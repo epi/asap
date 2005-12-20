@@ -1,0 +1,13 @@
+#define IDI_APP          101
+#define IDI_STOP         102
+#define IDI_PLAY         103
+#define IDR_TRAYMENU     150
+#define IDM_OPEN         201
+#define IDM_STOP         202
+#define IDM_QUALITY_RF   203
+#define IDM_QUALITY_MB1  204
+#define IDM_QUALITY_MB2  205
+#define IDM_QUALITY_MB3  206
+#define IDM_ABOUT        207
+#define IDM_EXIT         208
+#define IDM_SONG1        251
