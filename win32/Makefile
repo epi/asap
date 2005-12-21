@@ -10,7 +10,7 @@ asap2wav.exe: ..\asap2wav.c $(SRC) ..\players.h
 wasap.exe: wasap.c $(SRC) wasap.res ..\players.h
 	$(CC) wasap.c $(SRC) wasap.res comdlg32.lib shell32.lib user32.lib winmm.lib /link /release
 
-wasap.res: wasap.rc
+wasap.res: wasap.rc wasap.ico play.ico stop.ico
 	rc wasap.rc
 
 winamp\in_asap.dll: winamp\in_asap.c $(SRC) ..\players.h
