@@ -1,6 +1,9 @@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
 CC = @CC@
 INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@ -s
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CFLAGS = @CFLAGS@
@@ -15,18 +18,18 @@ SRC = asap.c $(ATARI800_SRC_DIR)/cpu.c $(ATARI800_SRC_DIR)/mzpokeysnd.c $(ATARI8
 all: $(TARGET)
 
 $(TARGET): asap2wav.c $(SRC) players.h
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) $^ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) asap2wav.c $(SRC) $(LIBS)
 
 players.h: raw2c.pl cmc_0500.raw mpt_0500.raw tmc_0500.raw
 	perl $^ >$@
 
 install: $(TARGET) asap2wav.1
-	$(INSTALL_PROGRAM) $(TARGET) $(DESTDIR)@prefix@/bin/$(TARGET)
-	$(INSTALL_DATA) asap2wav.1 $(DESTDIR)@prefix@/share/man/man1/asap2wav.1
+	$(INSTALL_PROGRAM) $(TARGET) @bindir@/$(TARGET)
+	$(INSTALL_DATA) asap2wav.1 @mandir@/man1/asap2wav.1
 
 uninstall:
-	rm $(DESTDIR)@prefix@/bin/$(TARGET)
-	rm $(DESTDIR)@prefix@/share/man/man1/asap2wav.1
+	rm @bindir@/$(TARGET)
+	rm @mandir@/man1/asap2wav.1
 
 clean:
 	rm -f players.h $(TARGET) core *.bak *~
