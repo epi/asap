@@ -28,8 +28,10 @@
 #include "resource.h"
 
 #define APP_TITLE        "WASAP"
+#define WND_CLASS_NAME   "WASAP"
 #define FREQUENCY        44100
 #define QUALITY_DEFAULT  1
+
 
 static char *Util_stpcpy(char *dest, const char *src)
 {
@@ -49,13 +51,6 @@ static char *Util_utoa(char *dest, unsigned int x)
 	} while (x > 0);
 	return Util_stpcpy(dest, p);
 }
-
-static unsigned int quality = QUALITY_DEFAULT;
-
-static unsigned int songs = 0;
-static unsigned int cursong = 0;
-
-static char strFileTitle[MAX_PATH] = "";
 
 
 /* WaveOut ---------------------------------------------------------------- */
@@ -78,7 +73,7 @@ static void WaveOut_Write(LPWAVEHDR pwh)
 {
 	if (playing) {
 		ASAP_Generate(pwh->lpData, BUFFER_SIZE);
-		if (waveOutWrite(hwo, pwh, sizeof(wh[0])) != MMSYSERR_NOERROR)
+		if (waveOutWrite(hwo, pwh, sizeof(WAVEHDR)) != MMSYSERR_NOERROR)
 			WaveOut_Stop();
 	}
 }
@@ -124,8 +119,9 @@ static void WaveOut_Exit(void)
 
 /* Tray ------------------------------------------------------------------- */
 
-static HICON hStopIcon;
-static HICON hPlayIcon;
+static unsigned int songs = 0;
+static unsigned int cursong = 0;
+static char strFileTitle[MAX_PATH] = "";
 
 #define MYWM_NOTIFYICON  (WM_APP + 1)
 
@@ -155,12 +151,11 @@ static void Tray_Modify(HWND hWnd, HICON hIcon)
 	/* 8 */
 	p = Util_stpcpy(nid.szTip, APP_TITLE);
 	if (songs > 0) {
-		size_t len = strlen(strFileTitle);
 		/* 2 */
 		*p++ = ':';
 		*p++ = ' ';
 		/* max 33 */
-		if (len <= 33)
+		if (strlen(strFileTitle) <= 33)
 			p = Util_stpcpy(p, strFileTitle);
 		else {
 			memcpy(p, strFileTitle, 30);
@@ -193,53 +188,34 @@ static void Tray_Delete(HWND hWnd)
 }
 
 
-/* Menu ------------------------------------------------------------------- */
+/* GUI -------------------------------------------------------------------- */
 
-static HMENU hMainMenu;
+static HICON hStopIcon;
+static HICON hPlayIcon;
+static HMENU hTrayMenu;
 static HMENU hSongMenu;
 static HMENU hQualityMenu;
 
-static void UpdateSongMenu(unsigned int oldsongs, unsigned int newsongs)
+static void SetSongs(unsigned int newsongs)
 {
-	if (oldsongs < newsongs) {
+	if (songs < newsongs) {
 		do {
 			char tmp_buf[16];
-			Util_utoa(tmp_buf, oldsongs + 1);
-			AppendMenu(hSongMenu, cursong == oldsongs
-			                       ? MF_CHECKED | MF_ENABLED | MF_STRING
-			                       : MF_ENABLED | MF_STRING,
-			           IDM_SONG1 + oldsongs, tmp_buf);
-		} while (++oldsongs < newsongs);
+			Util_utoa(tmp_buf, songs + 1);
+			AppendMenu(hSongMenu, MF_ENABLED | MF_STRING,
+			           IDM_SONG1 + songs, tmp_buf);
+		} while (++songs < newsongs);
 	}
-	else if (oldsongs > newsongs) {
+	else if (songs > newsongs) {
 		do
-			DeleteMenu(hSongMenu, --oldsongs, MF_BYPOSITION);
-		while (oldsongs > newsongs);
+			DeleteMenu(hSongMenu, --songs, MF_BYPOSITION);
+		while (songs > newsongs);
 	}
 }
 
-static void CheckMenu(HMENU hMenu, unsigned int oldpos, unsigned int newpos)
+static void PlaySong(HWND hWnd, unsigned int n)
 {
-	CheckMenuItem(hMenu, oldpos, MF_BYPOSITION | MF_UNCHECKED);
-	CheckMenuItem(hMenu, newpos, MF_BYPOSITION | MF_CHECKED);
-}
-
-static void CheckSongMenu(unsigned int oldsong, unsigned int newsong)
-{
-	CheckMenu(hSongMenu, oldsong, newsong);
-}
-
-static void CheckQualityMenu(unsigned int oldquality, unsigned int newquality)
-{
-	CheckMenu(hQualityMenu, oldquality, newquality);
-}
-
-
-/* Commands --------------------------------------------------------------- */
-
-static void play_song(HWND hWnd, unsigned int n)
-{
-	CheckSongMenu(cursong, n);
+	CheckMenuRadioItem(hSongMenu, 0, songs - 1, n, MF_BYPOSITION);
 	cursong = n;
 	ASAP_PlaySong(n);
 	Tray_Modify(hWnd, hPlayIcon);
@@ -248,15 +224,23 @@ static void play_song(HWND hWnd, unsigned int n)
 
 static int opening = FALSE;
 
-static void load_file(HWND hWnd, int reopen)
+static void LoadFile(HWND hWnd, int reopen)
 {
 	static char strFile[MAX_PATH] = "";
 	static OPENFILENAME ofn = {
 		sizeof(OPENFILENAME),
 		NULL,
 		0,
-		"All supported (*.sap,*.cmc,*.cmr,*.mpt,*.tmc)\0"
-		"*.sap;*.cmc;*.cmr;*.mpt;*.tmc\0"
+		"All supported\0"
+		"*.sap;*.cmc;*.cmr;*.dmc;*.mpt;*.mpd;*.tmc\0"
+		"Slight Atari Player (*.sap)\0"
+		"*.sap\0"
+		"Chaos Music Composer (*.cmc;*.cmr;*.dmc)\0"
+		"*.cmc;*.cmr;*.dmc\0"
+		"Music ProTracker (*.mpt;*.mpd)\0"
+		"*.mpt;*.mpd\0"
+		"Theta Music Composer (*.tmc)\0"
+		"*.tmc\0"
 		"\0",
 		NULL,
 		0,
@@ -284,24 +268,23 @@ static void load_file(HWND hWnd, int reopen)
 		static unsigned char module[65000];
 		DWORD module_len;
 		fh = CreateFile(strFile, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-		                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+		                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
+		                NULL);
 		if (fh != INVALID_HANDLE_VALUE) {
 			if (ReadFile(fh, module, sizeof(module), &module_len, NULL)) {
-				unsigned int oldsongs = songs;
 				CloseHandle(fh);
 				WaveOut_Stop();
 				if (ASAP_Load(strFile + ofn.nFileExtension, module,
 					(unsigned int) module_len)) {
-					songs = ASAP_GetSongs();
-					play_song(hWnd, reopen ? cursong : ASAP_GetDefSong());
+					SetSongs(ASAP_GetSongs());
+					PlaySong(hWnd, reopen ? cursong : ASAP_GetDefSong());
 				}
 				else {
-					songs = 0;
+					SetSongs(0);
 					Tray_Modify(hWnd, hStopIcon);
 					MessageBox(hWnd, "Format not supported", APP_TITLE,
 							   MB_OK | MB_ICONERROR);
 				}
-				UpdateSongMenu(oldsongs, songs);
 			}
 			else
 				CloseHandle(fh);
@@ -310,8 +293,12 @@ static void load_file(HWND hWnd, int reopen)
 	opening = FALSE;
 }
 
-
-/* GUI -------------------------------------------------------------------- */
+static void Reinitialize(HWND hWnd, unsigned int quality, int reopen)
+{
+	CheckMenuRadioItem(hQualityMenu, 0, 3, quality, MF_BYPOSITION);
+	ASAP_Initialize(FREQUENCY, quality);
+	LoadFile(hWnd, reopen);
+}
 
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
                                     LPARAM lParam)
@@ -325,7 +312,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 		idc = LOWORD(wParam);
 		switch (idc) {
 		case IDM_OPEN:
-			load_file(hWnd, FALSE);
+			LoadFile(hWnd, FALSE);
 			break;
 		case IDM_STOP:
 			WaveOut_Stop();
@@ -345,21 +332,17 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 		default:
 			if (idc >= IDM_SONG1 && idc < IDM_SONG1 + songs) {
 				WaveOut_Stop();
-				play_song(hWnd, idc - IDM_SONG1);
+				PlaySong(hWnd, idc - IDM_SONG1);
 			}
 			else if (idc >= IDM_QUALITY_RF && idc <= IDM_QUALITY_MB3) {
 				int reopen = FALSE;
 				if (songs > 0) {
 					WaveOut_Stop();
-					UpdateSongMenu(songs, 0);
-					songs = 0;
+					SetSongs(0);
 					Tray_Modify(hWnd, hStopIcon);
 					reopen = TRUE;
 				}
-				ASAP_Initialize(FREQUENCY, idc - IDM_QUALITY_RF);
-				CheckQualityMenu(quality, idc - IDM_QUALITY_RF);
-				quality = idc - IDM_QUALITY_RF;
-				load_file(hWnd, reopen);
+				Reinitialize(hWnd, idc - IDM_QUALITY_RF, reopen);
 			}
 			break;
 		}
@@ -374,12 +357,12 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 		}
 		switch (lParam) {
 		case WM_LBUTTONDOWN:
-			load_file(hWnd, FALSE);
+			LoadFile(hWnd, FALSE);
 			break;
 		case WM_RBUTTONDOWN:
 			GetCursorPos(&pt);
 			SetForegroundWindow(hWnd);
-			TrackPopupMenu(hMainMenu,
+			TrackPopupMenu(hTrayMenu,
 				TPM_RIGHTALIGN | TPM_BOTTOMALIGN | TPM_RIGHTBUTTON,
 				pt.x, pt.y, 0, hWnd, NULL);
 			PostMessage(hWnd, WM_NULL, 0, 0);
@@ -399,9 +382,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 {
 	WNDCLASS wc;
 	HWND hWnd;
+	HMENU hMainMenu;
 	MSG msg;
 
-	hWnd = FindWindow("ASAPWinAppClass", NULL);
+	hWnd = FindWindow(WND_CLASS_NAME, NULL);
 	if (hWnd != NULL) {
 		HWND hChild = GetLastActivePopup(hWnd);
 		if (hChild != hWnd)
@@ -409,19 +393,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		return 0;
 	}
 
-	wc.lpszClassName = "ASAPWinAppClass";
-	wc.lpfnWndProc = MainWndProc;
 	wc.style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW;
+	wc.lpfnWndProc = MainWndProc;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
 	wc.hInstance = hInstance;
 	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_APP));
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH) (COLOR_WINDOW + 1);
 	wc.lpszMenuName = NULL;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
+	wc.lpszClassName = WND_CLASS_NAME;
 	RegisterClass(&wc);
 
-	hWnd = CreateWindow("ASAPWinAppClass",
+	hWnd = CreateWindow(WND_CLASS_NAME,
 		APP_TITLE,
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
@@ -434,28 +418,29 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		NULL
 	);
 
-	hStopIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_STOP));
-	hPlayIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PLAY));
-
-	hMainMenu = GetSubMenu(LoadMenu(hInstance, MAKEINTRESOURCE(IDR_TRAYMENU)), 0);
-	hSongMenu = CreatePopupMenu();
-	InsertMenu(hMainMenu, 1, MF_BYPOSITION | MF_ENABLED | MF_STRING | MF_POPUP, (UINT_PTR) hSongMenu, "So&ng");
-	hQualityMenu = GetSubMenu(hMainMenu, 3);
-	SetMenuDefaultItem(hMainMenu, 0, TRUE);
-
 	if (!WaveOut_Init(FREQUENCY)) {
 		MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
 		           MB_OK | MB_ICONERROR);
 		return 1;
 	}
-	ASAP_Initialize(FREQUENCY, QUALITY_DEFAULT);
+
+	hStopIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_STOP));
+	hPlayIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PLAY));
+	hMainMenu = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_TRAYMENU));
+	hTrayMenu = GetSubMenu(hMainMenu, 0);
+	hSongMenu = CreatePopupMenu();
+	InsertMenu(hTrayMenu, 1, MF_BYPOSITION | MF_ENABLED | MF_STRING | MF_POPUP,
+	           (UINT_PTR) hSongMenu, "So&ng");
+	hQualityMenu = GetSubMenu(hTrayMenu, 3);
+	SetMenuDefaultItem(hTrayMenu, 0, TRUE);
 	Tray_Add(hWnd, hStopIcon);
-	load_file(hWnd, FALSE);
+	Reinitialize(hWnd, QUALITY_DEFAULT, FALSE);
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
 	WaveOut_Exit();
 	Tray_Delete(hWnd);
+	DestroyMenu(hMainMenu);
 	return 0;
 }
