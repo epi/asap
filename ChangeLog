@@ -1,0 +1,45 @@
+2005-12-27  Piotr Fusik  <fox@scene.pl>
+* ChangeLog, TODO: created
+
+* .cvsignore: ignore autoconf-generated files
+
+* win32/wasap.c, win32/wasap.rc: use radio-marks instead of check-marks,
+  this even simplifies the code
+
+* asap.c: fixed an endless loop when a file other than SAP was loaded first;
+  made initialization of poly{9,17}_lookup several times faster;
+  implemented subsongs in MPT and TMC files; removed the unused DivN* arrays;
+  ASAP_PlaySong() first clears POKEY sound registers - this helps SAPs which
+  don't do that
+
+* maketar.pl, win32/Makefile: "nmake dist" creates release archives
+
+* asap.c, asap2wav.c, win32/wasap.c, win32/winamp/in_asap.c:
+  support DMC (DoublePlay CMC) and MPD (MPT DoublePlay) formats
+
+* win32/wasap.c: added file selector filters
+
+
+2005-12-23  Piotr Fusik  <fox@scene.pl>
+* Makefile.in, config.guess, config.sub, install-sh: uploaded the latest
+  run-time config/install scripts
+
+
+2005-12-21  Piotr Fusik  <fox@scene.pl>
+* .cvsignore, win32/.cvsignore, win32/winamp/.cvsignore: specified files
+  that are not stored in CVS
+
+* win32/Makefile: added icon dependencies
+
+* win32/wasap.ico: colored the 16x16 application icon
+
+
+2005-12-20  Piotr Fusik  <fox@scene.pl>
+* COPYING, Makefile.in, asap.c, asap.h, asap2wav.c, asap_internal.h,
+  configure.ac, cmc_0500.raw, mpt_0500.raw, tmc_0500.raw, raw2c.pl,
+  win32/Makefile, win32/config.h, win32/play.ico, win32/stop.ico,
+  win32/wasap.ico, win32/resource.h, win32/wasap.c, win32/wasap.rc,
+  win32/winamp/in2.h, win32/winamp/out.h, win32/winamp/in_asap.c:
+  initial CVS checkin
+
+

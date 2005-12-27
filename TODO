@@ -1,0 +1,43 @@
+To be done (highest priority first):
+
+* relocate modules which collide with the player or hardware registers
+
+* wasap: open file from Windows Explorer
+
+* XMMS plugin
+
+* winamp: switch subsongs
+
+* display name, author, date
+
+* stereo
+
+* TYPE D SAPs
+
+* TYPE S SAPs
+
+* MD1/MD2 (MPT with samples)
+
+* Raster Music Tracker
+
+* Theta Music Composer 2.0
+
+* POKEY timer interrupts
+
+* AMS
+
+* TYPE R SAPs ?
+
+* Delta
+
+* Future Tracker ?
+
+* Sound Tracker ?
+
+* 16-bit sound output
+
+* auto-detect song length in native formats
+
+* extend SAP with a tag that defines song length
+
+* seeking
