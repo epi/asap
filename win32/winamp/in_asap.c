@@ -219,7 +219,9 @@ static In_Module mod = {
 	"sap\0Slight Atari Player (*.SAP)\0"
 	"cmc\0Chaos Music Composer (*.CMC)\0"
 	"cmr\0Chaos Music Composer / Rzog (*.CMR)\0"
+	"dmc\0DoublePlay Chaos Music Composer (*.DMC)\0"
 	"mpt\0Music ProTracker (*.MPT)\0"
+	"mpd\0Music ProTracker DoublePlay (*.MPD)\0"
 	"tmc\0Theta Music Composer (*.TMC)\0",
 	0,    // is_seekable
 	1,    // UsesOutputPlug

@@ -164,7 +164,8 @@ int main(int argc, char *argv[])
 			if (strcmp(arg, "-h") == 0 || strcmp(arg, "--help") == 0) {
 				printf(
 					"Usage: asap2wav [OPTIONS] INPUTFILE...\n"
-					"Each INPUTFILE must be in a supported format: SAP, CMC, CMR, MPT, TMC or AMS.\n"
+					"Each INPUTFILE must be in a supported format:\n"
+					"SAP, CMC, CMR, DMC, MPT, MPD or TMC.\n"
 					"Options:\n"
 					"-o FILE     --output=FILE      Set output WAV file name\n"
 					"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
