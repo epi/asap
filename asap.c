@@ -55,55 +55,11 @@ UBYTE wsync_halt = 0;
 UBYTE AUDF[4 * MAXPOKEYS];	/* AUDFx (D200, D202, D204, D206) */
 UBYTE AUDC[4 * MAXPOKEYS];	/* AUDCx (D201, D203, D205, D207) */
 UBYTE AUDCTL[MAXPOKEYS];	/* AUDCTL (D208) */
-int DivNIRQ[4], DivNMax[4];
 int Base_mult[MAXPOKEYS];		/* selects either 64Khz or 15Khz clock mult */
 
 UBYTE poly9_lookup[511];
 UBYTE poly17_lookup[16385];
 static ULONG random_scanline_counter;
-
-static void Update_Counter(int chan_mask)
-{
-	/* only reset the channels that have changed */
-
-	if (chan_mask & (1 << CHAN1)) {
-		/* process channel 1 frequency */
-		if (AUDCTL[0] & CH1_179)
-			DivNMax[CHAN1] = AUDF[CHAN1] + 4;
-		else
-			DivNMax[CHAN1] = (AUDF[CHAN1] + 1) * Base_mult[0];
-		if (DivNMax[CHAN1] < LINE_C)
-			DivNMax[CHAN1] = LINE_C;
-	}
-
-	if (chan_mask & (1 << CHAN2)) {
-		/* process channel 2 frequency */
-		if (AUDCTL[0] & CH1_CH2) {
-			if (AUDCTL[0] & CH1_179)
-				DivNMax[CHAN2] = AUDF[CHAN2] * 256 + AUDF[CHAN1] + 7;
-			else
-				DivNMax[CHAN2] = (AUDF[CHAN2] * 256 + AUDF[CHAN1] + 1) * Base_mult[0];
-		}
-		else
-			DivNMax[CHAN2] = (AUDF[CHAN2] + 1) * Base_mult[0];
-		if (DivNMax[CHAN2] < LINE_C)
-			DivNMax[CHAN2] = LINE_C;
-	}
-
-	if (chan_mask & (1 << CHAN4)) {
-		/* process channel 4 frequency */
-		if (AUDCTL[0] & CH3_CH4) {
-			if (AUDCTL[0] & CH3_179)
-				DivNMax[CHAN4] = AUDF[CHAN4] * 256 + AUDF[CHAN3] + 7;
-			else
-				DivNMax[CHAN4] = (AUDF[CHAN4] * 256 + AUDF[CHAN3] + 1) * Base_mult[0];
-		}
-		else
-			DivNMax[CHAN4] = (AUDF[CHAN4] + 1) * Base_mult[0];
-		if (DivNMax[CHAN4] < LINE_C)
-			DivNMax[CHAN4] = LINE_C;
-	}
-}
 
 #ifndef SOUND_GAIN /* sound gain can be pre-defined in the configure/Makefile */
 #define SOUND_GAIN 4
@@ -142,33 +98,25 @@ static void POKEY_PutByte(UWORD addr, UBYTE byte)
 		else
 			Base_mult[0] = DIV_64;
 
-		Update_Counter((1 << CHAN1) | (1 << CHAN2) | (1 << CHAN3) | (1 << CHAN4));
 		Update_pokey_sound(_AUDCTL, byte, 0, SOUND_GAIN);
 		break;
 	case _AUDF1:
 		AUDF[CHAN1] = byte;
-		Update_Counter((AUDCTL[0] & CH1_CH2) ? ((1 << CHAN2) | (1 << CHAN1)) : (1 << CHAN1));
 		Update_pokey_sound(_AUDF1, byte, 0, SOUND_GAIN);
 		break;
 	case _AUDF2:
 		AUDF[CHAN2] = byte;
-		Update_Counter(1 << CHAN2);
 		Update_pokey_sound(_AUDF2, byte, 0, SOUND_GAIN);
 		break;
 	case _AUDF3:
 		AUDF[CHAN3] = byte;
-		Update_Counter((AUDCTL[0] & CH3_CH4) ? ((1 << CHAN4) | (1 << CHAN3)) : (1 << CHAN3));
 		Update_pokey_sound(_AUDF3, byte, 0, SOUND_GAIN);
 		break;
 	case _AUDF4:
 		AUDF[CHAN4] = byte;
-		Update_Counter(1 << CHAN4);
 		Update_pokey_sound(_AUDF4, byte, 0, SOUND_GAIN);
 		break;
 	case _STIMER:
-		DivNIRQ[CHAN1] = DivNMax[CHAN1];
-		DivNIRQ[CHAN2] = DivNMax[CHAN2];
-		DivNIRQ[CHAN4] = DivNMax[CHAN4];
 		Update_pokey_sound(_STIMER, byte, 0, SOUND_GAIN);
 		break;
 #ifdef STEREO_SOUND
@@ -226,7 +174,6 @@ static void POKEY_PutByte(UWORD addr, UBYTE byte)
 static void POKEY_Initialise(void)
 {
 	int i;
-	int j;
 	ULONG reg;
 
 	for (i = 0; i < (MAXPOKEYS * 4); i++) {
@@ -239,24 +186,17 @@ static void POKEY_Initialise(void)
 		Base_mult[i] = DIV_64;
 	}
 
-	for (i = 0; i < 4; i++)
-		DivNIRQ[i] = DivNMax[i] = 0;
-
 	/* initialise poly9_lookup */
 	reg = 0x1ff;
 	for (i = 0; i < 511; i++) {
-		poly9_lookup[i] = (UBYTE) (reg >> 1);
-		reg |= (((reg >> 5) ^ reg) & 1) << 9;
-		reg >>= 1;
+		reg = ((((reg >> 5) ^ reg) & 1) << 8) + (reg >> 1);
+		poly9_lookup[i] = (UBYTE) reg;
 	}
 	/* initialise poly17_lookup */
 	reg = 0x1ffff;
 	for (i = 0; i < 16385; i++) {
-		poly17_lookup[i] = (UBYTE) (reg >> 9);
-		for (j = 0; j < 8; j++) {
-			reg |= (((reg >> 5) ^ reg) & 1) << 17;
-			reg >>= 1;
-		}
+		reg = ((((reg >> 5) ^ reg) & 0xff) << 9) + (reg >> 8);
+		poly17_lookup[i] = (UBYTE) (reg >> 1);
 	}
 
 	random_scanline_counter = 0;
@@ -334,6 +274,13 @@ static unsigned int sap_songs;
 static unsigned int sap_defsong;
 static unsigned int sap_fastplay;
 
+/* This array maps subsong numbers to track positions.
+   Note: the original MPT supports up to 128 track positions, therefore up to 64
+   subsongs (each subsong must have at least one pattern entry and a jump/stop).
+   We additionally support here the modified MPT ("10.5") which supports
+   up to 254 track positions, even though the player doesn't support it yet. */
+static UBYTE mpt_song_pos[127];
+
 static unsigned int tmc_per_frame;
 static unsigned int tmc_per_frame_counter;
 
@@ -383,18 +330,88 @@ static int load_cmc(const unsigned char *module, unsigned int module_len, int cm
 
 static int load_mpt(const unsigned char *module, unsigned int module_len)
 {
-	return load_native(module, module_len, mpt_0500_raw_data, sizeof(mpt_0500_raw_data), 'm');
+	if (!load_native(module, module_len, mpt_0500_raw_data, sizeof(mpt_0500_raw_data), 'm'))
+		return FALSE;
+	/* auto-detect number of subsongs - only if the address of the first track is standard */
+	if (module[0x1c6] + (module[0x1ca] << 8) == sap_music + 0x1ca) {
+		/* we look for jump/stop commands only in the first track,
+		   even though the players allow them in any track */
+		int i;
+		int song_len;
+		/* seen[i] == TRUE if the track position i is already processed */
+		UBYTE seen[256];
+		/* Calculate the length of the first track. Address of the second track minus
+		   address of the first track equals the length of the first track in bytes.
+		   Divide by two to get number of track positions. */
+		song_len = (module[0x1c7] + (module[0x1cb] << 8) - sap_music - 0x1ca) >> 1;
+		if (song_len > 0xfe)
+			return FALSE;
+		memset(seen, FALSE, sizeof(seen));
+		sap_songs = 0;
+		for (i = 0; i < song_len; i++) {
+			int j;
+			UBYTE c;
+			if (seen[i])
+				continue;
+			j = i;
+			do {
+				seen[j] = TRUE;
+				c = module[0x1d0 + j * 2];
+				if (c != 0xff)
+					break;
+				j = module[0x1d1 + j * 2];
+			} while (j < song_len && !seen[j]);
+			if (c >= 64)
+				continue;
+			mpt_song_pos[sap_songs++] = (UBYTE) j;
+			j++;
+			while (j < song_len && !seen[j]) {
+				seen[j] = TRUE;
+				c = module[0x1d0 + j * 2];
+				if (c < 64)
+					j++;
+				else if (c == 0xff)
+					j = module[0x1d1 + j * 2];
+				else
+					break;
+			}
+		}
+		return sap_songs != 0;
+	}
+	mpt_song_pos[0] = 0;
+	return TRUE;
 }
 
 static int load_tmc(const unsigned char *module, unsigned int module_len)
 {
 	static const unsigned int fastplay_lookup[] = { 312U, 312U / 2U, 312U / 3U, 312U / 4U };
+	unsigned int i;
 	if (!load_native(module, module_len, tmc_0500_raw_data, sizeof(tmc_0500_raw_data), 't'))
 		return FALSE;
 	tmc_per_frame = module[37];
 	if (tmc_per_frame < 1 || tmc_per_frame > 4)
 		return FALSE;
 	sap_fastplay = fastplay_lookup[tmc_per_frame - 1];
+	i = 0;
+	/* find first instrument */
+	while (module[0x66 + i] == 0) {
+		if (++i >= 64)
+			return FALSE; /* no instrument */
+	}
+	i = (module[0x66 + i] << 8) + module[0x26 + i] - sap_music - 1 + 6;
+	if (i >= module_len)
+		return FALSE;
+	/* skip trailing jumps */
+	do {
+		if (i <= 0x1b5)
+			return FALSE; /* no pattern to play */
+		i -= 16;
+	} while (module[i] >= 0x80);
+	while (i >= 0x1b5) {
+		if (module[i] >= 0x80)
+			sap_songs++;
+		i -= 16;
+	}
 	return TRUE;
 }
 
@@ -518,8 +535,6 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end)
 	}
 	if (sap_ptr[1] != 0xff)
 		return FALSE;
-	sampleclocks = 0;
-	sampleclocks_per_player = 114U * sap_fastplay * sample_frequency;
 	memset(memory, 0, sizeof(memory));
 	sap_ptr += 2;
 	while (sap_ptr + 5 <= sap_end) {
@@ -557,6 +572,12 @@ int ASAP_Load(const char *format, const unsigned char *module, unsigned int modu
 		return load_cmc(module, module_len, FALSE);
 	case EXT('C', 'M', 'R'):
 		return load_cmc(module, module_len, TRUE);
+	case EXT('D', 'M', 'C'):
+		sap_fastplay = 156;
+		return load_cmc(module, module_len, FALSE);
+	case EXT('M', 'P', 'D'):
+		sap_fastplay = 156;
+		return load_mpt(module, module_len);
 	case EXT('M', 'P', 'T'):
 		return load_mpt(module, module_len);
 	case EXT('S', 'A', 'P'):
@@ -592,6 +613,11 @@ static void call_6502(UWORD addr, int max_scanlines)
 
 void ASAP_PlaySong(unsigned int song)
 {
+	UWORD addr;
+	for (addr = _AUDF1; addr <= _STIMER; addr++)
+		POKEY_PutByte(addr, 0);
+	sampleclocks = 0;
+	sampleclocks_per_player = 114U * sap_fastplay * sample_frequency;
 	regP = 0x30;
 	switch (sap_type) {
 	case 'B':
@@ -616,7 +642,7 @@ void ASAP_PlaySong(unsigned int song)
 		regY = (UBYTE) sap_music;
 		call_6502(sap_player, 5 * 312);
 		regA = 0x02;
-		regX = 0x00;
+		regX = mpt_song_pos[song];
 		call_6502(sap_player, 5 * 312);
 		break;
 	case 't':
@@ -624,7 +650,8 @@ void ASAP_PlaySong(unsigned int song)
 		regX = (UBYTE) (sap_music >> 8);
 		regY = (UBYTE) sap_music;
 		call_6502(sap_player, 5 * 312);
-		regA = 0x60;
+		regA = 0x00;
+		regX = (UBYTE) song;
 		call_6502(sap_player, 5 * 312);
 		tmc_per_frame_counter = 1;
 		break;
