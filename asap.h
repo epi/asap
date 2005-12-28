@@ -31,7 +31,8 @@
 #define ASAP_CREDITS \
    "Another Slight Atari Player (C) 2005 Piotr Fusik\n" \
    "6502 and POKEY sound emulation (C) 1995-2005 Atari800 development team\n" \
-   "CMC, MPT, TMC players (C) 1994-1997 Marcin Lewandowski\n"
+   "CMC, MPT, TMC players (C) 1994-1997 Marcin Lewandowski\n" \
+   "RMT player (C) 2002-2005 Radek Sterba\n"
 
 /* Short GPL notice, display after credits. */
 #define ASAP_COPYRIGHT \

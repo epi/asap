@@ -287,29 +287,45 @@ static unsigned int tmc_per_frame_counter;
 static unsigned int sampleclocks;
 static unsigned int sampleclocks_per_player;
 
+static const unsigned int perframe2fastplay[] = { 312U, 312U / 2U, 312U / 3U, 312U / 4U };
+
 static int load_native(const unsigned char *module, unsigned int module_len,
-                       const unsigned char *player, unsigned int player_len, char type)
+                       const unsigned char *player, unsigned int player_len,
+                       unsigned int player_addr, char type)
 {
 	int block_len;
-	if (module_len < 0x01d0 || module[0] != 0xff || module[1] != 0xff)
+	if (module[0] != 0xff || module[1] != 0xff)
 		return FALSE;
 	sap_music = module[2] + (module[3] << 8);
-	if (sap_music < 0x0500 + player_len)
+	if (sap_music < player_addr + player_len)
 		return FALSE;
 	block_len = module[4] + (module[5] << 8) + 1 - sap_music;
-	if ((unsigned int) (6 + block_len) != module_len)
-		return FALSE;
+	if ((unsigned int) (6 + block_len) != module_len) {
+		UWORD info_addr;
+		int info_len;
+		if (type != 'r' || (unsigned int) (11 + block_len) > module_len)
+			return FALSE;
+		/* allow optional info for Raster Music Tracker */
+		info_addr = module[6 + block_len] + (module[7 + block_len] << 8);
+		if (info_addr != sap_music + block_len)
+			return FALSE;
+		info_len = module[8 + block_len] + (module[9 + block_len] << 8) + 1 - info_addr;
+		if ((unsigned int) (10 + block_len + info_len) != module_len)
+			return FALSE;
+	}
 	memcpy(memory + sap_music, module + 6, block_len);
-	memcpy(memory + 0x0500, player, player_len);
+	memcpy(memory + player_addr, player, player_len);
 	sap_type = type;
-	sap_player = 0x0500;
+	sap_player = player_addr;
 	return TRUE;
 }
 
 static int load_cmc(const unsigned char *module, unsigned int module_len, int cmr)
 {
 	int pos;
-	if (!load_native(module, module_len, cmc_0500_raw_data, sizeof(cmc_0500_raw_data), 'C'))
+	if (module_len < 0x300)
+		return FALSE;
+	if (!load_native(module, module_len, cmc_0500_raw_data, sizeof(cmc_0500_raw_data), 0x500, 'C'))
 		return FALSE;
 	if (cmr)
 		memcpy(memory + 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, sizeof(cmr_bass_table));
@@ -330,7 +346,9 @@ static int load_cmc(const unsigned char *module, unsigned int module_len, int cm
 
 static int load_mpt(const unsigned char *module, unsigned int module_len)
 {
-	if (!load_native(module, module_len, mpt_0500_raw_data, sizeof(mpt_0500_raw_data), 'm'))
+	if (module_len < 0x1d0)
+		return FALSE;
+	if (!load_native(module, module_len, mpt_0500_raw_data, sizeof(mpt_0500_raw_data), 0x500, 'm'))
 		return FALSE;
 	/* auto-detect number of subsongs - only if the address of the first track is standard */
 	if (module[0x1c6] + (module[0x1ca] << 8) == sap_music + 0x1ca) {
@@ -382,16 +400,33 @@ static int load_mpt(const unsigned char *module, unsigned int module_len)
 	return TRUE;
 }
 
+static int load_rmt(const unsigned char *module, unsigned int module_len)
+{
+	unsigned int i;
+	if (module_len < 0x30 || memcmp(module + 6, "RMT4", 4) != 0)
+		return FALSE;
+	i = module[12];
+	if (i < 1 || i > 4)
+		return FALSE;
+	sap_fastplay = perframe2fastplay[i - 1];
+	if (!load_native(module, module_len, rmt_0390_raw_data, sizeof(rmt_0390_raw_data), 0x390, 'r'))
+		return FALSE;
+	/* TODO: detect subsongs */
+	sap_player = 0x600;
+	return TRUE;
+}
+
 static int load_tmc(const unsigned char *module, unsigned int module_len)
 {
-	static const unsigned int fastplay_lookup[] = { 312U, 312U / 2U, 312U / 3U, 312U / 4U };
 	unsigned int i;
-	if (!load_native(module, module_len, tmc_0500_raw_data, sizeof(tmc_0500_raw_data), 't'))
+	if (module_len < 0x1d0)
+		return FALSE;
+	if (!load_native(module, module_len, tmc_0500_raw_data, sizeof(tmc_0500_raw_data), 0x500, 't'))
 		return FALSE;
 	tmc_per_frame = module[37];
 	if (tmc_per_frame < 1 || tmc_per_frame > 4)
 		return FALSE;
-	sap_fastplay = fastplay_lookup[tmc_per_frame - 1];
+	sap_fastplay = perframe2fastplay[tmc_per_frame - 1];
 	i = 0;
 	/* find first instrument */
 	while (module[0x66 + i] == 0) {
@@ -580,6 +615,8 @@ int ASAP_Load(const char *format, const unsigned char *module, unsigned int modu
 		return load_mpt(module, module_len);
 	case EXT('M', 'P', 'T'):
 		return load_mpt(module, module_len);
+	case EXT('R', 'M', 'T'):
+		return load_rmt(module, module_len);
 	case EXT('S', 'A', 'P'):
 		return load_sap(module, module + module_len);
 	case EXT('T', 'M', 'C'):
@@ -645,6 +682,12 @@ void ASAP_PlaySong(unsigned int song)
 		regX = mpt_song_pos[song];
 		call_6502(sap_player, 5 * 312);
 		break;
+	case 'r':
+		regA = 0x00;
+		regX = (UBYTE) sap_music;
+		regY = (UBYTE) (sap_music >> 8);
+		call_6502(sap_player, 5 * 312);
+		break;
 	case 't':
 		regA = 0x70;
 		regX = (UBYTE) (sap_music >> 8);
@@ -680,6 +723,7 @@ void ASAP_Generate(void *buffer, unsigned int buffer_len)
 			call_6502((UWORD) (sap_player + 6), sap_fastplay);
 			break;
 		case 'm':
+		case 'r':
 			call_6502((UWORD) (sap_player + 3), sap_fastplay);
 			break;
 		case 't':

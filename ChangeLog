@@ -1,3 +1,8 @@
+2005-12-28  Piotr Fusik  <fox@scene.pl>
+* rmt_0390.raw, asap.c, asap.h, asap2wav.c, Makefile.in, win32/wasap.c,
+  win32/Makefile, win32/winamp/in_asap.c: support RMT mono songs
+
+
 2005-12-27  Piotr Fusik  <fox@scene.pl>
 * ChangeLog, TODO: created
 

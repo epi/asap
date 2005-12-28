@@ -1,5 +1,7 @@
 To be done (highest priority first):
 
+* Raster Music Tracker - subsongs
+
 * relocate modules which collide with the player or hardware registers
 
 * wasap: open file from Windows Explorer
@@ -18,8 +20,6 @@ To be done (highest priority first):
 
 * MD1/MD2 (MPT with samples)
 
-* Raster Music Tracker
-
 * Theta Music Composer 2.0
 
 * POKEY timer interrupts
@@ -28,7 +28,7 @@ To be done (highest priority first):
 
 * TYPE R SAPs ?
 
-* Delta
+* Delta Composer
 
 * Future Tracker ?
 

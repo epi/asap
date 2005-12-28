@@ -18,7 +18,7 @@ wasap.res: wasap.rc wasap.ico play.ico stop.ico
 winamp\in_asap.dll: winamp\in_asap.c $(SRC) ..\players.h
 	$(CC) /LD winamp\in_asap.c $(SRC) user32.lib /link /release
 
-..\players.h: ..\raw2c.pl ..\cmc_0500.raw ..\mpt_0500.raw ..\tmc_0500.raw
+..\players.h: ..\raw2c.pl ..\cmc_0500.raw ..\mpt_0500.raw ..\rmt_0390.raw ..\tmc_0500.raw
 	perl $** >$@
 
 clean:
@@ -45,7 +45,7 @@ dist: all ..\configure ..\config.h.in
 		$(ATARI800_SRC_DIR)\pokeysnd.c $(ATARI800_SRC_DIR)\remez.c \
 		$(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h \
 		-b $(ASAP_DIR)\cmc_0500.raw $(ASAP_DIR)\mpt_0500.raw \
-		$(ASAP_DIR)\tmc_0500.raw \
+		$(ASAP_DIR)\rmt_0390.raw $(ASAP_DIR)\tmc_0500.raw \
 		$(ASAP_DIR)\win32\play.ico $(ASAP_DIR)\win32\stop.ico \
 		$(ASAP_DIR)\win32\wasap.ico \
 		-s $(ASAP_DIR)\config.guess $(ASAP_DIR)\config.sub \

@@ -232,13 +232,15 @@ static void LoadFile(HWND hWnd, int reopen)
 		NULL,
 		0,
 		"All supported\0"
-		"*.sap;*.cmc;*.cmr;*.dmc;*.mpt;*.mpd;*.tmc\0"
+		"*.sap;*.cmc;*.cmr;*.dmc;*.mpt;*.mpd;*.rmt;*.tmc\0"
 		"Slight Atari Player (*.sap)\0"
 		"*.sap\0"
 		"Chaos Music Composer (*.cmc;*.cmr;*.dmc)\0"
 		"*.cmc;*.cmr;*.dmc\0"
 		"Music ProTracker (*.mpt;*.mpd)\0"
 		"*.mpt;*.mpd\0"
+		"Raster Music Tracker (*.rmt)\0"
+		"*.rmt\0"
 		"Theta Music Composer (*.tmc)\0"
 		"*.tmc\0"
 		"\0",

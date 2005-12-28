@@ -20,7 +20,7 @@ all: $(TARGET)
 $(TARGET): asap2wav.c $(SRC) players.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) asap2wav.c $(SRC) $(LIBS)
 
-players.h: raw2c.pl cmc_0500.raw mpt_0500.raw tmc_0500.raw
+players.h: raw2c.pl cmc_0500.raw mpt_0500.raw rmt_0390.raw tmc_0500.raw
 	perl $^ >$@
 
 install: $(TARGET) asap2wav.1
