@@ -1,0 +1,25 @@
+People who have contributed to ASAP
+-----------------------------------
+
+Atari800 Development Team  (http://atari800.sourceforge.net)
+* 6502 and POKEY emulation
+
+Michael Borisov
+* new POKEY sound emulation in Atari800
+
+Ron Fries
+* original POKEY sound emulation in Atari800
+
+Piotr Fusik  <fox@scene.pl>
+* author and maintainer of ASAP
+* Windows port and Winamp plugin
+
+Marcin Lewandowski  <jaskier@atari8.info>
+* original 6502 routines for playing CMC, MPT and TMC
+
+Radek Sterba  <raster@infos.cz>
+* 6502 routine for RMT
+
+Lukasz Sychowicz  <xray@scene.pl>
+* Windows icons
+
