@@ -1,0 +1,79 @@
+.TH ASAP2WAV 1 "December 31, 2005"
+.SH NAME
+asap2wav \- convert Atari 8-bit music to WAV
+.SH SYNOPSIS
+.B asap2wav
+.B [\-o
+.I FILE
+.B ] [\-s
+.I SONG
+.B ] [\-q
+.I QUALITY
+.B ] [\-t
+.I TIME
+.B ] [\-r
+.I FREQ
+.B ]
+.I INPUTFILE...
+.SH DESCRIPTION
+.B asap2wav
+converts Atari 8-bit music files to WAV files. It internally uses
+high-quality, identical to the popular Atari800 emulator,
+emulation of the POKEY sound chip and the 6502 processor.
+.SH ARGUMENTS
+Format of the input files is detected from their filename extensions.
+Currently the following formats are supported:
+.TP
+SAP (Slight Atari Player)
+A standard file format for playing Atari 8-bit music on modern computers.
+Samples and stereo are not supported yet.
+.TP
+CMC (Chaos Music Composer)
+A popular music editor for Atari.
+.TP
+CMR (CMC Rzog)
+CMC with modified bass sounds.
+.TP
+DMC (DoublePlay CMC)
+CMC with 6502 routines executed at double rate of the original CMC.
+.TP
+MPT (Music ProTracker)
+Another popular music editor for Atari. Samples are not supported yet.
+.TP
+MPD (MPT DoublePlay)
+MPT with 6502 routines executed at double rate of the original MPT.
+.TP
+RMT (Raster Music Tracker)
+New music editor for composing Atari music on a PC.
+Stereo is not supported yet.
+.TP
+TMC (Theta Music Composer)
+Powerful music editor for Atari. Stereo is not supported yet.
+.SH OPTIONS
+.TP
+\fB\-o\fR \fIFILE\fR, \fB\-\-output\fR=\fIFILE\fR
+Set output WAV file name. If you do not specify this option, the name
+of the input file is re-used, with the extension changed to "wav".
+.TP
+\fB\-s\fR \fISONG\fR, \fB\-\-song\fR=\fISONG\fR
+Select subsong number (zero-based).
+.TP
+\fB\-q\fR \fIQUALITY\fR, \fB\-\-quality\fR=\fIQUALITY\fR
+Set sound quality 0-3 (default: 1).
+.TP
+\fB\-t\fR \fITIME\fR, \fB\-\-time\fR=\fITIME\fR
+Set output length MM:SS (default: 03:00).
+.TP
+\fB\-r\fR \fIFREQ\fR, \fB\-\-rate\fR=\fIFREQ\fR
+Set sample rate in Hz (default: 44100).
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display help message and exit.
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Display version information and exit.
+.SH COPYRIGHT
+ASAP2WAV is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published
+by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.

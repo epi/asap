@@ -1,0 +1,20 @@
+WASAP - Windows Another Slight Atari Player
+-------------------------------------------
+
+WASAP is a tiny player of Atari 8-bit music for Windows. To install it,
+simply extract the archive to a directory of your choice. WASAP is designed
+to work on any version of Windows, starting with Windows 95.
+
+When you run WASAP, an "Open file" dialog appears. Simply select the file
+you want to listen to. Later, WASAP is controlled by its tray icon. When you
+hover the mouse pointer over the icon, the name of the loaded file appears.
+If the file contains several songs, the number of the currently playing song
+and the number of songs in the file are shown.
+
+To open another file, left-click the tray icon. The other options are
+available with a right click on the icon. "RF" quality means POKEY sound
+emulation programmed by Ron Fries. "MB" means Michael Borisov's emulation.
+
+WASAP is part of the ASAP project. Information about ASAP follows.
+
+

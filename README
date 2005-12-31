@@ -1,0 +1,67 @@
+ASAP - Another Slight Atari Player
+----------------------------------
+
+ASAP is a player/converter of Atari 8-bit music for modern computers.
+It provides high-quality, identical to the popular Atari800 emulator,
+emulation of the POKEY sound chip and the 6502 processor.
+
+This release includes the following programs that use the ASAP engine:
+* ASAP2WAV - portable command-line utility that generates WAV files
+* WASAP - a tiny player for Windows
+* in_asap - a Winamp plugin
+
+Currently supported input formats are:
+* SAP (Slight Atari Player) - a standard file format for playing Atari 8-bit
+  music on modern computers. Samples and stereo are not supported yet.
+* CMC (Chaos Music Composer) - a popular music editor for Atari.
+* CMR (CMC Rzog) - CMC with modified bass sounds.
+* DMC (DoublePlay CMC) - CMC with 6502 routines executed at double rate
+  of the original CMC.
+* MPT (Music ProTracker) - another popular music editor for Atari.
+  Samples are not supported yet.
+* MPD (MPT DoublePlay) - MPT with 6502 routines executed at double rate
+  of the original MPT.
+* RMT (Raster Music Tracker) - new music editor for composing Atari music
+  on a PC. Stereo is not supported yet.
+* TMC (Theta Music Composer) - powerful music editor for Atari.
+  Stereo is not supported yet.
+
+More formats will be added in the future. Also, lack of support for stereo
+and samples is only temporary.
+
+The biggest collection of SAP files is ASMA (Atari SAP Music Archive,
+http://asma.atari.org). It is strongly recommended that you use ASMA 3.0
+or newer. About 400 files in ASMA 3.0 are stereo or with samples,
+the remaining 1600 can be used with the current version of ASAP.
+
+If you are interested in the ASAP project, please subscribe its mailing list:
+https://lists.sourceforge.net/lists/listinfo/asap-users
+As in the Atari800 project, this is a combined list for end users
+and for developers. Once you subscribe, you can post comments, ideas
+and questions about ASAP. They will be answered ASAP. ;-)
+
+If, for some reason, you do not want to subscribe the mailing list,
+but have a bug report, feature request or a small code patch, you can use
+the sf.net tracker. Use "Bugs", "Feature Requests" or "Patches" link
+on this page:
+http://sourceforge.net/projects/asap/
+Although you may submit your requests anonymously, it is strongly recommended
+that you login to sf.net first (create an account if necessary). This way you
+will receive email notifications about changes made to your request, and you
+can be reached if your request needs a clarification. Please double-check
+the TODO file before reporting a supposed bug (which may be really lack
+of a feature) or submitting a feature request. Patches submitted
+via the request tracker must be small and created against the current
+development code stored in CVS.
+
+ASAP is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published
+by the Free Software Foundation; either version 2 of the License,
+or (at your option) any later version.
+
+ASAP is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the included GNU General Public License for more details.
+
+

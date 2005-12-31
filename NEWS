@@ -1,0 +1,17 @@
+History
+-------
+
+ASAP 0.1.0 (2005-12-31)
+
+This is the initial release of ASAP (Another Slight Atari Player)
+- a player/converter of Atari 8-bit music for modern computers.
+ASAP provides high-quality, identical to the popular Atari800 emulator,
+emulation of the POKEY sound chip and the 6502 processor.
+
+This release includes: ASAP2WAV - portable command-line utility for converting
+Atari 8-bit music to WAV files, WASAP - a tiny player for Windows
+and in_asap - a Winamp plugin. Currently supported input formats are:
+SAP (except for samples and stereo), CMC, CMR, DMC, MPT (without samples),
+MPD, RMT (mono) and TMC (mono).
+
+
