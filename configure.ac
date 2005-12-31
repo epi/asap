@@ -17,6 +17,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_C_BIGENDIAN
 AC_C_CONST
+AC_CHECK_LIB(m,cos,[LIBS="-lm $LIBS"])
 
 AC_ARG_ENABLE(unalignedwords,AC_HELP_STRING(--enable-unalignedwords,[Override usage of unaligned words]))
 if [[ "$enable_unalignedwords" != "yes" -a "$enable_unalignedwords" != "no" ]]; then
