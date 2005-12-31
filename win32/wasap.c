@@ -284,7 +284,7 @@ static void LoadFile(HWND hWnd, int reopen)
 				else {
 					SetSongs(0);
 					Tray_Modify(hWnd, hStopIcon);
-					MessageBox(hWnd, "Format not supported", APP_TITLE,
+					MessageBox(hWnd, "Unsupported file format", APP_TITLE,
 							   MB_OK | MB_ICONERROR);
 				}
 			}
