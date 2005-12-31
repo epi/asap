@@ -1,3 +1,25 @@
+** 0.1.0 released on 2005-12-31
+
+2005-12-31  Piotr Fusik  <fox@scene.pl>
+* NEWS, README, asap2wav.1, win32/README, win32/winamp/README: created
+
+* configure.ac: link with "-lm" if necessary
+
+* CREDITS, INSTALL, TODO, win32/wasap.c: slight fixes
+
+* win32/Makefile: updated the "dist" target
+
+* win32/.cvsignore: ignore asap2wav.txt
+
+
+2005-12-30  Piotr Fusik  <fox@scene.pl>
+* CREDITS, INSTALL: created
+
+* atari800/src/cpu.c, atari800/src/cpu.h, atari800/src/mzpokeysnd.c,
+  atari800/src/pokey.h, atari800/src/pokeysnd.c, atari800/src/remez.c:
+  committed changes required for ASAP to the Atari800 CVS
+
+
 2005-12-28  Piotr Fusik  <fox@scene.pl>
 * rmt_0390.raw, asap.c, asap.h, asap2wav.c, Makefile.in, win32/wasap.c,
   win32/Makefile, win32/winamp/in_asap.c: support RMT mono songs
