@@ -2,11 +2,13 @@ Getting source code
 -------------------
 
 If you want to compile an official release of ASAP, get the source
-distribution (asap-*-src.tar.gz) and uncompress it to a directory
+distribution (asap-*.tar.gz) and uncompress it to a directory
 of your choice.
 On Unix-like systems:
-tar zxf asap-*-src.tar.gz
+tar zxf asap-*.tar.gz
 On Windows you may use 7-Zip.
+Source distributions of ASAP include the part of Atari800 emulator sources
+used by ASAP (POKEY and 6502 emulation).
 
 If you instead want to compile the latest version from the CVS, checkout
 the "asap" module of the "asap" project and the "atari800" module
