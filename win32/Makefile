@@ -21,23 +21,28 @@ winamp\in_asap.dll: winamp\in_asap.c $(SRC) ..\players.h
 ..\players.h: ..\raw2c.pl ..\cmc_0500.raw ..\mpt_0500.raw ..\rmt_0390.raw ..\tmc_0500.raw
 	perl $** >$@
 
+asap2wav.txt: ..\asap2wav.1
+	groff -T ascii -m man ..\asap2wav.1 | col -bx >$@
+
 clean:
-	del ..\players.h;wasap.res;*.obj;asap2wav.exe;wasap.exe
+	del ..\players.h;wasap.res;*.obj;asap2wav.exe;wasap.exe;asap2wav.txt
 	del winamp\in_asap.exp;winamp\in_asap.lib;winamp\in_asap.dll
 
-dist: all ..\configure ..\config.h.in
-	del ..\..\asap-$(VERSION)-src.tar.gz;..\..\asap2wav-$(VERSION)-win32.zip
+dist: all ..\configure ..\config.h.in asap2wav.txt
+	del ..\..\asap-$(VERSION).tar.gz;..\..\asap2wav-$(VERSION)-win32.zip
 	del ..\..\asap-$(VERSION)-win32.zip;..\..\asap-$(VERSION)-winamp.zip
 	perl ..\maketar.pl -d asap-$(VERSION) \
 		-t $(ASAP_DIR)\asap.c $(ASAP_DIR)\asap.h \
 		$(ASAP_DIR)\asap_internal.h $(ASAP_DIR)\asap2wav.c \
+		$(ASAP_DIR)\asap2wav.1 \
 		$(ASAP_DIR)\configure.ac $(ASAP_DIR)\Makefile.in \
-		$(ASAP_DIR)\config.h.in \
-		$(ASAP_DIR)\ChangeLog $(ASAP_DIR)\COPYING $(ASAP_DIR)\TODO \
+		$(ASAP_DIR)\config.h.in $(ASAP_DIR)\ChangeLog \
+		$(ASAP_DIR)\COPYING $(ASAP_DIR)\CREDITS $(ASAP_DIR)\INSTALL \
+		$(ASAP_DIR)\NEWS $(ASAP_DIR)\README $(ASAP_DIR)\TODO \
 		$(ASAP_DIR)\win32\config.h $(ASAP_DIR)\win32\Makefile \
-		$(ASAP_DIR)\win32\wasap.c \
+		$(ASAP_DIR)\win32\wasap.c $(ASAP_DIR)\win32\README \
 		$(ASAP_DIR)\win32\resource.h $(ASAP_DIR)\win32\wasap.rc \
-		$(ASAP_DIR)\win32\winamp\in_asap.c \
+		$(ASAP_DIR)\win32\winamp\in_asap.c $(ASAP_DIR)\win32\winamp\README \
 		$(ASAP_DIR)\win32\winamp\in2.h $(ASAP_DIR)\win32\winamp\out.h \
 		$(ATARI800_SRC_DIR)\cpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c \
 		$(ATARI800_SRC_DIR)\cpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h \
@@ -51,8 +56,14 @@ dist: all ..\configure ..\config.h.in
 		-s $(ASAP_DIR)\config.guess $(ASAP_DIR)\config.sub \
 		$(ASAP_DIR)\install-sh $(ASAP_DIR)\configure \
 		$(ASAP_DIR)\maketar.pl $(ASAP_DIR)\raw2c.pl \
-		| 7z a -tgzip -si -mx=9 ..\..\asap-$(VERSION)-src.tar.gz
-	7z a -tzip -mx=9 ..\..\asap2wav-$(VERSION)-win32.zip asap2wav.exe
-	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip wasap.exe
+		| 7z a -tgzip -si -mx=9 ..\..\asap-$(VERSION).tar.gz
+	copy ..\COPYING copying.txt
+	7z a -tzip -mx=9 ..\..\asap2wav-$(VERSION)-win32.zip asap2wav.exe asap2wav.txt copying.txt
+	copy /b README + ..\README + ..\CREDITS + ..\NEWS readme.txt
+	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip wasap.exe readme.txt copying.txt
+	copy ..\COPYING winamp\copying.txt
+	copy /b winamp\README + ..\README + ..\CREDITS + ..\NEWS winamp\in_asap.txt
 	cd winamp
-	7z a -tzip -mx=9 ..\..\..\asap-$(VERSION)-winamp.zip in_asap.dll
+	7z a -tzip -mx=9 ..\..\..\asap-$(VERSION)-winamp.zip in_asap.dll in_asap.txt copying.txt
+	cd ..
+	del copying.txt;readme.txt;winamp\copying.txt;winamp\in_asap.txt
