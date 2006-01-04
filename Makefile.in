@@ -10,29 +10,32 @@ CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 DEFS = @DEFS@ -DASAP -DSOUND
 LIBS = @LIBS@
-TARGET = asap2wav@EXEEXT@
+ASAP2WAV = asap2wav@EXEEXT@
 
 ATARI800_SRC_DIR = ../atari800/src
 SRC = asap.c $(ATARI800_SRC_DIR)/cpu.c $(ATARI800_SRC_DIR)/mzpokeysnd.c $(ATARI800_SRC_DIR)/pokeysnd.c $(ATARI800_SRC_DIR)/remez.c
 
-all: $(TARGET)
+all: $(ASAP2WAV) libasap.so
 
-$(TARGET): asap2wav.c $(SRC) players.h
+$(ASAP2WAV): asap2wav.c $(SRC) players.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) asap2wav.c $(SRC) $(LIBS)
+
+libasap.so: xmms/libasap.c $(SRC) players.h
+	$(CC) $(CFLAGS) -I/usr/include/glib-1.2 -I/usr/lib/glib/include -I/usr/include/gtk-1.2 $(LDFLAGS) -shared -fPIC -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) xmms/libasap.c $(SRC) $(LIBS) -lpthread -lxmms
 
 players.h: raw2c.pl cmc_0500.raw mpt_0500.raw rmt_0390.raw tmc_0500.raw
 	perl $^ >$@
 
-install: $(TARGET) asap2wav.1
-	$(INSTALL_PROGRAM) $(TARGET) @bindir@/$(TARGET)
+install: $(ASAP2WAV) asap2wav.1
+	$(INSTALL_PROGRAM) $(ASAP2WAV) @bindir@/$(ASAP2WAV)
 	$(INSTALL_DATA) asap2wav.1 @mandir@/man1/asap2wav.1
 
 uninstall:
-	rm @bindir@/$(TARGET)
+	rm @bindir@/$(ASAP2WAV)
 	rm @mandir@/man1/asap2wav.1
 
 clean:
-	rm -f players.h $(TARGET) core *.bak *~
+	rm -f players.h $(ASAP2WAV) libasap.so core *.bak *~
 
 distclean: clean
 	-rm -f Makefile config.log config.status config.h configure config.h.in
