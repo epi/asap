@@ -1,7 +1,7 @@
 /*
  * wasap.c - Another Slight Atari Player for Win32 systems
  *
- * Copyright (C) 2005  Piotr Fusik
+ * Copyright (C) 2005-2006  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
 #include <windows.h>
 #include <shellapi.h>
 
@@ -30,7 +31,10 @@
 #define APP_TITLE        "WASAP"
 #define WND_CLASS_NAME   "WASAP"
 #define FREQUENCY        44100
-#define QUALITY_DEFAULT  1
+#define BUFFERED_BLOCKS  4096
+
+static unsigned int use_16bit = 1;
+static unsigned int quality = 1;
 
 
 static char *Util_stpcpy(char *dest, const char *src)
@@ -55,10 +59,13 @@ static char *Util_utoa(char *dest, unsigned int x)
 
 /* WaveOut ---------------------------------------------------------------- */
 
-#define BUFFER_SIZE 4096
-static HWAVEOUT hwo;
-static WAVEHDR wh[2];
-static unsigned char buffer[2][BUFFER_SIZE];
+/* double-buffering, *2 for 16-bit, *2 for stereo */
+static unsigned char buffer[2][BUFFERED_BLOCKS * 2 * 2];
+static HWAVEOUT hwo = INVALID_HANDLE_VALUE;
+static WAVEHDR wh[2] = {
+	{ buffer[0], 0, 0, 0, 0, 0, NULL, 0 },
+	{ buffer[1], 0, 0, 0, 0, 0, NULL, 0 },
+};
 static int playing = FALSE;
 
 static void WaveOut_Stop(void)
@@ -72,30 +79,34 @@ static void WaveOut_Stop(void)
 static void WaveOut_Write(LPWAVEHDR pwh)
 {
 	if (playing) {
-		ASAP_Generate(pwh->lpData, BUFFER_SIZE);
+		ASAP_Generate(pwh->lpData, pwh->dwBufferLength);
 		if (waveOutWrite(hwo, pwh, sizeof(WAVEHDR)) != MMSYSERR_NOERROR)
 			WaveOut_Stop();
 	}
 }
 
 static void CALLBACK WaveOut_Proc(HWAVEOUT hwo2, UINT uMsg, DWORD dwInstance,
-                                 DWORD dwParam1, DWORD dwParam2)
+                                  DWORD dwParam1, DWORD dwParam2)
 {
 	if (uMsg == WOM_DONE)
 		WaveOut_Write((LPWAVEHDR) dwParam1);
 }
 
-static int WaveOut_Init(unsigned int frequency)
+static int WaveOut_Open(unsigned int frequency, unsigned int use_16bit,
+                        unsigned int channels)
 {
-	WAVEFORMATEX wfx = { WAVE_FORMAT_PCM, 1, frequency, frequency, 1, 8, 0 };
+	WAVEFORMATEX wfx;
+	wfx.wFormatTag = WAVE_FORMAT_PCM;
+	wfx.nChannels = channels;
+	wfx.nSamplesPerSec = frequency;
+	wfx.nBlockAlign = channels << use_16bit;
+	wfx.nAvgBytesPerSec = frequency * wfx.nBlockAlign;
+	wfx.wBitsPerSample = 8 << use_16bit;
+	wfx.cbSize = 0;
 	if (waveOutOpen(&hwo, WAVE_MAPPER, &wfx, (DWORD) WaveOut_Proc, 0,
 	                CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
 		return FALSE;
-	memset(wh, 0, sizeof(wh));
-	wh[0].lpData = buffer[0];
-	wh[0].dwBufferLength = BUFFER_SIZE;
-	wh[1].lpData = buffer[1];
-	wh[1].dwBufferLength = BUFFER_SIZE;
+	wh[1].dwBufferLength = wh[0].dwBufferLength = BUFFERED_BLOCKS * wfx.nBlockAlign;
 	if (waveOutPrepareHeader(hwo, &wh[0], sizeof(wh[0])) != MMSYSERR_NOERROR
 	 || waveOutPrepareHeader(hwo, &wh[1], sizeof(wh[1])) != MMSYSERR_NOERROR)
 		return FALSE;
@@ -109,11 +120,17 @@ static void WaveOut_Start(void)
 	WaveOut_Write(&wh[1]);
 }
 
-static void WaveOut_Exit(void)
+static void WaveOut_Close(void)
 {
-	waveOutUnprepareHeader(hwo, &wh[1], sizeof(wh[1]));
-	waveOutUnprepareHeader(hwo, &wh[0], sizeof(wh[0]));
+	if (hwo == INVALID_HANDLE_VALUE)
+		return;
+	WaveOut_Stop();
+	if (wh[0].dwFlags & WHDR_PREPARED)
+		waveOutUnprepareHeader(hwo, &wh[0], sizeof(wh[0]));
+	if (wh[1].dwFlags & WHDR_PREPARED)
+		waveOutUnprepareHeader(hwo, &wh[1], sizeof(wh[1]));
 	waveOutClose(hwo);
+	hwo = INVALID_HANDLE_VALUE;
 }
 
 
@@ -121,7 +138,7 @@ static void WaveOut_Exit(void)
 
 static unsigned int songs = 0;
 static unsigned int cursong = 0;
-static char strFileTitle[MAX_PATH] = "";
+static char strFile[MAX_PATH] = "";
 
 #define MYWM_NOTIFYICON  (WM_APP + 1)
 
@@ -151,14 +168,18 @@ static void Tray_Modify(HWND hWnd, HICON hIcon)
 	/* 8 */
 	p = Util_stpcpy(nid.szTip, APP_TITLE);
 	if (songs > 0) {
+		const char *pb;
+		const char *pe;
+		for (pe = strFile; *pe != '\0'; pe++);
+		for (pb = pe; pb > strFile && pb[-1] != '\\' && pb[-1] != '/'; pb--);
 		/* 2 */
 		*p++ = ':';
 		*p++ = ' ';
 		/* max 33 */
-		if (strlen(strFileTitle) <= 33)
-			p = Util_stpcpy(p, strFileTitle);
+		if (pe - pb <= 33)
+			p = Util_stpcpy(p, pb);
 		else {
-			memcpy(p, strFileTitle, 30);
+			memcpy(p, pb, 30);
 			p = Util_stpcpy(p + 30, "...");
 		}
 		if (songs > 1) {
@@ -196,20 +217,20 @@ static HMENU hTrayMenu;
 static HMENU hSongMenu;
 static HMENU hQualityMenu;
 
-static void SetSongs(unsigned int newsongs)
+static void SetSongs(unsigned int new_songs)
 {
-	if (songs < newsongs) {
+	if (songs < new_songs) {
 		do {
 			char tmp_buf[16];
 			Util_utoa(tmp_buf, songs + 1);
 			AppendMenu(hSongMenu, MF_ENABLED | MF_STRING,
 			           IDM_SONG1 + songs, tmp_buf);
-		} while (++songs < newsongs);
+		} while (++songs < new_songs);
 	}
-	else if (songs > newsongs) {
+	else if (songs > new_songs) {
 		do
 			DeleteMenu(hSongMenu, --songs, MF_BYPOSITION);
-		while (songs > newsongs);
+		while (songs > new_songs);
 	}
 }
 
@@ -222,17 +243,50 @@ static void PlaySong(HWND hWnd, unsigned int n)
 	WaveOut_Start();
 }
 
+static void LoadFile(HWND hWnd)
+{
+	HANDLE fh;
+	static unsigned char module[65000];
+	DWORD module_len;
+	fh = CreateFile(strFile, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+	if (fh == INVALID_HANDLE_VALUE)
+		return;
+	if (!ReadFile(fh, module, sizeof(module), &module_len, NULL)) {
+		CloseHandle(fh);
+		return;
+	}
+	CloseHandle(fh);
+	WaveOut_Close();
+	if (ASAP_Load(strFile, module, (unsigned int) module_len)) {
+		if (!WaveOut_Open(FREQUENCY, use_16bit, ASAP_GetChannels())) {
+			SetSongs(0);
+			Tray_Modify(hWnd, hStopIcon);
+			MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
+					   MB_OK | MB_ICONERROR);
+			return;
+		}
+		SetSongs(ASAP_GetSongs());
+		PlaySong(hWnd, ASAP_GetDefSong());
+	}
+	else {
+		SetSongs(0);
+		Tray_Modify(hWnd, hStopIcon);
+		MessageBox(hWnd, "Unsupported file format", APP_TITLE,
+		           MB_OK | MB_ICONERROR);
+	}
+}
+
 static int opening = FALSE;
 
-static void LoadFile(HWND hWnd, int reopen)
+static void SelectAndLoadFile(HWND hWnd)
 {
-	static char strFile[MAX_PATH] = "";
 	static OPENFILENAME ofn = {
 		sizeof(OPENFILENAME),
 		NULL,
 		0,
 		"All supported\0"
-		"*.sap;*.cmc;*.cmr;*.dmc;*.mpt;*.mpd;*.rmt;*.tmc\0"
+		"*.sap;*.cmc;*.cmr;*.dmc;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8\0"
 		"Slight Atari Player (*.sap)\0"
 		"*.sap\0"
 		"Chaos Music Composer (*.cmc;*.cmr;*.dmc)\0"
@@ -241,16 +295,16 @@ static void LoadFile(HWND hWnd, int reopen)
 		"*.mpt;*.mpd\0"
 		"Raster Music Tracker (*.rmt)\0"
 		"*.rmt\0"
-		"Theta Music Composer (*.tmc)\0"
-		"*.tmc\0"
+		"Theta Music Composer (*.tmc;*.tm8)\0"
+		"*.tmc;*.tm8\0"
 		"\0",
 		NULL,
 		0,
 		1,
 		strFile,
 		MAX_PATH,
-		strFileTitle,
-		MAX_PATH,
+		NULL,
+		0,
 		NULL,
 		"Select Atari 8-bit music",
 		OFN_ENABLESIZING | OFN_EXPLORER | OFN_HIDEREADONLY
@@ -264,42 +318,29 @@ static void LoadFile(HWND hWnd, int reopen)
 	};
 	opening = TRUE;
 	ofn.hwndOwner = hWnd;
-	if ((reopen || GetOpenFileName(&ofn)) && ofn.nFileExtension > 0
-	 && strFile[ofn.nFileExtension - 1] == '.') {
-		HANDLE fh;
-		static unsigned char module[65000];
-		DWORD module_len;
-		fh = CreateFile(strFile, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-		                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
-		                NULL);
-		if (fh != INVALID_HANDLE_VALUE) {
-			if (ReadFile(fh, module, sizeof(module), &module_len, NULL)) {
-				CloseHandle(fh);
-				WaveOut_Stop();
-				if (ASAP_Load(strFile + ofn.nFileExtension, module,
-					(unsigned int) module_len)) {
-					SetSongs(ASAP_GetSongs());
-					PlaySong(hWnd, reopen ? cursong : ASAP_GetDefSong());
-				}
-				else {
-					SetSongs(0);
-					Tray_Modify(hWnd, hStopIcon);
-					MessageBox(hWnd, "Unsupported file format", APP_TITLE,
-							   MB_OK | MB_ICONERROR);
-				}
-			}
-			else
-				CloseHandle(fh);
-		}
-	}
+	if (GetOpenFileName(&ofn))
+		LoadFile(hWnd);
 	opening = FALSE;
 }
 
-static void Reinitialize(HWND hWnd, unsigned int quality, int reopen)
+static void SetQuality(HWND hWnd, unsigned int new_16bit, unsigned int new_quality)
 {
-	CheckMenuRadioItem(hQualityMenu, 0, 3, quality, MF_BYPOSITION);
-	ASAP_Initialize(FREQUENCY, quality);
-	LoadFile(hWnd, reopen);
+	int reopen = FALSE;
+	if (songs > 0) {
+		WaveOut_Stop();
+		SetSongs(0);
+		Tray_Modify(hWnd, hStopIcon);
+		reopen = TRUE;
+	}
+	CheckMenuRadioItem(hQualityMenu, IDM_8BIT, IDM_16BIT,
+		IDM_8BIT + new_16bit, MF_BYCOMMAND);
+	CheckMenuRadioItem(hQualityMenu, IDM_QUALITY_RF, IDM_QUALITY_MB3,
+		IDM_QUALITY_RF + new_quality, MF_BYCOMMAND);
+	ASAP_Initialize(FREQUENCY, new_16bit, new_quality);
+	use_16bit = new_16bit;
+	quality = new_quality;
+	if (reopen)
+		LoadFile(hWnd);
 }
 
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
@@ -307,6 +348,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 {
 	UINT idc;
 	POINT pt;
+	PCOPYDATASTRUCT pcds;
 	switch (msg) {
 	case WM_COMMAND:
 		if (opening)
@@ -314,7 +356,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 		idc = LOWORD(wParam);
 		switch (idc) {
 		case IDM_OPEN:
-			LoadFile(hWnd, FALSE);
+			SelectAndLoadFile(hWnd);
 			break;
 		case IDM_STOP:
 			WaveOut_Stop();
@@ -336,16 +378,10 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 				WaveOut_Stop();
 				PlaySong(hWnd, idc - IDM_SONG1);
 			}
-			else if (idc >= IDM_QUALITY_RF && idc <= IDM_QUALITY_MB3) {
-				int reopen = FALSE;
-				if (songs > 0) {
-					WaveOut_Stop();
-					SetSongs(0);
-					Tray_Modify(hWnd, hStopIcon);
-					reopen = TRUE;
-				}
-				Reinitialize(hWnd, idc - IDM_QUALITY_RF, reopen);
-			}
+			else if (idc >= IDM_QUALITY_RF && idc <= IDM_QUALITY_MB3)
+				SetQuality(hWnd, use_16bit, idc - IDM_QUALITY_RF);
+			else if (idc >= IDM_8BIT && idc <= IDM_16BIT)
+				SetQuality(hWnd, idc - IDM_8BIT, quality);
 			break;
 		}
 		break;
@@ -359,7 +395,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 		}
 		switch (lParam) {
 		case WM_LBUTTONDOWN:
-			LoadFile(hWnd, FALSE);
+			SelectAndLoadFile(hWnd);
 			break;
 		case WM_RBUTTONDOWN:
 			GetCursorPos(&pt);
@@ -373,6 +409,13 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			break;
 		}
 		break;
+	case WM_COPYDATA:
+		pcds = (PCOPYDATASTRUCT) lParam;
+		if (pcds->dwData == 'O' && pcds->cbData <= sizeof(strFile)) {
+			memcpy(strFile, pcds->lpData, pcds->cbData);
+			LoadFile(hWnd);
+		}
+		break;
 	default:
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
@@ -382,16 +425,40 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow)
 {
+	char *pb;
+	char *pe;
 	WNDCLASS wc;
 	HWND hWnd;
 	HMENU hMainMenu;
 	MSG msg;
 
+	for (pb = lpCmdLine; *pb == ' ' || *pb == '\t'; pb++);
+	for (pe = pb; *pe != '\0'; pe++);
+	while (--pe > pb && (*pe == ' ' || *pe == '\t'));
+	/* Now pb and pe point at respectively the first and last
+	   non-blank character in lpCmdLine. If pb > pe then the command line
+	   is blank. */
+	if (*pb == '"' && *pe == '"')
+		pb++;
+	else
+		pe++;
+	*pe = '\0';
+	/* Now pb contains the filename, if any, specified on the command line. */
+
 	hWnd = FindWindow(WND_CLASS_NAME, NULL);
 	if (hWnd != NULL) {
-		HWND hChild = GetLastActivePopup(hWnd);
-		if (hChild != hWnd)
-			SetForegroundWindow(hChild);
+		/* as instance of WASAP is already running */
+		if (*pb != '\0') {
+			/* pass the filename */
+			COPYDATASTRUCT cds = { 'O', (DWORD) (pe + 1 - pb), pb };
+			SendMessage(hWnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
+		}
+		else {
+			/* bring the open dialog to top */
+			HWND hChild = GetLastActivePopup(hWnd);
+			if (hChild != hWnd)
+				SetForegroundWindow(hChild);
+		}
 		return 0;
 	}
 
@@ -420,12 +487,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		NULL
 	);
 
-	if (!WaveOut_Init(FREQUENCY)) {
-		MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
-		           MB_OK | MB_ICONERROR);
-		return 1;
-	}
-
 	hStopIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_STOP));
 	hPlayIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PLAY));
 	hMainMenu = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_TRAYMENU));
@@ -436,12 +497,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	hQualityMenu = GetSubMenu(hTrayMenu, 3);
 	SetMenuDefaultItem(hTrayMenu, 0, TRUE);
 	Tray_Add(hWnd, hStopIcon);
-	Reinitialize(hWnd, QUALITY_DEFAULT, FALSE);
+	SetQuality(hWnd, use_16bit, quality);
+	if (*pb != '\0') {
+		memcpy(strFile, pb, pe + 1 - pb);
+		LoadFile(hWnd);
+	}
+	else
+		SelectAndLoadFile(hWnd);
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-	WaveOut_Exit();
+	WaveOut_Close();
 	Tray_Delete(hWnd);
 	DestroyMenu(hMainMenu);
 	return 0;
