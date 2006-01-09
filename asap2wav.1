@@ -1,4 +1,4 @@
-.TH ASAP2WAV 1 "December 31, 2005"
+.TH ASAP2WAV 1 "January 8, 2006"
 .SH NAME
 asap2wav \- convert Atari 8-bit music to WAV
 .SH SYNOPSIS
@@ -7,13 +7,13 @@ asap2wav \- convert Atari 8-bit music to WAV
 .I FILE
 .B ] [\-s
 .I SONG
-.B ] [\-q
-.I QUALITY
 .B ] [\-t
 .I TIME
 .B ] [\-r
 .I FREQ
-.B ]
+.B ] [\-q
+.I QUALITY
+.B ] [\-b] [\-w]
 .I INPUTFILE...
 .SH DESCRIPTION
 .B asap2wav
@@ -26,7 +26,7 @@ Currently the following formats are supported:
 .TP
 SAP (Slight Atari Player)
 A standard file format for playing Atari 8-bit music on modern computers.
-Samples and stereo are not supported yet.
+Samples are not supported yet.
 .TP
 CMC (Chaos Music Composer)
 A popular music editor for Atari.
@@ -45,10 +45,12 @@ MPT with 6502 routines executed at double rate of the original MPT.
 .TP
 RMT (Raster Music Tracker)
 New music editor for composing Atari music on a PC.
-Stereo is not supported yet.
 .TP
 TMC (Theta Music Composer)
-Powerful music editor for Atari. Stereo is not supported yet.
+Powerful music editor for Atari, mono tunes.
+.TP
+TM8 (Theta Music Composer 8-channel)
+Stereo TMC tunes.
 .SH OPTIONS
 .TP
 \fB\-o\fR \fIFILE\fR, \fB\-\-output\fR=\fIFILE\fR
@@ -58,14 +60,20 @@ of the input file is re-used, with the extension changed to "wav".
 \fB\-s\fR \fISONG\fR, \fB\-\-song\fR=\fISONG\fR
 Select subsong number (zero-based).
 .TP
-\fB\-q\fR \fIQUALITY\fR, \fB\-\-quality\fR=\fIQUALITY\fR
-Set sound quality 0-3 (default: 1).
-.TP
 \fB\-t\fR \fITIME\fR, \fB\-\-time\fR=\fITIME\fR
 Set output length MM:SS (default: 03:00).
 .TP
 \fB\-r\fR \fIFREQ\fR, \fB\-\-rate\fR=\fIFREQ\fR
 Set sample rate in Hz (default: 44100).
+.TP
+\fB\-q\fR \fIQUALITY\fR, \fB\-\-quality\fR=\fIQUALITY\fR
+Set sound quality 0-3 (default: 1).
+.TP
+\fB\-b\fR, \fB\-\-byte-samples\fR
+Output 8-bit samples.
+.TP
+\fB\-w\fR, \fB\-\-word-samples\fR
+Output 16-bit samples (default).
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Display help message and exit.

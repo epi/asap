@@ -1,7 +1,7 @@
 /*
  * asap.h - public interface of the ASAP engine
  *
- * Copyright (C) 2005  Piotr Fusik
+ * Copyright (C) 2005-2006  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -25,42 +25,65 @@
 #define _ASAP_H_
 
 /* ASAP version. */
-#define ASAP_VERSION "0.1.0"
+#define ASAP_VERSION "0.2.0"
 
-/* Short ASAP credits (display your name too, if you are porting ASAP). */
+/* Short ASAP credits.
+   If you are porting ASAP then display your name, too. */
 #define ASAP_CREDITS \
-   "Another Slight Atari Player (C) 2005 Piotr Fusik\n" \
+   "Another Slight Atari Player (C) 2005-2006 Piotr Fusik\n" \
    "6502 and POKEY sound emulation (C) 1995-2005 Atari800 development team\n" \
    "CMC, MPT, TMC players (C) 1994-1997 Marcin Lewandowski\n" \
    "RMT player (C) 2002-2005 Radek Sterba\n"
 
-/* Short GPL notice, display after credits. */
+/* Short GPL notice.
+   Display after the credits. */
 #define ASAP_COPYRIGHT \
    "This program is free software; you can redistribute it and/or modify\n" \
    "it under the terms of the GNU General Public License as published\n" \
    "by the Free Software Foundation; either version 2 of the License,\n" \
    "or (at your option) any later version."
 
+/* Output formats. */
+/* unsigned char */
+#define AUDIO_FORMAT_U8      0
+/* signed short, little-endian */
+#define AUDIO_FORMAT_S16_LE  1
+/* signed short, big-endian */
+#define AUDIO_FORMAT_S16_BE  2
+/* signed short, machine's native endian convention */
+#ifdef WORDS_BIGENDIAN
+#define AUDIO_FORMAT_S16_NE  AUDIO_FORMAT_S16_BE
+#else
+#define AUDIO_FORMAT_S16_NE  AUDIO_FORMAT_S16_LE
+#endif
+
 /* Initializes ASAP.
    "frequency" is sample rate in Hz (for example 44100).
+   "audio_format" is the format of generated samples (see values above).
    "quality" 0 means Ron Fries' pokeysnd,
    1..3 mean Michael Borisov's mzpokeysnd with different filters.
    You must call this function before any other ASAP function. */
-void ASAP_Initialize(unsigned int frequency, unsigned int quality);
+void ASAP_Initialize(unsigned int frequency, unsigned int audio_format,
+                     unsigned int quality);
 
 /* Loads a module.
-   "format" is the case-insensitive file format name (e.g. "cmc"),
-   you can pass filename extension.
-   "module" is the data.
-   "module_len" is number of bytes of the data.
+   "filename" is required to detect file format by the filename extension.
+   You can pass a fake filename, but the extension must match the format
+   of "module".
+   "module" is the data (the contents of the file).
+   ASAP uses "filename" and "module" only inside this function.
+   "module_len" is the number of data bytes.
    Returns non-zero on success.
    If zero is returned, you must not call any of the following functions. */
-int ASAP_Load(const char *format, const unsigned char *module,
+int ASAP_Load(const char *filename, const unsigned char *module,
               unsigned int module_len);
 
+/* Returns number of channels for the loaded module.
+   1 means mono and 2 means stereo. */
+unsigned int ASAP_GetChannels(void);
+
 /* Returns number of songs in the loaded module.
-   ASAP supports multiple songs per SAP or CMC module.
-   For other formats the returned value is 1. */
+   ASAP supports multiple songs per file. */
 unsigned int ASAP_GetSongs(void);
 
 /* Returns zero-based number of the default song.
@@ -76,10 +99,10 @@ void ASAP_PlaySong(unsigned int song);
 
 /* Fills in the specified buffer with generated samples.
    "buffer" is a buffer for samples, managed outside ASAP.
-   "buffer_len" is the length of this buffer.
+   "buffer_len" is the length of this buffer in bytes.
    You must call ASAP_PlaySong() before this function.
-   Normally you use a buffer of a few kilobytes and call ASAP_Generate()
-   in a loop or via a callback. */
+   Normally you use a buffer of a few kilobytes or less,
+   and call ASAP_Generate() in a loop or via a callback. */
 void ASAP_Generate(void *buffer, unsigned int buffer_len);
 
 #endif

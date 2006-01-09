@@ -1,7 +1,7 @@
 /*
  * asap.c - ASAP engine
  *
- * Copyright (C) 2005  Piotr Fusik
+ * Copyright (C) 2005-2006  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "asap.h"
 #include "asap_internal.h"
 #include "cpu.h"
 #include "pokey.h"
@@ -61,6 +62,8 @@ UBYTE poly9_lookup[511];
 UBYTE poly17_lookup[16385];
 static ULONG random_scanline_counter;
 
+static unsigned int enable_stereo = 0;
+
 #ifndef SOUND_GAIN /* sound gain can be pre-defined in the configure/Makefile */
 #define SOUND_GAIN 4
 #endif
@@ -68,7 +71,7 @@ static ULONG random_scanline_counter;
 static void POKEY_PutByte(UWORD addr, UBYTE byte)
 {
 #ifdef STEREO_SOUND
-	addr &= stereo_enabled ? 0x1f : 0x0f;
+	addr &= enable_stereo ? 0x1f : 0x0f;
 #else
 	addr &= 0x0f;
 #endif
@@ -251,11 +254,16 @@ void ASAP_CIM(void)
 	xpos = xpos_limit;
 }
 
-static unsigned int sample_frequency;
+static unsigned int block_rate;
+static unsigned int sample_format;
+static unsigned int sample_16bit;
 
-void ASAP_Initialize(unsigned int frequency, unsigned int quality)
+void ASAP_Initialize(unsigned int frequency, unsigned int audio_format, unsigned int quality)
 {
-	sample_frequency = frequency;
+	block_rate = frequency;
+	sample_format = audio_format;
+	sample_16bit = audio_format == AUDIO_FORMAT_U8 ? 0 : 1;
+	enable_stereo = 5; /* force Pokey_sound_init() in ASAP_PlaySong() */
 	POKEY_Initialise();
 	if (quality == 0)
 		enable_new_pokey = FALSE;
@@ -263,13 +271,13 @@ void ASAP_Initialize(unsigned int frequency, unsigned int quality)
 		Pokey_set_mzquality(quality - 1);
 		enable_new_pokey = TRUE;
 	}
-	Pokey_sound_init(ASAP_MAIN_CLOCK, (uint16) frequency, 1, 0);
 }
 
 static char sap_type;
 static UWORD sap_player;
 static UWORD sap_music;
 static UWORD sap_init;
+static unsigned int sap_stereo;
 static unsigned int sap_songs;
 static unsigned int sap_defsong;
 static unsigned int sap_fastplay;
@@ -284,8 +292,8 @@ static UBYTE mpt_song_pos[127];
 static unsigned int tmc_per_frame;
 static unsigned int tmc_per_frame_counter;
 
-static unsigned int sampleclocks;
-static unsigned int sampleclocks_per_player;
+static unsigned int blockclocks;
+static unsigned int blockclocks_per_player;
 
 static const unsigned int perframe2fastplay[] = { 312U, 312U / 2U, 312U / 3U, 312U / 4U };
 
@@ -546,8 +554,12 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end)
 				return FALSE;
 		}
 		else if (tag_matches("STEREO", sap_ptr, sap_end))
+#ifdef STEREO_SOUND
+			sap_stereo = 1;
+#else
 			return FALSE;
-		/* ignore unknown tag*/
+#endif
+		/* ignore unknown tags */
 		while (sap_ptr[0] != 0x0d) {
 			sap_ptr++;
 			if (sap_ptr >= sap_end)
@@ -588,21 +600,26 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end)
 	return FALSE;
 }
 
-#define EXT(c1, c2, c3) ((c1 << 16) + (c2 << 8) + c3)
+#define EXT(c1, c2, c3) ((c1 + (c2 << 8) + (c3 << 16)) | 0x202020)
 
-int ASAP_Load(const char *format, const unsigned char *module, unsigned int module_len)
+int ASAP_Load(const char *filename, const unsigned char *module, unsigned int module_len)
 {
+	const char *p;
 	int ext;
+	for (p = filename; *p != '\0'; p++);
 	ext = 0;
-	while (*format != '\0') {
-		if (ext > 0xffff)
-			return FALSE; /* fourth character */
-		ext = (ext << 8) + (*format++ & 0xff);
+	for (;;) {
+		if (--p <= filename || *p < ' ')
+			return FALSE; /* no filename extension or invalid character */
+		if (*p == '.')
+			break;
+		ext = (ext << 8) + (*p & 0xff);
 	}
+	sap_stereo = 0;
 	sap_songs = 1;
 	sap_defsong = 0;
 	sap_fastplay = 312;
-	switch (ext & 0xdfdfdf) {
+	switch (ext | 0x202020) {
 	case EXT('C', 'M', 'C'):
 		return load_cmc(module, module_len, FALSE);
 	case EXT('C', 'M', 'R'):
@@ -619,11 +636,21 @@ int ASAP_Load(const char *format, const unsigned char *module, unsigned int modu
 		return load_rmt(module, module_len);
 	case EXT('S', 'A', 'P'):
 		return load_sap(module, module + module_len);
+#ifdef STEREO_SOUND
+	case EXT('T', 'M', '8'):
+		sap_stereo = 1;
+		return load_tmc(module, module_len);
+#endif
 	case EXT('T', 'M', 'C'):
 		return load_tmc(module, module_len);
 	default:
 		return FALSE;
 	}
+}
+
+unsigned int ASAP_GetChannels(void)
+{
+	return 1 << sap_stereo;
 }
 
 unsigned int ASAP_GetSongs(void)
@@ -651,10 +678,18 @@ static void call_6502(UWORD addr, int max_scanlines)
 void ASAP_PlaySong(unsigned int song)
 {
 	UWORD addr;
+	if (enable_stereo != sap_stereo) {
+		Pokey_sound_init(ASAP_MAIN_CLOCK, (uint16) block_rate,
+			1 << sap_stereo, sample_16bit ? SND_BIT16 : 0);
+		enable_stereo = sap_stereo;
+	}
 	for (addr = _AUDF1; addr <= _STIMER; addr++)
 		POKEY_PutByte(addr, 0);
-	sampleclocks = 0;
-	sampleclocks_per_player = 114U * sap_fastplay * sample_frequency;
+	if (sap_stereo)
+		for (addr = _AUDF1 + _POKEY2; addr <= _STIMER + _POKEY2; addr++)
+			POKEY_PutByte(addr, 0);
+	blockclocks = 0;
+	blockclocks_per_player = 114U * sap_fastplay * block_rate;
 	regP = 0x30;
 	switch (sap_type) {
 	case 'B':
@@ -703,17 +738,41 @@ void ASAP_PlaySong(unsigned int song)
 
 void ASAP_Generate(void *buffer, unsigned int buffer_len)
 {
+	/* convert number of bytes to number of blocks */
+	buffer_len >>= sample_16bit + enable_stereo;
+	if (buffer_len == 0U)
+		return;
 	for (;;) {
-		unsigned int samples = sampleclocks / ASAP_MAIN_CLOCK;
-		if (samples != 0U) {
-			if (samples > buffer_len)
-				samples = buffer_len;
-			sampleclocks -= samples * ASAP_MAIN_CLOCK;
+		unsigned int blocks = blockclocks / ASAP_MAIN_CLOCK;
+		if (blocks != 0U) {
+			unsigned int samples;
+			if (blocks > buffer_len)
+				blocks = buffer_len;
+			buffer_len -= blocks;
+			samples = blocks << enable_stereo;
+			blockclocks -= blocks * ASAP_MAIN_CLOCK;
 			Pokey_process(buffer, samples);
-			buffer_len -= samples;
+			/* swap bytes in non-native words if necessary */
+			if (sample_format ==
+#ifdef WORDS_BIGENDIAN
+				AUDIO_FORMAT_S16_LE
+#else
+				AUDIO_FORMAT_S16_BE
+#endif
+				) {
+				unsigned char *p = (unsigned char *) buffer;
+				unsigned int n = samples;
+				do {
+					unsigned char t = p[0];
+					p[0] = p[1];
+					p[1] = t;
+					p += 2;
+				} while (--n != 0U);
+			}
 			if (buffer_len == 0U)
 				return;
-			buffer = (void *) ((unsigned char *) buffer + samples);
+			buffer = (void *) ((unsigned char *) buffer +
+				(samples << sample_16bit));
 		}
 		switch (sap_type) {
 		case 'B':
@@ -737,6 +796,6 @@ void ASAP_Generate(void *buffer, unsigned int buffer_len)
 		}
 		random_scanline_counter = (random_scanline_counter + LINE_C * sap_fastplay)
 		                          % ((AUDCTL[0] & POLY9) ? POLY9_SIZE : POLY17_SIZE);
-		sampleclocks += sampleclocks_per_player;
+		blockclocks += blockclocks_per_player;
 	}
 }

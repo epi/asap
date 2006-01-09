@@ -1,7 +1,7 @@
 /*
  * in_asap.c - ASAP plugin for Winamp
  *
- * Copyright (C) 2005  Piotr Fusik
+ * Copyright (C) 2005-2006  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
 #include <windows.h>
 #include <string.h>
 
@@ -28,9 +29,17 @@
 
 #include "asap.h"
 
-#define FREQUENCY        44100
-#define QUALITY_DEFAULT  1
-#define BUFFER_SIZE      576
+#define FREQUENCY          44100
+#define BITS_PER_SAMPLE    16
+#define QUALITY            1
+// This is a magic size for Winamp, better do not modify it
+#define BUFFERED_BLOCKS    576
+// Winamp's equalizer works only with 16-bit samples and sounds awfully,
+// probably because of the DC offset of the generated sound
+#define SUPPORT_EQUALIZER  0
+
+static unsigned int channels;
+static unsigned int buffered_bytes;
 
 #if 0
 
@@ -62,12 +71,14 @@ static void config(HWND hwndParent)
 
 static void about(HWND hwndParent)
 {
-	MessageBox(hwndParent, ASAP_CREDITS ASAP_COPYRIGHT, "About ASAP Winamp plugin " ASAP_VERSION, MB_OK);
+	MessageBox(hwndParent, ASAP_CREDITS "\n" ASAP_COPYRIGHT,
+		"About ASAP Winamp plugin " ASAP_VERSION, MB_OK);
 }
 
 static void init(void)
 {
-	ASAP_Initialize(FREQUENCY, QUALITY_DEFAULT);
+	ASAP_Initialize(FREQUENCY,
+		BITS_PER_SAMPLE == 8 ? AUDIO_FORMAT_U8 : AUDIO_FORMAT_S16_NE, QUALITY);
 }
 
 static void quit(void)
@@ -101,15 +112,34 @@ static int isOurFile(char *fn)
 static DWORD WINAPI playThread(LPVOID dummy)
 {
 	while (thread_run) {
-		if (mod.outMod->CanWrite() >= BUFFER_SIZE /* << mod.dsp_isactive() */) {
-			static unsigned char buffer[BUFFER_SIZE /* * 2 */];
+		if (mod.outMod->CanWrite() >= (int) buffered_bytes
+#if SUPPORT_EQUALIZER
+			<< mod.dsp_isactive()
+#endif
+		) {
+			static
+#if BITS_PER_SAMPLE == 8
+				unsigned char
+#else
+				short int
+#endif
+				buffer[BUFFERED_BLOCKS * 2
+#if SUPPORT_EQUALIZER
+				* 2
+#endif
+				];
 			int t;
-			ASAP_Generate(buffer, BUFFER_SIZE);
+			ASAP_Generate(buffer, buffered_bytes);
 			t = mod.outMod->GetWrittenTime();
-			mod.SAAddPCMData(buffer, 1, 8, t);
-			mod.VSAAddPCMData(buffer, 1, 8, t);
-			// t = mod.dsp_dosamples((short int *) buffer, BUFFER_SIZE, 8, 1, FREQUENCY);
-			mod.outMod->Write(buffer, BUFFER_SIZE /* t */);
+			mod.SAAddPCMData(buffer, channels, BITS_PER_SAMPLE, t);
+			mod.VSAAddPCMData(buffer, channels, BITS_PER_SAMPLE, t);
+#if SUPPORT_EQUALIZER
+			t = mod.dsp_dosamples((short int *) buffer, BUFFERED_BLOCKS,
+				BITS_PER_SAMPLE, channels, FREQUENCY) * channels * (BITS_PER_SAMPLE / 8);
+			mod.outMod->Write((char *) buffer, t);
+#else
+			mod.outMod->Write((char *) buffer, buffered_bytes);
+#endif
 		}
 		else
 			Sleep(20);
@@ -119,16 +149,12 @@ static DWORD WINAPI playThread(LPVOID dummy)
 
 static int play(char *fn)
 {
-	const char *dot;
 	HANDLE fh;
 	static unsigned char module[65000];
 	DWORD module_len;
 	int maxlatency;
 	DWORD threadId;
 	strcpy(current_filename, fn);
-	dot = strrchr(fn, '.');
-	if (dot == NULL)
-		return 1;
 	fh = CreateFile(fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
@@ -138,15 +164,19 @@ static int play(char *fn)
 		return -1;
 	}
 	CloseHandle(fh);
-	if (!ASAP_Load(dot + 1, module, (unsigned int) module_len))
+	if (!ASAP_Load(fn, module, (unsigned int) module_len))
 		return 1;
 	ASAP_PlaySong(ASAP_GetDefSong());
-	maxlatency = mod.outMod->Open(FREQUENCY, 1, 8, -1, -1);
+	channels = ASAP_GetChannels();
+	buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
+	maxlatency = mod.outMod->Open(FREQUENCY, channels, BITS_PER_SAMPLE, -1, -1);
 	if (maxlatency < 0)
 		return 1;
-	mod.SetInfo(8, FREQUENCY / 1000, 1, 1);
+	mod.SetInfo(BITS_PER_SAMPLE, FREQUENCY / 1000, channels, 1);
 	mod.SAVSAInit(maxlatency, FREQUENCY);
-	mod.VSASetInfo(FREQUENCY, 1);
+	// hey! Winamp SDK examples call VSASetInfo(frequency,channels),
+	// but the arguments in in2.h suggest the reverse order of arguments!
+	mod.VSASetInfo(FREQUENCY, channels);
 	mod.outMod->SetVolume(-666);
 	thread_run = TRUE;
 	thread_handle = CreateThread(NULL, 0, playThread, NULL, 0, &threadId);
@@ -181,7 +211,7 @@ static void stop(void)
 		thread_handle = NULL;
 	}
 	mod.outMod->Close();
-	// mod.SAVSADeInit();
+	mod.SAVSADeInit();
 }
 
 static int getLength(void)
@@ -223,7 +253,11 @@ static In_Module mod = {
 	"mpt\0Music ProTracker (*.MPT)\0"
 	"mpd\0Music ProTracker DoublePlay (*.MPD)\0"
 	"rmt\0Raster Music Tracker (*.RMT)\0"
-	"tmc\0Theta Music Composer (*.TMC)\0",
+	"tmc\0Theta Music Composer (*.TMC)\0"
+#ifdef STEREO_SOUND
+	"tm8\0Theta Music Composer 8-channel (*.TM8)\0"
+#endif
+	,
 	0,    // is_seekable
 	1,    // UsesOutputPlug
 	config,

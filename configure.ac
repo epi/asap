@@ -2,7 +2,7 @@
 # Run "autoheader" to generate "config.h.in" from this file.
 
 AC_PREREQ(2.56)
-AC_INIT(asap, 0.1.0, fox@scene.pl)
+AC_INIT(asap, 0.2.0, fox@scene.pl)
 AC_CONFIG_SRCDIR(asap.c)
 AC_CONFIG_HEADER(config.h)
 
@@ -70,6 +70,23 @@ if [[ "$enable_unalignedwords" = "yes" ]]; then
         AC_DEFINE(WORDS_UNALIGNED_OK,1,[Define if unaligned word access is ok.])
     fi
 fi
+
+dnl The A8_OPTION macro automates the calling of AC_ARG_ENABLE, AC_HELP_STRING and AC_DEFINE.
+dnl         $1    = the name of the feature, what follows "--enable-".
+dnl         $2    = "yes" or "no", determines if feature defaults to being active or not.
+dnl         $3    = The right side of the help line.
+dnl                 The left side is always "--enable-$1".
+dnl         $4    = The symbol name which goes to config.h, the C #define symbol.
+dnl                 A symbol called "WANT_$4" is defined for use in this configure.ac.
+dnl         $5    = The help string which shows up in config.h for the $4 symbol.
+AC_DEFUN([A8_OPTION],[
+    AC_ARG_ENABLE($1,AC_HELP_STRING(--enable-$1,$3),WANT_$4=$enableval,WANT_$4=$2)
+    if [[ "$WANT_$4" = "yes" ]]; then
+        AC_DEFINE($4,1,$5)
+    fi
+])
+
+A8_OPTION(stereo,yes,[Support stereo tunes (default=ON)],STEREO_SOUND,[Define to support stereo tunes.])
 
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT

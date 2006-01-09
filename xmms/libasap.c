@@ -31,8 +31,12 @@
 #include "asap.h"
 
 #define FREQUENCY        44100
-#define QUALITY_DEFAULT  1
-#define BUFFER_SIZE      512
+#define BITS_PER_SAMPLE    16
+#define QUALITY            1
+#define BUFFERED_BLOCKS    512
+
+static unsigned int channels;
+static unsigned int buffered_bytes;
 
 extern InputPlugin mod;
 
@@ -42,25 +46,26 @@ static volatile int thread_run = FALSE;
 
 static void init(void)
 {
-	ASAP_Initialize(FREQUENCY, QUALITY_DEFAULT);
+	ASAP_Initialize(FREQUENCY,
+		BITS_PER_SAMPLE == 8 ? AUDIO_FORMAT_U8 : AUDIO_FORMAT_S16_NE, QUALITY);
 }
 
-#define EXT(c1, c2, c3) ((c1 << 16) + (c2 << 8) + c3)
+#define EXT(c1, c2, c3) ((c1 + (c2 << 8) + (c3 << 16)) | 0x202020)
 
 static int is_our_file(char *filename)
 {
 	const char *p;
 	int ext;
-	p = strrchr(filename, '.');
-	if (p == NULL)
-		return FALSE;
+	for (p = filename; *p != '\0'; p++);
 	ext = 0;
-	while (*++p != '\0') {
-		if (ext > 0xffff)
-			return FALSE; /* fourth character */
+	for (;;) {
+		if (--p <= filename || *p < ' ')
+			return FALSE; /* no filename extension or invalid character */
+		if (*p == '.')
+			break;
 		ext = (ext << 8) + (*p & 0xff);
 	}
-	switch (ext & 0xdfdfdf) {
+	switch (ext | 0x202020) {
 	case EXT('C', 'M', 'C'):
 	case EXT('C', 'M', 'R'):
 	case EXT('D', 'M', 'C'):
@@ -69,6 +74,9 @@ static int is_our_file(char *filename)
 	case EXT('R', 'M', 'T'):
 	case EXT('S', 'A', 'P'):
 	case EXT('T', 'M', 'C'):
+#ifdef STEREO_SOUND
+	case EXT('T', 'M', '8'):
+#endif
 		return TRUE;
 	default:
 		return FALSE;
@@ -78,14 +86,22 @@ static int is_our_file(char *filename)
 static void *play_thread(void *arg)
 {
 	for (;;) {
-		static unsigned char buffer[BUFFER_SIZE];
-		ASAP_Generate(buffer, BUFFER_SIZE);
-		mod.add_vis_pcm(mod.output->written_time(), FMT_U8, 1, BUFFER_SIZE, buffer);
-		while (thread_run && mod.output->buffer_free() < BUFFER_SIZE)
+		static
+#if BITS_PER_SAMPLE == 8
+			unsigned char
+#else
+			short int
+#endif
+			buffer[BUFFERED_BLOCKS * 2];
+		ASAP_Generate(buffer, buffered_bytes);
+		mod.add_vis_pcm(mod.output->written_time(),
+			BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
+			channels, buffered_bytes, buffer);
+		while (thread_run && mod.output->buffer_free() < buffered_bytes)
 			xmms_usleep(20000);
 		if (!thread_run)
 			break;
-		mod.output->write_audio(buffer, BUFFER_SIZE);
+		mod.output->write_audio(buffer, buffered_bytes);
 	}
 	mod.output->buffer_free();
 	mod.output->buffer_free();
@@ -94,26 +110,25 @@ static void *play_thread(void *arg)
 
 static void play_file(char *filename)
 {
-	const char *dot;
 	FILE *fp;
 	static unsigned char module[65000];
 	unsigned int module_len;
-	dot = strrchr(filename, '.');
-	if (dot == NULL)
-		return;
 	fp = fopen(filename, "rb");
 	if (fp == NULL)
 		return;
 	module_len = fread(module, 1, sizeof(module), fp);
 	fclose(fp);
-	if (!ASAP_Load(dot + 1, module, module_len))
+	if (!ASAP_Load(filename, module, module_len))
 		return;
 	ASAP_PlaySong(ASAP_GetDefSong());
+	channels = ASAP_GetChannels();
+	buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
 
-	if (!mod.output->open_audio(FMT_U8, FREQUENCY, 1))
+	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
+		FREQUENCY, channels))
 		return;
 
-	mod.set_info(NULL, -1, 8000, FREQUENCY, 1);
+	mod.set_info(NULL, -1, BITS_PER_SAMPLE * 1000, FREQUENCY, channels);
 	thread_run = TRUE;
 	pthread_create(&thread_handle, NULL, play_thread, NULL);
 }

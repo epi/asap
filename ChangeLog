@@ -1,3 +1,20 @@
+2006-01-09  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, asap2wav.c, win32/wasap.c, win32/winamp/in_asap.c,
+  xmms/libasap.c: simplified code by passing full filename instead of just
+  the extension to ASAP_Load()
+
+* win32/wasap.ico: transparency did not always work for the 16x16 icon
+
+* asap.c, asap.h, asap2wav.c, asap2wav.1, configure.ac, win32/wasap.c,
+  win32/wasap.rc, win32/resource.h, win32/config.h, win32/winamp/in_asap.c,
+  xmms/libasap.c: stereo and 16-bit output
+
+* win32/wasap.c: accepts a filename on the command line (you can use
+  "Open with" from Windows Explorer)
+
+* atari800/src/pokeysnd.c: some fixes in RF pokeysnd for stereo
+
+
 2006-01-04  Piotr Fusik  <fox@scene.pl>
 * xmms/libasap.c, Makefile.in: added XMMS plugin
 

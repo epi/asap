@@ -1,7 +1,7 @@
 /*
  * asap2wav.c - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2005  Piotr Fusik
+ * Copyright (C) 2005-2006  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -42,6 +43,7 @@ static unsigned int song = 1000; /* default */
 static unsigned int quality = 1;
 static unsigned int frequency = 44100;
 static unsigned int seconds = 180;
+static unsigned int use_16bit = 1;
 
 static int set_output(const char *s)
 {
@@ -113,8 +115,15 @@ static int set_time(const char *s)
 	return set_dec(s, &seconds, "time", 1, 3599);
 }
 
+/* write 16-bit word as little endian */
+static void fput16(unsigned int x, FILE *fp)
+{
+	fputc(x & 0xff, fp);
+	fputc((x >> 8) & 0xff, fp);
+}
+
 /* write 32-bit word as little endian */
-static void fput32(int x, FILE *fp)
+static void fput32(unsigned int x, FILE *fp)
 {
 	fputc(x & 0xff, fp);
 	fputc((x >> 8) & 0xff, fp);
@@ -161,17 +170,31 @@ int main(int argc, char *argv[])
 			}
 			if (j < sizeof(param_opts) / sizeof(param_opts[0]))
 				continue;
+			if (strcmp(arg, "-b") == 0 || strcmp(arg, "--byte-samples") == 0) {
+				use_16bit = 0;
+				continue;
+			}
+			if (strcmp(arg, "-w") == 0 || strcmp(arg, "--word-samples") == 0) {
+				use_16bit = 1;
+				continue;
+			}
 			if (strcmp(arg, "-h") == 0 || strcmp(arg, "--help") == 0) {
 				printf(
 					"Usage: asap2wav [OPTIONS] INPUTFILE...\n"
 					"Each INPUTFILE must be in a supported format:\n"
+#ifdef STEREO_SOUND
+					"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC or TM8.\n"
+#else
 					"SAP, CMC, CMR, DMC, MPT, MPD, RMT or TMC.\n"
+#endif
 					"Options:\n"
 					"-o FILE     --output=FILE      Set output WAV file name\n"
 					"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
-					"-q QUALITY  --quality=QUALITY  Set sound quality 0-3 (default: 1)\n"
 					"-t TIME     --time=TIME        Set output length MM:SS (default: 03:00)\n"
 					"-r FREQ     --rate=FREQ        Set sample rate in Hz (default: 44100)\n"
+					"-q QUALITY  --quality=QUALITY  Set sound quality 0-3 (default: 1)\n"
+					"-b          --byte-samples     Output 8-bit samples\n"
+					"-w          --word-samples     Output 16-bit samples (default)\n"
 					"-h          --help             Display this information and exit\n"
 					"-v          --version          Display version information and exit\n"
 				);
@@ -188,16 +211,13 @@ int main(int argc, char *argv[])
 			FILE *fp;
 			static unsigned char module[65000];
 			unsigned int module_len;
-			const char *dot;
-			unsigned int n_samples;
+			unsigned int channels;
+			unsigned int block_size;
+			unsigned int bytes_per_second;
+			unsigned int n_bytes;
 			static unsigned char buffer[8192];
 			if (strlen(arg) >= FILENAME_MAX) {
 				print_error("filename too long");
-				return 1;
-			}
-			dot = strrchr(arg, '.');
-			if (dot == NULL) {
-				print_error("%s has no filename extension", arg);
 				return 1;
 			}
 			fp = fopen(arg, "rb");
@@ -207,8 +227,8 @@ int main(int argc, char *argv[])
 			}
 			module_len = fread(module, 1, sizeof(module), fp);
 			fclose(fp);
-			ASAP_Initialize(frequency, quality);
-			if (!ASAP_Load(dot + 1, module, module_len)) {
+			ASAP_Initialize(frequency, use_16bit ? AUDIO_FORMAT_S16_LE : AUDIO_FORMAT_U8, quality);
+			if (!ASAP_Load(arg, module, module_len)) {
 				print_error("%s: format not supported", arg);
 				return 1;
 			}
@@ -225,7 +245,9 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			if (output_file == NULL) {
+				const char *dot;
 				static char output_default[FILENAME_MAX + 5]; /* max. original name + ".wav" + '\0' */
+				dot = strrchr(arg, '.');
 				sprintf(output_default, "%.*s.wav", (int) (dot - arg), arg);
 				output_file = output_default;
 			}
@@ -234,25 +256,31 @@ int main(int argc, char *argv[])
 				print_error("cannot write %s", output_file);
 				return 1;
 			}
-			n_samples = seconds * frequency;
+			channels = ASAP_GetChannels();
+			block_size = channels << use_16bit;
+			bytes_per_second = frequency * block_size;
+			n_bytes = seconds * bytes_per_second;
 			fwrite("RIFF", 1, 4, fp);
-			fput32(n_samples + 36, fp);
-			fwrite("WAVEfmt \x10\0\0\0\1\0\1\0", 1, 16, fp);
+			fput32(n_bytes + 36, fp);
+			fwrite("WAVEfmt \x10\0\0\0\1\0", 1, 14, fp);
+			fput16(channels, fp);
 			fput32(frequency, fp);
-			fput32(frequency, fp);
-			fwrite("\1\0\x08\0data", 1, 8, fp);
-			fput32(n_samples, fp);
-			while (n_samples > sizeof(buffer)) {
+			fput32(bytes_per_second, fp);
+			fput16(block_size, fp);
+			fput16(8 << use_16bit, fp);
+			fwrite("data", 1, 4, fp);
+			fput32(n_bytes, fp);
+			while (n_bytes > sizeof(buffer)) {
 				ASAP_Generate(buffer, sizeof(buffer));
 				if (fwrite(buffer, 1, sizeof(buffer), fp) != sizeof(buffer)) {
 					fclose(fp);
 					print_error("error writing to %s", output_file);
 					return 1;
 				}
-				n_samples -= sizeof(buffer);
+				n_bytes -= sizeof(buffer);
 			}
-			ASAP_Generate(buffer, n_samples);
-			fwrite(buffer, 1, n_samples, fp);
+			ASAP_Generate(buffer, n_bytes);
+			fwrite(buffer, 1, n_bytes, fp);
 			fclose(fp);
 			output_file = NULL;
 			files_processed++;
