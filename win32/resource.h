@@ -10,4 +10,6 @@
 #define IDM_QUALITY_MB3  206
 #define IDM_ABOUT        207
 #define IDM_EXIT         208
+#define IDM_8BIT         209
+#define IDM_16BIT        210
 #define IDM_SONG1        251

@@ -16,6 +16,9 @@ BEGIN
 			MENUITEM "MB 1", IDM_QUALITY_MB1
 			MENUITEM "MB 2", IDM_QUALITY_MB2
 			MENUITEM "MB 3", IDM_QUALITY_MB3
+			MENUITEM SEPARATOR
+			MENUITEM "8-bit", IDM_8BIT
+			MENUITEM "16-bit", IDM_16BIT
 		END
 		MENUITEM "&About WASAP...", IDM_ABOUT
 		MENUITEM "&Exit", IDM_EXIT
@@ -39,8 +42,8 @@ END
 }
 
 1 VERSIONINFO
-	FILEVERSION 0,1,0,0
-	PRODUCTVERSION 0,1,0,0
+	FILEVERSION 0,2,0,0
+	PRODUCTVERSION 0,2,0,0
 	FILEFLAGSMASK 0x3fL
 	FILEFLAGS 0x0L
 	FILEOS 0x40004L
@@ -53,12 +56,12 @@ BEGIN
 		BEGIN
 			VALUE "CompanyName", "ASAP Developers\0"
 			VALUE "FileDescription", "WASAP - Windows Another Slight Atari Player\0"
-			VALUE "FileVersion", "0.1.0\0"
+			VALUE "FileVersion", "0.2.0\0"
 			VALUE "InternalName", "wasap\0"
-			VALUE "LegalCopyright", "Copyleft 2005\0"
+			VALUE "LegalCopyright", "Copyleft 2005-2006\0"
 			VALUE "OriginalFilename", "wasap.exe\0"
 			VALUE "ProductName", "WASAP\0"
-			VALUE "ProductVersion", "0.1.0\0"
+			VALUE "ProductVersion", "0.2.0\0"
 		END
 	END
 	BLOCK "VarFileInfo"
