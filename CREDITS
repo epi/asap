@@ -12,7 +12,9 @@ Ron Fries
 
 Piotr Fusik  <fox@scene.pl>
 * author and maintainer of ASAP
-* ASAP2WAV, Windows player and Winamp plugin
+* ASAP2WAV
+* WASAP
+* plugins for foobar2000, Winamp, XMMS
 
 Marcin Lewandowski  <jaskier@atari8.info>
 * original 6502 routines for playing CMC, MPT and TMC
