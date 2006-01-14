@@ -5,7 +5,7 @@ for (@ARGV) {
 	open INPUT, $_ and binmode INPUT or die "$_: $!\n";
 	s!.*[/\\]!!;
 	y/0-9A-Za-z/_/c;
-	print "static const unsigned char ${_}_data[] = {\n\t";
+	print "static const unsigned char ${_}[] = {\n\t";
 	my $buf;
 	print join ', ', map sprintf('0x%02X', $_), unpack 'C*', $buf
 		if read INPUT, $buf, 16;
