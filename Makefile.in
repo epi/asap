@@ -23,8 +23,23 @@ $(ASAP2WAV): asap2wav.c $(SRC) players.h
 libasap.so: xmms/libasap.c $(SRC) players.h
 	$(CC) $(CFLAGS) -I/usr/include/glib-1.2 -I/usr/lib/glib/include -I/usr/include/gtk-1.2 $(LDFLAGS) -shared -fPIC -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) xmms/libasap.c $(SRC) $(LIBS) -lpthread -lxmms
 
-players.h: raw2c.pl cmc_0500.raw mpt_0500.raw rmt_0390.raw tmc_0500.raw
+players.h: raw2c.pl players/cmc.obx players/mpt.obx players/rmt4.obx players/rmt8.obx players/tmc.obx
 	perl $^ >$@
+
+players/cmc.obx: players/cmc.asx
+	xasm -q -o $@ $<
+
+players/mpt.obx: players/mpt.asx
+	xasm -q -o $@ $<
+
+players/rmt4.obx: players/rmt.asx
+	xasm -q -d STEREOMODE=0 -o $@ $<
+
+players/rmt8.obx: players/rmt.asx
+	xasm -q -d STEREOMODE=1 -o $@ $<
+
+players/tmc.obx: players/tmc.asx
+	xasm -q -o $@ $<
 
 install: $(ASAP2WAV) asap2wav.1
 	$(INSTALL_PROGRAM) $(ASAP2WAV) @bindir@/$(ASAP2WAV)
