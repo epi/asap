@@ -1,5 +1,5 @@
 /*
- * in_asap.c - ASAP plugin for XMMS
+ * libasap.c - ASAP plugin for XMMS
  *
  * Copyright (C) 2006  Piotr Fusik
  *
