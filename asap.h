@@ -24,6 +24,10 @@
 #ifndef _ASAP_H_
 #define _ASAP_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* ASAP version. */
 #define ASAP_VERSION "0.2.0"
 
@@ -104,5 +108,9 @@ void ASAP_PlaySong(unsigned int song);
    Normally you use a buffer of a few kilobytes or less,
    and call ASAP_Generate() in a loop or via a callback. */
 void ASAP_Generate(void *buffer, unsigned int buffer_len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
