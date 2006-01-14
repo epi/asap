@@ -174,8 +174,8 @@ static int play(char *fn)
 		return 1;
 	mod.SetInfo(BITS_PER_SAMPLE, FREQUENCY / 1000, channels, 1);
 	mod.SAVSAInit(maxlatency, FREQUENCY);
-	// hey! Winamp SDK examples call VSASetInfo(frequency,channels),
-	// but the arguments in in2.h suggest the reverse order of arguments!
+	// the order of VSASetInfo's arguments in in2.h is wrong!
+	// http://forums.winamp.com/showthread.php?postid=1841035
 	mod.VSASetInfo(FREQUENCY, channels);
 	mod.outMod->SetVolume(-666);
 	thread_run = TRUE;
