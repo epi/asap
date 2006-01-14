@@ -1,3 +1,19 @@
+2006-01-14  Piotr Fusik  <fox@scene.pl>
+* asap.c: some SAPs are self-extracting and their initialization (which
+  includes decompression) takes more than 5 Atari frames which was
+  the limit (now it's 50 frames)
+
+* cmc_0500.raw, mpt_0500.raw, rmt_0390.raw, tmc_0500.raw, raw2c.pl,
+  players/cmc.asx, players/mpt.asx, players/rmt.asx, players/tmc.asx,
+  players/.cvsignore, asap.c, Makefile.in, win32/Makefile:
+  compiled 6502 routines replaced with their source code
+  (binaries will be included in source distributions);
+  added support for stereo RMT files
+
+* asap.h, win32/foobar2000/foo_asap.c, win32/foobar2000/README,
+  win32/foobar2000/.cvsignore, win32/Makefile: added foobar2000 plugin
+
+
 2006-01-09  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, asap2wav.c, win32/wasap.c, win32/winamp/in_asap.c,
   xmms/libasap.c: simplified code by passing full filename instead of just
