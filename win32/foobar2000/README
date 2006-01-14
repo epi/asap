@@ -1,0 +1,15 @@
+Another Slight Atari Player - foobar2000 plugin
+-----------------------------------------------
+
+This is a plugin for foobar 2000 version 0.8 that makes it possible to play
+Atari 8-bit music stored in several formats. To install the plugin, simply
+extract foo_asap.dll to the "components" directory of your foobar2000
+installation (normally "C:\Program Files\foobar2000").
+
+At the moment the plugin does not support multiple songs per file, seeking,
+file information, configuration nor song lengths (you need to manually switch
+between the files on the playlist).
+
+This plugin is part of the ASAP project. Information about ASAP follows.
+
+
