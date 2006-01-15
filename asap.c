@@ -33,7 +33,7 @@
 
 #include "players.h"
 
-#define CMR_BASS_TABLE_OFFSET  0x70d
+#define CMR_BASS_TABLE_OFFSET  0x70f
 
 static const unsigned char cmr_bass_table[] = {
 	0x5C, 0x56, 0x50, 0x4D, 0x47, 0x44, 0x41, 0x3E,
@@ -282,12 +282,8 @@ static unsigned int sap_songs;
 static unsigned int sap_defsong;
 static unsigned int sap_fastplay;
 
-/* This array maps subsong numbers to track positions.
-   Note: the original MPT supports up to 128 track positions, therefore up to 64
-   subsongs (each subsong must have at least one pattern entry and a jump/stop).
-   We additionally support here the modified MPT ("10.5") which supports
-   up to 254 track positions, even though the player doesn't support it yet. */
-static UBYTE mpt_song_pos[127];
+/* This array maps subsong numbers to track positions for MPT and RMT formats. */
+static UBYTE song_pos[128];
 
 static unsigned int tmc_per_frame;
 static unsigned int tmc_per_frame_counter;
@@ -355,63 +351,71 @@ static int load_cmc(const unsigned char *module, unsigned int module_len, int cm
 
 static int load_mpt(const unsigned char *module, unsigned int module_len)
 {
+	unsigned int i;
+	unsigned int song_len;
+	/* seen[i] == TRUE if the track position i is already processed */
+	UBYTE seen[256];
 	if (module_len < 0x1d0)
 		return FALSE;
 	if (!load_native(module, module_len, mpt_obx, 'm'))
 		return FALSE;
-	/* auto-detect number of subsongs - only if the address of the first track is standard */
-	if (module[0x1c6] + (module[0x1ca] << 8) == sap_music + 0x1ca) {
-		/* we look for jump/stop commands only in the first track,
-		   even though the players allow them in any track */
-		int i;
-		int song_len;
-		/* seen[i] == TRUE if the track position i is already processed */
-		UBYTE seen[256];
-		/* Calculate the length of the first track. Address of the second track minus
-		   address of the first track equals the length of the first track in bytes.
-		   Divide by two to get number of track positions. */
-		song_len = (module[0x1c7] + (module[0x1cb] << 8) - sap_music - 0x1ca) >> 1;
-		if (song_len > 0xfe)
-			return FALSE;
-		memset(seen, FALSE, sizeof(seen));
-		sap_songs = 0;
-		for (i = 0; i < song_len; i++) {
-			int j;
-			UBYTE c;
-			if (seen[i])
-				continue;
-			j = i;
-			do {
-				seen[j] = TRUE;
-				c = module[0x1d0 + j * 2];
-				if (c != 0xff)
-					break;
-				j = module[0x1d1 + j * 2];
-			} while (j < song_len && !seen[j]);
-			if (c >= 64)
-				continue;
-			mpt_song_pos[sap_songs++] = (UBYTE) j;
-			j++;
-			while (j < song_len && !seen[j]) {
-				seen[j] = TRUE;
-				c = module[0x1d0 + j * 2];
-				if (c < 64)
-					j++;
-				else if (c == 0xff)
-					j = module[0x1d1 + j * 2];
-				else
-					break;
-			}
-		}
-		return sap_songs != 0;
+	/* do not auto-detect number of subsongs if the address
+	   of the first track is non-standard */
+	if (module[0x1c6] + (module[0x1ca] << 8) != sap_music + 0x1ca) {
+		song_pos[0] = 0;
+		return TRUE;
 	}
-	mpt_song_pos[0] = 0;
-	return TRUE;
+	/* Calculate the length of the first track. Address of the second track minus
+	   address of the first track equals the length of the first track in bytes.
+	   Divide by two to get number of track positions. */
+	song_len = (module[0x1c7] + (module[0x1cb] << 8) - sap_music - 0x1ca) >> 1;
+	if (song_len > 0xfe)
+		return FALSE;
+	memset(seen, FALSE, sizeof(seen));
+	sap_songs = 0;
+	for (i = 0; i < song_len; i++) {
+		unsigned int j;
+		UBYTE c;
+		if (seen[i])
+			continue;
+		j = i;
+		/* follow jump commands until a pattern or a stop command is found */
+		do {
+			seen[j] = TRUE;
+			c = module[0x1d0 + j * 2];
+			if (c != 0xff)
+				break;
+			j = module[0x1d1 + j * 2];
+		} while (j < song_len && !seen[j]);
+		/* if no pattern found then this is not a subsong */
+		if (c >= 64)
+			continue;
+		/* found subsong */
+		song_pos[sap_songs++] = (UBYTE) j;
+		j++;
+		/* follow this subsong */
+		while (j < song_len && !seen[j]) {
+			seen[j] = TRUE;
+			c = module[0x1d0 + j * 2];
+			if (c < 64)
+				j++;
+			else if (c == 0xff)
+				j = module[0x1d1 + j * 2];
+			else
+				break;
+		}
+	}
+	return sap_songs != 0;
 }
 
 static int load_rmt(const unsigned char *module, unsigned int module_len)
 {
 	unsigned int i;
+	UWORD song_start;
+	UWORD song_last_byte;
+	const unsigned char *song;
+	unsigned int song_len;
+	UBYTE seen[256];
 	if (module_len < 0x30 || module[6] != 'R' || module[7] != 'M'
 	 || module[8] != 'T' || module[13] != 1)
 		return FALSE;
@@ -430,9 +434,40 @@ static int load_rmt(const unsigned char *module, unsigned int module_len)
 	sap_fastplay = perframe2fastplay[i - 1];
 	if (!load_native(module, module_len, sap_stereo ? rmt8_obx : rmt4_obx, 'r'))
 		return FALSE;
-	/* TODO: detect subsongs */
 	sap_player = 0x600;
-	return TRUE;
+	/* auto-detect number of subsongs */
+	song_start = module[20] + (module[21] << 8);
+	song_last_byte = module[4] + (module[5] << 8);
+	if (song_start <= sap_music || song_start >= song_last_byte)
+		return FALSE;
+	song = module + 6 + song_start - sap_music;
+	song_len = (song_last_byte + 1 - song_start) >> (2 + sap_stereo);
+	if (song_len > 0xfe)
+		song_len = 0xfe;
+	memset(seen, FALSE, sizeof(seen));
+	sap_songs = 0;
+	for (i = 0; i < song_len; i++) {
+		unsigned int j;
+		if (seen[i])
+			continue;
+		j = i;
+		do {
+			seen[j] = TRUE;
+			if (song[j << (2 + sap_stereo)] != 0xfe)
+				break;
+			j = song[(j << (2 + sap_stereo)) + 1];
+		} while (j < song_len && !seen[j]);
+		song_pos[sap_songs++] = (UBYTE) j;
+		j++;
+		while (j < song_len && !seen[j]) {
+			seen[j] = TRUE;
+			if (song[j << (2 + sap_stereo)] != 0xfe)
+				j++;
+			else
+				j = song[(j << (2 + sap_stereo)) + 1];
+		}
+	}
+	return sap_songs != 0;
 }
 
 static int load_tmc(const unsigned char *module, unsigned int module_len)
@@ -728,11 +763,11 @@ void ASAP_PlaySong(unsigned int song)
 		regY = (UBYTE) sap_music;
 		call_6502(sap_player, SCANLINES_FOR_INIT);
 		regA = 0x02;
-		regX = mpt_song_pos[song];
+		regX = song_pos[song];
 		call_6502(sap_player, SCANLINES_FOR_INIT);
 		break;
 	case 'r':
-		regA = 0x00;
+		regA = song_pos[song];
 		regX = (UBYTE) sap_music;
 		regY = (UBYTE) (sap_music >> 8);
 		call_6502(sap_player, SCANLINES_FOR_INIT);
