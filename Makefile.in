@@ -11,17 +11,23 @@ LDFLAGS = @LDFLAGS@
 DEFS = @DEFS@ -DASAP -DSOUND
 LIBS = @LIBS@
 ASAP2WAV = asap2wav@EXEEXT@
+XMMS_CFLAGS = @XMMS_CFLAGS@
+XMMS_LIBS = @XMMS_LIBS@
+XMMS_INPUT_PLUGIN_DIR = @XMMS_INPUT_PLUGIN_DIR@
+XMMS_USER_PLUGIN_DIR = $(HOME)/.xmms/Plugins
 
 ATARI800_SRC_DIR = ../atari800/src
 SRC = asap.c $(ATARI800_SRC_DIR)/cpu.c $(ATARI800_SRC_DIR)/mzpokeysnd.c $(ATARI800_SRC_DIR)/pokeysnd.c $(ATARI800_SRC_DIR)/remez.c
 
-all: $(ASAP2WAV) libasap.so
+all: $(ASAP2WAV) asap-xmms
 
 $(ASAP2WAV): asap2wav.c $(SRC) players.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) asap2wav.c $(SRC) $(LIBS)
 
+asap-xmms: libasap.so
+
 libasap.so: xmms/libasap.c $(SRC) players.h
-	$(CC) $(CFLAGS) -I/usr/include/glib-1.2 -I/usr/lib/glib/include -I/usr/include/gtk-1.2 $(LDFLAGS) -shared -fPIC -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) xmms/libasap.c $(SRC) $(LIBS) -lpthread -lxmms
+	$(CC) $(CFLAGS) $(XMMS_CFLAGS) $(LDFLAGS) -shared -fPIC -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) xmms/libasap.c $(SRC) $(LIBS) $(XMMS_LIBS)
 
 players.h: raw2c.pl players/cmc.obx players/mpt.obx players/rmt4.obx players/rmt8.obx players/tmc.obx
 	perl $^ >$@
@@ -41,13 +47,27 @@ players/rmt8.obx: players/rmt.asx
 players/tmc.obx: players/tmc.asx
 	xasm -q -o $@ $<
 
-install: $(ASAP2WAV) asap2wav.1
+install: install-asap2wav install-xmms
+
+install-asap2wav: $(ASAP2WAV) asap2wav.1
 	$(INSTALL_PROGRAM) $(ASAP2WAV) @bindir@/$(ASAP2WAV)
 	$(INSTALL_DATA) asap2wav.1 @mandir@/man1/asap2wav.1
 
-uninstall:
+uninstall-asap2wav:
 	rm @bindir@/$(ASAP2WAV)
 	rm @mandir@/man1/asap2wav.1
+
+install-xmms: libasap.so
+	$(INSTALL_PROGRAM) libasap.so $(XMMS_INPUT_PLUGIN_DIR)/libasap.so
+
+uninstall-xmms:
+	rm $(XMMS_INPUT_PLUGIN_DIR)/libasap.so
+
+install-user: libasap.so
+	$(INSTALL_PROGRAM) libasap.so $(XMMS_USER_PLUGIN_DIR)/libasap.so
+
+uninstall-user:
+	rm $(XMMS_USER_PLUGIN_DIR)/libasap.so
 
 clean:
 	rm -f players.h $(ASAP2WAV) libasap.so core *.bak *~

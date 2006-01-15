@@ -30,7 +30,8 @@ if [[ "$enable_unalignedwords" != "yes" -a "$enable_unalignedwords" != "no" ]]; 
             ;;
         *)
             AC_MSG_WARN([$host_cpu architecture is unknown to this script.])
-            AC_MSG_WARN([Performance may be sub-optimal. Please contact ASAP developers.])
+            AC_MSG_WARN([Performance may be sub-optimal.])
+            AC_MSG_WARN([Please contact ASAP developers.])
             enable_unalignedwords=no
             ;;
     esac
@@ -87,6 +88,24 @@ AC_DEFUN([A8_OPTION],[
 ])
 
 A8_OPTION(stereo,yes,[Support stereo tunes (default=ON)],STEREO_SOUND,[Define to support stereo tunes.])
+
+AC_CHECK_PROG(HAVE_XMMS_CONFIG, xmms-config, yes, no)
+if [[ "$HAVE_XMMS_CONFIG" = "yes" ]]; then
+    XMMS_CFLAGS=`xmms-config --cflags`
+    XMMS_LIBS=`xmms-config --libs`
+    XMMS_INPUT_PLUGIN_DIR=`xmms-config --input-plugin-dir`
+else
+    AC_MSG_WARN([xmms-config program not found!])
+    AC_MSG_WARN([If you want to compile the XMMS plugin,])
+    AC_MSG_WARN([install xmms-devel package,])
+    AC_MSG_WARN([then re-run this configure script.])
+    XMMS_CFLAGS="NOT_CONFIGURED"
+    XMMS_LIBS="NOT_CONFIGURED"
+    XMMS_INPUT_PLUGIN_DIR="NOT_CONFIGURED"
+fi
+AC_SUBST(XMMS_CFLAGS)
+AC_SUBST(XMMS_LIBS)
+AC_SUBST(XMMS_INPUT_PLUGIN_DIR)
 
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT
