@@ -1,14 +1,6 @@
 To be done (highest priority first)
 -----------------------------------
 
-* subsongs in RMT files
-
-* relocate native modules which collide with the player or hardware registers
-
-* foobar2000, winamp, xmms: configuration
-
-* foobar2000, winamp, xmms: subsongs
-
 * TYPE D SAPs
 
 * TYPE S SAPs
@@ -17,17 +9,23 @@ To be done (highest priority first)
 
 * POKEY timer interrupts
 
-* input formats: Theta Music Composer 2.0, Advanced Music System,
-  Delta Composer, Future Composer, Sound Tracker, Antic Music Processor
-
 * display song name, author, date
 
 * auto-detect song length in native formats
 
 * design and support TIME tag for SAPs
 
-* seeking
+* foobar2000, winamp, xmms: configuration
+
+* foobar2000, winamp, xmms: subsongs
+
+* input formats: Theta Music Composer 2.0, Advanced Music System,
+  Delta Composer, Future Composer, Sound Tracker, Antic Music Processor
+
+* seeking within the currently played song
 
 * convert 6502 routines to C for better performance
+
+* relocate native modules which collide with the player or hardware registers
 
 

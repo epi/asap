@@ -1,7 +1,16 @@
 History
 -------
 
-ASAP 0.1.0 (2005-12-31)
+* ASAP 0.2.0 (2006-01-15)
+
+This release supports stereo and 16-bit audio output (enabled by default).
+Compressed SAP files (for example Fractals.sap) are played correctly.
+Subsongs are supported in RMT files.
+There are new plugins: for XMMS and for foobar2000 version 0.8.
+WASAP supports Windows Explorer's "Open with".
+
+
+* ASAP 0.1.0 (2005-12-31)
 
 This is the initial release of ASAP (Another Slight Atari Player)
 - a player/converter of Atari 8-bit music for modern computers.

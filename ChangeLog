@@ -1,3 +1,11 @@
+** 0.2.0 released on 2006-01-15
+
+2006-01-15  Piotr Fusik  <fox@scene.pl>
+* asap.c: support for subsongs in RMT files
+
+* configure.ac, Makefile.in: improved XMMS plugin compilation and installation
+
+
 2006-01-14  Piotr Fusik  <fox@scene.pl>
 * asap.c: some SAPs are self-extracting and their initialization (which
   includes decompression) takes more than 5 Atari frames which was
