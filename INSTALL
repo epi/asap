@@ -36,15 +36,48 @@ autoheader
 
 To compile and install, run the following commands:
 ./configure
-gmake
-gmake install
+gmake asap2wav
+gmake install-asap2wav
 The last command must be run with super-user priviledges.
 Use "make" if there's no "gmake".
 
 If you have no super-user priviledges or want to install the program
 in a non-standard location, you can specify the "--prefix" option
 for the "configure" script, or simply copy the compiled program
-instead of executing "gmake install".
+instead of executing "gmake install-asap2wav".
+
+
+Building the XMMS plugin on Unix-like systems
+---------------------------------------------
+
+In addition to the above prerequisites you need a full XMMS installation.
+If you have just the XMMS binary package installed, you additionally need
+"xmms-devel". I have tested only the 1.2.10 version of XMMS.
+XMMS itself depends on Gtk+ and Glib, so you need them too.
+
+To compile, run the following commands:
+./configure
+gmake asap-xmms
+
+If the compilation finished successfully, you can install the plugin
+in your home directory:
+gmake install-user
+
+or, if you are "root", for all users:
+gmake install-xmms
+
+If you have other XMMS plugins that support Atari 8-bit music, make sure
+to remove them in order to avoid conflicts.
+
+
+Building ASAP2WAV *and* the XMMS plugin on Unix-like systems
+------------------------------------------------------------
+
+If you want to compile and install both the converter and the XMMS plugin
+for all users, there is a shortcut:
+./configure
+gmake
+gmake install
 
 
 Building ASAP2WAV, WASAP and the Winamp plugin on Windows
