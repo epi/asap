@@ -1,3 +1,9 @@
+2006-01-20  Piotr Fusik  <fox@scene.pl>
+* xmms/libasap.c, win32/winamp/in_asap.c: forward declarations of "static"
+  variables should use "static" and not "extern" - this fixes the GCC 4
+  compilation error
+
+
 ** 0.2.0 released on 2006-01-15
 
 2006-01-15  Piotr Fusik  <fox@scene.pl>

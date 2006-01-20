@@ -38,7 +38,7 @@
 static unsigned int channels;
 static unsigned int buffered_bytes;
 
-extern InputPlugin mod;
+static InputPlugin mod;
 
 static pthread_t thread_handle;
 

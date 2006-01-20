@@ -54,7 +54,7 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lp
 
 #endif
 
-extern In_Module mod;
+static In_Module mod;
 
 static char current_filename[MAX_PATH] = "";
 
