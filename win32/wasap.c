@@ -286,7 +286,7 @@ static void SelectAndLoadFile(HWND hWnd)
 		NULL,
 		0,
 		"All supported\0"
-		"*.sap;*.cmc;*.cmr;*.dmc;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8\0"
+		"*.sap;*.cmc;*.cmr;*.dmc;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2\0"
 		"Slight Atari Player (*.sap)\0"
 		"*.sap\0"
 		"Chaos Music Composer (*.cmc;*.cmr;*.dmc)\0"
@@ -295,8 +295,10 @@ static void SelectAndLoadFile(HWND hWnd)
 		"*.mpt;*.mpd\0"
 		"Raster Music Tracker (*.rmt)\0"
 		"*.rmt\0"
-		"Theta Music Composer (*.tmc;*.tm8)\0"
+		"Theta Music Composer 1.x (*.tmc;*.tm8)\0"
 		"*.tmc;*.tm8\0"
+		"Theta Music Composer 2.x (*.tm2)\0"
+		"*.tm2\0"
 		"\0",
 		NULL,
 		0,

@@ -183,9 +183,9 @@ int main(int argc, char *argv[])
 					"Usage: asap2wav [OPTIONS] INPUTFILE...\n"
 					"Each INPUTFILE must be in a supported format:\n"
 #ifdef STEREO_SOUND
-					"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC or TM8.\n"
+					"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC, TM8 or TM2.\n"
 #else
-					"SAP, CMC, CMR, DMC, MPT, MPD, RMT or TMC.\n"
+					"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC or TM2.\n"
 #endif
 					"Options:\n"
 					"-o FILE     --output=FILE      Set output WAV file name\n"

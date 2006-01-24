@@ -1,4 +1,4 @@
-.TH ASAP2WAV 1 "January 8, 2006"
+.TH ASAP2WAV 1 "January 22, 2006"
 .SH NAME
 asap2wav \- convert Atari 8-bit music to WAV
 .SH SYNOPSIS
@@ -24,33 +24,38 @@ emulation of the POKEY sound chip and the 6502 processor.
 Format of the input files is detected from their filename extensions.
 Currently the following formats are supported:
 .TP
-SAP (Slight Atari Player)
-A standard file format for playing Atari 8-bit music on modern computers.
-Samples are not supported yet.
+SAP
+Slight Atari Player - standard file format for playing Atari 8-bit music
+on modern computers. Samples are not supported yet.
 .TP
-CMC (Chaos Music Composer)
-A popular music editor for Atari.
+CMC
+Chaos Music Composer.
 .TP
-CMR (CMC Rzog)
-CMC with modified bass sounds.
+CMR
+CMC Rzog - CMC with modified bass sounds.
 .TP
-DMC (DoublePlay CMC)
-CMC with 6502 routines executed at double rate of the original CMC.
+DMC
+DoublePlay CMC - CMC with 6502 routines executed at double rate
+of the original CMC.
 .TP
-MPT (Music ProTracker)
-Another popular music editor for Atari. Samples are not supported yet.
+MPT
+Music ProTracker. Samples are not supported yet.
 .TP
-MPD (MPT DoublePlay)
-MPT with 6502 routines executed at double rate of the original MPT.
+MPD
+MPT DoublePlay - MPT with 6502 routines executed at double rate
+of the original MPT.
 .TP
-RMT (Raster Music Tracker)
-New music editor for composing Atari music on a PC.
+RMT
+Raster Music Tracker.
 .TP
-TMC (Theta Music Composer)
-Powerful music editor for Atari, mono tunes.
+TMC
+Theta Music Composer 1.x, 4-channel file.
 .TP
-TM8 (Theta Music Composer 8-channel)
-Stereo TMC tunes.
+TM8
+Theta Music Composer 1.x, 8-channel (stereo) file.
+.TP
+TM2
+Theta Music Composer 2.x.
 .SH OPTIONS
 .TP
 \fB\-o\fR \fIFILE\fR, \fB\-\-output\fR=\fIFILE\fR

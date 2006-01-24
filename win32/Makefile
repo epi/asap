@@ -22,7 +22,7 @@ wasap.res: wasap.rc wasap.ico play.ico stop.ico
 winamp\in_asap.dll: winamp\in_asap.c $(SRC) ..\players.h
 	$(ASAP_CC) /LD winamp\in_asap.c $(SRC) user32.lib $(LINKOPT)
 
-..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx
+..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	perl $** >$@
 
 ..\players\cmc.obx: ..\players\cmc.asx
@@ -38,6 +38,9 @@ winamp\in_asap.dll: winamp\in_asap.c $(SRC) ..\players.h
 	xasm $** /q /d:STEREOMODE=1 /o:$@
 
 ..\players\tmc.obx: ..\players\tmc.asx
+	xasm $** /q /o:$@
+
+..\players\tm2.obx: ..\players\tm2.asx
 	xasm $** /q /o:$@
 
 # foobar2000
@@ -76,7 +79,7 @@ clean:
 asap2wav.txt: ..\asap2wav.1
 	groff -m man -r LL=78n -r IN=5n -T ascii -P -cbu ..\asap2wav.1 >$@
 
-dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx
+dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	del ..\..\asap-$(VERSION).tar.gz;..\..\asap2wav-$(VERSION)-win32.zip
 	del ..\..\asap-$(VERSION)-win32.zip;..\..\asap-$(VERSION)-winamp.zip
 	del ..\..\asap-$(VERSION)-foobar2000.zip
@@ -84,7 +87,7 @@ dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\pla
 		-t $(ASAP_DIR)\asap.c $(ASAP_DIR)\asap.h $(ASAP_DIR)\asap_internal.h \
 		$(ASAP_DIR)\asap2wav.c $(ASAP_DIR)\asap2wav.1 \
 		$(ASAP_DIR)\players\cmc.asx $(ASAP_DIR)\players\mpt.asx \
-		$(ASAP_DIR)\players\rmt.asx $(ASAP_DIR)\players\tmc.asx \
+		$(ASAP_DIR)\players\rmt.asx $(ASAP_DIR)\players\tmc.asx $(ASAP_DIR)\players\tm2.asx \
 		$(ASAP_DIR)\configure.ac $(ASAP_DIR)\Makefile.in \
 		$(ASAP_DIR)\config.h.in $(ASAP_DIR)\ChangeLog \
 		$(ASAP_DIR)\COPYING $(ASAP_DIR)\CREDITS $(ASAP_DIR)\INSTALL \
@@ -103,7 +106,7 @@ dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\pla
 		$(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h \
 		-b $(ASAP_DIR)\players\cmc.obx $(ASAP_DIR)\players\mpt.obx \
 		$(ASAP_DIR)\players\rmt4.obx $(ASAP_DIR)\players\rmt8.obx \
-		$(ASAP_DIR)\players\tmc.obx \
+		$(ASAP_DIR)\players\tmc.obx $(ASAP_DIR)\players\tm2.obx \
 		$(ASAP_DIR)\win32\play.ico $(ASAP_DIR)\win32\stop.ico \
 		$(ASAP_DIR)\win32\wasap.ico \
 		-s $(ASAP_DIR)\config.guess $(ASAP_DIR)\config.sub \

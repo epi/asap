@@ -5,11 +5,13 @@ To be done (highest priority first)
 
 * TYPE S SAPs
 
-* MD1/MD2 (MPT with samples)
+* MD1 and MD2 input formats (MPT with samples)
 
 * POKEY timer interrupts
 
-* display song name, author, date
+* display song name, author, date, ...
+
+* display additional information from STIL.txt
 
 * auto-detect song length in native formats
 
@@ -19,8 +21,9 @@ To be done (highest priority first)
 
 * foobar2000, winamp, xmms: subsongs
 
-* input formats: Theta Music Composer 2.0, Advanced Music System,
-  Delta Composer, Future Composer, Sound Tracker, Antic Music Processor
+* input formats: Benjy Soundmonitor, Advanced Music System, Delta Composer,
+  Future Composer, Sound Tracker, Antic Music Processor, Black Music Composer,
+  Collen Music Creator, Music Studio, Soft Synth
 
 * seeking within the currently played song
 

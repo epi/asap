@@ -77,6 +77,7 @@ static int is_our_file(char *filename)
 #ifdef STEREO_SOUND
 	case EXT('T', 'M', '8'):
 #endif
+	case EXT('T', 'M', '2'):
 		return TRUE;
 	default:
 		return FALSE;

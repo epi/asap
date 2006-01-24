@@ -504,6 +504,61 @@ static int load_tmc(const unsigned char *module, unsigned int module_len)
 	return TRUE;
 }
 
+static int load_tm2(const unsigned char *module, unsigned int module_len)
+{
+	unsigned int i;
+	unsigned int song_end;
+	unsigned char c;
+	if (module_len < 0x3a4)
+		return FALSE;
+	i = module[0x25];
+	if (i < 1 || i > 4)
+		return FALSE;
+	sap_fastplay = perframe2fastplay[i - 1];
+	if (!load_native(module, module_len, tm2_obx, 'T'))
+		return FALSE;
+	/* TODO: quadrophonic */
+	if (module[0x1f] != 0)
+#ifdef STEREO_SOUND
+		sap_stereo = 1;
+#else
+		return FALSE;
+#endif
+	sap_player = 0x500;
+	song_end = 0xffff;
+	for (i = 0; i < 0x80; i++) {
+		unsigned int instr_addr = module[0x86 + i] + (module[0x306 + i] << 8);
+		if (instr_addr != 0 && instr_addr < song_end)
+			song_end = instr_addr;
+	}
+	for (i = 0; i < 0x100; i++) {
+		unsigned int pattern_addr = module[0x106 + i] + (module[0x206 + i] << 8);
+		if (pattern_addr != 0 && pattern_addr < song_end)
+			song_end = pattern_addr;
+	}
+	if (song_end < sap_music + 0x380U + 2U * 17U)
+		return FALSE;
+	i = song_end - sap_music - 0x380;
+	if (0x386 + i >= module_len)
+		return FALSE;
+	i -= i % 17;
+	/* skip trailing stop/jump commands */
+	do {
+		if (i == 0)
+			return FALSE;
+		i -= 17;
+		c = module[0x386 + 16 + i];
+	} while (c == 0 || c >= 0x80);
+	/* count stop/jump commands */
+	while (i > 0) {
+		i -= 17;
+		c = module[0x386 + 16 + i];
+		if (c == 0 || c >= 0x80)
+			sap_songs++;
+	}
+	return TRUE;
+}
+
 static int tag_matches(const char *tag, const UBYTE *sap_ptr, const UBYTE *sap_end)
 {
 	size_t len = strlen(tag);
@@ -682,6 +737,8 @@ int ASAP_Load(const char *filename, const unsigned char *module, unsigned int mo
 		return load_rmt(module, module_len);
 	case EXT('S', 'A', 'P'):
 		return load_sap(module, module + module_len);
+	case EXT('T', 'M', '2'):
+		return load_tm2(module, module_len);
 #ifdef STEREO_SOUND
 	case EXT('T', 'M', '8'):
 		sap_stereo = 1;
@@ -773,6 +830,7 @@ void ASAP_PlaySong(unsigned int song)
 		call_6502(sap_player, SCANLINES_FOR_INIT);
 		break;
 	case 't':
+	case 'T':
 		regA = 0x70;
 		regX = (UBYTE) (sap_music >> 8);
 		regY = (UBYTE) sap_music;
@@ -832,6 +890,7 @@ void ASAP_Generate(void *buffer, unsigned int buffer_len)
 			break;
 		case 'm':
 		case 'r':
+		case 'T':
 			call_6502((UWORD) (sap_player + 3), sap_fastplay);
 			break;
 		case 't':

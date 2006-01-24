@@ -76,6 +76,7 @@ bool input_asap::test_filename(const char *full_path, const char *extension)
 #ifdef STEREO_SOUND
 	case EXT('T', 'M', '8'):
 #endif
+	case EXT('T', 'M', '2'):
 		return true;
 	default:
 		return false;
@@ -127,7 +128,8 @@ ASAP_FILE_TYPE(DMC, "DoublePlay Chaos Music Composer");
 ASAP_FILE_TYPE(MPT, "Music ProTracker");
 ASAP_FILE_TYPE(MPD, "Music ProTracker DoublePlay");
 ASAP_FILE_TYPE(RMT, "Raster Music Tracker");
-ASAP_FILE_TYPE(TMC, "Theta Music Composer");
+ASAP_FILE_TYPE(TMC, "Theta Music Composer 1.x 4-channel");
 #ifdef STEREO_SOUND
-ASAP_FILE_TYPE(TM8, "Theta Music Composer 8-channel");
+ASAP_FILE_TYPE(TM8, "Theta Music Composer 1.x 8-channel");
 #endif
+ASAP_FILE_TYPE(TM2, "Theta Music Composer 2.x");

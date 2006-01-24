@@ -29,14 +29,14 @@ extern "C" {
 #endif
 
 /* ASAP version. */
-#define ASAP_VERSION "0.2.0"
+#define ASAP_VERSION "0.2.1"
 
 /* Short ASAP credits.
    If you are porting ASAP then display your name, too. */
 #define ASAP_CREDITS \
    "Another Slight Atari Player (C) 2005-2006 Piotr Fusik\n" \
    "6502 and POKEY sound emulation (C) 1995-2006 Atari800 development team\n" \
-   "CMC, MPT, TMC players (C) 1994-1997 Marcin Lewandowski\n" \
+   "CMC, MPT, TMC players (C) 1994-2005 Marcin Lewandowski\n" \
    "RMT player (C) 2002-2005 Radek Sterba\n"
 
 /* Short GPL notice.

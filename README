@@ -13,19 +13,19 @@ This release includes the following programs that use the ASAP engine:
 * plugin for XMMS
 
 Currently supported input formats are:
-* SAP (Slight Atari Player) - standard file format for playing Atari 8-bit
-  music on modern computers. Samples are not supported yet.
-* CMC (Chaos Music Composer) - popular music editor for Atari.
-* CMR (CMC Rzog) - CMC with modified bass sounds.
-* DMC (DoublePlay CMC) - CMC with 6502 routines executed at double rate
-  of the original CMC.
-* MPT (Music ProTracker) - another popular music editor for Atari.
-  Samples are not supported yet.
-* MPD (MPT DoublePlay) - MPT with 6502 routines executed at double rate
-  of the original MPT.
-* RMT (Raster Music Tracker) - new editor for composing Atari music on a PC.
-* TMC (Theta Music Composer) - powerful music editor for Atari.
-* TM8 (Theta Music Composer 8-channel) - stereo TMC tunes.
+* SAP (Slight Atari Player - standard file format for playing Atari 8-bit
+  music on modern computers, samples are not supported yet)
+* CMC (Chaos Music Composer)
+* CMR (CMC Rzog - CMC with modified bass sounds)
+* DMC (DoublePlay CMC - CMC with 6502 routines executed at double rate
+  of the original CMC)
+* MPT (Music ProTracker - without samples)
+* MPD (MPT DoublePlay - MPT with 6502 routines executed at double rate
+  of the original MPT)
+* RMT (Raster Music Tracker)
+* TMC (Theta Music Composer 1.x - 4-channel music)
+* TM8 (Theta Music Composer 1.x - 8-channel music)
+* TM2 (Theta Music Composer 2.x)
 
 The biggest collection of SAP files is ASMA (Atari SAP Music Archive,
 http://asma.atari.org). It is strongly recommended that you use ASMA 3.0
