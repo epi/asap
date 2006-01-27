@@ -2,12 +2,13 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
 mandir = @mandir@
-man1dir = $(mandir)/man1
+man1dir = ${mandir}/man1
 
 CC = @CC@
-INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_DATA = @INSTALL_DATA@
+XASM = xasm -q
+INSTALL = ./install-sh
+INSTALL_PROGRAM = ${INSTALL}
+INSTALL_DATA = ${INSTALL} -m 644
 
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
@@ -17,67 +18,68 @@ ASAP2WAV = asap2wav@EXEEXT@
 XMMS_CFLAGS = @XMMS_CFLAGS@
 XMMS_LIBS = @XMMS_LIBS@
 XMMS_INPUT_PLUGIN_DIR = @XMMS_INPUT_PLUGIN_DIR@
-XMMS_USER_PLUGIN_DIR = $(HOME)/.xmms/Plugins
+XMMS_USER_PLUGIN_DIR = ${HOME}/.xmms/Plugins
 
 ATARI800_SRC_DIR = ../atari800/src
-SRC = asap.c $(ATARI800_SRC_DIR)/cpu.c $(ATARI800_SRC_DIR)/mzpokeysnd.c $(ATARI800_SRC_DIR)/pokeysnd.c $(ATARI800_SRC_DIR)/remez.c
+COMMON_C = asap.c ${ATARI800_SRC_DIR}/cpu.c ${ATARI800_SRC_DIR}/mzpokeysnd.c ${ATARI800_SRC_DIR}/pokeysnd.c ${ATARI800_SRC_DIR}/remez.c
+COMMON_H = asap.h asap_internal.h config.h players.h ${ATARI800_SRC_DIR}/cpu.h ${ATARI800_SRC_DIR}/mzpokeysnd.h ${ATARI800_SRC_DIR}/pokey.h ${ATARI800_SRC_DIR}/pokeysnd.h ${ATARI800_SRC_DIR}/remez.h
+PLAYERS_OBX = players/cmc.obx players/mpt.obx players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx
 
-all: $(ASAP2WAV) asap-xmms
+all: ${ASAP2WAV} asap-xmms
 
-$(ASAP2WAV): asap2wav.c $(SRC) players.h
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) asap2wav.c $(SRC) $(LIBS)
+${ASAP2WAV}: asap2wav.c ${COMMON_C} ${COMMON_H}
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${DEFS} -I. -I${ATARI800_SRC_DIR} asap2wav.c ${COMMON_C} ${LIBS}
 
 asap-xmms: libasap.so
 
-libasap.so: xmms/libasap.c $(SRC) players.h
-	$(CC) $(CFLAGS) $(XMMS_CFLAGS) $(LDFLAGS) -shared -fPIC -o $@ $(DEFS) -I. -I$(ATARI800_SRC_DIR) xmms/libasap.c $(SRC) $(LIBS) $(XMMS_LIBS)
+libasap.so: xmms/libasap.c ${COMMON_C} ${COMMON_H}
+	${CC} ${CFLAGS} ${XMMS_CFLAGS} ${LDFLAGS} -shared -fPIC -o $@ ${DEFS} -I. -I${ATARI800_SRC_DIR} xmms/libasap.c ${COMMON_C} ${LIBS} ${XMMS_LIBS}
 
-players.h: raw2c.pl players/cmc.obx players/mpt.obx players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx
-	perl $^ >$@
+players.h: raw2c.pl ${PLAYERS_OBX}
+	perl raw2c.pl ${PLAYERS_OBX} >$@
 
 players/cmc.obx: players/cmc.asx
-	xasm -q -o $@ $<
+	${XASM} -o $@ players/cmc.asx
 
 players/mpt.obx: players/mpt.asx
-	xasm -q -o $@ $<
+	${XASM} -o $@ players/mpt.asx
 
 players/rmt4.obx: players/rmt.asx
-	xasm -q -d STEREOMODE=0 -o $@ $<
+	${XASM} -d STEREOMODE=0 -o $@ players/rmt.asx
 
 players/rmt8.obx: players/rmt.asx
-	xasm -q -d STEREOMODE=1 -o $@ $<
+	${XASM} -d STEREOMODE=1 -o $@ players/rmt.asx
 
 players/tmc.obx: players/tmc.asx
-	xasm -q -o $@ $<
+	${XASM} -o $@ players/tmc.asx
 
 players/tm2.obx: players/tm2.asx
-	xasm -q -o $@ $<
+	${XASM} -o $@ players/tm2.asx
 
 install: install-asap2wav install-xmms
 
-install-asap2wav: $(ASAP2WAV) asap2wav.1
-	$(INSTALL_PROGRAM) $(ASAP2WAV) $(bindir)/$(ASAP2WAV)
-	$(INSTALL_DATA) asap2wav.1 $(man1dir)/asap2wav.1
+install-asap2wav: ${ASAP2WAV} asap2wav.1
+	${INSTALL_PROGRAM} ${ASAP2WAV} ${bindir}/${ASAP2WAV}
+	${INSTALL_DATA} asap2wav.1 ${man1dir}/asap2wav.1
 
 uninstall-asap2wav:
-	rm $(bindir)/$(ASAP2WAV)
-	rm $(man1dir)/asap2wav.1
+	rm -f ${bindir}/${ASAP2WAV} ${man1dir}/asap2wav.1
 
 install-xmms: libasap.so
-	$(INSTALL_PROGRAM) libasap.so $(XMMS_INPUT_PLUGIN_DIR)/libasap.so
+	${INSTALL_PROGRAM} libasap.so ${XMMS_INPUT_PLUGIN_DIR}/libasap.so
 
 uninstall-xmms:
-	rm $(XMMS_INPUT_PLUGIN_DIR)/libasap.so
+	rm -f ${XMMS_INPUT_PLUGIN_DIR}/libasap.so
 
 install-user: libasap.so
-	$(INSTALL_PROGRAM) libasap.so $(XMMS_USER_PLUGIN_DIR)/libasap.so
+	${INSTALL_PROGRAM} libasap.so ${XMMS_USER_PLUGIN_DIR}/libasap.so
 
 uninstall-user:
-	rm $(XMMS_USER_PLUGIN_DIR)/libasap.so
+	rm -f ${XMMS_USER_PLUGIN_DIR}/libasap.so
 
 clean:
-	rm -f players.h $(ASAP2WAV) libasap.so
+	rm -f players.h ${ASAP2WAV} libasap.so
 
 distclean: clean
-	-rm -f Makefile config.log config.status config.h configure config.h.in
-	-rm -rf autom4te.cache
+	rm -f Makefile config.log config.status config.h configure config.h.in
+	rm -rf autom4te.cache

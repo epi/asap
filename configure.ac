@@ -2,7 +2,7 @@
 # Run "autoheader" to generate "config.h.in" from this file.
 
 AC_PREREQ(2.56)
-AC_INIT(asap, 0.2.0, fox@scene.pl)
+AC_INIT(asap, 0.2.1, fox@scene.pl)
 AC_CONFIG_SRCDIR(asap.c)
 AC_CONFIG_HEADER(config.h)
 
@@ -14,7 +14,6 @@ if [[ "X_$LDFLAGS" = "X_" ]]; then
     LDFLAGS="-s"
 fi
 AC_PROG_CC
-AC_PROG_INSTALL
 AC_C_BIGENDIAN
 AC_C_CONST
 AC_CHECK_LIB(m,cos,[LIBS="-lm $LIBS"])
