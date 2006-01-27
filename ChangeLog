@@ -1,3 +1,15 @@
+2006-01-27  Piotr Fusik  <fox@scene.pl>
+* configure.ac, Makefile.in: use ./install-sh because it can create missing
+  directories
+
+* Makefile.in: avoid $^ which is not supported by PMake ("make" on *BSD)
+
+* configure.ac, win32/Makefile, win32/wasap.rc: version 0.2.1
+
+* win32/foobar2000/foo_asap.cpp, win32/foobar2000/README, win32/Makefile:
+  foobar2000 plugin now supports subsongs
+
+
 2006-01-24  Piotr Fusik  <fox@scene.pl>
 * players/tm2.asx, asap.c, asap.h, asap2wav.c, Makefile.in, win32/wasap.c,
   win32/Makefile, win32/foobar2000/foo_asap.cpp, win32/winamp/in_asap.c,
@@ -30,7 +42,7 @@
   (binaries will be included in source distributions);
   added support for stereo RMT files
 
-* asap.h, win32/foobar2000/foo_asap.c, win32/foobar2000/README,
+* asap.h, win32/foobar2000/foo_asap.cpp, win32/foobar2000/README,
   win32/foobar2000/.cvsignore, win32/Makefile: added foobar2000 plugin
 
 
