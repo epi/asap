@@ -1,47 +1,51 @@
-VERSION = 0.2.0
+VERSION = 0.2.1
 ATARI800_SRC_DIR = ..\..\atari800\src
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
-SRC = ..\asap.c $(ATARI800_SRC_DIR)\cpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c $(ATARI800_SRC_DIR)\pokeysnd.c $(ATARI800_SRC_DIR)\remez.c
+
 CC = cl /nologo /O2 /GL /GR- /GS- /fp:fast /W3 /wd4996 /DNDEBUG
 LINKOPT = /link /release /opt:nowin98
 MKLIB = lib /nologo /ltcg /out:$@
 ASAP_CC = $(CC) /Fe$@ /DHAVE_CONFIG_H /DASAP /DSOUND /I . /I .. /I $(ATARI800_SRC_DIR)
+XASM = xasm /q
+
+COMMON_C = ..\asap.c $(ATARI800_SRC_DIR)\cpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c $(ATARI800_SRC_DIR)\pokeysnd.c $(ATARI800_SRC_DIR)\remez.c
+COMMON_H = config.h ..\asap.h ..\asap_internal.h ..\players.h $(ATARI800_SRC_DIR)\cpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h $(ATARI800_SRC_DIR)\pokey.h $(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h
 
 all: asap2wav.exe wasap.exe winamp\in_asap.dll
 
-asap2wav.exe: ..\asap2wav.c $(SRC) ..\players.h
-	$(ASAP_CC) ..\asap2wav.c $(SRC) $(LINKOPT)
+asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
+	$(ASAP_CC) ..\asap2wav.c $(COMMON_C) $(LINKOPT)
 
-wasap.exe: wasap.c $(SRC) wasap.res ..\players.h
-	$(ASAP_CC) wasap.c $(SRC) wasap.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
+wasap.exe: wasap.c $(COMMON_C) wasap.res $(COMMON_H)
+	$(ASAP_CC) wasap.c $(COMMON_C) wasap.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
 
 wasap.res: wasap.rc wasap.ico play.ico stop.ico
 	rc wasap.rc
 
-winamp\in_asap.dll: winamp\in_asap.c $(SRC) ..\players.h
-	$(ASAP_CC) /LD winamp\in_asap.c $(SRC) user32.lib $(LINKOPT)
+winamp\in_asap.dll: winamp\in_asap.c $(COMMON_C) $(COMMON_H)
+	$(ASAP_CC) /LD winamp\in_asap.c $(COMMON_C) user32.lib $(LINKOPT)
 
 ..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	perl $** >$@
 
 ..\players\cmc.obx: ..\players\cmc.asx
-	xasm $** /q /o:$@
+	$(XASM) $** /o:$@
 
 ..\players\mpt.obx: ..\players\mpt.asx
-	xasm $** /q /o:$@
+	$(XASM) $** /o:$@
 
 ..\players\rmt4.obx: ..\players\rmt.asx
-	xasm $** /q /d:STEREOMODE=0 /o:$@
+	$(XASM) $** /d:STEREOMODE=0 /o:$@
 
 ..\players\rmt8.obx: ..\players\rmt.asx
-	xasm $** /q /d:STEREOMODE=1 /o:$@
+	$(XASM) $** /d:STEREOMODE=1 /o:$@
 
 ..\players\tmc.obx: ..\players\tmc.asx
-	xasm $** /q /o:$@
+	$(XASM) $** /o:$@
 
 ..\players\tm2.obx: ..\players\tm2.asx
-	xasm $** /q /o:$@
+	$(XASM) $** /o:$@
 
 # foobar2000
 
@@ -49,10 +53,10 @@ foo: foobar2000\foo_asap.dll
 
 FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)\foobar2000\foobar2000_component_client\component_client.cpp foobar2000\pfc.lib foobar2000\utf8api.lib foobar2000\foobar2000_SDK.lib
 
-foobar2000\foo_asap.dll: foobar2000\foo_asap.cpp $(SRC) ..\players.h $(FOOBAR2000_RUNTIME)
-	$(ASAP_CC) /LD /DWIN32 /I $(FOOBAR2000_SDK_DIR) foobar2000\foo_asap.cpp $(SRC) $(FOOBAR2000_RUNTIME) $(LINKOPT)
+foobar2000\foo_asap.dll: foobar2000\foo_asap.cpp $(COMMON_C) $(COMMON_H) $(FOOBAR2000_RUNTIME)
+	$(ASAP_CC) /LD /DWIN32 /I $(FOOBAR2000_SDK_DIR) foobar2000\foo_asap.cpp $(COMMON_C) $(FOOBAR2000_RUNTIME) $(LINKOPT)
 
-foobar2000\foobar2000_SDK.lib: foobar2000\audio_chunk.obj foobar2000\console.obj foobar2000\dsp.obj foobar2000\guids.obj foobar2000\service.obj
+foobar2000\foobar2000_SDK.lib: foobar2000\audio_chunk.obj foobar2000\console.obj foobar2000\dsp.obj foobar2000\guids.obj foobar2000\reader.obj foobar2000\service.obj
 	$(MKLIB) $**
 
 {$(FOOBAR2000_SDK_DIR)\foobar2000\SDK\}.cpp{foobar2000\}.obj:
