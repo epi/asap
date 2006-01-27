@@ -6,9 +6,24 @@ Atari 8-bit music stored in several formats. To install the plugin, simply
 extract foo_asap.dll to the "components" directory of your foobar2000
 installation (normally "C:\Program Files\foobar2000").
 
-At the moment the plugin does not support multiple songs per file, seeking,
-file information, configuration nor song lengths (you need to manually switch
-between the files on the playlist).
+The plugin does support subsongs, which appear as separate items
+on the playlist. foobar2000's default title formating doesn't include subsong
+numbers however, so the subsongs look the same on the playlist.
+To fix this problem, open Foobar2000 / Preferences / Display / Title formatting
+and before the last line in the edit box insert something like this:
+$ifgreater(%_subsong%,0, - subsong $add(1,%_subsong%),)
+- this will add 1-based numbers to all subsongs except for subsong 1
+(90% of SAPs in ASMA contain just one song). More advanced title formatting
+(including total number of subsongs, AUTHOR/NAME tags, etc) will be possible
+in future versions of ASAP.
+
+The SAP file format supports definition of any of subsongs as the default
+one (the one that should be played first from this SAP file). The plugin
+puts the default subsong first on the playlist. However, by default,
+foobar2000 sorts the subsongs itself. To prevent this (if you want to),
+open Foobar2000 / Preferences / Core and clear the "Sort incoming files by"
+field (do not worry about sorting by the path since subdirectories seem to be
+traversed alphabetically anyway).
 
 This plugin is part of the ASAP project. Information about ASAP follows.
 

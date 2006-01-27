@@ -23,47 +23,35 @@
 
 #include "config.h"
 
-#include "foobar2000/SDK/componentversion.h"
-#include "foobar2000/SDK/input.h"
-
-#include "asap.h"
-
 #define FREQUENCY          44100
 #define BITS_PER_SAMPLE    16
 #define QUALITY            1
 #define BUFFERED_BLOCKS    576
+#define SUPPORT_SUBSONGS   1
 
-static unsigned int channels;
-static unsigned int buffered_bytes;
-
-static
-#if BITS_PER_SAMPLE == 8
-	unsigned char
-#else
-	short int
+#include "foobar2000/SDK/componentversion.h"
+#include "foobar2000/SDK/input.h"
+#if SUPPORT_SUBSONGS
+#include "foobar2000/SDK/playlist_loader.h"
 #endif
-	buffer[BUFFERED_BLOCKS * 2];
 
-class input_asap : public input
+#include "asap.h"
+
+#define EXT(c1, c2, c3) ((c1 + (c2 << 8) + (c3 << 16)) | 0x202020)
+
+static bool is_our_file(const char *filename)
 {
-public:
-	bool test_filename(const char *full_path, const char *extension);
-	set_info_t set_info(reader *r, const file_info *info) { return SET_INFO_FAILURE; }
-	bool open(reader *r, file_info *info, unsigned flags);
-	bool can_seek() { return false; }
-	bool seek(double seconds) { return false; }
-	int run(audio_chunk *chunk);
-};
-
-#define EXT(c1, c2, c3) (((c1 << 16) + (c2 << 8) + c3) | 0x202020)
-
-bool input_asap::test_filename(const char *full_path, const char *extension)
-{
-	int ext = 0;
-	while (*extension > ' ')
-		ext = (ext << 8) + (*extension++ & 0xff);
-	if (*extension != '\0')
-		return false;
+	const char *p;
+	int ext;
+	for (p = filename; *p != '\0'; p++);
+	ext = 0;
+	for (;;) {
+		if (--p <= filename || *p < ' ')
+			return false; /* no filename extension or invalid character */
+		if (*p == '.')
+			break;
+		ext = (ext << 8) + (*p & 0xff);
+	}
 	switch (ext | 0x202020) {
 	case EXT('C', 'M', 'C'):
 	case EXT('C', 'M', 'R'):
@@ -83,24 +71,67 @@ bool input_asap::test_filename(const char *full_path, const char *extension)
 	}
 }
 
-static bool initialized = false;
+static unsigned int channels;
+static unsigned int buffered_bytes;
 
-bool input_asap::open(reader *r, file_info *info, unsigned flags)
+static int open_asap(const char *filename, reader *r)
 {
 	::buffered_bytes = 0;
-	if (!::initialized) {
+	static bool initialized = false;
+	if (!initialized) {
 		::ASAP_Initialize(FREQUENCY,
 			BITS_PER_SAMPLE == 8 ? AUDIO_FORMAT_U8 : AUDIO_FORMAT_S16_NE,
 			QUALITY);
-		::initialized = true;
+		initialized = true;
 	}
 	static unsigned char module[65000];
-	unsigned int module_len = r->read(module, sizeof(module));
-	if (!::ASAP_Load(info->get_file_path(), module, module_len))
+	unsigned int module_len;
+#if SUPPORT_SUBSONGS
+	if (r == NULL) {
+		r = file::g_open_read(filename);
+		if (r == NULL)
+			return 0;
+		module_len = r->read(module, sizeof(module));
+		r->reader_release();
+	}
+	else
+#endif
+		module_len = r->read(module, sizeof(module));
+	return ::ASAP_Load(filename, module, module_len);
+}
+
+static
+#if BITS_PER_SAMPLE == 8
+	unsigned char
+#else
+	short int
+#endif
+	buffer[BUFFERED_BLOCKS * 2];
+
+class input_asap : public input
+{
+public:
+	bool test_filename(const char *full_path, const char *extension) { return ::is_our_file(full_path); }
+	set_info_t set_info(reader *r, const file_info *info) { return SET_INFO_FAILURE; }
+	bool open(reader *r, file_info *info, unsigned flags);
+	bool can_seek() { return false; }
+	bool seek(double seconds) { return false; }
+	int run(audio_chunk *chunk);
+};
+
+bool input_asap::open(reader *r, file_info *info, unsigned flags)
+{
+	if (!::open_asap(info->get_file_path(), r))
 		return false;
 	if ((flags & OPEN_FLAG_DECODE) == 0)
 		return true;
-	::ASAP_PlaySong(::ASAP_GetDefSong());
+	::ASAP_PlaySong(
+#if SUPPORT_SUBSONGS
+		info->get_subsong_index()
+#else
+		::ASAP_GetDefSong()
+#endif
+	);
 	::channels = ::ASAP_GetChannels();
 	::buffered_bytes = BUFFERED_BLOCKS * ::channels * (BITS_PER_SAMPLE / 8);
 	return true;
@@ -115,21 +146,65 @@ int input_asap::run(audio_chunk *chunk)
 	return 1;
 }
 
-static service_factory_t<input,input_asap> foo;
+static service_factory_single_t<input,input_asap> foo;
 
 DECLARE_COMPONENT_VERSION("ASAP", ASAP_VERSION, ASAP_CREDITS "\n" ASAP_COPYRIGHT);
 
-#define ASAP_FILE_TYPE(ext, desc) namespace asap_ ## ext { DECLARE_FILE_TYPE(desc " (*." #ext ")", "*." #ext); }
-
-ASAP_FILE_TYPE(SAP, "Slight Atari Player");
-ASAP_FILE_TYPE(CMC, "Chaos Music Composer");
-ASAP_FILE_TYPE(CMR, "Chaos Music Composer / Rzog");
-ASAP_FILE_TYPE(DMC, "DoublePlay Chaos Music Composer");
-ASAP_FILE_TYPE(MPT, "Music ProTracker");
-ASAP_FILE_TYPE(MPD, "Music ProTracker DoublePlay");
-ASAP_FILE_TYPE(RMT, "Raster Music Tracker");
-ASAP_FILE_TYPE(TMC, "Theta Music Composer 1.x 4-channel");
+static const char * const names_and_masks[][2] = {
+	{ "Slight Atari Player (*.sap)", "*.SAP" },
+	{ "Chaos Music Composer (*.cmc;*.cmr;*.dmc)", "*.CMC;*.CMR;*.DMC" },
+	{ "Music ProTracker (*.mpt;*.mpd)", "*.MPT;*.MPD" },
+	{ "Raster Music Tracker (*.rmt)", "*.RMT" },
 #ifdef STEREO_SOUND
-ASAP_FILE_TYPE(TM8, "Theta Music Composer 1.x 8-channel");
+	{ "Theta Music Composer 1.x (*.tmc;*.tm8)", "*.TMC;*.TM8" },
+#else
+	{ "Theta Music Composer 1.x (*.tmc)", "*.TMC" },
 #endif
-ASAP_FILE_TYPE(TM2, "Theta Music Composer 2.x");
+	{ "Theta Music Composer 2.x (*.tm2)", "*.TM2" }
+};
+
+#define N_FILE_TYPES (sizeof(names_and_masks) / sizeof(names_and_masks[0]))
+
+class input_file_type_asap : public service_impl_single_t<input_file_type>
+{
+public:
+	virtual unsigned get_count() { return N_FILE_TYPES; }
+	virtual bool get_name(unsigned idx, string_base &out)
+	{
+		if (idx < N_FILE_TYPES) { out = ::names_and_masks[idx][0]; return true; }
+		return false;
+	}
+	virtual bool get_mask(unsigned idx, string_base &out)
+	{
+		if (idx < N_FILE_TYPES) { out = ::names_and_masks[idx][1]; return true; }
+		return false;
+	}
+};
+
+static service_factory_single_t<input_file_type,input_file_type_asap> foo2;
+
+#if SUPPORT_SUBSONGS
+
+class indexer_asap : public track_indexer
+{
+public:
+	virtual int get_tracks(const char *filename, callback *out, reader *r)
+	{
+		if (!::is_our_file(filename))
+			return 0;
+		if (::open_asap(filename, r) == 0)
+			return 0;
+		unsigned int d = ::ASAP_GetDefSong();
+		out->on_entry(make_playable_location(filename, (int) d));
+		unsigned int n = ::ASAP_GetSongs();
+		unsigned int i;
+		for (i = 0; i < n; i++)
+			if (i != d)
+				out->on_entry(make_playable_location(filename, (int) i));
+		return 1;
+	}
+};
+
+static service_factory_single_t<track_indexer,indexer_asap> foo3;
+
+#endif /* SUPPORT_SUBSONGS */
