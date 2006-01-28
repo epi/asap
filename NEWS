@@ -1,6 +1,13 @@
 History
 -------
 
+* ASAP 0.2.1 (2006-01-28)
+
+This release supports TM2 (Theta Music Composer 2.x) file format.
+Compilation and installation on Unix-like systems have been improved.
+foobar2000 plugin supports subsongs.
+
+
 * ASAP 0.2.0 (2006-01-15)
 
 This release supports stereo and 16-bit audio output (enabled by default).
