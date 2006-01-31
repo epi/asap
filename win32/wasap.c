@@ -246,7 +246,7 @@ static void PlaySong(HWND hWnd, unsigned int n)
 static void LoadFile(HWND hWnd)
 {
 	HANDLE fh;
-	static unsigned char module[65000];
+	static unsigned char module[ASAP_MODULE_MAX];
 	DWORD module_len;
 	fh = CreateFile(strFile, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
@@ -399,10 +399,14 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 		case WM_LBUTTONDOWN:
 			SelectAndLoadFile(hWnd);
 			break;
+		case WM_MBUTTONDOWN:
+			if (songs <= 1)
+				break;
+			/* FALLTHROUGH */
 		case WM_RBUTTONDOWN:
 			GetCursorPos(&pt);
 			SetForegroundWindow(hWnd);
-			TrackPopupMenu(hTrayMenu,
+			TrackPopupMenu(lParam == WM_MBUTTONDOWN ? hSongMenu : hTrayMenu,
 				TPM_RIGHTALIGN | TPM_BOTTOMALIGN | TPM_RIGHTBUTTON,
 				pt.x, pt.y, 0, hWnd, NULL);
 			PostMessage(hWnd, WM_NULL, 0, 0);
