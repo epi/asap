@@ -1,4 +1,4 @@
-VERSION = 0.2.1
+VERSION = 0.2.2
 ATARI800_SRC_DIR = ..\..\atari800\src
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
@@ -102,7 +102,7 @@ dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\pla
 		$(ASAP_DIR)\win32\foobar2000\foo_asap.cpp $(ASAP_DIR)\win32\foobar2000\README \
 		$(ASAP_DIR)\win32\winamp\in_asap.c $(ASAP_DIR)\win32\winamp\README \
 		$(ASAP_DIR)\win32\winamp\in2.h $(ASAP_DIR)\win32\winamp\out.h \
-		$(ASAP_DIR)\xmms\libasap.c \
+		$(ASAP_DIR)\xmms\libasap.c $(ASAP_DIR)\xmms\libasap.map \
 		$(ATARI800_SRC_DIR)\cpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c \
 		$(ATARI800_SRC_DIR)\cpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h \
 		$(ATARI800_SRC_DIR)\pokey.h \
