@@ -33,7 +33,7 @@ ${ASAP2WAV}: asap2wav.c ${COMMON_C} ${COMMON_H}
 asap-xmms: libasap.so
 
 libasap.so: xmms/libasap.c ${COMMON_C} ${COMMON_H}
-	${CC} ${CFLAGS} ${XMMS_CFLAGS} ${LDFLAGS} -shared -fPIC -o $@ ${DEFS} -I. -I${ATARI800_SRC_DIR} xmms/libasap.c ${COMMON_C} ${LIBS} ${XMMS_LIBS}
+	${CC} ${CFLAGS} ${XMMS_CFLAGS} ${LDFLAGS} -shared -fPIC -Wl,--version-script=xmms/libasap.map -o $@ ${DEFS} -I. -I${ATARI800_SRC_DIR} xmms/libasap.c ${COMMON_C} ${LIBS} ${XMMS_LIBS}
 
 players.h: raw2c.pl ${PLAYERS_OBX}
 	perl raw2c.pl ${PLAYERS_OBX} >$@
