@@ -1,3 +1,19 @@
+2006-01-31  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, win32/foobar2000/foo_asap.cpp, xmms/libasap.c:
+  ASAP_IsOurFile() - as an intended side-effect, the XMMS plugin supports TM8
+
+* asap.h, asap2wav.c, win32/wasap.c, win32/winamp/in_asap.c,
+  win32/foobar2000/foo_asap.cpp, xmms/libasap.c: ASAP_MODULE_MAX
+
+* win32/wasap.c: middle-click opens subsong menu
+
+* xmms/libasap.map, Makefile.in: added linker script to strip dynamic symbols
+
+* xmms/libasap.c: use open/read/close (#define USE_STDIO to get
+  fopen/fread/fclose back); prefixed function names with "asap_" to prevent
+  collision with system pause()
+
+
 ** 0.2.1 released on 2006-01-28
 
 2006-01-27  Piotr Fusik  <fox@scene.pl>
