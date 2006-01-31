@@ -150,7 +150,7 @@ static DWORD WINAPI playThread(LPVOID dummy)
 static int play(char *fn)
 {
 	HANDLE fh;
-	static unsigned char module[65000];
+	static unsigned char module[ASAP_MODULE_MAX];
 	DWORD module_len;
 	int maxlatency;
 	DWORD threadId;

@@ -701,50 +701,75 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end)
 	return FALSE;
 }
 
-#define EXT(c1, c2, c3) ((c1 + (c2 << 8) + (c3 << 16)) | 0x202020)
+#define ASAP_EXT(c1, c2, c3) (((c1) + ((c2) << 8) + ((c3) << 16)) | 0x202020)
 
-int ASAP_Load(const char *filename, const unsigned char *module, unsigned int module_len)
+static int get_packed_ext(const char *filename)
 {
 	const char *p;
 	int ext;
 	for (p = filename; *p != '\0'; p++);
 	ext = 0;
 	for (;;) {
-		if (--p <= filename || *p < ' ')
-			return FALSE; /* no filename extension or invalid character */
+		if (--p <= filename || *p <= ' ')
+			return 0; /* no filename extension or invalid character */
 		if (*p == '.')
-			break;
+			return ext | 0x202020;
 		ext = (ext << 8) + (*p & 0xff);
 	}
+}
+
+int ASAP_IsOurFile(const char *filename)
+{
+	switch (get_packed_ext(filename)) {
+	case ASAP_EXT('C', 'M', 'C'):
+	case ASAP_EXT('C', 'M', 'R'):
+	case ASAP_EXT('D', 'M', 'C'):
+	case ASAP_EXT('M', 'P', 'D'):
+	case ASAP_EXT('M', 'P', 'T'):
+	case ASAP_EXT('R', 'M', 'T'):
+	case ASAP_EXT('S', 'A', 'P'):
+	case ASAP_EXT('T', 'M', '2'):
+#ifdef STEREO_SOUND
+	case ASAP_EXT('T', 'M', '8'):
+#endif
+	case ASAP_EXT('T', 'M', 'C'):
+		return TRUE;
+	default:
+		return FALSE;
+	}
+}
+
+int ASAP_Load(const char *filename, const unsigned char *module, unsigned int module_len)
+{
 	sap_stereo = 0;
 	sap_songs = 1;
 	sap_defsong = 0;
 	sap_fastplay = 312;
-	switch (ext | 0x202020) {
-	case EXT('C', 'M', 'C'):
+	switch (get_packed_ext(filename)) {
+	case ASAP_EXT('C', 'M', 'C'):
 		return load_cmc(module, module_len, FALSE);
-	case EXT('C', 'M', 'R'):
+	case ASAP_EXT('C', 'M', 'R'):
 		return load_cmc(module, module_len, TRUE);
-	case EXT('D', 'M', 'C'):
+	case ASAP_EXT('D', 'M', 'C'):
 		sap_fastplay = 156;
 		return load_cmc(module, module_len, FALSE);
-	case EXT('M', 'P', 'D'):
+	case ASAP_EXT('M', 'P', 'D'):
 		sap_fastplay = 156;
 		return load_mpt(module, module_len);
-	case EXT('M', 'P', 'T'):
+	case ASAP_EXT('M', 'P', 'T'):
 		return load_mpt(module, module_len);
-	case EXT('R', 'M', 'T'):
+	case ASAP_EXT('R', 'M', 'T'):
 		return load_rmt(module, module_len);
-	case EXT('S', 'A', 'P'):
+	case ASAP_EXT('S', 'A', 'P'):
 		return load_sap(module, module + module_len);
-	case EXT('T', 'M', '2'):
+	case ASAP_EXT('T', 'M', '2'):
 		return load_tm2(module, module_len);
 #ifdef STEREO_SOUND
-	case EXT('T', 'M', '8'):
+	case ASAP_EXT('T', 'M', '8'):
 		sap_stereo = 1;
 		return load_tmc(module, module_len);
 #endif
-	case EXT('T', 'M', 'C'):
+	case ASAP_EXT('T', 'M', 'C'):
 		return load_tmc(module, module_len);
 	default:
 		return FALSE;

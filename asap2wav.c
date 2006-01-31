@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 		}
 		else {
 			FILE *fp;
-			static unsigned char module[65000];
+			static unsigned char module[ASAP_MODULE_MAX];
 			unsigned int module_len;
 			unsigned int channels;
 			unsigned int block_size;

@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 /* ASAP version. */
-#define ASAP_VERSION "0.2.1"
+#define ASAP_VERSION "0.2.2"
 
 /* Short ASAP credits.
    If you are porting ASAP then display your name, too. */
@@ -61,23 +61,30 @@ extern "C" {
 #define AUDIO_FORMAT_S16_NE  AUDIO_FORMAT_S16_LE
 #endif
 
+/* Maximum length of a supported input file.
+   You can assume that files longer than this are not supported by ASAP. */
+#define ASAP_MODULE_MAX  65000
+
+/* Checks whether the extension of the passed filename is known to ASAP.
+   Does no file operations. You can call this function anytime. */
+int ASAP_IsOurFile(const char *filename);
+
 /* Initializes ASAP.
    "frequency" is sample rate in Hz (for example 44100).
    "audio_format" is the format of generated samples (see values above).
    "quality" 0 means Ron Fries' pokeysnd,
    1..3 mean Michael Borisov's mzpokeysnd with different filters.
-   You must call this function before any other ASAP function. */
+   You must call this function before any of the following functions. */
 void ASAP_Initialize(unsigned int frequency, unsigned int audio_format,
                      unsigned int quality);
 
-/* Loads a module.
-   "filename" is required to detect file format by the filename extension.
-   You can pass a fake filename, but the extension must match the format
-   of "module".
+/* Loads a module into ASAP.
+   "filename" determines the file format.
    "module" is the data (the contents of the file).
-   ASAP uses "filename" and "module" only inside this function.
    "module_len" is the number of data bytes.
-   Returns non-zero on success.
+   ASAP does not make copies of the passed pointers. You can overwrite
+   or free the memory once this function returns.
+   ASAP_Load() returns non-zero on success.
    If zero is returned, you must not call any of the following functions. */
 int ASAP_Load(const char *filename, const unsigned char *module,
               unsigned int module_len);
