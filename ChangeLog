@@ -1,3 +1,9 @@
+2006-04-13  Piotr Fusik  <fox@scene.pl>
+* TODO: updated
+
+* win32/Makefile: distribute TODO with binary releases
+
+
 2006-01-31  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, win32/foobar2000/foo_asap.cpp, xmms/libasap.c:
   ASAP_IsOurFile() - as an intended side-effect, the XMMS plugin supports TM8

@@ -11,6 +11,7 @@ XASM = xasm /q
 
 COMMON_C = ..\asap.c $(ATARI800_SRC_DIR)\cpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c $(ATARI800_SRC_DIR)\pokeysnd.c $(ATARI800_SRC_DIR)\remez.c
 COMMON_H = config.h ..\asap.h ..\asap_internal.h ..\players.h $(ATARI800_SRC_DIR)\cpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h $(ATARI800_SRC_DIR)\pokey.h $(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h
+COMMON_DOC = ..\README + ..\CREDITS + ..\TODO + ..\NEWS
 
 all: asap2wav.exe wasap.exe winamp\in_asap.dll
 
@@ -119,15 +120,15 @@ dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\pla
 		| 7z a -tgzip -si -mx=9 ..\..\asap-$(VERSION).tar.gz
 	copy ..\COPYING copying.txt
 	7z a -tzip -mx=9 ..\..\asap2wav-$(VERSION)-win32.zip asap2wav.exe asap2wav.txt copying.txt
-	copy /b README + ..\README + ..\CREDITS + ..\NEWS readme.txt
+	copy /b README + $(COMMON_DOC) readme.txt
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip wasap.exe readme.txt copying.txt
 	copy ..\COPYING winamp\copying.txt
-	copy /b winamp\README + ..\README + ..\CREDITS + ..\NEWS winamp\in_asap.txt
+	copy /b winamp\README + $(COMMON_DOC) winamp\in_asap.txt
 	cd winamp
 	7z a -tzip -mx=9 ..\..\..\asap-$(VERSION)-winamp.zip in_asap.dll in_asap.txt copying.txt
 	cd ..
 	copy ..\COPYING foobar2000\copying.txt
-	copy /b foobar2000\README + ..\README + ..\CREDITS + ..\NEWS foobar2000\foo_asap.txt
+	copy /b foobar2000\README + $(COMMON_DOC) foobar2000\foo_asap.txt
 	cd foobar2000
 	7z a -tzip -mx=9 ..\..\..\asap-$(VERSION)-foobar2000.zip foo_asap.dll foo_asap.txt copying.txt
 	cd ..
