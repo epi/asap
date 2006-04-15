@@ -30,9 +30,9 @@
 
 #define APP_TITLE        "WASAP"
 #define WND_CLASS_NAME   "WASAP"
-#define FREQUENCY        44100
 #define BUFFERED_BLOCKS  4096
 
+static unsigned int frequency = 44100;
 static unsigned int use_16bit = 1;
 static unsigned int quality = 1;
 
@@ -259,7 +259,7 @@ static void LoadFile(HWND hWnd)
 	CloseHandle(fh);
 	WaveOut_Close();
 	if (ASAP_Load(strFile, module, (unsigned int) module_len)) {
-		if (!WaveOut_Open(FREQUENCY, use_16bit, ASAP_GetChannels())) {
+		if (!WaveOut_Open(frequency, use_16bit, ASAP_GetChannels())) {
 			SetSongs(0);
 			Tray_Modify(hWnd, hStopIcon);
 			MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
@@ -325,7 +325,7 @@ static void SelectAndLoadFile(HWND hWnd)
 	opening = FALSE;
 }
 
-static void SetQuality(HWND hWnd, unsigned int new_16bit, unsigned int new_quality)
+static void ApplyQuality(HWND hWnd)
 {
 	int reopen = FALSE;
 	if (songs > 0) {
@@ -334,13 +334,13 @@ static void SetQuality(HWND hWnd, unsigned int new_16bit, unsigned int new_quali
 		Tray_Modify(hWnd, hStopIcon);
 		reopen = TRUE;
 	}
+	CheckMenuRadioItem(hQualityMenu, IDM_44100_HZ, IDM_48000_HZ,
+		frequency == 44100 ? IDM_44100_HZ : IDM_48000_HZ, MF_BYCOMMAND);
 	CheckMenuRadioItem(hQualityMenu, IDM_8BIT, IDM_16BIT,
-		IDM_8BIT + new_16bit, MF_BYCOMMAND);
+		IDM_8BIT + use_16bit, MF_BYCOMMAND);
 	CheckMenuRadioItem(hQualityMenu, IDM_QUALITY_RF, IDM_QUALITY_MB3,
-		IDM_QUALITY_RF + new_quality, MF_BYCOMMAND);
-	ASAP_Initialize(FREQUENCY, new_16bit, new_quality);
-	use_16bit = new_16bit;
-	quality = new_quality;
+		IDM_QUALITY_RF + quality, MF_BYCOMMAND);
+	ASAP_Initialize(frequency, use_16bit ? AUDIO_FORMAT_S16_LE : AUDIO_FORMAT_U8, quality);
 	if (reopen)
 		LoadFile(hWnd);
 }
@@ -380,10 +380,18 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 				WaveOut_Stop();
 				PlaySong(hWnd, idc - IDM_SONG1);
 			}
-			else if (idc >= IDM_QUALITY_RF && idc <= IDM_QUALITY_MB3)
-				SetQuality(hWnd, use_16bit, idc - IDM_QUALITY_RF);
-			else if (idc >= IDM_8BIT && idc <= IDM_16BIT)
-				SetQuality(hWnd, idc - IDM_8BIT, quality);
+			else if (idc >= IDM_QUALITY_RF && idc <= IDM_QUALITY_MB3) {
+				quality = idc - IDM_QUALITY_RF;
+				ApplyQuality(hWnd);
+			}
+			else if (idc >= IDM_44100_HZ && idc <= IDM_48000_HZ) {
+				frequency = idc == IDM_44100_HZ ? 44100 : 48000;
+				ApplyQuality(hWnd);
+			}
+			else if (idc >= IDM_8BIT && idc <= IDM_16BIT) {
+				use_16bit = idc - IDM_8BIT;
+				ApplyQuality(hWnd);
+			}
 			break;
 		}
 		break;
@@ -503,7 +511,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	hQualityMenu = GetSubMenu(hTrayMenu, 3);
 	SetMenuDefaultItem(hTrayMenu, 0, TRUE);
 	Tray_Add(hWnd, hStopIcon);
-	SetQuality(hWnd, use_16bit, quality);
+	ApplyQuality(hWnd);
 	if (*pb != '\0') {
 		memcpy(strFile, pb, pe + 1 - pb);
 		LoadFile(hWnd);

@@ -1,3 +1,8 @@
+2006-04-15  Piotr Fusik  <fox@scene.pl>
+* win32/wasap.c, win32/wasap.rc, win32/resource.h: sample rate selection
+  (44100 Hz or 48000 Hz)
+
+
 2006-04-13  Piotr Fusik  <fox@scene.pl>
 * TODO: updated
 
