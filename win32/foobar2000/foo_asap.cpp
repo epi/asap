@@ -27,91 +27,83 @@
 #define BITS_PER_SAMPLE    16
 #define QUALITY            1
 #define BUFFERED_BLOCKS    576
-#define SUPPORT_SUBSONGS   1
 
-#include "foobar2000/SDK/componentversion.h"
-#include "foobar2000/SDK/input.h"
-#if SUPPORT_SUBSONGS
-#include "foobar2000/SDK/playlist_loader.h"
-#endif
+#include "foobar2000/SDK/foobar2000.h"
 
 #include "asap.h"
 
 static unsigned int channels;
 static unsigned int buffered_bytes;
 
-static int open_asap(const char *filename, reader *r)
+class input_asap
 {
-	::buffered_bytes = 0;
-	static bool initialized = false;
-	if (!initialized) {
-		::ASAP_Initialize(FREQUENCY,
-			BITS_PER_SAMPLE == 8 ? AUDIO_FORMAT_U8 : AUDIO_FORMAT_S16_NE,
-			QUALITY);
-		initialized = true;
-	}
-	static unsigned char module[ASAP_MODULE_MAX];
-	unsigned int module_len;
-#if SUPPORT_SUBSONGS
-	if (r == NULL) {
-		r = file::g_open_read(filename);
-		if (r == NULL)
-			return 0;
-		module_len = r->read(module, sizeof(module));
-		r->reader_release();
-	}
-	else
-#endif
-		module_len = r->read(module, sizeof(module));
-	return ::ASAP_Load(filename, module, module_len);
-}
+	service_ptr_t<file> m_file;
 
-class input_asap : public input
-{
 public:
 
-	virtual bool test_filename(const char *full_path, const char *extension)
+	static bool g_is_our_content_type(const char *p_content_type)
 	{
-		return ::ASAP_IsOurFile(full_path) ? true : false;
+		return false;
 	}
 
-	virtual set_info_t set_info(reader *r, const file_info *info)
+	static bool g_is_our_path(const char *p_path, const char *p_extension)
 	{
-		return SET_INFO_FAILURE;
+		return ::ASAP_IsOurFile(p_path) != 0;
 	}
 
-	virtual bool open(reader *r, file_info *info, unsigned flags)
+	void open(service_ptr_t<file> p_filehint, const char *p_path, t_input_open_reason p_reason, abort_callback &p_abort)
 	{
-		if (!::open_asap(info->get_file_path(), r))
-			return false;
-		if ((flags & OPEN_FLAG_DECODE) == 0)
-			return true;
-		::ASAP_PlaySong(
-#if SUPPORT_SUBSONGS
-			info->get_subsong_index()
-#else
-			::ASAP_GetDefSong()
-#endif
-		);
+		if (p_reason != input_open_info_read && p_reason != input_open_decode)
+			throw exception_io_unsupported_format();
+		if (p_filehint.is_empty())
+			filesystem::g_open(p_filehint, p_path, filesystem::open_mode_read, p_abort);
+		m_file = p_filehint;
+		::buffered_bytes = 0;
+		static bool initialized = false;
+		if (!initialized) {
+			::ASAP_Initialize(FREQUENCY,
+				BITS_PER_SAMPLE == 8 ? AUDIO_FORMAT_U8 : AUDIO_FORMAT_S16_NE,
+				QUALITY);
+			initialized = true;
+		}
+		static unsigned char module[ASAP_MODULE_MAX];
+		unsigned int module_len;
+		module_len = m_file->read(module, sizeof(module), p_abort);
+		if (!::ASAP_Load(p_path, module, module_len))
+			throw exception_io_unsupported_format();
 		::channels = ::ASAP_GetChannels();
+	}
+
+	t_uint32 get_subsong_count()
+	{
+		return ::ASAP_GetSongs();
+	}
+
+	t_uint32 get_subsong(t_uint32 p_index)
+	{
+		return p_index;
+	}
+
+	void get_info(t_uint32 p_subsong, file_info &p_info, abort_callback &p_abort)
+	{
+		p_info.info_set_int("channels", ::channels);
+	}
+
+	t_filestats get_file_stats(abort_callback &p_abort)
+	{
+		return m_file->get_stats(p_abort);
+	}
+
+	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort)
+	{
+		::ASAP_PlaySong(p_subsong);
 		::buffered_bytes = BUFFERED_BLOCKS * ::channels * (BITS_PER_SAMPLE / 8);
-		return true;
 	}
 
-	virtual bool can_seek()
-	{
-		return false;
-	}
-
-	virtual bool seek(double seconds)
-	{
-		return false;
-	}
-
-	virtual int run(audio_chunk *chunk)
+	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort)
 	{
 		if (::buffered_bytes == 0)
-			return 0;
+			return false;
 		static
 #if BITS_PER_SAMPLE == 8
 			unsigned char
@@ -121,13 +113,47 @@ public:
 			buffer[BUFFERED_BLOCKS * 2];
 
 		::ASAP_Generate(buffer, ::buffered_bytes);
-		chunk->set_data_fixedpoint(buffer, ::buffered_bytes, FREQUENCY,
-		                           ::channels, BITS_PER_SAMPLE);
-		return 1;
+		p_chunk.set_data_fixedpoint(buffer, ::buffered_bytes, FREQUENCY,
+		                            ::channels, BITS_PER_SAMPLE,
+		                            ::channels == 2 ? audio_chunk::channel_config_stereo
+		                                            : audio_chunk::channel_config_mono);
+		return true;
+	}
+
+	void decode_seek(double p_seconds, abort_callback& p_abort)
+	{
+	}
+
+	bool decode_can_seek()
+	{
+		return false;
+	}
+
+	bool decode_get_dynamic_info(file_info &p_out, double &p_timestamp_delta)
+	{
+		return false;
+	}
+
+	bool decode_get_dynamic_info_track(file_info &p_out, double &p_timestamp_delta)
+	{
+		return false;
+	}
+
+	void decode_on_idle(abort_callback &p_abort)
+	{
+		m_file->on_idle(p_abort); // TODO
+	}
+
+	void retag_set_info(t_uint32 p_subsong, const file_info &p_info, abort_callback &p_abort)
+	{
+	}
+
+	void retag_commit(abort_callback &p_abort)
+	{
 	}
 };
 
-static service_factory_single_t<input,input_asap> foo;
+static input_factory_t<input_asap> g_input_asap_factory;
 
 DECLARE_COMPONENT_VERSION("ASAP", ASAP_VERSION, ASAP_CREDITS "\n" ASAP_COPYRIGHT);
 
@@ -155,7 +181,7 @@ public:
 		return N_FILE_TYPES;
 	}
 
-	virtual bool get_name(unsigned idx, string_base &out)
+	virtual bool get_name(unsigned idx, pfc::string_base &out)
 	{
 		if (idx < N_FILE_TYPES) {
 			out = ::names_and_masks[idx][0];
@@ -164,7 +190,7 @@ public:
 		return false;
 	}
 
-	virtual bool get_mask(unsigned idx, string_base &out)
+	virtual bool get_mask(unsigned idx, pfc::string_base &out)
 	{
 		if (idx < N_FILE_TYPES) {
 			out = ::names_and_masks[idx][1];
@@ -172,33 +198,11 @@ public:
 		}
 		return false;
 	}
-};
 
-static service_factory_single_t<input_file_type,input_file_type_asap> foo2;
-
-#if SUPPORT_SUBSONGS
-
-class track_indexer_asap : public track_indexer
-{
-public:
-
-	virtual int get_tracks(const char *filename, callback *out, reader *r)
+	virtual bool is_associatable(unsigned idx)
 	{
-		if (!::ASAP_IsOurFile(filename))
-			return 0;
-		if (::open_asap(filename, r) == 0)
-			return 0;
-		unsigned int d = ::ASAP_GetDefSong();
-		out->on_entry(make_playable_location(filename, (int) d));
-		unsigned int n = ::ASAP_GetSongs();
-		unsigned int i;
-		for (i = 0; i < n; i++)
-			if (i != d)
-				out->on_entry(make_playable_location(filename, (int) i));
-		return 1;
+		return true;
 	}
 };
 
-static service_factory_single_t<track_indexer,track_indexer_asap> foo3;
-
-#endif /* SUPPORT_SUBSONGS */
+static service_factory_single_t<input_file_type_asap> g_input_file_type_asap_factory;

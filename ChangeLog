@@ -1,3 +1,8 @@
+2006-04-17  Piotr Fusik  <fox@scene.pl>
+* win32/foobar2000/foo_asap.cpp, win32/Makefile, win32/foobar2000/README,
+  INSTALL: upgraded to foobar2000 0.9
+
+
 2006-04-15  Piotr Fusik  <fox@scene.pl>
 * win32/wasap.c, win32/wasap.rc, win32/resource.h: sample rate selection
   (44100 Hz or 48000 Hz)

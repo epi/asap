@@ -8,7 +8,7 @@ emulation of the POKEY sound chip and the 6502 processor.
 This release includes the following programs that use the ASAP engine:
 * ASAP2WAV - portable command-line utility that generates WAV files
 * WASAP - tiny player for Windows
-* plugin for foobar2000 0.8
+* plugin for foobar2000 0.9
 * plugin for Winamp
 * plugin for XMMS
 

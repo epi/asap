@@ -100,44 +100,10 @@ Building the foobar2000 plugin on Windows
 -----------------------------------------
 
 You need the Windows compilation prerequisites (see above)
-and foobar2000 0.8 SDK - extract it to a new directory called
+and foobar2000 0.9 SDK - extract it to a new directory called
 "foobar2000_SDK" under the directory that contains "asap" and "atari800".
 
-The following changes are needed to compile foobar2000_SDK\pfc
-with Visual C++ 2005 Express:
-
---- string.h.original	Sun Feb  1 22:33:04 2004
-+++ string.h	Sat Jan 14 15:01:59 2006
-@@ -2,7 +2,6 @@
- #define _PFC_STRING_H_
-
- #ifndef WCHAR
--typedef unsigned short WCHAR;
- #endif
-
- bool is_path_separator(unsigned c);
-@@ -473,7 +472,7 @@
- 	inline const T * operator = (const string_simple_t<T> & param) {set_string(param);return get_ptr();}
- 	inline const T * operator += (const T * src) {add_string(src);return get_ptr();}
-
--	inline string_simple(const string_simple_t<T> & param) {ptr = t_strdup(param);}
-+	inline string_simple_t(const string_simple_t<T> & param) {ptr = t_strdup(param);}
- 	inline void reset() {if (ptr) {mem_ops<T>::free(ptr);ptr=0;}}
- 	inline bool is_empty() {return !ptr || !*ptr;}
- 	inline unsigned length() {return t_strlen(get_ptr());}
---- string.cpp.original	Thu Mar 18 15:13:40 2004
-+++ string.cpp	Sat Jan 14 15:03:27 2006
-@@ -475,7 +475,7 @@
- 	char temp[64];
- 	if (val<0) {*(out++) = '-'; val = -val;}
- 	else if (b_sign) {*(out++) = '+';}
--	_i64toa((__int64)(val * pow(10,precision)),temp,10);
-+	_i64toa((__int64)(val * pow(10.0,(double) precision)),temp,10);
- 	unsigned len = strlen(temp);
- 	if (len <= precision)
- 	{
-
-Now from the command prompt navigate to the "win32" directory and run:
+From the command prompt navigate to the "win32" directory and run:
 nmake foo
 
 This will produce foobar2000\foo_asap.dll.

@@ -52,25 +52,22 @@ winamp\in_asap.dll: winamp\in_asap.c $(COMMON_C) $(COMMON_H)
 
 foo: foobar2000\foo_asap.dll
 
-FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)\foobar2000\foobar2000_component_client\component_client.cpp foobar2000\pfc.lib foobar2000\utf8api.lib foobar2000\foobar2000_SDK.lib
+FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)\foobar2000\foobar2000_component_client\component_client.cpp foobar2000\foobar2000_SDK.lib foobar2000\pfc.lib $(FOOBAR2000_SDK_DIR)\foobar2000\shared\shared.lib
 
 foobar2000\foo_asap.dll: foobar2000\foo_asap.cpp $(COMMON_C) $(COMMON_H) $(FOOBAR2000_RUNTIME)
-	$(ASAP_CC) /LD /DWIN32 /I $(FOOBAR2000_SDK_DIR) foobar2000\foo_asap.cpp $(COMMON_C) $(FOOBAR2000_RUNTIME) $(LINKOPT)
+	$(ASAP_CC) /LD /DWIN32 /DUNICODE /EHsc /I $(FOOBAR2000_SDK_DIR) foobar2000\foo_asap.cpp $(COMMON_C) $(FOOBAR2000_RUNTIME) $(LINKOPT)
 
-foobar2000\foobar2000_SDK.lib: foobar2000\audio_chunk.obj foobar2000\console.obj foobar2000\dsp.obj foobar2000\guids.obj foobar2000\reader.obj foobar2000\service.obj
+foobar2000\foobar2000_SDK.lib: foobar2000\abort_callback.obj foobar2000\audio_chunk.obj foobar2000\audio_chunk_channel_config.obj foobar2000\file_info.obj foobar2000\filesystem.obj foobar2000\guids.obj foobar2000\replaygain_info.obj foobar2000\service.obj
 	$(MKLIB) $**
 
 {$(FOOBAR2000_SDK_DIR)\foobar2000\SDK\}.cpp{foobar2000\}.obj:
-	$(CC) /c /Fo$@ /DWIN32 /I $(FOOBAR2000_SDK_DIR) $**
+	$(CC) /c /Fo$@ /DWIN32 /DUNICODE /EHsc /I $(FOOBAR2000_SDK_DIR) $**
 
-foobar2000\utf8api.lib: $(FOOBAR2000_SDK_DIR)\foobar2000\utf8api\text_drawing.cpp $(FOOBAR2000_SDK_DIR)\foobar2000\utf8api\utf8.cpp $(FOOBAR2000_SDK_DIR)\foobar2000\utf8api\utf8api.cpp foobar2000\pfc.lib
-	$(CC) /LD /Fefoobar2000\utf8api.dll /DUTF8API_EXPORTS /DWIN32 $** advapi32.lib comctl32.lib comdlg32.lib gdi32.lib shell32.lib user32.lib
-
-foobar2000\pfc.lib: foobar2000\byte_order_helper.obj foobar2000\cfg_var.obj foobar2000\mem_block.obj foobar2000\string.obj foobar2000\utf8.obj
+foobar2000\pfc.lib: foobar2000\cfg_var.obj foobar2000\other.obj foobar2000\string.obj foobar2000\string_conv.obj foobar2000\utf8.obj
 	$(MKLIB) $**
 
 {$(FOOBAR2000_SDK_DIR)\pfc\}.cpp{foobar2000\}.obj:
-	$(CC) /c /Fo$@ /DWIN32 $**
+	$(CC) /c /Fo$@ /DWIN32 /DUNICODE /EHsc $**
 
 # delete generated files
 
