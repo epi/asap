@@ -29,10 +29,13 @@ extern "C" {
 #endif
 
 /* ASAP version. */
-#define ASAP_VERSION "0.2.2"
+#define ASAP_VERSION_MAJOR   0
+#define ASAP_VERSION_MINOR   2
+#define ASAP_VERSION_MICRO   2
+#define ASAP_VERSION         "0.2.2"
 
-/* Short ASAP credits.
-   If you are porting ASAP then display your name, too. */
+/* Short credits of the ASAP engine. */
+#define ASAP_YEARS           "2005-2006"
 #define ASAP_CREDITS \
    "Another Slight Atari Player (C) 2005-2006 Piotr Fusik\n" \
    "6502 and POKEY sound emulation (C) 1995-2006 Atari800 development team\n" \
@@ -63,7 +66,7 @@ extern "C" {
 
 /* Maximum length of a supported input file.
    You can assume that files longer than this are not supported by ASAP. */
-#define ASAP_MODULE_MAX  65000
+#define ASAP_MODULE_MAX      65000
 
 /* Checks whether the extension of the passed filename is known to ASAP.
    Does no file operations. You can call this function anytime. */
