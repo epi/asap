@@ -16,8 +16,8 @@ the subdirectories "asap" and "atari800" after the checkouts).
 Using a command-line CVS client:
 mkdir asap-cvs
 cd asap-cvs
-cvs -z9 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/asap co -P asap
-cvs -z9 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/atari800 co -P atari800
+cvs -z9 -d:pserver:anonymous@asap.cvs.sourceforge.net:/cvsroot/asap co -P asap
+cvs -z9 -d:pserver:anonymous@atari800.cvs.sourceforge.net:/cvsroot/atari800 co -P atari800
 You also need to install xasm (http://xasm.atari.org) to a directory on your PATH.
 
 
