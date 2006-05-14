@@ -1,3 +1,11 @@
+2006-05-14  Piotr Fusik  <fox@scene.pl>
+* asap.h, win32/wasap.rc: wasap.rc now takes version numbers from asap.h
+
+* INSTALL: sf.net switched to per-project CVS server addresses
+
+* TODO: updated
+
+
 2006-04-17  Piotr Fusik  <fox@scene.pl>
 * win32/foobar2000/foo_asap.cpp, win32/Makefile, win32/foobar2000/README,
   INSTALL: upgraded to foobar2000 0.9
@@ -16,7 +24,7 @@
 
 2006-01-31  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, win32/foobar2000/foo_asap.cpp, xmms/libasap.c:
-  ASAP_IsOurFile() - as an intended side-effect, the XMMS plugin supports TM8
+  added ASAP_IsOurFile(); the XMMS plugin now supports TM8
 
 * asap.h, asap2wav.c, win32/wasap.c, win32/winamp/in_asap.c,
   win32/foobar2000/foo_asap.cpp, xmms/libasap.c: ASAP_MODULE_MAX
