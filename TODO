@@ -3,7 +3,7 @@ Things to be done in future versions
 
 * new POKEY engine
 
-* TYPE D SAPs
+* SAP TYPEs: D, S, R
 
 * mute user-selected POKEY channels
 
@@ -11,25 +11,20 @@ Things to be done in future versions
 
 * POKEY timer interrupts
 
-* TYPE S SAPs
-
-* NEO input format
-
 * auto-detect song length in native formats
 
 * display song name, author, date, ...
 
-* extend the SAP format with new tags: TIME and STIL-like
+* extend the SAP format with new tags: QUAD, POKEYS, TIME and STIL-like
 
 * foobar2000, winamp, xmms: configuration
 
-* MD1 and MD2 input formats (MPT with samples)
-
 * winamp, xmms: subsongs
 
-* input formats: Benjy Soundmonitor, Advanced Music System, Delta Composer,
-  Future Composer, Sound Tracker, Antic Music Processor, Black Music Composer,
-  Collen Music Creator, Music Studio, Soft Synth, ...
+* input formats: MD1, MD2, Benjy Soundmonitor, Advanced Music System,
+  Delta Composer, Future Composer, Sound Tracker, Antic Music Processor,
+  Black Music Composer, Collen Music Creator, Music Studio, Soft Synth,
+  NEO, MD8, ...
 
 * seeking within the currently played song
 
