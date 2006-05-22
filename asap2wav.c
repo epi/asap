@@ -28,6 +28,43 @@
 
 #include "asap.h"
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+static int no_input_files = TRUE;
+
+static void print_help(void)
+{
+	printf(
+		"Usage: asap2wav [OPTIONS] INPUTFILE...\n"
+		"Each INPUTFILE must be in a supported format:\n"
+#ifdef STEREO_SOUND
+		"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC, TM8 or TM2.\n"
+#else
+		"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC or TM2.\n"
+#endif
+		"Options:\n"
+		"-o FILE     --output=FILE      Set output WAV file name\n"
+		"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
+		"-t TIME     --time=TIME        Set output length MM:SS (default: 03:00)\n"
+		"-r FREQ     --rate=FREQ        Set sample rate in Hz (default: 44100)\n"
+		"-q QUALITY  --quality=QUALITY  Set sound quality 0-3 (default: 1)\n"
+		"-b          --byte-samples     Output 8-bit samples\n"
+		"-w          --word-samples     Output 16-bit samples (default)\n"
+		"-h          --help             Display this information\n"
+		"-v          --version          Display version information\n"
+	);
+}
+
+static void print_version(void)
+{
+	printf("ASAP2WAV " ASAP_VERSION "\n");
+}
+
 static void print_error(const char *format, ...)
 {
 	va_list args;
@@ -55,7 +92,7 @@ static int set_dec(const char *s, unsigned int *result, const char *name,
                    unsigned int minval, unsigned int maxval)
 {
 	unsigned int newval = 0;
-	while (*s != '\0') {
+	do {
 		if (*s < '0' || *s > '9') {
 			print_error("%s must be an integer", name);
 			return 1;
@@ -65,7 +102,7 @@ static int set_dec(const char *s, unsigned int *result, const char *name,
 			print_error("maximum %s is %u", name, maxval);
 			return 1;
 		}
-	}
+	} while (*s != '\0');
 	if (newval < minval) {
 		print_error("minimum %s is %u", name, minval);
 		return 1;
@@ -115,6 +152,16 @@ static int set_time(const char *s)
 	return set_dec(s, &seconds, "time", 1, 3599);
 }
 
+static void set_byte_samples(void)
+{
+	use_16bit = 0;
+}
+
+static void set_word_samples(void)
+{
+	use_16bit = 1;
+}
+
 /* write 16-bit word as little endian */
 static void fput16(unsigned int x, FILE *fp)
 {
@@ -131,81 +178,65 @@ static void fput32(unsigned int x, FILE *fp)
 	fputc((x >> 24) & 0xff, fp);
 }
 
+typedef struct {
+	const char *name;
+	void (*void_func)(void);
+	int (*arg_func)(const char *s);
+} command_line_option;
+
 int main(int argc, char *argv[])
 {
-	static const struct {
-		const char name[9];
-		int (*func)(const char *s);
-	} param_opts[] = {
-		{ "output=", set_output },
-		{ "song=", set_song },
-		{ "quality=", set_quality },
-		{ "time=", set_time },
-		{ "rate=", set_frequency }
-	};
 	int i;
-	int files_processed = 0;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (arg[0] == '-') {
-			int j;
-			for (j = 0; j < sizeof(param_opts) / sizeof(param_opts[0]); j++) {
-				if (arg[1] == param_opts[j].name[0] && arg[2] == '\0') {
-					if (++i >= argc) {
-						print_error("missing argument for '-%c'", arg[1]);
-						return 1;
+			static const command_line_option opts[] = {
+				{ "output=", NULL, set_output },
+				{ "song=", NULL, set_song },
+				{ "time=", NULL, set_time },
+				{ "rate=", NULL, set_frequency },
+				{ "quality=", NULL, set_quality },
+				{ "byte-samples", set_byte_samples, NULL },
+				{ "word-samples", set_word_samples, NULL },
+				{ "help", print_help, NULL },
+				{ "version", print_version, NULL }
+			};
+			const command_line_option *p = opts;
+			for (;;) {
+				if (arg[1] == p->name[0] && arg[2] == '\0') {
+					if (p->void_func != NULL)
+						p->void_func();
+					else {
+						if (++i >= argc) {
+							print_error("missing argument for '-%c'", arg[1]);
+							return 1;
+						}
+						if (p->arg_func(argv[i]))
+							return 1;
 					}
-					if (param_opts[j].func(argv[i]))
-						return 1;
 					break;
 				}
 				if (arg[1] == '-') {
-					size_t len = strlen(param_opts[j].name);
-					if (strncmp(arg + 2, param_opts[j].name, len) == 0) {
-						if (param_opts[j].func(arg + 2 + len))
-							return 1;
-						break;
+					if (p->void_func != NULL) {
+						if (strcmp(arg + 2, p->name) == 0) {
+							p->void_func();
+							break;
+						}
+					}
+					else {
+						size_t len = strlen(p->name);
+						if (strncmp(arg + 2, p->name, len) == 0) {
+							if (p->arg_func(arg + 2 + len))
+								return 1;
+							break;
+						}
 					}
 				}
+				if (++p >= opts + sizeof(opts)) {
+					print_error("unknown option: %s", arg);
+					return 1;
+				}
 			}
-			if (j < sizeof(param_opts) / sizeof(param_opts[0]))
-				continue;
-			if (strcmp(arg, "-b") == 0 || strcmp(arg, "--byte-samples") == 0) {
-				use_16bit = 0;
-				continue;
-			}
-			if (strcmp(arg, "-w") == 0 || strcmp(arg, "--word-samples") == 0) {
-				use_16bit = 1;
-				continue;
-			}
-			if (strcmp(arg, "-h") == 0 || strcmp(arg, "--help") == 0) {
-				printf(
-					"Usage: asap2wav [OPTIONS] INPUTFILE...\n"
-					"Each INPUTFILE must be in a supported format:\n"
-#ifdef STEREO_SOUND
-					"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC, TM8 or TM2.\n"
-#else
-					"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC or TM2.\n"
-#endif
-					"Options:\n"
-					"-o FILE     --output=FILE      Set output WAV file name\n"
-					"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
-					"-t TIME     --time=TIME        Set output length MM:SS (default: 03:00)\n"
-					"-r FREQ     --rate=FREQ        Set sample rate in Hz (default: 44100)\n"
-					"-q QUALITY  --quality=QUALITY  Set sound quality 0-3 (default: 1)\n"
-					"-b          --byte-samples     Output 8-bit samples\n"
-					"-w          --word-samples     Output 16-bit samples (default)\n"
-					"-h          --help             Display this information and exit\n"
-					"-v          --version          Display version information and exit\n"
-				);
-				return 0;
-			}
-			if (strcmp(arg, "-v") == 0 || strcmp(arg, "--version") == 0) {
-				printf("ASAP2WAV " ASAP_VERSION "\n");
-				return 0;
-			}
-			print_error("unknown option: %s", arg);
-			return 1;
 		}
 		else {
 			FILE *fp;
@@ -283,10 +314,10 @@ int main(int argc, char *argv[])
 			fwrite(buffer, 1, n_bytes, fp);
 			fclose(fp);
 			output_file = NULL;
-			files_processed++;
+			no_input_files = FALSE;
 		}
 	}
-	if (files_processed == 0) {
+	if (no_input_files) {
 		print_error("no input files; try: asap2wav --help");
 		return 1;
 	}

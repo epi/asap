@@ -559,107 +559,114 @@ static int load_tm2(const unsigned char *module, unsigned int module_len)
 	return TRUE;
 }
 
-static int tag_matches(const char *tag, const UBYTE *sap_ptr, const UBYTE *sap_end)
+static int tag_matches(const char *tag, const UBYTE **ps, const UBYTE *pe)
 {
+	const UBYTE *p = *ps;
 	size_t len = strlen(tag);
-	return (sap_ptr + len + 8 < sap_end) && memcmp(tag, sap_ptr, len) == 0;
+	if ((p + len + 8 < pe) && memcmp(tag, p, len) == 0) {
+		*ps = p + len;
+		return TRUE;
+	}
+	else
+		return FALSE;
 }
 
-static int parse_hex(const UBYTE **ps, UWORD *retval)
+static int parse_hex(UWORD *retval, const UBYTE **ps, const UBYTE *pe)
 {
-	int chars = 0;
-	*retval = 0;
-	while (**ps != 0x0d) {
+	const UBYTE *p = *ps;
+	int r = 0;
+	do {
 		char c;
-		if (++chars > 4)
+		c = (char) *p;
+		if (r > 0xfff)
 			return FALSE;
-		c = (char) *(*ps)++;
-		*retval <<= 4;
+		r <<= 4;
 		if (c >= '0' && c <= '9')
-			*retval += c - '0';
+			r += c - '0';
 		else if (c >= 'A' && c <= 'F')
-			*retval += c - 'A' + 10;
+			r += c - 'A' + 10;
 		else if (c >= 'a' && c <= 'f')
-			*retval += c - 'a' + 10;
+			r += c - 'a' + 10;
 		else
 			return FALSE;
-	}
-	return chars != 0;
+		if (++p >= pe)
+			return FALSE;
+	} while (*p != 0x0d);
+	*ps = p;
+	*retval = (UWORD) r;
+	return TRUE;
 }
 
-static int parse_dec(const UBYTE **ps, unsigned int *retval)
+static int parse_dec(unsigned int *retval, const UBYTE **ps, const UBYTE *pe,
+                     unsigned int minval, unsigned int maxval)
 {
-	int chars = 0;
-	*retval = 0;
-	while (**ps != 0x0d) {
+	const UBYTE *p = *ps;
+	unsigned int r = 0;
+	do {
 		char c;
-		if (++chars > 3)
-			return FALSE;
-		c = (char) *(*ps)++;
-		*retval *= 10;
+		c = (char) *p;
 		if (c >= '0' && c <= '9')
-			*retval += c - '0';
+			r = 10 * r + c - '0';
 		else
 			return FALSE;
-	}
-	return chars != 0;
+		if (r > maxval || ++p >= pe)
+			return FALSE;
+	} while (*p != 0x0d);
+	if (r < minval)
+		return FALSE;
+	*ps = p;
+	*retval = r;
+	return TRUE;
 }
 
 static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end)
 {
-	if (!tag_matches("SAP", sap_ptr, sap_end))
+	if (!tag_matches("SAP", &sap_ptr, sap_end))
 		return FALSE;
 	sap_type = '?';
 	sap_player = 0xffff;
 	sap_music = 0xffff;
 	sap_init = 0xffff;
-	sap_ptr += 3;
 	for (;;) {
 		if (sap_ptr + 8 >= sap_end || sap_ptr[0] != 0x0d || sap_ptr[1] != 0x0a)
 			return FALSE;
 		sap_ptr += 2;
 		if (sap_ptr[0] == 0xff)
 			break;
-		if (tag_matches("TYPE ", sap_ptr, sap_end)) {
-			sap_ptr += 5;
+		if (tag_matches("TYPE ", &sap_ptr, sap_end)) {
 			sap_type = *sap_ptr++;
 		}
-		else if (tag_matches("PLAYER ", sap_ptr, sap_end)) {
-			sap_ptr += 7;
-			if (!parse_hex(&sap_ptr, &sap_player))
+		else if (tag_matches("PLAYER ", &sap_ptr, sap_end)) {
+			if (!parse_hex(&sap_player, &sap_ptr, sap_end))
 				return FALSE;
 		}
-		else if (tag_matches("MUSIC ", sap_ptr, sap_end)) {
-			sap_ptr += 6;
-			if (!parse_hex(&sap_ptr, &sap_music))
+		else if (tag_matches("MUSIC ", &sap_ptr, sap_end)) {
+			if (!parse_hex(&sap_music, &sap_ptr, sap_end))
 				return FALSE;
 		}
-		else if (tag_matches("INIT ", sap_ptr, sap_end)) {
-			sap_ptr += 5;
-			if (!parse_hex(&sap_ptr, &sap_init))
+		else if (tag_matches("INIT ", &sap_ptr, sap_end)) {
+			if (!parse_hex(&sap_init, &sap_ptr, sap_end))
 				return FALSE;
 		}
-		else if (tag_matches("SONGS ", sap_ptr, sap_end)) {
-			sap_ptr += 6;
-			if (!parse_dec(&sap_ptr, &sap_songs) || sap_songs < 1 || sap_songs > 255)
+		else if (tag_matches("SONGS ", &sap_ptr, sap_end)) {
+			if (!parse_dec(&sap_songs, &sap_ptr, sap_end, 1, 255))
 				return FALSE;
 		}
-		else if (tag_matches("DEFSONG ", sap_ptr, sap_end)) {
-			sap_ptr += 8;
-			if (!parse_dec(&sap_ptr, &sap_defsong))
+		else if (tag_matches("DEFSONG ", &sap_ptr, sap_end)) {
+			if (!parse_dec(&sap_defsong, &sap_ptr, sap_end, 0, 254))
 				return FALSE;
 		}
-		else if (tag_matches("FASTPLAY ", sap_ptr, sap_end)) {
-			sap_ptr += 9;
-			if (!parse_dec(&sap_ptr, &sap_fastplay) || sap_fastplay < 1 || sap_fastplay > 312)
+		else if (tag_matches("FASTPLAY ", &sap_ptr, sap_end)) {
+			if (!parse_dec(&sap_fastplay, &sap_ptr, sap_end, 1, 312))
 				return FALSE;
 		}
-		else if (tag_matches("STEREO", sap_ptr, sap_end))
+		else if (tag_matches("STEREO", &sap_ptr, sap_end)) {
 #ifdef STEREO_SOUND
 			sap_stereo = 1;
 #else
 			return FALSE;
 #endif
+		}
 		/* ignore unknown tags */
 		while (sap_ptr[0] != 0x0d) {
 			sap_ptr++;
