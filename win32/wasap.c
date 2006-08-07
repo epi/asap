@@ -139,30 +139,21 @@ static void WaveOut_Close(void)
 static unsigned int songs = 0;
 static unsigned int cursong = 0;
 static char strFile[MAX_PATH] = "";
-
 #define MYWM_NOTIFYICON  (WM_APP + 1)
+static NOTIFYICONDATA nid = {
+	sizeof(NOTIFYICONDATA),
+	NULL,
+	0,
+	NIF_ICON | NIF_MESSAGE | NIF_TIP,
+	MYWM_NOTIFYICON,
+	NULL,
+	APP_TITLE
+};
+static UINT taskbarCreatedMessage;
 
-static void Tray_Add(HWND hWnd, HICON hIcon)
+static void Tray_Modify(HICON hIcon)
 {
-	NOTIFYICONDATA nid;
-	nid.cbSize = sizeof(NOTIFYICONDATA);
-	nid.hWnd = hWnd;
-	nid.uID = 0;
-	nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-	nid.uCallbackMessage = MYWM_NOTIFYICON;
-	nid.hIcon = hIcon;
-	strcpy(nid.szTip, APP_TITLE);
-	Shell_NotifyIcon(NIM_ADD, &nid);
-}
-
-static void Tray_Modify(HWND hWnd, HICON hIcon)
-{
-	NOTIFYICONDATA nid;
 	char *p;
-	nid.cbSize = sizeof(NOTIFYICONDATA);
-	nid.hWnd = hWnd;
-	nid.uID = 0;
-	nid.uFlags = NIF_ICON | NIF_TIP;
 	nid.hIcon = hIcon;
 	/* we need to be careful because szTip is only 64 characters */
 	/* 8 */
@@ -199,15 +190,6 @@ static void Tray_Modify(HWND hWnd, HICON hIcon)
 	Shell_NotifyIcon(NIM_MODIFY, &nid);
 }
 
-static void Tray_Delete(HWND hWnd)
-{
-	NOTIFYICONDATA nid;
-	nid.cbSize = sizeof(NOTIFYICONDATA);
-	nid.hWnd = hWnd;
-	nid.uID = 0;
-	Shell_NotifyIcon(NIM_DELETE, &nid);
-}
-
 
 /* GUI -------------------------------------------------------------------- */
 
@@ -234,12 +216,12 @@ static void SetSongs(unsigned int new_songs)
 	}
 }
 
-static void PlaySong(HWND hWnd, unsigned int n)
+static void PlaySong(unsigned int n)
 {
 	CheckMenuRadioItem(hSongMenu, 0, songs - 1, n, MF_BYPOSITION);
 	cursong = n;
 	ASAP_PlaySong(n);
-	Tray_Modify(hWnd, hPlayIcon);
+	Tray_Modify(hPlayIcon);
 	WaveOut_Start();
 }
 
@@ -261,17 +243,17 @@ static void LoadFile(HWND hWnd)
 	if (ASAP_Load(strFile, module, (unsigned int) module_len)) {
 		if (!WaveOut_Open(frequency, use_16bit, ASAP_GetChannels())) {
 			SetSongs(0);
-			Tray_Modify(hWnd, hStopIcon);
+			Tray_Modify(hStopIcon);
 			MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
 					   MB_OK | MB_ICONERROR);
 			return;
 		}
 		SetSongs(ASAP_GetSongs());
-		PlaySong(hWnd, ASAP_GetDefSong());
+		PlaySong(ASAP_GetDefSong());
 	}
 	else {
 		SetSongs(0);
-		Tray_Modify(hWnd, hStopIcon);
+		Tray_Modify(hStopIcon);
 		MessageBox(hWnd, "Unsupported file format", APP_TITLE,
 		           MB_OK | MB_ICONERROR);
 	}
@@ -331,7 +313,7 @@ static void ApplyQuality(HWND hWnd)
 	if (songs > 0) {
 		WaveOut_Stop();
 		SetSongs(0);
-		Tray_Modify(hWnd, hStopIcon);
+		Tray_Modify(hStopIcon);
 		reopen = TRUE;
 	}
 	CheckMenuRadioItem(hQualityMenu, IDM_44100_HZ, IDM_48000_HZ,
@@ -362,7 +344,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			break;
 		case IDM_STOP:
 			WaveOut_Stop();
-			Tray_Modify(hWnd, hStopIcon);
+			Tray_Modify(hStopIcon);
 			break;
 		case IDM_ABOUT:
 			MessageBox(hWnd,
@@ -378,7 +360,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 		default:
 			if (idc >= IDM_SONG1 && idc < IDM_SONG1 + songs) {
 				WaveOut_Stop();
-				PlaySong(hWnd, idc - IDM_SONG1);
+				PlaySong(idc - IDM_SONG1);
 			}
 			else if (idc >= IDM_QUALITY_RF && idc <= IDM_QUALITY_MB3) {
 				quality = idc - IDM_QUALITY_RF;
@@ -431,6 +413,8 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 		}
 		break;
 	default:
+		if (msg == taskbarCreatedMessage)
+			Shell_NotifyIcon(NIM_ADD, &nid);
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 	return 0;
@@ -510,7 +494,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	           (UINT_PTR) hSongMenu, "So&ng");
 	hQualityMenu = GetSubMenu(hTrayMenu, 3);
 	SetMenuDefaultItem(hTrayMenu, 0, TRUE);
-	Tray_Add(hWnd, hStopIcon);
+	nid.hWnd = hWnd;
+	nid.hIcon = hStopIcon;
+	Shell_NotifyIcon(NIM_ADD, &nid);
+	taskbarCreatedMessage = RegisterWindowMessage("TaskbarCreated");
 	ApplyQuality(hWnd);
 	if (*pb != '\0') {
 		memcpy(strFile, pb, pe + 1 - pb);
@@ -523,7 +510,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		DispatchMessage(&msg);
 	}
 	WaveOut_Close();
-	Tray_Delete(hWnd);
+	Shell_NotifyIcon(NIM_DELETE, &nid);
 	DestroyMenu(hMainMenu);
 	return 0;
 }
