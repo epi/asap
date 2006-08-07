@@ -1,3 +1,7 @@
+2006-08-07  Piotr Fusik  <fox@scene.pl>
+* win32/wasap.c: restore tray icon after Explorer restart
+
+
 2006-05-22  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap2wav.c: minor code improvements
 
