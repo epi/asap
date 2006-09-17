@@ -1,3 +1,7 @@
+2006-09-17  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile, win32/wasap.rc, win32/foobar2000/foo_asap.cpp: slight clean-up
+
+
 2006-08-07  Piotr Fusik  <fox@scene.pl>
 * win32/wasap.c: restore tray icon after Explorer restart
 
