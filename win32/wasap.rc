@@ -1,9 +1,9 @@
 #include "../asap.h"
 #include "resource.h"
 
-IDI_APP ICON DISCARDABLE "wasap.ico"
-IDI_STOP ICON DISCARDABLE "stop.ico"
-IDI_PLAY ICON DISCARDABLE "play.ico"
+IDI_APP ICON "wasap.ico"
+IDI_STOP ICON "stop.ico"
+IDI_PLAY ICON "play.ico"
 
 IDR_TRAYMENU MENU
 {
