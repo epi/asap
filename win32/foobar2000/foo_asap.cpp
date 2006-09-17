@@ -141,7 +141,7 @@ public:
 
 	void decode_on_idle(abort_callback &p_abort)
 	{
-		m_file->on_idle(p_abort); // TODO
+		m_file->on_idle(p_abort);
 	}
 
 	void retag_set_info(t_uint32 p_subsong, const file_info &p_info, abort_callback &p_abort)
