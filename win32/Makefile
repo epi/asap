@@ -21,7 +21,7 @@ asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
 wasap.exe: wasap.c $(COMMON_C) wasap.res $(COMMON_H)
 	$(ASAP_CC) wasap.c $(COMMON_C) wasap.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
 
-wasap.res: wasap.rc wasap.ico play.ico stop.ico
+wasap.res: wasap.rc ..\asap.h resource.h wasap.ico play.ico stop.ico
 	rc wasap.rc
 
 winamp\in_asap.dll: winamp\in_asap.c $(COMMON_C) $(COMMON_H)
