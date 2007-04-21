@@ -1,7 +1,7 @@
 /*
  * in_asap.c - ASAP plugin for Winamp
  *
- * Copyright (C) 2005-2006  Piotr Fusik
+ * Copyright (C) 2005-2007  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,20 +26,14 @@
 #include <string.h>
 
 #include "in2.h"
+#define WM_WA_MPEG_EOF       (WM_USER + 2)
 
 #include "asap.h"
+#include "settings.h"
 
-#define FREQUENCY          44100
-#define BITS_PER_SAMPLE    16
-#define QUALITY            1
-// This is a magic size for Winamp, better do not modify it
-#define BUFFERED_BLOCKS    576
 // Winamp's equalizer works only with 16-bit samples and sounds awfully,
 // probably because of the DC offset of the generated sound
-#define SUPPORT_EQUALIZER  0
-
-static unsigned int channels;
-static unsigned int buffered_bytes;
+#define SUPPORT_EQUALIZER    0
 
 #if 0
 
@@ -59,14 +53,71 @@ static In_Module mod;
 static char current_filename[MAX_PATH] = "";
 
 static HANDLE thread_handle = NULL;
-
 static volatile int thread_run = FALSE;
 
 static int paused = 0;
 
+static unsigned int channels;
+
+static volatile int song_length = -1;
+static unsigned int blocks_played;
+
+static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg) {
+	case WM_INITDIALOG:
+		if (song_length < 0) {
+			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_UNLIMITED);
+			SetDlgItemInt(hDlg, IDC_LIMIT, DEFAULT_SONG_LENGTH, FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_LIMIT), FALSE);
+		}
+		else {
+			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_LIMITED);
+			SetDlgItemInt(hDlg, IDC_LIMIT, (UINT) song_length, FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_LIMIT), TRUE);
+		}
+		return TRUE;
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED) {
+			WORD wCtrl = LOWORD(wParam);
+			switch (wCtrl) {
+			case IDC_UNLIMITED:
+			case IDC_LIMITED:
+				CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, wCtrl);
+				EnableWindow(GetDlgItem(hDlg, IDC_LIMIT), wCtrl == IDC_LIMITED);
+				if (wCtrl == IDC_LIMITED) {
+					HWND hLimit = GetDlgItem(hDlg, IDC_LIMIT);
+					SetFocus(hLimit);
+					SendMessage(hLimit, EM_SETSEL, 0, -1);
+				}
+				return TRUE;
+			case IDOK:
+				if (IsDlgButtonChecked(hDlg, IDC_UNLIMITED) == BST_CHECKED)
+					song_length = -1;
+				else {
+					UINT limit = GetDlgItemInt(hDlg, IDC_LIMIT, NULL, FALSE);
+					if (limit == 0U) {
+						MessageBox(hDlg, "Invalid number of seconds", "Error", MB_OK | MB_ICONERROR);
+						return TRUE;
+					}
+					song_length = (int) limit;
+				}
+				// FALLTHROUGH
+			case IDCANCEL:
+				EndDialog(hDlg, wCtrl);
+				return TRUE;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	return FALSE;
+}
+
 static void config(HWND hwndParent)
 {
-	// TODO
+	DialogBox(mod.hDllInstance, MAKEINTRESOURCE(IDD_SETTINGS), hwndParent, settingsDialogProc);
 }
 
 static void about(HWND hwndParent)
@@ -95,7 +146,7 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 		strcpy(title, dirsep != NULL ? dirsep + 1 : file);
 	}
 	if (length_in_ms != NULL)
-		*length_in_ms = -1000;
+		*length_in_ms = song_length * 1000;
 }
 
 static int infoBox(char *file, HWND hwndParent)
@@ -112,6 +163,25 @@ static int isOurFile(char *fn)
 static DWORD WINAPI playThread(LPVOID dummy)
 {
 	while (thread_run) {
+		int blocks_to_play;
+		unsigned int buffered_bytes;
+		if (song_length < 0)
+			blocks_to_play = BUFFERED_BLOCKS;
+		else {
+			blocks_to_play = song_length * FREQUENCY - blocks_played;
+			if (blocks_to_play <= 0) {
+				mod.outMod->CanWrite();
+				if (!mod.outMod->IsPlaying()) {
+					PostMessage(mod.hMainWindow, WM_WA_MPEG_EOF, 0, 0);
+					return 0;
+				}
+				Sleep(10);
+				continue;
+			}
+			if (blocks_to_play > BUFFERED_BLOCKS)
+				blocks_to_play = BUFFERED_BLOCKS;
+		}
+		buffered_bytes = (unsigned int) blocks_to_play * channels * (BITS_PER_SAMPLE / 8);
 		if (mod.outMod->CanWrite() >= (int) buffered_bytes
 #if SUPPORT_EQUALIZER
 			<< mod.dsp_isactive()
@@ -134,12 +204,13 @@ static DWORD WINAPI playThread(LPVOID dummy)
 			mod.SAAddPCMData(buffer, channels, BITS_PER_SAMPLE, t);
 			mod.VSAAddPCMData(buffer, channels, BITS_PER_SAMPLE, t);
 #if SUPPORT_EQUALIZER
-			t = mod.dsp_dosamples((short int *) buffer, BUFFERED_BLOCKS,
+			t = mod.dsp_dosamples((short int *) buffer, blocks_to_play,
 				BITS_PER_SAMPLE, channels, FREQUENCY) * channels * (BITS_PER_SAMPLE / 8);
 			mod.outMod->Write((char *) buffer, t);
 #else
 			mod.outMod->Write((char *) buffer, buffered_bytes);
 #endif
+			blocks_played += blocks_to_play;
 		}
 		else
 			Sleep(20);
@@ -168,7 +239,6 @@ static int play(char *fn)
 		return 1;
 	ASAP_PlaySong(ASAP_GetDefSong());
 	channels = ASAP_GetChannels();
-	buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
 	maxlatency = mod.outMod->Open(FREQUENCY, channels, BITS_PER_SAMPLE, -1, -1);
 	if (maxlatency < 0)
 		return 1;
@@ -178,6 +248,7 @@ static int play(char *fn)
 	// http://forums.winamp.com/showthread.php?postid=1841035
 	mod.VSASetInfo(FREQUENCY, channels);
 	mod.outMod->SetVolume(-666);
+	blocks_played = 0;
 	thread_run = TRUE;
 	thread_handle = CreateThread(NULL, 0, playThread, NULL, 0, &threadId);
 	return thread_handle != NULL ? 0 : 1;
@@ -216,7 +287,7 @@ static void stop(void)
 
 static int getLength(void)
 {
-	return -1000;
+	return song_length * 1000;
 }
 
 static int getOutputTime(void)

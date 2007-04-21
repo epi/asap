@@ -1,7 +1,7 @@
 /*
- * foo_asap.cpp - ASAP plugin for foobar2000
+ * foo_asap.cpp - ASAP plugin for foobar2000 0.9.x
  *
- * Copyright (C) 2006  Piotr Fusik
+ * Copyright (C) 2006-2007  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,17 +23,111 @@
 
 #include "config.h"
 
-#define FREQUENCY          44100
-#define BITS_PER_SAMPLE    16
-#define QUALITY            1
-#define BUFFERED_BLOCKS    576
-
 #include "foobar2000/SDK/foobar2000.h"
 
 #include "asap.h"
+#include "settings.h"
+
+
+/* Configuration --------------------------------------------------------- */
+
+static const GUID song_length_guid =
+	{ 0x810e12f0, 0xa695, 0x42d2, { 0xab, 0xc0, 0x14, 0x1e, 0xe5, 0xf3, 0xb3, 0xb7 } };
+static cfg_int song_length(song_length_guid, -1);
+
+static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	WORD wCtrl;
+	switch (uMsg) {
+	case WM_INITDIALOG:
+		if (song_length.get_value() < 0) {
+			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_UNLIMITED);
+			SetDlgItemInt(hDlg, IDC_LIMIT, DEFAULT_SONG_LENGTH, FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_LIMIT), FALSE);
+		}
+		else {
+			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_LIMITED);
+			SetDlgItemInt(hDlg, IDC_LIMIT, (UINT) song_length, FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_LIMIT), TRUE);
+		}
+		return TRUE;
+	case WM_COMMAND:
+		wCtrl = LOWORD(wParam);
+		switch (wCtrl) {
+		case IDC_UNLIMITED:
+		case IDC_LIMITED:
+			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, wCtrl);
+			EnableWindow(GetDlgItem(hDlg, IDC_LIMIT), wCtrl == IDC_LIMITED);
+			if (wCtrl == IDC_UNLIMITED)
+				song_length = -1;
+			else {
+				HWND hLimit = GetDlgItem(hDlg, IDC_LIMIT);
+				SetFocus(hLimit);
+				SendMessage(hLimit, EM_SETSEL, 0, -1);
+				UINT limit = GetDlgItemInt(hDlg, IDC_LIMIT, NULL, FALSE);
+				if (limit != 0U)
+					song_length = (int) limit;
+			}
+			return TRUE;
+		case IDC_LIMIT:
+			if (HIWORD(wParam) == EN_CHANGE && IsDlgButtonChecked(hDlg, IDC_LIMITED) == BST_CHECKED) {
+				UINT limit = GetDlgItemInt(hDlg, IDC_LIMIT, NULL, FALSE);
+				if (limit != 0U)
+					song_length = (int) limit;
+			}
+			return TRUE;
+		default:
+			break;
+		}
+	default:
+		break;
+	}
+	return FALSE;
+}
+
+class preferences_page_asap : public preferences_page
+{
+public:
+	virtual HWND create(HWND parent)
+	{
+		return CreateDialog(core_api::get_my_instance(), MAKEINTRESOURCE(IDD_SETTINGS), parent, ::settings_dialog_proc);
+	}
+
+	virtual const char *get_name()
+	{
+		return "ASAP";
+	}
+
+	virtual GUID get_guid()
+	{
+		static const GUID a_guid =
+			{ 0xf7c0a763, 0x7c20, 0x4b64, { 0x92, 0xbf, 0x11, 0xe5, 0x5d, 0x8, 0xe5, 0x53 } };
+		return a_guid;
+	}
+
+	virtual GUID get_parent_guid()
+	{
+		return guid_input;
+	}
+
+	virtual bool reset_query()
+	{
+		return true;
+	}
+
+	virtual void reset()
+	{
+		song_length = -1;
+	}
+};
+
+static service_factory_single_t<preferences_page_asap> g_preferences_page_asap_factory;
+
+
+/* Decoding -------------------------------------------------------------- */
 
 static unsigned int channels;
-static unsigned int buffered_bytes;
+static unsigned int blocks_played;
 
 class input_asap
 {
@@ -58,7 +152,6 @@ public:
 		if (p_filehint.is_empty())
 			filesystem::g_open(p_filehint, p_path, filesystem::open_mode_read, p_abort);
 		m_file = p_filehint;
-		::buffered_bytes = 0;
 		static bool initialized = false;
 		if (!initialized) {
 			::ASAP_Initialize(FREQUENCY,
@@ -86,6 +179,9 @@ public:
 
 	void get_info(t_uint32 p_subsong, file_info &p_info, abort_callback &p_abort)
 	{
+		int length = song_length.get_value();
+		if (length > 0)
+			p_info.set_length(length);
 		p_info.info_set_int("channels", ::channels);
 	}
 
@@ -97,13 +193,24 @@ public:
 	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort)
 	{
 		::ASAP_PlaySong(p_subsong);
-		::buffered_bytes = BUFFERED_BLOCKS * ::channels * (BITS_PER_SAMPLE / 8);
+		::blocks_played = 0;
 	}
 
 	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort)
 	{
-		if (::buffered_bytes == 0)
-			return false;
+		int length = ::song_length.get_value();
+		int blocks_to_play;
+		unsigned int buffered_bytes;
+		if (length < 0)
+			blocks_to_play = BUFFERED_BLOCKS;
+		else {
+			blocks_to_play = length * FREQUENCY - ::blocks_played;
+			if (blocks_to_play <= 0)
+				return false;
+			if (blocks_to_play > BUFFERED_BLOCKS)
+				blocks_to_play = BUFFERED_BLOCKS;
+		}
+		buffered_bytes = (unsigned int) blocks_to_play * ::channels * (BITS_PER_SAMPLE / 8);
 		static
 #if BITS_PER_SAMPLE == 8
 			unsigned char
@@ -112,11 +219,12 @@ public:
 #endif
 			buffer[BUFFERED_BLOCKS * 2];
 
-		::ASAP_Generate(buffer, ::buffered_bytes);
-		p_chunk.set_data_fixedpoint(buffer, ::buffered_bytes, FREQUENCY,
+		::ASAP_Generate(buffer, buffered_bytes);
+		p_chunk.set_data_fixedpoint(buffer, buffered_bytes, FREQUENCY,
 		                            ::channels, BITS_PER_SAMPLE,
 		                            ::channels == 2 ? audio_chunk::channel_config_stereo
 		                                            : audio_chunk::channel_config_mono);
+		::blocks_played += blocks_to_play;
 		return true;
 	}
 
@@ -155,7 +263,8 @@ public:
 
 static input_factory_t<input_asap> g_input_asap_factory;
 
-DECLARE_COMPONENT_VERSION("ASAP", ASAP_VERSION, ASAP_CREDITS "\n" ASAP_COPYRIGHT);
+
+/* File types ------------------------------------------------------------ */
 
 static const char * const names_and_masks[][2] = {
 	{ "Slight Atari Player (*.sap)", "*.SAP" },
@@ -206,3 +315,5 @@ public:
 };
 
 static service_factory_single_t<input_file_type_asap> g_input_file_type_asap_factory;
+
+DECLARE_COMPONENT_VERSION("ASAP", ASAP_VERSION, ASAP_CREDITS "\n" ASAP_COPYRIGHT);
