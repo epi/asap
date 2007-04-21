@@ -11,15 +11,15 @@ Things to be done in future versions
 
 * POKEY timer interrupts
 
-* auto-detect song length in native formats
-
 * display song name, author, date, ...
 
-* extend the SAP format with new tags: QUAD, POKEYS, TIME and STIL-like
+* support the TIME tag in the SAP format
 
-* foobar2000, winamp, xmms: configuration
+* auto-detect song length in native formats
 
-* winamp, xmms: subsongs
+* foobar2000, Winamp, XMMS: configuration
+
+* Winamp, XMMS: subsongs
 
 * input formats: MD1, MD2, Benjy Soundmonitor, Advanced Music System,
   Delta Composer, Future Composer, Sound Tracker, Antic Music Processor,
