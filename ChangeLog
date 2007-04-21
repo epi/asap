@@ -1,3 +1,14 @@
+2007-04-21  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile, win32/wasap/wasap.c, win32/wasap/wasap.rc,
+  win32/wasap/resource.h, win32/wasap/wasap.ico, win32/wasap/play.ico,
+  win32/wasap/stop.ico, win32/wasap/README, win32/wasap/.cvsignore:
+  moved WASAP-specific files to a separate directory
+
+* win32/Makefile, win32/settings.rc, win32/settings.h, win32/winamp/in_asap.c,
+  win32/foobar2000/foo_asap.cpp: song time limit setting for Winamp
+  and foobar2000 plugins
+
+
 2006-09-17  Piotr Fusik  <fox@scene.pl>
 * win32/Makefile, win32/wasap.rc, win32/foobar2000/foo_asap.cpp: slight clean-up
 
