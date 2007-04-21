@@ -834,7 +834,6 @@ void ASAP_PlaySong(unsigned int song)
 		regA = (UBYTE) song;
 		regX = 0x00;
 		regY = 0x00;
-		/* 5 frames should be enough */
 		call_6502(sap_init, SCANLINES_FOR_INIT);
 		break;
 	case 'C':
