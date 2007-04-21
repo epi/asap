@@ -35,9 +35,9 @@ extern "C" {
 #define ASAP_VERSION         "0.2.2"
 
 /* Short credits of the ASAP engine. */
-#define ASAP_YEARS           "2005-2006"
+#define ASAP_YEARS           "2005-2007"
 #define ASAP_CREDITS \
-   "Another Slight Atari Player (C) 2005-2006 Piotr Fusik\n" \
+   "Another Slight Atari Player (C) 2005-2007 Piotr Fusik\n" \
    "6502 and POKEY sound emulation (C) 1995-2006 Atari800 development team\n" \
    "CMC, MPT, TMC players (C) 1994-2005 Marcin Lewandowski\n" \
    "RMT player (C) 2002-2005 Radek Sterba\n"
