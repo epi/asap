@@ -107,7 +107,7 @@ dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\pla
 		$(ASAP_DIR)\COPYING $(ASAP_DIR)\CREDITS $(ASAP_DIR)\INSTALL \
 		$(ASAP_DIR)\NEWS $(ASAP_DIR)\README $(ASAP_DIR)\TODO \
 		$(ASAP_DIR)\win32\config.h $(ASAP_DIR)\win32\Makefile \
-		$(ASAP_DIR)\win32\settings.h $(ASAP_DIR)\win32\winamp\settings.rc \
+		$(ASAP_DIR)\win32\settings.h $(ASAP_DIR)\win32\settings.rc \
 		$(ASAP_DIR)\win32\wasap\wasap.c $(ASAP_DIR)\win32\wasap\README \
 		$(ASAP_DIR)\win32\wasap\resource.h $(ASAP_DIR)\win32\wasap\wasap.rc \
 		$(ASAP_DIR)\win32\foobar2000\foo_asap.cpp $(ASAP_DIR)\win32\foobar2000\README \
@@ -130,9 +130,10 @@ dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\pla
 		| 7z a -tgzip -si -mx=9 ..\..\asap-$(VERSION).tar.gz
 	copy ..\COPYING copying.txt
 	7z a -tzip -mx=9 ..\..\asap2wav-$(VERSION)-win32.zip asap2wav.exe asap2wav.txt copying.txt
-	copy /b README + $(COMMON_DOC) wasap\wasap.txt
+	copy ..\COPYING wasap\copying.txt
+	copy /b wasap\README + $(COMMON_DOC) wasap\readme.txt
 	cd wasap
-	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip wasap.exe wasap.txt copying.txt
+	7z a -tzip -mx=9 ..\..\..\asap-$(VERSION)-win32.zip wasap.exe readme.txt copying.txt
 	cd ..
 	copy ..\COPYING winamp\copying.txt
 	copy /b winamp\README + $(COMMON_DOC) winamp\in_asap.txt
@@ -145,6 +146,6 @@ dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\pla
 	7z a -tzip -mx=9 ..\..\..\asap-$(VERSION)-foobar2000.zip foo_asap.dll foo_asap.txt copying.txt
 	cd ..
 	del copying.txt
-	del wasap\copying.txt;wasap\wasap.txt
+	del wasap\copying.txt;wasap\readme.txt
 	del winamp\copying.txt;winamp\in_asap.txt
 	del foobar2000\copying.txt;foobar2000\foo_asap.txt
