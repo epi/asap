@@ -1,3 +1,8 @@
+2007-04-24  Piotr Fusik  <fox@scene.pl>
+* gsplayer/gspasap.c, gsplayer/mapplugin.h, win32/Makefile:
+  plugin for GSPlayer, doesn't work yet for an unknown reason
+
+
 2007-04-21  Piotr Fusik  <fox@scene.pl>
 * win32/Makefile, win32/wasap/wasap.c, win32/wasap/wasap.rc,
   win32/wasap/resource.h, win32/wasap/wasap.ico, win32/wasap/play.ico,

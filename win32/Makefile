@@ -14,7 +14,7 @@ COMMON_C = ..\asap.c $(ATARI800_SRC_DIR)\cpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c 
 COMMON_H = config.h ..\asap.h ..\asap_internal.h ..\players.h $(ATARI800_SRC_DIR)\cpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h $(ATARI800_SRC_DIR)\pokey.h $(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h
 COMMON_DOC = ..\README + ..\CREDITS + ..\TODO + ..\NEWS
 
-all: asap2wav.exe wasap\wasap.exe winamp\in_asap.dll
+all: asap2wav.exe wasap\wasap.exe winamp\in_asap.dll gspasap.dll
 
 asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_CC) ..\asap2wav.c $(COMMON_C) $(LINKOPT)
@@ -80,6 +80,11 @@ foobar2000\pfc.lib: foobar2000\cfg_var.obj foobar2000\guid.obj foobar2000\other.
 foobar2000\foo_asap.res: settings.rc ..\asap.h settings.h
 	$(RC) /D FOOBAR2000 settings.rc
 
+# GSPlayer
+
+gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C)
+	$(ASAP_CC) /LD ..\gsplayer\gspasap.c $(COMMON_C) $(LINKOPT)
+
 # delete generated files
 
 clean:
@@ -106,6 +111,7 @@ dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\pla
 		$(ASAP_DIR)\config.h.in $(ASAP_DIR)\ChangeLog \
 		$(ASAP_DIR)\COPYING $(ASAP_DIR)\CREDITS $(ASAP_DIR)\INSTALL \
 		$(ASAP_DIR)\NEWS $(ASAP_DIR)\README $(ASAP_DIR)\TODO \
+		$(ASAP_DIR)\gsplayer\gspasap.c $(ASAP_DIR)\gsplayer\mapplugin.h \
 		$(ASAP_DIR)\win32\config.h $(ASAP_DIR)\win32\Makefile \
 		$(ASAP_DIR)\win32\settings.h $(ASAP_DIR)\win32\settings.rc \
 		$(ASAP_DIR)\win32\wasap\wasap.c $(ASAP_DIR)\win32\wasap\README \
