@@ -1,3 +1,19 @@
+2007-04-27  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, asap2wav.c, win32/Makefile, win32/settings.rc,
+  win32/settings.h, win32/wasap/wasap.c, win32/wasap/wasap.rc,
+  win32/wasap/resource.h, win32/winamp/in_asap.c, win32/foobar2000/foo_asap.c,
+  gsplayer/gspasap.c, xmms/libasap.c, TODO:
+  recognize AUTHOR, NAME, DATE, TIME tags in SAP files;
+  major refactoring of the API
+
+* asap2wav.c: removed the "no input files" message
+
+* asapscan.c, asap.c, win32/Makefile: asapscan is a command-line utility
+  that automatically detects the values that should be specified in TIME tags
+
+* config.guess, config.sub: updated
+
+
 2007-04-24  Piotr Fusik  <fox@scene.pl>
 * gsplayer/gspasap.c, gsplayer/mapplugin.h, win32/Makefile:
   plugin for GSPlayer, doesn't work yet for an unknown reason
