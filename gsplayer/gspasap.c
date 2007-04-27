@@ -1,3 +1,26 @@
+/*
+ * gspasap.c - ASAP plugin for GSPlayer
+ *
+ * Copyright (C) 2007  Piotr Fusik
+ *
+ * This file is part of ASAP (Another Slight Atari Player),
+ * see http://asap.sourceforge.net
+ *
+ * ASAP is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * ASAP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ASAP; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #include "config.h"
 #include <windows.h>
 #include <tchar.h>
@@ -88,6 +111,8 @@ static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 	HANDLE fh;
 	static unsigned char module[ASAP_MODULE_MAX];
 	DWORD module_len;
+	const ASAP_ModuleInfo *module_info;
+	int duration;
 #ifdef _UNICODE
 	char szFile[MAX_PATH];
 	if (WideCharToMultiByte(CP_ACP, 0, pszFile, -1, szFile, MAX_PATH, NULL, NULL) <= 0)
@@ -103,18 +128,17 @@ static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 	}
 	CloseHandle(fh);
 #ifdef _UNICODE
-	if (!ASAP_Load(szFile, module, (unsigned int) module_len))
-		return FALSE;
+	module_info = ASAP_Load(szFile, module, module_len);
 #else
-	if (!ASAP_Load(pszFile, module, (unsigned int) module_len))
-		return FALSE;
+	module_info = ASAP_Load(pszFile, module, module_len);
 #endif
-	pInfo->nChannels = ASAP_GetChannels();
+	pInfo->nChannels = module_info->channels;
 	pInfo->nSampleRate = FREQUENCY;
 	pInfo->nBitsPerSample = BITS_PER_SAMPLE;
 	pInfo->nAvgBitrate = 8;
-	pInfo->nDuration = 0;
-	ASAP_PlaySong(ASAP_GetDefSong());
+	duration = module_info->durations[module_info->default_song];
+	pInfo->nDuration = duration * 1000;
+	ASAP_PlaySong(module_info->default_song, duration);
 	return TRUE;
 }
 
@@ -130,8 +154,8 @@ static BOOL WINAPI asapStartDecodeFile()
 
 static int WINAPI asapDecodeFile(WAVEHDR *pHdr)
 {
-	ASAP_Generate(pHdr->lpData, pHdr->dwBufferLength);
-	return PLUGIN_RET_SUCCESS;
+	int len = ASAP_Generate(pHdr->lpData, pHdr->dwBufferLength);
+	return len < (int) pHdr->dwBufferLength ? PLUGIN_RET_EOF : PLUGIN_RET_SUCCESS;
 }
 
 static void WINAPI asapStopDecodeFile()
@@ -144,11 +168,13 @@ static void WINAPI asapCloseFile()
 
 static BOOL WINAPI asapGetTag(MAP_PLUGIN_FILETAG *pTag)
 {
+	// TODO
 	return FALSE;
 }
 
 static BOOL WINAPI asapGetFileTag(LPCTSTR pszFile, MAP_PLUGIN_FILETAG *pTag)
 {
+	// TODO
 	return FALSE;
 }
 

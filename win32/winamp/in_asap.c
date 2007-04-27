@@ -50,32 +50,45 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lp
 
 static In_Module mod;
 
+// configuration
+static int song_length = -1;
+static BOOL play_loops = FALSE;
+
+// current file
 static char current_filename[MAX_PATH] = "";
+static unsigned char module[ASAP_MODULE_MAX];
+static DWORD module_len;
+static int channels;
+static int duration;
 
 static HANDLE thread_handle = NULL;
 static volatile int thread_run = FALSE;
 
 static int paused = 0;
 
-static unsigned int channels;
-
-static volatile int song_length = -1;
-static unsigned int blocks_played;
+static void enableTimeInput(HWND hDlg, BOOL enable)
+{
+	EnableWindow(GetDlgItem(hDlg, IDC_MINUTES), enable);
+	EnableWindow(GetDlgItem(hDlg, IDC_SECONDS), enable);
+}
 
 static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		if (song_length < 0) {
+		if (song_length <= 0) {
 			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_UNLIMITED);
-			SetDlgItemInt(hDlg, IDC_LIMIT, DEFAULT_SONG_LENGTH, FALSE);
-			EnableWindow(GetDlgItem(hDlg, IDC_LIMIT), FALSE);
+			SetDlgItemInt(hDlg, IDC_MINUTES, DEFAULT_SONG_LENGTH / 60, FALSE);
+			SetDlgItemInt(hDlg, IDC_SECONDS, DEFAULT_SONG_LENGTH % 60, FALSE);
+			enableTimeInput(hDlg, FALSE);
 		}
 		else {
 			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_LIMITED);
-			SetDlgItemInt(hDlg, IDC_LIMIT, (UINT) song_length, FALSE);
-			EnableWindow(GetDlgItem(hDlg, IDC_LIMIT), TRUE);
+			SetDlgItemInt(hDlg, IDC_MINUTES, (UINT) song_length / 60, FALSE);
+			SetDlgItemInt(hDlg, IDC_SECONDS, (UINT) song_length % 60, FALSE);
+			enableTimeInput(hDlg, TRUE);
 		}
+		CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, play_loops ? IDC_LOOPS : IDC_NOLOOPS);
 		return TRUE;
 	case WM_COMMAND:
 		if (HIWORD(wParam) == BN_CLICKED) {
@@ -84,24 +97,32 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 			case IDC_UNLIMITED:
 			case IDC_LIMITED:
 				CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, wCtrl);
-				EnableWindow(GetDlgItem(hDlg, IDC_LIMIT), wCtrl == IDC_LIMITED);
+				enableTimeInput(hDlg, wCtrl == IDC_LIMITED);
 				if (wCtrl == IDC_LIMITED) {
-					HWND hLimit = GetDlgItem(hDlg, IDC_LIMIT);
-					SetFocus(hLimit);
-					SendMessage(hLimit, EM_SETSEL, 0, -1);
+					HWND hMinutes = GetDlgItem(hDlg, IDC_MINUTES);
+					SetFocus(hMinutes);
+					SendMessage(hMinutes, EM_SETSEL, 0, -1);
 				}
+				return TRUE;
+			case IDC_LOOPS:
+			case IDC_NOLOOPS:
+				CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, wCtrl);
 				return TRUE;
 			case IDOK:
 				if (IsDlgButtonChecked(hDlg, IDC_UNLIMITED) == BST_CHECKED)
 					song_length = -1;
 				else {
-					UINT limit = GetDlgItemInt(hDlg, IDC_LIMIT, NULL, FALSE);
-					if (limit == 0U) {
-						MessageBox(hDlg, "Invalid number of seconds", "Error", MB_OK | MB_ICONERROR);
+					BOOL minutesTranslated;
+					BOOL secondsTranslated;
+					UINT minutes = GetDlgItemInt(hDlg, IDC_MINUTES, &minutesTranslated, FALSE);
+					UINT seconds = GetDlgItemInt(hDlg, IDC_SECONDS, &secondsTranslated, FALSE);
+					if (!minutesTranslated || !secondsTranslated) {
+						MessageBox(hDlg, "Invalid number", "Error", MB_OK | MB_ICONERROR);
 						return TRUE;
 					}
-					song_length = (int) limit;
+					song_length = (int) (60 * minutes + seconds);
 				}
+				play_loops = (IsDlgButtonChecked(hDlg, IDC_LOOPS) == BST_CHECKED);
 				// FALLTHROUGH
 			case IDCANCEL:
 				EndDialog(hDlg, wCtrl);
@@ -136,22 +157,54 @@ static void quit(void)
 {
 }
 
+static BOOL loadFile(const char *filename)
+{
+	HANDLE fh;
+	fh = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+	if (fh == INVALID_HANDLE_VALUE)
+		return FALSE;
+	if (!ReadFile(fh, module, sizeof(module), &module_len, NULL)) {
+		CloseHandle(fh);
+		return FALSE;
+	}
+	CloseHandle(fh);
+	return TRUE;
+}
+
+static int getSubsongSeconds(const ASAP_ModuleInfo *module_info, int song)
+{
+	int seconds = module_info->durations[song];
+	if (seconds <= 0)
+		seconds = song_length;
+	else if (play_loops && module_info->loops[song])
+		seconds = song_length;
+	return seconds;
+}
+
 static void getFileInfo(char *file, char *title, int *length_in_ms)
 {
+	ASAP_ModuleInfo module_info;
 	if (file == NULL || file[0] == '\0')
 		file = current_filename;
-	if (title != NULL) {
-		const char *dirsep;
-		dirsep = strrchr(file, '\\');
-		strcpy(title, dirsep != NULL ? dirsep + 1 : file);
-	}
+	if (!loadFile(file))
+		return; // XXX
+	if (!ASAP_GetModuleInfo(file, module, module_len, &module_info))
+		return;
+	if (title != NULL)
+		strcpy(title, module_info.name); // XXX: max length?
 	if (length_in_ms != NULL)
-		*length_in_ms = song_length * 1000;
+		*length_in_ms = getSubsongSeconds(&module_info, module_info.default_song) * 1000;
 }
 
 static int infoBox(char *file, HWND hwndParent)
 {
-	// TODO
+	if (loadFile(file)) {
+		ASAP_ModuleInfo module_info;
+		if (ASAP_GetModuleInfo(file, module, module_len, &module_info))
+			MessageBox(hwndParent, module_info.all_info, "File information",
+				MB_OK | MB_ICONINFORMATION);
+	}
 	return 0;
 }
 
@@ -163,13 +216,26 @@ static int isOurFile(char *fn)
 static DWORD WINAPI playThread(LPVOID dummy)
 {
 	while (thread_run) {
-		int blocks_to_play;
-		unsigned int buffered_bytes;
-		if (song_length < 0)
-			blocks_to_play = BUFFERED_BLOCKS;
-		else {
-			blocks_to_play = song_length * FREQUENCY - blocks_played;
-			if (blocks_to_play <= 0) {
+		static
+#if BITS_PER_SAMPLE == 8
+			unsigned char
+#else
+			short
+#endif
+			buffer[BUFFERED_BLOCKS * 2
+#if SUPPORT_EQUALIZER
+			* 2
+#endif
+			];
+		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
+		if (mod.outMod->CanWrite() >= buffered_bytes
+#if SUPPORT_EQUALIZER
+			<< mod.dsp_isactive()
+#endif
+		) {
+			int t;
+			buffered_bytes = ASAP_Generate(buffer, buffered_bytes);
+			if (buffered_bytes <= 0) {
 				mod.outMod->CanWrite();
 				if (!mod.outMod->IsPlaying()) {
 					PostMessage(mod.hMainWindow, WM_WA_MPEG_EOF, 0, 0);
@@ -178,28 +244,6 @@ static DWORD WINAPI playThread(LPVOID dummy)
 				Sleep(10);
 				continue;
 			}
-			if (blocks_to_play > BUFFERED_BLOCKS)
-				blocks_to_play = BUFFERED_BLOCKS;
-		}
-		buffered_bytes = (unsigned int) blocks_to_play * channels * (BITS_PER_SAMPLE / 8);
-		if (mod.outMod->CanWrite() >= (int) buffered_bytes
-#if SUPPORT_EQUALIZER
-			<< mod.dsp_isactive()
-#endif
-		) {
-			static
-#if BITS_PER_SAMPLE == 8
-				unsigned char
-#else
-				short int
-#endif
-				buffer[BUFFERED_BLOCKS * 2
-#if SUPPORT_EQUALIZER
-				* 2
-#endif
-				];
-			int t;
-			ASAP_Generate(buffer, buffered_bytes);
 			t = mod.outMod->GetWrittenTime();
 			mod.SAAddPCMData(buffer, channels, BITS_PER_SAMPLE, t);
 			mod.VSAAddPCMData(buffer, channels, BITS_PER_SAMPLE, t);
@@ -210,7 +254,6 @@ static DWORD WINAPI playThread(LPVOID dummy)
 #else
 			mod.outMod->Write((char *) buffer, buffered_bytes);
 #endif
-			blocks_played += blocks_to_play;
 		}
 		else
 			Sleep(20);
@@ -220,25 +263,20 @@ static DWORD WINAPI playThread(LPVOID dummy)
 
 static int play(char *fn)
 {
-	HANDLE fh;
-	static unsigned char module[ASAP_MODULE_MAX];
-	DWORD module_len;
+	const ASAP_ModuleInfo *module_info;
+	int song;
 	int maxlatency;
 	DWORD threadId;
 	strcpy(current_filename, fn);
-	fh = CreateFile(fn, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-	if (fh == INVALID_HANDLE_VALUE)
+	if (!loadFile(fn))
 		return -1;
-	if (!ReadFile(fh, module, sizeof(module), &module_len, NULL)) {
-		CloseHandle(fh);
-		return -1;
-	}
-	CloseHandle(fh);
-	if (!ASAP_Load(fn, module, (unsigned int) module_len))
+	module_info = ASAP_Load(fn, module, module_len);
+	if (module_info == NULL)
 		return 1;
-	ASAP_PlaySong(ASAP_GetDefSong());
-	channels = ASAP_GetChannels();
+	song = module_info->default_song;
+	duration = getSubsongSeconds(module_info, song);
+	ASAP_PlaySong(song, duration);
+	channels = module_info->channels;
 	maxlatency = mod.outMod->Open(FREQUENCY, channels, BITS_PER_SAMPLE, -1, -1);
 	if (maxlatency < 0)
 		return 1;
@@ -248,7 +286,6 @@ static int play(char *fn)
 	// http://forums.winamp.com/showthread.php?postid=1841035
 	mod.VSASetInfo(FREQUENCY, channels);
 	mod.outMod->SetVolume(-666);
-	blocks_played = 0;
 	thread_run = TRUE;
 	thread_handle = CreateThread(NULL, 0, playThread, NULL, 0, &threadId);
 	return thread_handle != NULL ? 0 : 1;
@@ -275,8 +312,8 @@ static void stop(void)
 {
 	if (thread_handle != NULL) {
 		thread_run = FALSE;
-		// wait max 30 seconds
-		if (WaitForSingleObject(thread_handle, 30 * 1000) == WAIT_TIMEOUT)
+		// wait max 10 seconds
+		if (WaitForSingleObject(thread_handle, 10 * 1000) == WAIT_TIMEOUT)
 			TerminateThread(thread_handle, 0);
 		CloseHandle(thread_handle);
 		thread_handle = NULL;
@@ -287,7 +324,7 @@ static void stop(void)
 
 static int getLength(void)
 {
-	return song_length * 1000;
+	return duration * 1000;
 }
 
 static int getOutputTime(void)

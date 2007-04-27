@@ -1,7 +1,7 @@
 /*
  * asap.h - public interface of the ASAP engine
  *
- * Copyright (C) 2005-2006  Piotr Fusik
+ * Copyright (C) 2005-2007  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -30,9 +30,9 @@ extern "C" {
 
 /* ASAP version. */
 #define ASAP_VERSION_MAJOR   0
-#define ASAP_VERSION_MINOR   2
-#define ASAP_VERSION_MICRO   2
-#define ASAP_VERSION         "0.2.2"
+#define ASAP_VERSION_MINOR   3
+#define ASAP_VERSION_MICRO   0
+#define ASAP_VERSION         "0.3.0"
 
 /* Short credits of the ASAP engine. */
 #define ASAP_YEARS           "2005-2007"
@@ -68,9 +68,36 @@ extern "C" {
    You can assume that files longer than this are not supported by ASAP. */
 #define ASAP_MODULE_MAX      65000
 
+/* Information about a file. */
+typedef struct {
+   char author[128];      /* author's name */
+   char name[128];        /* title */
+   char date[128];        /* creation date */
+   char all_info[512];    /* the above information formatted in multiple lines */
+   int channels;          /* 1 for mono or 2 for stereo */
+   int songs;             /* number of subsongs */
+   int default_song;      /* 0-based index of the "main" subsong */
+   short durations[128];  /* lengths of songs, in seconds, 0 = unspecified */
+   char loops[128];       /* whether songs repeat (1) or not (0) */
+} ASAP_ModuleInfo;
+
 /* Checks whether the extension of the passed filename is known to ASAP.
    Does no file operations. You can call this function anytime. */
 int ASAP_IsOurFile(const char *filename);
+
+/* Gets basic information about a module.
+   "filename" determines the file format.
+   "module" is the data (the contents of the file).
+   "module_len" is the number of data bytes.
+   "module_info" is the structure where the information is returned.
+   ASAP_GetModuleInfo() returns non-zero on success.
+   You can call this function anytime. */
+int ASAP_GetModuleInfo(const char *filename, const unsigned char *module,
+                       int module_len, ASAP_ModuleInfo *module_info);
+
+/* A helper function. Parses the string in the "mm:ss" format
+   and returns the number of seconds or 0 if an error occurs. */
+int ASAP_ParseDuration(const char *duration);
 
 /* Initializes ASAP.
    "frequency" is sample rate in Hz (for example 44100).
@@ -78,46 +105,36 @@ int ASAP_IsOurFile(const char *filename);
    "quality" 0 means Ron Fries' pokeysnd,
    1..3 mean Michael Borisov's mzpokeysnd with different filters.
    You must call this function before any of the following functions. */
-void ASAP_Initialize(unsigned int frequency, unsigned int audio_format,
-                     unsigned int quality);
+void ASAP_Initialize(int frequency, int audio_format, int quality);
 
 /* Loads a module into ASAP.
    "filename" determines the file format.
    "module" is the data (the contents of the file).
    "module_len" is the number of data bytes.
    ASAP does not make copies of the passed pointers. You can overwrite
-   or free the memory once this function returns.
-   ASAP_Load() returns non-zero on success.
-   If zero is returned, you must not call any of the following functions. */
-int ASAP_Load(const char *filename, const unsigned char *module,
-              unsigned int module_len);
-
-/* Returns number of channels for the loaded module.
-   1 means mono and 2 means stereo. */
-unsigned int ASAP_GetChannels(void);
-
-/* Returns number of songs in the loaded module.
-   ASAP supports multiple songs per file. */
-unsigned int ASAP_GetSongs(void);
-
-/* Returns zero-based number of the default song.
-   This corresponds to the "DEFSONG" tag value in a SAP file
-   and is zero for other formats. */
-unsigned int ASAP_GetDefSong(void);
+   or free "filename" and "module" once this function returns.
+   On success, ASAP_Load() returns a pointer to a static structure.
+   If NULL is returned, you must not call the following functions. */
+const ASAP_ModuleInfo *ASAP_Load(const char *filename,
+                                 const unsigned char *module,
+                                 int module_len);
 
 /* Prepares ASAP to play the specified song of the loaded module.
-   "song" is zero-based and must be less that the value returned
-   by ASAP_GetSongs(). Normally, after successful ASAP_Load()
-   you should use the value of ASAP_GetDefSong(). */
-void ASAP_PlaySong(unsigned int song);
+   "song" is a zero-based index which must be less than the "songs" field
+   of the ASAP_ModuleInfo structure.
+   "seconds" is playback time in seconds - use durations[song]
+   unless you want to override it. 0 means indefinitely. */
+void ASAP_PlaySong(int song, int duration);
 
 /* Fills in the specified buffer with generated samples.
    "buffer" is a buffer for samples, managed outside ASAP.
    "buffer_len" is the length of this buffer in bytes.
+   ASAP_Generate() returns number of bytes actually written
+   (less than buffer_len if reached the end).
    You must call ASAP_PlaySong() before this function.
    Normally you use a buffer of a few kilobytes or less,
    and call ASAP_Generate() in a loop or via a callback. */
-void ASAP_Generate(void *buffer, unsigned int buffer_len);
+int ASAP_Generate(void *buffer, int buffer_len);
 
 #ifdef __cplusplus
 }

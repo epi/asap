@@ -10,4 +10,7 @@
 #define IDC_STATIC     -1
 #define IDC_UNLIMITED  102
 #define IDC_LIMITED    103
-#define IDC_LIMIT      104
+#define IDC_MINUTES    104
+#define IDC_SECONDS    105
+#define IDC_LOOPS      106
+#define IDC_NOLOOPS    107

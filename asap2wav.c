@@ -1,7 +1,7 @@
 /*
  * asap2wav.c - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2005-2006  Piotr Fusik
+ * Copyright (C) 2005-2007  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -50,7 +50,7 @@ static void print_help(void)
 		"Options:\n"
 		"-o FILE     --output=FILE      Set output WAV file name\n"
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
-		"-t TIME     --time=TIME        Set output length MM:SS (default: 03:00)\n"
+		"-t TIME     --time=TIME        Set output length MM:SS\n"
 		"-r FREQ     --rate=FREQ        Set sample rate in Hz (default: 44100)\n"
 		"-q QUALITY  --quality=QUALITY  Set sound quality 0-3 (default: 1)\n"
 		"-b          --byte-samples     Output 8-bit samples\n"
@@ -58,11 +58,13 @@ static void print_help(void)
 		"-h          --help             Display this information\n"
 		"-v          --version          Display version information\n"
 	);
+	no_input_files = FALSE;
 }
 
 static void print_version(void)
 {
 	printf("ASAP2WAV " ASAP_VERSION "\n");
+	no_input_files = FALSE;
 }
 
 static void print_error(const char *format, ...)
@@ -76,11 +78,11 @@ static void print_error(const char *format, ...)
 }
 
 static const char *output_file = NULL;
-static unsigned int song = 1000; /* default */
-static unsigned int quality = 1;
-static unsigned int frequency = 44100;
-static unsigned int seconds = 180;
-static unsigned int use_16bit = 1;
+static int song = -1;
+static int quality = 1;
+static int frequency = 44100;
+static int seconds = -1;
+static int use_16bit = 1;
 
 static int set_output(const char *s)
 {
@@ -88,10 +90,10 @@ static int set_output(const char *s)
 	return 0;
 }
 
-static int set_dec(const char *s, unsigned int *result, const char *name,
-                   unsigned int minval, unsigned int maxval)
+static int set_dec(const char *s, int *result, const char *name,
+                   int minval, int maxval)
 {
-	unsigned int newval = 0;
+	int newval = 0;
 	do {
 		if (*s < '0' || *s > '9') {
 			print_error("%s must be an integer", name);
@@ -99,12 +101,12 @@ static int set_dec(const char *s, unsigned int *result, const char *name,
 		}
 		newval = 10 * newval + *s++ - '0';
 		if (newval > maxval) {
-			print_error("maximum %s is %u", name, maxval);
+			print_error("maximum %s is %d", name, maxval);
 			return 1;
 		}
 	} while (*s != '\0');
 	if (newval < minval) {
-		print_error("minimum %s is %u", name, minval);
+		print_error("minimum %s is %d", name, minval);
 		return 1;
 	}
 	*result = newval;
@@ -113,7 +115,7 @@ static int set_dec(const char *s, unsigned int *result, const char *name,
 
 static int set_song(const char *s)
 {
-	return set_dec(s, &song, "subsong number", 0, 255);
+	return set_dec(s, &song, "subsong number", 0, 127);
 }
 
 static int set_quality(const char *s)
@@ -128,28 +130,12 @@ static int set_frequency(const char *s)
 
 static int set_time(const char *s)
 {
-	unsigned int newmin;
-	const char *p;
-	if (s[0] < '0' || s[0] > '9') {
+	seconds = ASAP_ParseDuration(s);
+	if (seconds == 0) {
 		print_error("invalid time format");
 		return 1;
 	}
-	newmin = s[0] - '0';
-	p = s + 1;
-	if (*p >= '0' && *p <= '9')
-		newmin = 10 * newmin + *p++ - '0';
-	if (*p == ':') {
-		unsigned int newsec;
-		if (newmin > 59) {
-			print_error("maximum time is 59:59");
-			return 1;
-		}
-		if (set_dec(p + 1, &newsec, "SS", newmin == 0 ? 1 : 0, 59))
-			return 1;
-		seconds = 60 * newmin + newsec;
-		return 0;
-	}
-	return set_dec(s, &seconds, "time", 1, 3599);
+	return 0;
 }
 
 static void set_byte_samples(void)
@@ -163,14 +149,14 @@ static void set_word_samples(void)
 }
 
 /* write 16-bit word as little endian */
-static void fput16(unsigned int x, FILE *fp)
+static void fput16(int x, FILE *fp)
 {
 	fputc(x & 0xff, fp);
 	fputc((x >> 8) & 0xff, fp);
 }
 
 /* write 32-bit word as little endian */
-static void fput32(unsigned int x, FILE *fp)
+static void fput32(int x, FILE *fp)
 {
 	fputc(x & 0xff, fp);
 	fputc((x >> 8) & 0xff, fp);
@@ -241,11 +227,11 @@ int main(int argc, char *argv[])
 		else {
 			FILE *fp;
 			static unsigned char module[ASAP_MODULE_MAX];
-			unsigned int module_len;
-			unsigned int channels;
-			unsigned int block_size;
-			unsigned int bytes_per_second;
-			unsigned int n_bytes;
+			int module_len;
+			const ASAP_ModuleInfo *module_info;
+			int block_size;
+			int bytes_per_second;
+			int n_bytes;
 			static unsigned char buffer[8192];
 			if (strlen(arg) >= FILENAME_MAX) {
 				print_error("filename too long");
@@ -259,25 +245,29 @@ int main(int argc, char *argv[])
 			module_len = fread(module, 1, sizeof(module), fp);
 			fclose(fp);
 			ASAP_Initialize(frequency, use_16bit ? AUDIO_FORMAT_S16_LE : AUDIO_FORMAT_U8, quality);
-			if (!ASAP_Load(arg, module, module_len)) {
+			module_info = ASAP_Load(arg, module, module_len);
+			if (module_info == NULL) {
 				print_error("%s: format not supported", arg);
 				return 1;
 			}
-			if (song > 255)
-				ASAP_PlaySong(ASAP_GetDefSong());
-			else if (song < ASAP_GetSongs()) {
-				ASAP_PlaySong(song);
-				/* back to default */
-				song = 1000;
-			}
-			else {
-				print_error("you have requested subsong %u ...", song);
-				print_error("... but %s contains only %u subsongs", arg, ASAP_GetSongs());
+			if (song < 0)
+				song = module_info->default_song;
+			if (song >= module_info->songs) {
+				print_error("you have requested subsong %d ...", song);
+				print_error("... but %s contains only %d subsongs", arg, module_info->songs);
 				return 1;
 			}
+			if (seconds <= 0) {
+				seconds = module_info->durations[song];
+				if (seconds <= 0)
+					seconds = 180;
+			}
+			ASAP_PlaySong(song, seconds);
 			if (output_file == NULL) {
 				const char *dot;
-				static char output_default[FILENAME_MAX + 5]; /* max. original name + ".wav" + '\0' */
+				static char output_default[FILENAME_MAX];
+				/* we are sure to find a dot because ASAP_Load()
+				   accepts only filenames with an extension */
 				dot = strrchr(arg, '.');
 				sprintf(output_default, "%.*s.wav", (int) (dot - arg), arg);
 				output_file = output_default;
@@ -287,38 +277,36 @@ int main(int argc, char *argv[])
 				print_error("cannot write %s", output_file);
 				return 1;
 			}
-			channels = ASAP_GetChannels();
-			block_size = channels << use_16bit;
+			block_size = module_info->channels << use_16bit;
 			bytes_per_second = frequency * block_size;
 			n_bytes = seconds * bytes_per_second;
 			fwrite("RIFF", 1, 4, fp);
 			fput32(n_bytes + 36, fp);
 			fwrite("WAVEfmt \x10\0\0\0\1\0", 1, 14, fp);
-			fput16(channels, fp);
+			fput16(module_info->channels, fp);
 			fput32(frequency, fp);
 			fput32(bytes_per_second, fp);
 			fput16(block_size, fp);
 			fput16(8 << use_16bit, fp);
 			fwrite("data", 1, 4, fp);
 			fput32(n_bytes, fp);
-			while (n_bytes > sizeof(buffer)) {
-				ASAP_Generate(buffer, sizeof(buffer));
-				if (fwrite(buffer, 1, sizeof(buffer), fp) != sizeof(buffer)) {
+			do {
+				n_bytes = ASAP_Generate(buffer, sizeof(buffer));
+				if (fwrite(buffer, 1, n_bytes, fp) != n_bytes) {
 					fclose(fp);
 					print_error("error writing to %s", output_file);
 					return 1;
 				}
-				n_bytes -= sizeof(buffer);
-			}
-			ASAP_Generate(buffer, n_bytes);
-			fwrite(buffer, 1, n_bytes, fp);
+			} while (n_bytes == sizeof(buffer));
 			fclose(fp);
 			output_file = NULL;
+			song = -1;
+			seconds = -1;
 			no_input_files = FALSE;
 		}
 	}
 	if (no_input_files) {
-		print_error("no input files; try: asap2wav --help");
+		print_help();
 		return 1;
 	}
 	return 0;

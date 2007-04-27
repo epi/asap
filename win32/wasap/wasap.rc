@@ -11,6 +11,7 @@ IDR_TRAYMENU MENU
 	{
 		MENUITEM "&Open...", IDM_OPEN
 		MENUITEM "&Stop", IDM_STOP
+		MENUITEM "File &information...", IDM_FILE_INFO, GRAYED
 		POPUP "&Quality"
 		{
 			MENUITEM "RF", IDM_QUALITY_RF

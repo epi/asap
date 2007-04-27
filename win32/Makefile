@@ -1,6 +1,6 @@
-VERSION = 0.2.2
-ATARI800_SRC_DIR = ..\..\atari800\src
+VERSION = 0.3.0
 ASAP_DIR = ..\..\asap
+ATARI800_SRC_DIR = ..\..\atari800\src
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 
 CC = cl /nologo /O2 /GL /GR- /GS- /fp:fast /W3 /wd4996 /DNDEBUG
@@ -14,10 +14,7 @@ COMMON_C = ..\asap.c $(ATARI800_SRC_DIR)\cpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c 
 COMMON_H = config.h ..\asap.h ..\asap_internal.h ..\players.h $(ATARI800_SRC_DIR)\cpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h $(ATARI800_SRC_DIR)\pokey.h $(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h
 COMMON_DOC = ..\README + ..\CREDITS + ..\TODO + ..\NEWS
 
-all: asap2wav.exe wasap\wasap.exe winamp\in_asap.dll gspasap.dll
-
-asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_CC) ..\asap2wav.c $(COMMON_C) $(LINKOPT)
+all: asap2wav.exe wasap\wasap.exe winamp\in_asap.dll gspasap.dll asapscan.exe
 
 ..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	perl $** >$@
@@ -39,6 +36,11 @@ asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
 
 ..\players\tm2.obx: ..\players\tm2.asx
 	$(XASM) $** /o:$@
+
+# ASAP2WAV
+
+asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
+	$(ASAP_CC) ..\asap2wav.c $(COMMON_C) $(LINKOPT)
 
 # WASAP
 
@@ -85,6 +87,11 @@ foobar2000\foo_asap.res: settings.rc ..\asap.h settings.h
 gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C)
 	$(ASAP_CC) /LD ..\gsplayer\gspasap.c $(COMMON_C) $(LINKOPT)
 
+# asapscan
+
+asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
+	$(ASAP_CC) ..\asapscan.c $(COMMON_C) $(LINKOPT)
+
 # delete generated files
 
 clean:
@@ -92,6 +99,8 @@ clean:
 	del wasap\wasap.res;wasap\wasap.exe
 	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\*.exp;foobar2000\*.dll
 	del winamp\in_asap.exp;winamp\in_asap.lib;winamp\in_asap.dll
+	del ..\gsplayer\gspasap.exp;..\gsplayer\gspasap.lib;..\gsplayer\gspasap.dll
+	del asapscan.exe
 
 # prepare files for release
 
@@ -105,6 +114,7 @@ dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\pla
 	perl ..\maketar.pl -d asap-$(VERSION) \
 		-t $(ASAP_DIR)\asap.c $(ASAP_DIR)\asap.h $(ASAP_DIR)\asap_internal.h \
 		$(ASAP_DIR)\asap2wav.c $(ASAP_DIR)\asap2wav.1 \
+		$(ASAP_DIR)\asapscan.c \
 		$(ASAP_DIR)\players\cmc.asx $(ASAP_DIR)\players\mpt.asx \
 		$(ASAP_DIR)\players\rmt.asx $(ASAP_DIR)\players\tmc.asx $(ASAP_DIR)\players\tm2.asx \
 		$(ASAP_DIR)\configure.ac $(ASAP_DIR)\Makefile.in \

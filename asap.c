@@ -1,7 +1,7 @@
 /*
  * asap.c - ASAP engine
  *
- * Copyright (C) 2005-2006  Piotr Fusik
+ * Copyright (C) 2005-2007  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -24,6 +24,7 @@
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "asap.h"
 #include "asap_internal.h"
@@ -62,7 +63,7 @@ UBYTE poly9_lookup[511];
 UBYTE poly17_lookup[16385];
 static ULONG random_scanline_counter;
 
-static unsigned int enable_stereo = 0;
+static int enable_stereo = 0;
 
 #ifndef SOUND_GAIN /* sound gain can be pre-defined in the configure/Makefile */
 #define SOUND_GAIN 4
@@ -254,11 +255,11 @@ void ASAP_CIM(void)
 	xpos = xpos_limit;
 }
 
-static unsigned int block_rate;
-static unsigned int sample_format;
-static unsigned int sample_16bit;
+static int block_rate;
+static int sample_format;
+static int sample_16bit;
 
-void ASAP_Initialize(unsigned int frequency, unsigned int audio_format, unsigned int quality)
+void ASAP_Initialize(int frequency, int audio_format, int quality)
 {
 	block_rate = frequency;
 	sample_format = audio_format;
@@ -277,23 +278,23 @@ static char sap_type;
 static UWORD sap_player;
 static UWORD sap_music;
 static UWORD sap_init;
-static unsigned int sap_stereo;
-static unsigned int sap_songs;
-static unsigned int sap_defsong;
-static unsigned int sap_fastplay;
+int sap_fastplay;
+static ASAP_ModuleInfo loaded_module_info;
 
 /* This array maps subsong numbers to track positions for MPT and RMT formats. */
 static UBYTE song_pos[128];
 
-static unsigned int tmc_per_frame;
-static unsigned int tmc_per_frame_counter;
+static int tmc_per_frame;
+static int tmc_per_frame_counter;
 
-static unsigned int blockclocks;
-static unsigned int blockclocks_per_player;
+static int blockclocks;
+static int blockclocks_per_player;
 
-static const unsigned int perframe2fastplay[] = { 312U, 312U / 2U, 312U / 3U, 312U / 4U };
+static int bytes_to_play;
 
-static int load_native(const unsigned char *module, unsigned int module_len,
+static const int perframe2fastplay[] = { 312, 312 / 2, 312 / 3, 312 / 4 };
+
+static int load_native(const unsigned char *module, int module_len,
                        const unsigned char *player, char type)
 {
 	UWORD player_last_byte;
@@ -306,17 +307,17 @@ static int load_native(const unsigned char *module, unsigned int module_len,
 	if (sap_music <= player_last_byte)
 		return FALSE;
 	block_len = module[4] + (module[5] << 8) + 1 - sap_music;
-	if ((unsigned int) (6 + block_len) != module_len) {
+	if (6 + block_len != module_len) {
 		UWORD info_addr;
 		int info_len;
-		if (type != 'r' || (unsigned int) (11 + block_len) > module_len)
+		if (type != 'r' || 11 + block_len > module_len)
 			return FALSE;
 		/* allow optional info for Raster Music Tracker */
 		info_addr = module[6 + block_len] + (module[7 + block_len] << 8);
 		if (info_addr != sap_music + block_len)
 			return FALSE;
 		info_len = module[8 + block_len] + (module[9 + block_len] << 8) + 1 - info_addr;
-		if ((unsigned int) (10 + block_len + info_len) != module_len)
+		if (10 + block_len + info_len != module_len)
 			return FALSE;
 	}
 	memcpy(memory + sap_music, module + 6, block_len);
@@ -325,15 +326,18 @@ static int load_native(const unsigned char *module, unsigned int module_len,
 	return TRUE;
 }
 
-static int load_cmc(const unsigned char *module, unsigned int module_len, int cmr)
+static int load_cmc(const unsigned char *module, int module_len,
+                    ASAP_ModuleInfo *module_info, int cmr)
 {
 	int pos;
-	if (module_len < 0x300)
+	if (module_len < 0x306)
 		return FALSE;
-	if (!load_native(module, module_len, cmc_obx, 'C'))
-		return FALSE;
-	if (cmr)
-		memcpy(memory + 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, sizeof(cmr_bass_table));
+	if (module_info == &loaded_module_info) {
+		if (!load_native(module, module_len, cmc_obx, 'C'))
+			return FALSE;
+		if (cmr)
+			memcpy(memory + 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, sizeof(cmr_bass_table));
+	}
 	/* auto-detect number of subsongs */
 	pos = 0x54;
 	while (--pos >= 0) {
@@ -344,37 +348,43 @@ static int load_cmc(const unsigned char *module, unsigned int module_len, int cm
 	}
 	while (--pos >= 0) {
 		if (module[0x206 + pos] == 0x8f || module[0x206 + pos] == 0xef)
-			sap_songs++;
+			module_info->songs++;
 	}
 	return TRUE;
 }
 
-static int load_mpt(const unsigned char *module, unsigned int module_len)
+static int load_mpt(const unsigned char *module, int module_len,
+                    ASAP_ModuleInfo *module_info)
 {
-	unsigned int i;
-	unsigned int song_len;
+	int track0_addr;
+	int i;
+	int song_len;
 	/* seen[i] == TRUE if the track position i is already processed */
 	UBYTE seen[256];
 	if (module_len < 0x1d0)
 		return FALSE;
-	if (!load_native(module, module_len, mpt_obx, 'm'))
-		return FALSE;
+	if (module_info == &loaded_module_info) {
+		if (!load_native(module, module_len, mpt_obx, 'm'))
+			return FALSE;
+	}
+	track0_addr = module[2] + (module[3] << 8) + 0x1ca;
 	/* do not auto-detect number of subsongs if the address
 	   of the first track is non-standard */
-	if (module[0x1c6] + (module[0x1ca] << 8) != sap_music + 0x1ca) {
-		song_pos[0] = 0;
+	if (module[0x1c6] + (module[0x1ca] << 8) != track0_addr) {
+		if (module_info == &loaded_module_info)
+			song_pos[0] = 0;
 		return TRUE;
 	}
 	/* Calculate the length of the first track. Address of the second track minus
 	   address of the first track equals the length of the first track in bytes.
 	   Divide by two to get number of track positions. */
-	song_len = (module[0x1c7] + (module[0x1cb] << 8) - sap_music - 0x1ca) >> 1;
+	song_len = (module[0x1c7] + (module[0x1cb] << 8) - track0_addr) >> 1;
 	if (song_len > 0xfe)
 		return FALSE;
 	memset(seen, FALSE, sizeof(seen));
-	sap_songs = 0;
+	module_info->songs = 0;
 	for (i = 0; i < song_len; i++) {
-		unsigned int j;
+		int j;
 		UBYTE c;
 		if (seen[i])
 			continue;
@@ -391,7 +401,9 @@ static int load_mpt(const unsigned char *module, unsigned int module_len)
 		if (c >= 64)
 			continue;
 		/* found subsong */
-		song_pos[sap_songs++] = (UBYTE) j;
+		if (module_info == &loaded_module_info)
+			song_pos[module_info->songs] = (UBYTE) j;
+		module_info->songs++;
 		j++;
 		/* follow this subsong */
 		while (j < song_len && !seen[j]) {
@@ -405,89 +417,105 @@ static int load_mpt(const unsigned char *module, unsigned int module_len)
 				break;
 		}
 	}
-	return sap_songs != 0;
+	return module_info->songs != 0;
 }
 
-static int load_rmt(const unsigned char *module, unsigned int module_len)
+static int load_rmt(const unsigned char *module, int module_len,
+                    ASAP_ModuleInfo *module_info)
 {
-	unsigned int i;
+	int i;
+	UWORD module_start;
 	UWORD song_start;
 	UWORD song_last_byte;
 	const unsigned char *song;
-	unsigned int song_len;
+	int song_len;
+	int pos_shift;
 	UBYTE seen[256];
 	if (module_len < 0x30 || module[6] != 'R' || module[7] != 'M'
 	 || module[8] != 'T' || module[13] != 1)
 		return FALSE;
 	switch (module[9]) {
 	case '4':
+		pos_shift = 2;
 		break;
+#ifdef STEREO_SOUND
 	case '8':
-		sap_stereo = 1;
+		module_info->channels = 2;
+		pos_shift = 3;
 		break;
+#endif
 	default:
 		return FALSE;
 	}
 	i = module[12];
 	if (i < 1 || i > 4)
 		return FALSE;
-	sap_fastplay = perframe2fastplay[i - 1];
-	if (!load_native(module, module_len, sap_stereo ? rmt8_obx : rmt4_obx, 'r'))
-		return FALSE;
-	sap_player = 0x600;
+	if (module_info == &loaded_module_info) {
+		sap_fastplay = perframe2fastplay[i - 1];
+		if (!load_native(module, module_len, module_info->channels == 2 ? rmt8_obx : rmt4_obx, 'r'))
+			return FALSE;
+		sap_player = 0x600;
+	}
 	/* auto-detect number of subsongs */
+	module_start = module[2] + (module[3] << 8);
 	song_start = module[20] + (module[21] << 8);
 	song_last_byte = module[4] + (module[5] << 8);
-	if (song_start <= sap_music || song_start >= song_last_byte)
+	if (song_start <= module_start || song_start >= song_last_byte)
 		return FALSE;
-	song = module + 6 + song_start - sap_music;
-	song_len = (song_last_byte + 1 - song_start) >> (2 + sap_stereo);
+	song = module + 6 + song_start - module_start;
+	song_len = (song_last_byte + 1 - song_start) >> pos_shift;
 	if (song_len > 0xfe)
 		song_len = 0xfe;
 	memset(seen, FALSE, sizeof(seen));
-	sap_songs = 0;
+	module_info->songs = 0;
 	for (i = 0; i < song_len; i++) {
-		unsigned int j;
+		int j;
 		if (seen[i])
 			continue;
 		j = i;
 		do {
 			seen[j] = TRUE;
-			if (song[j << (2 + sap_stereo)] != 0xfe)
+			if (song[j << pos_shift] != 0xfe)
 				break;
-			j = song[(j << (2 + sap_stereo)) + 1];
+			j = song[(j << pos_shift) + 1];
 		} while (j < song_len && !seen[j]);
-		song_pos[sap_songs++] = (UBYTE) j;
+		if (module_info == &loaded_module_info)
+			song_pos[module_info->songs] = (UBYTE) j;
+		module_info->songs++;
 		j++;
 		while (j < song_len && !seen[j]) {
 			seen[j] = TRUE;
-			if (song[j << (2 + sap_stereo)] != 0xfe)
+			if (song[j << pos_shift] != 0xfe)
 				j++;
 			else
-				j = song[(j << (2 + sap_stereo)) + 1];
+				j = song[(j << pos_shift) + 1];
 		}
 	}
-	return sap_songs != 0;
+	return module_info->songs != 0;
 }
 
-static int load_tmc(const unsigned char *module, unsigned int module_len)
+static int load_tmc(const unsigned char *module, int module_len,
+					ASAP_ModuleInfo *module_info)
 {
-	unsigned int i;
+	int i;
 	if (module_len < 0x1d0)
 		return FALSE;
-	if (!load_native(module, module_len, tmc_obx, 't'))
-		return FALSE;
-	tmc_per_frame = module[37];
-	if (tmc_per_frame < 1 || tmc_per_frame > 4)
-		return FALSE;
-	sap_fastplay = perframe2fastplay[tmc_per_frame - 1];
+	if (module_info == &loaded_module_info) {
+		if (!load_native(module, module_len, tmc_obx, 't'))
+			return FALSE;
+		tmc_per_frame = module[37];
+		if (tmc_per_frame < 1 || tmc_per_frame > 4)
+			return FALSE;
+		sap_fastplay = perframe2fastplay[tmc_per_frame - 1];
+	}
 	i = 0;
 	/* find first instrument */
 	while (module[0x66 + i] == 0) {
 		if (++i >= 64)
 			return FALSE; /* no instrument */
 	}
-	i = (module[0x66 + i] << 8) + module[0x26 + i] - sap_music - 1 + 6;
+	i = (module[0x66 + i] << 8) + module[0x26 + i]
+		- module[2] - (module[3] << 8) - 1 + 6;
 	if (i >= module_len)
 		return FALSE;
 	/* skip trailing jumps */
@@ -498,45 +526,48 @@ static int load_tmc(const unsigned char *module, unsigned int module_len)
 	} while (module[i] >= 0x80);
 	while (i >= 0x1b5) {
 		if (module[i] >= 0x80)
-			sap_songs++;
+			module_info->songs++;
 		i -= 16;
 	}
 	return TRUE;
 }
 
-static int load_tm2(const unsigned char *module, unsigned int module_len)
+static int load_tm2(const unsigned char *module, int module_len,
+                    ASAP_ModuleInfo *module_info)
 {
-	unsigned int i;
-	unsigned int song_end;
-	unsigned char c;
+	int i;
+	int song_end;
+	int c;
 	if (module_len < 0x3a4)
 		return FALSE;
-	i = module[0x25];
-	if (i < 1 || i > 4)
-		return FALSE;
-	sap_fastplay = perframe2fastplay[i - 1];
-	if (!load_native(module, module_len, tm2_obx, 'T'))
-		return FALSE;
+	if (module_info == &loaded_module_info) {
+		i = module[0x25];
+		if (i < 1 || i > 4)
+			return FALSE;
+		sap_fastplay = perframe2fastplay[i - 1];
+		if (!load_native(module, module_len, tm2_obx, 'T'))
+			return FALSE;
+		sap_player = 0x500;
+	}
 	/* TODO: quadrophonic */
 	if (module[0x1f] != 0)
 #ifdef STEREO_SOUND
-		sap_stereo = 1;
+		module_info->channels = 2;
 #else
 		return FALSE;
 #endif
-	sap_player = 0x500;
 	song_end = 0xffff;
 	for (i = 0; i < 0x80; i++) {
-		unsigned int instr_addr = module[0x86 + i] + (module[0x306 + i] << 8);
+		int instr_addr = module[0x86 + i] + (module[0x306 + i] << 8);
 		if (instr_addr != 0 && instr_addr < song_end)
 			song_end = instr_addr;
 	}
 	for (i = 0; i < 0x100; i++) {
-		unsigned int pattern_addr = module[0x106 + i] + (module[0x206 + i] << 8);
+		int pattern_addr = module[0x106 + i] + (module[0x206 + i] << 8);
 		if (pattern_addr != 0 && pattern_addr < song_end)
 			song_end = pattern_addr;
 	}
-	if (song_end < sap_music + 0x380U + 2U * 17U)
+	if (song_end < sap_music + 0x380 + 2 * 17)
 		return FALSE;
 	i = song_end - sap_music - 0x380;
 	if (0x386 + i >= module_len)
@@ -554,30 +585,16 @@ static int load_tm2(const unsigned char *module, unsigned int module_len)
 		i -= 17;
 		c = module[0x386 + 16 + i];
 		if (c == 0 || c >= 0x80)
-			sap_songs++;
+			module_info->songs++;
 	}
 	return TRUE;
 }
 
-static int tag_matches(const char *tag, const UBYTE **ps, const UBYTE *pe)
+static int parse_hex(UWORD *retval, const char *p)
 {
-	const UBYTE *p = *ps;
-	size_t len = strlen(tag);
-	if ((p + len + 8 < pe) && memcmp(tag, p, len) == 0) {
-		*ps = p + len;
-		return TRUE;
-	}
-	else
-		return FALSE;
-}
-
-static int parse_hex(UWORD *retval, const UBYTE **ps, const UBYTE *pe)
-{
-	const UBYTE *p = *ps;
 	int r = 0;
 	do {
-		char c;
-		c = (char) *p;
+		char c = *p;
 		if (r > 0xfff)
 			return FALSE;
 		r <<= 4;
@@ -589,93 +606,181 @@ static int parse_hex(UWORD *retval, const UBYTE **ps, const UBYTE *pe)
 			r += c - 'a' + 10;
 		else
 			return FALSE;
-		if (++p >= pe)
-			return FALSE;
-	} while (*p != 0x0d);
-	*ps = p;
+	} while (*++p != '\0');
 	*retval = (UWORD) r;
 	return TRUE;
 }
 
-static int parse_dec(unsigned int *retval, const UBYTE **ps, const UBYTE *pe,
-                     unsigned int minval, unsigned int maxval)
+static int parse_dec(int *retval, const char *p, int minval, int maxval)
 {
-	const UBYTE *p = *ps;
-	unsigned int r = 0;
+	int r = 0;
 	do {
-		char c;
-		c = (char) *p;
+		char c = *p;
 		if (c >= '0' && c <= '9')
 			r = 10 * r + c - '0';
 		else
 			return FALSE;
-		if (r > maxval || ++p >= pe)
+		if (r > maxval)
 			return FALSE;
-	} while (*p != 0x0d);
+	} while (*++p != '\0');
 	if (r < minval)
 		return FALSE;
-	*ps = p;
 	*retval = r;
 	return TRUE;
 }
 
-static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end)
+static int parse_text(char *retval, const char *p)
 {
-	if (!tag_matches("SAP", &sap_ptr, sap_end))
+	int i;
+	if (*p != '"')
 		return FALSE;
-	sap_type = '?';
-	sap_player = 0xffff;
-	sap_music = 0xffff;
-	sap_init = 0xffff;
-	for (;;) {
-		if (sap_ptr + 8 >= sap_end || sap_ptr[0] != 0x0d || sap_ptr[1] != 0x0a)
+	p++;
+	i = 0;
+	while (*p != '"') {
+		if (i >= 127)
 			return FALSE;
-		sap_ptr += 2;
-		if (sap_ptr[0] == 0xff)
+		if (*p == '\0')
+			return FALSE;
+		retval[i++] = *p++;
+	}
+	retval[i] = '\0';
+	return TRUE;
+}
+
+int ASAP_ParseDuration(const char *duration)
+{
+	int r;
+	if (*duration < '0' || *duration > '9')
+		return 0;
+	r = *duration++ - '0';
+	if (*duration >= '0' && *duration <= '9')
+		r = 10 * r + *duration++ - '0';
+	if (*duration != ':')
+		return r;
+	duration++;
+	if (*duration < '0' || *duration > '5')
+		return 0;
+	r = 60 * r + (*duration++ - '0') * 10;
+	if (*duration < '0' || *duration > '9')
+		return 0;
+	r += *duration++ - '0';
+	return r;
+}
+
+static char *my_stpcpy(char *dest, const char *src)
+{
+	size_t len = strlen(src);
+	memcpy(dest, src, len);
+	return dest + len;
+}
+
+static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end,
+                    ASAP_ModuleInfo *module_info)
+{
+	char *p;
+	int sap_signature = FALSE;
+	int duration_index = 0;
+	if (module_info == &loaded_module_info) {
+		sap_type = '?';
+		sap_player = 0xffff;
+		sap_music = 0xffff;
+		sap_init = 0xffff;
+	}
+	for (;;) {
+		char line[256];
+		if (sap_ptr + 8 >= sap_end)
+			return FALSE;
+		if (*sap_ptr == 0xff)
 			break;
-		if (tag_matches("TYPE ", &sap_ptr, sap_end)) {
-			sap_type = *sap_ptr++;
-		}
-		else if (tag_matches("PLAYER ", &sap_ptr, sap_end)) {
-			if (!parse_hex(&sap_player, &sap_ptr, sap_end))
+		p = line;
+		while (*sap_ptr != 0x0d) {
+			*p++ = (char) *sap_ptr++;
+			if (sap_ptr >= sap_end || p >= line + sizeof(line) - 1)
 				return FALSE;
 		}
-		else if (tag_matches("MUSIC ", &sap_ptr, sap_end)) {
-			if (!parse_hex(&sap_music, &sap_ptr, sap_end))
+		if (++sap_ptr >= sap_end || *sap_ptr++ != 0x0a)
+			return FALSE;
+		*p = '\0';
+		for (p = line; *p != '\0'; p++) {
+			if (*p == ' ') {
+				*p++ = '\0';
+				break;
+			}
+		}
+		if (strcmp(line, "SAP") == 0)
+			sap_signature = TRUE;
+		if (!sap_signature)
+			return FALSE;
+		if (module_info == &loaded_module_info) {
+			if (strcmp(line, "TYPE") == 0) {
+				sap_type = *p;
+			}
+			else if (strcmp(line, "PLAYER") == 0) {
+				if (!parse_hex(&sap_player, p))
+					return FALSE;
+			}
+			else if (strcmp(line, "MUSIC") == 0) {
+				if (!parse_hex(&sap_music, p))
+					return FALSE;
+			}
+			else if (strcmp(line, "INIT") == 0) {
+				if (!parse_hex(&sap_init, p))
+					return FALSE;
+			}
+			else if (strcmp(line, "FASTPLAY") == 0) {
+				if (!parse_dec(&sap_fastplay, p, 1, 312))
+					return FALSE;
+			}
+		}
+		if (strcmp(line, "AUTHOR") == 0) {
+			if (!parse_text(module_info->author, p))
 				return FALSE;
 		}
-		else if (tag_matches("INIT ", &sap_ptr, sap_end)) {
-			if (!parse_hex(&sap_init, &sap_ptr, sap_end))
+		else if (strcmp(line, "NAME") == 0) {
+			if (!parse_text(module_info->name, p))
 				return FALSE;
 		}
-		else if (tag_matches("SONGS ", &sap_ptr, sap_end)) {
-			if (!parse_dec(&sap_songs, &sap_ptr, sap_end, 1, 255))
+		else if (strcmp(line, "DATE") == 0) {
+			if (!parse_text(module_info->date, p))
 				return FALSE;
 		}
-		else if (tag_matches("DEFSONG ", &sap_ptr, sap_end)) {
-			if (!parse_dec(&sap_defsong, &sap_ptr, sap_end, 0, 254))
+		else if (strcmp(line, "SONGS") == 0) {
+			if (!parse_dec(&module_info->songs, p, 1, 255))
 				return FALSE;
 		}
-		else if (tag_matches("FASTPLAY ", &sap_ptr, sap_end)) {
-			if (!parse_dec(&sap_fastplay, &sap_ptr, sap_end, 1, 312))
+		else if (strcmp(line, "DEFSONG") == 0) {
+			if (!parse_dec(&module_info->default_song, p, 0, 254))
 				return FALSE;
 		}
-		else if (tag_matches("STEREO", &sap_ptr, sap_end)) {
+		else if (strcmp(line, "STEREO") == 0) {
 #ifdef STEREO_SOUND
-			sap_stereo = 1;
+			module_info->channels = 2;
 #else
 			return FALSE;
 #endif
 		}
-		/* ignore unknown tags */
-		while (sap_ptr[0] != 0x0d) {
-			sap_ptr++;
-			if (sap_ptr >= sap_end)
+		else if (strcmp(line, "TIME") == 0) {
+			int seconds = ASAP_ParseDuration(p);
+			if (seconds == 0 || duration_index >= 128)
 				return FALSE;
+			module_info->durations[duration_index] = (short) seconds;
+			if (strstr(p, "LOOP") != NULL)
+				module_info->loops[duration_index] = TRUE;
+			duration_index++;
 		}
 	}
-	if (sap_defsong >= sap_songs)
+	if (module_info->default_song >= module_info->songs)
 		return FALSE;
+	p = my_stpcpy(module_info->all_info, "Author: ");
+	p = my_stpcpy(p, module_info->author);
+	p = my_stpcpy(p, "\nName: ");
+	p = my_stpcpy(p, module_info->name);
+	p = my_stpcpy(p, "\nDate: ");
+	p = my_stpcpy(p, module_info->date);
+	*p++ = '\n';
+	*p = '\0';
+	if (module_info != &loaded_module_info)
+		return TRUE;
 	switch (sap_type) {
 	case 'B':
 		if (sap_player == 0xffff || sap_init == 0xffff)
@@ -746,56 +851,59 @@ int ASAP_IsOurFile(const char *filename)
 	}
 }
 
-int ASAP_Load(const char *filename, const unsigned char *module, unsigned int module_len)
+int ASAP_GetModuleInfo(const char *filename, const unsigned char *module,
+                       int module_len, ASAP_ModuleInfo *module_info)
 {
-	sap_stereo = 0;
-	sap_songs = 1;
-	sap_defsong = 0;
-	sap_fastplay = 312;
+	strcpy(module_info->author, "<?>");
+	strcpy(module_info->name, "<?>");
+	strcpy(module_info->date, "<?>");
+	module_info->channels = 1;
+	module_info->songs = 1;
+	module_info->default_song = 0;
+	memset(module_info->durations, 0, sizeof(module_info->durations));
+	memset(module_info->loops, 0, sizeof(module_info->loops));
 	switch (get_packed_ext(filename)) {
 	case ASAP_EXT('C', 'M', 'C'):
-		return load_cmc(module, module_len, FALSE);
+		return load_cmc(module, module_len, module_info, FALSE);
 	case ASAP_EXT('C', 'M', 'R'):
-		return load_cmc(module, module_len, TRUE);
+		return load_cmc(module, module_len, module_info, TRUE);
 	case ASAP_EXT('D', 'M', 'C'):
-		sap_fastplay = 156;
-		return load_cmc(module, module_len, FALSE);
+		if (module_info == &loaded_module_info)
+			sap_fastplay = 156;
+		return load_cmc(module, module_len, module_info, FALSE);
 	case ASAP_EXT('M', 'P', 'D'):
-		sap_fastplay = 156;
-		return load_mpt(module, module_len);
+		if (module_info == &loaded_module_info)
+			sap_fastplay = 156;
+		return load_mpt(module, module_len, module_info);
 	case ASAP_EXT('M', 'P', 'T'):
-		return load_mpt(module, module_len);
+		return load_mpt(module, module_len, module_info);
 	case ASAP_EXT('R', 'M', 'T'):
-		return load_rmt(module, module_len);
+		return load_rmt(module, module_len, module_info);
 	case ASAP_EXT('S', 'A', 'P'):
-		return load_sap(module, module + module_len);
+		return load_sap(module, module + module_len, module_info);
 	case ASAP_EXT('T', 'M', '2'):
-		return load_tm2(module, module_len);
+		return load_tm2(module, module_len, module_info);
 #ifdef STEREO_SOUND
 	case ASAP_EXT('T', 'M', '8'):
-		sap_stereo = 1;
-		return load_tmc(module, module_len);
+		module_info->channels = 2;
+		return load_tmc(module, module_len, module_info);
 #endif
 	case ASAP_EXT('T', 'M', 'C'):
-		return load_tmc(module, module_len);
+		return load_tmc(module, module_len, module_info);
 	default:
 		return FALSE;
 	}
 }
 
-unsigned int ASAP_GetChannels(void)
+const ASAP_ModuleInfo *ASAP_Load(const char *filename,
+                                 const unsigned char *module,
+                                 int module_len)
 {
-	return 1 << sap_stereo;
-}
-
-unsigned int ASAP_GetSongs(void)
-{
-	return sap_songs;
-}
-
-unsigned int ASAP_GetDefSong(void)
-{
-	return sap_defsong;
+	sap_fastplay = 312;
+	if (ASAP_GetModuleInfo(filename, module, module_len, &loaded_module_info))
+		return &loaded_module_info;
+	else
+		return NULL;
 }
 
 static void call_6502(UWORD addr, int max_scanlines)
@@ -813,17 +921,21 @@ static void call_6502(UWORD addr, int max_scanlines)
 /* 50 Atari frames for the initialization routine - some SAPs are self-extracting. */
 #define SCANLINES_FOR_INIT  (50 * 312)
 
-void ASAP_PlaySong(unsigned int song)
+void ASAP_PlaySong(int song, int duration)
 {
 	UWORD addr;
-	if (enable_stereo != sap_stereo) {
+	if (duration <= 0)
+		bytes_to_play = -1;
+	else
+		bytes_to_play = (duration * block_rate * loaded_module_info.channels) << sample_16bit;
+	if ((1 << enable_stereo) != loaded_module_info.channels) {
 		Pokey_sound_init(ASAP_MAIN_CLOCK, (uint16) block_rate,
-			1 << sap_stereo, sample_16bit ? SND_BIT16 : 0);
-		enable_stereo = sap_stereo;
+			loaded_module_info.channels, sample_16bit ? SND_BIT16 : 0);
+		enable_stereo = loaded_module_info.channels == 2 ? 1 : 0;
 	}
 	for (addr = _AUDF1; addr <= _STIMER; addr++)
 		POKEY_PutByte(addr, 0);
-	if (sap_stereo)
+	if (enable_stereo)
 		for (addr = _AUDF1 + _POKEY2; addr <= _STIMER + _POKEY2; addr++)
 			POKEY_PutByte(addr, 0);
 	blockclocks = 0;
@@ -874,19 +986,49 @@ void ASAP_PlaySong(unsigned int song)
 	}
 }
 
-void ASAP_Generate(void *buffer, unsigned int buffer_len)
+void call_6502_player(void)
 {
-	/* convert number of bytes to number of blocks */
-	buffer_len >>= sample_16bit + enable_stereo;
-	if (buffer_len == 0U)
-		return;
+	switch (sap_type) {
+	case 'B':
+		call_6502(sap_player, sap_fastplay);
+		break;
+	case 'C':
+		call_6502((UWORD) (sap_player + 6), sap_fastplay);
+		break;
+	case 'm':
+	case 'r':
+	case 'T':
+		call_6502((UWORD) (sap_player + 3), sap_fastplay);
+		break;
+	case 't':
+		if (--tmc_per_frame_counter <= 0) {
+			tmc_per_frame_counter = tmc_per_frame;
+			call_6502((UWORD) (sap_player + 3), sap_fastplay);
+		}
+		else
+			call_6502((UWORD) (sap_player + 6), sap_fastplay);
+		break;
+	}
+}
+
+int ASAP_Generate(void *buffer, int buffer_len)
+{
+	int buffer_blocks;
+	if (bytes_to_play >= 0) {
+		if (buffer_len > bytes_to_play)
+			buffer_len = bytes_to_play;
+		bytes_to_play -= buffer_len;
+	}
+	buffer_blocks = buffer_len >> (sample_16bit + enable_stereo);
+	if (buffer_blocks <= 0)
+		return buffer_len;
 	for (;;) {
-		unsigned int blocks = blockclocks / ASAP_MAIN_CLOCK;
+		int blocks = blockclocks / ASAP_MAIN_CLOCK;
 		if (blocks != 0U) {
-			unsigned int samples;
-			if (blocks > buffer_len)
-				blocks = buffer_len;
-			buffer_len -= blocks;
+			int samples;
+			if (blocks > buffer_blocks)
+				blocks = buffer_blocks;
+			buffer_blocks -= blocks;
 			samples = blocks << enable_stereo;
 			blockclocks -= blocks * ASAP_MAIN_CLOCK;
 			Pokey_process(buffer, samples);
@@ -899,40 +1041,20 @@ void ASAP_Generate(void *buffer, unsigned int buffer_len)
 #endif
 				) {
 				unsigned char *p = (unsigned char *) buffer;
-				unsigned int n = samples;
+				int n = samples;
 				do {
 					unsigned char t = p[0];
 					p[0] = p[1];
 					p[1] = t;
 					p += 2;
-				} while (--n != 0U);
+				} while (--n != 0);
 			}
-			if (buffer_len == 0U)
-				return;
+			if (buffer_blocks == 0)
+				return buffer_len;
 			buffer = (void *) ((unsigned char *) buffer +
 				(samples << sample_16bit));
 		}
-		switch (sap_type) {
-		case 'B':
-			call_6502(sap_player, sap_fastplay);
-			break;
-		case 'C':
-			call_6502((UWORD) (sap_player + 6), sap_fastplay);
-			break;
-		case 'm':
-		case 'r':
-		case 'T':
-			call_6502((UWORD) (sap_player + 3), sap_fastplay);
-			break;
-		case 't':
-			if (--tmc_per_frame_counter <= 0) {
-				tmc_per_frame_counter = tmc_per_frame;
-				call_6502((UWORD) (sap_player + 3), sap_fastplay);
-			}
-			else
-				call_6502((UWORD) (sap_player + 6), sap_fastplay);
-			break;
-		}
+		call_6502_player();
 		random_scanline_counter = (random_scanline_counter + LINE_C * sap_fastplay)
 		                          % ((AUDCTL[0] & POLY9) ? POLY9_SIZE : POLY17_SIZE);
 		blockclocks += blockclocks_per_player;

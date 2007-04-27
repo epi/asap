@@ -1,7 +1,7 @@
 /*
  * libasap.c - ASAP plugin for XMMS
  *
- * Copyright (C) 2006  Piotr Fusik
+ * Copyright (C) 2006-2007  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -41,8 +41,7 @@
 #define QUALITY            1
 #define BUFFERED_BLOCKS    512
 
-static unsigned int channels;
-static unsigned int buffered_bytes;
+static int channels;
 
 static InputPlugin mod;
 
@@ -71,7 +70,8 @@ static void *asap_play_thread(void *arg)
 			short int
 #endif
 			buffer[BUFFERED_BLOCKS * 2];
-		ASAP_Generate(buffer, buffered_bytes);
+		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
+		buffered_bytes = ASAP_Generate(buffer, buffered_bytes);
 		mod.add_vis_pcm(mod.output->written_time(),
 			BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
 			channels, buffered_bytes, buffer);
@@ -80,6 +80,8 @@ static void *asap_play_thread(void *arg)
 		if (!thread_run)
 			break;
 		mod.output->write_audio(buffer, buffered_bytes);
+		if (buffered_bytes == 0)
+			break;
 	}
 	mod.output->buffer_free();
 	mod.output->buffer_free();
@@ -89,35 +91,42 @@ static void *asap_play_thread(void *arg)
 static void asap_play_file(char *filename)
 {
 	static unsigned char module[ASAP_MODULE_MAX];
-	unsigned int module_len;
+	int module_len;
+	const ASAP_ModuleInfo *module_info;
+	int duration;
 #ifdef USE_STDIO
 	FILE *fp;
 	fp = fopen(filename, "rb");
 	if (fp == NULL)
 		return;
-	module_len = fread(module, 1, sizeof(module), fp);
+	module_len = (int) fread(module, 1, sizeof(module), fp);
 	fclose(fp);
 #else
 	int fd;
 	fd = open(filename, O_RDONLY);
 	if (fd == -1)
 		return;
-	module_len = (unsigned int) read(fd, module, sizeof(module));
+	module_len = read(fd, module, sizeof(module));
 	close(fd);
-	if ((int) module_len < 0)
+	if (module_len < 0)
 		return;
 #endif
-	if (!ASAP_Load(filename, module, module_len))
+	module_info = ASAP_Load(filename, module, module_len);
+	if (module_info == NULL)
 		return;
-	ASAP_PlaySong(ASAP_GetDefSong());
-	channels = ASAP_GetChannels();
-	buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
+	duration = module_info->durations[module_info->default_song];
+	ASAP_PlaySong(module_info->default_song, duration);
+	channels = module_info->channels;
 
 	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
 		FREQUENCY, channels))
 		return;
 
-	mod.set_info(NULL, -1, BITS_PER_SAMPLE * 1000, FREQUENCY, channels);
+	if (duration > 0)
+		duration *= 1000;
+	else
+		duration = -1;
+	mod.set_info((char *) module_info->name, duration, BITS_PER_SAMPLE * 1000, FREQUENCY, channels);
 	thread_run = TRUE;
 	pthread_create(&thread_handle, NULL, asap_play_thread, NULL);
 }
