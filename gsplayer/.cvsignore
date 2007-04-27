@@ -1,4 +1,4 @@
-asap2wav.txt
 *.dll
 *.exp
 *.lib
+*.res
