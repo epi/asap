@@ -7,29 +7,20 @@ Things to be done in future versions
 
 * mute user-selected POKEY channels
 
-* POKEY channel volume meters
-
 * POKEY timer interrupts
 
-* display song name, author, date, ...
+* detect song length in native formats
 
-* support the TIME tag in the SAP format
+* Winamp, XMMS, GSPlayer: subsongs
 
-* auto-detect song length in native formats
+* XMMS, GSPlayer: configuration
 
-* foobar2000, Winamp, XMMS: configuration
-
-* Winamp, XMMS: subsongs
-
-* input formats: MD1, MD2, Benjy Soundmonitor, Advanced Music System,
+* input formats: Benjy Soundmonitor, Advanced Music System,
   Delta Composer, Future Composer, Sound Tracker, Antic Music Processor,
-  Black Music Composer, Collen Music Creator, Music Studio, Soft Synth,
-  NEO, MD8, ...
+  Black Music Composer, Collen Music Creator, Music Studio, Soft Synth, ...
 
 * seeking within the currently played song
 
 * convert 6502 routines to C for better performance
-
-* relocate native modules which collide with the player or hardware registers
 
 
