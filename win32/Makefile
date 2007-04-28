@@ -14,7 +14,7 @@ COMMON_C = ..\asap.c $(ATARI800_SRC_DIR)\cpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c 
 COMMON_H = config.h ..\asap.h ..\asap_internal.h ..\players.h $(ATARI800_SRC_DIR)\cpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h $(ATARI800_SRC_DIR)\pokey.h $(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h
 COMMON_DOC = ..\README + ..\CREDITS + ..\TODO + ..\NEWS
 
-all: asap2wav.exe wasap\wasap.exe winamp\in_asap.dll gspasap.dll asapscan.exe
+all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asapscan.exe
 
 ..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	perl $** >$@
@@ -44,7 +44,7 @@ asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
 
 # WASAP
 
-wasap\wasap.exe: wasap\wasap.c $(COMMON_C) wasap\wasap.res $(COMMON_H) wasap\resource.h
+wasap.exe: wasap\wasap.c $(COMMON_C) wasap\wasap.res $(COMMON_H) wasap\resource.h
 	$(ASAP_CC) wasap\wasap.c $(COMMON_C) wasap\wasap.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
 
 wasap\wasap.res: wasap\wasap.rc ..\asap.h wasap\resource.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
@@ -52,7 +52,7 @@ wasap\wasap.res: wasap\wasap.rc ..\asap.h wasap\resource.h wasap\wasap.ico wasap
 
 # Winamp
 
-winamp\in_asap.dll: winamp\in_asap.c $(COMMON_C) winamp\in_asap.res $(COMMON_H) settings.h
+in_asap.dll: winamp\in_asap.c $(COMMON_C) winamp\in_asap.res $(COMMON_H) settings.h
 	$(ASAP_CC) /LD winamp\in_asap.c $(COMMON_C) winamp\in_asap.res user32.lib $(LINKOPT)
 
 winamp\in_asap.res: settings.rc ..\asap.h settings.h
@@ -60,11 +60,11 @@ winamp\in_asap.res: settings.rc ..\asap.h settings.h
 
 # foobar2000
 
-foo: foobar2000\foo_asap.dll
+foo: foo_asap.dll
 
 FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)\foobar2000\foobar2000_component_client\component_client.cpp foobar2000\foobar2000_SDK.lib foobar2000\pfc.lib $(FOOBAR2000_SDK_DIR)\foobar2000\shared\shared.lib
 
-foobar2000\foo_asap.dll: foobar2000\foo_asap.cpp $(COMMON_C) foobar2000\foo_asap.res $(COMMON_H) $(FOOBAR2000_RUNTIME)
+foo_asap.dll: foobar2000\foo_asap.cpp $(COMMON_C) foobar2000\foo_asap.res $(COMMON_H) $(FOOBAR2000_RUNTIME)
 	$(ASAP_CC) /LD /DWIN32 /DUNICODE /EHsc /I $(FOOBAR2000_SDK_DIR) foobar2000\foo_asap.cpp $(COMMON_C) foobar2000\foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
 
 foobar2000\foobar2000_SDK.lib: foobar2000\abort_callback.obj foobar2000\audio_chunk.obj foobar2000\audio_chunk_channel_config.obj foobar2000\file_info.obj foobar2000\filesystem.obj foobar2000\guids.obj foobar2000\preferences_page.obj foobar2000\replaygain_info.obj foobar2000\service.obj
@@ -95,22 +95,47 @@ asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
 # delete generated files
 
 clean:
-	del ..\players.h;wasap.res;*.obj;asap2wav.exe;asap2wav.txt
-	del wasap\wasap.res;wasap\wasap.exe
-	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\*.exp;foobar2000\*.dll
-	del winamp\in_asap.exp;winamp\in_asap.lib;winamp\in_asap.dll
-	del ..\gsplayer\gspasap.exp;..\gsplayer\gspasap.lib;..\gsplayer\gspasap.dll
+	del ..\players\*.obx;..\players.h
+	del *.txt;*.obj;*.exp;*.lib
+	del asap2wav.exe
+	del wasap\wasap.res;wasap.exe
+	del winamp\in_asap.res;in_asap.dll
+	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\foo_asap.res;foo_asap.dll
+	del gspasap.dll
 	del asapscan.exe
 
 # prepare files for release
 
+copying.txt: ..\COPYING
+	copy $** $@
+
+credits.txt: ..\CREDITS
+	copy $** $@
+
+news.txt: ..\NEWS
+	copy $** $@
+
+readme.txt: ..\README
+	copy $** $@
+
+todo.txt: ..\TODO
+	copy $** $@
+
 asap2wav.txt: ..\asap2wav.1
 	groff -m man -r LL=78n -r IN=5n -T ascii -P -cbu ..\asap2wav.1 >$@
 
-dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
-	del ..\..\asap-$(VERSION).tar.gz;..\..\asap2wav-$(VERSION)-win32.zip
-	del ..\..\asap-$(VERSION)-win32.zip;..\..\asap-$(VERSION)-winamp.zip
-	del ..\..\asap-$(VERSION)-foobar2000.zip
+wasap.txt: wasap\README
+	copy $** $@
+
+in_asap.txt: winamp\README
+	copy $** $@
+
+foo_asap.txt: foobar2000\README
+	copy $** $@
+
+dist: all foo ..\configure ..\config.h.in copying.txt credits.txt news.txt readme.txt todo.txt asap2wav.txt wasap.txt in_asap.txt foo_asap.txt ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
+	del ..\..\asap-$(VERSION).tar.gz
+	del ..\..\asap-$(VERSION)-win32.zip
 	perl ..\maketar.pl -d asap-$(VERSION) \
 		-t $(ASAP_DIR)\asap.c $(ASAP_DIR)\asap.h $(ASAP_DIR)\asap_internal.h \
 		$(ASAP_DIR)\asap2wav.c $(ASAP_DIR)\asap2wav.1 \
@@ -144,24 +169,8 @@ dist: all foo ..\configure ..\config.h.in asap2wav.txt ..\players\cmc.obx ..\pla
 		$(ASAP_DIR)\install-sh $(ASAP_DIR)\configure \
 		$(ASAP_DIR)\maketar.pl $(ASAP_DIR)\raw2c.pl \
 		| 7z a -tgzip -si -mx=9 ..\..\asap-$(VERSION).tar.gz
-	copy ..\COPYING copying.txt
-	7z a -tzip -mx=9 ..\..\asap2wav-$(VERSION)-win32.zip asap2wav.exe asap2wav.txt copying.txt
-	copy ..\COPYING wasap\copying.txt
-	copy /b wasap\README + $(COMMON_DOC) wasap\readme.txt
-	cd wasap
-	7z a -tzip -mx=9 ..\..\..\asap-$(VERSION)-win32.zip wasap.exe readme.txt copying.txt
-	cd ..
-	copy ..\COPYING winamp\copying.txt
-	copy /b winamp\README + $(COMMON_DOC) winamp\in_asap.txt
-	cd winamp
-	7z a -tzip -mx=9 ..\..\..\asap-$(VERSION)-winamp.zip in_asap.dll in_asap.txt copying.txt
-	cd ..
-	copy ..\COPYING foobar2000\copying.txt
-	copy /b foobar2000\README + $(COMMON_DOC) foobar2000\foo_asap.txt
-	cd foobar2000
-	7z a -tzip -mx=9 ..\..\..\asap-$(VERSION)-foobar2000.zip foo_asap.dll foo_asap.txt copying.txt
-	cd ..
-	del copying.txt
-	del wasap\copying.txt;wasap\readme.txt
-	del winamp\copying.txt;winamp\in_asap.txt
-	del foobar2000\copying.txt;foobar2000\foo_asap.txt
+	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip \
+		copying.txt credits.txt news.txt readme.txt todo.txt \
+		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt \
+		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll
+

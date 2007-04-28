@@ -6,10 +6,9 @@ stored in several formats. To install the plugin, simply extract in_asap.dll
 to the "Plugins" directory of your Winamp installation. It is also recommended
 that you remove other plugins that support Atari 8-bit music.
 
-At the moment the plugin does not support multiple songs per file, seeking,
-file information, configuration nor song lengths (you need to manually switch
-between the files on the playlist).
+The plugin now has some configuration. You can specify a time limit for songs
+that do not define playback time. You can also choose if songs marked
+as looping should finish when the loop starts or not.
 
-This plugin is part of the ASAP project. Information about ASAP follows.
-
-
+At the moment the plugin plays only the default subsong and gives no access
+to other subsongs in the file.

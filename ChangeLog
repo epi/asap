@@ -1,3 +1,10 @@
+2007-04-28  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile: create single package for the Win32 platform containing
+  ASAP2WAV, WASAP, Winamp plugin and foobar2000 plugin
+
+* win32/wasap/README, win32/winamp/README, win32/foobar2000/README: updated
+
+
 2007-04-27  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, asap2wav.c, win32/Makefile, win32/settings.rc,
   win32/settings.h, win32/wasap/wasap.c, win32/wasap/wasap.rc,
