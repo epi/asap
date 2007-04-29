@@ -1,3 +1,8 @@
+2007-04-29  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, win32/winamp/in_asap.c, win32/foobar2000/foo_asap.cpp,
+  xmms/libasap.c, TODO: ASAP_Seek()
+
+
 2007-04-28  Piotr Fusik  <fox@scene.pl>
 * win32/Makefile: create single package for the Win32 platform containing
   ASAP2WAV, WASAP, Winamp plugin and foobar2000 plugin
@@ -8,8 +13,8 @@
 2007-04-27  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, asap2wav.c, win32/Makefile, win32/settings.rc,
   win32/settings.h, win32/wasap/wasap.c, win32/wasap/wasap.rc,
-  win32/wasap/resource.h, win32/winamp/in_asap.c, win32/foobar2000/foo_asap.c,
-  gsplayer/gspasap.c, xmms/libasap.c, TODO:
+  win32/wasap/resource.h, win32/winamp/in_asap.c,
+  win32/foobar2000/foo_asap.cpp, gsplayer/gspasap.c, xmms/libasap.c, TODO:
   recognize AUTHOR, NAME, DATE, TIME tags in SAP files;
   major refactoring of the API
 

@@ -218,6 +218,7 @@ public:
 		if (seconds > 0)
 			p_info.set_length(seconds);
 		p_info.info_set_int("channels", module_info.channels);
+		p_info.info_set_int("subsongs", module_info.songs);
 		p_info.meta_set("composer", module_info.author);
 		p_info.meta_set("title", module_info.name);
 		p_info.meta_set("date", module_info.date);
@@ -257,11 +258,12 @@ public:
 
 	void decode_seek(double p_seconds, abort_callback& p_abort)
 	{
+		ASAP_Seek((int) (p_seconds * 1000));
 	}
 
 	bool decode_can_seek()
 	{
-		return false;
+		return true;
 	}
 
 	bool decode_get_dynamic_info(file_info &p_out, double &p_timestamp_delta)

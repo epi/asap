@@ -126,6 +126,10 @@ const ASAP_ModuleInfo *ASAP_Load(const char *filename,
    unless you want to override it. 0 means indefinitely. */
 void ASAP_PlaySong(int song, int duration);
 
+/* Rewinds the current song.
+   "position" is the requested absolute position in milliseconds. */
+void ASAP_Seek(int position);
+
 /* Fills in the specified buffer with generated samples.
    "buffer" is a buffer for samples, managed outside ASAP.
    "buffer_len" is the length of this buffer in bytes.

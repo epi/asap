@@ -5,9 +5,9 @@ Things to be done in future versions
 
 * SAP TYPEs: D, S, R
 
-* mute user-selected POKEY channels
-
 * POKEY timer interrupts
+
+* mute user-selected POKEY channels
 
 * detect song length in native formats
 
@@ -19,8 +19,4 @@ Things to be done in future versions
   Delta Composer, Future Composer, Sound Tracker, Antic Music Processor,
   Black Music Composer, Collen Music Creator, Music Studio, Soft Synth, ...
 
-* seeking within the currently played song
-
 * convert 6502 routines to C for better performance
-
-

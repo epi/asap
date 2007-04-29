@@ -287,10 +287,11 @@ static UBYTE song_pos[128];
 static int tmc_per_frame;
 static int tmc_per_frame_counter;
 
-static int blockclocks;
-static int blockclocks_per_player;
-
-static int bytes_to_play;
+static int current_song;
+static int current_duration;
+static int blocks_played;
+static int blockcycles_till_player;
+static int blockcycles_per_player;
 
 static const int perframe2fastplay[] = { 312, 312 / 2, 312 / 3, 312 / 4 };
 
@@ -924,10 +925,11 @@ static void call_6502(UWORD addr, int max_scanlines)
 void ASAP_PlaySong(int song, int duration)
 {
 	UWORD addr;
-	if (duration <= 0)
-		bytes_to_play = -1;
-	else
-		bytes_to_play = (duration * block_rate * loaded_module_info.channels) << sample_16bit;
+	current_song = song;
+	current_duration = duration;
+	blocks_played = 0;
+	blockcycles_till_player = 0;
+	blockcycles_per_player = 114U * sap_fastplay * block_rate;
 	if ((1 << enable_stereo) != loaded_module_info.channels) {
 		Pokey_sound_init(ASAP_MAIN_CLOCK, (uint16) block_rate,
 			loaded_module_info.channels, sample_16bit ? SND_BIT16 : 0);
@@ -938,8 +940,6 @@ void ASAP_PlaySong(int song, int duration)
 	if (enable_stereo)
 		for (addr = _AUDF1 + _POKEY2; addr <= _STIMER + _POKEY2; addr++)
 			POKEY_PutByte(addr, 0);
-	blockclocks = 0;
-	blockclocks_per_player = 114U * sap_fastplay * block_rate;
 	regP = 0x30;
 	switch (sap_type) {
 	case 'B':
@@ -1011,52 +1011,71 @@ void call_6502_player(void)
 	}
 }
 
-int ASAP_Generate(void *buffer, int buffer_len)
+static int cpu_process(int blocks)
 {
-	int buffer_blocks;
-	if (bytes_to_play >= 0) {
-		if (buffer_len > bytes_to_play)
-			buffer_len = bytes_to_play;
-		bytes_to_play -= buffer_len;
-	}
-	buffer_blocks = buffer_len >> (sample_16bit + enable_stereo);
-	if (buffer_blocks <= 0)
-		return buffer_len;
-	for (;;) {
-		int blocks = blockclocks / ASAP_MAIN_CLOCK;
-		if (blocks != 0U) {
-			int samples;
-			if (blocks > buffer_blocks)
-				blocks = buffer_blocks;
-			buffer_blocks -= blocks;
-			samples = blocks << enable_stereo;
-			blockclocks -= blocks * ASAP_MAIN_CLOCK;
-			Pokey_process(buffer, samples);
-			/* swap bytes in non-native words if necessary */
-			if (sample_format ==
-#ifdef WORDS_BIGENDIAN
-				AUDIO_FORMAT_S16_LE
-#else
-				AUDIO_FORMAT_S16_BE
-#endif
-				) {
-				unsigned char *p = (unsigned char *) buffer;
-				int n = samples;
-				do {
-					unsigned char t = p[0];
-					p[0] = p[1];
-					p[1] = t;
-					p += 2;
-				} while (--n != 0);
-			}
-			if (buffer_blocks == 0)
-				return buffer_len;
-			buffer = (void *) ((unsigned char *) buffer +
-				(samples << sample_16bit));
-		}
+	int ready_blocks;
+	while (blockcycles_till_player < ASAP_MAIN_CLOCK) {
 		call_6502_player();
 		random_scanline_counter = (random_scanline_counter + LINE_C * sap_fastplay)
 		                          % ((AUDCTL[0] & POLY9) ? POLY9_SIZE : POLY17_SIZE);
-		blockclocks += blockclocks_per_player;
+		blockcycles_till_player += blockcycles_per_player;
 	}
+	ready_blocks = blockcycles_till_player / ASAP_MAIN_CLOCK;
+	if (blocks > ready_blocks)
+		blocks = ready_blocks;
+	blocks_played += blocks;
+	blockcycles_till_player -= blocks * ASAP_MAIN_CLOCK;
+	return blocks;
+}
+
+void ASAP_Seek(int position)
+{
+	int block = (int) ((double) position * block_rate / 1000);
+	if (block < blocks_played)
+		ASAP_PlaySong(current_song, current_duration);
+	while (blocks_played < block)
+		cpu_process(block - blocks_played);
+}
+
+/* swap bytes in non-native words if necessary */
+static void fix_endianess(void *buffer, int samples)
+{
+	if (sample_format ==
+#ifdef WORDS_BIGENDIAN
+		AUDIO_FORMAT_S16_LE
+#else
+		AUDIO_FORMAT_S16_BE
+#endif
+		) {
+		unsigned char *p = (unsigned char *) buffer;
+		int n = samples;
+		do {
+			unsigned char t = p[0];
+			p[0] = p[1];
+			p[1] = t;
+			p += 2;
+		} while (--n != 0);
+	}
+}
+
+int ASAP_Generate(void *buffer, int buffer_len)
+{
+	int buffer_blocks = buffer_len >> (sample_16bit + enable_stereo);
+	int remaining_blocks;
+	if (current_duration > 0) {
+		int total_blocks = current_duration * block_rate;
+		if (blocks_played + buffer_blocks > total_blocks)
+			buffer_blocks = total_blocks - blocks_played;
+	}
+	remaining_blocks = buffer_blocks;
+	while (remaining_blocks > 0) {
+		int blocks = cpu_process(remaining_blocks);
+		int samples = blocks << enable_stereo;
+		Pokey_process(buffer, samples);
+		fix_endianess(buffer, samples);
+		buffer = (void *) ((unsigned char *) buffer +
+			(samples << sample_16bit));
+		remaining_blocks -= blocks;
+	}
+	return buffer_blocks << (sample_16bit + enable_stereo);
 }

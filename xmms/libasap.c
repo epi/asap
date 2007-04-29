@@ -45,8 +45,8 @@ static int channels;
 
 static InputPlugin mod;
 
+static int seek_to;
 static pthread_t thread_handle;
-
 static volatile int thread_run = FALSE;
 
 static void asap_init(void)
@@ -71,6 +71,11 @@ static void *asap_play_thread(void *arg)
 #endif
 			buffer[BUFFERED_BLOCKS * 2];
 		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
+		if (seek_to >= 0) {
+			mod.output->flush(seek_to);
+			ASAP_Seek(seek_to);
+			seek_to = -1;
+		}
 		buffered_bytes = ASAP_Generate(buffer, buffered_bytes);
 		mod.add_vis_pcm(mod.output->written_time(),
 			BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
@@ -122,13 +127,17 @@ static void asap_play_file(char *filename)
 		FREQUENCY, channels))
 		return;
 
-	if (duration > 0)
-		duration *= 1000;
-	else
-		duration = -1;
-	mod.set_info((char *) module_info->name, duration, BITS_PER_SAMPLE * 1000, FREQUENCY, channels);
+	mod.set_info((char *) module_info->name, duration * 1000, BITS_PER_SAMPLE * 1000, FREQUENCY, channels);
+	seek_to = -1;
 	thread_run = TRUE;
 	pthread_create(&thread_handle, NULL, asap_play_thread, NULL);
+}
+
+static void asap_seek(int time)
+{
+	seek_to = time * 1000;
+	while (seek_to >= 0)
+		xmms_usleep(10000);
 }
 
 static void asap_pause(short paused)
@@ -163,7 +172,7 @@ static InputPlugin mod = {
 	asap_play_file,
 	asap_stop,
 	asap_pause,
-	NULL,
+	asap_seek,
 	NULL,
 	asap_get_time,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL

@@ -63,8 +63,8 @@ static int duration;
 
 static HANDLE thread_handle = NULL;
 static volatile int thread_run = FALSE;
-
 static int paused = 0;
+static int seek_needed;
 
 static void enableTimeInput(HWND hDlg, BOOL enable)
 {
@@ -228,6 +228,11 @@ static DWORD WINAPI playThread(LPVOID dummy)
 #endif
 			];
 		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
+		if (seek_needed >= 0) {
+			mod.outMod->Flush(seek_needed);
+			ASAP_Seek(seek_needed);
+			seek_needed = -1;
+		}
 		if (mod.outMod->CanWrite() >= buffered_bytes
 #if SUPPORT_EQUALIZER
 			<< mod.dsp_isactive()
@@ -286,6 +291,7 @@ static int play(char *fn)
 	// http://forums.winamp.com/showthread.php?postid=1841035
 	mod.VSASetInfo(FREQUENCY, channels);
 	mod.outMod->SetVolume(-666);
+	seek_needed = -1;
 	thread_run = TRUE;
 	thread_handle = CreateThread(NULL, 0, playThread, NULL, 0, &threadId);
 	return thread_handle != NULL ? 0 : 1;
@@ -334,6 +340,7 @@ static int getOutputTime(void)
 
 static void setOutputTime(int time_in_ms)
 {
+	seek_needed = time_in_ms;
 }
 
 static void setVolume(int volume)
@@ -367,7 +374,7 @@ static In_Module mod = {
 #endif
 	"tm2\0Theta Music Composer 2.x (*.TM2)\0"
 	,
-	0,    // is_seekable
+	1,    // is_seekable
 	1,    // UsesOutputPlug
 	config,
 	about,
