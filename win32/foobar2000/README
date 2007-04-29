@@ -12,9 +12,8 @@ as looping should finish when the loop starts or not.
 
 The plugin does support subsongs, which appear as separate items
 on the playlist. foobar2000's default title formating doesn't include subsong
-numbers however, so the subsongs look the same on the playlist.
+numbers however, so the subsongs appear the same on the playlist.
 To fix this problem, open File / Preferences / Display / Title formatting
 and before "$tab()" in the edit box insert something like this:
-$ifgreater(%_subsong%,0, - subsong $add(1,%_subsong%),)
-- this will add 1-based numbers to all subsongs except for subsong 1
-(90% of SAPs in ASMA contain just one song).
+$ifgreater($info(subsongs), 1, - song $add(1,%_subsong%),)
+- this will add subsong numbers to files that contain subsongs.
