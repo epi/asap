@@ -518,7 +518,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	hSongMenu = CreatePopupMenu();
 	InsertMenu(hTrayMenu, 1, MF_BYPOSITION | MF_ENABLED | MF_STRING | MF_POPUP,
 	           (UINT_PTR) hSongMenu, "So&ng");
-	hQualityMenu = GetSubMenu(hTrayMenu, 3);
+	hQualityMenu = GetSubMenu(hTrayMenu, 4);
 	SetMenuDefaultItem(hTrayMenu, 0, TRUE);
 	nid.hWnd = hWnd;
 	nid.hIcon = hStopIcon;
