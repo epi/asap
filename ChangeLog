@@ -5,6 +5,8 @@
 * win32/foobar2000/foo_asap.cpp, win32/foobar2000/README: number of subsongs
   is available as the "subsongs" info item
 
+* asapscan.c: fixed loop detection
+
 
 2007-04-28  Piotr Fusik  <fox@scene.pl>
 * win32/Makefile: create single package for the Win32 platform containing
