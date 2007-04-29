@@ -94,7 +94,7 @@ void scan_song(int song)
 		}
 		else
 			silence_run = 0;
-		if (i >= 2 * loop_player_calls) {
+		if (i > loop_player_calls) {
 			if (memcmp(registers_dump, p - 18 * loop_player_calls, 18 * loop_player_calls) == 0) {
 				int seconds = player_calls_to_seconds(i - loop_player_calls);
 				printf("TIME %02d:%02d LOOP\n", seconds / 60, seconds % 60);
