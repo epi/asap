@@ -33,6 +33,8 @@
 #define BITS_PER_SAMPLE  8
 #define QUALITY          0
 
+static const ASAP_ModuleInfo *module_info;
+
 static void WINAPI asapInit()
 {
 	ASAP_Initialize(FREQUENCY,
@@ -111,13 +113,17 @@ static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 	HANDLE fh;
 	static unsigned char module[ASAP_MODULE_MAX];
 	DWORD module_len;
-	const ASAP_ModuleInfo *module_info;
 	int duration;
 #ifdef _UNICODE
 	char szFile[MAX_PATH];
 	if (WideCharToMultiByte(CP_ACP, 0, pszFile, -1, szFile, MAX_PATH, NULL, NULL) <= 0)
 		return FALSE;
+#define ANSI_FILENAME szFile
+#else
+#define ANSI_FILENAME pszFile
 #endif
+	if (!ASAP_IsOurFile(ANSI_FILENAME))
+		return FALSE;
 	fh = CreateFile(pszFile, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
@@ -127,18 +133,15 @@ static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 		return FALSE;
 	}
 	CloseHandle(fh);
-#ifdef _UNICODE
-	module_info = ASAP_Load(szFile, module, module_len);
-#else
-	module_info = ASAP_Load(pszFile, module, module_len);
-#endif
+	module_info = ASAP_Load(ANSI_FILENAME, module, module_len);
+	if (module_info == NULL)
+		return FALSE;
 	pInfo->nChannels = module_info->channels;
 	pInfo->nSampleRate = FREQUENCY;
 	pInfo->nBitsPerSample = BITS_PER_SAMPLE;
 	pInfo->nAvgBitrate = 8;
 	duration = module_info->durations[module_info->default_song];
 	pInfo->nDuration = duration * 1000;
-	ASAP_PlaySong(module_info->default_song, duration);
 	return TRUE;
 }
 
@@ -149,12 +152,15 @@ static long WINAPI asapSeekFile(long lTime)
 
 static BOOL WINAPI asapStartDecodeFile()
 {
+	int duration = module_info->durations[module_info->default_song];
+	ASAP_PlaySong(module_info->default_song, duration);
 	return TRUE;
 }
 
 static int WINAPI asapDecodeFile(WAVEHDR *pHdr)
 {
 	int len = ASAP_Generate(pHdr->lpData, pHdr->dwBufferLength);
+	pHdr->dwBytesRecorded = len;
 	return len < (int) pHdr->dwBufferLength ? PLUGIN_RET_EOF : PLUGIN_RET_SUCCESS;
 }
 

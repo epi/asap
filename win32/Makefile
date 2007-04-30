@@ -85,7 +85,7 @@ foobar2000\foo_asap.res: settings.rc ..\asap.h settings.h
 # GSPlayer
 
 gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C)
-	$(ASAP_CC) /LD ..\gsplayer\gspasap.c $(COMMON_C) $(LINKOPT)
+	$(ASAP_CC) /LD ..\gsplayer\gspasap.c $(COMMON_C) ..\gsplayer\gspasap.def $(LINKOPT)
 
 # asapscan
 
@@ -147,6 +147,7 @@ dist: all foo ..\configure ..\config.h.in copying.txt credits.txt news.txt readm
 		$(ASAP_DIR)\COPYING $(ASAP_DIR)\CREDITS $(ASAP_DIR)\INSTALL \
 		$(ASAP_DIR)\NEWS $(ASAP_DIR)\README $(ASAP_DIR)\TODO \
 		$(ASAP_DIR)\gsplayer\gspasap.c $(ASAP_DIR)\gsplayer\mapplugin.h \
+		$(ASAP_DIR)\gsplayer\gspasap.def \
 		$(ASAP_DIR)\win32\config.h $(ASAP_DIR)\win32\Makefile \
 		$(ASAP_DIR)\win32\settings.h $(ASAP_DIR)\win32\settings.rc \
 		$(ASAP_DIR)\win32\wasap\wasap.c $(ASAP_DIR)\win32\wasap\README \
@@ -173,4 +174,3 @@ dist: all foo ..\configure ..\config.h.in copying.txt credits.txt news.txt readm
 		copying.txt credits.txt news.txt readme.txt todo.txt \
 		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt \
 		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll
-
