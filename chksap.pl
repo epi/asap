@@ -254,11 +254,12 @@ Piotr Fusik C<fox@scene.pl>.
 =cut
 
 use File::Find;
+use File::Spec;
 use Getopt::Long;
 use Pod::Usage;
 use strict;
 
-my $asapscan = 'e:/0/asap/asapscan';
+my $asapscan = File::Spec->rel2abs('asapscan');
 my ($check, $fix, $stat, $time, $help, $version) = (0, 0, 0, 0, 0);
 my ($total_files, $sap_files, $stereo_files) = (0, 0, 0);
 my ($total_length, $min_length, $max_length) = (0, 100_000, 0);
