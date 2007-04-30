@@ -48,7 +48,7 @@ static void WINAPI asapQuit()
 
 static DWORD WINAPI asapGetFunc()
 {
-	return PLUGIN_FUNC_DECFILE;
+	return PLUGIN_FUNC_DECFILE | PLUGIN_FUNC_SEEKFILE;
 }
 
 static BOOL WINAPI asapGetPluginName(LPTSTR pszName)
@@ -64,6 +64,7 @@ static BOOL WINAPI asapSetEqualizer(MAP_PLUGIN_EQ *pEQ)
 
 static void WINAPI asapShowConfigDlg(HWND hwndParent)
 {
+	// TODO
 }
 
 static LPCTSTR exts[] = {
@@ -147,7 +148,8 @@ static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 
 static long WINAPI asapSeekFile(long lTime)
 {
-	return 0;
+	ASAP_Seek((int) lTime);
+	return lTime;
 }
 
 static BOOL WINAPI asapStartDecodeFile()
