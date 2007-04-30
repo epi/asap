@@ -2,6 +2,14 @@
 * gsplayer/gspasap.c, gsplayer/gspasap.def, win32/Makefile: made the GSPlayer
   plugin work
 
+* asap2wav.c: refactoring; "--raw" skips WAV headers, "-o -" writes
+  to standard output. You can use ASAP2WAV with these two options to generate
+  an audio stream for another program, for example:
+  asap2wav --raw -o - file.sap | aplay -r 44100 -f S16_LE -t raw
+
+* chksap.pl: a Perl script that can detect and automatically fix many subtle
+  errors in SAP files as well as compute statistics
+
 
 2007-04-29  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, win32/winamp/in_asap.c, win32/foobar2000/foo_asap.cpp,
