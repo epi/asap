@@ -1,3 +1,12 @@
+2007-05-01  Piotr Fusik  <fox@scene.pl>
+* asapscan.c, chksap.pl: detect POKEY features used, such as hi-pass filters
+
+* gsplayer/gspasap.c: pass AUTHOR and NAME to GSPlayer
+
+* win32/settings.c, win32/Makefile, gsplayer/gspasap.c, win32/winamp/in_asap.c:
+  identical settings dialog box in Winamp and GSPlayer plugins
+
+
 2007-04-30  Piotr Fusik  <fox@scene.pl>
 * gsplayer/gspasap.c, gsplayer/gspasap.def, win32/Makefile: made the GSPlayer
   plugin work
