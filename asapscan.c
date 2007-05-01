@@ -42,11 +42,31 @@ extern unsigned char AUDCTL[2];
 extern int sap_fastplay;
 void call_6502_player(void);
 
-static int dump = FALSE;
+static int detect_time = FALSE;
 static int scan_player_calls;
 static int silence_player_calls;
 static int loop_player_calls;
 static unsigned char *registers_dump;
+
+static int dump = FALSE;
+
+#define FEATURE_CHECK          1
+#define FEATURE_15_KHZ         2
+#define FEATURE_HIPASS_FILTER  4
+#define FEATURE_LOW_OF_16_BIT  8
+#define FEATURE_9_BIT_POLY     16
+static int features = 0;
+
+static void print_help(void)
+{
+	printf(
+		"Usage: asapscan MODE INPUTFILE\n"
+		"Modes:\n"
+		"-d  Dump POKEY registers\n"
+		"-f  List POKEY features used\n"
+		"-t  Detect silence and loops\n"
+	);
+}
 
 static int seconds_to_player_calls(int seconds)
 {
@@ -84,29 +104,44 @@ void scan_song(int song)
 				AUDF[4], AUDC[4], AUDF[5], AUDC[5], AUDF[6], AUDC[6], AUDF[7], AUDC[7], AUDCTL[1]
 			);
 		}
-		if (is_silence) {
-			silence_run++;
-			if (silence_run >= silence_player_calls) {
-				int seconds = player_calls_to_seconds(i - silence_run);
-				printf("TIME %02d:%02d\n", seconds / 60, seconds % 60);
-				return;
-			}
+		if (features != 0) {
+			if (((AUDCTL[0] | AUDCTL[1]) & 1) != 0)
+				features |= FEATURE_15_KHZ;
+			if (((AUDCTL[0] | AUDCTL[1]) & 6) != 0)
+				features |= FEATURE_HIPASS_FILTER;
+			if (((AUDCTL[0] & 0x40) != 0 && (AUDC[0] & 0xf) != 0)
+			|| ((AUDCTL[0] & 0x20) != 0 && (AUDC[2] & 0xf) != 0))
+				features |= FEATURE_LOW_OF_16_BIT;
+			if (((AUDCTL[0] | AUDCTL[1]) & 0x80) != 0)
+				features |= FEATURE_9_BIT_POLY;
 		}
-		else
-			silence_run = 0;
-		if (i > loop_player_calls) {
-			if (memcmp(registers_dump, p - 18 * loop_player_calls, 18 * loop_player_calls) == 0) {
-				int seconds = player_calls_to_seconds(i - loop_player_calls);
-				printf("TIME %02d:%02d LOOP\n", seconds / 60, seconds % 60);
-				return;
+		if (detect_time) {
+			if (is_silence) {
+				silence_run++;
+				if (silence_run >= silence_player_calls) {
+					int seconds = player_calls_to_seconds(i - silence_run);
+					printf("TIME %02d:%02d\n", seconds / 60, seconds % 60);
+					return;
+				}
+			}
+			else
+				silence_run = 0;
+			if (i > loop_player_calls) {
+				if (memcmp(registers_dump, p - 18 * loop_player_calls, 18 * loop_player_calls) == 0) {
+					int seconds = player_calls_to_seconds(i - loop_player_calls);
+					printf("TIME %02d:%02d LOOP\n", seconds / 60, seconds % 60);
+					return;
+				}
 			}
 		}
 	}
-	printf("No silence or loop detected\n");
+	if (detect_time)
+		printf("No silence or loop detected\n");
 }
 
 int main(int argc, char *argv[])
 {
+	const char *input_file;
 	int scan_seconds = 15 * 60;
 	int silence_seconds = 10;
 	int loop_seconds = 5 * 60;
@@ -115,21 +150,32 @@ int main(int argc, char *argv[])
 	int module_len;
 	const ASAP_ModuleInfo *module_info;
 	int song;
-	if (argc != 2 || strcmp(argv[1], "--h") == 0 || strcmp(argv[1], "--help") == 0) {
-		printf("Usage: asapscan INPUTFILE\n");
+	if (argc != 3) {
+		print_help();
 		return 1;
 	}
-	fp = fopen(argv[1], "rb");
+	if (strcmp(argv[1], "-d") == 0)
+		dump = TRUE;
+	else if (strcmp(argv[1], "-f") == 0)
+		features = 1;
+	else if (strcmp(argv[1], "-t") == 0)
+		detect_time = TRUE;
+	else {
+		print_help();
+		return 1;
+	}
+	input_file = argv[2];
+	fp = fopen(input_file, "rb");
 	if (fp == NULL) {
-		fprintf(stderr, "asapscan: cannot open %s\n", argv[1]);
+		fprintf(stderr, "asapscan: cannot open %s\n", argv[2]);
 		return 1;
 	}
 	module_len = fread(module, 1, sizeof(module), fp);
 	fclose(fp);
 	ASAP_Initialize(44100, AUDIO_FORMAT_U8, 0);
-	module_info = ASAP_Load(argv[1], module, module_len);
+	module_info = ASAP_Load(input_file, module, module_len);
 	if (module_info == NULL) {
-		fprintf(stderr, "asapscan: %s: format not supported\n", argv[1]);
+		fprintf(stderr, "asapscan: %s: format not supported\n", input_file);
 		return 1;
 	}
 	scan_player_calls = seconds_to_player_calls(scan_seconds);
@@ -143,5 +189,15 @@ int main(int argc, char *argv[])
 	for (song = 0; song < module_info->songs; song++)
 		scan_song(song);
 	free(registers_dump);
+	if (features != 0) {
+		if ((features & FEATURE_15_KHZ) != 0)
+			printf("15 kHz clock\n");
+		if ((features & FEATURE_HIPASS_FILTER) != 0)
+			printf("Hi-pass filter\n");
+		if ((features & FEATURE_LOW_OF_16_BIT) != 0)
+			printf("Low byte of 16-bit counter\n");
+		if ((features & FEATURE_9_BIT_POLY) != 0)
+			printf("9-bit poly\n");
+	}
 	return 0;
 }

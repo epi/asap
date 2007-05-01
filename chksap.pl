@@ -56,6 +56,16 @@ and stores it in TIME tags.
 
 =back
 
+In the statistics mode the following option is available:
+
+=over 4
+
+=item B<-u>, B<--features>
+
+Lists files with rarely used POKEY features.
+
+=back
+
 The following options display some text and terminate the program
 without file operations:
 
@@ -260,13 +270,13 @@ use Pod::Usage;
 use strict;
 
 my $asapscan = File::Spec->rel2abs('asapscan');
-my ($check, $fix, $stat, $time, $help, $version) = (0, 0, 0, 0, 0);
+my ($check, $fix, $stat, $time, $features, $help, $version) = (0, 0, 0, 0, 0, 0);
 my ($total_files, $sap_files, $stereo_files) = (0, 0, 0);
 my ($total_length, $min_length, $max_length) = (0, 100_000, 0);
 my ($min_filename, $max_filename);
 my ($time_files, $total_seconds) = (0, 0);
 my (@fixed_messages, @notfixed_messages, @fatal_messages);
-my (%stat, %types);
+my (%stat, %types, %features);
 
 sub process($$) {
 	my ($filename, $fullpath) = @_;
@@ -487,7 +497,7 @@ sub process($$) {
 			else {
 				if ($fix) {
 					if ($time && !@times) {
-						my $times = `$asapscan $filename`;
+						my $times = `$asapscan -t $filename`;
 						if (!$times) {
 							$fatal{'error running asapscan'} = 1;
 						}
@@ -541,6 +551,14 @@ sub process($$) {
 			}
 		}
 	}
+	if ($features) {
+		my @features = `$asapscan -f $filename`;
+		chomp(@features);
+		if ($?) {
+			$fatal{'error running asapscan'} = 1;
+		}
+		push @{$features{$_}}, $fullpath for @features;
+	}
 	if (%fatal) {
 		push @fatal_messages,
 			"$fullpath (" . join('; ', sort(keys(%fatal))) . ")\n";
@@ -556,6 +574,7 @@ GetOptions(
 	'fix|f' => \$fix,
 	'statistics|s' => \$stat,
 	'time|t' => \$time,
+	'features|u' => \$features,
 	'help|h' => \$help,
 	'version|v' => \$version,
 ) or pod2usage(2);
@@ -628,6 +647,14 @@ elsif ($stat) {
 			print "\n$_ values:\n";
 			for (sort keys(%$ref)) {
 				printf "%4dx: %s\n", $ref->{$_}, $_;
+			}
+		}
+	}
+	if ($features) {
+		for (sort keys %features) {
+			print "\nFiles which use $_:\n";
+			for (sort @{$features{$_}}) {
+				print "$_\n";
 			}
 		}
 	}
