@@ -6,6 +6,8 @@
 * win32/settings.c, win32/Makefile, gsplayer/gspasap.c, win32/winamp/in_asap.c:
   identical settings dialog box in Winamp and GSPlayer plugins
 
+* xmms/libasap.c: implemented about, get_song_info and file_info_box
+
 
 2007-04-30  Piotr Fusik  <fox@scene.pl>
 * gsplayer/gspasap.c, gsplayer/gspasap.def, win32/Makefile: made the GSPlayer
