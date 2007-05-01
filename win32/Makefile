@@ -52,8 +52,8 @@ wasap\wasap.res: wasap\wasap.rc ..\asap.h wasap\resource.h wasap\wasap.ico wasap
 
 # Winamp
 
-in_asap.dll: winamp\in_asap.c $(COMMON_C) winamp\in_asap.res $(COMMON_H) settings.h
-	$(ASAP_CC) /LD winamp\in_asap.c $(COMMON_C) winamp\in_asap.res user32.lib $(LINKOPT)
+in_asap.dll: winamp\in_asap.c $(COMMON_C) settings.c winamp\in_asap.res $(COMMON_H) settings.h
+	$(ASAP_CC) /LD winamp\in_asap.c $(COMMON_C) settings.c winamp\in_asap.res user32.lib $(LINKOPT)
 
 winamp\in_asap.res: settings.rc ..\asap.h settings.h
 	$(RC) /D WINAMP settings.rc
@@ -84,8 +84,11 @@ foobar2000\foo_asap.res: settings.rc ..\asap.h settings.h
 
 # GSPlayer
 
-gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C)
-	$(ASAP_CC) /LD ..\gsplayer\gspasap.c $(COMMON_C) ..\gsplayer\gspasap.def $(LINKOPT)
+gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) settings.c gspasap.res ..\gsplayer\gspasap.def
+	$(ASAP_CC) /LD ..\gsplayer\gspasap.c $(COMMON_C) settings.c gspasap.res ..\gsplayer\gspasap.def user32.lib $(LINKOPT)
+
+gspasap.res: settings.rc ..\asap.h settings.h
+	$(RC) /D GSPLAYER settings.rc
 
 # asapscan
 
@@ -149,6 +152,7 @@ dist: all foo ..\configure ..\config.h.in copying.txt credits.txt news.txt readm
 		$(ASAP_DIR)\gsplayer\gspasap.c $(ASAP_DIR)\gsplayer\mapplugin.h \
 		$(ASAP_DIR)\gsplayer\gspasap.def \
 		$(ASAP_DIR)\win32\config.h $(ASAP_DIR)\win32\Makefile \
+		$(ASAP_DIR)\win32\settings.c \
 		$(ASAP_DIR)\win32\settings.h $(ASAP_DIR)\win32\settings.rc \
 		$(ASAP_DIR)\win32\wasap\wasap.c $(ASAP_DIR)\win32\wasap\README \
 		$(ASAP_DIR)\win32\wasap\resource.h $(ASAP_DIR)\win32\wasap\wasap.rc \
@@ -168,6 +172,7 @@ dist: all foo ..\configure ..\config.h.in copying.txt credits.txt news.txt readm
 		$(ASAP_DIR)\win32\wasap\wasap.ico \
 		-s $(ASAP_DIR)\config.guess $(ASAP_DIR)\config.sub \
 		$(ASAP_DIR)\install-sh $(ASAP_DIR)\configure \
+		$(ASAP_DIR)\chksap.pl \
 		$(ASAP_DIR)\maketar.pl $(ASAP_DIR)\raw2c.pl \
 		| 7z a -tgzip -si -mx=9 ..\..\asap-$(VERSION).tar.gz
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip \
