@@ -27,13 +27,43 @@
 
 #include "mapplugin.h"
 
-#include "asap.h"
-
 #define FREQUENCY        44100
 #define BITS_PER_SAMPLE  8
 #define QUALITY          0
 
+#include "asap.h"
+#include "settings.h"
+
+static HINSTANCE hInstance;
+
+static unsigned char module[ASAP_MODULE_MAX];
+static DWORD module_len;
 static const ASAP_ModuleInfo *module_info;
+
+#ifdef _UNICODE
+
+#define CHAR_TO_TCHAR(dest, src, destChars) \
+	MultiByteToWideChar(CP_ACP, 0, src, -1, dest, destChars)
+static char ansiFilename[MAX_PATH];
+#define ANSI_FILENAME ansiFilename
+#define CONVERT_FILENAME \
+	if (WideCharToMultiByte(CP_ACP, 0, pszFile, -1, ansiFilename, MAX_PATH, NULL, NULL) <= 0) \
+		return FALSE;
+
+#else
+
+#define CHAR_TO_TCHAR(dest, src, destChars) \
+	_tcscpy(dest, src)
+#define ANSI_FILENAME pszFile
+#define CONVERT_FILENAME
+
+#endif
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+	hInstance = hinstDLL;
+	return TRUE;
+}
 
 static void WINAPI asapInit()
 {
@@ -48,7 +78,7 @@ static void WINAPI asapQuit()
 
 static DWORD WINAPI asapGetFunc()
 {
-	return PLUGIN_FUNC_DECFILE | PLUGIN_FUNC_SEEKFILE;
+	return PLUGIN_FUNC_DECFILE | PLUGIN_FUNC_SEEKFILE | PLUGIN_FUNC_FILETAG;
 }
 
 static BOOL WINAPI asapGetPluginName(LPTSTR pszName)
@@ -64,22 +94,22 @@ static BOOL WINAPI asapSetEqualizer(MAP_PLUGIN_EQ *pEQ)
 
 static void WINAPI asapShowConfigDlg(HWND hwndParent)
 {
-	// TODO
+	settingsDialog(hInstance, hwndParent);
 }
 
-static LPCTSTR exts[] = {
-	_T("sap"), _T("Slight Atari Player (*.sap)"),
-	_T("cmc"), _T("Chaos Music Composer (*.cmc)"),
-	_T("cmr"), _T("Chaos Music Composer / Rzog (*.cmr)"),
-	_T("dmc"), _T("DoublePlay Chaos Music Composer (*.dmc)"),
-	_T("mpt"), _T("Music ProTracker (*.mpt)"),
-	_T("mpd"), _T("Music ProTracker DoublePlay (*.mpd)"),
-	_T("rmt"), _T("Raster Music Tracker (*.rmt)"),
-	_T("tmc"), _T("Theta Music Composer 1.x 4-channel (*.tmc)"),
+static const char *exts[] = {
+	"sap", "Slight Atari Player (*.sap)",
+	"cmc", "Chaos Music Composer (*.cmc)",
+	"cmr", "Chaos Music Composer / Rzog (*.cmr)",
+	"dmc", "DoublePlay Chaos Music Composer (*.dmc)",
+	"mpt", "Music ProTracker (*.mpt)",
+	"mpd", "Music ProTracker DoublePlay (*.mpd)",
+	"rmt", "Raster Music Tracker (*.rmt)",
+	"tmc", "Theta Music Composer 1.x 4-channel (*.tmc)",
 #ifdef STEREO_SOUND
-	_T("tm8"), _T("Theta Music Composer 1.x 8-channel (*.tm8)"),
+	"tm8", "Theta Music Composer 1.x 8-channel (*.tm8)",
 #endif
-	_T("tm2"), _T("Theta Music Composer 2.x (*.tm2)")
+	"tm2", "Theta Music Composer 2.x (*.tm2)"
 };
 #define N_EXTS (sizeof(exts) / sizeof(exts[0]) / 2)
 
@@ -92,37 +122,21 @@ static BOOL WINAPI asapGetFileExt(int nIndex, LPTSTR pszExt, LPTSTR pszExtDesc)
 {
 	if (nIndex >= N_EXTS)
 		return FALSE;
-	_tcscpy(pszExt, exts[nIndex * 2]);
-	_tcscpy(pszExtDesc, exts[nIndex * 2 + 1]);
+	CHAR_TO_TCHAR(pszExt, exts[nIndex * 2], MAX_PATH);
+	CHAR_TO_TCHAR(pszExtDesc, exts[nIndex * 2 + 1], MAX_PATH);
 	return TRUE;
 }
 
 static BOOL WINAPI asapIsValidFile(LPCTSTR pszFile)
 {
-#ifdef _UNICODE
-	char szFile[MAX_PATH];
-	if (WideCharToMultiByte(CP_ACP, 0, pszFile, -1, szFile, MAX_PATH, NULL, NULL) <= 0)
-		return FALSE;
-	return ASAP_IsOurFile(szFile);
-#else
-	return ASAP_IsOurFile(pszFile);
-#endif
+	CONVERT_FILENAME;
+	return ASAP_IsOurFile(ANSI_FILENAME);
 }
 
-static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
+static BOOL loadFile(LPCTSTR pszFile)
 {
 	HANDLE fh;
-	static unsigned char module[ASAP_MODULE_MAX];
-	DWORD module_len;
-	int duration;
-#ifdef _UNICODE
-	char szFile[MAX_PATH];
-	if (WideCharToMultiByte(CP_ACP, 0, pszFile, -1, szFile, MAX_PATH, NULL, NULL) <= 0)
-		return FALSE;
-#define ANSI_FILENAME szFile
-#else
-#define ANSI_FILENAME pszFile
-#endif
+	CONVERT_FILENAME;
 	if (!ASAP_IsOurFile(ANSI_FILENAME))
 		return FALSE;
 	fh = CreateFile(pszFile, GENERIC_READ, 0, NULL, OPEN_EXISTING,
@@ -134,6 +148,15 @@ static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 		return FALSE;
 	}
 	CloseHandle(fh);
+	return TRUE;
+}
+
+static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
+{
+	int duration;
+	CONVERT_FILENAME;
+	if (!loadFile(pszFile))
+		return FALSE;
 	module_info = ASAP_Load(ANSI_FILENAME, module, module_len);
 	if (module_info == NULL)
 		return FALSE;
@@ -141,7 +164,7 @@ static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 	pInfo->nSampleRate = FREQUENCY;
 	pInfo->nBitsPerSample = BITS_PER_SAMPLE;
 	pInfo->nAvgBitrate = 8;
-	duration = module_info->durations[module_info->default_song];
+	duration = getSubsongSeconds(module_info, module_info->default_song);
 	pInfo->nDuration = duration * 1000;
 	return TRUE;
 }
@@ -154,7 +177,7 @@ static long WINAPI asapSeekFile(long lTime)
 
 static BOOL WINAPI asapStartDecodeFile()
 {
-	int duration = module_info->durations[module_info->default_song];
+	int duration = getSubsongSeconds(module_info, module_info->default_song);
 	ASAP_PlaySong(module_info->default_song, duration);
 	return TRUE;
 }
@@ -174,16 +197,29 @@ static void WINAPI asapCloseFile()
 {
 }
 
+static void getTag(const ASAP_ModuleInfo *module_info, MAP_PLUGIN_FILETAG *pTag)
+{
+	ZeroMemory(pTag, sizeof(MAP_PLUGIN_FILETAG));
+	CHAR_TO_TCHAR(pTag->szTrack, module_info->name, MAX_PLUGIN_TAG_STR);
+	CHAR_TO_TCHAR(pTag->szArtist, module_info->author, MAX_PLUGIN_TAG_STR);
+}
+
 static BOOL WINAPI asapGetTag(MAP_PLUGIN_FILETAG *pTag)
 {
-	// TODO
-	return FALSE;
+	getTag(module_info, pTag);
+	return TRUE;
 }
 
 static BOOL WINAPI asapGetFileTag(LPCTSTR pszFile, MAP_PLUGIN_FILETAG *pTag)
 {
-	// TODO
-	return FALSE;
+	ASAP_ModuleInfo module_info;
+	CONVERT_FILENAME;
+	if (!loadFile(pszFile))
+		return FALSE;
+	if (!ASAP_GetModuleInfo(ANSI_FILENAME, module, module_len, &module_info))
+		return FALSE;
+	getTag(&module_info, pTag);
+	return TRUE;
 }
 
 static BOOL WINAPI asapOpenStreaming(LPBYTE pbBuf, DWORD cbBuf, MAP_PLUGIN_STREMING_INFO *pInfo)
