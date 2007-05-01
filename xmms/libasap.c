@@ -22,7 +22,6 @@
  */
 
 #include "config.h"
-#include <string.h>
 #include <pthread.h>
 #ifdef USE_STDIO
 #include <stdio.h>
@@ -45,9 +44,17 @@ static int channels;
 
 static InputPlugin mod;
 
+static unsigned char module[ASAP_MODULE_MAX];
+static int module_len;
+
 static int seek_to;
 static pthread_t thread_handle;
 static volatile int thread_run = FALSE;
+
+static void asap_show_message(gchar *title, gchar *text)
+{
+	xmms_show_message(title, text, "Ok", FALSE, NULL, NULL);
+}
 
 static void asap_init(void)
 {
@@ -55,9 +62,37 @@ static void asap_init(void)
 		BITS_PER_SAMPLE == 8 ? AUDIO_FORMAT_U8 : AUDIO_FORMAT_S16_NE, QUALITY);
 }
 
+static void asap_about(void)
+{
+	asap_show_message("About ASAP XMMS plugin " ASAP_VERSION,
+		ASAP_CREDITS "\n" ASAP_COPYRIGHT);
+}
+
 static int asap_is_our_file(char *filename)
 {
 	return ASAP_IsOurFile(filename);
+}
+
+static int asap_load_file(const char *filename)
+{
+#ifdef USE_STDIO
+	FILE *fp;
+	fp = fopen(filename, "rb");
+	if (fp == NULL)
+		return FALSE;
+	module_len = (int) fread(module, 1, sizeof(module), fp);
+	fclose(fp);
+#else
+	int fd;
+	fd = open(filename, O_RDONLY);
+	if (fd == -1)
+		return FALSE;
+	module_len = read(fd, module, sizeof(module));
+	close(fd);
+	if (module_len < 0)
+		return FALSE;
+#endif
+	return TRUE;
 }
 
 static void *asap_play_thread(void *arg)
@@ -95,27 +130,10 @@ static void *asap_play_thread(void *arg)
 
 static void asap_play_file(char *filename)
 {
-	static unsigned char module[ASAP_MODULE_MAX];
-	int module_len;
 	const ASAP_ModuleInfo *module_info;
 	int duration;
-#ifdef USE_STDIO
-	FILE *fp;
-	fp = fopen(filename, "rb");
-	if (fp == NULL)
+	if (!asap_load_file(filename))
 		return;
-	module_len = (int) fread(module, 1, sizeof(module), fp);
-	fclose(fp);
-#else
-	int fd;
-	fd = open(filename, O_RDONLY);
-	if (fd == -1)
-		return;
-	module_len = read(fd, module, sizeof(module));
-	close(fd);
-	if (module_len < 0)
-		return;
-#endif
 	module_info = ASAP_Load(filename, module, module_len);
 	if (module_info == NULL)
 		return;
@@ -127,7 +145,8 @@ static void asap_play_file(char *filename)
 		FREQUENCY, channels))
 		return;
 
-	mod.set_info((char *) module_info->name, duration * 1000, BITS_PER_SAMPLE * 1000, FREQUENCY, channels);
+	mod.set_info((char *) module_info->name, duration > 0 ? duration * 1000 : -1,
+		BITS_PER_SAMPLE * 1000, FREQUENCY, channels);
 	seek_to = -1;
 	thread_run = TRUE;
 	pthread_create(&thread_handle, NULL, asap_play_thread, NULL);
@@ -161,11 +180,34 @@ static int asap_get_time(void)
 	return mod.output->output_time();
 }
 
+static void asap_get_song_info(char *filename, char **title, int *length)
+{
+	ASAP_ModuleInfo module_info;
+	int duration;
+	if (!asap_load_file(filename))
+		return;
+	if (!ASAP_GetModuleInfo(filename, module, module_len, &module_info))
+		return;
+	*title = g_strdup(module_info.name);
+	duration = module_info.durations[module_info.default_song];
+	*length = duration > 0 ? duration * 1000 : -1;
+}
+
+static void asap_file_info_box(char *filename)
+{
+	ASAP_ModuleInfo module_info;
+	if (!asap_load_file(filename))
+		return;
+	if (!ASAP_GetModuleInfo(filename, module, module_len, &module_info))
+		return;
+	asap_show_message("File information", module_info.all_info);
+}
+
 static InputPlugin mod = {
 	NULL, NULL,
 	"ASAP " ASAP_VERSION,
 	asap_init,
-	NULL,
+	asap_about,
 	NULL,
 	asap_is_our_file,
 	NULL,
@@ -175,7 +217,10 @@ static InputPlugin mod = {
 	asap_seek,
 	NULL,
 	asap_get_time,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	asap_get_song_info,
+	asap_file_info_box,
+	NULL
 };
 
 InputPlugin *get_iplugin_info(void)
