@@ -1,10 +1,9 @@
-#ifndef FREQUENCY
 #define FREQUENCY            44100
-#endif
-#ifndef BITS_PER_SAMPLE
+#ifdef _WIN32_WCE
+#define BITS_PER_SAMPLE      8
+#define QUALITY              0
+#else
 #define BITS_PER_SAMPLE      16
-#endif
-#ifndef QUALITY
 #define QUALITY              1
 #endif
 #define DEFAULT_SONG_LENGTH  180

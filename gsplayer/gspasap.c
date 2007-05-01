@@ -27,10 +27,6 @@
 
 #include "mapplugin.h"
 
-#define FREQUENCY        44100
-#define BITS_PER_SAMPLE  8
-#define QUALITY          0
-
 #include "asap.h"
 #include "settings.h"
 
