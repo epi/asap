@@ -1,9 +1,9 @@
 Things to be done in future versions
 ------------------------------------
 
-* new POKEY engine
+* new POKEY emulator
 
-* SAP TYPEs: D, S, R
+* TYPE D and TYPE S SAPs
 
 * POKEY timer interrupts
 
@@ -13,10 +13,8 @@ Things to be done in future versions
 
 * Winamp, XMMS, GSPlayer: subsongs
 
-* XMMS, GSPlayer: configuration
+* XMMS: configuration
 
 * input formats: Benjy Soundmonitor, Advanced Music System,
   Delta Composer, Future Composer, Sound Tracker, Antic Music Processor,
   Black Music Composer, Collen Music Creator, Music Studio, Soft Synth, ...
-
-* convert 6502 routines to C for better performance
