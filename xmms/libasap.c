@@ -145,8 +145,8 @@ static void asap_play_file(char *filename)
 		FREQUENCY, channels))
 		return;
 
-	mod.set_info((char *) module_info->name, duration > 0 ? duration * 1000 : -1,
-		BITS_PER_SAMPLE * 1000, FREQUENCY, channels);
+	mod.set_info((char *) module_info->name, duration, BITS_PER_SAMPLE * 1000,
+		FREQUENCY, channels);
 	seek_to = -1;
 	thread_run = TRUE;
 	pthread_create(&thread_handle, NULL, asap_play_thread, NULL);
@@ -183,14 +183,12 @@ static int asap_get_time(void)
 static void asap_get_song_info(char *filename, char **title, int *length)
 {
 	ASAP_ModuleInfo module_info;
-	int duration;
 	if (!asap_load_file(filename))
 		return;
 	if (!ASAP_GetModuleInfo(filename, module, module_len, &module_info))
 		return;
 	*title = g_strdup(module_info.name);
-	duration = module_info.durations[module_info.default_song];
-	*length = duration > 0 ? duration * 1000 : -1;
+	*length = module_info.durations[module_info.default_song];
 }
 
 static void asap_file_info_box(char *filename)

@@ -105,12 +105,12 @@ void settingsDialog(HINSTANCE hInstance, HWND hwndParent)
 	DialogBox(hInstance, MAKEINTRESOURCE(IDD_SETTINGS), hwndParent, settingsDialogProc);
 }
 
-int getSubsongSeconds(const ASAP_ModuleInfo *module_info, int song)
+int getSubsongDuration(const ASAP_ModuleInfo *module_info, int song)
 {
-	int seconds = module_info->durations[song];
-	if (seconds <= 0)
-		seconds = song_length;
-	else if (play_loops && module_info->loops[song])
-		seconds = song_length;
-	return seconds;
+	int duration = module_info->durations[song];
+	if (duration < 0)
+		return 1000 * song_length;
+	if (play_loops && module_info->loops[song])
+		return 1000 * song_length;
+	return duration;
 }

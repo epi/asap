@@ -70,15 +70,15 @@ extern "C" {
 
 /* Information about a file. */
 typedef struct {
-   char author[128];      /* author's name */
-   char name[128];        /* title */
-   char date[128];        /* creation date */
-   char all_info[512];    /* the above information formatted in multiple lines */
-   int channels;          /* 1 for mono or 2 for stereo */
-   int songs;             /* number of subsongs */
-   int default_song;      /* 0-based index of the "main" subsong */
-   short durations[128];  /* lengths of songs, in seconds, 0 = unspecified */
-   char loops[128];       /* whether songs repeat (1) or not (0) */
+   char author[128];    /* author's name */
+   char name[128];      /* title */
+   char date[128];      /* creation date */
+   char all_info[512];  /* the above information formatted in multiple lines */
+   int channels;        /* 1 for mono or 2 for stereo */
+   int songs;           /* number of subsongs */
+   int default_song;    /* 0-based index of the "main" subsong */
+   int durations[32];   /* lengths of songs, in milliseconds, -1 = unspecified */
+   int loops[32];       /* whether songs repeat (1) or not (0) */
 } ASAP_ModuleInfo;
 
 /* Checks whether the extension of the passed filename is known to ASAP.
@@ -95,8 +95,8 @@ int ASAP_IsOurFile(const char *filename);
 int ASAP_GetModuleInfo(const char *filename, const unsigned char *module,
                        int module_len, ASAP_ModuleInfo *module_info);
 
-/* A helper function. Parses the string in the "mm:ss" format
-   and returns the number of seconds or 0 if an error occurs. */
+/* A helper function. Parses the string in the "mm:ss.xxx" format
+   and returns the number of milliseconds or -1 if an error occurs. */
 int ASAP_ParseDuration(const char *duration);
 
 /* Initializes ASAP.
@@ -122,8 +122,8 @@ const ASAP_ModuleInfo *ASAP_Load(const char *filename,
 /* Prepares ASAP to play the specified song of the loaded module.
    "song" is a zero-based index which must be less than the "songs" field
    of the ASAP_ModuleInfo structure.
-   "seconds" is playback time in seconds - use durations[song]
-   unless you want to override it. 0 means indefinitely. */
+   "seconds" is playback time in milliseconds - use durations[song]
+   unless you want to override it. -1 means indefinitely. */
 void ASAP_PlaySong(int song, int duration);
 
 /* Rewinds the current song.

@@ -274,7 +274,7 @@ my ($check, $fix, $stat, $time, $features, $help, $version) = (0, 0, 0, 0, 0, 0)
 my ($total_files, $sap_files, $stereo_files) = (0, 0, 0);
 my ($total_length, $min_length, $max_length) = (0, 100_000, 0);
 my ($min_filename, $max_filename);
-my ($time_files, $total_seconds) = (0, 0);
+my ($time_files, $total_millis) = (0, 0);
 my (@fixed_messages, @notfixed_messages, @fatal_messages);
 my (%stat, %types, %features);
 
@@ -501,8 +501,8 @@ sub process($$) {
 						if (!$times) {
 							$fatal{'error running asapscan'} = 1;
 						}
-						elsif ($times =~ /^(?:TIME \d?\d:\d\d(?: LOOP)?\n)+$/s) {
-							@times = $times =~ /\d?\d:\d\d(?: LOOP)?/gs;
+						elsif ($times =~ /^(?:TIME \d?\d:\d\d\.\d\d(?: LOOP)?\n)+$/s) {
+							@times = $times =~ /\d?\d:\d\d\.\d\d(?: LOOP)?/gs;
 							$fixed{'added TIME tags'} = 1;
 						}
 						else {
@@ -546,8 +546,8 @@ sub process($$) {
 		if (@times) {
 			++$time_files;
 			for (@times) {
-				my ($minutes, $seconds) = /(\d?\d):(\d\d)/;
-				$total_seconds += 60 * $minutes + $seconds;
+				my ($minutes, $seconds, $hundredths) = /(\d?\d):(\d\d)(?:\.(\d\d))?/;
+				$total_millis += 60_000 * $minutes + 1000 * $seconds + $hundredths * 10;
 			}
 		}
 	}
@@ -635,7 +635,7 @@ elsif ($stat) {
 		print "Total: $extra_subsongs extra subsongs in $files_with_subsongs files\n";
 	}
 	printf "\nFiles tagged with TIME:       $time_files (%d hours %d minutes %d seconds)\n",
-		int($total_seconds / 3600), int($total_seconds / 60 % 60), $total_seconds % 60;
+		int($total_millis / 3600_000), int($total_millis / 60_000 % 60), $total_millis / 1000 % 60;
 	print "\nStereo SAP files:             $stereo_files\n";
 	for (sort keys %types) {
 		printf "Type %s:   mono:%4d   stereo:%4d   total:%4d\n", $_,

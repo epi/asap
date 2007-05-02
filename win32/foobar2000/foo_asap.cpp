@@ -157,14 +157,14 @@ class input_asap
 	unsigned char module[ASAP_MODULE_MAX];
 	ASAP_ModuleInfo module_info;
 
-	int get_subsong_seconds(t_uint32 p_subsong)
+	int get_subsong_duration(t_uint32 p_subsong)
 	{
-		int seconds = module_info.durations[p_subsong];
-		if (seconds <= 0)
-			seconds = song_length.get_value();
-		else if (play_loops.get_value() && module_info.loops[p_subsong])
-			seconds = song_length.get_value();
-		return seconds;
+		int duration = module_info.durations[p_subsong];
+		if (duration < 0)
+			return 1000 *  song_length.get_value();
+		if (play_loops.get_value() && module_info.loops[p_subsong])
+			return 1000 * song_length.get_value();
+		return duration;
 	}
 
 public:
@@ -214,9 +214,9 @@ public:
 
 	void get_info(t_uint32 p_subsong, file_info &p_info, abort_callback &p_abort)
 	{
-		int seconds = get_subsong_seconds(p_subsong);
-		if (seconds > 0)
-			p_info.set_length(seconds);
+		int duration = get_subsong_duration(p_subsong);
+		if (duration >= 0)
+			p_info.set_length(duration / 1000.0);
 		p_info.info_set_int("channels", module_info.channels);
 		p_info.info_set_int("subsongs", module_info.songs);
 		p_info.meta_set("composer", module_info.author);
@@ -231,7 +231,7 @@ public:
 
 	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort)
 	{
-		::ASAP_PlaySong(p_subsong, get_subsong_seconds(p_subsong));
+		::ASAP_PlaySong(p_subsong, get_subsong_duration(p_subsong));
 	}
 
 	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort)

@@ -281,6 +281,8 @@ static UWORD sap_init;
 int sap_fastplay;
 static ASAP_ModuleInfo loaded_module_info;
 
+#define MAX_DURATIONS  (sizeof(module_info->durations) / sizeof(module_info->durations[0]))
+
 /* This array maps subsong numbers to track positions for MPT and RMT formats. */
 static UBYTE song_pos[128];
 
@@ -652,19 +654,32 @@ int ASAP_ParseDuration(const char *duration)
 {
 	int r;
 	if (*duration < '0' || *duration > '9')
-		return 0;
+		return -1;
 	r = *duration++ - '0';
 	if (*duration >= '0' && *duration <= '9')
 		r = 10 * r + *duration++ - '0';
-	if (*duration != ':')
+	if (*duration == ':') {
+		duration++;
+		if (*duration < '0' || *duration > '5')
+			return -1;
+		r = 60 * r + (*duration++ - '0') * 10;
+		if (*duration < '0' || *duration > '9')
+			return -1;
+		r += *duration++ - '0';
+	}
+	r *= 1000;
+	if (*duration != '.')
 		return r;
 	duration++;
-	if (*duration < '0' || *duration > '5')
-		return 0;
-	r = 60 * r + (*duration++ - '0') * 10;
 	if (*duration < '0' || *duration > '9')
-		return 0;
-	r += *duration++ - '0';
+		return r;
+	r += 100 * (*duration++ - '0');
+	if (*duration < '0' || *duration > '9')
+		return r;
+	r += 10 * (*duration++ - '0');
+	if (*duration < '0' || *duration > '9')
+		return r;
+	r += *duration - '0';
 	return r;
 }
 
@@ -761,10 +776,10 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end,
 #endif
 		}
 		else if (strcmp(line, "TIME") == 0) {
-			int seconds = ASAP_ParseDuration(p);
-			if (seconds == 0 || duration_index >= 128)
+			int duration = ASAP_ParseDuration(p);
+			if (duration < 0 || duration_index >= MAX_DURATIONS)
 				return FALSE;
-			module_info->durations[duration_index] = (short) seconds;
+			module_info->durations[duration_index] = duration;
 			if (strstr(p, "LOOP") != NULL)
 				module_info->loops[duration_index] = TRUE;
 			duration_index++;
@@ -855,14 +870,17 @@ int ASAP_IsOurFile(const char *filename)
 int ASAP_GetModuleInfo(const char *filename, const unsigned char *module,
                        int module_len, ASAP_ModuleInfo *module_info)
 {
+	int i;
 	strcpy(module_info->author, "<?>");
 	strcpy(module_info->name, "<?>");
 	strcpy(module_info->date, "<?>");
 	module_info->channels = 1;
 	module_info->songs = 1;
 	module_info->default_song = 0;
-	memset(module_info->durations, 0, sizeof(module_info->durations));
-	memset(module_info->loops, 0, sizeof(module_info->loops));
+	for (i = 0; i < MAX_DURATIONS; i++) {
+		module_info->durations[i] = -1;
+		module_info->loops[i] = FALSE;
+	}
 	switch (get_packed_ext(filename)) {
 	case ASAP_EXT('C', 'M', 'C'):
 		return load_cmc(module, module_len, module_info, FALSE);
@@ -1009,6 +1027,8 @@ void call_6502_player(void)
 			call_6502((UWORD) (sap_player + 6), sap_fastplay);
 		break;
 	}
+	random_scanline_counter = (random_scanline_counter + LINE_C * sap_fastplay)
+	                          % ((AUDCTL[0] & POLY9) ? POLY9_SIZE : POLY17_SIZE);
 }
 
 static int cpu_process(int blocks)
@@ -1016,8 +1036,6 @@ static int cpu_process(int blocks)
 	int ready_blocks;
 	while (blockcycles_till_player < ASAP_MAIN_CLOCK) {
 		call_6502_player();
-		random_scanline_counter = (random_scanline_counter + LINE_C * sap_fastplay)
-		                          % ((AUDCTL[0] & POLY9) ? POLY9_SIZE : POLY17_SIZE);
 		blockcycles_till_player += blockcycles_per_player;
 	}
 	ready_blocks = blockcycles_till_player / ASAP_MAIN_CLOCK;
@@ -1028,9 +1046,14 @@ static int cpu_process(int blocks)
 	return blocks;
 }
 
+static int milliseconds_to_blocks(int milliseconds)
+{
+	return (int) ((double) milliseconds * block_rate / 1000);
+}
+
 void ASAP_Seek(int position)
 {
-	int block = (int) ((double) position * block_rate / 1000);
+	int block = milliseconds_to_blocks(position);
 	if (block < blocks_played)
 		ASAP_PlaySong(current_song, current_duration);
 	while (blocks_played < block)
@@ -1063,7 +1086,7 @@ int ASAP_Generate(void *buffer, int buffer_len)
 	int buffer_blocks = buffer_len >> (sample_16bit + enable_stereo);
 	int remaining_blocks;
 	if (current_duration > 0) {
-		int total_blocks = current_duration * block_rate;
+		int total_blocks = milliseconds_to_blocks(current_duration);
 		if (blocks_played + buffer_blocks > total_blocks)
 			buffer_blocks = total_blocks - blocks_played;
 	}

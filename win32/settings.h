@@ -22,4 +22,4 @@
 
 // functions
 void settingsDialog(HINSTANCE hInstance, HWND hwndParent);
-int getSubsongSeconds(const ASAP_ModuleInfo *module_info, int song);
+int getSubsongDuration(const ASAP_ModuleInfo *module_info, int song);

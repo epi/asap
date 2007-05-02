@@ -149,7 +149,6 @@ static BOOL loadFile(LPCTSTR pszFile)
 
 static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 {
-	int duration;
 	CONVERT_FILENAME;
 	if (!loadFile(pszFile))
 		return FALSE;
@@ -160,8 +159,7 @@ static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 	pInfo->nSampleRate = FREQUENCY;
 	pInfo->nBitsPerSample = BITS_PER_SAMPLE;
 	pInfo->nAvgBitrate = 8;
-	duration = getSubsongSeconds(module_info, module_info->default_song);
-	pInfo->nDuration = duration * 1000;
+	pInfo->nDuration = getSubsongDuration(module_info, module_info->default_song);
 	return TRUE;
 }
 
@@ -173,7 +171,7 @@ static long WINAPI asapSeekFile(long lTime)
 
 static BOOL WINAPI asapStartDecodeFile()
 {
-	int duration = getSubsongSeconds(module_info, module_info->default_song);
+	int duration = getSubsongDuration(module_info, module_info->default_song);
 	ASAP_PlaySong(module_info->default_song, duration);
 	return TRUE;
 }

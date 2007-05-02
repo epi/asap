@@ -229,7 +229,7 @@ static void PlaySong(int n)
 	current_song = n;
 	duration = module_info->durations[n];
 	if (module_info->loops[n])
-		duration = 0;
+		duration = -1;
 	ASAP_PlaySong(n, duration);
 	Tray_Modify(hPlayIcon);
 	WaveOut_Start();

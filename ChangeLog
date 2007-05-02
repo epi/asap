@@ -1,3 +1,14 @@
+2007-05-02  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, asapscan.c, chksap.pl, gsplayer/gspasap.c, xmms/libasap.c,
+  win32/settings.c, win32/settings.h, win32/foobar2000/foo_asap.cpp,
+  win32/wasap/wasap.c, win32/winamp/in_asap.c: millisecond precision
+  of song length
+
+* asapscan.c: improved loop detection (not only from the beginning of the song)
+
+* asapscan.c: don't dump registers of the second POKEY for mono songs
+
+
 2007-05-01  Piotr Fusik  <fox@scene.pl>
 * asapscan.c, chksap.pl: detect POKEY features used, such as hi-pass filters
 

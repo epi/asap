@@ -110,7 +110,7 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 	if (title != NULL)
 		strcpy(title, module_info.name); // XXX: max length?
 	if (length_in_ms != NULL)
-		*length_in_ms = getSubsongSeconds(&module_info, module_info.default_song) * 1000;
+		*length_in_ms = getSubsongDuration(&module_info, module_info.default_song);
 }
 
 static int infoBox(char *file, HWND hwndParent)
@@ -195,7 +195,7 @@ static int play(char *fn)
 	if (module_info == NULL)
 		return 1;
 	song = module_info->default_song;
-	duration = getSubsongSeconds(module_info, song);
+	duration = getSubsongDuration(module_info, song);
 	ASAP_PlaySong(song, duration);
 	channels = module_info->channels;
 	maxlatency = mod.outMod->Open(FREQUENCY, channels, BITS_PER_SAMPLE, -1, -1);
@@ -246,7 +246,7 @@ static void stop(void)
 
 static int getLength(void)
 {
-	return duration * 1000;
+	return duration;
 }
 
 static int getOutputTime(void)
