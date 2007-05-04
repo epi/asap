@@ -45,14 +45,19 @@ Compute and display statistics.
 
 =back
 
-In the fix mode the following option is available:
+In the fix mode the following options are available:
 
 =over 4
 
 =item B<-t>, B<--time>
 
-Detects playback time using an external program "asapscan"
-and stores it in TIME tags.
+For files that have no TIME tag detects playback time using an external
+program "asapscan" and stores it in TIME tags.
+
+=item B<-T>, B<--overwrite-time>
+
+Detects playback time using an external program "asapscan" and stores it
+in TIME tags, possibly overwriting the current values.
 
 =back
 
@@ -270,7 +275,7 @@ use Pod::Usage;
 use strict;
 
 my $asapscan = File::Spec->rel2abs('asapscan');
-my ($check, $fix, $stat, $time, $features, $help, $version) = (0, 0, 0, 0, 0, 0);
+my ($check, $fix, $stat, $time, $overwrite_time, $features, $help, $version) = (0, 0, 0, 0, 0, 0, 0);
 my ($total_files, $sap_files, $stereo_files) = (0, 0, 0);
 my ($total_length, $min_length, $max_length) = (0, 100_000, 0);
 my ($min_filename, $max_filename);
@@ -489,21 +494,28 @@ sub process($$) {
 				$fixed{'FFFF inside binary part'} = 1;
 			}
 		}
-		if (%fixed || ($time && !@times)) {
+		if (%fixed || ($time && !@times) || $overwrite_time) {
 			if (%fatal) {
 				push @notfixed_messages,
 					"$fullpath (" . join('; ', sort(keys(%fixed))) . ")\n";
 			}
 			else {
 				if ($fix) {
-					if ($time && !@times) {
+					if (($time && !@times) || $overwrite_time) {
 						my $times = `$asapscan -t $filename`;
 						if (!$times) {
 							$fatal{'error running asapscan'} = 1;
 						}
-						elsif ($times =~ /^(?:TIME \d?\d:\d\d\.\d\d(?: LOOP)?\n)+$/s) {
-							@times = $times =~ /\d?\d:\d\d\.\d\d(?: LOOP)?/gs;
-							$fixed{'added TIME tags'} = 1;
+						elsif ($times =~ /^(?:TIME \d?\d:\d\d(?:\.\d\d)?(?: LOOP)?\n)+$/s) {
+							my @new_times = $times =~ /\d?\d:\d\d(?:\.\d\d)?(?: LOOP)?/gs;
+							if (!@times) {
+								@times = @new_times;
+								$fixed{'added TIME tags'} = 1;
+							}
+							elsif ("@new_times" ne "@times") {
+								@times = @new_times;
+								$fixed{'changed TIME tags'} = 1;
+							}
 						}
 						else {
 							$fatal{'cannot detect TIME'} = 1;
@@ -574,6 +586,7 @@ GetOptions(
 	'fix|f' => \$fix,
 	'statistics|s' => \$stat,
 	'time|t' => \$time,
+	'overwrite-time|T' => \$overwrite_time,
 	'features|u' => \$features,
 	'help|h' => \$help,
 	'version|v' => \$version,
@@ -581,11 +594,11 @@ GetOptions(
 
 pod2usage({ -verbose => 1, -exitval => 0 }) if $help;
 if ($version) {
-	print "chksap 1.1\n";
+	print "chksap 1.2\n";
 	exit 0;
 }
 
-pod2usage(2) if $check + $fix + $stat != 1 || $time > $fix || @ARGV == 0;
+pod2usage(2) if $check + $fix + $stat != 1 || $time > $fix || $overwrite_time > $fix || @ARGV == 0;
 
 find(\&wanted, @ARGV);
 
