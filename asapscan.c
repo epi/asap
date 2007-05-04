@@ -45,7 +45,8 @@ void call_6502_player(void);
 static int detect_time = FALSE;
 static int scan_player_calls;
 static int silence_player_calls;
-static int loop_player_calls;
+static int loop_check_player_calls;
+static int loop_min_player_calls;
 static unsigned char *registers_dump;
 
 static const ASAP_ModuleInfo *module_info;
@@ -61,8 +62,8 @@ static int features = 0;
 static void print_help(void)
 {
 	printf(
-		"Usage: asapscan MODE INPUTFILE\n"
-		"Modes:\n"
+		"Usage: asapscan COMMAND INPUTFILE\n"
+		"Commands:\n"
 		"-d  Dump POKEY registers\n"
 		"-f  List POKEY features used\n"
 		"-t  Detect silence and loops\n"
@@ -83,8 +84,8 @@ void scan_song(int song)
 {
 	int i;
 	int silence_run = 0;
-	int loop_bytes = 18 * loop_player_calls;
-	ASAP_PlaySong(song, 0);
+	int loop_bytes = 18 * loop_check_player_calls;
+	ASAP_PlaySong(song, -1);
 	for (i = 0; i < scan_player_calls; i++) {
 		unsigned char *p = registers_dump + 18 * i;
 		int j;
@@ -135,11 +136,17 @@ void scan_song(int song)
 			}
 			else
 				silence_run = 0;
-			if (i > loop_player_calls) {
+			if (i > loop_check_player_calls) {
 				unsigned char *q;
-				for (q = registers_dump; q < p - loop_bytes; q += 18) {
+				if (memcmp(p - loop_bytes - 18, p - loop_bytes, loop_bytes) == 0) {
+					/* POKEY registers do not change - probably an ultrasound */
+					int duration = player_calls_to_milliseconds(i - loop_check_player_calls);
+					printf("TIME %02d:%02d.%02d\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100);
+					return;
+				}
+				for (q = registers_dump; q < p - loop_bytes - 18 * loop_min_player_calls; q += 18) {
 					if (memcmp(q, p - loop_bytes, loop_bytes) == 0) {
-						int duration = player_calls_to_milliseconds(i - loop_player_calls);
+						int duration = player_calls_to_milliseconds(i - loop_check_player_calls);
 						printf("TIME %02d:%02d.%02d LOOP\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100);
 						return;
 					}
@@ -148,15 +155,16 @@ void scan_song(int song)
 		}
 	}
 	if (detect_time)
-		printf("No silence or loop detected\n");
+		printf("No silence or loop detected in song %d\n", song);
 }
 
 int main(int argc, char *argv[])
 {
 	const char *input_file;
 	int scan_seconds = 15 * 60;
-	int silence_seconds = 10;
-	int loop_seconds = 3 * 60;
+	int silence_seconds = 5;
+	int loop_check_seconds = 3 * 60;
+	int loop_min_seconds = 5;
 	FILE *fp;
 	static unsigned char module[ASAP_MODULE_MAX];
 	int module_len;
@@ -191,7 +199,8 @@ int main(int argc, char *argv[])
 	}
 	scan_player_calls = seconds_to_player_calls(scan_seconds);
 	silence_player_calls = seconds_to_player_calls(silence_seconds);
-	loop_player_calls = seconds_to_player_calls(loop_seconds);
+	loop_check_player_calls = seconds_to_player_calls(loop_check_seconds);
+	loop_min_player_calls = seconds_to_player_calls(loop_min_seconds);
 	registers_dump = malloc(scan_player_calls * 18);
 	if (registers_dump == NULL) {
 		fprintf(stderr, "asapscan: out of memory\n");
