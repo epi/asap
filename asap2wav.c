@@ -86,7 +86,7 @@ static int output_header = TRUE;
 static int song = -1;
 static int quality = 1;
 static int frequency = 44100;
-static int seconds = -1;
+static int duration = -1;
 static int use_16bit = TRUE;
 
 static void set_dec(const char *s, int *result, const char *name,
@@ -107,8 +107,8 @@ static void set_dec(const char *s, int *result, const char *name,
 
 static void set_time(const char *s)
 {
-	seconds = ASAP_ParseDuration(s);
-	if (seconds == 0)
+	duration = ASAP_ParseDuration(s);
+	if (duration <= 0)
 		fatal_error("invalid time format");
 }
 
@@ -154,12 +154,12 @@ static void process_file(const char *input_file)
 			"... but %s contains only %d subsongs",
 			song, input_file, module_info->songs);
 	}
-	if (seconds <= 0) {
-		seconds = module_info->durations[song];
-		if (seconds <= 0)
-			seconds = 180;
+	if (duration < 0) {
+		duration = module_info->durations[song];
+		if (duration < 0)
+			duration = 180 * 1000;
 	}
-	ASAP_PlaySong(song, seconds);
+	ASAP_PlaySong(song, duration);
 	if (output_file == NULL) {
 		const char *dot;
 		static char output_default[FILENAME_MAX];
@@ -180,7 +180,7 @@ static void process_file(const char *input_file)
 	if (output_header) {
 		int block_size = module_info->channels << use_16bit;
 		int bytes_per_second = frequency * block_size;
-		n_bytes = seconds * bytes_per_second;
+		n_bytes = (int) ((double) duration * frequency / 1000) * block_size;
 		fwrite("RIFF", 1, 4, fp);
 		fput32(n_bytes + 36, fp);
 		fwrite("WAVEfmt \x10\0\0\0\1\0", 1, 14, fp);
@@ -203,7 +203,7 @@ static void process_file(const char *input_file)
 		fclose(fp);
 	output_file = NULL;
 	song = -1;
-	seconds = -1;
+	duration = -1;
 	no_input_files = FALSE;
 }
 
