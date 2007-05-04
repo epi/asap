@@ -1,8 +1,16 @@
+2007-05-04  Piotr Fusik  <fox@scene.pl>
+* chksap.pl: TIME tag can include hundredths of seconds
+
+* asapscan.c: if POKEY registers do not change then the song ends and not loops
+
+* chksap.pl: -T overwrites TIME tags
+
+
 2007-05-02  Piotr Fusik  <fox@scene.pl>
-* asap.c, asap.h, asapscan.c, chksap.pl, gsplayer/gspasap.c, xmms/libasap.c,
+* asap.c, asap.h, asap2wav.c, asapscan.c, chksap.pl, gsplayer/gspasap.c,
   win32/settings.c, win32/settings.h, win32/foobar2000/foo_asap.cpp,
-  win32/wasap/wasap.c, win32/winamp/in_asap.c: millisecond precision
-  of song length
+  win32/wasap/wasap.c, win32/winamp/in_asap.c, xmms/libasap.c:
+  millisecond precision of song length
 
 * asapscan.c: improved loop detection (not only from the beginning of the song)
 
