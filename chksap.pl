@@ -432,7 +432,7 @@ sub process($$) {
 				}
 			}
 			elsif ($tag eq 'TIME') {
-				if ($arg !~ /^\d?\d:\d\d(?: LOOP)?$/s) {
+				if ($arg !~ /^\d?\d:\d\d(?:\.\d\d)?(?: LOOP)?$/s) {
 					$fatal{'invalid argument of TIME'} = 1;
 				}
 				push @times, $arg;
