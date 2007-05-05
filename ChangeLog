@@ -1,3 +1,8 @@
+2007-05-05  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c, apokeysnd.h, asap.c, asap.h, win32/wasap/wasap.c,
+  win32/wasap/wasap.rc, win32/Makefile: new experimental POKEY sound emulator
+
+
 2007-05-04  Piotr Fusik  <fox@scene.pl>
 * chksap.pl: TIME tag can include hundredths of seconds
 

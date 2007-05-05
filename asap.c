@@ -29,8 +29,12 @@
 #include "asap.h"
 #include "asap_internal.h"
 #include "cpu.h"
+#ifdef APOKEYSND
+#include "apokeysnd.h"
+#else
 #include "pokey.h"
 #include "pokeysnd.h"
+#endif
 
 #include "players.h"
 
@@ -52,6 +56,8 @@ UBYTE memory[65536 + 2];
 int xpos = 0;
 int xpos_limit = 0;
 UBYTE wsync_halt = 0;
+
+#ifndef APOKEYSND
 
 /* structures to hold the 9 pokey control bytes */
 UBYTE AUDF[4 * MAXPOKEYS];	/* AUDFx (D200, D202, D204, D206) */
@@ -206,12 +212,19 @@ static void POKEY_Initialise(void)
 	random_scanline_counter = 0;
 }
 
+#endif /* APOKEYSND */
+
 UBYTE ASAP_GetByte(UWORD addr)
 {
+#ifndef APOKEYSND
 	unsigned int i;
+#endif
 	switch (addr & 0xff0f) {
 	case 0xd20a:
-		i = random_scanline_counter + (unsigned int) xpos + (unsigned int) xpos / LINE_C * DMAR;
+#ifdef APOKEYSND
+		return (UBYTE) PokeySound_GetRandom(addr, xpos + xpos / (LINE_C - DMAR) * DMAR);
+#else
+		i = random_scanline_counter + (unsigned int) xpos + (unsigned int) xpos / (LINE_C - DMAR) * DMAR;
 		if (AUDCTL[0] & POLY9)
 			return poly9_lookup[i % POLY9_SIZE];
 		else {
@@ -221,6 +234,7 @@ UBYTE ASAP_GetByte(UWORD addr)
 			i &= 7;
 			return (UBYTE) ((ptr[0] >> i) + (ptr[1] << (8 - i)));
 		}
+#endif
 	case 0xd40b:
 		return (UBYTE) ((unsigned int) xpos / (unsigned int) (2 * (LINE_C - DMAR)) % 156U);
 	default:
@@ -245,7 +259,11 @@ void ASAP_PutByte(UWORD addr, UBYTE byte)
 	else
 		dPutByte(addr, byte);
 #else
+#ifdef APOKEYSND
+	PokeySound_PutByte(addr, byte, xpos + xpos / (LINE_C - DMAR) * DMAR);
+#else
 	POKEY_PutByte(addr, byte);
+#endif
 #endif
 }
 
@@ -254,6 +272,14 @@ void ASAP_CIM(void)
 {
 	xpos = xpos_limit;
 }
+
+#ifdef APOKEYSND
+
+#define block_rate     44100
+#define sample_format  AUDIO_FORMAT_U8
+#define sample_16bit   0
+
+#else
 
 static int block_rate;
 static int sample_format;
@@ -274,6 +300,8 @@ void ASAP_Initialize(int frequency, int audio_format, int quality)
 	}
 }
 
+#endif /* APOKEYSND */
+
 static char sap_type;
 static UWORD sap_player;
 static UWORD sap_music;
@@ -291,9 +319,14 @@ static int tmc_per_frame_counter;
 
 static int current_song;
 static int current_duration;
+#ifdef APOKEYSND
+static int bytes_played;
+static int atari_sound_index;
+#else
 static int blocks_played;
 static int blockcycles_till_player;
 static int blockcycles_per_player;
+#endif
 
 static const int perframe2fastplay[] = { 312, 312 / 2, 312 / 3, 312 / 4 };
 
@@ -942,9 +975,17 @@ static void call_6502(UWORD addr, int max_scanlines)
 
 void ASAP_PlaySong(int song, int duration)
 {
+#ifndef APOKEYSND
 	UWORD addr;
+#endif
 	current_song = song;
 	current_duration = duration;
+#ifdef APOKEYSND
+	bytes_played = 0;
+	atari_sound_len = 0;
+	atari_sound_index = 0;
+	PokeySound_Initialize(loaded_module_info.channels - 1);
+#else
 	blocks_played = 0;
 	blockcycles_till_player = 0;
 	blockcycles_per_player = 114U * sap_fastplay * block_rate;
@@ -958,6 +999,7 @@ void ASAP_PlaySong(int song, int duration)
 	if (enable_stereo)
 		for (addr = _AUDF1 + _POKEY2; addr <= _STIMER + _POKEY2; addr++)
 			POKEY_PutByte(addr, 0);
+#endif
 	regP = 0x30;
 	switch (sap_type) {
 	case 'B':
@@ -1027,9 +1069,49 @@ void call_6502_player(void)
 			call_6502((UWORD) (sap_player + 6), sap_fastplay);
 		break;
 	}
+#ifdef APOKEYSND
+	PokeySound_Flush(114 * sap_fastplay);
+#else
 	random_scanline_counter = (random_scanline_counter + LINE_C * sap_fastplay)
 	                          % ((AUDCTL[0] & POLY9) ? POLY9_SIZE : POLY17_SIZE);
+#endif
 }
+
+static int milliseconds_to_blocks(int milliseconds)
+{
+	return (int) ((double) milliseconds * block_rate / 1000);
+}
+
+#ifdef APOKEYSND
+
+int ASAP_Generate(void *buffer, int buffer_len)
+{
+	int remaining_bytes;
+	if (current_duration > 0) {
+		int total_bytes = milliseconds_to_blocks(current_duration)
+			<< (loaded_module_info.channels - 1);
+		if (bytes_played + buffer_len > total_bytes)
+			buffer_len = total_bytes - bytes_played;
+	}
+	remaining_bytes = buffer_len;
+	while (remaining_bytes > 0) {
+		int bytes = atari_sound_len - atari_sound_index;
+		if (bytes >= remaining_bytes) {
+			memcpy(buffer, atari_sound + atari_sound_index, remaining_bytes);
+			atari_sound_index += remaining_bytes;
+			break;
+		}
+		memcpy(buffer, atari_sound + atari_sound_index, bytes);
+		buffer = (void *) ((unsigned char *) buffer + bytes);
+		remaining_bytes -= bytes;
+		call_6502_player();
+		atari_sound_index = 0;
+	}
+	bytes_played += buffer_len;
+	return buffer_len;
+}
+
+#else
 
 static int cpu_process(int blocks)
 {
@@ -1044,11 +1126,6 @@ static int cpu_process(int blocks)
 	blocks_played += blocks;
 	blockcycles_till_player -= blocks * ASAP_MAIN_CLOCK;
 	return blocks;
-}
-
-static int milliseconds_to_blocks(int milliseconds)
-{
-	return (int) ((double) milliseconds * block_rate / 1000);
 }
 
 void ASAP_Seek(int position)
@@ -1102,3 +1179,5 @@ int ASAP_Generate(void *buffer, int buffer_len)
 	}
 	return buffer_blocks << (sample_16bit + enable_stereo);
 }
+
+#endif /* APOKEYSND */

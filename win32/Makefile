@@ -50,6 +50,14 @@ wasap.exe: wasap\wasap.c $(COMMON_C) wasap\wasap.res $(COMMON_H) wasap\resource.
 wasap\wasap.res: wasap\wasap.rc ..\asap.h wasap\resource.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
 	$(RC) wasap\wasap.rc
 
+# WASAP - experimental
+
+wasapx.exe: wasap\wasap.c ..\asap.c ..\apokeysnd.c $(ATARI800_SRC_DIR)\cpu.c wasap\wasapx.res config.h ..\asap.h ..\asap_internal.h ..\apokeysnd.h ..\players.h $(ATARI800_SRC_DIR)\cpu.h wasap\resource.h
+	$(ASAP_CC) /DAPOKEYSND wasap\wasap.c ..\asap.c ..\apokeysnd.c $(ATARI800_SRC_DIR)\cpu.c wasap\wasapx.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
+
+wasap\wasapx.res: wasap\wasap.rc ..\asap.h wasap\resource.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
+	$(RC) /D APOKEYSND wasap\wasap.rc
+
 # Winamp
 
 in_asap.dll: winamp\in_asap.c $(COMMON_C) settings.c winamp\in_asap.res $(COMMON_H) settings.h
@@ -143,6 +151,7 @@ dist: all foo ..\configure ..\config.h.in copying.txt credits.txt news.txt readm
 		-t $(ASAP_DIR)\asap.c $(ASAP_DIR)\asap.h $(ASAP_DIR)\asap_internal.h \
 		$(ASAP_DIR)\asap2wav.c $(ASAP_DIR)\asap2wav.1 \
 		$(ASAP_DIR)\asapscan.c \
+		$(ASAP_DIR)\apokeysnd.c $(ASAP_DIR)\apokeysnd.h \
 		$(ASAP_DIR)\players\cmc.asx $(ASAP_DIR)\players\mpt.asx \
 		$(ASAP_DIR)\players\rmt.asx $(ASAP_DIR)\players\tmc.asx $(ASAP_DIR)\players\tm2.asx \
 		$(ASAP_DIR)\configure.ac $(ASAP_DIR)\Makefile.in \
@@ -178,4 +187,4 @@ dist: all foo ..\configure ..\config.h.in copying.txt credits.txt news.txt readm
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip \
 		copying.txt credits.txt news.txt readme.txt todo.txt \
 		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt \
-		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll
+		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll

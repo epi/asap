@@ -32,9 +32,14 @@
 #define WND_CLASS_NAME   "WASAP"
 #define BUFFERED_BLOCKS  4096
 
+#ifdef APOKEYSND
+static const int frequency = 44100;
+static const int use_16bit = 0;
+#else
 static int frequency = 44100;
 static int use_16bit = 1;
 static int quality = 1;
+#endif
 static const ASAP_ModuleInfo *module_info;
 static int current_song;
 
@@ -200,7 +205,9 @@ static HICON hStopIcon;
 static HICON hPlayIcon;
 static HMENU hTrayMenu;
 static HMENU hSongMenu;
+#ifndef APOKEYSND
 static HMENU hQualityMenu;
+#endif
 
 static void ClearSongsMenu(void)
 {
@@ -333,6 +340,7 @@ static void SelectAndLoadFile(void)
 	opening = FALSE;
 }
 
+#ifndef APOKEYSND
 static void ApplyQuality(void)
 {
 	int reopen = FALSE;
@@ -350,6 +358,7 @@ static void ApplyQuality(void)
 	if (reopen)
 		LoadFile();
 }
+#endif
 
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
                                     LPARAM lParam)
@@ -389,6 +398,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 				StopPlayback();
 				PlaySong(idc - IDM_SONG1);
 			}
+#ifndef APOKEYSND
 			else if (idc >= IDM_QUALITY_RF && idc <= IDM_QUALITY_MB3) {
 				quality = idc - IDM_QUALITY_RF;
 				ApplyQuality();
@@ -401,6 +411,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 				use_16bit = idc - IDM_8BIT;
 				ApplyQuality();
 			}
+#endif
 			break;
 		}
 		break;
@@ -518,13 +529,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	hSongMenu = CreatePopupMenu();
 	InsertMenu(hTrayMenu, 1, MF_BYPOSITION | MF_ENABLED | MF_STRING | MF_POPUP,
 	           (UINT_PTR) hSongMenu, "So&ng");
+#ifndef APOKEYSND
 	hQualityMenu = GetSubMenu(hTrayMenu, 4);
+#endif
 	SetMenuDefaultItem(hTrayMenu, 0, TRUE);
 	nid.hWnd = hWnd;
 	nid.hIcon = hStopIcon;
 	Shell_NotifyIcon(NIM_ADD, &nid);
 	taskbarCreatedMessage = RegisterWindowMessage("TaskbarCreated");
+#ifndef APOKEYSND
 	ApplyQuality();
+#endif
 	if (*pb != '\0') {
 		memcpy(strFile, pb, pe + 1 - pb);
 		LoadFile();

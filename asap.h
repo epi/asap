@@ -105,7 +105,9 @@ int ASAP_ParseDuration(const char *duration);
    "quality" 0 means Ron Fries' pokeysnd,
    1..3 mean Michael Borisov's mzpokeysnd with different filters.
    You must call this function before any of the following functions. */
+#ifndef APOKEYSND
 void ASAP_Initialize(int frequency, int audio_format, int quality);
+#endif
 
 /* Loads a module into ASAP.
    "filename" determines the file format.

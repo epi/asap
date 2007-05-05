@@ -12,6 +12,7 @@ IDR_TRAYMENU MENU
 		MENUITEM "&Open...", IDM_OPEN
 		MENUITEM "&Stop", IDM_STOP
 		MENUITEM "File &information...", IDM_FILE_INFO, GRAYED
+#ifndef APOKEYSND
 		POPUP "&Quality"
 		{
 			MENUITEM "RF", IDM_QUALITY_RF
@@ -25,6 +26,7 @@ IDR_TRAYMENU MENU
 			MENUITEM "8-bit", IDM_8BIT
 			MENUITEM "16-bit", IDM_16BIT
 		}
+#endif
 		MENUITEM "&About WASAP...", IDM_ABOUT
 		MENUITEM "&Exit", IDM_EXIT
 	}
