@@ -444,7 +444,7 @@ static void mix_stereo(int samples)
 			sample = 255;
 		atari_sound[2 * i] = (unsigned char) sample;
 		acc1 += (pokey_states[1].delta_buffer[i] << 10) - (acc1 >> 8);
-		sample = 128 + (acc0 >> 8);
+		sample = 128 + (acc1 >> 8);
 		if (sample < 0)
 			sample = 0;
 		else if (sample > 255)
