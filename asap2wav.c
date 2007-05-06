@@ -53,10 +53,12 @@ static void print_help(void)
 		"-o -        --output=-         Write to standard output\n"
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
 		"-t TIME     --time=TIME        Set output length MM:SS\n"
+#ifndef APOKEYSND
 		"-r FREQ     --rate=FREQ        Set sample rate in Hz (default: 44100)\n"
 		"-q QUALITY  --quality=QUALITY  Set sound quality 0-3 (default: 1)\n"
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
+#endif
 		"            --raw              Output raw audio (no WAV header)\n"
 		"-h          --help             Display this information\n"
 		"-v          --version          Display version information\n"
@@ -84,10 +86,15 @@ static void fatal_error(const char *format, ...)
 static const char *output_file = NULL;
 static int output_header = TRUE;
 static int song = -1;
+#ifdef APOKEYSND
+static const int frequency = 44100;
+static const int use_16bit = FALSE;
+#else
 static int quality = 1;
 static int frequency = 44100;
-static int duration = -1;
 static int use_16bit = TRUE;
+#endif
+static int duration = -1;
 
 static void set_dec(const char *s, int *result, const char *name,
                     int minval, int maxval)
@@ -143,7 +150,9 @@ static void process_file(const char *input_file)
 		fatal_error("cannot open %s", input_file);
 	module_len = fread(module, 1, sizeof(module), fp);
 	fclose(fp);
+#ifndef APOKEYSND
 	ASAP_Initialize(frequency, use_16bit ? AUDIO_FORMAT_S16_LE : AUDIO_FORMAT_U8, quality);
+#endif
 	module_info = ASAP_Load(input_file, module, module_len);
 	if (module_info == NULL)
 		fatal_error("%s: format not supported", input_file);
@@ -226,6 +235,7 @@ int main(int argc, char *argv[])
 			set_time(argv[++i]);
 		else if (strncmp(arg, "--time=", 7) == 0)
 			set_time(arg + 7);
+#ifndef APOKEYSND
 		else if (arg[1] == 'r' && arg[2] == '\0')
 			set_dec(argv[++i], &frequency, "sample rate", 4000, 65535);
 		else if (strncmp(arg, "--rate=", 7) == 0)
@@ -240,6 +250,7 @@ int main(int argc, char *argv[])
 		else if ((arg[1] == 'w' && arg[2] == '\0')
 			|| strcmp(arg, "--word-samples") == 0)
 			use_16bit = TRUE;
+#endif
 		else if (strcmp(arg, "--raw") == 0)
 			output_header = FALSE;
 		else if ((arg[1] == 'h' && arg[2] == '\0')

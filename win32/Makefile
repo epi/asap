@@ -42,6 +42,11 @@ all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asapscan.exe
 asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_CC) ..\asap2wav.c $(COMMON_C) $(LINKOPT)
 
+# ASAP2WAV - experimental
+
+asap2wavx.exe: ..\asap2wav.c ..\asap.c ..\apokeysnd.c $(ATARI800_SRC_DIR)\cpu.c config.h ..\asap.h ..\asap_internal.h ..\apokeysnd.h ..\players.h $(ATARI800_SRC_DIR)\cpu.h
+	$(ASAP_CC) /DAPOKEYSND ..\asap2wav.c ..\asap.c ..\apokeysnd.c $(ATARI800_SRC_DIR)\cpu.c $(LINKOPT)
+
 # WASAP
 
 wasap.exe: wasap\wasap.c $(COMMON_C) wasap\wasap.res $(COMMON_H) wasap\resource.h
