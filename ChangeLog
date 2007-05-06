@@ -1,3 +1,18 @@
+** 0.3.0 released on 2007-05-06
+
+2007-05-06  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c: made stereo work
+
+* asap2wav.c, win32/Makefile: ASAP2WAV with experimental POKEY emulator
+
+* gsplayer/gspasap.txt, INSTALL: info about the GSPlayer plugin
+
+
+2007-05-06  Kostas Nakos  <knakos@gmail.com>
+* win32/Makefile, win32/config.h, win32/settings.rc: GSPlayer plugin
+  for Windows CE
+
+
 2007-05-05  Piotr Fusik  <fox@scene.pl>
 * apokeysnd.c, apokeysnd.h, asap.c, asap.h, win32/wasap/wasap.c,
   win32/wasap/wasap.rc, win32/Makefile: new experimental POKEY sound emulator

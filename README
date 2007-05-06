@@ -9,6 +9,7 @@ This release includes the following programs that use the ASAP engine:
 * ASAP2WAV - portable command-line utility that generates WAV files
 * WASAP - tiny player for Windows
 * plugin for foobar2000 0.9
+* plugin for GSPlayer
 * plugin for Winamp
 * plugin for XMMS
 
@@ -28,9 +29,8 @@ Currently supported input formats are:
 * TM2 (Theta Music Composer 2.x)
 
 The biggest collection of SAP files is ASMA (Atari SAP Music Archive,
-http://asma.atari.org). It is strongly recommended that you use ASMA 3.0
-or newer. 226 files in ASMA 3.0 contain samples, the remaining 1780 can be
-used with the current version of ASAP.
+http://asma.atari.org). About 10% of files in ASMA contain samples and cannot
+be used with the current version of ASAP.
 
 If you are interested in the ASAP project, please subscribe its mailing list:
 https://lists.sourceforge.net/lists/listinfo/asap-users
@@ -46,11 +46,7 @@ http://sourceforge.net/projects/asap/
 Although you may submit your requests anonymously, it is strongly recommended
 that you login to sf.net first (create an account if necessary). This way you
 will receive email notifications about changes made to your request, and you
-can be reached if your request needs a clarification. Please double-check
-the TODO file before reporting a supposed bug (which may be really lack
-of a feature) or submitting a feature request. Patches submitted
-via the request tracker must be small and created against the current
-development code stored in CVS.
+can be reached if your request needs a clarification.
 
 ASAP is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published
@@ -61,5 +57,3 @@ ASAP is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty
 of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 See the included GNU General Public License for more details.
-
-

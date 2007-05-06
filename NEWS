@@ -1,6 +1,15 @@
 History
 -------
 
+* ASAP 0.3.0 (2007-05-06)
+
+This release adds support for AUTHOR, NAME, DATE and TIME tags in SAP files.
+Winamp, foobar2000 and the new GSPlayer plugin have configurable playback time
+for songs with no TIME tag and songs marked with LOOP.
+foobar2000 plugin has been updated for version 0.9 of foobar2000.
+XMMS plugin supports the TM8 extension.
+
+
 * ASAP 0.2.1 (2006-01-28)
 
 This release supports TM2 (Theta Music Composer 2.x) file format.
