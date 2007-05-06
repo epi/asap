@@ -1,4 +1,4 @@
-.TH ASAP2WAV 1 "April 27, 2007"
+.TH ASAP2WAV 1 "May 6, 2007"
 .SH NAME
 asap2wav \- convert Atari 8-bit music to WAV
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ asap2wav \- convert Atari 8-bit music to WAV
 .I FREQ
 .B ] [\-q
 .I QUALITY
-.B ] [\-b] [\-w]
+.B ] [\-b] [\-w] [\-\-raw]
 .I INPUTFILE...
 .SH DESCRIPTION
 .B asap2wav
@@ -59,8 +59,9 @@ Theta Music Composer 2.x.
 .SH OPTIONS
 .TP
 \fB\-o\fR \fIFILE\fR, \fB\-\-output\fR=\fIFILE\fR
-Set output WAV file name. If you do not specify this option, the name
-of the input file is re-used, with the extension changed to "wav".
+Set output WAV file name. "-" means standard output.
+If you do not specify this option, the name of the input file is re-used,
+with the extension changed to "wav".
 .TP
 \fB\-s\fR \fISONG\fR, \fB\-\-song\fR=\fISONG\fR
 Select subsong number (zero-based).
@@ -79,6 +80,9 @@ Output 8-bit samples.
 .TP
 \fB\-w\fR, \fB\-\-word-samples\fR
 Output 16-bit samples (default).
+.TP
+\fB\-\-raw\fR
+Output audio samples without the WAV header.
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Display help message and exit.
