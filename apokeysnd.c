@@ -139,7 +139,7 @@ void PokeySound_Initialize(int stereo)
 #define DO_TICK(ch) \
 	poly = cycle + ps->poly_index - (ch - 1); \
 	newout = ps->out##ch; \
-	switch (ps->audc##ch >> 5) { \
+	switch (ps->audc##ch >> 4) { \
 	case 0: \
 		if (poly5_lookup[poly % 31]) { \
 			if ((ps->audctl & 0x80) != 0) \
@@ -150,15 +150,15 @@ void PokeySound_Initialize(int stereo)
 			} \
 		} \
 		break; \
-	case 1: \
-	case 3: \
+	case 2: \
+	case 6: \
 		newout ^= poly5_lookup[poly % 31]; \
 		break; \
-	case 2:\
+	case 4:\
 		if (poly5_lookup[poly % 31]) \
 			newout = poly4_lookup[poly % 15]; \
 		break; \
-	case 4: \
+	case 8: \
 		if ((ps->audctl & 0x80) != 0) \
 			newout = poly9_lookup[poly % 511] & 1; \
 		else { \
@@ -166,12 +166,14 @@ void PokeySound_Initialize(int stereo)
 			newout = (poly17_lookup[poly >> 3] >> (poly & 7)) & 1; \
 		} \
 		break; \
-	case 5: \
-	case 7: \
+	case 10: \
+	case 14: \
 		newout ^= 1; \
 		break; \
-	case 6: \
+	case 12: \
 		newout = poly4_lookup[poly % 15]; \
+		break; \
+	default: \
 		break; \
 	} \
 	if (newout != ps->out##ch) { \

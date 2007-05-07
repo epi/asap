@@ -244,26 +244,20 @@ UBYTE ASAP_GetByte(UWORD addr)
 
 void ASAP_PutByte(UWORD addr, UBYTE byte)
 {
-	/* TODO: implement WSYNC */
-#if 0
+#ifdef APOKEYSND
 	if ((addr >> 8) == 0xd2)
-		POKEY_PutByte(addr, byte);
+		PokeySound_PutByte(addr, byte, xpos + xpos / (LINE_C - DMAR) * DMAR);
 	else if ((addr & 0xff0f) == 0xd40a) {
-		if (xpos <= WSYNC_C && xpos_limit >= WSYNC_C)
-			xpos = WSYNC_C;
-		else {
-			wsync_halt = TRUE;
-			xpos = xpos_limit;
-		}
+		int cycle = xpos % (LINE_C - DMAR) + DMAR;
+		if (cycle <= WSYNC_C)
+			xpos += WSYNC_C - cycle;
+		else
+			xpos += LINE_C - DMAR + WSYNC_C - cycle;
 	}
 	else
 		dPutByte(addr, byte);
 #else
-#ifdef APOKEYSND
-	PokeySound_PutByte(addr, byte, xpos + xpos / (LINE_C - DMAR) * DMAR);
-#else
 	POKEY_PutByte(addr, byte);
-#endif
 #endif
 }
 
@@ -276,8 +270,6 @@ void ASAP_CIM(void)
 #ifdef APOKEYSND
 
 #define block_rate     44100
-#define sample_format  AUDIO_FORMAT_U8
-#define sample_16bit   0
 
 #else
 
@@ -832,6 +824,9 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end,
 		return TRUE;
 	switch (sap_type) {
 	case 'B':
+#ifdef APOKEYSND
+	case 'D':
+#endif
 		if (sap_player == 0xffff || sap_init == 0xffff)
 			return FALSE;
 		break;
@@ -839,6 +834,13 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end,
 		if (sap_player == 0xffff || sap_music == 0xffff)
 			return FALSE;
 		break;
+#ifdef APOKEYSND
+	case 'S':
+		if (sap_init == 0xffff)
+			return FALSE;
+		sap_fastplay = 78;
+		break;
+#endif
 	default:
 		return FALSE;
 	}
@@ -1017,6 +1019,16 @@ void ASAP_PlaySong(int song, int duration)
 		regX = (UBYTE) song;
 		call_6502((UWORD) (sap_player + 3), SCANLINES_FOR_INIT);
 		break;
+#ifdef APOKEYSND
+	case 'D':
+	case 'S':
+		regA = (UBYTE) song;
+		regX = 0x00;
+		regY = 0x00;
+		regS = 0xff;
+		regPC = sap_init;
+		break;
+#endif
 	case 'm':
 		regA = 0x00;
 		regX = (UBYTE) (sap_music >> 8);
@@ -1055,6 +1067,42 @@ void call_6502_player(void)
 	case 'C':
 		call_6502((UWORD) (sap_player + 6), sap_fastplay);
 		break;
+#ifdef APOKEYSND
+	case 'D':
+#define PUSH_ON_6502_STACK(x)  dPutByte(0x100 + regS--, x)
+#define RETURN_FROM_PLAYER_ADDR  0xd200
+		/* save 6502 state on 6502 stack */
+		PUSH_ON_6502_STACK(regPC >> 8);
+		PUSH_ON_6502_STACK(regPC & 0xff);
+		CPU_GetStatus();
+		PUSH_ON_6502_STACK(regP);
+		PUSH_ON_6502_STACK(regA);
+		PUSH_ON_6502_STACK(regX);
+		PUSH_ON_6502_STACK(regY);
+		/* RTS will jump to 6502 code that restores the state */
+		PUSH_ON_6502_STACK((RETURN_FROM_PLAYER_ADDR - 1) >> 8);
+		PUSH_ON_6502_STACK((RETURN_FROM_PLAYER_ADDR - 1) & 0xff);
+		dPutByte(RETURN_FROM_PLAYER_ADDR, 0x68);     /* PLA */
+		dPutByte(RETURN_FROM_PLAYER_ADDR + 1, 0xa8); /* TAY */
+		dPutByte(RETURN_FROM_PLAYER_ADDR + 2, 0x68); /* PLA */
+		dPutByte(RETURN_FROM_PLAYER_ADDR + 3, 0xaa); /* TAX */
+		dPutByte(RETURN_FROM_PLAYER_ADDR + 4, 0x68); /* PLA */
+		dPutByte(RETURN_FROM_PLAYER_ADDR + 5, 0x40); /* RTI */
+		regPC = sap_player;
+		xpos = 0;
+		GO(sap_fastplay * (LINE_C - DMAR));
+		break;
+	case 'S':
+		xpos = 0;
+		GO(sap_fastplay * (LINE_C - DMAR));
+		{
+			int i = dGetByte(0x45) - 1;
+			dPutByte(0x45, i);
+			if (i == 0)
+				dPutByte(0xb07b, dGetByte(0xb07b) + 1);
+		}
+		break;
+#endif
 	case 'm':
 	case 'r':
 	case 'T':

@@ -72,7 +72,11 @@ extern UBYTE wsync_halt;
 extern UBYTE memory[65536 + 2];
 
 #define GetByte(addr)			(((addr) & 0xf900) == 0xd000 ? ASAP_GetByte(addr) : memory[addr])
+#ifdef APOKEYSND
+#define PutByte(addr, byte)		do { if (((addr) & 0xf900) == 0xd000) ASAP_PutByte(addr, byte); else memory[addr] = byte; } while (0)
+#else
 #define PutByte(addr, byte)		do { if (((addr) >> 8) == 0xd2) ASAP_PutByte(addr, byte); else memory[addr] = byte; } while (0)
+#endif
 
 /* Reads a byte from the specified special address (not RAM or ROM). */
 UBYTE ASAP_GetByte(UWORD addr);
