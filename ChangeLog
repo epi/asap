@@ -1,6 +1,8 @@
 2007-05-07  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap_internal.h, apokeysnd.c: handle TYPE D and TYPE S SAP files
 
+* apokeysnd.c: corrected handling of reload_cycles
+
 
 ** 0.3.0 released on 2007-05-06
 

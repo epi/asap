@@ -204,7 +204,7 @@ static void generate(PokeyState *ps, int current_cycle)
 		if (cycle == ps->tick_cycle2) {
 			ps->tick_cycle2 += ps->period_cycles2;
 			if ((ps->audctl & 0x10) != 0)
-				ps->tick_cycle1 += ps->reload_cycles1;
+				ps->tick_cycle1 = cycle + ps->reload_cycles1;
 			DO_TICK(2);
 		}
 		if (cycle == ps->tick_cycle3) {
@@ -216,7 +216,7 @@ static void generate(PokeyState *ps, int current_cycle)
 		if (cycle == ps->tick_cycle4) {
 			ps->tick_cycle4 += ps->period_cycles4;
 			if ((ps->audctl & 8) != 0)
-				ps->tick_cycle3 += ps->reload_cycles3;
+				ps->tick_cycle3 = cycle + ps->reload_cycles3;
 			if ((ps->audctl & 2) != 0 && ps->delta2 > 0)
 				ps->delta_buffer[CYCLE_TO_SAMPLE(cycle)] += ps->delta2 = -ps->delta2;
 			DO_TICK(4);
@@ -269,7 +269,7 @@ void PokeySound_PutByte(int addr, int data, int current_cycle)
 			break;
 		case 0x50:
 			ps->period_cycles2 = data + 256 * ps->audf2 + 7;
-			ps->reload_cycles1 = data + 7;
+			ps->reload_cycles1 = data + 4;
 			break;
 		}
 		break;
@@ -313,7 +313,7 @@ void PokeySound_PutByte(int addr, int data, int current_cycle)
 			break;
 		case 0x28:
 			ps->period_cycles4 = data + 256 * ps->audf4 + 7;
-			ps->reload_cycles3 = data + 7;
+			ps->reload_cycles3 = data + 4;
 			break;
 		}
 		break;
@@ -363,7 +363,7 @@ void PokeySound_PutByte(int addr, int data, int current_cycle)
 		case 0x50:
 			ps->period_cycles1 = 256;
 			ps->period_cycles2 = ps->audf1 + 256 * ps->audf2 + 7;
-			ps->reload_cycles1 = ps->audf1 + 7;
+			ps->reload_cycles1 = ps->audf1 + 4;
 			break;
 		}
 		switch (ps->audctl & 0x28) {
@@ -383,7 +383,7 @@ void PokeySound_PutByte(int addr, int data, int current_cycle)
 		case 0x28:
 			ps->period_cycles3 = 256;
 			ps->period_cycles4 = ps->audf3 + 256 * ps->audf4 + 7;
-			ps->reload_cycles3 = ps->audf3 + 7;
+			ps->reload_cycles3 = ps->audf3 + 4;
 			break;
 		}
 		break;
