@@ -242,6 +242,8 @@ UBYTE ASAP_GetByte(UWORD addr)
 			return (UBYTE) ((ptr[0] >> i) + (ptr[1] << (8 - i)));
 		}
 #endif
+	case 0xd20e:
+		return cpu_state.irqst;
 	case 0xd40b:
 		return (UBYTE) ((unsigned int) cpu_state.cycle / (unsigned int) (2 * (LINE_C - DMAR)) % 156U);
 	default:
