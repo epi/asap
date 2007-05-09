@@ -1,4 +1,4 @@
-VERSION = 0.3.0
+VERSION = 0.4.0
 ASAP_DIR = ..\..\asap
 ATARI800_SRC_DIR = ..\..\atari800\src
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
@@ -11,8 +11,8 @@ XASM = xasm /q
 RC = rc /fo $@
 CLARM = clarm /nologo /O2 /W3 /DNDEBUG /DARM /D_ARM /DARM_ /DARMV4 /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
 
-COMMON_C = ..\asap.c $(ATARI800_SRC_DIR)\cpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c $(ATARI800_SRC_DIR)\pokeysnd.c $(ATARI800_SRC_DIR)\remez.c
-COMMON_H = config.h ..\asap.h ..\asap_internal.h ..\players.h $(ATARI800_SRC_DIR)\cpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h $(ATARI800_SRC_DIR)\pokey.h $(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h
+COMMON_C = ..\asap.c ..\acpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c $(ATARI800_SRC_DIR)\pokeysnd.c $(ATARI800_SRC_DIR)\remez.c
+COMMON_H = config.h ..\asap.h ..\asap_internal.h ..\players.h ..\acpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h $(ATARI800_SRC_DIR)\pokey.h $(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h
 COMMON_DOC = ..\README + ..\CREDITS + ..\TODO + ..\NEWS
 
 all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll
@@ -45,8 +45,8 @@ asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
 
 # ASAP2WAV - experimental
 
-asap2wavx.exe: ..\asap2wav.c ..\asap.c ..\apokeysnd.c $(ATARI800_SRC_DIR)\cpu.c config.h ..\asap.h ..\asap_internal.h ..\apokeysnd.h ..\players.h $(ATARI800_SRC_DIR)\cpu.h
-	$(ASAP_CC) /DAPOKEYSND ..\asap2wav.c ..\asap.c ..\apokeysnd.c $(ATARI800_SRC_DIR)\cpu.c $(LINKOPT)
+asap2wavx.exe: ..\asap2wav.c ..\asap.c ..\apokeysnd.c ..\acpu.c config.h ..\asap.h ..\asap_internal.h ..\apokeysnd.h ..\players.h ..\acpu.h
+	$(ASAP_CC) /DAPOKEYSND ..\asap2wav.c ..\asap.c ..\apokeysnd.c ..\acpu.c $(LINKOPT)
 
 # WASAP
 
@@ -58,8 +58,8 @@ wasap\wasap.res: wasap\wasap.rc ..\asap.h wasap\resource.h wasap\wasap.ico wasap
 
 # WASAP - experimental
 
-wasapx.exe: wasap\wasap.c ..\asap.c ..\apokeysnd.c $(ATARI800_SRC_DIR)\cpu.c wasap\wasapx.res config.h ..\asap.h ..\asap_internal.h ..\apokeysnd.h ..\players.h $(ATARI800_SRC_DIR)\cpu.h wasap\resource.h
-	$(ASAP_CC) /DAPOKEYSND wasap\wasap.c ..\asap.c ..\apokeysnd.c $(ATARI800_SRC_DIR)\cpu.c wasap\wasapx.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
+wasapx.exe: wasap\wasap.c ..\asap.c ..\apokeysnd.c ..\acpu.c wasap\wasapx.res config.h ..\asap.h ..\asap_internal.h ..\apokeysnd.h ..\players.h ..\acpu.h wasap\resource.h
+	$(ASAP_CC) /DAPOKEYSND wasap\wasap.c ..\asap.c ..\apokeysnd.c ..\acpu.c wasap\wasapx.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
 
 wasap\wasapx.res: wasap\wasap.rc ..\asap.h wasap\resource.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
 	$(RC) /D APOKEYSND wasap\wasap.rc
@@ -176,6 +176,7 @@ dist: all foo wince ..\configure ..\config.h.in copying.txt credits.txt news.txt
 		-t $(ASAP_DIR)\asap.c $(ASAP_DIR)\asap.h $(ASAP_DIR)\asap_internal.h \
 		$(ASAP_DIR)\asap2wav.c $(ASAP_DIR)\asap2wav.1 \
 		$(ASAP_DIR)\asapscan.c \
+		$(ASAP_DIR)\acpu.c $(ASAP_DIR)\acpu.h \
 		$(ASAP_DIR)\apokeysnd.c $(ASAP_DIR)\apokeysnd.h \
 		$(ASAP_DIR)\players\cmc.asx $(ASAP_DIR)\players\mpt.asx \
 		$(ASAP_DIR)\players\rmt.asx $(ASAP_DIR)\players\tmc.asx $(ASAP_DIR)\players\tm2.asx \
@@ -194,8 +195,7 @@ dist: all foo wince ..\configure ..\config.h.in copying.txt credits.txt news.txt
 		$(ASAP_DIR)\win32\winamp\in_asap.c $(ASAP_DIR)\win32\winamp\README \
 		$(ASAP_DIR)\win32\winamp\in2.h $(ASAP_DIR)\win32\winamp\out.h \
 		$(ASAP_DIR)\xmms\libasap.c $(ASAP_DIR)\xmms\libasap.map \
-		$(ATARI800_SRC_DIR)\cpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c \
-		$(ATARI800_SRC_DIR)\cpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h \
+		$(ATARI800_SRC_DIR)\mzpokeysnd.c $(ATARI800_SRC_DIR)\mzpokeysnd.h \
 		$(ATARI800_SRC_DIR)\pokey.h \
 		$(ATARI800_SRC_DIR)\pokeysnd.c $(ATARI800_SRC_DIR)\remez.c \
 		$(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h \

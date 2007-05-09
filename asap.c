@@ -28,7 +28,7 @@
 
 #include "asap.h"
 #include "asap_internal.h"
-#include "cpu.h"
+#include "acpu.h"
 #ifdef APOKEYSND
 #include "apokeysnd.h"
 #else
@@ -53,9 +53,7 @@ static const unsigned char cmr_bass_table[] = {
 
 UBYTE memory[65536 + 2];
 
-int xpos = 0;
-int xpos_limit = 0;
-UBYTE wsync_halt = 0;
+static CpuState cpu_state;
 
 #ifndef APOKEYSND
 
@@ -214,6 +212,8 @@ static void POKEY_Initialise(void)
 
 #endif /* APOKEYSND */
 
+#define REAL_CYCLE (cpu_state.cycle + cpu_state.cycle / (LINE_C - DMAR) * DMAR)
+
 UBYTE ASAP_GetByte(UWORD addr)
 {
 #ifndef APOKEYSND
@@ -222,9 +222,9 @@ UBYTE ASAP_GetByte(UWORD addr)
 	switch (addr & 0xff0f) {
 	case 0xd20a:
 #ifdef APOKEYSND
-		return (UBYTE) PokeySound_GetRandom(addr, xpos + xpos / (LINE_C - DMAR) * DMAR);
+		return (UBYTE) PokeySound_GetRandom(addr, REAL_CYCLE);
 #else
-		i = random_scanline_counter + (unsigned int) xpos + (unsigned int) xpos / (LINE_C - DMAR) * DMAR;
+		i = random_scanline_counter + REAL_CYCLE;
 		if (AUDCTL[0] & POLY9)
 			return poly9_lookup[i % POLY9_SIZE];
 		else {
@@ -236,7 +236,7 @@ UBYTE ASAP_GetByte(UWORD addr)
 		}
 #endif
 	case 0xd40b:
-		return (UBYTE) ((unsigned int) xpos / (unsigned int) (2 * (LINE_C - DMAR)) % 156U);
+		return (UBYTE) ((unsigned int) cpu_state.cycle / (unsigned int) (2 * (LINE_C - DMAR)) % 156U);
 	default:
 		return dGetByte(addr);
 	}
@@ -246,13 +246,13 @@ void ASAP_PutByte(UWORD addr, UBYTE byte)
 {
 #ifdef APOKEYSND
 	if ((addr >> 8) == 0xd2)
-		PokeySound_PutByte(addr, byte, xpos + xpos / (LINE_C - DMAR) * DMAR);
+		PokeySound_PutByte(addr, byte, REAL_CYCLE);
 	else if ((addr & 0xff0f) == 0xd40a) {
-		int cycle = xpos % (LINE_C - DMAR) + DMAR;
+		int cycle = cpu_state.cycle % (LINE_C - DMAR) + DMAR;
 		if (cycle <= WSYNC_C)
-			xpos += WSYNC_C - cycle;
+			cpu_state.cycle += WSYNC_C - cycle;
 		else
-			xpos += LINE_C - DMAR + WSYNC_C - cycle;
+			cpu_state.cycle += LINE_C - DMAR + WSYNC_C - cycle;
 	}
 	else
 		dPutByte(addr, byte);
@@ -264,7 +264,7 @@ void ASAP_PutByte(UWORD addr, UBYTE byte)
 /* We use CIM opcode to return from a subroutine to ASAP */
 void ASAP_CIM(void)
 {
-	xpos = xpos_limit;
+	cpu_state.cycle = 0x7fffffff;
 }
 
 #ifdef APOKEYSND
@@ -962,18 +962,26 @@ const ASAP_ModuleInfo *ASAP_Load(const char *filename,
 
 static void call_6502(UWORD addr, int max_scanlines)
 {
-	regPC = addr;
+	cpu_state.pc = addr;
 	/* put a CIM at 0xd20a and a return address on stack */
 	dPutByte(0xd20a, 0xd2);
 	dPutByte(0x01fe, 0x09);
 	dPutByte(0x01ff, 0xd2);
-	regS = 0xfd;
-	xpos = 0;
-	GO(max_scanlines * (LINE_C - DMAR));
+	cpu_state.s = 0xfd;
+	cpu_state.cycle = 0;
+	Cpu_Run(&cpu_state, max_scanlines * (LINE_C - DMAR));
 }
 
 /* 50 Atari frames for the initialization routine - some SAPs are self-extracting. */
 #define SCANLINES_FOR_INIT  (50 * 312)
+
+static void call_6502_init(UWORD addr, int a, int x, int y)
+{
+	cpu_state.a = a & 0xff;
+	cpu_state.x = x & 0xff;
+	cpu_state.y = y & 0xff;
+	call_6502(addr, SCANLINES_FOR_INIT);
+}
 
 void ASAP_PlaySong(int song, int duration)
 {
@@ -1002,57 +1010,38 @@ void ASAP_PlaySong(int song, int duration)
 		for (addr = _AUDF1 + _POKEY2; addr <= _STIMER + _POKEY2; addr++)
 			POKEY_PutByte(addr, 0);
 #endif
-	regP = 0x30;
+	cpu_state.nz = 0;
+	cpu_state.c = 0;
+	cpu_state.vdi = I_FLAG;
 	switch (sap_type) {
 	case 'B':
-		regA = (UBYTE) song;
-		regX = 0x00;
-		regY = 0x00;
-		call_6502(sap_init, SCANLINES_FOR_INIT);
+		call_6502_init(sap_init, song, 0, 0);
 		break;
 	case 'C':
-		regA = 0x70;
-		regX = (UBYTE) sap_music;
-		regY = (UBYTE) (sap_music >> 8);
-		call_6502((UWORD) (sap_player + 3), SCANLINES_FOR_INIT);
-		regA = 0x00;
-		regX = (UBYTE) song;
-		call_6502((UWORD) (sap_player + 3), SCANLINES_FOR_INIT);
+		call_6502_init((UWORD) (sap_player + 3), 0x70, sap_music, sap_music >> 8);
+		call_6502_init((UWORD) (sap_player + 3), 0x00, song, 0);
 		break;
 #ifdef APOKEYSND
 	case 'D':
 	case 'S':
-		regA = (UBYTE) song;
-		regX = 0x00;
-		regY = 0x00;
-		regS = 0xff;
-		regPC = sap_init;
+		cpu_state.a = song;
+		cpu_state.x = 0x00;
+		cpu_state.y = 0x00;
+		cpu_state.s = 0xff;
+		cpu_state.pc = sap_init;
 		break;
 #endif
 	case 'm':
-		regA = 0x00;
-		regX = (UBYTE) (sap_music >> 8);
-		regY = (UBYTE) sap_music;
-		call_6502(sap_player, SCANLINES_FOR_INIT);
-		regA = 0x02;
-		regX = song_pos[song];
-		call_6502(sap_player, SCANLINES_FOR_INIT);
+		call_6502_init(sap_player, 0x00, sap_music >> 8, sap_music);
+		call_6502_init(sap_player, 0x02, song_pos[song], 0);
 		break;
 	case 'r':
-		regA = song_pos[song];
-		regX = (UBYTE) sap_music;
-		regY = (UBYTE) (sap_music >> 8);
-		call_6502(sap_player, SCANLINES_FOR_INIT);
+		call_6502_init(sap_player, song_pos[song], sap_music, sap_music >> 8);
 		break;
 	case 't':
 	case 'T':
-		regA = 0x70;
-		regX = (UBYTE) (sap_music >> 8);
-		regY = (UBYTE) sap_music;
-		call_6502(sap_player, SCANLINES_FOR_INIT);
-		regA = 0x00;
-		regX = (UBYTE) song;
-		call_6502(sap_player, SCANLINES_FOR_INIT);
+		call_6502_init(sap_player, 0x70, sap_music >> 8, sap_music);
+		call_6502_init(sap_player, 0x00, song, 0);
 		tmc_per_frame_counter = 1;
 		break;
 	}
@@ -1069,16 +1058,15 @@ void call_6502_player(void)
 		break;
 #ifdef APOKEYSND
 	case 'D':
-#define PUSH_ON_6502_STACK(x)  dPutByte(0x100 + regS--, x)
+#define PUSH_ON_6502_STACK(x)  dPutByte(0x100 + cpu_state.s, x); cpu_state.s = (cpu_state.s - 1) & 0xff
 #define RETURN_FROM_PLAYER_ADDR  0xd200
 		/* save 6502 state on 6502 stack */
-		PUSH_ON_6502_STACK(regPC >> 8);
-		PUSH_ON_6502_STACK(regPC & 0xff);
-		CPU_GetStatus();
-		PUSH_ON_6502_STACK(regP);
-		PUSH_ON_6502_STACK(regA);
-		PUSH_ON_6502_STACK(regX);
-		PUSH_ON_6502_STACK(regY);
+		PUSH_ON_6502_STACK(cpu_state.pc >> 8);
+		PUSH_ON_6502_STACK(cpu_state.pc & 0xff);
+		PUSH_ON_6502_STACK(((cpu_state.nz | (cpu_state.nz >> 1)) & N_FLAG) + cpu_state.vdi + ((cpu_state.nz & 0xff) == 0 ? Z_FLAG : 0) + cpu_state.c + 0x20);
+		PUSH_ON_6502_STACK(cpu_state.a);
+		PUSH_ON_6502_STACK(cpu_state.x);
+		PUSH_ON_6502_STACK(cpu_state.y);
 		/* RTS will jump to 6502 code that restores the state */
 		PUSH_ON_6502_STACK((RETURN_FROM_PLAYER_ADDR - 1) >> 8);
 		PUSH_ON_6502_STACK((RETURN_FROM_PLAYER_ADDR - 1) & 0xff);
@@ -1088,13 +1076,13 @@ void call_6502_player(void)
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 3, 0xaa); /* TAX */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 4, 0x68); /* PLA */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 5, 0x40); /* RTI */
-		regPC = sap_player;
-		xpos = 0;
-		GO(sap_fastplay * (LINE_C - DMAR));
+		cpu_state.pc = sap_player;
+		cpu_state.cycle = 0;
+		Cpu_Run(&cpu_state, sap_fastplay * (LINE_C - DMAR));
 		break;
 	case 'S':
-		xpos = 0;
-		GO(sap_fastplay * (LINE_C - DMAR));
+		cpu_state.cycle = 0;
+		Cpu_Run(&cpu_state, sap_fastplay * (LINE_C - DMAR));
 		{
 			int i = dGetByte(0x45) - 1;
 			dPutByte(0x45, i);

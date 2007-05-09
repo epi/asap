@@ -1,3 +1,7 @@
+2007-05-09  Piotr Fusik  <fox@scene.pl>
+* acpu.c, acpu.h, asap.c, win32/Makefile: new 6502 emulator
+
+
 2007-05-07  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap_internal.h, apokeysnd.c: handle TYPE D and TYPE S SAP files
 

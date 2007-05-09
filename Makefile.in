@@ -21,8 +21,8 @@ XMMS_INPUT_PLUGIN_DIR = @XMMS_INPUT_PLUGIN_DIR@
 XMMS_USER_PLUGIN_DIR = ${HOME}/.xmms/Plugins
 
 ATARI800_SRC_DIR = ../atari800/src
-COMMON_C = asap.c ${ATARI800_SRC_DIR}/cpu.c ${ATARI800_SRC_DIR}/mzpokeysnd.c ${ATARI800_SRC_DIR}/pokeysnd.c ${ATARI800_SRC_DIR}/remez.c
-COMMON_H = asap.h asap_internal.h config.h players.h ${ATARI800_SRC_DIR}/cpu.h ${ATARI800_SRC_DIR}/mzpokeysnd.h ${ATARI800_SRC_DIR}/pokey.h ${ATARI800_SRC_DIR}/pokeysnd.h ${ATARI800_SRC_DIR}/remez.h
+COMMON_C = asap.c acpu.c ${ATARI800_SRC_DIR}/mzpokeysnd.c ${ATARI800_SRC_DIR}/pokeysnd.c ${ATARI800_SRC_DIR}/remez.c
+COMMON_H = asap.h asap_internal.h config.h players.h acpu.h ${ATARI800_SRC_DIR}/mzpokeysnd.h ${ATARI800_SRC_DIR}/pokey.h ${ATARI800_SRC_DIR}/pokeysnd.h ${ATARI800_SRC_DIR}/remez.h
 PLAYERS_OBX = players/cmc.obx players/mpt.obx players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx
 
 all: ${ASAP2WAV} asap-xmms
