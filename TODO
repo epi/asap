@@ -1,11 +1,7 @@
 Things to be done in future versions
 ------------------------------------
 
-* new POKEY emulator
-
-* TYPE D and TYPE S SAPs
-
-* POKEY timer interrupts
+* debug the new POKEY emulator
 
 * mute user-selected POKEY channels
 

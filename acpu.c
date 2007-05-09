@@ -24,9 +24,9 @@
 #include "asap_internal.h"
 #include "acpu.h"
 
-/*	0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
-static const int cycles[256] =
+static const int opcode_cycles[256] =
 {
+/*	0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 	7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, /* 0x */
 	2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, /* 1x */
 	6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6, /* 2x */
@@ -217,6 +217,15 @@ static const int cycles[256] =
 	pc++; \
 	break
 
+#define CHECK_IRQ \
+	if ((vdi & I_FLAG) == 0 && cs->irqst != 0xff) { \
+		PHPC; \
+		PHPB0; \
+		vdi |= I_FLAG; \
+		pc = dGetWordAligned(0xfffe); \
+		cs->cycle += 7; \
+	}
+
 void Cpu_Run(CpuState *cs, int cycle_limit)
 {
 	int pc;
@@ -227,6 +236,7 @@ void Cpu_Run(CpuState *cs, int cycle_limit)
 	int c;
 	int s;
 	int vdi;
+	int next_event_cycle;
 	pc = cs->pc;
 	nz = cs->nz;
 	a = cs->a;
@@ -235,10 +245,38 @@ void Cpu_Run(CpuState *cs, int cycle_limit)
 	c = cs->c;
 	s = cs->s;
 	vdi = cs->vdi;
-	while (cs->cycle < cycle_limit) {
+	next_event_cycle = cycle_limit;
+	if (next_event_cycle > cs->timer1_cycle)
+		next_event_cycle = cs->timer1_cycle;
+	if (next_event_cycle > cs->timer2_cycle)
+		next_event_cycle = cs->timer2_cycle;
+	if (next_event_cycle > cs->timer4_cycle)
+		next_event_cycle = cs->timer4_cycle;
+	cs->nearest_event_cycle = next_event_cycle;
+	for (;;) {
+		int cycle;
 		int addr;
-		int data = FETCH;
-		cs->cycle += cycles[data];
+		int data;
+		cycle = cs->cycle;
+		if (cycle >= cs->nearest_event_cycle) {
+			if (cycle >= cycle_limit)
+				break;
+			next_event_cycle = cycle_limit;
+#define CHECK_TIMER_IRQ(ch) \
+			if (cycle >= cs->timer##ch##_cycle) { \
+				cs->irqst &= ~ch; \
+				cs->timer##ch##_cycle = NEVER; \
+			} \
+			else if (next_event_cycle > cs->timer##ch##_cycle) \
+				next_event_cycle = cs->timer##ch##_cycle;
+			CHECK_TIMER_IRQ(1);
+			CHECK_TIMER_IRQ(2);
+			CHECK_TIMER_IRQ(4);
+			cs->nearest_event_cycle = next_event_cycle;
+			CHECK_IRQ;
+		}
+		data = FETCH;
+		cs->cycle += opcode_cycles[data];
 		switch (data) {
 		case 0x00: /* BRK */
 			pc++;
@@ -418,6 +456,7 @@ void Cpu_Run(CpuState *cs, int cycle_limit)
 			break;
 		case 0x28: /* PLP */
 			PLP;
+			CHECK_IRQ;
 			break;
 		case 0x29: /* AND #ab */
 			nz = a &= FETCH;
@@ -498,6 +537,7 @@ void Cpu_Run(CpuState *cs, int cycle_limit)
 			PL(pc);
 			PL(addr);
 			pc += addr << 8;
+			CHECK_IRQ;
 			break;
 		case 0x41: /* EOR (ab,x) */
 			INDIRECT_X;
@@ -575,6 +615,7 @@ void Cpu_Run(CpuState *cs, int cycle_limit)
 			break;
 		case 0x58: /* CLI */
 			vdi &= V_FLAG | D_FLAG;
+			CHECK_IRQ;
 			break;
 		case 0x59: /* EOR abcd,y */
 			ABSOLUTE_Y;
@@ -1197,4 +1238,10 @@ void Cpu_Run(CpuState *cs, int cycle_limit)
 	cs->c = c;
 	cs->s = s;
 	cs->vdi = vdi;
+	if (cs->timer1_cycle != NEVER)
+		cs->timer1_cycle -= cycle_limit;
+	if (cs->timer2_cycle != NEVER)
+		cs->timer2_cycle -= cycle_limit;
+	if (cs->timer4_cycle != NEVER)
+		cs->timer4_cycle -= cycle_limit;
 }

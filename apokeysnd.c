@@ -28,40 +28,7 @@
 #define SAMPLE_RATE  44100
 #define MAIN_CLOCK   1773447
 
-typedef struct {
-	int audctl;
-	int poly_index;
-	int div_cycles;
-	int audf1;
-	int audf2;
-	int audf3;
-	int audf4;
-	int audc1;
-	int audc2;
-	int audc3;
-	int audc4;
-	int tick_cycle1;
-	int tick_cycle2;
-	int tick_cycle3;
-	int tick_cycle4;
-	int period_cycles1;
-	int period_cycles2;
-	int period_cycles3;
-	int period_cycles4;
-	int reload_cycles1;
-	int reload_cycles3;
-	int out1;
-	int out2;
-	int out3;
-	int out4;
-	int delta1;
-	int delta2;
-	int delta3;
-	int delta4;
-	char delta_buffer[1024];
-} PokeyState;
-
-static PokeyState pokey_states[2];
+PokeyState pokey_states[2];
 
 static const unsigned char poly4_lookup[15] =
 	{ 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };

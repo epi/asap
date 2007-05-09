@@ -5,6 +5,8 @@
 #define Z_FLAG  0x02
 #define C_FLAG  0x01
 
+#define NEVER   0x800000
+
 typedef struct {
 	int cycle;
 	int pc;
@@ -15,6 +17,11 @@ typedef struct {
 	int nz;
 	int c;
 	int vdi;
+	int nearest_event_cycle;
+	int timer1_cycle;
+	int timer2_cycle;
+	int timer4_cycle;
+	int irqst;
 } CpuState;
 
 void Cpu_Run(CpuState *cs, int cycle_limit);

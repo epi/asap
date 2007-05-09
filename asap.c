@@ -55,6 +55,13 @@ UBYTE memory[65536 + 2];
 
 static CpuState cpu_state;
 
+static char sap_type;
+static UWORD sap_player;
+static UWORD sap_music;
+static UWORD sap_init;
+int sap_fastplay;
+static ASAP_ModuleInfo loaded_module_info;
+
 #ifndef APOKEYSND
 
 /* structures to hold the 9 pokey control bytes */
@@ -245,8 +252,28 @@ UBYTE ASAP_GetByte(UWORD addr)
 void ASAP_PutByte(UWORD addr, UBYTE byte)
 {
 #ifdef APOKEYSND
-	if ((addr >> 8) == 0xd2)
-		PokeySound_PutByte(addr, byte, REAL_CYCLE);
+	if ((addr >> 8) == 0xd2) {
+		if ((addr & (loaded_module_info.channels == 1 ? 0xf : 0x1f)) == 0xe) {
+			cpu_state.irqst |= byte ^ 0xff;
+#define SET_TIMER_IRQ(ch) \
+			if ((byte & cpu_state.irqst & ch) != 0 && cpu_state.timer##ch##_cycle == NEVER) { \
+				int t = pokey_states[0].tick_cycle##ch; \
+				while (t < REAL_CYCLE) \
+					t += pokey_states[0].period_cycles##ch ; \
+				t = t * (LINE_C - DMAR) / LINE_C; \
+				cpu_state.timer##ch##_cycle = t; \
+				if (cpu_state.nearest_event_cycle > t) \
+					cpu_state.nearest_event_cycle = t; \
+			} \
+			else \
+				cpu_state.timer##ch##_cycle = NEVER;
+			SET_TIMER_IRQ(1);
+			SET_TIMER_IRQ(2);
+			SET_TIMER_IRQ(4);
+		}
+		else
+			PokeySound_PutByte(addr, byte, REAL_CYCLE);
+	}
 	else if ((addr & 0xff0f) == 0xd40a) {
 		int cycle = cpu_state.cycle % (LINE_C - DMAR) + DMAR;
 		if (cycle <= WSYNC_C)
@@ -293,13 +320,6 @@ void ASAP_Initialize(int frequency, int audio_format, int quality)
 }
 
 #endif /* APOKEYSND */
-
-static char sap_type;
-static UWORD sap_player;
-static UWORD sap_music;
-static UWORD sap_init;
-int sap_fastplay;
-static ASAP_ModuleInfo loaded_module_info;
 
 #define MAX_DURATIONS  (sizeof(module_info->durations) / sizeof(module_info->durations[0]))
 
@@ -1013,6 +1033,10 @@ void ASAP_PlaySong(int song, int duration)
 	cpu_state.nz = 0;
 	cpu_state.c = 0;
 	cpu_state.vdi = I_FLAG;
+	cpu_state.timer1_cycle = NEVER;
+	cpu_state.timer2_cycle = NEVER;
+	cpu_state.timer4_cycle = NEVER;
+	cpu_state.irqst = 0xff;
 	switch (sap_type) {
 	case 'B':
 		call_6502_init(sap_init, song, 0, 0);
