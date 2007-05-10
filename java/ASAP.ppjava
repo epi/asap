@@ -1,0 +1,64 @@
+/*
+ * ASAP.ppjava - Java version of ASAP
+ *
+ * Copyright (C) 2007  Piotr Fusik
+ *
+ * This file is part of ASAP (Another Slight Atari Player),
+ * see http://asap.sourceforge.net
+ *
+ * ASAP is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * ASAP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ASAP; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#define JAVA
+#define CONST_LOOKUP          private static final
+#define AS                    this.
+#define SBYTE                 byte
+#define dGetByte(addr)        (memory[addr] & 0xff)
+#define dPutByte(addr, data)  memory[addr] = (byte) (data)
+#define GetByte(addr)        (((addr) & 0xf900) == 0xd000 ? ASAP_GetByte(addr) : dGetByte(addr))
+#define PutByte(addr, data)  do { if (((addr) & 0xf900) == 0xd000) ASAP_PutByte(addr, data); else dPutByte(addr, data); } while (false)
+
+package net.sf.asap;
+
+public final class ASAP {
+
+	private int cycle;
+	private int cpu_pc;
+	private int cpu_a;
+	private int cpu_x;
+	private int cpu_y;
+	private int cpu_s;
+	private int cpu_nz;
+	private int cpu_c;
+	private int cpu_vdi;
+	private int nearest_event_cycle;
+	private int timer1_cycle;
+	private int timer2_cycle;
+	private int timer4_cycle;
+	private int irqst;
+	private byte[] memory = new byte[65536];
+
+#include "acpu.c"
+
+	private int ASAP_GetByte(int addr)
+	{
+		return 0xff;
+	}
+
+	private void ASAP_PutByte(int addr, int data)
+	{
+	}
+
+}

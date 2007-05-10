@@ -22,9 +22,8 @@
  */
 
 #include "asap_internal.h"
-#include "acpu.h"
 
-static const int opcode_cycles[256] =
+CONST_LOOKUP int opcode_cycles[] =
 {
 /*	0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 	7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, /* 0x */
@@ -100,7 +99,7 @@ static const int opcode_cycles[256] =
 		a = ((ah & 0xf) << 4) + (al & 0x0f); \
 	}
 
-#define zGetByte(x)  dGetByte((x) & 0xff)
+#define zGetByte(addr)  dGetByte((addr) & 0xff)
 
 #define PEEK         dGetByte(pc)
 #define FETCH        dGetByte(pc++)
@@ -113,14 +112,14 @@ static const int opcode_cycles[256] =
 #define ZPAGE_Y      addr = (FETCH + y) & 0xff
 #define INDIRECT_X   addr = (FETCH + x) & 0xff; addr = dGetByte(addr) + (zGetByte(addr + 1) << 8)
 #define INDIRECT_Y   addr = FETCH; addr = (dGetByte(addr) + (zGetByte(addr + 1) << 8) + y) & 0xffff
-#define NCYCLES_X    if ((addr & 0xff) < x) cs->cycle++
-#define NCYCLES_Y    if ((addr & 0xff) < y) cs->cycle++
+#define NCYCLES_X    if ((addr & 0xff) < x) AS cycle++
+#define NCYCLES_Y    if ((addr & 0xff) < y) AS cycle++
 
-#define PL(x)        s = (s + 1) & 0xff; x = dGetByte(0x0100 + s)
-#define PLP          PL(vdi); nz = ((vdi & N_FLAG) << 1) + (~vdi & Z_FLAG); c = vdi & C_FLAG; vdi &= V_FLAG | D_FLAG | I_FLAG
-#define PH(x)        dPutByte(0x0100 + s, x); s = (s - 1) & 0xff
-#define PHW(x)       PH((x) >> 8); PH(x)
-#define PHP(x)       PH(((nz | (nz >> 1)) & N_FLAG) + vdi + ((nz & 0xff) == 0 ? Z_FLAG : 0) + c + x)
+#define PL(dest)     s = (s + 1) & 0xff; dest = dGetByte(0x0100 + s)
+#define PLP          PL(vdi); nz = ((vdi & 0x80) << 1) + (~vdi & Z_FLAG); c = vdi & 1; vdi &= V_FLAG | D_FLAG | I_FLAG
+#define PH(data)     dPutByte(0x0100 + s, data); s = (s - 1) & 0xff
+#define PHW(data)    PH((data) >> 8); PH(data)
+#define PHP(bflag)   PH(((nz | (nz >> 1)) & 0x80) + vdi + ((nz & 0xff) == 0 ? Z_FLAG : 0) + c + bflag)
 #define PHPB0        PHP(0x20)  /* push flags with B flag clear (NMI, IRQ) */
 #define PHPB1        PHP(0x30)  /* push flags with B flag set (PHP, BRK) */
 #define PHPC         PHW(pc)
@@ -193,8 +192,8 @@ static const int opcode_cycles[256] =
 
 #define ASO          ASL; nz = a |= nz
 #define ASO_ZP       ASL_ZP; nz = a |= nz
-#define RLA          nz = GetByte(addr); nz = (nz << 1) + c; c = nz >> 8; PutByte(addr, nz); nz = a &= nz
-#define RLA_ZP       nz = dGetByte(addr); nz = (nz << 1) + c; c = nz >> 8; dPutByte(addr, nz); nz = a &= nz
+#define RLA          ROL; nz = a &= nz
+#define RLA_ZP       ROL_ZP; nz = a &= nz
 #define LSE          LSR; nz = a ^= nz
 #define LSE_ZP       LSR_ZP; nz = a ^= nz
 #define RRA          ROR; data = nz; DO_ADC
@@ -204,13 +203,17 @@ static const int opcode_cycles[256] =
 #define INS          INC; data = nz; DO_SBC
 #define INS_ZP       INC_ZP; data = nz; DO_SBC
 
+#ifndef SBYTE
+#define SBYTE        signed char
+#endif
+
 #define BRANCH(cond) \
 	if (cond) { \
 		addr = (SBYTE) FETCH; \
 		addr += pc; \
-		if ((addr ^ pc) & 0xff00) \
-			cs->cycle++; \
-		cs->cycle++; \
+		if (((addr ^ pc) & 0xff00) != 0) \
+			AS cycle++; \
+		AS cycle++; \
 		pc = addr; \
 		break; \
 	} \
@@ -218,15 +221,19 @@ static const int opcode_cycles[256] =
 	break
 
 #define CHECK_IRQ \
-	if ((vdi & I_FLAG) == 0 && cs->irqst != 0xff) { \
+	if ((vdi & I_FLAG) == 0 && AS irqst != 0xff) { \
 		PHPC; \
 		PHPB0; \
 		vdi |= I_FLAG; \
-		pc = dGetWordAligned(0xfffe); \
-		cs->cycle += 7; \
+		pc = dGetWord(0xfffe); \
+		AS cycle += 7; \
 	}
 
-void Cpu_Run(CpuState *cs, int cycle_limit)
+#ifdef JAVA
+private void Cpu_Run(int cycle_limit)
+#else
+void Cpu_Run(ASAP_State *as, int cycle_limit)
+#endif
 {
 	int pc;
 	int nz;
@@ -237,53 +244,53 @@ void Cpu_Run(CpuState *cs, int cycle_limit)
 	int s;
 	int vdi;
 	int next_event_cycle;
-	pc = cs->pc;
-	nz = cs->nz;
-	a = cs->a;
-	x = cs->x;
-	y = cs->y;
-	c = cs->c;
-	s = cs->s;
-	vdi = cs->vdi;
+	pc = AS cpu_pc;
+	nz = AS cpu_nz;
+	a = AS cpu_a;
+	x = AS cpu_x;
+	y = AS cpu_y;
+	c = AS cpu_c;
+	s = AS cpu_s;
+	vdi = AS cpu_vdi;
 	next_event_cycle = cycle_limit;
-	if (next_event_cycle > cs->timer1_cycle)
-		next_event_cycle = cs->timer1_cycle;
-	if (next_event_cycle > cs->timer2_cycle)
-		next_event_cycle = cs->timer2_cycle;
-	if (next_event_cycle > cs->timer4_cycle)
-		next_event_cycle = cs->timer4_cycle;
-	cs->nearest_event_cycle = next_event_cycle;
+	if (next_event_cycle > AS timer1_cycle)
+		next_event_cycle = AS timer1_cycle;
+	if (next_event_cycle > AS timer2_cycle)
+		next_event_cycle = AS timer2_cycle;
+	if (next_event_cycle > AS timer4_cycle)
+		next_event_cycle = AS timer4_cycle;
+	AS nearest_event_cycle = next_event_cycle;
 	for (;;) {
 		int cycle;
 		int addr;
 		int data;
-		cycle = cs->cycle;
-		if (cycle >= cs->nearest_event_cycle) {
+		cycle = AS cycle;
+		if (cycle >= AS nearest_event_cycle) {
 			if (cycle >= cycle_limit)
 				break;
 			next_event_cycle = cycle_limit;
 #define CHECK_TIMER_IRQ(ch) \
-			if (cycle >= cs->timer##ch##_cycle) { \
-				cs->irqst &= ~ch; \
-				cs->timer##ch##_cycle = NEVER; \
+			if (cycle >= AS timer##ch##_cycle) { \
+				AS irqst &= ~ch; \
+				AS timer##ch##_cycle = NEVER; \
 			} \
-			else if (next_event_cycle > cs->timer##ch##_cycle) \
-				next_event_cycle = cs->timer##ch##_cycle;
+			else if (next_event_cycle > AS timer##ch##_cycle) \
+				next_event_cycle = AS timer##ch##_cycle;
 			CHECK_TIMER_IRQ(1);
 			CHECK_TIMER_IRQ(2);
 			CHECK_TIMER_IRQ(4);
-			cs->nearest_event_cycle = next_event_cycle;
+			AS nearest_event_cycle = next_event_cycle;
 			CHECK_IRQ;
 		}
 		data = FETCH;
-		cs->cycle += opcode_cycles[data];
+		AS cycle += opcode_cycles[data];
 		switch (data) {
 		case 0x00: /* BRK */
 			pc++;
 			PHPC;
 			PHPB1;
 			vdi |= I_FLAG;
-			pc = dGetWordAligned(0xfffe);
+			pc = dGetWord(0xfffe);
 			break;
 		case 0x01: /* ORA (ab,x) */
 			INDIRECT_X;
@@ -301,7 +308,7 @@ void Cpu_Run(CpuState *cs, int cycle_limit)
 		case 0xb2:
 		case 0xd2:
 		case 0xf2:
-			ASAP_CIM();
+			AS cycle = cycle_limit;
 			break;
 		case 0x03: /* ASO (ab,x) [unofficial] */
 			INDIRECT_X;
@@ -407,7 +414,7 @@ void Cpu_Run(CpuState *cs, int cycle_limit)
 		case 0xdc:
 		case 0xfc:
 			if (FETCH + x >= 0x100)
-				cs->cycle++;
+				AS cycle++;
 			pc++;
 			break;
 		case 0x1d: /* ORA abcd,x */
@@ -1230,18 +1237,18 @@ void Cpu_Run(CpuState *cs, int cycle_limit)
 			break;
 		}
 	}
-	cs->pc = pc;
-	cs->nz = nz;
-	cs->a = a;
-	cs->x = x;
-	cs->y = y;
-	cs->c = c;
-	cs->s = s;
-	cs->vdi = vdi;
-	if (cs->timer1_cycle != NEVER)
-		cs->timer1_cycle -= cycle_limit;
-	if (cs->timer2_cycle != NEVER)
-		cs->timer2_cycle -= cycle_limit;
-	if (cs->timer4_cycle != NEVER)
-		cs->timer4_cycle -= cycle_limit;
+	AS cpu_pc = pc;
+	AS cpu_nz = nz;
+	AS cpu_a = a;
+	AS cpu_x = x;
+	AS cpu_y = y;
+	AS cpu_c = c;
+	AS cpu_s = s;
+	AS cpu_vdi = vdi;
+	if (AS timer1_cycle != NEVER)
+		AS timer1_cycle -= cycle_limit;
+	if (AS timer2_cycle != NEVER)
+		AS timer2_cycle -= cycle_limit;
+	if (AS timer4_cycle != NEVER)
+		AS timer4_cycle -= cycle_limit;
 }
