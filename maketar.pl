@@ -1,5 +1,6 @@
 #!/usr/bin/perl
-# Yes, I know about Archive::Tar. No, I don't want to use it here.
+# Archive::Tar doesn't give full control over what is stored in the archive,
+# so I do not use it.
 use strict;
 
 my $dir_time;
