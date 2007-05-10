@@ -21,26 +21,14 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include "asap.h"
 #include "asap_internal.h"
-#include "acpu.h"
-#ifdef APOKEYSND
-#include "apokeysnd.h"
-#else
-#include "pokey.h"
-#include "pokeysnd.h"
-#endif
-
 #include "players.h"
 
 #define CMR_BASS_TABLE_OFFSET  0x70f
 
-static const unsigned char cmr_bass_table[] = {
+CONST_LOOKUP byte cmr_bass_table[] = {
 	0x5C, 0x56, 0x50, 0x4D, 0x47, 0x44, 0x41, 0x3E,
 	0x38, 0x35, 0x88, 0x7F, 0x79, 0x73, 0x6C, 0x67,
 	0x60, 0x5A, 0x55, 0x51, 0x4C, 0x48, 0x43, 0x3F,
@@ -48,345 +36,104 @@ static const unsigned char cmr_bass_table[] = {
 	0x25, 0x24, 0x21, 0x1F, 0x1E
 };
 
-/* main clock in Hz, PAL (FREQ_17_EXACT is for NTSC!) */
-#define ASAP_MAIN_CLOCK  1773447U
+#define REAL_CYCLE  (AS cycle + AS cycle / 105 * 9)
 
-UBYTE memory[65536 + 2];
-
-static CpuState cpu_state;
-
-static char sap_type;
-static UWORD sap_player;
-static UWORD sap_music;
-static UWORD sap_init;
-int sap_fastplay;
-static ASAP_ModuleInfo loaded_module_info;
-
-#ifndef APOKEYSND
-
-/* structures to hold the 9 pokey control bytes */
-UBYTE AUDF[4 * MAXPOKEYS];	/* AUDFx (D200, D202, D204, D206) */
-UBYTE AUDC[4 * MAXPOKEYS];	/* AUDCx (D201, D203, D205, D207) */
-UBYTE AUDCTL[MAXPOKEYS];	/* AUDCTL (D208) */
-int Base_mult[MAXPOKEYS];		/* selects either 64Khz or 15Khz clock mult */
-
-UBYTE poly9_lookup[511];
-UBYTE poly17_lookup[16385];
-static ULONG random_scanline_counter;
-
-static int enable_stereo = 0;
-
-#ifndef SOUND_GAIN /* sound gain can be pre-defined in the configure/Makefile */
-#define SOUND_GAIN 4
-#endif
-
-static void POKEY_PutByte(UWORD addr, UBYTE byte)
+int ASAP_GetByte(ASAP_State *as, int addr)
 {
-#ifdef STEREO_SOUND
-	addr &= enable_stereo ? 0x1f : 0x0f;
-#else
-	addr &= 0x0f;
-#endif
-	switch (addr) {
-	case _AUDC1:
-		AUDC[CHAN1] = byte;
-		Update_pokey_sound(_AUDC1, byte, 0, SOUND_GAIN);
-		break;
-	case _AUDC2:
-		AUDC[CHAN2] = byte;
-		Update_pokey_sound(_AUDC2, byte, 0, SOUND_GAIN);
-		break;
-	case _AUDC3:
-		AUDC[CHAN3] = byte;
-		Update_pokey_sound(_AUDC3, byte, 0, SOUND_GAIN);
-		break;
-	case _AUDC4:
-		AUDC[CHAN4] = byte;
-		Update_pokey_sound(_AUDC4, byte, 0, SOUND_GAIN);
-		break;
-	case _AUDCTL:
-		AUDCTL[0] = byte;
-
-		/* determine the base multiplier for the 'div by n' calculations */
-		if (byte & CLOCK_15)
-			Base_mult[0] = DIV_15;
-		else
-			Base_mult[0] = DIV_64;
-
-		Update_pokey_sound(_AUDCTL, byte, 0, SOUND_GAIN);
-		break;
-	case _AUDF1:
-		AUDF[CHAN1] = byte;
-		Update_pokey_sound(_AUDF1, byte, 0, SOUND_GAIN);
-		break;
-	case _AUDF2:
-		AUDF[CHAN2] = byte;
-		Update_pokey_sound(_AUDF2, byte, 0, SOUND_GAIN);
-		break;
-	case _AUDF3:
-		AUDF[CHAN3] = byte;
-		Update_pokey_sound(_AUDF3, byte, 0, SOUND_GAIN);
-		break;
-	case _AUDF4:
-		AUDF[CHAN4] = byte;
-		Update_pokey_sound(_AUDF4, byte, 0, SOUND_GAIN);
-		break;
-	case _STIMER:
-		Update_pokey_sound(_STIMER, byte, 0, SOUND_GAIN);
-		break;
-#ifdef STEREO_SOUND
-	case _AUDC1 + _POKEY2:
-		AUDC[CHAN1 + CHIP2] = byte;
-		Update_pokey_sound(_AUDC1, byte, 1, SOUND_GAIN);
-		break;
-	case _AUDC2 + _POKEY2:
-		AUDC[CHAN2 + CHIP2] = byte;
-		Update_pokey_sound(_AUDC2, byte, 1, SOUND_GAIN);
-		break;
-	case _AUDC3 + _POKEY2:
-		AUDC[CHAN3 + CHIP2] = byte;
-		Update_pokey_sound(_AUDC3, byte, 1, SOUND_GAIN);
-		break;
-	case _AUDC4 + _POKEY2:
-		AUDC[CHAN4 + CHIP2] = byte;
-		Update_pokey_sound(_AUDC4, byte, 1, SOUND_GAIN);
-		break;
-	case _AUDCTL + _POKEY2:
-		AUDCTL[1] = byte;
-		/* determine the base multiplier for the 'div by n' calculations */
-		if (byte & CLOCK_15)
-			Base_mult[1] = DIV_15;
-		else
-			Base_mult[1] = DIV_64;
-
-		Update_pokey_sound(_AUDCTL, byte, 1, SOUND_GAIN);
-		break;
-	case _AUDF1 + _POKEY2:
-		AUDF[CHAN1 + CHIP2] = byte;
-		Update_pokey_sound(_AUDF1, byte, 1, SOUND_GAIN);
-		break;
-	case _AUDF2 + _POKEY2:
-		AUDF[CHAN2 + CHIP2] = byte;
-		Update_pokey_sound(_AUDF2, byte, 1, SOUND_GAIN);
-		break;
-	case _AUDF3 + _POKEY2:
-		AUDF[CHAN3 + CHIP2] = byte;
-		Update_pokey_sound(_AUDF3, byte, 1, SOUND_GAIN);
-		break;
-	case _AUDF4 + _POKEY2:
-		AUDF[CHAN4 + CHIP2] = byte;
-		Update_pokey_sound(_AUDF4, byte, 1, SOUND_GAIN);
-		break;
-	case _STIMER + _POKEY2:
-		Update_pokey_sound(_STIMER, byte, 1, SOUND_GAIN);
-		break;
-#endif
-	default:
-		break;
-	}
-}
-
-static void POKEY_Initialise(void)
-{
-	int i;
-	ULONG reg;
-
-	for (i = 0; i < (MAXPOKEYS * 4); i++) {
-		AUDC[i] = 0;
-		AUDF[i] = 0;
-	}
-
-	for (i = 0; i < MAXPOKEYS; i++) {
-		AUDCTL[i] = 0;
-		Base_mult[i] = DIV_64;
-	}
-
-	/* initialise poly9_lookup */
-	reg = 0x1ff;
-	for (i = 0; i < 511; i++) {
-		reg = ((((reg >> 5) ^ reg) & 1) << 8) + (reg >> 1);
-		poly9_lookup[i] = (UBYTE) reg;
-	}
-	/* initialise poly17_lookup */
-	reg = 0x1ffff;
-	for (i = 0; i < 16385; i++) {
-		reg = ((((reg >> 5) ^ reg) & 0xff) << 9) + (reg >> 8);
-		poly17_lookup[i] = (UBYTE) (reg >> 1);
-	}
-
-	random_scanline_counter = 0;
-}
-
-#endif /* APOKEYSND */
-
-#define REAL_CYCLE (cpu_state.cycle + cpu_state.cycle / (LINE_C - DMAR) * DMAR)
-
-UBYTE ASAP_GetByte(UWORD addr)
-{
-#ifndef APOKEYSND
-	unsigned int i;
-#endif
 	switch (addr & 0xff0f) {
 	case 0xd20a:
-#ifdef APOKEYSND
-		return (UBYTE) PokeySound_GetRandom(addr, REAL_CYCLE);
-#else
-		i = random_scanline_counter + REAL_CYCLE;
-		if (AUDCTL[0] & POLY9)
-			return poly9_lookup[i % POLY9_SIZE];
-		else {
-			const UBYTE *ptr;
-			i %= POLY17_SIZE;
-			ptr = poly17_lookup + (i >> 3);
-			i &= 7;
-			return (UBYTE) ((ptr[0] >> i) + (ptr[1] << (8 - i)));
-		}
-#endif
+		return PokeySound_GetRandom(as, addr, REAL_CYCLE);
 	case 0xd20e:
-		return cpu_state.irqst;
+		return AS irqst;
 	case 0xd40b:
-		return (UBYTE) ((unsigned int) cpu_state.cycle / (unsigned int) (2 * (LINE_C - DMAR)) % 156U);
+		return AS cycle / (2 * 105) % 156;
 	default:
 		return dGetByte(addr);
 	}
 }
 
-void ASAP_PutByte(UWORD addr, UBYTE byte)
+void ASAP_PutByte(ASAP_State *as, int addr, int data)
 {
-#ifdef APOKEYSND
 	if ((addr >> 8) == 0xd2) {
-		if ((addr & (loaded_module_info.channels == 1 ? 0xf : 0x1f)) == 0xe) {
-			cpu_state.irqst |= byte ^ 0xff;
+		if ((addr & (AS module_info.channels == 1 ? 0xf : 0x1f)) == 0xe) {
+			AS irqst |= data ^ 0xff;
 #define SET_TIMER_IRQ(ch) \
-			if ((byte & cpu_state.irqst & ch) != 0 && cpu_state.timer##ch##_cycle == NEVER) { \
-				int t = pokey_states[0].tick_cycle##ch; \
+			if ((data & AS irqst & ch) != 0 && AS timer##ch##_cycle == NEVER) { \
+				int t = AS base_pokey.tick_cycle##ch; \
 				while (t < REAL_CYCLE) \
-					t += pokey_states[0].period_cycles##ch ; \
-				t = t * (LINE_C - DMAR) / LINE_C; \
-				cpu_state.timer##ch##_cycle = t; \
-				if (cpu_state.nearest_event_cycle > t) \
-					cpu_state.nearest_event_cycle = t; \
+					t += AS base_pokey.period_cycles##ch ; \
+				t = t * 105 / 114; \
+				AS timer##ch##_cycle = t; \
+				if (AS nearest_event_cycle > t) \
+					AS nearest_event_cycle = t; \
 			} \
 			else \
-				cpu_state.timer##ch##_cycle = NEVER;
+				AS timer##ch##_cycle = NEVER;
 			SET_TIMER_IRQ(1);
 			SET_TIMER_IRQ(2);
 			SET_TIMER_IRQ(4);
 		}
 		else
-			PokeySound_PutByte(addr, byte, REAL_CYCLE);
+			PokeySound_PutByte(as, addr, data, REAL_CYCLE);
 	}
 	else if ((addr & 0xff0f) == 0xd40a) {
-		int cycle = cpu_state.cycle % (LINE_C - DMAR) + DMAR;
-		if (cycle <= WSYNC_C)
-			cpu_state.cycle += WSYNC_C - cycle;
+		int cycle = AS cycle % 105 + 9;
+		if (cycle <= 106)
+			AS cycle += 106 - cycle;
 		else
-			cpu_state.cycle += LINE_C - DMAR + WSYNC_C - cycle;
+			AS cycle += 105 + 106 - cycle;
 	}
 	else
-		dPutByte(addr, byte);
-#else
-	POKEY_PutByte(addr, byte);
-#endif
+		dPutByte(addr, data);
 }
-
-/* We use CIM opcode to return from a subroutine to ASAP */
-void ASAP_CIM(void)
-{
-	cpu_state.cycle = 0x7fffffff;
-}
-
-#ifdef APOKEYSND
-
-#define block_rate     44100
-
-#else
-
-static int block_rate;
-static int sample_format;
-static int sample_16bit;
-
-void ASAP_Initialize(int frequency, int audio_format, int quality)
-{
-	block_rate = frequency;
-	sample_format = audio_format;
-	sample_16bit = audio_format == AUDIO_FORMAT_U8 ? 0 : 1;
-	enable_stereo = 5; /* force Pokey_sound_init() in ASAP_PlaySong() */
-	POKEY_Initialise();
-	if (quality == 0)
-		enable_new_pokey = FALSE;
-	else {
-		Pokey_set_mzquality(quality - 1);
-		enable_new_pokey = TRUE;
-	}
-}
-
-#endif /* APOKEYSND */
 
 #define MAX_DURATIONS  (sizeof(module_info->durations) / sizeof(module_info->durations[0]))
 
-/* This array maps subsong numbers to track positions for MPT and RMT formats. */
-static UBYTE song_pos[128];
+CONST_LOOKUP int perframe2fastplay[] = { 312, 312 / 2, 312 / 3, 312 / 4 };
 
-static int tmc_per_frame;
-static int tmc_per_frame_counter;
-
-static int current_song;
-static int current_duration;
-#ifdef APOKEYSND
-static int bytes_played;
-static int atari_sound_index;
-#else
-static int blocks_played;
-static int blockcycles_till_player;
-static int blockcycles_per_player;
-#endif
-
-static const int perframe2fastplay[] = { 312, 312 / 2, 312 / 3, 312 / 4 };
-
-static int load_native(const unsigned char *module, int module_len,
-                       const unsigned char *player, char type)
+static abool load_native(ASAP_State *as, const byte *module, int module_len,
+                         const byte *player, char type)
 {
-	UWORD player_last_byte;
+	int player_last_byte;
 	int block_len;
 	if (module[0] != 0xff || module[1] != 0xff)
 		return FALSE;
-	sap_player = player[2] + (player[3] << 8);
+	AS sap_player = player[2] + (player[3] << 8);
 	player_last_byte = player[4] + (player[5] << 8);
-	sap_music = module[2] + (module[3] << 8);
-	if (sap_music <= player_last_byte)
+	AS sap_music = module[2] + (module[3] << 8);
+	if (AS sap_music <= player_last_byte)
 		return FALSE;
-	block_len = module[4] + (module[5] << 8) + 1 - sap_music;
+	block_len = module[4] + (module[5] << 8) + 1 - AS sap_music;
 	if (6 + block_len != module_len) {
-		UWORD info_addr;
+		int info_addr;
 		int info_len;
 		if (type != 'r' || 11 + block_len > module_len)
 			return FALSE;
 		/* allow optional info for Raster Music Tracker */
 		info_addr = module[6 + block_len] + (module[7 + block_len] << 8);
-		if (info_addr != sap_music + block_len)
+		if (info_addr != AS sap_music + block_len)
 			return FALSE;
 		info_len = module[8 + block_len] + (module[9 + block_len] << 8) + 1 - info_addr;
 		if (10 + block_len + info_len != module_len)
 			return FALSE;
 	}
-	memcpy(memory + sap_music, module + 6, block_len);
-	memcpy(memory + sap_player, player + 6, player_last_byte + 1 - sap_player);
-	sap_type = type;
+	memcpy(AS memory + AS sap_music, module + 6, block_len);
+	memcpy(AS memory + AS sap_player, player + 6, player_last_byte + 1 - AS sap_player);
+	AS sap_type = type;
 	return TRUE;
 }
 
-static int load_cmc(const unsigned char *module, int module_len,
-                    ASAP_ModuleInfo *module_info, int cmr)
+static abool parse_cmc(ASAP_State *as, ASAP_ModuleInfo *module_info,
+                       const byte *module, int module_len, abool cmr)
 {
 	int pos;
 	if (module_len < 0x306)
 		return FALSE;
-	if (module_info == &loaded_module_info) {
-		if (!load_native(module, module_len, cmc_obx, 'C'))
+	if (as != NULL) {
+		if (!load_native(as, module, module_len, cmc_obx, 'C'))
 			return FALSE;
 		if (cmr)
-			memcpy(memory + 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, sizeof(cmr_bass_table));
+			memcpy(AS memory + 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, sizeof(cmr_bass_table));
 	}
 	/* auto-detect number of subsongs */
 	pos = 0x54;
@@ -403,26 +150,26 @@ static int load_cmc(const unsigned char *module, int module_len,
 	return TRUE;
 }
 
-static int load_mpt(const unsigned char *module, int module_len,
-                    ASAP_ModuleInfo *module_info)
+static abool parse_mpt(ASAP_State *as, ASAP_ModuleInfo *module_info,
+                       const byte *module, int module_len)
 {
 	int track0_addr;
 	int i;
 	int song_len;
 	/* seen[i] == TRUE if the track position i is already processed */
-	UBYTE seen[256];
+	abool seen[256];
 	if (module_len < 0x1d0)
 		return FALSE;
-	if (module_info == &loaded_module_info) {
-		if (!load_native(module, module_len, mpt_obx, 'm'))
+	if (as != NULL) {
+		if (!load_native(as, module, module_len, mpt_obx, 'm'))
 			return FALSE;
 	}
 	track0_addr = module[2] + (module[3] << 8) + 0x1ca;
 	/* do not auto-detect number of subsongs if the address
 	   of the first track is non-standard */
 	if (module[0x1c6] + (module[0x1ca] << 8) != track0_addr) {
-		if (module_info == &loaded_module_info)
-			song_pos[0] = 0;
+		if (as != NULL)
+			AS song_pos[0] = 0;
 		return TRUE;
 	}
 	/* Calculate the length of the first track. Address of the second track minus
@@ -435,7 +182,7 @@ static int load_mpt(const unsigned char *module, int module_len,
 	module_info->songs = 0;
 	for (i = 0; i < song_len; i++) {
 		int j;
-		UBYTE c;
+		int c;
 		if (seen[i])
 			continue;
 		j = i;
@@ -451,8 +198,8 @@ static int load_mpt(const unsigned char *module, int module_len,
 		if (c >= 64)
 			continue;
 		/* found subsong */
-		if (module_info == &loaded_module_info)
-			song_pos[module_info->songs] = (UBYTE) j;
+		if (as != NULL)
+			AS song_pos[module_info->songs] = (byte) j;
 		module_info->songs++;
 		j++;
 		/* follow this subsong */
@@ -470,17 +217,17 @@ static int load_mpt(const unsigned char *module, int module_len,
 	return module_info->songs != 0;
 }
 
-static int load_rmt(const unsigned char *module, int module_len,
-                    ASAP_ModuleInfo *module_info)
+static abool parse_rmt(ASAP_State *as, ASAP_ModuleInfo *module_info,
+                       const byte *module, int module_len)
 {
 	int i;
-	UWORD module_start;
-	UWORD song_start;
-	UWORD song_last_byte;
-	const unsigned char *song;
+	int module_start;
+	int song_start;
+	int song_last_byte;
+	const byte *song;
 	int song_len;
 	int pos_shift;
-	UBYTE seen[256];
+	abool seen[256];
 	if (module_len < 0x30 || module[6] != 'R' || module[7] != 'M'
 	 || module[8] != 'T' || module[13] != 1)
 		return FALSE;
@@ -488,23 +235,22 @@ static int load_rmt(const unsigned char *module, int module_len,
 	case '4':
 		pos_shift = 2;
 		break;
-#ifdef STEREO_SOUND
 	case '8':
 		module_info->channels = 2;
 		pos_shift = 3;
 		break;
-#endif
 	default:
 		return FALSE;
 	}
 	i = module[12];
 	if (i < 1 || i > 4)
 		return FALSE;
-	if (module_info == &loaded_module_info) {
-		sap_fastplay = perframe2fastplay[i - 1];
-		if (!load_native(module, module_len, module_info->channels == 2 ? rmt8_obx : rmt4_obx, 'r'))
+	if (as != NULL) {
+		AS sap_fastplay = perframe2fastplay[i - 1];
+		if (!load_native(as, module, module_len,
+			module_info->channels == 2 ? rmt8_obx : rmt4_obx, 'r'))
 			return FALSE;
-		sap_player = 0x600;
+		AS sap_player = 0x600;
 	}
 	/* auto-detect number of subsongs */
 	module_start = module[2] + (module[3] << 8);
@@ -529,8 +275,8 @@ static int load_rmt(const unsigned char *module, int module_len,
 				break;
 			j = song[(j << pos_shift) + 1];
 		} while (j < song_len && !seen[j]);
-		if (module_info == &loaded_module_info)
-			song_pos[module_info->songs] = (UBYTE) j;
+		if (as != NULL)
+			AS song_pos[module_info->songs] = (byte) j;
 		module_info->songs++;
 		j++;
 		while (j < song_len && !seen[j]) {
@@ -544,19 +290,19 @@ static int load_rmt(const unsigned char *module, int module_len,
 	return module_info->songs != 0;
 }
 
-static int load_tmc(const unsigned char *module, int module_len,
-					ASAP_ModuleInfo *module_info)
+static abool parse_tmc(ASAP_State *as, ASAP_ModuleInfo *module_info,
+                       const byte *module, int module_len)
 {
 	int i;
 	if (module_len < 0x1d0)
 		return FALSE;
-	if (module_info == &loaded_module_info) {
-		if (!load_native(module, module_len, tmc_obx, 't'))
+	if (as != NULL) {
+		if (!load_native(as, module, module_len, tmc_obx, 't'))
 			return FALSE;
-		tmc_per_frame = module[37];
-		if (tmc_per_frame < 1 || tmc_per_frame > 4)
+		AS tmc_per_frame = module[37];
+		if (AS tmc_per_frame < 1 || AS tmc_per_frame > 4)
 			return FALSE;
-		sap_fastplay = perframe2fastplay[tmc_per_frame - 1];
+		AS sap_fastplay = perframe2fastplay[AS tmc_per_frame - 1];
 	}
 	i = 0;
 	/* find first instrument */
@@ -582,30 +328,26 @@ static int load_tmc(const unsigned char *module, int module_len,
 	return TRUE;
 }
 
-static int load_tm2(const unsigned char *module, int module_len,
-                    ASAP_ModuleInfo *module_info)
+static abool parse_tm2(ASAP_State *as, ASAP_ModuleInfo *module_info,
+                       const byte *module, int module_len)
 {
 	int i;
 	int song_end;
 	int c;
+	int song_start;
 	if (module_len < 0x3a4)
 		return FALSE;
-	if (module_info == &loaded_module_info) {
+	if (as != NULL) {
 		i = module[0x25];
 		if (i < 1 || i > 4)
 			return FALSE;
-		sap_fastplay = perframe2fastplay[i - 1];
-		if (!load_native(module, module_len, tm2_obx, 'T'))
+		AS sap_fastplay = perframe2fastplay[i - 1];
+		if (!load_native(as, module, module_len, tm2_obx, 'T'))
 			return FALSE;
-		sap_player = 0x500;
+		AS sap_player = 0x500;
 	}
-	/* TODO: quadrophonic */
 	if (module[0x1f] != 0)
-#ifdef STEREO_SOUND
 		module_info->channels = 2;
-#else
-		return FALSE;
-#endif
 	song_end = 0xffff;
 	for (i = 0; i < 0x80; i++) {
 		int instr_addr = module[0x86 + i] + (module[0x306 + i] << 8);
@@ -617,9 +359,10 @@ static int load_tm2(const unsigned char *module, int module_len,
 		if (pattern_addr != 0 && pattern_addr < song_end)
 			song_end = pattern_addr;
 	}
-	if (song_end < sap_music + 0x380 + 2 * 17)
+	song_start = module[2] + (module[3] << 8) + 0x380;
+	if (song_end < song_start + 2 * 17)
 		return FALSE;
-	i = song_end - sap_music - 0x380;
+	i = song_end - song_start;
 	if (0x386 + i >= module_len)
 		return FALSE;
 	i -= i % 17;
@@ -640,7 +383,7 @@ static int load_tm2(const unsigned char *module, int module_len,
 	return TRUE;
 }
 
-static int parse_hex(UWORD *retval, const char *p)
+static abool parse_hex(int *retval, const char *p)
 {
 	int r = 0;
 	do {
@@ -657,11 +400,11 @@ static int parse_hex(UWORD *retval, const char *p)
 		else
 			return FALSE;
 	} while (*++p != '\0');
-	*retval = (UWORD) r;
+	*retval = r;
 	return TRUE;
 }
 
-static int parse_dec(int *retval, const char *p, int minval, int maxval)
+static abool parse_dec(int *retval, const char *p, int minval, int maxval)
 {
 	int r = 0;
 	do {
@@ -679,7 +422,7 @@ static int parse_dec(int *retval, const char *p, int minval, int maxval)
 	return TRUE;
 }
 
-static int parse_text(char *retval, const char *p)
+static abool parse_text(char *retval, const char *p)
 {
 	int i;
 	if (*p != '"')
@@ -737,17 +480,17 @@ static char *my_stpcpy(char *dest, const char *src)
 	return dest + len;
 }
 
-static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end,
-                    ASAP_ModuleInfo *module_info)
+static abool parse_sap(ASAP_State *as, ASAP_ModuleInfo *module_info,
+                       const byte *sap_ptr, const byte * const sap_end)
 {
 	char *p;
-	int sap_signature = FALSE;
+	abool sap_signature = FALSE;
 	int duration_index = 0;
-	if (module_info == &loaded_module_info) {
-		sap_type = '?';
-		sap_player = 0xffff;
-		sap_music = 0xffff;
-		sap_init = 0xffff;
+	if (as != NULL) {
+		AS sap_type = '?';
+		AS sap_player = 0xffff;
+		AS sap_music = 0xffff;
+		AS sap_init = 0xffff;
 	}
 	for (;;) {
 		char line[256];
@@ -774,24 +517,24 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end,
 			sap_signature = TRUE;
 		if (!sap_signature)
 			return FALSE;
-		if (module_info == &loaded_module_info) {
+		if (as != NULL) {
 			if (strcmp(line, "TYPE") == 0) {
-				sap_type = *p;
+				AS sap_type = *p;
 			}
 			else if (strcmp(line, "PLAYER") == 0) {
-				if (!parse_hex(&sap_player, p))
+				if (!parse_hex(&AS sap_player, p))
 					return FALSE;
 			}
 			else if (strcmp(line, "MUSIC") == 0) {
-				if (!parse_hex(&sap_music, p))
+				if (!parse_hex(&AS sap_music, p))
 					return FALSE;
 			}
 			else if (strcmp(line, "INIT") == 0) {
-				if (!parse_hex(&sap_init, p))
+				if (!parse_hex(&AS sap_init, p))
 					return FALSE;
 			}
 			else if (strcmp(line, "FASTPLAY") == 0) {
-				if (!parse_dec(&sap_fastplay, p, 1, 312))
+				if (!parse_dec(&AS sap_fastplay, p, 1, 312))
 					return FALSE;
 			}
 		}
@@ -815,13 +558,8 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end,
 			if (!parse_dec(&module_info->default_song, p, 0, 254))
 				return FALSE;
 		}
-		else if (strcmp(line, "STEREO") == 0) {
-#ifdef STEREO_SOUND
+		else if (strcmp(line, "STEREO") == 0)
 			module_info->channels = 2;
-#else
-			return FALSE;
-#endif
-		}
 		else if (strcmp(line, "TIME") == 0) {
 			int duration = ASAP_ParseDuration(p);
 			if (duration < 0 || duration_index >= MAX_DURATIONS)
@@ -842,33 +580,29 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end,
 	p = my_stpcpy(p, module_info->date);
 	*p++ = '\n';
 	*p = '\0';
-	if (module_info != &loaded_module_info)
+	if (as == NULL)
 		return TRUE;
-	switch (sap_type) {
+	switch (AS sap_type) {
 	case 'B':
-#ifdef APOKEYSND
 	case 'D':
-#endif
-		if (sap_player == 0xffff || sap_init == 0xffff)
+		if (AS sap_player == 0xffff || AS sap_init == 0xffff)
 			return FALSE;
 		break;
 	case 'C':
-		if (sap_player == 0xffff || sap_music == 0xffff)
+		if (AS sap_player == 0xffff || AS sap_music == 0xffff)
 			return FALSE;
 		break;
-#ifdef APOKEYSND
 	case 'S':
-		if (sap_init == 0xffff)
+		if (AS sap_init == 0xffff)
 			return FALSE;
-		sap_fastplay = 78;
+		AS sap_fastplay = 78;
 		break;
-#endif
 	default:
 		return FALSE;
 	}
 	if (sap_ptr[1] != 0xff)
 		return FALSE;
-	memset(memory, 0, sizeof(memory));
+	memset(AS memory, 0, sizeof(AS memory));
 	sap_ptr += 2;
 	while (sap_ptr + 5 <= sap_end) {
 		int start_addr = sap_ptr[0] + (sap_ptr[1] << 8);
@@ -876,7 +610,7 @@ static int load_sap(const UBYTE *sap_ptr, const UBYTE * const sap_end,
 		if (block_len <= 0 || sap_ptr + block_len > sap_end)
 			return FALSE;
 		sap_ptr += 4;
-		memcpy(memory + start_addr, sap_ptr, block_len);
+		memcpy(AS memory + start_addr, sap_ptr, block_len);
 		sap_ptr += block_len;
 		if (sap_ptr == sap_end)
 			return TRUE;
@@ -903,7 +637,7 @@ static int get_packed_ext(const char *filename)
 	}
 }
 
-int ASAP_IsOurFile(const char *filename)
+abool ASAP_IsOurFile(const char *filename)
 {
 	switch (get_packed_ext(filename)) {
 	case ASAP_EXT('C', 'M', 'C'):
@@ -914,9 +648,7 @@ int ASAP_IsOurFile(const char *filename)
 	case ASAP_EXT('R', 'M', 'T'):
 	case ASAP_EXT('S', 'A', 'P'):
 	case ASAP_EXT('T', 'M', '2'):
-#ifdef STEREO_SOUND
 	case ASAP_EXT('T', 'M', '8'):
-#endif
 	case ASAP_EXT('T', 'M', 'C'):
 		return TRUE;
 	default:
@@ -924,8 +656,8 @@ int ASAP_IsOurFile(const char *filename)
 	}
 }
 
-int ASAP_GetModuleInfo(const char *filename, const unsigned char *module,
-                       int module_len, ASAP_ModuleInfo *module_info)
+abool parse_file(ASAP_State *as, ASAP_ModuleInfo *module_info,
+                 const char *filename, const byte *module, int module_len)
 {
 	int i;
 	strcpy(module_info->author, "<?>");
@@ -940,175 +672,156 @@ int ASAP_GetModuleInfo(const char *filename, const unsigned char *module,
 	}
 	switch (get_packed_ext(filename)) {
 	case ASAP_EXT('C', 'M', 'C'):
-		return load_cmc(module, module_len, module_info, FALSE);
+		return parse_cmc(as, module_info, module, module_len, FALSE);
 	case ASAP_EXT('C', 'M', 'R'):
-		return load_cmc(module, module_len, module_info, TRUE);
+		return parse_cmc(as, module_info, module, module_len, TRUE);
 	case ASAP_EXT('D', 'M', 'C'):
-		if (module_info == &loaded_module_info)
-			sap_fastplay = 156;
-		return load_cmc(module, module_len, module_info, FALSE);
+		if (as != NULL)
+			AS sap_fastplay = 156;
+		return parse_cmc(as, module_info, module, module_len, FALSE);
 	case ASAP_EXT('M', 'P', 'D'):
-		if (module_info == &loaded_module_info)
-			sap_fastplay = 156;
-		return load_mpt(module, module_len, module_info);
+		if (as != NULL)
+			AS sap_fastplay = 156;
+		return parse_mpt(as, module_info, module, module_len);
 	case ASAP_EXT('M', 'P', 'T'):
-		return load_mpt(module, module_len, module_info);
+		return parse_mpt(as, module_info, module, module_len);
 	case ASAP_EXT('R', 'M', 'T'):
-		return load_rmt(module, module_len, module_info);
+		return parse_rmt(as, module_info, module, module_len);
 	case ASAP_EXT('S', 'A', 'P'):
-		return load_sap(module, module + module_len, module_info);
+		return parse_sap(as, module_info, module, module + module_len);
 	case ASAP_EXT('T', 'M', '2'):
-		return load_tm2(module, module_len, module_info);
-#ifdef STEREO_SOUND
+		return parse_tm2(as, module_info, module, module_len);
 	case ASAP_EXT('T', 'M', '8'):
 		module_info->channels = 2;
-		return load_tmc(module, module_len, module_info);
-#endif
+		return parse_tmc(as, module_info, module, module_len);
 	case ASAP_EXT('T', 'M', 'C'):
-		return load_tmc(module, module_len, module_info);
+		return parse_tmc(as, module_info, module, module_len);
 	default:
 		return FALSE;
 	}
 }
 
-const ASAP_ModuleInfo *ASAP_Load(const char *filename,
-                                 const unsigned char *module,
-                                 int module_len)
+abool ASAP_GetModuleInfo(ASAP_ModuleInfo *module_info, const char *filename,
+                         const byte *module, int module_len)
 {
-	sap_fastplay = 312;
-	if (ASAP_GetModuleInfo(filename, module, module_len, &loaded_module_info))
-		return &loaded_module_info;
-	else
-		return NULL;
+	return parse_file(NULL, module_info, filename, module, module_len);
 }
 
-static void call_6502(UWORD addr, int max_scanlines)
+abool ASAP_Load(ASAP_State *as, const char *filename,
+                const byte *module, int module_len)
 {
-	cpu_state.pc = addr;
+	AS sap_fastplay = 312;
+	return parse_file(as, &as->module_info, filename, module, module_len);
+}
+
+static void call_6502(ASAP_State *as, int addr, int max_scanlines)
+{
+	AS cpu_pc = addr;
 	/* put a CIM at 0xd20a and a return address on stack */
 	dPutByte(0xd20a, 0xd2);
 	dPutByte(0x01fe, 0x09);
 	dPutByte(0x01ff, 0xd2);
-	cpu_state.s = 0xfd;
-	cpu_state.cycle = 0;
-	Cpu_Run(&cpu_state, max_scanlines * (LINE_C - DMAR));
+	AS cpu_s = 0xfd;
+	AS cycle = 0;
+	Cpu_Run(as, max_scanlines * 105);
 }
 
 /* 50 Atari frames for the initialization routine - some SAPs are self-extracting. */
 #define SCANLINES_FOR_INIT  (50 * 312)
 
-static void call_6502_init(UWORD addr, int a, int x, int y)
+static void call_6502_init(ASAP_State *as, int addr, int a, int x, int y)
 {
-	cpu_state.a = a & 0xff;
-	cpu_state.x = x & 0xff;
-	cpu_state.y = y & 0xff;
-	call_6502(addr, SCANLINES_FOR_INIT);
+	AS cpu_a = a & 0xff;
+	AS cpu_x = x & 0xff;
+	AS cpu_y = y & 0xff;
+	call_6502(as, addr, SCANLINES_FOR_INIT);
 }
 
-void ASAP_PlaySong(int song, int duration)
+void ASAP_PlaySong(ASAP_State *as, int song, int duration)
 {
-#ifndef APOKEYSND
-	UWORD addr;
-#endif
-	current_song = song;
-	current_duration = duration;
-#ifdef APOKEYSND
-	bytes_played = 0;
-	atari_sound_len = 0;
-	atari_sound_index = 0;
-	PokeySound_Initialize(loaded_module_info.channels - 1);
-#else
-	blocks_played = 0;
-	blockcycles_till_player = 0;
-	blockcycles_per_player = 114U * sap_fastplay * block_rate;
-	if ((1 << enable_stereo) != loaded_module_info.channels) {
-		Pokey_sound_init(ASAP_MAIN_CLOCK, (uint16) block_rate,
-			loaded_module_info.channels, sample_16bit ? SND_BIT16 : 0);
-		enable_stereo = loaded_module_info.channels == 2 ? 1 : 0;
-	}
-	for (addr = _AUDF1; addr <= _STIMER; addr++)
-		POKEY_PutByte(addr, 0);
-	if (enable_stereo)
-		for (addr = _AUDF1 + _POKEY2; addr <= _STIMER + _POKEY2; addr++)
-			POKEY_PutByte(addr, 0);
-#endif
-	cpu_state.nz = 0;
-	cpu_state.c = 0;
-	cpu_state.vdi = I_FLAG;
-	cpu_state.timer1_cycle = NEVER;
-	cpu_state.timer2_cycle = NEVER;
-	cpu_state.timer4_cycle = NEVER;
-	cpu_state.irqst = 0xff;
-	switch (sap_type) {
+	AS current_song = song;
+	AS current_duration = duration;
+	AS blocks_played = 0;
+	PokeySound_Initialize(as);
+	AS cpu_nz = 0;
+	AS cpu_c = 0;
+	AS cpu_vdi = I_FLAG;
+	AS timer1_cycle = NEVER;
+	AS timer2_cycle = NEVER;
+	AS timer4_cycle = NEVER;
+	AS irqst = 0xff;
+	switch (AS sap_type) {
 	case 'B':
-		call_6502_init(sap_init, song, 0, 0);
+		call_6502_init(as, AS sap_init, song, 0, 0);
 		break;
 	case 'C':
-		call_6502_init((UWORD) (sap_player + 3), 0x70, sap_music, sap_music >> 8);
-		call_6502_init((UWORD) (sap_player + 3), 0x00, song, 0);
+		call_6502_init(as, AS sap_player + 3, 0x70, AS sap_music, AS sap_music >> 8);
+		call_6502_init(as, AS sap_player + 3, 0x00, song, 0);
 		break;
-#ifdef APOKEYSND
 	case 'D':
 	case 'S':
-		cpu_state.a = song;
-		cpu_state.x = 0x00;
-		cpu_state.y = 0x00;
-		cpu_state.s = 0xff;
-		cpu_state.pc = sap_init;
+		AS cpu_a = song;
+		AS cpu_x = 0x00;
+		AS cpu_y = 0x00;
+		AS cpu_s = 0xff;
+		AS cpu_pc = AS sap_init;
 		break;
-#endif
 	case 'm':
-		call_6502_init(sap_player, 0x00, sap_music >> 8, sap_music);
-		call_6502_init(sap_player, 0x02, song_pos[song], 0);
+		call_6502_init(as, AS sap_player, 0x00, AS sap_music >> 8, AS sap_music);
+		call_6502_init(as, AS sap_player, 0x02, AS song_pos[song], 0);
 		break;
 	case 'r':
-		call_6502_init(sap_player, song_pos[song], sap_music, sap_music >> 8);
+		call_6502_init(as, AS sap_player, AS song_pos[song], AS sap_music, AS sap_music >> 8);
 		break;
 	case 't':
 	case 'T':
-		call_6502_init(sap_player, 0x70, sap_music >> 8, sap_music);
-		call_6502_init(sap_player, 0x00, song, 0);
-		tmc_per_frame_counter = 1;
+		call_6502_init(as, AS sap_player, 0x70, AS sap_music >> 8, AS sap_music);
+		call_6502_init(as, AS sap_player, 0x00, song, 0);
+		AS tmc_per_frame_counter = 1;
 		break;
 	}
 }
 
-void call_6502_player(void)
+void call_6502_player(ASAP_State *as)
 {
-	switch (sap_type) {
+	int s;
+	PokeySound_StartFrame(as);
+	switch (AS sap_type) {
 	case 'B':
-		call_6502(sap_player, sap_fastplay);
+		call_6502(as, AS sap_player, AS sap_fastplay);
 		break;
 	case 'C':
-		call_6502((UWORD) (sap_player + 6), sap_fastplay);
+		call_6502(as, AS sap_player + 6, AS sap_fastplay);
 		break;
-#ifdef APOKEYSND
 	case 'D':
-#define PUSH_ON_6502_STACK(x)  dPutByte(0x100 + cpu_state.s, x); cpu_state.s = (cpu_state.s - 1) & 0xff
+		s = AS cpu_s;
+#define PUSH_ON_6502_STACK(x)  dPutByte(0x100 + s, x); s = (s - 1) & 0xff
 #define RETURN_FROM_PLAYER_ADDR  0xd200
 		/* save 6502 state on 6502 stack */
-		PUSH_ON_6502_STACK(cpu_state.pc >> 8);
-		PUSH_ON_6502_STACK(cpu_state.pc & 0xff);
-		PUSH_ON_6502_STACK(((cpu_state.nz | (cpu_state.nz >> 1)) & N_FLAG) + cpu_state.vdi + ((cpu_state.nz & 0xff) == 0 ? Z_FLAG : 0) + cpu_state.c + 0x20);
-		PUSH_ON_6502_STACK(cpu_state.a);
-		PUSH_ON_6502_STACK(cpu_state.x);
-		PUSH_ON_6502_STACK(cpu_state.y);
+		PUSH_ON_6502_STACK(AS cpu_pc >> 8);
+		PUSH_ON_6502_STACK(AS cpu_pc & 0xff);
+		PUSH_ON_6502_STACK(((AS cpu_nz | (AS cpu_nz >> 1)) & 0x80) + AS cpu_vdi + \
+			((AS cpu_nz & 0xff) == 0 ? Z_FLAG : 0) + AS cpu_c + 0x20);
+		PUSH_ON_6502_STACK(AS cpu_a);
+		PUSH_ON_6502_STACK(AS cpu_x);
+		PUSH_ON_6502_STACK(AS cpu_y);
 		/* RTS will jump to 6502 code that restores the state */
 		PUSH_ON_6502_STACK((RETURN_FROM_PLAYER_ADDR - 1) >> 8);
 		PUSH_ON_6502_STACK((RETURN_FROM_PLAYER_ADDR - 1) & 0xff);
+		AS cpu_s = s;
 		dPutByte(RETURN_FROM_PLAYER_ADDR, 0x68);     /* PLA */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 1, 0xa8); /* TAY */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 2, 0x68); /* PLA */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 3, 0xaa); /* TAX */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 4, 0x68); /* PLA */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 5, 0x40); /* RTI */
-		cpu_state.pc = sap_player;
-		cpu_state.cycle = 0;
-		Cpu_Run(&cpu_state, sap_fastplay * (LINE_C - DMAR));
+		AS cpu_pc = AS sap_player;
+		AS cycle = 0;
+		Cpu_Run(as, AS sap_fastplay * 105);
 		break;
 	case 'S':
-		cpu_state.cycle = 0;
-		Cpu_Run(&cpu_state, sap_fastplay * (LINE_C - DMAR));
+		AS cycle = 0;
+		Cpu_Run(as, AS sap_fastplay * 105);
 		{
 			int i = dGetByte(0x45) - 1;
 			dPutByte(0x45, i);
@@ -1116,130 +829,62 @@ void call_6502_player(void)
 				dPutByte(0xb07b, dGetByte(0xb07b) + 1);
 		}
 		break;
-#endif
 	case 'm':
 	case 'r':
 	case 'T':
-		call_6502((UWORD) (sap_player + 3), sap_fastplay);
+		call_6502(as, AS sap_player + 3, AS sap_fastplay);
 		break;
 	case 't':
-		if (--tmc_per_frame_counter <= 0) {
-			tmc_per_frame_counter = tmc_per_frame;
-			call_6502((UWORD) (sap_player + 3), sap_fastplay);
+		if (--AS tmc_per_frame_counter <= 0) {
+			AS tmc_per_frame_counter = AS tmc_per_frame;
+			call_6502(as, AS sap_player + 3, AS sap_fastplay);
 		}
 		else
-			call_6502((UWORD) (sap_player + 6), sap_fastplay);
+			call_6502(as, AS sap_player + 6, AS sap_fastplay);
 		break;
 	}
-#ifdef APOKEYSND
-	PokeySound_Flush(114 * sap_fastplay);
-#else
-	random_scanline_counter = (random_scanline_counter + LINE_C * sap_fastplay)
-	                          % ((AUDCTL[0] & POLY9) ? POLY9_SIZE : POLY17_SIZE);
-#endif
+	PokeySound_EndFrame(as, 114 * AS sap_fastplay);
 }
 
 static int milliseconds_to_blocks(int milliseconds)
 {
-	return (int) ((double) milliseconds * block_rate / 1000);
+	return milliseconds * (ASAP_SAMPLE_RATE / 100) / 10;
 }
 
-#ifdef APOKEYSND
-
-int ASAP_Generate(void *buffer, int buffer_len)
-{
-	int remaining_bytes;
-	if (current_duration > 0) {
-		int total_bytes = milliseconds_to_blocks(current_duration)
-			<< (loaded_module_info.channels - 1);
-		if (bytes_played + buffer_len > total_bytes)
-			buffer_len = total_bytes - bytes_played;
-	}
-	remaining_bytes = buffer_len;
-	while (remaining_bytes > 0) {
-		int bytes = atari_sound_len - atari_sound_index;
-		if (bytes >= remaining_bytes) {
-			memcpy(buffer, atari_sound + atari_sound_index, remaining_bytes);
-			atari_sound_index += remaining_bytes;
-			break;
-		}
-		memcpy(buffer, atari_sound + atari_sound_index, bytes);
-		buffer = (void *) ((unsigned char *) buffer + bytes);
-		remaining_bytes -= bytes;
-		call_6502_player();
-		atari_sound_index = 0;
-	}
-	bytes_played += buffer_len;
-	return buffer_len;
-}
-
-#else
-
-static int cpu_process(int blocks)
-{
-	int ready_blocks;
-	while (blockcycles_till_player < ASAP_MAIN_CLOCK) {
-		call_6502_player();
-		blockcycles_till_player += blockcycles_per_player;
-	}
-	ready_blocks = blockcycles_till_player / ASAP_MAIN_CLOCK;
-	if (blocks > ready_blocks)
-		blocks = ready_blocks;
-	blocks_played += blocks;
-	blockcycles_till_player -= blocks * ASAP_MAIN_CLOCK;
-	return blocks;
-}
-
-void ASAP_Seek(int position)
+void ASAP_Seek(ASAP_State *as, int position)
 {
 	int block = milliseconds_to_blocks(position);
-	if (block < blocks_played)
-		ASAP_PlaySong(current_song, current_duration);
-	while (blocks_played < block)
-		cpu_process(block - blocks_played);
-}
-
-/* swap bytes in non-native words if necessary */
-static void fix_endianess(void *buffer, int samples)
-{
-	if (sample_format ==
-#ifdef WORDS_BIGENDIAN
-		AUDIO_FORMAT_S16_LE
-#else
-		AUDIO_FORMAT_S16_BE
-#endif
-		) {
-		unsigned char *p = (unsigned char *) buffer;
-		int n = samples;
-		do {
-			unsigned char t = p[0];
-			p[0] = p[1];
-			p[1] = t;
-			p += 2;
-		} while (--n != 0);
+	if (block < AS blocks_played)
+		ASAP_PlaySong(as, AS current_song, AS current_duration);
+	while (AS blocks_played + AS samples - AS sample_offset < block) {
+		AS blocks_played += AS samples - AS sample_offset;
+		call_6502_player(as);
 	}
+	AS sample_offset += block - AS blocks_played;
+	AS blocks_played = block;
 }
 
-int ASAP_Generate(void *buffer, int buffer_len)
+int ASAP_Generate(ASAP_State *as, void *buffer, int buffer_len,
+                  ASAP_SampleFormat format)
 {
-	int buffer_blocks = buffer_len >> (sample_16bit + enable_stereo);
+	int block_shift = (AS module_info.channels - 1) + (format != ASAP_FORMAT_U8 ? 1 : 0);
+	int buffer_blocks = buffer_len >> block_shift;
 	int remaining_blocks;
-	if (current_duration > 0) {
-		int total_blocks = milliseconds_to_blocks(current_duration);
-		if (blocks_played + buffer_blocks > total_blocks)
-			buffer_blocks = total_blocks - blocks_played;
+	if (AS current_duration > 0) {
+		int total_blocks = milliseconds_to_blocks(AS current_duration);
+		if (buffer_blocks > total_blocks - AS blocks_played)
+			buffer_blocks = total_blocks - AS blocks_played;
 	}
+	if (buffer_blocks == 0)
+		return 0;
 	remaining_blocks = buffer_blocks;
-	while (remaining_blocks > 0) {
-		int blocks = cpu_process(remaining_blocks);
-		int samples = blocks << enable_stereo;
-		Pokey_process(buffer, samples);
-		fix_endianess(buffer, samples);
-		buffer = (void *) ((unsigned char *) buffer +
-			(samples << sample_16bit));
+	for (;;) {
+		int blocks = PokeySound_Generate(as, buffer, remaining_blocks, format);
+		AS blocks_played += blocks;
 		remaining_blocks -= blocks;
+		if (remaining_blocks == 0)
+			return buffer_blocks << block_shift;
+		buffer = (byte *) buffer + (blocks << block_shift);
+		call_6502_player(as);
 	}
-	return buffer_blocks << (sample_16bit + enable_stereo);
 }
-
-#endif /* APOKEYSND */

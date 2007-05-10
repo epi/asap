@@ -23,26 +23,13 @@
 
 #include <string.h>
 
-#include "apokeysnd.h"
+#include "asap_internal.h"
 
-#define SAMPLE_RATE  44100
-#define MAIN_CLOCK   1773447
-
-PokeyState pokey_states[2];
-
-static const unsigned char poly4_lookup[15] =
+static const byte poly4_lookup[15] =
 	{ 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
-static const unsigned char poly5_lookup[31] =
+static const byte poly5_lookup[31] =
 	{ 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1,
 	  0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1 };
-static unsigned char poly9_lookup[511];
-static unsigned char poly17_lookup[16385];
-
-static int enable_stereo;
-unsigned char atari_sound[2048];
-int atari_sound_len;
-static int sample_offset;
-static int iir_acc[2];
 
 static void init_state(PokeyState *ps)
 {
@@ -78,30 +65,30 @@ static void init_state(PokeyState *ps)
 	memset(ps->delta_buffer, 0, sizeof(ps->delta_buffer));
 }
 
-void PokeySound_Initialize(int stereo)
+void PokeySound_Initialize(ASAP_State *as)
 {
-	static int poly9_17_initialized = 0;
-	enable_stereo = stereo;
-	if (!poly9_17_initialized) {
-		int i;
-		int reg;
-		poly9_17_initialized = 1;
-		reg = 0x1ff;
-		for (i = 0; i < 511; i++) {
-			reg = ((((reg >> 5) ^ reg) & 1) << 8) + (reg >> 1);
-			poly9_lookup[i] = (unsigned char) reg;
-		}
-		reg = 0x1ffff;
-		for (i = 0; i < 16385; i++) {
-			reg = ((((reg >> 5) ^ reg) & 0xff) << 9) + (reg >> 8);
-			poly17_lookup[i] = (unsigned char) (reg >> 1);
-		}
+	int i;
+	int reg;
+	reg = 0x1ff;
+	for (i = 0; i < 511; i++) {
+		reg = ((((reg >> 5) ^ reg) & 1) << 8) + (reg >> 1);
+		AS poly9_lookup[i] = (byte) reg;
 	}
-	init_state(pokey_states);
-	init_state(pokey_states + 1);
+	reg = 0x1ffff;
+	for (i = 0; i < 16385; i++) {
+		reg = ((((reg >> 5) ^ reg) & 0xff) << 9) + (reg >> 8);
+		AS poly17_lookup[i] = (byte) (reg >> 1);
+	}
+	AS sample_offset = 0;
+	AS sample_index = 0;
+	AS samples = 0;
+	AS iir_acc_left = 0;
+	AS iir_acc_right = 0;
+	init_state(&AS base_pokey);
+	init_state(&AS extra_pokey);
 }
 
-#define CYCLE_TO_SAMPLE(cycle)  (((cycle) * SAMPLE_RATE + sample_offset) / MAIN_CLOCK)
+#define CYCLE_TO_SAMPLE(cycle)  (((cycle) * ASAP_SAMPLE_RATE + AS sample_offset) / ASAP_MAIN_CLOCK)
 
 #define DO_TICK(ch) \
 	poly = cycle + ps->poly_index - (ch - 1); \
@@ -110,10 +97,10 @@ void PokeySound_Initialize(int stereo)
 	case 0: \
 		if (poly5_lookup[poly % 31]) { \
 			if ((ps->audctl & 0x80) != 0) \
-				newout = poly9_lookup[poly % 511] & 1; \
+				newout = AS poly9_lookup[poly % 511] & 1; \
 			else { \
 				poly %= 131071; \
-				newout = (poly17_lookup[poly >> 3] >> (poly & 7)) & 1; \
+				newout = (AS poly17_lookup[poly >> 3] >> (poly & 7)) & 1; \
 			} \
 		} \
 		break; \
@@ -127,10 +114,10 @@ void PokeySound_Initialize(int stereo)
 		break; \
 	case 8: \
 		if ((ps->audctl & 0x80) != 0) \
-			newout = poly9_lookup[poly % 511] & 1; \
+			newout = AS poly9_lookup[poly % 511] & 1; \
 		else { \
 			poly %= 131071; \
-			newout = (poly17_lookup[poly >> 3] >> (poly & 7)) & 1; \
+			newout = (AS poly17_lookup[poly >> 3] >> (poly & 7)) & 1; \
 		} \
 		break; \
 	case 10: \
@@ -148,7 +135,7 @@ void PokeySound_Initialize(int stereo)
 		ps->delta_buffer[CYCLE_TO_SAMPLE(cycle)] += ps->delta##ch = -ps->delta##ch; \
 	}
 
-static void generate(PokeyState *ps, int current_cycle)
+static void generate(ASAP_State *as, PokeyState *ps, int current_cycle)
 {
 	for (;;) {
 		int cycle = current_cycle;
@@ -194,7 +181,7 @@ static void generate(PokeyState *ps, int current_cycle)
 #define DO_AUDC(ch) \
 	if (data == ps->audc##ch) \
 		break; \
-	generate(ps, current_cycle); \
+	generate(as, ps, current_cycle); \
 	ps->audc##ch = data; \
 	if ((data & 0x10) != 0) { \
 		data &= 0xf; \
@@ -214,14 +201,14 @@ static void generate(PokeyState *ps, int current_cycle)
 	} \
 	break;
 
-void PokeySound_PutByte(int addr, int data, int current_cycle)
+void PokeySound_PutByte(ASAP_State *as, int addr, int data, int current_cycle)
 {
-	PokeyState *ps = (addr & 0x10) != 0 && enable_stereo ? pokey_states + 1 : pokey_states;
+	PokeyState *ps = (addr & 0x10) != 0 && AS module_info.channels == 2 ? &AS extra_pokey : &AS base_pokey;
 	switch (addr & 0xf) {
 	case 0x00:
 		if (data == ps->audf1)
 			break;
-		generate(ps, current_cycle);
+		generate(as, ps, current_cycle);
 		ps->audf1 = data;
 		switch (ps->audctl & 0x50) {
 		case 0x00:
@@ -245,7 +232,7 @@ void PokeySound_PutByte(int addr, int data, int current_cycle)
 	case 0x02:
 		if (data == ps->audf2)
 			break;
-		generate(ps, current_cycle);
+		generate(as, ps, current_cycle);
 		ps->audf2 = data;
 		switch (ps->audctl & 0x50) {
 		case 0x00:
@@ -265,7 +252,7 @@ void PokeySound_PutByte(int addr, int data, int current_cycle)
 	case 0x04:
 		if (data == ps->audf3)
 			break;
-		generate(ps, current_cycle);
+		generate(as, ps, current_cycle);
 		ps->audf3 = data;
 		switch (ps->audctl & 0x28) {
 		case 0x00:
@@ -289,7 +276,7 @@ void PokeySound_PutByte(int addr, int data, int current_cycle)
 	case 0x06:
 		if (data == ps->audf4)
 			break;
-		generate(ps, current_cycle);
+		generate(as, ps, current_cycle);
 		ps->audf4 = data;
 		switch (ps->audctl & 0x28) {
 		case 0x00:
@@ -309,7 +296,7 @@ void PokeySound_PutByte(int addr, int data, int current_cycle)
 	case 0x08:
 		if (data == ps->audctl)
 			break;
-		generate(ps, current_cycle);
+		generate(as, ps, current_cycle);
 		ps->audctl = data;
 		ps->div_cycles = ((data & 1) != 0) ? 114 : 28;
 		/* TODO: tick_cycles */
@@ -365,70 +352,25 @@ void PokeySound_PutByte(int addr, int data, int current_cycle)
 	}
 }
 
-int PokeySound_GetRandom(int addr, int current_cycle)
+int PokeySound_GetRandom(ASAP_State *as, int addr, int current_cycle)
 {
-	PokeyState *ps = (addr & 0x10) != 0 && enable_stereo ? pokey_states + 1 : pokey_states;
+	PokeyState *ps = (addr & 0x10) != 0 && AS module_info.channels == 2 ? &AS extra_pokey : &AS base_pokey;
 	int i = current_cycle + ps->poly_index;
 	if ((ps->audctl & 0x80) != 0)
-		return poly9_lookup[i % 511];
+		return AS poly9_lookup[i % 511];
 	else {
 		int j;
 		i %= 131071;
 		j = i >> 3;
 		i &= 7;
-		return ((poly17_lookup[j] >> i) + (poly17_lookup[j + 1] << (8 - i))) & 0xff;
+		return ((AS poly17_lookup[j] >> i) + (AS poly17_lookup[j + 1] << (8 - i))) & 0xff;
 	}
 }
 
-static void mix_mono(int samples)
-{
-	int i;
-	int acc = iir_acc[0];
-	for (i = 0; i < samples; i++) {
-		int sample;
-		acc += (pokey_states[0].delta_buffer[i] << 10) - (acc >> 8);
-		sample = 128 + (acc >> 8);
-		if (sample < 0)
-			sample = 0;
-		else if (sample > 255)
-			sample = 255;
-		atari_sound[i] = (unsigned char) sample;
-	}
-	iir_acc[0] = acc;
-	atari_sound_len = samples;
-}
-
-static void mix_stereo(int samples)
-{
-	int i;
-	int acc0 = iir_acc[0];
-	int acc1 = iir_acc[1];
-	for (i = 0; i < samples; i++) {
-		int sample;
-		acc0 += (pokey_states[0].delta_buffer[i] << 10) - (acc0 >> 8);
-		sample = 128 + (acc0 >> 8);
-		if (sample < 0)
-			sample = 0;
-		else if (sample > 255)
-			sample = 255;
-		atari_sound[2 * i] = (unsigned char) sample;
-		acc1 += (pokey_states[1].delta_buffer[i] << 10) - (acc1 >> 8);
-		sample = 128 + (acc1 >> 8);
-		if (sample < 0)
-			sample = 0;
-		else if (sample > 255)
-			sample = 255;
-		atari_sound[2 * i + 1] = (unsigned char) sample;
-	}
-	iir_acc[0] = acc0;
-	iir_acc[1] = acc1;
-	atari_sound_len = 2 * samples;
-}
-
-static void flush(PokeyState *ps, int current_cycle)
+static void end_frame(ASAP_State *as, PokeyState *ps, int current_cycle)
 {
 	int m;
-	generate(ps, current_cycle);
+	generate(as, ps, current_cycle);
 	ps->poly_index += current_cycle;
 	m = ((ps->audctl & 0x80) != 0) ? 15 * 31 * 511 : 15 * 31 * 131071;
 	if (ps->poly_index >= m)
@@ -439,20 +381,63 @@ static void flush(PokeyState *ps, int current_cycle)
 	ps->tick_cycle4 -= current_cycle;
 }
 
-void PokeySound_Flush(int current_cycle)
+void PokeySound_StartFrame(ASAP_State *as)
 {
-	int samples;
-	flush(pokey_states, current_cycle);
-	if (enable_stereo)
-		flush(pokey_states + 1, current_cycle);
-	sample_offset += current_cycle * SAMPLE_RATE;
-	samples = sample_offset / MAIN_CLOCK;
-	sample_offset %= MAIN_CLOCK;
-	if (enable_stereo) {
-		mix_stereo(samples);
-		memset(pokey_states[1].delta_buffer, 0, sizeof(pokey_states[1].delta_buffer));
+	memset(AS base_pokey.delta_buffer, 0, sizeof(AS base_pokey.delta_buffer));
+	if (AS module_info.channels == 2)
+		memset(AS extra_pokey.delta_buffer, 0, sizeof(AS extra_pokey.delta_buffer));
+}
+
+void PokeySound_EndFrame(ASAP_State *as, int current_cycle)
+{
+	end_frame(as, &AS base_pokey, current_cycle);
+	if (AS module_info.channels == 2)
+		end_frame(as, &AS extra_pokey, current_cycle);
+	AS sample_offset += current_cycle * ASAP_SAMPLE_RATE;
+	AS sample_index = 0;
+	AS samples = AS sample_offset / ASAP_MAIN_CLOCK;
+	AS sample_offset %= ASAP_MAIN_CLOCK;
+}
+
+int PokeySound_Generate(ASAP_State *as, byte *buffer, int blocks, ASAP_SampleFormat format)
+{
+	int sample_index = AS sample_index;
+	int acc_left = AS iir_acc_left;
+	int acc_right = AS iir_acc_right;
+	int i;
+	if (blocks > AS samples - sample_index)
+		blocks = AS samples - sample_index;
+	for (i = 0; i < blocks; i++) {
+		int sample;
+		acc_left += (AS base_pokey.delta_buffer[sample_index + i] << 10) - (acc_left >> 8);
+		sample = acc_left;
+#define STORE_SAMPLE \
+		if (sample < -32767) \
+			sample = -32767; \
+		else if (sample > 32767) \
+			sample = 32767; \
+		switch (format) { \
+		case ASAP_FORMAT_U8: \
+			*buffer++ = (byte) ((sample >> 8) + 128); \
+			break; \
+		case ASAP_FORMAT_S16_LE: \
+			*buffer++ = (byte) sample; \
+			*buffer++ = (byte) (sample >> 8); \
+			break; \
+		case ASAP_FORMAT_S16_BE: \
+			*buffer++ = (byte) (sample >> 8); \
+			*buffer++ = (byte) sample; \
+			break; \
+		}
+		STORE_SAMPLE;
+		if (AS module_info.channels == 2) {
+			acc_right += (AS extra_pokey.delta_buffer[sample_index + i] << 10) - (acc_right >> 8);
+			sample = acc_right;
+			STORE_SAMPLE;
+		}
 	}
-	else
-		mix_mono(samples);
-	memset(pokey_states[0].delta_buffer, 0, sizeof(pokey_states[0].delta_buffer));
+	AS sample_index += blocks;
+	AS iir_acc_left = acc_left;
+	AS iir_acc_right = acc_right;
+	return blocks;
 }
