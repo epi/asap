@@ -1,3 +1,18 @@
+2007-05-10  Piotr Fusik  <fox@scene.pl>
+* acpu.c, acpu.h, apokeysnd.c, apokeysnd.h, asap.c, asap.h, asap_internal.h,
+  asap2wav.c, configure.ac, config.guess, config.sub, Makefile.in,
+  gsplayer/gspasap.c, win32/Makefile, win32/settings.c, win32/settings.h,
+  win32/foobar2000/foo_asap.cpp, win32/winamp/in_asap.c,
+  win32/wasap/wasap.c, win32/wasap/wasap.rc, win32/wasap/resource.h,
+  xmms/libasap.c, INSTALL: removed all static variables; ASAP now uses
+  apokeysnd and no longer depends on Atari800
+
+* win32/winamp/in_asap.c: enabled Winamp equalizer support
+
+* java/ASAP.ppjava, acpu.c, asap_internal.h, win32/Makefile, TODO:
+  6502 emulator can be compiled in Java
+
+
 2007-05-09  Piotr Fusik  <fox@scene.pl>
 * acpu.c, acpu.h, asap.c, win32/Makefile: new 6502 emulator
 
