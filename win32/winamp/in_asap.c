@@ -21,7 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
 #include <windows.h>
 #include <string.h>
 
@@ -31,15 +30,14 @@
 #include "asap.h"
 #include "settings.h"
 
-// Winamp's equalizer works only with 16-bit samples and sounds awfully,
-// probably because of the DC offset of the generated sound
-#define SUPPORT_EQUALIZER    0
+// Winamp's equalizer works only with 16-bit samples
+#define SUPPORT_EQUALIZER    1
 
 #if 0
 
 // This is used in Winamp examples to disable C runtime in order to produce smaller DLL.
 // Currently it doesn't work here, because the following CRT functions are used:
-// _fltused, _ftol, floor, rand, free, malloc
+// memset, memcpy, strstr
 
 BOOL WINAPI _DllMainCRTStartup(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 {
@@ -51,11 +49,12 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lp
 static In_Module mod;
 
 // current file
+static ASAP_State asap;
 static char current_filename[MAX_PATH] = "";
-static unsigned char module[ASAP_MODULE_MAX];
+static byte module[ASAP_MODULE_MAX];
 static DWORD module_len;
-static int channels;
 static int duration;
+#define channels  asap.module_info.channels
 
 static HANDLE thread_handle = NULL;
 static volatile int thread_run = FALSE;
@@ -75,8 +74,6 @@ static void about(HWND hwndParent)
 
 static void init(void)
 {
-	ASAP_Initialize(FREQUENCY,
-		BITS_PER_SAMPLE == 8 ? AUDIO_FORMAT_U8 : AUDIO_FORMAT_S16_NE, QUALITY);
 }
 
 static void quit(void)
@@ -105,7 +102,7 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 		file = current_filename;
 	if (!loadFile(file))
 		return; // XXX
-	if (!ASAP_GetModuleInfo(file, module, module_len, &module_info))
+	if (!ASAP_GetModuleInfo(&module_info, file, module, module_len))
 		return;
 	if (title != NULL)
 		strcpy(title, module_info.name); // XXX: max length?
@@ -117,7 +114,7 @@ static int infoBox(char *file, HWND hwndParent)
 {
 	if (loadFile(file)) {
 		ASAP_ModuleInfo module_info;
-		if (ASAP_GetModuleInfo(file, module, module_len, &module_info))
+		if (ASAP_GetModuleInfo(&module_info, file, module, module_len))
 			MessageBox(hwndParent, module_info.all_info, "File information",
 				MB_OK | MB_ICONINFORMATION);
 	}
@@ -134,7 +131,7 @@ static DWORD WINAPI playThread(LPVOID dummy)
 	while (thread_run) {
 		static
 #if BITS_PER_SAMPLE == 8
-			unsigned char
+			byte
 #else
 			short
 #endif
@@ -146,7 +143,7 @@ static DWORD WINAPI playThread(LPVOID dummy)
 		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
 		if (seek_needed >= 0) {
 			mod.outMod->Flush(seek_needed);
-			ASAP_Seek(seek_needed);
+			ASAP_Seek(&asap, seek_needed);
 			seek_needed = -1;
 		}
 		if (mod.outMod->CanWrite() >= buffered_bytes
@@ -155,7 +152,7 @@ static DWORD WINAPI playThread(LPVOID dummy)
 #endif
 		) {
 			int t;
-			buffered_bytes = ASAP_Generate(buffer, buffered_bytes);
+			buffered_bytes = ASAP_Generate(&asap, buffer, buffered_bytes, BITS_PER_SAMPLE);
 			if (buffered_bytes <= 0) {
 				mod.outMod->CanWrite();
 				if (!mod.outMod->IsPlaying()) {
@@ -169,8 +166,9 @@ static DWORD WINAPI playThread(LPVOID dummy)
 			mod.SAAddPCMData(buffer, channels, BITS_PER_SAMPLE, t);
 			mod.VSAAddPCMData(buffer, channels, BITS_PER_SAMPLE, t);
 #if SUPPORT_EQUALIZER
-			t = mod.dsp_dosamples((short int *) buffer, blocks_to_play,
-				BITS_PER_SAMPLE, channels, FREQUENCY) * channels * (BITS_PER_SAMPLE / 8);
+			t = buffered_bytes / (channels * (BITS_PER_SAMPLE / 8));
+			t = mod.dsp_dosamples((short *) buffer, t, BITS_PER_SAMPLE, channels, ASAP_SAMPLE_RATE);
+			t *= channels * (BITS_PER_SAMPLE / 8);
 			mod.outMod->Write((char *) buffer, t);
 #else
 			mod.outMod->Write((char *) buffer, buffered_bytes);
@@ -184,28 +182,25 @@ static DWORD WINAPI playThread(LPVOID dummy)
 
 static int play(char *fn)
 {
-	const ASAP_ModuleInfo *module_info;
 	int song;
 	int maxlatency;
 	DWORD threadId;
 	strcpy(current_filename, fn);
 	if (!loadFile(fn))
 		return -1;
-	module_info = ASAP_Load(fn, module, module_len);
-	if (module_info == NULL)
+	if (!ASAP_Load(&asap, fn, module, module_len))
 		return 1;
-	song = module_info->default_song;
-	duration = getSubsongDuration(module_info, song);
-	ASAP_PlaySong(song, duration);
-	channels = module_info->channels;
-	maxlatency = mod.outMod->Open(FREQUENCY, channels, BITS_PER_SAMPLE, -1, -1);
+	song = asap.module_info.default_song;
+	duration = getSubsongDuration(&asap.module_info, song);
+	ASAP_PlaySong(&asap, song, duration);
+	maxlatency = mod.outMod->Open(ASAP_SAMPLE_RATE, channels, BITS_PER_SAMPLE, -1, -1);
 	if (maxlatency < 0)
 		return 1;
-	mod.SetInfo(BITS_PER_SAMPLE, FREQUENCY / 1000, channels, 1);
-	mod.SAVSAInit(maxlatency, FREQUENCY);
+	mod.SetInfo(BITS_PER_SAMPLE, ASAP_SAMPLE_RATE / 1000, channels, 1);
+	mod.SAVSAInit(maxlatency, ASAP_SAMPLE_RATE);
 	// the order of VSASetInfo's arguments in in2.h is wrong!
 	// http://forums.winamp.com/showthread.php?postid=1841035
-	mod.VSASetInfo(FREQUENCY, channels);
+	mod.VSASetInfo(ASAP_SAMPLE_RATE, channels);
 	mod.outMod->SetVolume(-666);
 	seek_needed = -1;
 	thread_run = TRUE;
@@ -285,9 +280,7 @@ static In_Module mod = {
 	"mpd\0Music ProTracker DoublePlay (*.MPD)\0"
 	"rmt\0Raster Music Tracker (*.RMT)\0"
 	"tmc\0Theta Music Composer 1.x 4-channel (*.TMC)\0"
-#ifdef STEREO_SOUND
 	"tm8\0Theta Music Composer 1.x 8-channel (*.TM8)\0"
-#endif
 	"tm2\0Theta Music Composer 2.x (*.TM2)\0"
 	,
 	1,    // is_seekable

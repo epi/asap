@@ -21,7 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
 #include <windows.h>
 #include <shellapi.h>
 
@@ -30,17 +29,11 @@
 
 #define APP_TITLE        "WASAP"
 #define WND_CLASS_NAME   "WASAP"
+#define BITS_PER_SAMPLE  16
 #define BUFFERED_BLOCKS  4096
 
-#ifdef APOKEYSND
-static const int frequency = 44100;
-static const int use_16bit = 0;
-#else
-static int frequency = 44100;
-static int use_16bit = 1;
-static int quality = 1;
-#endif
-static const ASAP_ModuleInfo *module_info;
+static ASAP_State asap;
+static int songs = 0;
 static int current_song;
 
 static HWND hWnd;
@@ -68,7 +61,7 @@ static char *Util_utoa(char *dest, int x)
 /* WaveOut ---------------------------------------------------------------- */
 
 /* double-buffering, *2 for 16-bit, *2 for stereo */
-static unsigned char buffer[2][BUFFERED_BLOCKS * 2 * 2];
+static byte buffer[2][BUFFERED_BLOCKS * 2 * 2];
 static HWAVEOUT hwo = INVALID_HANDLE_VALUE;
 static WAVEHDR wh[2] = {
 	{ buffer[0], 0, 0, 0, 0, 0, NULL, 0 },
@@ -87,7 +80,7 @@ static void WaveOut_Stop(void)
 static void WaveOut_Write(LPWAVEHDR pwh)
 {
 	if (playing) {
-		int len = ASAP_Generate(pwh->lpData, pwh->dwBufferLength);
+		int len = ASAP_Generate(&asap, pwh->lpData, pwh->dwBufferLength, BITS_PER_SAMPLE);
 		if (len < (int) pwh->dwBufferLength
 		 || waveOutWrite(hwo, pwh, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) {
 			// calling StopPlayback() here causes a deadlock
@@ -103,15 +96,15 @@ static void CALLBACK WaveOut_Proc(HWAVEOUT hwo2, UINT uMsg, DWORD dwInstance,
 		WaveOut_Write((LPWAVEHDR) dwParam1);
 }
 
-static int WaveOut_Open(int frequency, int use_16bit, int channels)
+static int WaveOut_Open(int channels)
 {
 	WAVEFORMATEX wfx;
 	wfx.wFormatTag = WAVE_FORMAT_PCM;
 	wfx.nChannels = channels;
-	wfx.nSamplesPerSec = frequency;
-	wfx.nBlockAlign = channels << use_16bit;
-	wfx.nAvgBytesPerSec = frequency * wfx.nBlockAlign;
-	wfx.wBitsPerSample = 8 << use_16bit;
+	wfx.nSamplesPerSec = ASAP_SAMPLE_RATE;
+	wfx.nBlockAlign = channels * (BITS_PER_SAMPLE / 8);
+	wfx.nAvgBytesPerSec = ASAP_SAMPLE_RATE * wfx.nBlockAlign;
+	wfx.wBitsPerSample = BITS_PER_SAMPLE;
 	wfx.cbSize = 0;
 	if (waveOutOpen(&hwo, WAVE_MAPPER, &wfx, (DWORD) WaveOut_Proc, 0,
 	                CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
@@ -166,7 +159,7 @@ static void Tray_Modify(HICON hIcon)
 	/* we need to be careful because szTip is only 64 characters */
 	/* 8 */
 	p = Util_stpcpy(nid.szTip, APP_TITLE);
-	if (module_info != NULL) {
+	if (songs > 0) {
 		const char *pb;
 		const char *pe;
 		for (pe = strFile; *pe != '\0'; pe++);
@@ -181,7 +174,7 @@ static void Tray_Modify(HICON hIcon)
 			memcpy(p, pb, 30);
 			p = Util_stpcpy(p + 30, "...");
 		}
-		if (current_song >= 0 && module_info->songs > 1) {
+		if (current_song >= 0 && songs > 1) {
 			/* 7 */
 			p = Util_stpcpy(p, " (song ");
 			/* max 3 */
@@ -189,7 +182,7 @@ static void Tray_Modify(HICON hIcon)
 			/* 4 */
 			p = Util_stpcpy(p, " of ");
 			/* max 3 */
-			p = Util_utoa(p, module_info->songs);
+			p = Util_utoa(p, songs);
 			/* 2 */
 			p[0] = ')';
 			p[1] = '\0';
@@ -205,9 +198,6 @@ static HICON hStopIcon;
 static HICON hPlayIcon;
 static HMENU hTrayMenu;
 static HMENU hSongMenu;
-#ifndef APOKEYSND
-static HMENU hQualityMenu;
-#endif
 
 static void ClearSongsMenu(void)
 {
@@ -230,14 +220,14 @@ static void SetSongsMenu(int n)
 static void PlaySong(int n)
 {
 	int duration;
-	if (module_info == NULL)
+	if (songs == 0)
 		return;
-	CheckMenuRadioItem(hSongMenu, 0, module_info->songs - 1, n, MF_BYPOSITION);
+	CheckMenuRadioItem(hSongMenu, 0, songs - 1, n, MF_BYPOSITION);
 	current_song = n;
-	duration = module_info->durations[n];
-	if (module_info->loops[n])
+	duration = asap.module_info.durations[n];
+	if (asap.module_info.loops[n])
 		duration = -1;
-	ASAP_PlaySong(n, duration);
+	ASAP_PlaySong(&asap, n, duration);
 	Tray_Modify(hPlayIcon);
 	WaveOut_Start();
 }
@@ -251,18 +241,18 @@ static void StopPlayback(void)
 
 static void UnloadFile(void)
 {
-	if (module_info == NULL)
+	if (songs == 0)
 		return;
 	EnableMenuItem(hTrayMenu, IDM_FILE_INFO, MF_BYCOMMAND | MF_GRAYED);
 	ClearSongsMenu();
 	StopPlayback();
-	module_info = NULL;
+	songs = 0;
 }
 
 static void LoadFile(void)
 {
 	HANDLE fh;
-	static unsigned char module[ASAP_MODULE_MAX];
+	static byte module[ASAP_MODULE_MAX];
 	DWORD module_len;
 	fh = CreateFile(strFile, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
@@ -274,17 +264,16 @@ static void LoadFile(void)
 	}
 	CloseHandle(fh);
 	UnloadFile();
-	module_info = ASAP_Load(strFile, module, module_len);
-	if (module_info != NULL) {
-		if (!WaveOut_Open(frequency, use_16bit, module_info->channels)) {
-			module_info = NULL;
+	if (ASAP_Load(&asap, strFile, module, module_len)) {
+		if (!WaveOut_Open(asap.module_info.channels)) {
 			MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
 					   MB_OK | MB_ICONERROR);
 			return;
 		}
+		songs = asap.module_info.songs;
 		EnableMenuItem(hTrayMenu, IDM_FILE_INFO, MF_BYCOMMAND | MF_ENABLED);
-		SetSongsMenu(module_info->songs);
-		PlaySong(module_info->default_song);
+		SetSongsMenu(songs);
+		PlaySong(asap.module_info.default_song);
 	}
 	else {
 		MessageBox(hWnd, "Unsupported file format", APP_TITLE,
@@ -340,26 +329,6 @@ static void SelectAndLoadFile(void)
 	opening = FALSE;
 }
 
-#ifndef APOKEYSND
-static void ApplyQuality(void)
-{
-	int reopen = FALSE;
-	if (module_info != NULL) {
-		UnloadFile();
-		reopen = TRUE;
-	}
-	CheckMenuRadioItem(hQualityMenu, IDM_44100_HZ, IDM_48000_HZ,
-		frequency == 44100 ? IDM_44100_HZ : IDM_48000_HZ, MF_BYCOMMAND);
-	CheckMenuRadioItem(hQualityMenu, IDM_8BIT, IDM_16BIT,
-		IDM_8BIT + use_16bit, MF_BYCOMMAND);
-	CheckMenuRadioItem(hQualityMenu, IDM_QUALITY_RF, IDM_QUALITY_MB3,
-		IDM_QUALITY_RF + quality, MF_BYCOMMAND);
-	ASAP_Initialize(frequency, use_16bit ? AUDIO_FORMAT_S16_LE : AUDIO_FORMAT_U8, quality);
-	if (reopen)
-		LoadFile();
-}
-#endif
-
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
                                     LPARAM lParam)
 {
@@ -379,8 +348,8 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			StopPlayback();
 			break;
 		case IDM_FILE_INFO:
-			if (module_info != NULL)
-				MessageBox(hWnd, module_info->all_info, "File information", MB_OK | MB_ICONINFORMATION);
+			if (songs > 0)
+				MessageBox(hWnd, asap.module_info.all_info, "File information", MB_OK | MB_ICONINFORMATION);
 			break;
 		case IDM_ABOUT:
 			MessageBox(hWnd,
@@ -394,24 +363,10 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			PostQuitMessage(0);
 			break;
 		default:
-			if (module_info != NULL && idc >= IDM_SONG1 && idc < IDM_SONG1 + module_info->songs) {
+			if (idc >= IDM_SONG1 && idc < IDM_SONG1 + songs) {
 				StopPlayback();
 				PlaySong(idc - IDM_SONG1);
 			}
-#ifndef APOKEYSND
-			else if (idc >= IDM_QUALITY_RF && idc <= IDM_QUALITY_MB3) {
-				quality = idc - IDM_QUALITY_RF;
-				ApplyQuality();
-			}
-			else if (idc >= IDM_44100_HZ && idc <= IDM_48000_HZ) {
-				frequency = idc == IDM_44100_HZ ? 44100 : 48000;
-				ApplyQuality();
-			}
-			else if (idc >= IDM_8BIT && idc <= IDM_16BIT) {
-				use_16bit = idc - IDM_8BIT;
-				ApplyQuality();
-			}
-#endif
 			break;
 		}
 		break;
@@ -428,7 +383,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			SelectAndLoadFile();
 			break;
 		case WM_MBUTTONDOWN:
-			if (module_info == NULL || module_info->songs <= 1)
+			if (songs <= 1)
 				break;
 			/* FALLTHROUGH */
 		case WM_RBUTTONDOWN:
@@ -529,17 +484,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	hSongMenu = CreatePopupMenu();
 	InsertMenu(hTrayMenu, 1, MF_BYPOSITION | MF_ENABLED | MF_STRING | MF_POPUP,
 	           (UINT_PTR) hSongMenu, "So&ng");
-#ifndef APOKEYSND
-	hQualityMenu = GetSubMenu(hTrayMenu, 4);
-#endif
 	SetMenuDefaultItem(hTrayMenu, 0, TRUE);
 	nid.hWnd = hWnd;
 	nid.hIcon = hStopIcon;
 	Shell_NotifyIcon(NIM_ADD, &nid);
 	taskbarCreatedMessage = RegisterWindowMessage("TaskbarCreated");
-#ifndef APOKEYSND
-	ApplyQuality();
-#endif
 	if (*pb != '\0') {
 		memcpy(strFile, pb, pe + 1 - pb);
 		LoadFile();

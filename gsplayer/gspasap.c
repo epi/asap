@@ -21,7 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
 #include <windows.h>
 #include <tchar.h>
 
@@ -32,9 +31,9 @@
 
 static HINSTANCE hInstance;
 
-static unsigned char module[ASAP_MODULE_MAX];
+static byte module[ASAP_MODULE_MAX];
 static DWORD module_len;
-static const ASAP_ModuleInfo *module_info;
+static ASAP_State asap;
 
 #ifdef _UNICODE
 
@@ -63,9 +62,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 static void WINAPI asapInit()
 {
-	ASAP_Initialize(FREQUENCY,
-		BITS_PER_SAMPLE == 8 ? AUDIO_FORMAT_U8 : AUDIO_FORMAT_S16_NE,
-		QUALITY);
 }
 
 static void WINAPI asapQuit()
@@ -102,9 +98,7 @@ static const char *exts[] = {
 	"mpd", "Music ProTracker DoublePlay (*.mpd)",
 	"rmt", "Raster Music Tracker (*.rmt)",
 	"tmc", "Theta Music Composer 1.x 4-channel (*.tmc)",
-#ifdef STEREO_SOUND
 	"tm8", "Theta Music Composer 1.x 8-channel (*.tm8)",
-#endif
 	"tm2", "Theta Music Composer 2.x (*.tm2)"
 };
 #define N_EXTS (sizeof(exts) / sizeof(exts[0]) / 2)
@@ -152,33 +146,32 @@ static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 	CONVERT_FILENAME;
 	if (!loadFile(pszFile))
 		return FALSE;
-	module_info = ASAP_Load(ANSI_FILENAME, module, module_len);
-	if (module_info == NULL)
+	if (!ASAP_Load(&asap, ANSI_FILENAME, module, module_len))
 		return FALSE;
-	pInfo->nChannels = module_info->channels;
-	pInfo->nSampleRate = FREQUENCY;
+	pInfo->nChannels = asap.module_info.channels;
+	pInfo->nSampleRate = ASAP_SAMPLE_RATE;
 	pInfo->nBitsPerSample = BITS_PER_SAMPLE;
 	pInfo->nAvgBitrate = 8;
-	pInfo->nDuration = getSubsongDuration(module_info, module_info->default_song);
+	pInfo->nDuration = getSubsongDuration(&asap.module_info, asap.module_info.default_song);
 	return TRUE;
 }
 
 static long WINAPI asapSeekFile(long lTime)
 {
-	ASAP_Seek((int) lTime);
+	ASAP_Seek(&asap, (int) lTime);
 	return lTime;
 }
 
 static BOOL WINAPI asapStartDecodeFile()
 {
-	int duration = getSubsongDuration(module_info, module_info->default_song);
-	ASAP_PlaySong(module_info->default_song, duration);
+	int duration = getSubsongDuration(&asap.module_info, asap.module_info.default_song);
+	ASAP_PlaySong(&asap, asap.module_info.default_song, duration);
 	return TRUE;
 }
 
 static int WINAPI asapDecodeFile(WAVEHDR *pHdr)
 {
-	int len = ASAP_Generate(pHdr->lpData, pHdr->dwBufferLength);
+	int len = ASAP_Generate(&asap, pHdr->lpData, pHdr->dwBufferLength, BITS_PER_SAMPLE);
 	pHdr->dwBytesRecorded = len;
 	return len < (int) pHdr->dwBufferLength ? PLUGIN_RET_EOF : PLUGIN_RET_SUCCESS;
 }
@@ -200,7 +193,7 @@ static void getTag(const ASAP_ModuleInfo *module_info, MAP_PLUGIN_FILETAG *pTag)
 
 static BOOL WINAPI asapGetTag(MAP_PLUGIN_FILETAG *pTag)
 {
-	getTag(module_info, pTag);
+	getTag(&asap.module_info, pTag);
 	return TRUE;
 }
 
@@ -210,7 +203,7 @@ static BOOL WINAPI asapGetFileTag(LPCTSTR pszFile, MAP_PLUGIN_FILETAG *pTag)
 	CONVERT_FILENAME;
 	if (!loadFile(pszFile))
 		return FALSE;
-	if (!ASAP_GetModuleInfo(ANSI_FILENAME, module, module_len, &module_info))
+	if (!ASAP_GetModuleInfo(&module_info, ANSI_FILENAME, module, module_len))
 		return FALSE;
 	getTag(&module_info, pTag);
 	return TRUE;

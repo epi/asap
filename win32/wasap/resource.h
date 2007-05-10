@@ -5,14 +5,6 @@
 #define IDM_OPEN         201
 #define IDM_STOP         202
 #define IDM_FILE_INFO    203
-#define IDM_QUALITY_RF   204
-#define IDM_QUALITY_MB1  205
-#define IDM_QUALITY_MB2  206
-#define IDM_QUALITY_MB3  207
-#define IDM_44100_HZ     208
-#define IDM_48000_HZ     209
-#define IDM_8BIT         210
-#define IDM_16BIT        211
-#define IDM_ABOUT        212
-#define IDM_EXIT         213
+#define IDM_ABOUT        204
+#define IDM_EXIT         205
 #define IDM_SONG1        251

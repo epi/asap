@@ -21,8 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-
 #include "foobar2000/SDK/foobar2000.h"
 
 #include "asap.h"
@@ -154,8 +152,9 @@ static service_factory_single_t<preferences_page_asap> g_preferences_page_asap_f
 class input_asap
 {
 	service_ptr_t<file> m_file;
-	unsigned char module[ASAP_MODULE_MAX];
+	byte module[ASAP_MODULE_MAX];
 	ASAP_ModuleInfo module_info;
+	ASAP_State asap;
 
 	int get_subsong_duration(t_uint32 p_subsong)
 	{
@@ -187,18 +186,11 @@ public:
 			filesystem::g_open(p_filehint, p_path, filesystem::open_mode_read, p_abort);
 		m_file = p_filehint;
 		int module_len = m_file->read(module, sizeof(module), p_abort);
-		if (!::ASAP_GetModuleInfo(p_path, module, module_len, &module_info))
+		if (!::ASAP_GetModuleInfo(&module_info, p_path, module, module_len))
 			throw exception_io_unsupported_format();
 		if (p_reason == input_open_info_read)
 			return;
-		static bool asap_initialized = false;
-		if (!asap_initialized) {
-			::ASAP_Initialize(FREQUENCY,
-				BITS_PER_SAMPLE == 8 ? AUDIO_FORMAT_U8 : AUDIO_FORMAT_S16_NE,
-				QUALITY);
-			asap_initialized = true;
-		}
-		if (::ASAP_Load(p_path, module, module_len) == NULL)
+		if (!::ASAP_Load(&asap, p_path, module, module_len))
 			throw exception_io_unsupported_format();
 	}
 
@@ -231,7 +223,7 @@ public:
 
 	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort)
 	{
-		::ASAP_PlaySong(p_subsong, get_subsong_duration(p_subsong));
+		::ASAP_PlaySong(&asap, p_subsong, get_subsong_duration(p_subsong));
 	}
 
 	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort)
@@ -240,25 +232,25 @@ public:
 		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
 		static
 #if BITS_PER_SAMPLE == 8
-			unsigned char
+			byte
 #else
-			short int
+			short
 #endif
 			buffer[BUFFERED_BLOCKS * 2];
 
-		buffered_bytes = ::ASAP_Generate(buffer, buffered_bytes);
+		buffered_bytes = ::ASAP_Generate(&asap, buffer, buffered_bytes,
+			(ASAP_SampleFormat) BITS_PER_SAMPLE);
 		if (buffered_bytes == 0)
 			return false;
-		p_chunk.set_data_fixedpoint(buffer, buffered_bytes, FREQUENCY,
-		                            channels, BITS_PER_SAMPLE,
-		                            channels == 2 ? audio_chunk::channel_config_stereo
-		                                          : audio_chunk::channel_config_mono);
+		p_chunk.set_data_fixedpoint(buffer, buffered_bytes, ASAP_SAMPLE_RATE,
+			channels, BITS_PER_SAMPLE,
+			channels == 2 ? audio_chunk::channel_config_stereo : audio_chunk::channel_config_mono);
 		return true;
 	}
 
 	void decode_seek(double p_seconds, abort_callback& p_abort)
 	{
-		ASAP_Seek((int) (p_seconds * 1000));
+		ASAP_Seek(&asap, (int) (p_seconds * 1000));
 	}
 
 	bool decode_can_seek()
@@ -300,11 +292,7 @@ static const char * const names_and_masks[][2] = {
 	{ "Chaos Music Composer (*.cmc;*.cmr;*.dmc)", "*.CMC;*.CMR;*.DMC" },
 	{ "Music ProTracker (*.mpt;*.mpd)", "*.MPT;*.MPD" },
 	{ "Raster Music Tracker (*.rmt)", "*.RMT" },
-#ifdef STEREO_SOUND
 	{ "Theta Music Composer 1.x (*.tmc;*.tm8)", "*.TMC;*.TM8" },
-#else
-	{ "Theta Music Composer 1.x (*.tmc)", "*.TMC" },
-#endif
 	{ "Theta Music Composer 2.x (*.tm2)", "*.TM2" }
 };
 

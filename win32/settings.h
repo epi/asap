@@ -1,11 +1,4 @@
-#define FREQUENCY            44100
-#ifdef _WIN32_WCE
-#define BITS_PER_SAMPLE      8
-#define QUALITY              0
-#else
 #define BITS_PER_SAMPLE      16
-#define QUALITY              1
-#endif
 #define DEFAULT_SONG_LENGTH  180
 // 576 is a magic number for Winamp, better do not modify it
 #define BUFFERED_BLOCKS      576

@@ -21,7 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
 #include <pthread.h>
 #ifdef USE_STDIO
 #include <stdio.h>
@@ -35,31 +34,24 @@
 
 #include "asap.h"
 
-#define FREQUENCY          44100
-#define BITS_PER_SAMPLE    16
-#define QUALITY            1
-#define BUFFERED_BLOCKS    512
+#define BITS_PER_SAMPLE  16
+#define BUFFERED_BLOCKS  512
 
 static int channels;
 
 static InputPlugin mod;
 
-static unsigned char module[ASAP_MODULE_MAX];
+static byte module[ASAP_MODULE_MAX];
 static int module_len;
+static ASAP_State asap;
 
 static int seek_to;
 static pthread_t thread_handle;
-static volatile int thread_run = FALSE;
+static volatile abool thread_run = FALSE;
 
 static void asap_show_message(gchar *title, gchar *text)
 {
 	xmms_show_message(title, text, "Ok", FALSE, NULL, NULL);
-}
-
-static void asap_init(void)
-{
-	ASAP_Initialize(FREQUENCY,
-		BITS_PER_SAMPLE == 8 ? AUDIO_FORMAT_U8 : AUDIO_FORMAT_S16_NE, QUALITY);
 }
 
 static void asap_about(void)
@@ -100,18 +92,18 @@ static void *asap_play_thread(void *arg)
 	for (;;) {
 		static
 #if BITS_PER_SAMPLE == 8
-			unsigned char
+			byte
 #else
-			short int
+			short
 #endif
 			buffer[BUFFERED_BLOCKS * 2];
 		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
 		if (seek_to >= 0) {
 			mod.output->flush(seek_to);
-			ASAP_Seek(seek_to);
+			ASAP_Seek(&asap, seek_to);
 			seek_to = -1;
 		}
-		buffered_bytes = ASAP_Generate(buffer, buffered_bytes);
+		buffered_bytes = ASAP_Generate(&asap, buffer, buffered_bytes, BITS_PER_SAMPLE);
 		mod.add_vis_pcm(mod.output->written_time(),
 			BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
 			channels, buffered_bytes, buffer);
@@ -130,23 +122,21 @@ static void *asap_play_thread(void *arg)
 
 static void asap_play_file(char *filename)
 {
-	const ASAP_ModuleInfo *module_info;
 	int duration;
 	if (!asap_load_file(filename))
 		return;
-	module_info = ASAP_Load(filename, module, module_len);
-	if (module_info == NULL)
+	if (!ASAP_Load(&asap, filename, module, module_len))
 		return;
 	duration = module_info->durations[module_info->default_song];
-	ASAP_PlaySong(module_info->default_song, duration);
+	ASAP_PlaySong(&asap, module_info->default_song, duration);
 	channels = module_info->channels;
 
 	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
-		FREQUENCY, channels))
+		ASAP_SAMPLE_RATE, channels))
 		return;
 
 	mod.set_info((char *) module_info->name, duration, BITS_PER_SAMPLE * 1000,
-		FREQUENCY, channels);
+		ASAP_SAMPLE_RATE, channels);
 	seek_to = -1;
 	thread_run = TRUE;
 	pthread_create(&thread_handle, NULL, asap_play_thread, NULL);
@@ -185,7 +175,7 @@ static void asap_get_song_info(char *filename, char **title, int *length)
 	ASAP_ModuleInfo module_info;
 	if (!asap_load_file(filename))
 		return;
-	if (!ASAP_GetModuleInfo(filename, module, module_len, &module_info))
+	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
 		return;
 	*title = g_strdup(module_info.name);
 	*length = module_info.durations[module_info.default_song];
@@ -196,7 +186,7 @@ static void asap_file_info_box(char *filename)
 	ASAP_ModuleInfo module_info;
 	if (!asap_load_file(filename))
 		return;
-	if (!ASAP_GetModuleInfo(filename, module, module_len, &module_info))
+	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
 		return;
 	asap_show_message("File information", module_info.all_info);
 }
@@ -204,7 +194,7 @@ static void asap_file_info_box(char *filename)
 static InputPlugin mod = {
 	NULL, NULL,
 	"ASAP " ASAP_VERSION,
-	asap_init,
+	NULL,
 	asap_about,
 	NULL,
 	asap_is_our_file,
