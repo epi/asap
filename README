@@ -2,8 +2,7 @@ ASAP - Another Slight Atari Player
 ----------------------------------
 
 ASAP is a player of Atari 8-bit music for modern computers.
-It provides high-quality, identical to the popular Atari800 emulator,
-emulation of the POKEY sound chip and the 6502 processor.
+It emulates the POKEY sound chip and the 6502 processor.
 
 This release includes the following programs that use the ASAP engine:
 * ASAP2WAV - portable command-line utility that generates WAV files
@@ -15,7 +14,7 @@ This release includes the following programs that use the ASAP engine:
 
 Currently supported input formats are:
 * SAP (Slight Atari Player - standard file format for playing Atari 8-bit
-  music on modern computers, samples are not supported yet)
+  music on modern computers)
 * CMC (Chaos Music Composer)
 * CMR (CMC Rzog - CMC with modified bass sounds)
 * DMC (DoublePlay CMC - CMC with 6502 routines executed at double rate
@@ -29,8 +28,7 @@ Currently supported input formats are:
 * TM2 (Theta Music Composer 2.x)
 
 The biggest collection of SAP files is ASMA (Atari SAP Music Archive,
-http://asma.atari.org). About 10% of files in ASMA contain samples and cannot
-be used with the current version of ASAP.
+http://asma.atari.org).
 
 If you are interested in the ASAP project, please subscribe its mailing list:
 https://lists.sourceforge.net/lists/listinfo/asap-users
