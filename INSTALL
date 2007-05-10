@@ -6,19 +6,15 @@ If you want to compile an official release of ASAP, get the source distribution
 On Unix-like systems:
 tar zxf asap-*.tar.gz
 On Windows you may use 7-Zip.
-Source distributions of ASAP include the part of Atari800 emulator sources
-used by ASAP (POKEY and 6502 emulation).
 
 If you instead want to compile the latest version from the CVS, checkout
-the "asap" module of the "asap" project and the "atari800" module
-of the "atari800" project into the same directory (so it contains
-the subdirectories "asap" and "atari800" after the checkouts).
+the "asap" module of the "asap" project.
 Using a command-line CVS client:
 mkdir asap-cvs
 cd asap-cvs
 cvs -z9 -d:pserver:anonymous@asap.cvs.sourceforge.net:/cvsroot/asap co -P asap
-cvs -z9 -d:pserver:anonymous@atari800.cvs.sourceforge.net:/cvsroot/atari800 co -P atari800
-You also need to install xasm (http://xasm.atari.org) to a directory on your PATH.
+You also need to install xasm (http://atariarea.krap.pl/x-asm) to a directory
+on your PATH.
 
 
 Building ASAP2WAV on Unix-like systems
@@ -30,9 +26,8 @@ From your shell prompt navigate to the "asap" directory (the one that
 contains "asap.c").
 
 If you got the sources from CVS, you additionally need the "autoconf"
-package and must run the following commands first:
+package and must run the following command first:
 autoconf
-autoheader
 
 To compile and install, run the following commands:
 ./configure

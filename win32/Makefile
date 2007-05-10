@@ -1,19 +1,19 @@
 VERSION = 0.4.0
 ASAP_DIR = ..\..\asap
-ATARI800_SRC_DIR = ..\..\atari800\src
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 
 CC = cl /nologo /O2 /GL /GR- /GS- /fp:fast /W3 /wd4996 /DNDEBUG
 LINKOPT = /link /release /opt:nowin98
 MKLIB = lib /nologo /ltcg /out:$@
-ASAP_CC = $(CC) /Fe$@ /DHAVE_CONFIG_H /DASAP /DSOUND /I . /I .. /I $(ATARI800_SRC_DIR)
+ASAP_CC = $(CC) /Fe$@ /I . /I ..
 XASM = xasm /q
 RC = rc /fo $@
 CLARM = clarm /nologo /O2 /W3 /DNDEBUG /DARM /D_ARM /DARM_ /DARMV4 /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
+PP = cl /nologo /EP
+JAVAC = javac -g:none
 
-COMMON_C = ..\asap.c ..\acpu.c $(ATARI800_SRC_DIR)\mzpokeysnd.c $(ATARI800_SRC_DIR)\pokeysnd.c $(ATARI800_SRC_DIR)\remez.c
-COMMON_H = config.h ..\asap.h ..\asap_internal.h ..\players.h ..\acpu.h $(ATARI800_SRC_DIR)\mzpokeysnd.h $(ATARI800_SRC_DIR)\pokey.h $(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h
-COMMON_DOC = ..\README + ..\CREDITS + ..\TODO + ..\NEWS
+COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
+COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
 
 all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll
 
@@ -43,11 +43,6 @@ all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll
 asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_CC) ..\asap2wav.c $(COMMON_C) $(LINKOPT)
 
-# ASAP2WAV - experimental
-
-asap2wavx.exe: ..\asap2wav.c ..\asap.c ..\apokeysnd.c ..\acpu.c config.h ..\asap.h ..\asap_internal.h ..\apokeysnd.h ..\players.h ..\acpu.h
-	$(ASAP_CC) /DAPOKEYSND ..\asap2wav.c ..\asap.c ..\apokeysnd.c ..\acpu.c $(LINKOPT)
-
 # WASAP
 
 wasap.exe: wasap\wasap.c $(COMMON_C) wasap\wasap.res $(COMMON_H) wasap\resource.h
@@ -55,14 +50,6 @@ wasap.exe: wasap\wasap.c $(COMMON_C) wasap\wasap.res $(COMMON_H) wasap\resource.
 
 wasap\wasap.res: wasap\wasap.rc ..\asap.h wasap\resource.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
 	$(RC) wasap\wasap.rc
-
-# WASAP - experimental
-
-wasapx.exe: wasap\wasap.c ..\asap.c ..\apokeysnd.c ..\acpu.c wasap\wasapx.res config.h ..\asap.h ..\asap_internal.h ..\apokeysnd.h ..\players.h ..\acpu.h wasap\resource.h
-	$(ASAP_CC) /DAPOKEYSND wasap\wasap.c ..\asap.c ..\apokeysnd.c ..\acpu.c wasap\wasapx.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
-
-wasap\wasapx.res: wasap\wasap.rc ..\asap.h wasap\resource.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
-	$(RC) /D APOKEYSND wasap\wasap.rc
 
 # Winamp
 
@@ -109,7 +96,7 @@ gspasap.res: settings.rc ..\asap.h settings.h
 wince: ..\gsplayer\gspasap.dll
 
 ..\gsplayer\gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) settings.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def $(COMMON_H) settings.h
-	$(CLARM) /Fe$@ /DHAVE_CONFIG_H /DASAP /DSOUND /I . /I .. /I $(ATARI800_SRC_DIR) \
+	$(CLARM) /Fe$@ /DHAVE_CONFIG_H /DASAP /DSOUND /I . /I .. \
 		/LD ..\gsplayer\gspasap.c $(COMMON_C) settings.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def /link /release /SUBSYSTEM:WINDOWSCE,3.00
 
 ..\gsplayer\gspasap.res: settings.rc ..\asap.h settings.h
@@ -120,19 +107,29 @@ wince: ..\gsplayer\gspasap.dll
 asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_CC) ..\asapscan.c $(COMMON_C) $(LINKOPT)
 
+# Java
+
+java: ..\java\ASAP.class
+
+..\java\ASAP.class: ..\java\ASAP.java
+	$(JAVAC) ..\java\ASAP.java
+
+..\java\ASAP.java: ..\java\ASAP.ppjava $(COMMON_C) $(COMMON_H)
+	$(PP) /I .. ..\java\ASAP.ppjava > ..\java\ASAP.java
+
 # delete generated files
 
 clean:
 	del ..\players\*.obx;..\players.h
 	del *.txt;*.obj;*.exp;*.lib
-	del asap2wav.exe;asap2wavx.exe
+	del asap2wav.exe
 	del wasap\wasap.res;wasap.exe
-	del wasap\wasapx.res;wasapx.exe
 	del winamp\in_asap.res;in_asap.dll
 	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\foo_asap.res;foo_asap.dll
 	del gspasap.dll;gspasap.res
 	del ..\gsplayer\gspasap.dll;..\gsplayer\gspasap.res
 	del asapscan.exe
+	del ..\java\ASAP.class;..\java\ASAP.java
 
 # prepare files for release
 
@@ -166,49 +163,37 @@ foo_asap.txt: foobar2000\README
 gspasap.txt: ..\gsplayer\gspasap.txt
 	copy $** $@
 
-dist: all foo wince ..\configure ..\config.h.in copying.txt credits.txt news.txt readme.txt todo.txt \
+dist: all foo wince ..\configure copying.txt credits.txt news.txt readme.txt todo.txt \
 	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt \
 	..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
-	del ..\..\asap-$(VERSION).tar.gz
-	del ..\..\asap-$(VERSION)-win32.zip
-	del ..\..\asap-$(VERSION)-wince-arm.zip
-	perl ..\maketar.pl -d asap-$(VERSION) \
-		-t $(ASAP_DIR)\asap.c $(ASAP_DIR)\asap.h $(ASAP_DIR)\asap_internal.h \
-		$(ASAP_DIR)\asap2wav.c $(ASAP_DIR)\asap2wav.1 \
-		$(ASAP_DIR)\asapscan.c \
-		$(ASAP_DIR)\acpu.c $(ASAP_DIR)\acpu.h \
-		$(ASAP_DIR)\apokeysnd.c $(ASAP_DIR)\apokeysnd.h \
-		$(ASAP_DIR)\players\cmc.asx $(ASAP_DIR)\players\mpt.asx \
-		$(ASAP_DIR)\players\rmt.asx $(ASAP_DIR)\players\tmc.asx $(ASAP_DIR)\players\tm2.asx \
-		$(ASAP_DIR)\configure.ac $(ASAP_DIR)\Makefile.in \
-		$(ASAP_DIR)\config.h.in $(ASAP_DIR)\ChangeLog \
-		$(ASAP_DIR)\COPYING $(ASAP_DIR)\CREDITS $(ASAP_DIR)\INSTALL \
-		$(ASAP_DIR)\NEWS $(ASAP_DIR)\README $(ASAP_DIR)\TODO \
-		$(ASAP_DIR)\gsplayer\gspasap.c $(ASAP_DIR)\gsplayer\mapplugin.h \
-		$(ASAP_DIR)\gsplayer\gspasap.def $(ASAP_DIR)\gsplayer\gspasap.txt \
-		$(ASAP_DIR)\win32\config.h $(ASAP_DIR)\win32\Makefile \
-		$(ASAP_DIR)\win32\settings.c \
-		$(ASAP_DIR)\win32\settings.h $(ASAP_DIR)\win32\settings.rc \
-		$(ASAP_DIR)\win32\wasap\wasap.c $(ASAP_DIR)\win32\wasap\README \
-		$(ASAP_DIR)\win32\wasap\resource.h $(ASAP_DIR)\win32\wasap\wasap.rc \
-		$(ASAP_DIR)\win32\foobar2000\foo_asap.cpp $(ASAP_DIR)\win32\foobar2000\README \
-		$(ASAP_DIR)\win32\winamp\in_asap.c $(ASAP_DIR)\win32\winamp\README \
-		$(ASAP_DIR)\win32\winamp\in2.h $(ASAP_DIR)\win32\winamp\out.h \
-		$(ASAP_DIR)\xmms\libasap.c $(ASAP_DIR)\xmms\libasap.map \
-		$(ATARI800_SRC_DIR)\mzpokeysnd.c $(ATARI800_SRC_DIR)\mzpokeysnd.h \
-		$(ATARI800_SRC_DIR)\pokey.h \
-		$(ATARI800_SRC_DIR)\pokeysnd.c $(ATARI800_SRC_DIR)\remez.c \
-		$(ATARI800_SRC_DIR)\pokeysnd.h $(ATARI800_SRC_DIR)\remez.h \
-		-b $(ASAP_DIR)\players\cmc.obx $(ASAP_DIR)\players\mpt.obx \
-		$(ASAP_DIR)\players\rmt4.obx $(ASAP_DIR)\players\rmt8.obx \
-		$(ASAP_DIR)\players\tmc.obx $(ASAP_DIR)\players\tm2.obx \
-		$(ASAP_DIR)\win32\wasap\play.ico $(ASAP_DIR)\win32\wasap\stop.ico \
-		$(ASAP_DIR)\win32\wasap\wasap.ico \
-		-s $(ASAP_DIR)\config.guess $(ASAP_DIR)\config.sub \
-		$(ASAP_DIR)\install-sh $(ASAP_DIR)\configure \
-		$(ASAP_DIR)\chksap.pl \
-		$(ASAP_DIR)\maketar.pl $(ASAP_DIR)\raw2c.pl \
-		| 7z a -tgzip -si -mx=9 ..\..\asap-$(VERSION).tar.gz
+	cd ..
+	del ..\asap-$(VERSION).tar.gz
+	del ..\asap-$(VERSION)-win32.zip
+	del ..\asap-$(VERSION)-wince-arm.zip
+	perl maketar.pl -d asap-$(VERSION) \
+		-t asap.c asap.h asap_internal.h acpu.c apokeysnd.c \
+		asap2wav.c asap2wav.1 asapscan.c \
+		players\cmc.asx players\mpt.asx players\rmt.asx players\tmc.asx players\tm2.asx \
+		configure.ac Makefile.in \
+		ChangeLog COPYING CREDITS INSTALL NEWS README TODO \
+		gsplayer\gspasap.c gsplayer\mapplugin.h \
+		gsplayer\gspasap.def gsplayer\gspasap.txt \
+		java\ASAP.ppjava \
+		win32\Makefile \
+		win32\settings.c win32\settings.h win32\settings.rc \
+		win32\foobar2000\foo_asap.cpp win32\foobar2000\README \
+		win32\wasap\wasap.c win32\wasap\README \
+		win32\wasap\resource.h win32\wasap\wasap.rc \
+		win32\winamp\in_asap.c win32\winamp\README \
+		win32\winamp\in2.h win32\winamp\out.h \
+		xmms\libasap.c xmms\libasap.map \
+		-b players\cmc.obx players\mpt.obx \
+		players\rmt4.obx players\rmt8.obx \
+		players\tmc.obx players\tm2.obx \
+		win32\wasap\play.ico win32\wasap\stop.ico win32\wasap\wasap.ico \
+		-s install-sh configure chksap.pl maketar.pl raw2c.pl \
+		| 7z a -tgzip -si -mx=9 ..\asap-$(VERSION).tar.gz
+	cd win32
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip \
 		copying.txt credits.txt news.txt readme.txt todo.txt \
 		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt \
