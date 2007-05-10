@@ -21,7 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,36 +28,21 @@
 
 #include "asap.h"
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-static int no_input_files = TRUE;
+static abool no_input_files = TRUE;
 
 static void print_help(void)
 {
 	printf(
 		"Usage: asap2wav [OPTIONS] INPUTFILE...\n"
 		"Each INPUTFILE must be in a supported format:\n"
-#ifdef STEREO_SOUND
 		"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC, TM8 or TM2.\n"
-#else
-		"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC or TM2.\n"
-#endif
 		"Options:\n"
 		"-o FILE     --output=FILE      Set output file name\n"
 		"-o -        --output=-         Write to standard output\n"
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
 		"-t TIME     --time=TIME        Set output length MM:SS\n"
-#ifndef APOKEYSND
-		"-r FREQ     --rate=FREQ        Set sample rate in Hz (default: 44100)\n"
-		"-q QUALITY  --quality=QUALITY  Set sound quality 0-3 (default: 1)\n"
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
-#endif
 		"            --raw              Output raw audio (no WAV header)\n"
 		"-h          --help             Display this information\n"
 		"-v          --version          Display version information\n"
@@ -84,16 +68,9 @@ static void fatal_error(const char *format, ...)
 }
 
 static const char *output_file = NULL;
-static int output_header = TRUE;
+static abool output_header = TRUE;
 static int song = -1;
-#ifdef APOKEYSND
-static const int frequency = 44100;
-static const int use_16bit = FALSE;
-#else
-static int quality = 1;
-static int frequency = 44100;
-static int use_16bit = TRUE;
-#endif
+static abool use_16bit = TRUE;
 static int duration = -1;
 
 static void set_dec(const char *s, int *result, const char *name,
@@ -138,11 +115,11 @@ static void fput32(int x, FILE *fp)
 static void process_file(const char *input_file)
 {
 	FILE *fp;
-	static unsigned char module[ASAP_MODULE_MAX];
+	static byte module[ASAP_MODULE_MAX];
 	int module_len;
-	const ASAP_ModuleInfo *module_info;
+	static ASAP_State asap;
 	int n_bytes;
-	static unsigned char buffer[8192];
+	static byte buffer[8192];
 	if (strlen(input_file) >= FILENAME_MAX)
 		fatal_error("filename too long");
 	fp = fopen(input_file, "rb");
@@ -150,25 +127,21 @@ static void process_file(const char *input_file)
 		fatal_error("cannot open %s", input_file);
 	module_len = fread(module, 1, sizeof(module), fp);
 	fclose(fp);
-#ifndef APOKEYSND
-	ASAP_Initialize(frequency, use_16bit ? AUDIO_FORMAT_S16_LE : AUDIO_FORMAT_U8, quality);
-#endif
-	module_info = ASAP_Load(input_file, module, module_len);
-	if (module_info == NULL)
+	if (!ASAP_Load(&asap, input_file, module, module_len))
 		fatal_error("%s: format not supported", input_file);
 	if (song < 0)
-		song = module_info->default_song;
-	if (song >= module_info->songs) {
+		song = asap.module_info.default_song;
+	if (song >= asap.module_info.songs) {
 		fatal_error("you have requested subsong %d ...\n"
 			"... but %s contains only %d subsongs",
-			song, input_file, module_info->songs);
+			song, input_file, asap.module_info.songs);
 	}
 	if (duration < 0) {
-		duration = module_info->durations[song];
+		duration = asap.module_info.durations[song];
 		if (duration < 0)
 			duration = 180 * 1000;
 	}
-	ASAP_PlaySong(song, duration);
+	ASAP_PlaySong(&asap, song, duration);
 	if (output_file == NULL) {
 		const char *dot;
 		static char output_default[FILENAME_MAX];
@@ -187,14 +160,14 @@ static void process_file(const char *input_file)
 			fatal_error("cannot write %s", output_file);
 	}
 	if (output_header) {
-		int block_size = module_info->channels << use_16bit;
-		int bytes_per_second = frequency * block_size;
-		n_bytes = (int) ((double) duration * frequency / 1000) * block_size;
+		int block_size = asap.module_info.channels << use_16bit;
+		int bytes_per_second = ASAP_SAMPLE_RATE * block_size;
+		n_bytes = duration * (ASAP_SAMPLE_RATE / 100) / 10 * block_size;
 		fwrite("RIFF", 1, 4, fp);
 		fput32(n_bytes + 36, fp);
 		fwrite("WAVEfmt \x10\0\0\0\1\0", 1, 14, fp);
-		fput16(module_info->channels, fp);
-		fput32(frequency, fp);
+		fput16(asap.module_info.channels, fp);
+		fput32(ASAP_SAMPLE_RATE, fp);
 		fput32(bytes_per_second, fp);
 		fput16(block_size, fp);
 		fput16(8 << use_16bit, fp);
@@ -202,7 +175,8 @@ static void process_file(const char *input_file)
 		fput32(n_bytes, fp);
 	}
 	do {
-		n_bytes = ASAP_Generate(buffer, sizeof(buffer));
+		n_bytes = ASAP_Generate(&asap, buffer, sizeof(buffer),
+			use_16bit ? ASAP_FORMAT_S16_LE : ASAP_FORMAT_U8);
 		if (fwrite(buffer, 1, n_bytes, fp) != n_bytes) {
 			fclose(fp);
 			fatal_error("error writing to %s", output_file);
@@ -235,22 +209,12 @@ int main(int argc, char *argv[])
 			set_time(argv[++i]);
 		else if (strncmp(arg, "--time=", 7) == 0)
 			set_time(arg + 7);
-#ifndef APOKEYSND
-		else if (arg[1] == 'r' && arg[2] == '\0')
-			set_dec(argv[++i], &frequency, "sample rate", 4000, 65535);
-		else if (strncmp(arg, "--rate=", 7) == 0)
-			set_dec(arg + 7, &frequency, "sample rate", 4000, 65535);
-		else if (arg[1] == 'q' && arg[2] == '\0')
-			set_dec(argv[++i], &quality, "quality", 0, 3);
-		else if (strncmp(arg, "--quality=", 10) == 0)
-			set_dec(arg + 10, &quality, "quality", 0, 3);
 		else if ((arg[1] == 'b' && arg[2] == '\0')
 			|| strcmp(arg, "--byte-samples") == 0)
 			use_16bit = FALSE;
 		else if ((arg[1] == 'w' && arg[2] == '\0')
 			|| strcmp(arg, "--word-samples") == 0)
 			use_16bit = TRUE;
-#endif
 		else if (strcmp(arg, "--raw") == 0)
 			output_header = FALSE;
 		else if ((arg[1] == 'h' && arg[2] == '\0')

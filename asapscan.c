@@ -21,7 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,28 +28,17 @@
 
 #include "asap.h"
 
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
+void call_6502_player(ASAP_State *as);
 
-extern unsigned char AUDF[8];
-extern unsigned char AUDC[8];
-extern unsigned char AUDCTL[2];
-extern int sap_fastplay;
-void call_6502_player(void);
-
-static int detect_time = FALSE;
+static abool detect_time = FALSE;
 static int scan_player_calls;
 static int silence_player_calls;
 static int loop_check_player_calls;
 static int loop_min_player_calls;
-static unsigned char *registers_dump;
+static byte *registers_dump;
 
-static const ASAP_ModuleInfo *module_info;
-static int dump = FALSE;
+static ASAP_State asap;
+static abool dump = FALSE;
 
 #define FEATURE_CHECK          1
 #define FEATURE_15_KHZ         2
@@ -70,14 +58,46 @@ static void print_help(void)
 	);
 }
 
+static abool store_pokey(byte *p, PokeyState *ps)
+{
+	abool is_silence = TRUE;
+	p[0] = ps->audf1;
+	p[1] = ps->audc1;
+	if ((ps->audc1 & 0xf) != 0)
+		is_silence = FALSE;
+	p[2] = ps->audf2;
+	p[3] = ps->audc2;
+	if ((ps->audc2 & 0xf) != 0)
+		is_silence = FALSE;
+	p[4] = ps->audf3;
+	p[5] = ps->audc3;
+	if ((ps->audc3 & 0xf) != 0)
+		is_silence = FALSE;
+	p[6] = ps->audf4;
+	p[7] = ps->audc4;
+	if ((ps->audc4 & 0xf) != 0)
+		is_silence = FALSE;
+	p[8] = ps->audctl;
+	return is_silence;
+}
+
+static void print_pokey(PokeyState *ps)
+{
+	printf(
+		"%02X %02X  %02X %02X  %02X %02X  %02X %02X  %02X",
+		ps->audf1, ps->audc1, ps->audf2, ps->audc2,
+		ps->audf3, ps->audc3, ps->audf4, ps->audc4, ps->audctl
+	);
+}
+
 static int seconds_to_player_calls(int seconds)
 {
-	return (int) (seconds * 1773447.0 / 114.0 / sap_fastplay);
+	return (int) (seconds * 1773447.0 / 114.0 / asap.sap_fastplay);
 }
 
 static int player_calls_to_milliseconds(int player_calls)
 {
-	return (int) ceil(player_calls * sap_fastplay * 114.0 * 1000 / 1773447.0);
+	return (int) ceil(player_calls * asap.sap_fastplay * 114.0 * 1000 / 1773447.0);
 }
 
 void scan_song(int song)
@@ -85,44 +105,33 @@ void scan_song(int song)
 	int i;
 	int silence_run = 0;
 	int loop_bytes = 18 * loop_check_player_calls;
-	ASAP_PlaySong(song, -1);
+	ASAP_PlaySong(&asap, song, -1);
 	for (i = 0; i < scan_player_calls; i++) {
-		unsigned char *p = registers_dump + 18 * i;
-		int j;
-		int is_silence = TRUE;
-		call_6502_player();
-		for (j = 0; j < 8; j++) {
-			p[j] = AUDF[j];
-			p[8 + j] = AUDC[j];
-			if ((AUDC[j] & 0xf) != 0)
-				is_silence = FALSE;
-		}
-		p[16] = AUDCTL[0];
-		p[17] = AUDCTL[1];
+		byte *p = registers_dump + 18 * i;
+		abool is_silence;
+		call_6502_player(&asap);
+		is_silence = store_pokey(p, &asap.base_pokey);
+		is_silence &= store_pokey(p + 9, &asap.extra_pokey);
 		if (dump) {
-			printf(
-				"%6.2f: %02X %02X  %02X %02X  %02X %02X  %02X %02X  %02X",
-				i * sap_fastplay * 114.0 / 1773447.0,
-				AUDF[0], AUDC[0], AUDF[1], AUDC[1], AUDF[2], AUDC[2], AUDF[3], AUDC[3], AUDCTL[0]
-			);
-			if (module_info->channels > 1) {
-				printf(
-					"  |  %02X %02X  %02X %02X  %02X %02X  %02X %02X  %02X\n",
-					AUDF[4], AUDC[4], AUDF[5], AUDC[5], AUDF[6], AUDC[6], AUDF[7], AUDC[7], AUDCTL[1]
-				);
+			printf("%6.2f: ", i * asap.sap_fastplay * 114.0 / 1773447.0);
+			print_pokey(&asap.base_pokey);
+			if (asap.module_info.channels == 2) {
+				printf("  |  ");
+				print_pokey(&asap.extra_pokey);
 			}
-			else
-				printf("\n");
+			printf("\n");
 		}
 		if (features != 0) {
-			if (((AUDCTL[0] | AUDCTL[1]) & 1) != 0)
+			int c1 = asap.base_pokey.audctl;
+			int c2 = asap.extra_pokey.audctl;
+			if (((c1 | c2) & 1) != 0)
 				features |= FEATURE_15_KHZ;
-			if (((AUDCTL[0] | AUDCTL[1]) & 6) != 0)
+			if (((c1 | c2) & 6) != 0)
 				features |= FEATURE_HIPASS_FILTER;
-			if (((AUDCTL[0] & 0x40) != 0 && (AUDC[0] & 0xf) != 0)
-			|| ((AUDCTL[0] & 0x20) != 0 && (AUDC[2] & 0xf) != 0))
+			if (((c1 & 0x40) != 0 && (asap.base_pokey.audc1 & 0xf) != 0)
+			|| ((c1 & 0x20) != 0 && (asap.base_pokey.audc3 & 0xf) != 0))
 				features |= FEATURE_LOW_OF_16_BIT;
-			if (((AUDCTL[0] | AUDCTL[1]) & 0x80) != 0)
+			if (((c1 | c2) & 0x80) != 0)
 				features |= FEATURE_9_BIT_POLY;
 		}
 		if (detect_time) {
@@ -137,7 +146,7 @@ void scan_song(int song)
 			else
 				silence_run = 0;
 			if (i > loop_check_player_calls) {
-				unsigned char *q;
+				byte *q;
 				if (memcmp(p - loop_bytes - 18, p - loop_bytes, loop_bytes) == 0) {
 					/* POKEY registers do not change - probably an ultrasound */
 					int duration = player_calls_to_milliseconds(i - loop_check_player_calls);
@@ -166,7 +175,7 @@ int main(int argc, char *argv[])
 	int loop_check_seconds = 3 * 60;
 	int loop_min_seconds = 5;
 	FILE *fp;
-	static unsigned char module[ASAP_MODULE_MAX];
+	static byte module[ASAP_MODULE_MAX];
 	int module_len;
 	int song;
 	if (argc != 3) {
@@ -191,9 +200,7 @@ int main(int argc, char *argv[])
 	}
 	module_len = fread(module, 1, sizeof(module), fp);
 	fclose(fp);
-	ASAP_Initialize(44100, AUDIO_FORMAT_U8, 0);
-	module_info = ASAP_Load(input_file, module, module_len);
-	if (module_info == NULL) {
+	if (!ASAP_Load(&asap, input_file, module, module_len)) {
 		fprintf(stderr, "asapscan: %s: format not supported\n", input_file);
 		return 1;
 	}
@@ -206,7 +213,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "asapscan: out of memory\n");
 		return 1;
 	}
-	for (song = 0; song < module_info->songs; song++)
+	for (song = 0; song < asap.module_info.songs; song++)
 		scan_song(song);
 	free(registers_dump);
 	if (features != 0) {
