@@ -5,6 +5,8 @@
   java/ASAP_ModuleInfo.java, java/ASAP2WAV.java, win32/Makefile:
   ASAP can be compiled as pure Java!
 
+* java/ASAPApplet.java, win32/Makefile: simple Java applet
+
 
 2007-05-10  Piotr Fusik  <fox@scene.pl>
 * acpu.c, acpu.h, apokeysnd.c, apokeysnd.h, asap.c, asap.h, asap_internal.h,

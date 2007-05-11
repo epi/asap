@@ -10,7 +10,8 @@ XASM = xasm /q
 RC = rc /fo $@
 CLARM = clarm /nologo /O2 /W3 /DNDEBUG /DARM /D_ARM /DARM_ /DARMV4 /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
 PP = cl /nologo /EP
-JAVAC = javac
+JAVAC = javac -classpath ..\java -d ..\java
+JAR = jar
 
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
@@ -109,13 +110,26 @@ asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
 
 # Java
 
-java: ..\java\ASAP2WAV.class
+java: ..\java\ASAP2WAV.class ..\java\asap_applet.jar
 
-..\java\ASAP2WAV.class: ..\java\ASAP2WAV.java ..\java\ASAP.java ..\java\ASAP_ModuleInfo.java
-	$(JAVAC) $**
+..\java\ASAP2WAV.class: ..\java\ASAP2WAV.java ..\java\net\sf\asap\ASAP.class
+	$(JAVAC) ..\java\ASAP2WAV.java
+
+..\java\asap_applet.jar: ..\java\ASAPApplet.class ..\java\net\sf\asap\ASAP.class \
+	..\java\net\sf\asap\ASAP_ModuleInfo.class ..\java\net\sf\asap\ASAP_State.class ..\java\net\sf\asap\PokeyState.class
+	$(JAR) cf $@ -C ..\java ASAPApplet.class -C ..\java net\sf\asap
+
+..\java\ASAPApplet.class: ..\java\ASAPApplet.java ..\java\net\sf\asap\ASAP.class
+	$(JAVAC) ..\java\ASAPApplet.java
+
+..\java\net\sf\asap\ASAP.class: ..\java\ASAP.java ..\java\net\sf\asap\ASAP_ModuleInfo.class
+	$(JAVAC) ..\java\ASAP.java
 
 ..\java\ASAP.java: ..\java\ASAP.ppjava $(COMMON_C) $(COMMON_H)
 	$(PP) /I .. ..\java\ASAP.ppjava > ..\java\ASAP.java
+
+..\java\net\sf\asap\ASAP_ModuleInfo.class: ..\java\ASAP_ModuleInfo.java
+	$(JAVAC) ..\java\ASAP_ModuleInfo.java
 
 # delete generated files
 
