@@ -10,7 +10,7 @@ XASM = xasm /q
 RC = rc /fo $@
 CLARM = clarm /nologo /O2 /W3 /DNDEBUG /DARM /D_ARM /DARM_ /DARMV4 /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
 PP = cl /nologo /EP
-JAVAC = javac -g:none
+JAVAC = javac
 
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
@@ -109,10 +109,10 @@ asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
 
 # Java
 
-java: ..\java\ASAP.class
+java: ..\java\ASAP2WAV.class
 
-..\java\ASAP.class: ..\java\ASAP.java
-	$(JAVAC) ..\java\ASAP.java
+..\java\ASAP2WAV.class: ..\java\ASAP2WAV.java ..\java\ASAP.java ..\java\ASAP_ModuleInfo.java
+	$(JAVAC) $**
 
 ..\java\ASAP.java: ..\java\ASAP.ppjava $(COMMON_C) $(COMMON_H)
 	$(PP) /I .. ..\java\ASAP.ppjava > ..\java\ASAP.java
@@ -129,7 +129,7 @@ clean:
 	del gspasap.dll;gspasap.res
 	del ..\gsplayer\gspasap.dll;..\gsplayer\gspasap.res
 	del asapscan.exe
-	del ..\java\ASAP.class;..\java\ASAP.java
+	del ..\java\*.class;..\java\ASAP.java
 
 # prepare files for release
 
@@ -178,7 +178,7 @@ dist: all foo wince ..\configure copying.txt credits.txt news.txt readme.txt tod
 		ChangeLog COPYING CREDITS INSTALL NEWS README TODO \
 		gsplayer\gspasap.c gsplayer\mapplugin.h \
 		gsplayer\gspasap.def gsplayer\gspasap.txt \
-		java\ASAP.ppjava \
+		java\ASAP.ppjava java\ASAP_ModuleInfo.java java\ASAP2WAV.java \
 		win32\Makefile \
 		win32\settings.c win32\settings.h win32\settings.rc \
 		win32\foobar2000\foo_asap.cpp win32\foobar2000\README \

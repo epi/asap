@@ -203,10 +203,6 @@ CONST_LOOKUP int opcode_cycles[] =
 #define INS          INC; data = nz; DO_SBC
 #define INS_ZP       INC_ZP; data = nz; DO_SBC
 
-#ifndef SBYTE
-#define SBYTE        signed char
-#endif
-
 #define BRANCH(cond) \
 	if (cond) { \
 		addr = (SBYTE) FETCH; \
@@ -229,11 +225,7 @@ CONST_LOOKUP int opcode_cycles[] =
 		AS cycle += 7; \
 	}
 
-#ifdef JAVA
-private void Cpu_Run(int cycle_limit)
-#else
-void Cpu_Run(ASAP_State *as, int cycle_limit)
-#endif
+ASAP_FUNC void Cpu_Run(ASAP_State PTR as, int cycle_limit)
 {
 	int pc;
 	int nz;

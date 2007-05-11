@@ -22,43 +22,194 @@
  */
 
 #define JAVA
-#define CONST_LOOKUP          private static final
-#define AS                    this.
-#define SBYTE                 byte
-#define dGetByte(addr)        (memory[addr] & 0xff)
-#define dPutByte(addr, data)  memory[addr] = (byte) (data)
-#define GetByte(addr)        (((addr) & 0xf900) == 0xd000 ? ASAP_GetByte(addr) : dGetByte(addr))
-#define PutByte(addr, data)  do { if (((addr) & 0xf900) == 0xd000) ASAP_PutByte(addr, data); else dPutByte(addr, data); } while (false)
+#define abool                   boolean
+#define FALSE                   false
+#define TRUE                    true
+#define NULL                    null
+#define const
+#define CONST_LOOKUP            private static final
+#define FILE_FUNC               private static
+#define ASAP_FUNC               private static
+#define PTR
+#define ADDRESSOF
+#define VOIDPTR                 byte[]
+#define UBYTE(data)             ((data) & 0xff)
+#define SBYTE                   byte
+#define STRING                  String
+#define SET_STRING(dest, src)   dest = src
+#define sizeof(array)           array.length
+#define ZERO_ARRAY(array)       for (int ii = 0; ii < array.length; ii++) array[ii] = 0
+#define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
+                                System.arraycopy(src, src_offset, dest, dest_offset, len)
+#define NEW_ARRAY(type, size)   [] = new type[size]
+#define INIT_BOOL_ARRAY(array)
+
+#define AS                      as.
+#define PS                      ps.
+#define MODULE_INFO             module_info.
+#define ASAP_SAMPLE_RATE        44100
+#define ASAP_FORMAT_U8          8
+#define ASAP_FORMAT_S16_LE      16
+#define ASAP_FORMAT_S16_BE      -16
+#define ASAP_SampleFormat       int
 
 package net.sf.asap;
 
-public final class ASAP {
+class PokeyState
+{
+	int audctl;
+	int poly_index;
+	int div_cycles;
+	int audf1;
+	int audf2;
+	int audf3;
+	int audf4;
+	int audc1;
+	int audc2;
+	int audc3;
+	int audc4;
+	int tick_cycle1;
+	int tick_cycle2;
+	int tick_cycle3;
+	int tick_cycle4;
+	int period_cycles1;
+	int period_cycles2;
+	int period_cycles3;
+	int period_cycles4;
+	int reload_cycles1;
+	int reload_cycles3;
+	int out1;
+	int out2;
+	int out3;
+	int out4;
+	int delta1;
+	int delta2;
+	int delta3;
+	int delta4;
+	byte[] delta_buffer = new byte[1024];
+}
 
-	private int cycle;
-	private int cpu_pc;
-	private int cpu_a;
-	private int cpu_x;
-	private int cpu_y;
-	private int cpu_s;
-	private int cpu_nz;
-	private int cpu_c;
-	private int cpu_vdi;
-	private int nearest_event_cycle;
-	private int timer1_cycle;
-	private int timer2_cycle;
-	private int timer4_cycle;
-	private int irqst;
-	private byte[] memory = new byte[65536];
+class ASAP_State
+{
+	int cycle;
+	int cpu_pc;
+	int cpu_a;
+	int cpu_x;
+	int cpu_y;
+	int cpu_s;
+	int cpu_nz;
+	int cpu_c;
+	int cpu_vdi;
+	int nearest_event_cycle;
+	int timer1_cycle;
+	int timer2_cycle;
+	int timer4_cycle;
+	int irqst;
+	PokeyState base_pokey = new PokeyState();
+	PokeyState extra_pokey = new PokeyState();
+	int sample_offset;
+	int sample_index;
+	int samples;
+	int iir_acc_left;
+	int iir_acc_right;
+	ASAP_ModuleInfo module_info = new ASAP_ModuleInfo();
+	char sap_type;
+	int sap_player;
+	int sap_music;
+	int sap_init;
+	int sap_fastplay;
+	int tmc_per_frame;
+	int tmc_per_frame_counter;
+	int current_song;
+	int current_duration;
+	int blocks_played;
+	byte[] song_pos = new byte[128];
+	byte[] poly9_lookup = new byte[511];
+	byte[] poly17_lookup = new byte[16385];
+	byte[] memory = new byte[65536];
+}
+
+public final class ASAP
+{
+	// FIXME: Cannot store all 6502 player data because javac
+	// reports "code too large" error. This is because constant
+	// arrays are initialized by a static initializer, where
+	// at least 6 bytes of Java bytecode (dup, bipush index,
+	// bipush value, bastore) are needed to initialize a single byte!
+	// The player data should be probably loaded at runtime
+	// or try to store them as Strings...
+	private static final byte[] cmc_obx = { };
+	private static final byte[] mpt_obx = { };
+	private static final byte[] rmt4_obx = { };
+	private static final byte[] rmt8_obx = { };
+	private static final byte[] tmc_obx = { };
+	private static final byte[] tm2_obx = { };
 
 #include "acpu.c"
+#include "apokeysnd.c"
+#include "asap.c"
 
-	private int ASAP_GetByte(int addr)
+	private final ASAP_State as = new ASAP_State();
+
+	public static final int MODULE_MAX = 65000;
+
+	public static final int SAMPLE_RATE = ASAP_SAMPLE_RATE;
+
+	public static final int FORMAT_U8 = ASAP_FORMAT_U8;
+	public static final int FORMAT_S16_LE = ASAP_FORMAT_S16_LE;
+	public static final int FORMAT_S16_BE = ASAP_FORMAT_S16_BE;
+
+	public static boolean isOurFile(String filename)
 	{
-		return 0xff;
+		return ASAP_IsOurFile(filename);
 	}
 
-	private void ASAP_PutByte(int addr, int data)
+	public static ASAP_ModuleInfo getModuleInfo(String filename, byte[] module, int module_len)
 	{
+		ASAP_ModuleInfo module_info = new ASAP_ModuleInfo();
+		if (!ASAP_GetModuleInfo(module_info, filename, module, module_len))
+			throw new IllegalArgumentException();
+		return module_info;
 	}
 
+	public static int parseDuration(String s)
+	{
+		int i = s.indexOf(':');
+		int r = 0;
+		if (i >= 0) {
+			r = Integer.parseInt(s.substring(0, i)) * 60000;
+			s = s.substring(i + 1);
+		}
+		i = s.indexOf(' ');
+		if (i >= 0)
+			s = s.substring(0, i);
+		r += (int) (Double.parseDouble(s) * 1000);
+		return r;
+	}
+
+	public void load(String filename, byte[] module, int module_len)
+	{
+		if (!ASAP_Load(as, filename, module, module_len))
+			throw new IllegalArgumentException();
+	}
+
+	public ASAP_ModuleInfo getModuleInfo()
+	{
+		return as.module_info;
+	}
+
+	public void playSong(int song, int duration)
+	{
+		ASAP_PlaySong(as, song, duration);
+	}
+
+	public void seek(int position)
+	{
+		ASAP_Seek(as, position);
+	}
+
+	public int generate(byte[] buffer, int format)
+	{
+		return ASAP_Generate(as, buffer, buffer.length, format);
+	}
 }

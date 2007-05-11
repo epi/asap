@@ -174,7 +174,7 @@ abool ASAP_IsOurFile(const char *filename);
    ASAP_GetModuleInfo() returns true on success.
    You can call this function anytime. */
 abool ASAP_GetModuleInfo(ASAP_ModuleInfo *module_info, const char *filename,
-                         const byte *module, int module_len);
+                         const byte module[], int module_len);
 
 /* A helper function. Parses the string in the "mm:ss.xxx" format
    and returns the number of milliseconds or -1 if an error occurs. */
@@ -191,7 +191,7 @@ int ASAP_ParseDuration(const char *duration);
    If false is returned, the structure is invalid and you cannot
    call the following functions. */
 abool ASAP_Load(ASAP_State *as, const char *filename,
-                const byte *module, int module_len);
+                const byte module[], int module_len);
 
 /* Prepares ASAP to play the specified song of the loaded module.
    "as" is ASAP state initialized by ASAP_Load().

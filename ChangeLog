@@ -1,3 +1,11 @@
+2007-05-11  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c: increased precision of IIR
+
+* acpu.c, apokeysnd.c, asap.c, asap.h, asap_internal.h, java/ASAP.ppjava,
+  java/ASAP_ModuleInfo.java, java/ASAP2WAV.java, win32/Makefile:
+  ASAP can be compiled as pure Java!
+
+
 2007-05-10  Piotr Fusik  <fox@scene.pl>
 * acpu.c, acpu.h, apokeysnd.c, apokeysnd.h, asap.c, asap.h, asap_internal.h,
   asap2wav.c, configure.ac, config.guess, config.sub, Makefile.in,
@@ -10,7 +18,7 @@
 * win32/winamp/in_asap.c: enabled Winamp equalizer support
 
 * java/ASAP.ppjava, acpu.c, asap_internal.h, win32/Makefile, TODO:
-  6502 emulator can be compiled in Java
+  6502 emulator can be compiled as Java
 
 
 2007-05-09  Piotr Fusik  <fox@scene.pl>
