@@ -22,7 +22,8 @@
  */
 
 import java.io.*;
-import net.sf.asap.*;
+import net.sf.asap.ASAP;
+import net.sf.asap.ASAP_ModuleInfo;
 
 public class ASAP2WAV
 {
