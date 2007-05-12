@@ -122,20 +122,22 @@ static void *asap_play_thread(void *arg)
 
 static void asap_play_file(char *filename)
 {
+	int song;
 	int duration;
 	if (!asap_load_file(filename))
 		return;
 	if (!ASAP_Load(&asap, filename, module, module_len))
 		return;
-	duration = module_info->durations[module_info->default_song];
-	ASAP_PlaySong(&asap, module_info->default_song, duration);
-	channels = module_info->channels;
+	song = asap.module_info.default_song;
+	duration = asap.module_info.durations[song];
+	ASAP_PlaySong(&asap, song, duration);
+	channels = asap.module_info.channels;
 
 	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
 		ASAP_SAMPLE_RATE, channels))
 		return;
 
-	mod.set_info((char *) module_info->name, duration, BITS_PER_SAMPLE * 1000,
+	mod.set_info((char *) asap.module_info.name, duration, BITS_PER_SAMPLE * 1000,
 		ASAP_SAMPLE_RATE, channels);
 	seek_to = -1;
 	thread_run = TRUE;
