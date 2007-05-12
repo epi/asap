@@ -893,11 +893,11 @@ ASAP_FUNC void ASAP_Seek(ASAP_State PTR as, int position)
 	int block = milliseconds_to_blocks(position);
 	if (block < AS blocks_played)
 		ASAP_PlaySong(as, AS current_song, AS current_duration);
-	while (AS blocks_played + AS samples - AS sample_offset < block) {
-		AS blocks_played += AS samples - AS sample_offset;
+	while (AS blocks_played + AS samples - AS sample_index < block) {
+		AS blocks_played += AS samples - AS sample_index;
 		call_6502_player(as);
 	}
-	AS sample_offset += block - AS blocks_played;
+	AS sample_index += block - AS blocks_played;
 	AS blocks_played = block;
 }
 
