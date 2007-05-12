@@ -129,6 +129,11 @@ class ASAP_State
 	byte[] memory = new byte[65536];
 }
 
+/** Another Slight Atari Player.
+    It interprets music files created for 8-bit Atari computers,
+    emulates the 6502 processor and the POKEY sound chip
+    and generates audio samples.  ASAP performs no I/O operations
+    - music data must be passed in byte arrays. */
 public final class ASAP
 {
 	// FIXME: Cannot store all 6502 player data because javac
@@ -151,19 +156,44 @@ public final class ASAP
 
 	private final ASAP_State as = new ASAP_State();
 
+	/** ASAP version. */
+	public static final String VERSION = "0.4.0";
+
+	/** Maximum length of a supported input file.
+	    You can assume that files longer than this are not supported by ASAP. */
 	public static final int MODULE_MAX = 65000;
 
+	/** Output sample rate. */
 	public static final int SAMPLE_RATE = ASAP_SAMPLE_RATE;
 
+	/** Output format: 8-bit unsigned. */
 	public static final int FORMAT_U8 = ASAP_FORMAT_U8;
+
+	/** Output format: 16-bit signed little-endian. */
 	public static final int FORMAT_S16_LE = ASAP_FORMAT_S16_LE;
+
+	/** Output format: 16-bit signed big-endian. */
 	public static final int FORMAT_S16_BE = ASAP_FORMAT_S16_BE;
 
+	/** Creates a new instance of the player.
+	    The first method you call on the new object must be <code>load</code>. */
+	public ASAP()
+	{
+	}
+
+	/** Checks whether the extension of the passed filename is known to ASAP.
+	    @param filename filename to check
+	    @return <code>true</code> if filename is supported by ASAP */
 	public static boolean isOurFile(String filename)
 	{
 		return ASAP_IsOurFile(filename);
 	}
 
+	/** Returns information about a module.
+	    @param filename determines file format
+	    @param module contents of the file
+	    @param module_len length of the file
+	    @return file information */
 	public static ASAP_ModuleInfo getModuleInfo(String filename, byte[] module, int module_len)
 	{
 		ASAP_ModuleInfo module_info = new ASAP_ModuleInfo();
@@ -172,6 +202,10 @@ public final class ASAP
 		return module_info;
 	}
 
+	/** Parses a string in the <code>"mm:ss.xxx"</code> format
+	    and returns the number of milliseconds represented by the string.
+	    @param s string representation of time
+	    @return number of milliseconds represented by the string */
 	public static int parseDuration(String s)
 	{
 		int i = s.indexOf(':');
@@ -187,27 +221,44 @@ public final class ASAP
 		return r;
 	}
 
+	/** Loads music data.
+	    @param filename determines file format
+	    @param module contents of the file
+	    @param module_len length of the file */
 	public void load(String filename, byte[] module, int module_len)
 	{
 		if (!ASAP_Load(as, filename, module, module_len))
 			throw new IllegalArgumentException();
 	}
 
+	/** Returns information about the loaded module.
+	    @return information about the loaded module */
 	public ASAP_ModuleInfo getModuleInfo()
 	{
 		return as.module_info;
 	}
 
+	/** Prepares ASAP to play the specified song of the loaded module.
+	    @param song zero-based song index
+		@param duration playback time in milliseconds,
+	    -1 means indefinitely */
 	public void playSong(int song, int duration)
 	{
 		ASAP_PlaySong(as, song, duration);
 	}
 
+	/** Rewinds the current song.
+	    @param position the requested absolute position in milliseconds */
 	public void seek(int position)
 	{
 		ASAP_Seek(as, position);
 	}
 
+	/** Fills the specified buffer with generated samples.
+	    @param buffer the destination buffer
+	    @param format format of samples
+	    @return number of bytes written in the buffer
+	    (less than <code>buffer.length</code> if reached the end of the song) */
 	public int generate(byte[] buffer, int format)
 	{
 		return ASAP_Generate(as, buffer, buffer.length, format);

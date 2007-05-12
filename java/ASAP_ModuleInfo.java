@@ -23,23 +23,24 @@
 
 package net.sf.asap;
 
+/** Information about a file recognized by ASAP. */
 public class ASAP_ModuleInfo {
-	/** author's name */
+	/** Music author's name. */
 	public String author;
-	/** title */
+	/** Music title. */
 	public String name;
-	/** creation date */
+	/** Music creation date. */
 	public String date;
-	/** author, name and date formatted in multiple lines */
+	/** Author, name and date formatted in multiple lines. */
 	public String all_info;
-	/* 1 for mono or 2 for stereo */
+	/** 1 for mono or 2 for stereo. */
 	public int channels;
-	/* number of subsongs */
+	/** Number of subsongs. */
 	public int songs;
-	/* 0-based index of the "main" subsong */
+	/** 0-based index of the "main" subsong. */
 	public int default_song;
-	/* lengths of songs, in milliseconds, -1 = unspecified */
+	/** Lengths of songs, in milliseconds, -1 = unspecified. */
 	public int[] durations = new int[32];
-	/* whether songs repeat or not */
+	/** Whether songs repeat or not. */
 	public boolean[] loops = new boolean[32];
 }
