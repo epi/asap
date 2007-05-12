@@ -1,4 +1,4 @@
-.TH ASAP2WAV 1 "May 6, 2007"
+.TH ASAP2WAV 1 "May 12, 2007"
 .SH NAME
 asap2wav \- convert Atari 8-bit music to WAV
 .SH SYNOPSIS
@@ -17,16 +17,15 @@ asap2wav \- convert Atari 8-bit music to WAV
 .I INPUTFILE...
 .SH DESCRIPTION
 .B asap2wav
-converts Atari 8-bit music files to WAV files. It internally uses
-high-quality, identical to the popular Atari800 emulator,
-emulation of the POKEY sound chip and the 6502 processor.
+converts Atari 8-bit music files to WAV files. It internally
+emulates the POKEY sound chip and the 6502 processor.
 .SH ARGUMENTS
 Format of the input files is detected from their filename extensions.
 Currently the following formats are supported:
 .TP
 SAP
 Slight Atari Player - standard file format for playing Atari 8-bit music
-on modern computers. Samples are not supported yet.
+on modern computers.
 .TP
 CMC
 Chaos Music Composer.
@@ -68,12 +67,6 @@ Select subsong number (zero-based).
 .TP
 \fB\-t\fR \fITIME\fR, \fB\-\-time\fR=\fITIME\fR
 Set output length MM:SS.
-.TP
-\fB\-r\fR \fIFREQ\fR, \fB\-\-rate\fR=\fIFREQ\fR
-Set sample rate in Hz (default: 44100).
-.TP
-\fB\-q\fR \fIQUALITY\fR, \fB\-\-quality\fR=\fIQUALITY\fR
-Set sound quality 0-3 (default: 1).
 .TP
 \fB\-b\fR, \fB\-\-byte-samples\fR
 Output 8-bit samples.
