@@ -6,12 +6,11 @@ CC = cl /nologo /O2 /GL /GR- /GS- /fp:fast /W3 /wd4996 /DNDEBUG
 LINKOPT = /link /release /opt:nowin98
 MKLIB = lib /nologo /ltcg /out:$@
 ASAP_CC = $(CC) /Fe$@ /I . /I ..
+PERL = perl
 XASM = xasm /q
 RC = rc /fo $@
 CLARM = clarm /nologo /O2 /W3 /DNDEBUG /DARM /D_ARM /DARM_ /DARMV4 /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
-PP = cl /nologo /EP
-JAVAC = javac -classpath ..\java -d ..\java
-JAR = jar
+GMAKE = make
 
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
@@ -19,7 +18,7 @@ COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
 all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll
 
 ..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
-	perl $** >$@
+	$(PERL) $** >$@
 
 ..\players\cmc.obx: ..\players\cmc.asx
 	$(XASM) $** /o:$@
@@ -108,28 +107,10 @@ wince: ..\gsplayer\gspasap.dll
 asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_CC) ..\asapscan.c $(COMMON_C) $(LINKOPT)
 
-# Java
+# java
 
-java: ..\java\ASAP2WAV.class ..\java\asap_applet.jar
-
-..\java\ASAP2WAV.class: ..\java\ASAP2WAV.java ..\java\net\sf\asap\ASAP.class
-	$(JAVAC) ..\java\ASAP2WAV.java
-
-..\java\asap_applet.jar: ..\java\ASAPApplet.class ..\java\net\sf\asap\ASAP.class \
-	..\java\net\sf\asap\ASAP_ModuleInfo.class ..\java\net\sf\asap\ASAP_State.class ..\java\net\sf\asap\PokeyState.class
-	$(JAR) cf $@ -C ..\java ASAPApplet.class -C ..\java net\sf\asap
-
-..\java\ASAPApplet.class: ..\java\ASAPApplet.java ..\java\net\sf\asap\ASAP.class
-	$(JAVAC) ..\java\ASAPApplet.java
-
-..\java\net\sf\asap\ASAP.class: ..\java\ASAP.java ..\java\net\sf\asap\ASAP_ModuleInfo.class
-	$(JAVAC) ..\java\ASAP.java
-
-..\java\ASAP.java: ..\java\ASAP.ppjava $(COMMON_C) $(COMMON_H)
-	$(PP) /I .. ..\java\ASAP.ppjava > ..\java\ASAP.java
-
-..\java\net\sf\asap\ASAP_ModuleInfo.class: ..\java\ASAP_ModuleInfo.java
-	$(JAVAC) ..\java\ASAP_ModuleInfo.java
+java:
+	$(GMAKE) -C ../java
 
 # delete generated files
 
@@ -143,7 +124,7 @@ clean:
 	del gspasap.dll;gspasap.res
 	del ..\gsplayer\gspasap.dll;..\gsplayer\gspasap.res
 	del asapscan.exe
-	del ..\java\*.class;..\java\ASAP.java
+	$(GMAKE) -C ../java clean
 
 # prepare files for release
 
@@ -177,7 +158,7 @@ foo_asap.txt: foobar2000\README
 gspasap.txt: ..\gsplayer\gspasap.txt
 	copy $** $@
 
-dist: all foo wince ..\configure copying.txt credits.txt news.txt readme.txt todo.txt \
+dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.txt todo.txt \
 	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt \
 	..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	cd ..
@@ -192,7 +173,10 @@ dist: all foo wince ..\configure copying.txt credits.txt news.txt readme.txt tod
 		ChangeLog COPYING CREDITS INSTALL NEWS README TODO \
 		gsplayer\gspasap.c gsplayer\mapplugin.h \
 		gsplayer\gspasap.def gsplayer\gspasap.txt \
-		java\ASAP.ppjava java\ASAP_ModuleInfo.java java\ASAP2WAV.java \
+		java\ASAP.ppjava java\ASAP_ModuleInfo.java \
+		java\ASAP2WAV.java java\ASAPApplet.java \
+		java\ASAPMIDlet.java java\MIDLET_MANIFEST.MF \
+		java\mf2jad.pl java\Makefile \
 		win32\Makefile \
 		win32\settings.c win32\settings.h win32\settings.rc \
 		win32\foobar2000\foo_asap.cpp win32\foobar2000\README \
