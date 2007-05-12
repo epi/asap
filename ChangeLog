@@ -1,3 +1,21 @@
+2007-05-12  Piotr Fusik  <fox@scene.pl>
+* asap.c: fixed ASAP_Seek() that incorrectly used sample_offset instead
+  of sample_index
+
+* asap.h: corrections in comments
+
+* java/Makefile, win32/Makefile: created separate Makefile for Java
+
+* java/ASAP.ppjava, java/ASAP_ModuleInfo.java: javadoc comments
+
+* java/ASAPMIDlet.java, java/MIDLET_MANIFEST.MF, java/mf2jad.pl, java/Makefile:
+  started coding a midlet - implemented a file selector
+
+* asap2wav.1: updated
+
+* xmms/libasap.c: fixed compilation errors
+
+
 2007-05-11  Piotr Fusik  <fox@scene.pl>
 * apokeysnd.c: increased precision of IIR
 
