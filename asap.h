@@ -49,7 +49,7 @@ extern "C" {
 	"by the Free Software Foundation; either version 2 of the License,\n" \
 	"or (at your option) any later version."
 
-/* Useful type definitions */
+/* Useful type definitions. */
 #ifndef FALSE
 #define FALSE  0
 #endif
@@ -152,7 +152,7 @@ typedef struct {
    You can assume that files longer than this are not supported by ASAP. */
 #define ASAP_MODULE_MAX   65000
 
-/* Sample rate */
+/* Output sample rate. */
 #define ASAP_SAMPLE_RATE  44100
 
 /* Output formats. */
@@ -162,17 +162,15 @@ typedef enum {
 	ASAP_FORMAT_S16_BE = -16  /* signed short, big-endian */
 } ASAP_SampleFormat;
 
-/* Checks whether the extension of the passed filename is known to ASAP.
-   Does no file operations. You can call this function anytime. */
+/* Checks whether the extension of the passed filename is known to ASAP. */
 abool ASAP_IsOurFile(const char *filename);
 
-/* Gets basic information about a module.
-   "filename" determines the file format.
-   "module" is the data (the contents of the file).
+/* Gets information about a module.
+   "filename" determines file format.
+   "module" is the music data (contents of the file).
    "module_len" is the number of data bytes.
    "module_info" is the structure where the information is returned.
-   ASAP_GetModuleInfo() returns true on success.
-   You can call this function anytime. */
+   ASAP_GetModuleInfo() returns true on success. */
 abool ASAP_GetModuleInfo(ASAP_ModuleInfo *module_info, const char *filename,
                          const byte module[], int module_len);
 
@@ -180,10 +178,10 @@ abool ASAP_GetModuleInfo(ASAP_ModuleInfo *module_info, const char *filename,
    and returns the number of milliseconds or -1 if an error occurs. */
 int ASAP_ParseDuration(const char *duration);
 
-/* Loads a module.
+/* Loads music data.
    "as" is the destination structure.
-   "filename" determines the file format.
-   "module" is the data (the contents of the file).
+   "filename" determines file format.
+   "module" is the music data (contents of the file).
    "module_len" is the number of data bytes.
    ASAP does not make copies of the passed pointers. You can overwrite
    or free "filename" and "module" once this function returns.
@@ -197,7 +195,7 @@ abool ASAP_Load(ASAP_State *as, const char *filename,
    "as" is ASAP state initialized by ASAP_Load().
    "song" is a zero-based index which must be less than the "songs" field
    of the ASAP_ModuleInfo structure.
-   "seconds" is playback time in milliseconds - use durations[song]
+   "duration" is playback time in milliseconds - use durations[song]
    unless you want to override it. -1 means indefinitely. */
 void ASAP_PlaySong(ASAP_State *as, int song, int duration);
 
@@ -206,12 +204,13 @@ void ASAP_PlaySong(ASAP_State *as, int song, int duration);
    "position" is the requested absolute position in milliseconds. */
 void ASAP_Seek(ASAP_State *as, int position);
 
-/* Fills in the specified buffer with generated samples.
+/* Fills the specified buffer with generated samples.
    "as" is ASAP state initialized by ASAP_PlaySong().
-   "buffer" is a buffer for samples, managed outside ASAP.
+   "buffer" is the destination buffer.
    "buffer_len" is the length of this buffer in bytes.
+   "format" is the format of samples.
    ASAP_Generate() returns number of bytes actually written
-   (less than buffer_len if reached the end).
+   (less than buffer_len if reached the end of the song).
    Normally you use a buffer of a few kilobytes or less,
    and call ASAP_Generate() in a loop or via a callback. */
 int ASAP_Generate(ASAP_State *as, void *buffer, int buffer_len,
