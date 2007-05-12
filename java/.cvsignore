@@ -1,6 +1,8 @@
 *.class
-ASAP.java
-net
-applet.html
-*.sap
 *.jar
+*.sap
+ASAP.java
+applet.html
+doc
+net
+preverified
