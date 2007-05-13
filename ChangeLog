@@ -1,8 +1,11 @@
 2007-05-13  Piotr Fusik  <fox@scene.pl>
-* acpu.c, apokeysnd.c, asap.c, asap.h, asap_internal.h - ASAP_State.cycle
-  is now real cycle rather than 6502 cycle
+* acpu.c, apokeysnd.c, asap.c, asap.h, asap_internal.h, java/ASAP.ppjava
+  - ASAP_State.cycle is now real cycle rather than 6502 cycle
 
 * asap.c: 6502 flag I is initially cleared - Digital_Trash.sap works
+
+* java/ASAPApplet.java: read() may return before end of file, so call it
+  repeatedly
 
 
 2007-05-12  Piotr Fusik  <fox@scene.pl>
