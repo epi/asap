@@ -63,11 +63,16 @@ public class ASAPApplet extends Applet implements Runnable
 	{
 		String filename = getParameter("file");
 		byte[] module;
-		int module_len;
+		int module_len = 0;
 		try {
 			InputStream is = new URL(getDocumentBase(), filename).openStream();
 			module = new byte[ASAP.MODULE_MAX];
-			module_len = is.read(module);
+			for (;;) {
+				int i = is.read(module, module_len, ASAP.MODULE_MAX - module_len);
+				if (i <= 0)
+					break;
+				module_len += i;
+			}
 			is.close();
 		} catch (IOException e) {
 			showStatus("ERROR LOADING " + filename);
