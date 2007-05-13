@@ -33,9 +33,9 @@ void Cpu_Run(ASAP_State *as, int cycle_limit);
 
 void PokeySound_Initialize(ASAP_State *as);
 void PokeySound_StartFrame(ASAP_State *as);
-void PokeySound_PutByte(ASAP_State *as, int addr, int data, int current_cycle);
-int PokeySound_GetRandom(ASAP_State *as, int addr, int current_cycle);
-void PokeySound_EndFrame(ASAP_State *as, int current_cycle);
+void PokeySound_PutByte(ASAP_State *as, int addr, int data);
+int PokeySound_GetRandom(ASAP_State *as, int addr);
+void PokeySound_EndFrame(ASAP_State *as, int cycle_limit);
 int PokeySound_Generate(ASAP_State *as, byte buffer[], int buffer_offset, int blocks, ASAP_SampleFormat format);
 
 #endif /* JAVA */

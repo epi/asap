@@ -183,18 +183,18 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 #define DO_AUDC(ch) \
 	if (data == PS audc##ch) \
 		break; \
-	generate(as, ps, current_cycle); \
+	generate(as, ps, AS cycle); \
 	PS audc##ch = data; \
 	if ((data & 0x10) != 0) { \
 		data &= 0xf; \
-		PS delta_buffer[CYCLE_TO_SAMPLE(current_cycle)] \
+		PS delta_buffer[CYCLE_TO_SAMPLE(AS cycle)] \
 			+= PS delta##ch > 0 ? data - PS delta##ch : data; \
 		PS delta##ch = data; \
 	} \
 	else { \
 		data &= 0xf; \
 		if (PS delta##ch > 0) { \
-			PS delta_buffer[CYCLE_TO_SAMPLE(current_cycle)] \
+			PS delta_buffer[CYCLE_TO_SAMPLE(AS cycle)] \
 				+= data - PS delta##ch; \
 			PS delta##ch = data; \
 		} \
@@ -203,7 +203,7 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 	} \
 	break;
 
-ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data, int current_cycle)
+ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 {
 	PokeyState PTR ps = (addr & 0x10) != 0 && AS module_info.channels == 2
 		? ADDRESSOF AS extra_pokey : ADDRESSOF AS base_pokey;
@@ -211,7 +211,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data, int cur
 	case 0x00:
 		if (data == PS audf1)
 			break;
-		generate(as, ps, current_cycle);
+		generate(as, ps, AS cycle);
 		PS audf1 = data;
 		switch (PS audctl & 0x50) {
 		case 0x00:
@@ -235,7 +235,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data, int cur
 	case 0x02:
 		if (data == PS audf2)
 			break;
-		generate(as, ps, current_cycle);
+		generate(as, ps, AS cycle);
 		PS audf2 = data;
 		switch (PS audctl & 0x50) {
 		case 0x00:
@@ -255,7 +255,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data, int cur
 	case 0x04:
 		if (data == PS audf3)
 			break;
-		generate(as, ps, current_cycle);
+		generate(as, ps, AS cycle);
 		PS audf3 = data;
 		switch (PS audctl & 0x28) {
 		case 0x00:
@@ -279,7 +279,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data, int cur
 	case 0x06:
 		if (data == PS audf4)
 			break;
-		generate(as, ps, current_cycle);
+		generate(as, ps, AS cycle);
 		PS audf4 = data;
 		switch (PS audctl & 0x28) {
 		case 0x00:
@@ -299,7 +299,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data, int cur
 	case 0x08:
 		if (data == PS audctl)
 			break;
-		generate(as, ps, current_cycle);
+		generate(as, ps, AS cycle);
 		PS audctl = data;
 		PS div_cycles = ((data & 1) != 0) ? 114 : 28;
 		/* TODO: tick_cycles */
@@ -355,11 +355,11 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data, int cur
 	}
 }
 
-ASAP_FUNC int PokeySound_GetRandom(ASAP_State PTR as, int addr, int current_cycle)
+ASAP_FUNC int PokeySound_GetRandom(ASAP_State PTR as, int addr)
 {
 	PokeyState PTR ps = (addr & 0x10) != 0 && AS module_info.channels == 2
 		? ADDRESSOF AS extra_pokey : ADDRESSOF AS base_pokey;
-	int i = current_cycle + PS poly_index;
+	int i = AS cycle + PS poly_index;
 	if ((PS audctl & 0x80) != 0)
 		return AS poly9_lookup[i % 511];
 	else {
@@ -371,18 +371,18 @@ ASAP_FUNC int PokeySound_GetRandom(ASAP_State PTR as, int addr, int current_cycl
 	}
 }
 
-FILE_FUNC void end_frame(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
+FILE_FUNC void end_frame(ASAP_State PTR as, PokeyState PTR ps, int cycle_limit)
 {
 	int m;
-	generate(as, ps, current_cycle);
-	PS poly_index += current_cycle;
+	generate(as, ps, cycle_limit);
+	PS poly_index += cycle_limit;
 	m = ((PS audctl & 0x80) != 0) ? 15 * 31 * 511 : 15 * 31 * 131071;
 	if (PS poly_index >= 2 * m)
 		PS poly_index -= m;
-	PS tick_cycle1 -= current_cycle;
-	PS tick_cycle2 -= current_cycle;
-	PS tick_cycle3 -= current_cycle;
-	PS tick_cycle4 -= current_cycle;
+	PS tick_cycle1 -= cycle_limit;
+	PS tick_cycle2 -= cycle_limit;
+	PS tick_cycle3 -= cycle_limit;
+	PS tick_cycle4 -= cycle_limit;
 }
 
 ASAP_FUNC void PokeySound_StartFrame(ASAP_State PTR as)

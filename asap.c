@@ -40,17 +40,15 @@ CONST_LOOKUP byte cmr_bass_table[] = {
 	0x25, 0x24, 0x21, 0x1F, 0x1E
 };
 
-#define REAL_CYCLE  (AS cycle + AS cycle / 105 * 9)
-
 ASAP_FUNC int ASAP_GetByte(ASAP_State PTR as, int addr)
 {
 	switch (addr & 0xff0f) {
 	case 0xd20a:
-		return PokeySound_GetRandom(as, addr, REAL_CYCLE);
+		return PokeySound_GetRandom(as, addr);
 	case 0xd20e:
 		return AS irqst;
 	case 0xd40b:
-		return AS cycle / (2 * 105) % 156;
+		return AS scanline_number >> 1;
 	default:
 		return dGetByte(addr);
 	}
@@ -64,9 +62,8 @@ ASAP_FUNC void ASAP_PutByte(ASAP_State PTR as, int addr, int data)
 #define SET_TIMER_IRQ(ch) \
 			if ((data & AS irqst & ch) != 0 && AS timer##ch##_cycle == NEVER) { \
 				int t = AS base_pokey.tick_cycle##ch; \
-				while (t < REAL_CYCLE) \
+				while (t < AS cycle) \
 					t += AS base_pokey.period_cycles##ch ; \
-				t = t * 105 / 114; \
 				AS timer##ch##_cycle = t; \
 				if (AS nearest_event_cycle > t) \
 					AS nearest_event_cycle = t; \
@@ -78,14 +75,13 @@ ASAP_FUNC void ASAP_PutByte(ASAP_State PTR as, int addr, int data)
 			SET_TIMER_IRQ(4);
 		}
 		else
-			PokeySound_PutByte(as, addr, data, REAL_CYCLE);
+			PokeySound_PutByte(as, addr, data);
 	}
 	else if ((addr & 0xff0f) == 0xd40a) {
-		int cycle = AS cycle % 105 + 9;
-		if (cycle <= 106)
-			AS cycle += 106 - cycle;
+		if (AS cycle <= AS next_scanline_cycle - 8)
+			AS cycle = AS next_scanline_cycle - 8;
 		else
-			AS cycle += 105 + 106 - cycle;
+			AS cycle = AS next_scanline_cycle + 106;
 	}
 	else
 		dPutByte(addr, data);
@@ -759,11 +755,11 @@ FILE_FUNC void call_6502(ASAP_State PTR as, int addr, int max_scanlines)
 	dPutByte(0x01fe, 0x09);
 	dPutByte(0x01ff, 0xd2);
 	AS cpu_s = 0xfd;
-	AS cycle = 0;
-	Cpu_Run(as, max_scanlines * 105);
+	Cpu_Run(as, max_scanlines * 114);
 }
 
 /* 50 Atari frames for the initialization routine - some SAPs are self-extracting. */
+/* FIXME: not enough space in delta_buffers!!! */
 #define SCANLINES_FOR_INIT  (50 * 312)
 
 FILE_FUNC void call_6502_init(ASAP_State PTR as, int addr, int a, int x, int y)
@@ -780,9 +776,12 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR as, int song, int duration)
 	AS current_duration = duration;
 	AS blocks_played = 0;
 	PokeySound_Initialize(as);
+	AS cycle = 0;
 	AS cpu_nz = 0;
 	AS cpu_c = 0;
-	AS cpu_vdi = I_FLAG;
+	AS cpu_vdi = 0;
+	AS scanline_number = 0;
+	AS next_scanline_cycle = 0;
 	AS timer1_cycle = NEVER;
 	AS timer2_cycle = NEVER;
 	AS timer4_cycle = NEVER;
@@ -853,12 +852,10 @@ ASAP_FUNC void call_6502_player(ASAP_State PTR as)
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 4, 0x68); /* PLA */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 5, 0x40); /* RTI */
 		AS cpu_pc = AS sap_player;
-		AS cycle = 0;
-		Cpu_Run(as, AS sap_fastplay * 105);
+		Cpu_Run(as, AS sap_fastplay * 114);
 		break;
 	case 'S':
-		AS cycle = 0;
-		Cpu_Run(as, AS sap_fastplay * 105);
+		Cpu_Run(as, AS sap_fastplay * 114);
 		{
 			int i = dGetByte(0x45) - 1;
 			dPutByte(0x45, i);
@@ -880,7 +877,7 @@ ASAP_FUNC void call_6502_player(ASAP_State PTR as)
 			call_6502(as, AS sap_player + 6, AS sap_fastplay);
 		break;
 	}
-	PokeySound_EndFrame(as, 114 * AS sap_fastplay);
+	PokeySound_EndFrame(as, AS sap_fastplay * 114);
 }
 
 FILE_FUNC int milliseconds_to_blocks(int milliseconds)

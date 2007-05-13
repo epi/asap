@@ -119,7 +119,9 @@ typedef struct {
 	int cpu_nz;
 	int cpu_c;
 	int cpu_vdi;
+	int scanline_number;
 	int nearest_event_cycle;
+	int next_scanline_cycle;
 	int timer1_cycle;
 	int timer2_cycle;
 	int timer4_cycle;

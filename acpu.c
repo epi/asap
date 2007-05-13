@@ -245,6 +245,8 @@ ASAP_FUNC void Cpu_Run(ASAP_State PTR as, int cycle_limit)
 	s = AS cpu_s;
 	vdi = AS cpu_vdi;
 	next_event_cycle = cycle_limit;
+	if (next_event_cycle > AS next_scanline_cycle)
+		next_event_cycle = AS next_scanline_cycle;
 	if (next_event_cycle > AS timer1_cycle)
 		next_event_cycle = AS timer1_cycle;
 	if (next_event_cycle > AS timer2_cycle)
@@ -261,6 +263,14 @@ ASAP_FUNC void Cpu_Run(ASAP_State PTR as, int cycle_limit)
 			if (cycle >= cycle_limit)
 				break;
 			next_event_cycle = cycle_limit;
+			if (cycle >= AS next_scanline_cycle) {
+				if (++AS scanline_number == 312)
+					AS scanline_number = 0;
+				AS cycle = cycle += 9;
+				AS next_scanline_cycle += 114;
+				if (next_event_cycle > AS next_scanline_cycle)
+					next_event_cycle = AS next_scanline_cycle;
+			}
 #define CHECK_TIMER_IRQ(ch) \
 			if (cycle >= AS timer##ch##_cycle) { \
 				AS irqst &= ~ch; \
@@ -1237,6 +1247,8 @@ ASAP_FUNC void Cpu_Run(ASAP_State PTR as, int cycle_limit)
 	AS cpu_c = c;
 	AS cpu_s = s;
 	AS cpu_vdi = vdi;
+	AS cycle -= cycle_limit;
+	AS next_scanline_cycle -= cycle_limit;
 	if (AS timer1_cycle != NEVER)
 		AS timer1_cycle -= cycle_limit;
 	if (AS timer2_cycle != NEVER)
