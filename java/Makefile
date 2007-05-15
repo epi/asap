@@ -1,4 +1,7 @@
-JAVAC = javac -classpath . -d .
+JRE = C:/java/jdk/jre
+WTK = C:/java/sesdk/PC_Emulation/WTK2
+
+JAVAC = javac -classpath ".;${JRE}/lib/plugin.jar" -d .
 JAR = jar
 JAVADOC = javadoc
 PP = cpp -C -P -I..
@@ -6,7 +9,6 @@ PERL = perl
 XASM = xasm -q
 RM = rm -f
 RMR = rm -rf
-WTK = C:/java/sesdk/PC_Emulation/WTK2
 ME_CLASSES = ${WTK}/lib/cldcapi10.jar;${WTK}/lib/midpapi10.jar;${WTK}/lib/jsr75.jar
 PREVERIFY = ${WTK}/bin/preverify1.0
 ME_EMU = ${WTK}/bin/emulatorw -gui
