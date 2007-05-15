@@ -31,6 +31,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
+import netscape.javascript.JSObject;
 
 import net.sf.asap.ASAP;
 import net.sf.asap.ASAP_ModuleInfo;
@@ -40,9 +41,14 @@ public class ASAPApplet extends Applet implements Runnable
 	private ASAP asap;
 	private int song;
 	private SourceDataLine line;
-	private boolean stopIt;
+	private boolean running;
 
 	private static final int BITS_PER_SAMPLE = 16;
+
+	public ASAPApplet()
+	{
+		asap = new ASAP();
+	}
 
 	public void paint(Graphics g)
 	{
@@ -59,14 +65,21 @@ public class ASAPApplet extends Applet implements Runnable
 		byte[] buffer = new byte[8192];
 		int len;
 		do {
-			len = asap.generate(buffer, BITS_PER_SAMPLE);
+			synchronized(asap) {
+				len = asap.generate(buffer, BITS_PER_SAMPLE);
+			}
 			line.write(buffer, 0, len);
-		} while (len == buffer.length && !stopIt);
+		} while (len == buffer.length && running);
+		if (running) {
+			String js = getParameter("onPlaybackEnd");
+			if (js != null)
+				JSObject.getWindow(this).eval(js);
+			running = false;
+		}
 	}
 
-	public void start()
+	public void play(String filename, int song, String defaultPlaybackTime, String loopPlaybackTime)
 	{
-		String filename = getParameter("file");
 		byte[] module;
 		int module_len = 0;
 		try {
@@ -83,38 +96,56 @@ public class ASAPApplet extends Applet implements Runnable
 			showStatus("ERROR LOADING " + filename);
 			return;
 		}
-		asap = new ASAP();
-		asap.load(filename, module, module_len);
-		ASAP_ModuleInfo module_info = asap.getModuleInfo();
-		song = module_info.default_song;
+		ASAP_ModuleInfo module_info;
+		synchronized(asap) {
+			asap.load(filename, module, module_len);
+			module_info = asap.getModuleInfo();
+			if (song < 0)
+				song = module_info.default_song;
+			int duration = module_info.durations[song];
+			try {
+				if (duration < 0)
+					duration = ASAP.parseDuration(defaultPlaybackTime);
+				else if (module_info.loops[song])
+					duration = ASAP.parseDuration(loopPlaybackTime);
+			} catch (Exception e) {
+			}
+			asap.playSong(song, duration);
+		}
+		if (line == null) {
+			AudioFormat format = new AudioFormat(ASAP.SAMPLE_RATE, BITS_PER_SAMPLE, module_info.channels, BITS_PER_SAMPLE != 8, false);
+			try {
+				line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, format));
+				line.open(format);
+			} catch (LineUnavailableException e) {
+				showStatus("ERROR OPENING AUDIO");
+				return;
+			}
+			line.start();
+		}
+		if (!running) {
+			running = true;
+			new Thread(this).start();
+		}
+	}
+
+	public void start()
+	{
+		String filename = getParameter("file");
+		if (filename == null)
+			return;
+		int song = -1;
 		try {
 			song = Integer.parseInt(getParameter("song"));
 		} catch (Exception e) {
 		}
-		int duration = module_info.durations[song];
-		try {
-			if (duration < 0)
-				duration = ASAP.parseDuration(getParameter("defaultPlaybackTime"));
-			else if (module_info.loops[song])
-				duration = ASAP.parseDuration(getParameter("loopPlaybackTime"));
-		} catch (Exception e) {
-		}
-		asap.playSong(song, duration);
-		AudioFormat format = new AudioFormat(ASAP.SAMPLE_RATE, BITS_PER_SAMPLE, module_info.channels, BITS_PER_SAMPLE != 8, false);
-		try {
-			line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, format));
-			line.open(format);
-		} catch (LineUnavailableException e) {
-			showStatus("ERROR OPENING AUDIO");
-			return;
-		}
-		line.start();
-		stopIt = false;
-		new Thread(this).start();
+		String defaultPlaybackTime = getParameter("defaultPlaybackTime");
+		String loopPlaybackTime = getParameter("loopPlaybackTime");
+		play(filename, song, defaultPlaybackTime, loopPlaybackTime);
 	}
 
 	public void stop()
 	{
-		stopIt = true;
+		running = false;
 	}
 }
