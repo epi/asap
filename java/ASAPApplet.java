@@ -38,7 +38,9 @@ import net.sf.asap.ASAP_ModuleInfo;
 public class ASAPApplet extends Applet implements Runnable
 {
 	private ASAP asap;
+	private int song;
 	private SourceDataLine line;
+	private boolean stopIt;
 
 	private static final int BITS_PER_SAMPLE = 16;
 
@@ -48,15 +50,18 @@ public class ASAPApplet extends Applet implements Runnable
 		g.drawString("Author: " + module_info.author, 10, 20);
 		g.drawString("Name: " + module_info.name, 10, 40);
 		g.drawString("Date: " + module_info.date, 10, 60);
+		if (module_info.songs > 1)
+			g.drawString("Song " + song + " of " + module_info.songs, 10, 80);
 	}
 
 	public void run()
 	{
 		byte[] buffer = new byte[8192];
-		for (;;) {
-			asap.generate(buffer, BITS_PER_SAMPLE);
-			line.write(buffer, 0, buffer.length);
-		}
+		int len;
+		do {
+			len = asap.generate(buffer, BITS_PER_SAMPLE);
+			line.write(buffer, 0, len);
+		} while (len == buffer.length && !stopIt);
 	}
 
 	public void start()
@@ -81,7 +86,20 @@ public class ASAPApplet extends Applet implements Runnable
 		asap = new ASAP();
 		asap.load(filename, module, module_len);
 		ASAP_ModuleInfo module_info = asap.getModuleInfo();
-		asap.playSong(module_info.default_song, -1);
+		song = module_info.default_song;
+		try {
+			song = Integer.parseInt(getParameter("song"));
+		} catch (Exception e) {
+		}
+		int duration = module_info.durations[song];
+		try {
+			if (duration < 0)
+				duration = ASAP.parseDuration(getParameter("defaultPlaybackTime"));
+			else if (module_info.loops[song])
+				duration = ASAP.parseDuration(getParameter("loopPlaybackTime"));
+		} catch (Exception e) {
+		}
+		asap.playSong(song, duration);
 		AudioFormat format = new AudioFormat(ASAP.SAMPLE_RATE, BITS_PER_SAMPLE, module_info.channels, BITS_PER_SAMPLE != 8, false);
 		try {
 			line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, format));
@@ -91,6 +109,12 @@ public class ASAPApplet extends Applet implements Runnable
 			return;
 		}
 		line.start();
+		stopIt = false;
 		new Thread(this).start();
+	}
+
+	public void stop()
+	{
+		stopIt = true;
 	}
 }
