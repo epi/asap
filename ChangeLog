@@ -1,3 +1,9 @@
+2007-05-15  Piotr Fusik  <fox@scene.pl>
+* java/ASAPApplet.java, java/Makefile: support "song", "defaultPlaybackTime",
+  "loopPlaybackTime" and "onPlaybackEnd" parameters and play() and stop()
+  methods
+
+
 2007-05-13  Piotr Fusik  <fox@scene.pl>
 * acpu.c, apokeysnd.c, asap.c, asap.h, asap_internal.h, java/ASAP.ppjava
   - ASAP_State.cycle is now real cycle rather than 6502 cycle
