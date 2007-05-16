@@ -24,7 +24,8 @@
 #define AS                      as->
 #define PS                      ps->
 #define MODULE_INFO             module_info->
-#define PLAYER_CODE(name)       name
+#define ASAP_Player             const byte *
+#define PLAYER_OBX(name)        name##_obx
 
 int ASAP_GetByte(ASAP_State *as, int addr);
 void ASAP_PutByte(ASAP_State *as, int addr, int data);

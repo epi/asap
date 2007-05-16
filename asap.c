@@ -92,14 +92,27 @@ ASAP_FUNC void ASAP_PutByte(ASAP_State PTR as, int addr, int data)
 CONST_LOOKUP int perframe2fastplay[] = { 312, 312 / 2, 312 / 3, 312 / 4 };
 
 FILE_FUNC abool load_native(ASAP_State PTR as, const byte module[], int module_len,
-                            const byte player[], char type)
+                            ASAP_Player player, char type)
 {
 	int player_last_byte;
 	int block_len;
 	if (UBYTE(module[0]) != 0xff || UBYTE(module[1]) != 0xff)
 		return FALSE;
+#ifdef JAVA
+	try {
+		player.read();
+		player.read();
+		AS sap_player = player.read();
+		AS sap_player += player.read() << 8;
+		player_last_byte = player.read();
+		player_last_byte += player.read() << 8;
+	} catch (IOException e) {
+		throw new RuntimeException();
+	}
+#else
 	AS sap_player = UBYTE(player[2]) + (UBYTE(player[3]) << 8);
 	player_last_byte = UBYTE(player[4]) + (UBYTE(player[5]) << 8);
+#endif
 	AS sap_music = UBYTE(module[2]) + (UBYTE(module[3]) << 8);
 	if (AS sap_music <= player_last_byte)
 		return FALSE;
@@ -118,7 +131,22 @@ FILE_FUNC abool load_native(ASAP_State PTR as, const byte module[], int module_l
 			return FALSE;
 	}
 	COPY_ARRAY(AS memory, AS sap_music, module, 6, block_len);
+#ifdef JAVA
+	int addr = AS sap_player;
+	do {
+		int i;
+		try {
+			i = player.read(AS memory, addr, player_last_byte + 1 - addr);
+		} catch (IOException e) {
+			throw new RuntimeException();
+		}
+		if (i <= 0)
+			throw new RuntimeException();
+		addr += i;
+	} while (addr <= player_last_byte);
+#else
 	COPY_ARRAY(AS memory, AS sap_player, player, 6, player_last_byte + 1 - AS sap_player);
+#endif
 	AS sap_type = type;
 	return TRUE;
 }
@@ -130,7 +158,7 @@ FILE_FUNC abool parse_cmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	if (module_len < 0x306)
 		return FALSE;
 	if (as != NULL) {
-		if (!load_native(as, module, module_len, cmc_obx, 'C'))
+		if (!load_native(as, module, module_len, PLAYER_OBX(cmc), 'C'))
 			return FALSE;
 		if (cmr)
 			COPY_ARRAY(AS memory, 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, 0, sizeof(cmr_bass_table));
@@ -161,7 +189,7 @@ FILE_FUNC abool parse_mpt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	if (module_len < 0x1d0)
 		return FALSE;
 	if (as != NULL) {
-		if (!load_native(as, module, module_len, mpt_obx, 'm'))
+		if (!load_native(as, module, module_len, PLAYER_OBX(mpt), 'm'))
 			return FALSE;
 	}
 	track0_addr = UBYTE(module[2]) + (UBYTE(module[3]) << 8) + 0x1ca;
@@ -248,7 +276,7 @@ FILE_FUNC abool parse_rmt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	if (as != NULL) {
 		AS sap_fastplay = perframe2fastplay[i - 1];
 		if (!load_native(as, module, module_len,
-			MODULE_INFO channels == 2 ? rmt8_obx : rmt4_obx, 'r'))
+			MODULE_INFO channels == 2 ? PLAYER_OBX(rmt8) : PLAYER_OBX(rmt4), 'r'))
 			return FALSE;
 		AS sap_player = 0x600;
 	}
@@ -297,7 +325,7 @@ FILE_FUNC abool parse_tmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	if (module_len < 0x1d0)
 		return FALSE;
 	if (as != NULL) {
-		if (!load_native(as, module, module_len, tmc_obx, 't'))
+		if (!load_native(as, module, module_len, PLAYER_OBX(tmc), 't'))
 			return FALSE;
 		AS tmc_per_frame = module[37];
 		if (AS tmc_per_frame < 1 || AS tmc_per_frame > 4)
@@ -342,7 +370,7 @@ FILE_FUNC abool parse_tm2(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 		if (i < 1 || i > 4)
 			return FALSE;
 		AS sap_fastplay = perframe2fastplay[i - 1];
-		if (!load_native(as, module, module_len, tm2_obx, 'T'))
+		if (!load_native(as, module, module_len, PLAYER_OBX(tm2), 'T'))
 			return FALSE;
 		AS sap_player = 0x500;
 	}

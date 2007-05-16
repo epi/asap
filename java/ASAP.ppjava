@@ -52,8 +52,13 @@
 #define ASAP_FORMAT_S16_LE      16
 #define ASAP_FORMAT_S16_BE      -16
 #define ASAP_SampleFormat       int
+#define ASAP_Player             InputStream
+#define PLAYER_OBX(name)        ASAP.class.getResourceAsStream(#name + ".obx")
 
 package net.sf.asap;
+
+import java.io.InputStream;
+import java.io.IOException;
 
 class PokeyState
 {
@@ -100,7 +105,9 @@ class ASAP_State
 	int cpu_nz;
 	int cpu_c;
 	int cpu_vdi;
+	int scanline_number;
 	int nearest_event_cycle;
+	int next_scanline_cycle;
 	int timer1_cycle;
 	int timer2_cycle;
 	int timer4_cycle;
@@ -136,19 +143,6 @@ class ASAP_State
     - music data must be passed in byte arrays. */
 public final class ASAP
 {
-	// FIXME: Cannot store all 6502 player data because javac
-	// reports "code too large" error. This is because constant
-	// arrays are initialized by a static initializer, where
-	// at least 6 bytes of Java bytecode (dup, bipush index,
-	// bipush value, bastore) are needed to initialize a single byte!
-	// The player data should be probably loaded at runtime
-	// or try to store them as Strings...
-	private static final byte[] cmc_obx = { };
-	private static final byte[] mpt_obx = { };
-	private static final byte[] rmt4_obx = { };
-	private static final byte[] rmt8_obx = { };
-	private static final byte[] tmc_obx = { };
-	private static final byte[] tm2_obx = { };
 
 #include "acpu.c"
 #include "apokeysnd.c"
