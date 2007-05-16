@@ -783,7 +783,7 @@ FILE_FUNC void call_6502(ASAP_State PTR as, int addr, int max_scanlines)
 	dPutByte(0x01fe, 0x09);
 	dPutByte(0x01ff, 0xd2);
 	AS cpu_s = 0xfd;
-	Cpu_Run(as, max_scanlines * 114);
+	Cpu_RunScanlines(as, max_scanlines);
 }
 
 /* 50 Atari frames for the initialization routine - some SAPs are self-extracting. */
@@ -880,10 +880,10 @@ ASAP_FUNC void call_6502_player(ASAP_State PTR as)
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 4, 0x68); /* PLA */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 5, 0x40); /* RTI */
 		AS cpu_pc = AS sap_player;
-		Cpu_Run(as, AS sap_fastplay * 114);
+		Cpu_RunScanlines(as, AS sap_fastplay);
 		break;
 	case 'S':
-		Cpu_Run(as, AS sap_fastplay * 114);
+		Cpu_RunScanlines(as, AS sap_fastplay);
 		{
 			int i = dGetByte(0x45) - 1;
 			dPutByte(0x45, i);

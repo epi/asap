@@ -5,6 +5,8 @@
   java/MIDLET_MANIFEST.MF: native Atari formats now supported by the Java
   version
 
+* acpu.h, asap.c, asap_internal.h: fixed cycle calculations
+
 
 2007-05-15  Piotr Fusik  <fox@scene.pl>
 * java/ASAPApplet.java, java/Makefile: support "song", "defaultPlaybackTime",

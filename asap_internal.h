@@ -30,7 +30,7 @@
 int ASAP_GetByte(ASAP_State *as, int addr);
 void ASAP_PutByte(ASAP_State *as, int addr, int data);
 
-void Cpu_Run(ASAP_State *as, int cycle_limit);
+void Cpu_RunScanlines(ASAP_State *as, int scanlines);
 
 void PokeySound_Initialize(ASAP_State *as);
 void PokeySound_StartFrame(ASAP_State *as);

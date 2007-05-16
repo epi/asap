@@ -225,7 +225,7 @@ CONST_LOOKUP int opcode_cycles[] =
 		AS cycle += 7; \
 	}
 
-ASAP_FUNC void Cpu_Run(ASAP_State PTR as, int cycle_limit)
+ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR as, int scanlines)
 {
 	int pc;
 	int nz;
@@ -236,6 +236,7 @@ ASAP_FUNC void Cpu_Run(ASAP_State PTR as, int cycle_limit)
 	int s;
 	int vdi;
 	int next_event_cycle;
+	int cycle_limit;
 	pc = AS cpu_pc;
 	nz = AS cpu_nz;
 	a = AS cpu_a;
@@ -244,9 +245,9 @@ ASAP_FUNC void Cpu_Run(ASAP_State PTR as, int cycle_limit)
 	c = AS cpu_c;
 	s = AS cpu_s;
 	vdi = AS cpu_vdi;
-	next_event_cycle = cycle_limit;
-	if (next_event_cycle > AS next_scanline_cycle)
-		next_event_cycle = AS next_scanline_cycle;
+	AS next_scanline_cycle = 114;
+	next_event_cycle = 114;
+	cycle_limit = 114 * scanlines;
 	if (next_event_cycle > AS timer1_cycle)
 		next_event_cycle = AS timer1_cycle;
 	if (next_event_cycle > AS timer2_cycle)
@@ -260,17 +261,15 @@ ASAP_FUNC void Cpu_Run(ASAP_State PTR as, int cycle_limit)
 		int data;
 		cycle = AS cycle;
 		if (cycle >= AS nearest_event_cycle) {
-			if (cycle >= cycle_limit)
-				break;
-			next_event_cycle = cycle_limit;
 			if (cycle >= AS next_scanline_cycle) {
 				if (++AS scanline_number == 312)
 					AS scanline_number = 0;
 				AS cycle = cycle += 9;
 				AS next_scanline_cycle += 114;
-				if (next_event_cycle > AS next_scanline_cycle)
-					next_event_cycle = AS next_scanline_cycle;
+				if (--scanlines <= 0)
+					break;
 			}
+			next_event_cycle = AS next_scanline_cycle;
 #define CHECK_TIMER_IRQ(ch) \
 			if (cycle >= AS timer##ch##_cycle) { \
 				AS irqst &= ~ch; \
@@ -310,6 +309,8 @@ ASAP_FUNC void Cpu_Run(ASAP_State PTR as, int cycle_limit)
 		case 0xb2:
 		case 0xd2:
 		case 0xf2:
+			AS scanline_number = (AS scanline_number + scanlines - 1) % 312;
+			scanlines = 1;
 			AS cycle = cycle_limit;
 			break;
 		case 0x03: /* ASO (ab,x) [unofficial] */
@@ -1248,7 +1249,6 @@ ASAP_FUNC void Cpu_Run(ASAP_State PTR as, int cycle_limit)
 	AS cpu_s = s;
 	AS cpu_vdi = vdi;
 	AS cycle -= cycle_limit;
-	AS next_scanline_cycle -= cycle_limit;
 	if (AS timer1_cycle != NEVER)
 		AS timer1_cycle -= cycle_limit;
 	if (AS timer2_cycle != NEVER)
