@@ -52,12 +52,14 @@ public class ASAPApplet extends Applet implements Runnable
 
 	public void paint(Graphics g)
 	{
+		if (!running)
+			return;
 		ASAP_ModuleInfo module_info = asap.getModuleInfo();
 		g.drawString("Author: " + module_info.author, 10, 20);
 		g.drawString("Name: " + module_info.name, 10, 40);
 		g.drawString("Date: " + module_info.date, 10, 60);
 		if (module_info.songs > 1)
-			g.drawString("Song " + song + " of " + module_info.songs, 10, 80);
+			g.drawString("Song " + (song + 1) + " of " + module_info.songs, 10, 80);
 	}
 
 	public void run()
@@ -76,6 +78,7 @@ public class ASAPApplet extends Applet implements Runnable
 				JSObject.getWindow(this).eval(js);
 			running = false;
 		}
+		repaint();
 	}
 
 	public void play(String filename, int song, String defaultPlaybackTime, String loopPlaybackTime)
@@ -127,6 +130,7 @@ public class ASAPApplet extends Applet implements Runnable
 			running = true;
 			new Thread(this).start();
 		}
+		repaint();
 	}
 
 	public void start()
