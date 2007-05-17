@@ -29,6 +29,11 @@
 #include "asap.h"
 
 static abool no_input_files = TRUE;
+static const char *output_file = NULL;
+static abool output_header = TRUE;
+static int song = -1;
+static abool use_16bit = TRUE;
+static int duration = -1;
 
 static void print_help(void)
 {
@@ -67,26 +72,16 @@ static void fatal_error(const char *format, ...)
 	exit(1);
 }
 
-static const char *output_file = NULL;
-static abool output_header = TRUE;
-static int song = -1;
-static abool use_16bit = TRUE;
-static int duration = -1;
-
-static void set_dec(const char *s, int *result, const char *name,
-                    int minval, int maxval)
+static void set_song(const char *s)
 {
-	int newval = 0;
+	song = 0;
 	do {
 		if (*s < '0' || *s > '9')
-			fatal_error("%s must be an integer", name);
-		newval = 10 * newval + *s++ - '0';
-		if (newval > maxval)
-			fatal_error("maximum %s is %d", name, maxval);
+			fatal_error("subsong number must be an integer");
+		song = 10 * song + *s++ - '0';
+		if (song > 31)
+			fatal_error("maximum subsong number is 31");
 	} while (*s != '\0');
-	if (newval < minval)
-		fatal_error("minimum %s is %d", name, minval);
-	*result = newval;
 }
 
 static void set_time(const char *s)
@@ -202,9 +197,9 @@ int main(int argc, char *argv[])
 		else if (strncmp(arg, "--output=", 9) == 0)
 			output_file = arg + 9;
 		else if (arg[1] == 's' && arg[2] == '\0')
-			set_dec(argv[++i], &song, "subsong number", 0, 127);
+			set_song(argv[++i]);
 		else if (strncmp(arg, "--song=", 7) == 0)
-			set_dec(arg + 7, &song, "subsong number", 0, 127);
+			set_song(arg + 7);
 		else if (arg[1] == 't' && arg[2] == '\0')
 			set_time(argv[++i]);
 		else if (strncmp(arg, "--time=", 7) == 0)
