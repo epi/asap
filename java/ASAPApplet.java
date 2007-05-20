@@ -124,8 +124,8 @@ public class ASAPApplet extends Applet implements Runnable
 				showStatus("ERROR OPENING AUDIO");
 				return;
 			}
-			line.start();
 		}
+		line.start();
 		if (!running) {
 			running = true;
 			new Thread(this).start();
@@ -151,5 +151,17 @@ public class ASAPApplet extends Applet implements Runnable
 	public void stop()
 	{
 		running = false;
+	}
+
+	public boolean togglePause()
+	{
+		if (line.isRunning()) {
+			line.stop();
+			return true;
+		}
+		else {
+			line.start();
+			return false;
+		}
 	}
 }
