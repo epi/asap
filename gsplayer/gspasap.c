@@ -29,6 +29,8 @@
 #include "asap.h"
 #include "settings.h"
 
+#define REG_KEY _T("Software\\GreenSoftware\\GSPlayer\\Plug-ins\\gspasap")
+
 static HINSTANCE hInstance;
 
 static byte module[ASAP_MODULE_MAX];
@@ -62,6 +64,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 static void WINAPI asapInit()
 {
+	HKEY hKey;
+	DWORD type;
+	DWORD size;
+	if (RegOpenKeyEx(HKEY_CURRENT_USER, REG_KEY, 0, KEY_QUERY_VALUE, &hKey) != ERROR_SUCCESS)
+		return;
+	size = sizeof(int);
+	RegQueryValueEx(hKey, _T("SongLength"), NULL, &type, (LPBYTE) &song_length, &size);
+	RegQueryValueEx(hKey, _T("SilenceSeconds"), NULL, &type, (LPBYTE) &silence_seconds, &size);
+	RegQueryValueEx(hKey, _T("PlayLoops"), NULL, &type, (LPBYTE) &play_loops, &size);
+	RegCloseKey(hKey);
 }
 
 static void WINAPI asapQuit()
@@ -86,7 +98,15 @@ static BOOL WINAPI asapSetEqualizer(MAP_PLUGIN_EQ *pEQ)
 
 static void WINAPI asapShowConfigDlg(HWND hwndParent)
 {
-	settingsDialog(hInstance, hwndParent);
+	if (settingsDialog(hInstance, hwndParent)) {
+		HKEY hKey;
+		if (RegCreateKeyEx(HKEY_CURRENT_USER, REG_KEY, 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS)
+			return;
+		RegSetValueEx(hKey, _T("SongLength"), 0, REG_DWORD, (LPBYTE) &song_length, sizeof(int));
+		RegSetValueEx(hKey, _T("SilenceSeconds"), 0, REG_DWORD, (LPBYTE) &silence_seconds, sizeof(int));
+		RegSetValueEx(hKey, _T("PlayLoops"), 0, REG_DWORD, (LPBYTE) &play_loops, sizeof(int));
+		RegCloseKey(hKey);
+	}
 }
 
 static const char *exts[] = {
@@ -152,7 +172,7 @@ static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 	pInfo->nSampleRate = ASAP_SAMPLE_RATE;
 	pInfo->nBitsPerSample = BITS_PER_SAMPLE;
 	pInfo->nAvgBitrate = 8;
-	pInfo->nDuration = getSubsongDuration(&asap.module_info, asap.module_info.default_song);
+	pInfo->nDuration = getSongDuration(&asap.module_info, asap.module_info.default_song);
 	return TRUE;
 }
 
@@ -164,8 +184,7 @@ static long WINAPI asapSeekFile(long lTime)
 
 static BOOL WINAPI asapStartDecodeFile()
 {
-	int duration = getSubsongDuration(&asap.module_info, asap.module_info.default_song);
-	ASAP_PlaySong(&asap, asap.module_info.default_song, duration);
+	playSong(&asap, asap.module_info.default_song);
 	return TRUE;
 }
 
