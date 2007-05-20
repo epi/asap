@@ -119,7 +119,7 @@ class ASAP_State
 	int samples;
 	int iir_acc_left;
 	int iir_acc_right;
-	ASAP_ModuleInfo module_info = new ASAP_ModuleInfo();
+	public ASAP_ModuleInfo module_info = new ASAP_ModuleInfo();
 	char sap_type;
 	int sap_player;
 	int sap_music;
@@ -130,6 +130,8 @@ class ASAP_State
 	int current_song;
 	int current_duration;
 	int blocks_played;
+	int silence_cycles;
+	int silence_cycles_counter;
 	byte[] song_pos = new byte[128];
 	byte[] poly9_lookup = new byte[511];
 	byte[] poly17_lookup = new byte[16385];

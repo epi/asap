@@ -33,6 +33,10 @@ static const GUID song_length_guid =
 	{ 0x810e12f0, 0xa695, 0x42d2, { 0xab, 0xc0, 0x14, 0x1e, 0xe5, 0xf3, 0xb3, 0xb7 } };
 static cfg_int song_length(song_length_guid, -1);
 
+static const GUID silence_seconds_guid =
+	{ 0x40170cb0, 0xc18c, 0x4f97, { 0xaa, 0x6, 0xdb, 0xe7, 0x45, 0xb0, 0x7e, 0x1d } };
+static cfg_int silence_seconds(silence_seconds_guid, -1);
+
 static const GUID play_loops_guid =
 	{ 0xf08d12f8, 0x58d6, 0x49fc, { 0xae, 0xc5, 0xf4, 0xd0, 0x2f, 0xb2, 0x20, 0xaf } };
 static cfg_bool play_loops(play_loops_guid, false);
@@ -41,6 +45,13 @@ static void enableTimeInput(HWND hDlg, BOOL enable)
 {
 	EnableWindow(GetDlgItem(hDlg, IDC_MINUTES), enable);
 	EnableWindow(GetDlgItem(hDlg, IDC_SECONDS), enable);
+}
+
+static void setFocusAndSelect(HWND hDlg, int nID)
+{
+	HWND hWnd = GetDlgItem(hDlg, nID);
+	SetFocus(hWnd);
+	SendMessage(hWnd, EM_SETSEL, 0, -1);
 }
 
 static void getTimeInput(HWND hDlg)
@@ -53,12 +64,20 @@ static void getTimeInput(HWND hDlg)
 		song_length = (int) (60 * minutes + seconds);
 }
 
+static void getSilenceInput(HWND hDlg)
+{
+	BOOL translated;
+	UINT seconds = GetDlgItemInt(hDlg, IDC_SILSECONDS, &translated, FALSE);
+	if (translated)
+		silence_seconds = (int) seconds;
+}
+
 static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	WORD wCtrl;
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		if (song_length.get_value() <= 0) {
+		if (song_length <= 0) {
 			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_UNLIMITED);
 			SetDlgItemInt(hDlg, IDC_MINUTES, DEFAULT_SONG_LENGTH / 60, FALSE);
 			SetDlgItemInt(hDlg, IDC_SECONDS, DEFAULT_SONG_LENGTH % 60, FALSE);
@@ -70,22 +89,41 @@ static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam
 			SetDlgItemInt(hDlg, IDC_SECONDS, (UINT) song_length % 60, FALSE);
 			enableTimeInput(hDlg, TRUE);
 		}
+		if (silence_seconds <= 0) {
+			CheckDlgButton(hDlg, IDC_SILENCE, BST_UNCHECKED);
+			SetDlgItemInt(hDlg, IDC_SILSECONDS, DEFAULT_SILENCE_SECONDS, FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), FALSE);
+		}
+		else {
+			CheckDlgButton(hDlg, IDC_SILENCE, BST_CHECKED);
+			SetDlgItemInt(hDlg, IDC_SILSECONDS, (UINT) silence_seconds, FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), TRUE);
+		}
 		CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, play_loops ? IDC_LOOPS : IDC_NOLOOPS);
 		return TRUE;
 	case WM_COMMAND:
 		wCtrl = LOWORD(wParam);
+		BOOL enabled;
 		switch (wCtrl) {
 		case IDC_UNLIMITED:
 		case IDC_LIMITED:
-			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, wCtrl);
-			enableTimeInput(hDlg, wCtrl == IDC_LIMITED);
-			if (wCtrl == IDC_UNLIMITED)
+			enabled = (wCtrl == IDC_LIMITED);
+			enableTimeInput(hDlg, enabled);
+			if (!enabled)
 				song_length = -1;
 			else {
-				HWND hMinutes = GetDlgItem(hDlg, IDC_MINUTES);
-				SetFocus(hMinutes);
-				SendMessage(hMinutes, EM_SETSEL, 0, -1);
+				setFocusAndSelect(hDlg, IDC_MINUTES);
 				getTimeInput(hDlg);
+			}
+			return TRUE;
+		case IDC_SILENCE:
+			enabled = (IsDlgButtonChecked(hDlg, IDC_SILENCE) == BST_CHECKED);
+			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), enabled);
+			if (!enabled)
+				silence_seconds = -1;
+			else {
+				setFocusAndSelect(hDlg, IDC_SILSECONDS);
+				getSilenceInput(hDlg);
 			}
 			return TRUE;
 		case IDC_MINUTES:
@@ -93,9 +131,12 @@ static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam
 			if (HIWORD(wParam) == EN_CHANGE && IsDlgButtonChecked(hDlg, IDC_LIMITED) == BST_CHECKED)
 				getTimeInput(hDlg);
 			return TRUE;
+		case IDC_SILSECONDS:
+			if (HIWORD(wParam) == EN_CHANGE && IsDlgButtonChecked(hDlg, IDC_SILENCE) == BST_CHECKED)
+				getSilenceInput(hDlg);
+			return TRUE;
 		case IDC_LOOPS:
 		case IDC_NOLOOPS:
-			CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, wCtrl);
 			play_loops = (IsDlgButtonChecked(hDlg, IDC_LOOPS) == BST_CHECKED);
 			return TRUE;
 		default:
@@ -156,16 +197,6 @@ class input_asap
 	ASAP_ModuleInfo module_info;
 	ASAP_State asap;
 
-	int get_subsong_duration(t_uint32 p_subsong)
-	{
-		int duration = module_info.durations[p_subsong];
-		if (duration < 0)
-			return 1000 *  song_length.get_value();
-		if (play_loops.get_value() && module_info.loops[p_subsong])
-			return 1000 * song_length.get_value();
-		return duration;
-	}
-
 public:
 
 	static bool g_is_our_content_type(const char *p_content_type)
@@ -206,7 +237,11 @@ public:
 
 	void get_info(t_uint32 p_subsong, file_info &p_info, abort_callback &p_abort)
 	{
-		int duration = get_subsong_duration(p_subsong);
+		int duration = module_info.durations[p_subsong];
+		if (duration < 0)
+			duration = 1000 *  song_length;
+		if (play_loops && module_info.loops[p_subsong])
+			duration = 1000 * song_length;
 		if (duration >= 0)
 			p_info.set_length(duration / 1000.0);
 		p_info.info_set_int("channels", module_info.channels);
@@ -223,7 +258,15 @@ public:
 
 	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort)
 	{
-		::ASAP_PlaySong(&asap, p_subsong, get_subsong_duration(p_subsong));
+		int duration = module_info.durations[p_subsong];
+		if (duration < 0) {
+			if (silence_seconds > 0)
+				::ASAP_DetectSilence(&asap, silence_seconds);
+			duration = 1000 * song_length;
+		}
+		if (play_loops && module_info.loops[p_subsong])
+			duration = 1000 * song_length;
+		::ASAP_PlaySong(&asap, p_subsong, duration);
 	}
 
 	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort)

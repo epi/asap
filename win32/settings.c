@@ -26,13 +26,33 @@
 #include "asap.h"
 #include "settings.h"
 
-static int song_length = -1;
-static BOOL play_loops = FALSE;
+int song_length = -1;
+int silence_seconds = -1;
+BOOL play_loops = FALSE;
 
 static void enableTimeInput(HWND hDlg, BOOL enable)
 {
 	EnableWindow(GetDlgItem(hDlg, IDC_MINUTES), enable);
 	EnableWindow(GetDlgItem(hDlg, IDC_SECONDS), enable);
+}
+
+static void setFocusAndSelect(HWND hDlg, int nID)
+{
+	HWND hWnd = GetDlgItem(hDlg, nID);
+	SetFocus(hWnd);
+	SendMessage(hWnd, EM_SETSEL, 0, -1);
+}
+
+static BOOL getDlgInt(HWND hDlg, int nID, int *result)
+{
+	BOOL translated;
+	UINT r = GetDlgItemInt(hDlg, nID, &translated, FALSE);
+	if (!translated) {
+		MessageBox(hDlg, "Invalid number", "Error", MB_OK | MB_ICONERROR);
+		return FALSE;
+	}
+	*result = (int) r;
+	return TRUE;
 }
 
 static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -51,41 +71,59 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 			SetDlgItemInt(hDlg, IDC_SECONDS, (UINT) song_length % 60, FALSE);
 			enableTimeInput(hDlg, TRUE);
 		}
+		if (silence_seconds <= 0) {
+			CheckDlgButton(hDlg, IDC_SILENCE, BST_UNCHECKED);
+			SetDlgItemInt(hDlg, IDC_SILSECONDS, DEFAULT_SILENCE_SECONDS, FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), FALSE);
+		}
+		else {
+			CheckDlgButton(hDlg, IDC_SILENCE, BST_CHECKED);
+			SetDlgItemInt(hDlg, IDC_SILSECONDS, (UINT) silence_seconds, FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), TRUE);
+		}
 		CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, play_loops ? IDC_LOOPS : IDC_NOLOOPS);
 		return TRUE;
 	case WM_COMMAND:
 		if (HIWORD(wParam) == BN_CLICKED) {
 			WORD wCtrl = LOWORD(wParam);
+			BOOL enabled;
 			switch (wCtrl) {
 			case IDC_UNLIMITED:
 			case IDC_LIMITED:
-				CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, wCtrl);
-				enableTimeInput(hDlg, wCtrl == IDC_LIMITED);
-				if (wCtrl == IDC_LIMITED) {
-					HWND hMinutes = GetDlgItem(hDlg, IDC_MINUTES);
-					SetFocus(hMinutes);
-					SendMessage(hMinutes, EM_SETSEL, 0, -1);
-				}
+				enabled = (wCtrl == IDC_LIMITED);
+				enableTimeInput(hDlg, enabled);
+				if (enabled)
+					setFocusAndSelect(hDlg, IDC_MINUTES);
+				return TRUE;
+			case IDC_SILENCE:
+				enabled = (IsDlgButtonChecked(hDlg, IDC_SILENCE) == BST_CHECKED);
+				EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), enabled);
+				if (enabled)
+					setFocusAndSelect(hDlg, IDC_SILSECONDS);
 				return TRUE;
 			case IDC_LOOPS:
 			case IDC_NOLOOPS:
-				CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, wCtrl);
 				return TRUE;
 			case IDOK:
+			{
+				int new_song_length;
 				if (IsDlgButtonChecked(hDlg, IDC_UNLIMITED) == BST_CHECKED)
-					song_length = -1;
+					new_song_length = -1;
 				else {
-					BOOL minutesTranslated;
-					BOOL secondsTranslated;
-					UINT minutes = GetDlgItemInt(hDlg, IDC_MINUTES, &minutesTranslated, FALSE);
-					UINT seconds = GetDlgItemInt(hDlg, IDC_SECONDS, &secondsTranslated, FALSE);
-					if (!minutesTranslated || !secondsTranslated) {
-						MessageBox(hDlg, "Invalid number", "Error", MB_OK | MB_ICONERROR);
+					int minutes;
+					int seconds;
+					if (!getDlgInt(hDlg, IDC_MINUTES, &minutes)
+					 || !getDlgInt(hDlg, IDC_SECONDS, &seconds))
 						return TRUE;
-					}
-					song_length = (int) (60 * minutes + seconds);
+					new_song_length = 60 * minutes + seconds;
 				}
+				if (IsDlgButtonChecked(hDlg, IDC_SILENCE) != BST_CHECKED)
+					silence_seconds = -1;
+				else if (!getDlgInt(hDlg, IDC_SILSECONDS, &silence_seconds))
+					return TRUE;
+				song_length = new_song_length;
 				play_loops = (IsDlgButtonChecked(hDlg, IDC_LOOPS) == BST_CHECKED);
+			}
 				// FALLTHROUGH
 			case IDCANCEL:
 				EndDialog(hDlg, wCtrl);
@@ -99,17 +137,31 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 	return FALSE;
 }
 
-void settingsDialog(HINSTANCE hInstance, HWND hwndParent)
+BOOL settingsDialog(HINSTANCE hInstance, HWND hwndParent)
 {
-	DialogBox(hInstance, MAKEINTRESOURCE(IDD_SETTINGS), hwndParent, settingsDialogProc);
+	return DialogBox(hInstance, MAKEINTRESOURCE(IDD_SETTINGS), hwndParent, settingsDialogProc) == IDOK;
 }
 
-int getSubsongDuration(const ASAP_ModuleInfo *module_info, int song)
+int getSongDuration(const ASAP_ModuleInfo *module_info, int song)
 {
 	int duration = module_info->durations[song];
 	if (duration < 0)
 		return 1000 * song_length;
 	if (play_loops && module_info->loops[song])
 		return 1000 * song_length;
+	return duration;
+}
+
+int playSong(ASAP_State *as, int song)
+{
+	int duration = as->module_info.durations[song];
+	if (duration < 0) {
+		if (silence_seconds > 0)
+			ASAP_DetectSilence(as, silence_seconds);
+		duration = 1000 * song_length;
+	}
+	if (play_loops && as->module_info.loops[song])
+		duration = 1000 * song_length;
+	ASAP_PlaySong(as, song, duration);
 	return duration;
 }

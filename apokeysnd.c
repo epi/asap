@@ -445,3 +445,9 @@ ASAP_FUNC int PokeySound_Generate(ASAP_State PTR as, byte buffer[], int buffer_o
 	AS iir_acc_right = acc_right;
 	return blocks;
 }
+
+ASAP_FUNC abool PokeySound_IsSilent(const PokeyState PTR ps)
+{
+	return (PS audc1 & 0xf) == 0 && (PS audc2 & 0xf) == 0
+		&& (PS audc3 & 0xf) == 0 && (PS audc4 & 0xf) == 0;
+}

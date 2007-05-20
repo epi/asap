@@ -144,6 +144,8 @@ typedef struct {
 	int current_song;
 	int current_duration;
 	int blocks_played;
+	int silence_cycles;
+	int silence_cycles_counter;
 	byte song_pos[128];
 	byte poly9_lookup[511];
 	byte poly17_lookup[16385];
@@ -192,6 +194,12 @@ int ASAP_ParseDuration(const char *duration);
    call the following functions. */
 abool ASAP_Load(ASAP_State *as, const char *filename,
                 const byte module[], int module_len);
+
+/* Enables silence detection.
+   Makes ASAP finish playing after the specified period of silence.
+   "as" is ASAP state initialized by ASAP_Load().
+   "seconds" is the minimum length of silence that ends playback. */
+void ASAP_DetectSilence(ASAP_State *as, int seconds);
 
 /* Prepares ASAP to play the specified song of the loaded module.
    "as" is ASAP state initialized by ASAP_Load().

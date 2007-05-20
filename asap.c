@@ -772,7 +772,13 @@ ASAP_FUNC abool ASAP_Load(ASAP_State PTR as, STRING filename,
                           const byte module[], int module_len)
 {
 	AS sap_fastplay = 312;
+	AS silence_cycles = 0;
 	return parse_file(as, ADDRESSOF AS module_info, filename, module, module_len);
+}
+
+ASAP_FUNC void ASAP_DetectSilence(ASAP_State PTR as, int seconds)
+{
+	AS silence_cycles = seconds * ASAP_MAIN_CLOCK;
 }
 
 FILE_FUNC void call_6502(ASAP_State PTR as, int addr, int max_scanlines)
@@ -803,6 +809,7 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR as, int song, int duration)
 	AS current_song = song;
 	AS current_duration = duration;
 	AS blocks_played = 0;
+	AS silence_cycles_counter = AS silence_cycles;
 	PokeySound_Initialize(as);
 	AS cycle = 0;
 	AS cpu_nz = 0;
@@ -846,7 +853,7 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR as, int song, int duration)
 	}
 }
 
-ASAP_FUNC void call_6502_player(ASAP_State PTR as)
+ASAP_FUNC abool call_6502_player(ASAP_State PTR as)
 {
 	int s;
 	PokeySound_StartFrame(as);
@@ -906,6 +913,17 @@ ASAP_FUNC void call_6502_player(ASAP_State PTR as)
 		break;
 	}
 	PokeySound_EndFrame(as, AS sap_fastplay * 114);
+	if (AS silence_cycles > 0) {
+		if (PokeySound_IsSilent(ADDRESSOF AS base_pokey)
+		 && PokeySound_IsSilent(ADDRESSOF AS extra_pokey)) {
+			AS silence_cycles_counter -= AS sap_fastplay * 114;
+			if (AS silence_cycles_counter <= 0)
+				return FALSE;
+		}
+		else
+			AS silence_cycles_counter = AS silence_cycles;
+	}
+	return TRUE;
 }
 
 FILE_FUNC int milliseconds_to_blocks(int milliseconds)
@@ -929,26 +947,23 @@ ASAP_FUNC void ASAP_Seek(ASAP_State PTR as, int position)
 ASAP_FUNC int ASAP_Generate(ASAP_State PTR as, VOIDPTR buffer, int buffer_len,
                             ASAP_SampleFormat format)
 {
-	int block_shift = (AS module_info.channels - 1) + (format != ASAP_FORMAT_U8 ? 1 : 0);
-	int buffer_blocks = buffer_len >> block_shift;
-	int remaining_blocks;
-	int buffer_offset;
+	int block_shift;
+	int buffer_blocks;
+	int block;
+	if (AS silence_cycles > 0 && AS silence_cycles_counter <= 0)
+		return 0;
+	block_shift = (AS module_info.channels - 1) + (format != ASAP_FORMAT_U8 ? 1 : 0);
+	buffer_blocks = buffer_len >> block_shift;
 	if (AS current_duration > 0) {
 		int total_blocks = milliseconds_to_blocks(AS current_duration);
 		if (buffer_blocks > total_blocks - AS blocks_played)
 			buffer_blocks = total_blocks - AS blocks_played;
 	}
-	if (buffer_blocks == 0)
-		return 0;
-	remaining_blocks = buffer_blocks;
-	buffer_offset = 0;
-	for (;;) {
-		int blocks = PokeySound_Generate(as, buffer, buffer_offset, remaining_blocks, format);
+	block = 0;
+	do {
+		int blocks = PokeySound_Generate(as, buffer, block << block_shift, buffer_blocks - block, format);
 		AS blocks_played += blocks;
-		remaining_blocks -= blocks;
-		if (remaining_blocks == 0)
-			return buffer_blocks << block_shift;
-		buffer_offset += blocks << block_shift;
-		call_6502_player(as);
-	}
+		block += blocks;
+	} while (block < buffer_blocks && call_6502_player(as));
+	return block << block_shift;
 }

@@ -28,7 +28,7 @@
 
 #include "asap.h"
 
-void call_6502_player(ASAP_State *as);
+abool call_6502_player(ASAP_State *as);
 
 static abool detect_time = FALSE;
 static int scan_player_calls;

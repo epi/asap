@@ -38,6 +38,7 @@ void PokeySound_PutByte(ASAP_State *as, int addr, int data);
 int PokeySound_GetRandom(ASAP_State *as, int addr);
 void PokeySound_EndFrame(ASAP_State *as, int cycle_limit);
 int PokeySound_Generate(ASAP_State *as, byte buffer[], int buffer_offset, int blocks, ASAP_SampleFormat format);
+abool PokeySound_IsSilent(const PokeyState *ps);
 
 #endif /* JAVA */
 
