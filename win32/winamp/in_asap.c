@@ -22,31 +22,34 @@
  */
 
 #include <windows.h>
+#include <commctrl.h>
 #include <string.h>
 
 #include "in2.h"
-#define WM_WA_MPEG_EOF       (WM_USER + 2)
+#include "ipc_pe.h"
+#include "wa_ipc.h"
 
 #include "asap.h"
 #include "settings.h"
 
 // Winamp's equalizer works only with 16-bit samples
-#define SUPPORT_EQUALIZER    1
+#define SUPPORT_EQUALIZER  1
 
 #if 0
-
 // This is used in Winamp examples to disable C runtime in order to produce smaller DLL.
 // Currently it doesn't work here, because the following CRT functions are used:
 // memset, memcpy, strstr
-
 BOOL WINAPI _DllMainCRTStartup(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 {
 	return TRUE;
 }
-
 #endif
 
 static In_Module mod;
+
+// configuration
+#define INI_SECTION  "in_asap"
+static const char *ini_file;
 
 // current file
 static ASAP_State asap;
@@ -56,14 +59,39 @@ static DWORD module_len;
 static int duration;
 #define channels  asap.module_info.channels
 
+static int playlistLength;
+
 static HANDLE thread_handle = NULL;
 static volatile int thread_run = FALSE;
 static int paused = 0;
 static int seek_needed;
 
+static void writeIniInt(const char *name, int value)
+{
+	char s[16];
+	char *p = s + 15;
+	BOOL negative = FALSE;
+	if (value < 0) {
+		negative = TRUE;
+		value = -value;
+	}
+	*p = '\0';
+	do {
+		*--p = value % 10 + '0';
+		value /= 10;
+	} while (value > 0);
+	if (negative)
+		*--p = '-';
+	WritePrivateProfileString(INI_SECTION, name, p, ini_file);
+}
+
 static void config(HWND hwndParent)
 {
-	settingsDialog(mod.hDllInstance, hwndParent);
+	if (settingsDialog(mod.hDllInstance, hwndParent)) {
+		writeIniInt("song_length", song_length);
+		writeIniInt("silence_seconds", silence_seconds);
+		writeIniInt("play_loops", play_loops);
+	}
 }
 
 static void about(HWND hwndParent)
@@ -72,12 +100,40 @@ static void about(HWND hwndParent)
 		"About ASAP Winamp plugin " ASAP_VERSION, MB_OK);
 }
 
-static void init(void)
+static char *my_stpcpy(char *dest, const char *src)
 {
+	size_t len = strlen(src);
+	memcpy(dest, src, len);
+	return dest + len;
 }
 
-static void quit(void)
+static char *my_stpint(char *dest, int i)
 {
+	if (i >= 10) {
+		*dest++ = i / 10 + '0';
+		i %= 10;
+	}
+	*dest++ = i + '0';
+	return dest;
+}
+
+static int extractSongNumber(const char *s, char *filename)
+{
+	int i = strlen(s);
+	int song = -1;
+	if (i > 6 && s[i - 1] >= '0' && s[i - 1] <= '9') {
+		if (s[i - 2] == '#') {
+			song = s[i - 1] - '1';
+			i -= 2;
+		}
+		else if (s[i - 2] >= '0' && s[i - 2] <= '9' && s[i - 3] == '#') {
+			song = (s[i - 2] - '0') * 10 + s[i - 1] - '1';
+			i -= 3;
+		}
+	}
+	memcpy(filename, s, i);
+	filename[i] = '\0';
+	return song;
 }
 
 static BOOL loadFile(const char *filename)
@@ -95,19 +151,106 @@ static BOOL loadFile(const char *filename)
 	return TRUE;
 }
 
+static void expandFileSongs(HWND playlistWnd, int index)
+{
+	const char *fn;
+	fileinfo fi;
+	int song;
+	ASAP_ModuleInfo module_info;
+	char *p;
+	int j;
+	fn = (const char *) SendMessage(mod.hMainWindow, WM_WA_IPC, index, IPC_GETPLAYLISTFILE);
+	song = extractSongNumber(fn, fi.file);
+	if (song >= 0 || !ASAP_IsOurFile(fi.file))
+		return;
+	if (!loadFile(fi.file))
+		return;
+	if (!ASAP_GetModuleInfo(&module_info, fi.file, module, module_len))
+		return;
+	SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
+	p = fi.file + strlen(fi.file);
+	for (j = 0; j < module_info.songs; j++) {
+		COPYDATASTRUCT cds;
+		*p = '#';
+		*my_stpint(p + 1, j + 1) = '\0';
+		fi.index = index + j;
+		cds.dwData = IPC_PE_INSERTFILENAME;
+		cds.lpData = &fi;
+		cds.cbData = sizeof(fileinfo);
+		SendMessage(playlistWnd, WM_COPYDATA, 0, (LPARAM) &cds);
+	}
+}
+
+static INT_PTR CALLBACK progressDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_INITDIALOG)
+		SendDlgItemMessage(hDlg, IDC_PROGRESS, PBM_SETRANGE, 0, MAKELPARAM(0, playlistLength));
+	return FALSE;
+}
+
+static void expandPlaylistSongs(void)
+{
+	static BOOL processing = FALSE;
+	HWND playlistWnd;
+	HWND progressWnd;
+	int index;
+	if (processing)
+		return;
+	playlistWnd = (HWND) SendMessage(mod.hMainWindow, WM_WA_IPC, IPC_GETWND_PE, IPC_GETWND);
+	if (playlistWnd == NULL)
+		return;
+	processing = TRUE;
+	playlistLength = SendMessage(mod.hMainWindow, WM_WA_IPC, 0, IPC_GETLISTLENGTH);
+	progressWnd = CreateDialog(mod.hDllInstance, MAKEINTRESOURCE(IDD_PROGRESS), mod.hMainWindow, progressDialogProc);
+	index = playlistLength;
+	while (--index >= 0) {
+		if ((index & 15) == 0)
+			SendDlgItemMessage(progressWnd, IDC_PROGRESS, PBM_SETPOS, playlistLength - index, 0);
+		expandFileSongs(playlistWnd, index);
+	}
+	DestroyWindow(progressWnd);
+	processing = FALSE;
+}
+
+static void init(void)
+{
+	ini_file = (const char *) SendMessage(mod.hMainWindow, WM_WA_IPC, 0, IPC_GETINIFILE);
+	song_length = GetPrivateProfileInt(INI_SECTION, "song_length", song_length, ini_file);
+	silence_seconds = GetPrivateProfileInt(INI_SECTION, "silence_seconds", silence_seconds, ini_file);
+	play_loops = GetPrivateProfileInt(INI_SECTION, "play_loops", play_loops, ini_file);
+}
+
+static void quit(void)
+{
+}
+
 static void getFileInfo(char *file, char *title, int *length_in_ms)
 {
+	char filename[MAX_PATH];
+	int song;
 	ASAP_ModuleInfo module_info;
 	if (file == NULL || file[0] == '\0')
 		file = current_filename;
-	if (!loadFile(file))
-		return; // XXX
-	if (!ASAP_GetModuleInfo(&module_info, file, module, module_len))
+	song = extractSongNumber(file, filename);
+	if (song < 0)
+		expandPlaylistSongs();
+	if (!loadFile(filename))
 		return;
-	if (title != NULL)
-		strcpy(title, module_info.name); // XXX: max length?
+	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
+		return;
+	if (song < 0)
+		song = module_info.default_song;
+	if (title != NULL) {
+		char *p = my_stpcpy(title, module_info.name);
+		if (module_info.songs > 1) {
+			p = my_stpcpy(p, " (song ");
+			p = my_stpint(p, song + 1);
+			*p++ = ')';
+		}
+		*p = '\0';
+	}
 	if (length_in_ms != NULL)
-		*length_in_ms = getSubsongDuration(&module_info, module_info.default_song);
+		*length_in_ms = getSongDuration(&module_info, song);
 }
 
 static int infoBox(char *file, HWND hwndParent)
@@ -123,7 +266,9 @@ static int infoBox(char *file, HWND hwndParent)
 
 static int isOurFile(char *fn)
 {
-	return 0;
+	char filename[MAX_PATH];
+	extractSongNumber(fn, filename);
+	return ASAP_IsOurFile(filename);
 }
 
 static DWORD WINAPI playThread(LPVOID dummy)
@@ -182,17 +327,19 @@ static DWORD WINAPI playThread(LPVOID dummy)
 
 static int play(char *fn)
 {
+	char filename[MAX_PATH];
 	int song;
 	int maxlatency;
 	DWORD threadId;
 	strcpy(current_filename, fn);
-	if (!loadFile(fn))
+	song = extractSongNumber(fn, filename);
+	if (!loadFile(filename))
 		return -1;
-	if (!ASAP_Load(&asap, fn, module, module_len))
+	if (!ASAP_Load(&asap, filename, module, module_len))
 		return 1;
-	song = asap.module_info.default_song;
-	duration = getSubsongDuration(&asap.module_info, song);
-	ASAP_PlaySong(&asap, song, duration);
+	if (song < 0)
+		song = asap.module_info.default_song;
+	duration = playSong(&asap, song);
 	maxlatency = mod.outMod->Open(ASAP_SAMPLE_RATE, channels, BITS_PER_SAMPLE, -1, -1);
 	if (maxlatency < 0)
 		return 1;
