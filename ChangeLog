@@ -1,3 +1,23 @@
+2007-05-20  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, asap_internal.h, apokeysnd.c, asapscan.c, gsplayer/gspasap.c,
+  java/ASAP.ppjava, win32/Makefile, win32/settings.c, win32/settings.h,
+  win32/settings.rc, win32/foobar2000/foo_asap.cpp, win32/winamp/in_asap.c:
+  silence detection; store settings in winamp.ini (Winamp plugin) or registry
+  (GSPlayer plugin)
+
+* java/ASAPApplet.java: togglePause()
+
+* win32/Makefile, win32/settings.rc, win32/settings.h, win32/winamp/in_asap.c,
+  win32/winamp/ipc_pe.h, win32/winamp/wa_ipc.h: subsongs as separate playlist
+  entries
+
+
+2007-05-17  Piotr Fusik  <fox@scene.pl>
+* java/ASAP2WAV.java: implemented all options present in the C version
+
+* asap2wav.c: slight refactoring
+
+
 2007-05-16  Piotr Fusik  <fox@scene.pl>
 * java/ASAPApplet.java: fixed paint() and called repaint()
 
