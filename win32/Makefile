@@ -66,7 +66,7 @@ foo: foo_asap.dll
 FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)\foobar2000\foobar2000_component_client\component_client.cpp foobar2000\foobar2000_SDK.lib foobar2000\pfc.lib $(FOOBAR2000_SDK_DIR)\foobar2000\shared\shared.lib
 
 foo_asap.dll: foobar2000\foo_asap.cpp $(COMMON_C) foobar2000\foo_asap.res $(COMMON_H) settings.h $(FOOBAR2000_RUNTIME)
-	$(ASAP_CC) /LD /DWIN32 /DUNICODE /EHsc /I $(FOOBAR2000_SDK_DIR) foobar2000\foo_asap.cpp $(COMMON_C) foobar2000\foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
+	$(ASAP_CC) /DFOOBAR2000 /LD /DWIN32 /DUNICODE /EHsc /I $(FOOBAR2000_SDK_DIR) foobar2000\foo_asap.cpp $(COMMON_C) foobar2000\foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
 
 foobar2000\foobar2000_SDK.lib: foobar2000\abort_callback.obj foobar2000\audio_chunk.obj foobar2000\audio_chunk_channel_config.obj foobar2000\file_info.obj foobar2000\filesystem.obj foobar2000\guids.obj foobar2000\preferences_page.obj foobar2000\replaygain_info.obj foobar2000\service.obj
 	$(MKLIB) $**
@@ -86,7 +86,7 @@ foobar2000\foo_asap.res: settings.rc ..\asap.h settings.h
 # GSPlayer
 
 gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) settings.c gspasap.res ..\gsplayer\gspasap.def $(COMMON_H) settings.h
-	$(ASAP_CC) /LD ..\gsplayer\gspasap.c $(COMMON_C) settings.c gspasap.res ..\gsplayer\gspasap.def user32.lib $(LINKOPT)
+	$(ASAP_CC) /LD ..\gsplayer\gspasap.c $(COMMON_C) settings.c gspasap.res ..\gsplayer\gspasap.def advapi32.lib user32.lib $(LINKOPT)
 
 gspasap.res: settings.rc ..\asap.h settings.h
 	$(RC) /D GSPLAYER settings.rc
@@ -184,6 +184,7 @@ dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.tx
 		win32\wasap\resource.h win32\wasap\wasap.rc \
 		win32\winamp\in_asap.c win32\winamp\README \
 		win32\winamp\in2.h win32\winamp\out.h \
+		win32\winamp\ipc_pe.h win32\winamp\wa_ipc.h \
 		xmms\libasap.c xmms\libasap.map \
 		-b players\cmc.obx players\mpt.obx \
 		players\rmt4.obx players\rmt8.obx \
