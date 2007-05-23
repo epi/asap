@@ -65,6 +65,10 @@ class PokeyState
 	int audctl;
 	int poly_index;
 	int div_cycles;
+	int mute1;
+	int mute2;
+	int mute3;
+	int mute4;
 	int audf1;
 	int audf2;
 	int audf3;

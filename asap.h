@@ -78,6 +78,10 @@ typedef struct {
 	int audctl;
 	int poly_index;
 	int div_cycles;
+	int mute1;
+	int mute2;
+	int mute3;
+	int mute4;
 	int audf1;
 	int audf2;
 	int audf3;
@@ -208,6 +212,15 @@ void ASAP_DetectSilence(ASAP_State *as, int seconds);
    "duration" is playback time in milliseconds - use durations[song]
    unless you want to override it. -1 means indefinitely. */
 void ASAP_PlaySong(ASAP_State *as, int song, int duration);
+
+/* Mutes the selected POKEY channels.
+   This is only useful for people who want to grab samples of individual
+   instruments.
+   "as" is ASAP state after calling ASAP_PlaySong().
+   "mask" is a bit mask which selects POKEY channels to be muted.
+   Four low-order bits control the base POKEY channels,
+   four high-order bits control the extra POKEY channels. */
+void ASAP_MutePokeyChannels(ASAP_State *as, int mask);
 
 /* Rewinds the current song.
    "as" is ASAP state initialized by ASAP_PlaySong().

@@ -27,6 +27,12 @@
 
 #include "asap_internal.h"
 
+/* mute 20kHz pure sounds */
+#define ULTRASOUND_CYCLES  (ASAP_MAIN_CLOCK / 40000)
+
+#define MUTE_FREQUENCY     1
+#define MUTE_USER          2
+
 CONST_LOOKUP byte poly4_lookup[] =
 	{ 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
 CONST_LOOKUP byte poly5_lookup[] =
@@ -38,6 +44,10 @@ FILE_FUNC void init_state(PokeyState PTR ps)
 	PS audctl = 0;
 	PS poly_index = 15 * 31 * 131071;
 	PS div_cycles = 28;
+	PS mute1 = MUTE_FREQUENCY;
+	PS mute2 = MUTE_FREQUENCY;
+	PS mute3 = MUTE_FREQUENCY;
+	PS mute4 = MUTE_FREQUENCY;
 	PS audf1 = 0;
 	PS audf2 = 0;
 	PS audf3 = 0;
@@ -180,6 +190,20 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 	}
 }
 
+#define MUTE_CHANNEL(ch, cond, mask) \
+	if (cond) { \
+		PS mute##ch |= mask; \
+		PS tick_cycle##ch = NEVER; \
+	} \
+	else { \
+		PS mute##ch &= ~mask; \
+		if (PS tick_cycle##ch == NEVER && PS mute##ch == 0) \
+			PS tick_cycle##ch = AS cycle; \
+	}
+
+#define DO_ULTRASOUND(ch) \
+	MUTE_CHANNEL(ch, PS period_cycles##ch <= ULTRASOUND_CYCLES && (PS audc##ch >> 4 == 10 || PS audc##ch >> 4 == 14), MUTE_FREQUENCY);
+
 #define DO_AUDC(ch) \
 	if (data == PS audc##ch) \
 		break; \
@@ -187,15 +211,18 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 	PS audc##ch = data; \
 	if ((data & 0x10) != 0) { \
 		data &= 0xf; \
-		PS delta_buffer[CYCLE_TO_SAMPLE(AS cycle)] \
-			+= PS delta##ch > 0 ? data - PS delta##ch : data; \
+		if ((PS mute##ch & MUTE_USER) == 0) \
+			PS delta_buffer[CYCLE_TO_SAMPLE(AS cycle)] \
+				+= PS delta##ch > 0 ? data - PS delta##ch : data; \
 		PS delta##ch = data; \
 	} \
 	else { \
 		data &= 0xf; \
+		DO_ULTRASOUND(ch); \
 		if (PS delta##ch > 0) { \
-			PS delta_buffer[CYCLE_TO_SAMPLE(AS cycle)] \
-				+= data - PS delta##ch; \
+			if ((PS mute##ch & MUTE_USER) == 0) \
+				PS delta_buffer[CYCLE_TO_SAMPLE(AS cycle)] \
+					+= data - PS delta##ch; \
 			PS delta##ch = data; \
 		} \
 		else \
@@ -220,6 +247,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 		case 0x10:
 			PS period_cycles2 = PS div_cycles * (data + 256 * PS audf2 + 1);
 			PS reload_cycles1 = PS div_cycles * (data + 1);
+			DO_ULTRASOUND(2);
 			break;
 		case 0x40:
 			PS period_cycles1 = data + 4;
@@ -227,8 +255,10 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 		case 0x50:
 			PS period_cycles2 = data + 256 * PS audf2 + 7;
 			PS reload_cycles1 = data + 4;
+			DO_ULTRASOUND(2);
 			break;
 		}
+		DO_ULTRASOUND(1);
 		break;
 	case 0x01:
 		DO_AUDC(1)
@@ -249,6 +279,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 			PS period_cycles2 = PS audf1 + 256 * data + 7;
 			break;
 		}
+		DO_ULTRASOUND(2);
 		break;
 	case 0x03:
 		DO_AUDC(2)
@@ -264,6 +295,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 		case 0x08:
 			PS period_cycles4 = PS div_cycles * (data + 256 * PS audf4 + 1);
 			PS reload_cycles3 = PS div_cycles * (data + 1);
+			DO_ULTRASOUND(4);
 			break;
 		case 0x20:
 			PS period_cycles3 = data + 4;
@@ -271,8 +303,10 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 		case 0x28:
 			PS period_cycles4 = data + 256 * PS audf4 + 7;
 			PS reload_cycles3 = data + 4;
+			DO_ULTRASOUND(4);
 			break;
 		}
+		DO_ULTRASOUND(3);
 		break;
 	case 0x05:
 		DO_AUDC(3)
@@ -293,6 +327,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 			PS period_cycles4 = PS audf3 + 256 * data + 7;
 			break;
 		}
+		DO_ULTRASOUND(4);
 		break;
 	case 0x07:
 		DO_AUDC(4)
@@ -323,6 +358,8 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 			PS reload_cycles1 = PS audf1 + 4;
 			break;
 		}
+		DO_ULTRASOUND(1);
+		DO_ULTRASOUND(2);
 		switch (data & 0x28) {
 		case 0x00:
 			PS period_cycles3 = PS div_cycles * (PS audf3 + 1);
@@ -343,6 +380,8 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 			PS reload_cycles3 = PS audf3 + 4;
 			break;
 		}
+		DO_ULTRASOUND(3);
+		DO_ULTRASOUND(4);
 		break;
 	case 0x09:
 		/* TODO: STIMER */
@@ -379,10 +418,14 @@ FILE_FUNC void end_frame(ASAP_State PTR as, PokeyState PTR ps, int cycle_limit)
 	m = ((PS audctl & 0x80) != 0) ? 15 * 31 * 511 : 15 * 31 * 131071;
 	if (PS poly_index >= 2 * m)
 		PS poly_index -= m;
-	PS tick_cycle1 -= cycle_limit;
-	PS tick_cycle2 -= cycle_limit;
-	PS tick_cycle3 -= cycle_limit;
-	PS tick_cycle4 -= cycle_limit;
+	if (PS tick_cycle1 != NEVER)
+		PS tick_cycle1 -= cycle_limit;
+	if (PS tick_cycle2 != NEVER)
+		PS tick_cycle2 -= cycle_limit;
+	if (PS tick_cycle3 != NEVER)
+		PS tick_cycle3 -= cycle_limit;
+	if (PS tick_cycle4 != NEVER)
+		PS tick_cycle4 -= cycle_limit;
 }
 
 ASAP_FUNC void PokeySound_StartFrame(ASAP_State PTR as)
@@ -450,4 +493,12 @@ ASAP_FUNC abool PokeySound_IsSilent(const PokeyState PTR ps)
 {
 	return (PS audc1 & 0xf) == 0 && (PS audc2 & 0xf) == 0
 		&& (PS audc3 & 0xf) == 0 && (PS audc4 & 0xf) == 0;
+}
+
+ASAP_FUNC void PokeySound_Mute(const ASAP_State PTR as, PokeyState PTR ps, int mask)
+{
+	MUTE_CHANNEL(1, (mask & 1) != 0, MUTE_USER);
+	MUTE_CHANNEL(2, (mask & 2) != 0, MUTE_USER);
+	MUTE_CHANNEL(3, (mask & 4) != 0, MUTE_USER);
+	MUTE_CHANNEL(4, (mask & 8) != 0, MUTE_USER);
 }
