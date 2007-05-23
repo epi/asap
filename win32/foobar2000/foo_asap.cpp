@@ -41,6 +41,12 @@ static const GUID play_loops_guid =
 	{ 0xf08d12f8, 0x58d6, 0x49fc, { 0xae, 0xc5, 0xf4, 0xd0, 0x2f, 0xb2, 0x20, 0xaf } };
 static cfg_bool play_loops(play_loops_guid, false);
 
+static const GUID mute_mask_guid =
+	{ 0x8bd94472, 0x82f1, 0x4e77, { 0x95, 0x78, 0xe9, 0x84, 0x75, 0xad, 0x17, 0x4 } };
+static cfg_int mute_mask(mute_mask_guid, 0);
+
+static ASAP_State asap;
+
 static void enableTimeInput(HWND hDlg, BOOL enable)
 {
 	EnableWindow(GetDlgItem(hDlg, IDC_MINUTES), enable);
@@ -74,6 +80,7 @@ static void getSilenceInput(HWND hDlg)
 
 static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	int i;
 	WORD wCtrl;
 	switch (uMsg) {
 	case WM_INITDIALOG:
@@ -100,6 +107,8 @@ static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam
 			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), TRUE);
 		}
 		CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, play_loops ? IDC_LOOPS : IDC_NOLOOPS);
+		for (i = 0; i < 8; i++)
+			CheckDlgButton(hDlg, IDC_MUTE1 + i, ((mute_mask >> i) & 1) != 0 ? BST_CHECKED : BST_UNCHECKED);
 		return TRUE;
 	case WM_COMMAND:
 		wCtrl = LOWORD(wParam);
@@ -138,6 +147,21 @@ static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam
 		case IDC_LOOPS:
 		case IDC_NOLOOPS:
 			play_loops = (IsDlgButtonChecked(hDlg, IDC_LOOPS) == BST_CHECKED);
+			return TRUE;
+		case IDC_MUTE1:
+		case IDC_MUTE1 + 1:
+		case IDC_MUTE1 + 2:
+		case IDC_MUTE1 + 3:
+		case IDC_MUTE1 + 4:
+		case IDC_MUTE1 + 5:
+		case IDC_MUTE1 + 6:
+		case IDC_MUTE1 + 7:
+			i = 1 << (wCtrl - IDC_MUTE1);
+			if (IsDlgButtonChecked(hDlg, wCtrl) == BST_CHECKED)
+				mute_mask = mute_mask | i;
+			else
+				mute_mask = mute_mask & ~i;
+			ASAP_MutePokeyChannels(&asap, mute_mask);
 			return TRUE;
 		default:
 			break;
@@ -181,7 +205,9 @@ public:
 	virtual void reset()
 	{
 		song_length = -1;
+		silence_seconds = -1;
 		play_loops = false;
+		mute_mask = 0;
 	}
 };
 
@@ -195,7 +221,6 @@ class input_asap
 	service_ptr_t<file> m_file;
 	byte module[ASAP_MODULE_MAX];
 	ASAP_ModuleInfo module_info;
-	ASAP_State asap;
 
 public:
 
@@ -206,7 +231,7 @@ public:
 
 	static bool g_is_our_path(const char *p_path, const char *p_extension)
 	{
-		return ::ASAP_IsOurFile(p_path) != 0;
+		return ASAP_IsOurFile(p_path) != 0;
 	}
 
 	void open(service_ptr_t<file> p_filehint, const char *p_path, t_input_open_reason p_reason, abort_callback &p_abort)
@@ -217,11 +242,11 @@ public:
 			filesystem::g_open(p_filehint, p_path, filesystem::open_mode_read, p_abort);
 		m_file = p_filehint;
 		int module_len = m_file->read(module, sizeof(module), p_abort);
-		if (!::ASAP_GetModuleInfo(&module_info, p_path, module, module_len))
+		if (!ASAP_GetModuleInfo(&module_info, p_path, module, module_len))
 			throw exception_io_unsupported_format();
 		if (p_reason == input_open_info_read)
 			return;
-		if (!::ASAP_Load(&asap, p_path, module, module_len))
+		if (!ASAP_Load(&asap, p_path, module, module_len))
 			throw exception_io_unsupported_format();
 	}
 
@@ -261,12 +286,12 @@ public:
 		int duration = module_info.durations[p_subsong];
 		if (duration < 0) {
 			if (silence_seconds > 0)
-				::ASAP_DetectSilence(&asap, silence_seconds);
+				ASAP_DetectSilence(&asap, silence_seconds);
 			duration = 1000 * song_length;
 		}
 		if (play_loops && module_info.loops[p_subsong])
 			duration = 1000 * song_length;
-		::ASAP_PlaySong(&asap, p_subsong, duration);
+		ASAP_PlaySong(&asap, p_subsong, duration);
 	}
 
 	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort)
@@ -281,7 +306,7 @@ public:
 #endif
 			buffer[BUFFERED_BLOCKS * 2];
 
-		buffered_bytes = ::ASAP_Generate(&asap, buffer, buffered_bytes,
+		buffered_bytes = ASAP_Generate(&asap, buffer, buffered_bytes,
 			(ASAP_SampleFormat) BITS_PER_SAMPLE);
 		if (buffered_bytes == 0)
 			return false;

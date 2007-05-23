@@ -34,6 +34,7 @@ static abool output_header = TRUE;
 static int song = -1;
 static abool use_16bit = TRUE;
 static int duration = -1;
+static int mute_mask = 0;
 
 static void print_help(void)
 {
@@ -49,6 +50,7 @@ static void print_help(void)
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
 		"            --raw              Output raw audio (no WAV header)\n"
+		"-m CHANNELS --mute=CHANNELS    Mute POKEY channels (1-8)\n"
 		"-h          --help             Display this information\n"
 		"-v          --version          Display version information\n"
 	);
@@ -89,6 +91,17 @@ static void set_time(const char *s)
 	duration = ASAP_ParseDuration(s);
 	if (duration <= 0)
 		fatal_error("invalid time format");
+}
+
+static void set_mute_mask(const char *s)
+{
+	int mask = 0;
+	while (*s != '\0') {
+		if (*s >= '1' && *s <= '8')
+			mask |= 1 << (*s - '1');
+		s++;
+	}
+	mute_mask = mask;
 }
 
 /* write 16-bit word as little endian */
@@ -137,6 +150,7 @@ static void process_file(const char *input_file)
 			duration = 180 * 1000;
 	}
 	ASAP_PlaySong(&asap, song, duration);
+	ASAP_MutePokeyChannels(&asap, mute_mask);
 	if (output_file == NULL) {
 		const char *dot;
 		static char output_default[FILENAME_MAX];
@@ -212,6 +226,10 @@ int main(int argc, char *argv[])
 			use_16bit = TRUE;
 		else if (strcmp(arg, "--raw") == 0)
 			output_header = FALSE;
+		else if (arg[1] == 'm' && arg[2] == '\0')
+			set_mute_mask(argv[++i]);
+		else if (strncmp(arg, "--mute=", 7) == 0)
+			set_mute_mask(arg + 7);
 		else if ((arg[1] == 'h' && arg[2] == '\0')
 			|| strcmp(arg, "--help") == 0)
 			print_help();

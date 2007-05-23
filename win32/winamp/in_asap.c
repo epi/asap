@@ -52,7 +52,7 @@ static In_Module mod;
 static const char *ini_file;
 
 // current file
-static ASAP_State asap;
+ASAP_State asap;
 static char current_filename[MAX_PATH] = "";
 static byte module[ASAP_MODULE_MAX];
 static DWORD module_len;
@@ -91,6 +91,7 @@ static void config(HWND hwndParent)
 		writeIniInt("song_length", song_length);
 		writeIniInt("silence_seconds", silence_seconds);
 		writeIniInt("play_loops", play_loops);
+		writeIniInt("mute_mask", mute_mask);
 	}
 }
 
@@ -218,6 +219,7 @@ static void init(void)
 	song_length = GetPrivateProfileInt(INI_SECTION, "song_length", song_length, ini_file);
 	silence_seconds = GetPrivateProfileInt(INI_SECTION, "silence_seconds", silence_seconds, ini_file);
 	play_loops = GetPrivateProfileInt(INI_SECTION, "play_loops", play_loops, ini_file);
+	mute_mask = GetPrivateProfileInt(INI_SECTION, "mute_mask", mute_mask, ini_file);
 }
 
 static void quit(void)
@@ -339,7 +341,7 @@ static int play(char *fn)
 		return 1;
 	if (song < 0)
 		song = asap.module_info.default_song;
-	duration = playSong(&asap, song);
+	duration = playSong(song);
 	maxlatency = mod.outMod->Open(ASAP_SAMPLE_RATE, channels, BITS_PER_SAMPLE, -1, -1);
 	if (maxlatency < 0)
 		return 1;

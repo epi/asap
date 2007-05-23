@@ -35,7 +35,7 @@ static HINSTANCE hInstance;
 
 static byte module[ASAP_MODULE_MAX];
 static DWORD module_len;
-static ASAP_State asap;
+ASAP_State asap;
 
 #ifdef _UNICODE
 
@@ -73,6 +73,7 @@ static void WINAPI asapInit()
 	RegQueryValueEx(hKey, _T("SongLength"), NULL, &type, (LPBYTE) &song_length, &size);
 	RegQueryValueEx(hKey, _T("SilenceSeconds"), NULL, &type, (LPBYTE) &silence_seconds, &size);
 	RegQueryValueEx(hKey, _T("PlayLoops"), NULL, &type, (LPBYTE) &play_loops, &size);
+	RegQueryValueEx(hKey, _T("MuteMask"), NULL, &type, (LPBYTE) &mute_mask, &size);
 	RegCloseKey(hKey);
 }
 
@@ -105,6 +106,7 @@ static void WINAPI asapShowConfigDlg(HWND hwndParent)
 		RegSetValueEx(hKey, _T("SongLength"), 0, REG_DWORD, (LPBYTE) &song_length, sizeof(int));
 		RegSetValueEx(hKey, _T("SilenceSeconds"), 0, REG_DWORD, (LPBYTE) &silence_seconds, sizeof(int));
 		RegSetValueEx(hKey, _T("PlayLoops"), 0, REG_DWORD, (LPBYTE) &play_loops, sizeof(int));
+		RegSetValueEx(hKey, _T("MuteMask"), 0, REG_DWORD, (LPBYTE) &mute_mask, sizeof(int));
 		RegCloseKey(hKey);
 	}
 }
@@ -184,7 +186,7 @@ static long WINAPI asapSeekFile(long lTime)
 
 static BOOL WINAPI asapStartDecodeFile()
 {
-	playSong(&asap, asap.module_info.default_song);
+	playSong(asap.module_info.default_song);
 	return TRUE;
 }
 

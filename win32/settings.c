@@ -29,6 +29,8 @@
 int song_length = -1;
 int silence_seconds = -1;
 BOOL play_loops = FALSE;
+int mute_mask = 0;
+static int saved_mute_mask;
 
 static void enableTimeInput(HWND hDlg, BOOL enable)
 {
@@ -57,6 +59,7 @@ static BOOL getDlgInt(HWND hDlg, int nID, int *result)
 
 static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	int i;
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		if (song_length <= 0) {
@@ -82,6 +85,9 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), TRUE);
 		}
 		CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, play_loops ? IDC_LOOPS : IDC_NOLOOPS);
+		saved_mute_mask = mute_mask;
+		for (i = 0; i < 8; i++)
+			CheckDlgButton(hDlg, IDC_MUTE1 + i, ((mute_mask >> i) & 1) != 0 ? BST_CHECKED : BST_UNCHECKED);
 		return TRUE;
 	case WM_COMMAND:
 		if (HIWORD(wParam) == BN_CLICKED) {
@@ -104,6 +110,21 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 			case IDC_LOOPS:
 			case IDC_NOLOOPS:
 				return TRUE;
+			case IDC_MUTE1:
+			case IDC_MUTE1 + 1:
+			case IDC_MUTE1 + 2:
+			case IDC_MUTE1 + 3:
+			case IDC_MUTE1 + 4:
+			case IDC_MUTE1 + 5:
+			case IDC_MUTE1 + 6:
+			case IDC_MUTE1 + 7:
+				i = 1 << (wCtrl - IDC_MUTE1);
+				if (IsDlgButtonChecked(hDlg, wCtrl) == BST_CHECKED)
+					mute_mask |= i;
+				else
+					mute_mask &= ~i;
+				ASAP_MutePokeyChannels(&asap, mute_mask);
+				return TRUE;
 			case IDOK:
 			{
 				int new_song_length;
@@ -124,9 +145,12 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 				song_length = new_song_length;
 				play_loops = (IsDlgButtonChecked(hDlg, IDC_LOOPS) == BST_CHECKED);
 			}
-				// FALLTHROUGH
+				EndDialog(hDlg, IDOK);
+				return TRUE;
 			case IDCANCEL:
-				EndDialog(hDlg, wCtrl);
+				mute_mask = saved_mute_mask;
+				ASAP_MutePokeyChannels(&asap, mute_mask);
+				EndDialog(hDlg, IDCANCEL);
 				return TRUE;
 			}
 		}
@@ -152,16 +176,17 @@ int getSongDuration(const ASAP_ModuleInfo *module_info, int song)
 	return duration;
 }
 
-int playSong(ASAP_State *as, int song)
+int playSong(int song)
 {
-	int duration = as->module_info.durations[song];
+	int duration = asap.module_info.durations[song];
 	if (duration < 0) {
 		if (silence_seconds > 0)
-			ASAP_DetectSilence(as, silence_seconds);
+			ASAP_DetectSilence(&asap, silence_seconds);
 		duration = 1000 * song_length;
 	}
-	if (play_loops && as->module_info.loops[song])
+	if (play_loops && asap.module_info.loops[song])
 		duration = 1000 * song_length;
-	ASAP_PlaySong(as, song, duration);
+	ASAP_PlaySong(&asap, song, duration);
+	ASAP_MutePokeyChannels(&asap, mute_mask);
 	return duration;
 }

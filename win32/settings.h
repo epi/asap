@@ -5,9 +5,11 @@
 // 576 is a magic number for Winamp, better do not modify it
 #define BUFFERED_BLOCKS          576
 #ifndef FOOBAR2000
+extern ASAP_State asap;
 extern int song_length;
 extern int silence_seconds;
 extern BOOL play_loops;
+extern int mute_mask;
 #endif
 
 // resource identifiers
@@ -22,9 +24,10 @@ extern BOOL play_loops;
 #define IDC_SILSECONDS 116
 #define IDC_LOOPS      117
 #define IDC_NOLOOPS    118
-#define IDC_PROGRESS   119
+#define IDC_MUTE1      121
+#define IDC_PROGRESS   131
 
 // functions
 BOOL settingsDialog(HINSTANCE hInstance, HWND hwndParent);
 int getSongDuration(const ASAP_ModuleInfo *module_info, int song);
-int playSong(ASAP_State *asap, int song);
+int playSong(int song);

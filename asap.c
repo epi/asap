@@ -853,6 +853,12 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR as, int song, int duration)
 	}
 }
 
+ASAP_FUNC void ASAP_MutePokeyChannels(ASAP_State PTR as, int mask)
+{
+	PokeySound_Mute(as, ADDRESSOF AS base_pokey, mask);
+	PokeySound_Mute(as, ADDRESSOF AS extra_pokey, mask >> 4);
+}
+
 ASAP_FUNC abool call_6502_player(ASAP_State PTR as)
 {
 	int s;

@@ -1,3 +1,12 @@
+2007-05-23  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c, asap.h, java/ASAP.ppjava: skip pure ultrasounds
+
+* apokeysnd.c, asap.c, asap.h, asap_internal.h, asap2wav.c, asap2wav.1,
+  win32/settings.rc, win32/settings.c, win32/settings.h, gsplayer/gspasap.c,
+  win32/foobar2000/foo_asap.cpp, win32/winamp/in_asap.c:
+  mute user-selected POKEY channels
+
+
 2007-05-20  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, asap_internal.h, apokeysnd.c, asapscan.c, gsplayer/gspasap.c,
   java/ASAP.ppjava, win32/Makefile, win32/settings.c, win32/settings.h,
