@@ -11,6 +11,7 @@ This release includes the following programs that use the ASAP engine:
 * plugin for GSPlayer
 * plugin for Winamp
 * plugin for XMMS
+* a Java applet
 
 Currently supported input formats are:
 * SAP (Slight Atari Player - standard file format for playing Atari 8-bit

@@ -1,6 +1,15 @@
 History
 -------
 
+* ASAP 0.4.0 beta (2007-05-23)
+
+This beta version introduces completely new 6502 and POKEY emulation.
+SAP files with samples are supported. ASAP can be compiled as Java.
+A Java applet has been created. Winamp, foobar2000 and GSPlayer plugins
+support silence detection and muting selected POKEY channels.
+Winamp plugin supports subsongs and Winamp's equalizer.
+
+
 * ASAP 0.3.0 (2007-05-06)
 
 This release adds support for AUTHOR, NAME, DATE and TIME tags in SAP files.
