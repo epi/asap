@@ -263,4 +263,31 @@ public final class ASAP
 	{
 		return ASAP_Generate(as, buffer, buffer.length, format);
 	}
+
+	/** Returns POKEY channel volume.
+	    @param channel POKEY channel number (from 1 to 8)
+	    @return volume of the specified channel (from 0 to 15) */
+	public int getPokeyChannelVolume(int channel)
+	{
+		switch (channel) {
+		case 1:
+			return as.base_pokey.audf1 & 0xf;
+		case 2:
+			return as.base_pokey.audf2 & 0xf;
+		case 3:
+			return as.base_pokey.audf3 & 0xf;
+		case 4:
+			return as.base_pokey.audf4 & 0xf;
+		case 5:
+			return as.extra_pokey.audf1 & 0xf;
+		case 6:
+			return as.extra_pokey.audf2 & 0xf;
+		case 7:
+			return as.extra_pokey.audf3 & 0xf;
+		case 8:
+			return as.extra_pokey.audf4 & 0xf;
+		default:
+			return 0;
+		}
+	}
 }

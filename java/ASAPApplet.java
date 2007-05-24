@@ -22,6 +22,7 @@
  */
 
 import java.applet.Applet;
+import java.awt.Color;
 import java.awt.Graphics;
 import java.io.InputStream;
 import java.io.IOException;
@@ -44,22 +45,45 @@ public class ASAPApplet extends Applet implements Runnable
 	private boolean running;
 
 	private static final int BITS_PER_SAMPLE = 16;
+	private static Color background = Color.BLACK;
+	private static Color foreground = Color.GREEN;
 
 	public ASAPApplet()
 	{
 		asap = new ASAP();
 	}
 
+	public void update(Graphics g)
+	{
+		if (running)
+			paint(g);
+		else
+			super.update(g);
+	}
+
 	public void paint(Graphics g)
 	{
 		if (!running)
 			return;
+		int channels = 4 * asap.getModuleInfo().channels;
+		int channelWidth = getWidth() / channels;
+		int totalHeight = getHeight();
+		int unitHeight = totalHeight / 15;
+		for (int i = 0; i < channels; i++) {
+			int height = asap.getPokeyChannelVolume(i + 1) * unitHeight;
+			g.setColor(background);
+			g.fillRect(i * channelWidth, 0, channelWidth, totalHeight - height);
+			g.setColor(foreground);
+			g.fillRect(i * channelWidth, totalHeight - height, channelWidth, height);
+		}
+	/*
 		ASAP_ModuleInfo module_info = asap.getModuleInfo();
 		g.drawString("Author: " + module_info.author, 10, 20);
 		g.drawString("Name: " + module_info.name, 10, 40);
 		g.drawString("Date: " + module_info.date, 10, 60);
 		if (module_info.songs > 1)
 			g.drawString("Song " + (song + 1) + " of " + module_info.songs, 10, 80);
+	*/
 	}
 
 	public void run()
@@ -71,6 +95,7 @@ public class ASAPApplet extends Applet implements Runnable
 				len = asap.generate(buffer, BITS_PER_SAMPLE);
 			}
 			line.write(buffer, 0, len);
+			repaint();
 		} while (len == buffer.length && running);
 		if (running) {
 			String js = getParameter("onPlaybackEnd");
@@ -133,8 +158,22 @@ public class ASAPApplet extends Applet implements Runnable
 		repaint();
 	}
 
+	private Color getColor(String parameter)
+	{
+		return new Color(Integer.parseInt(getParameter(parameter), 16));
+	}
+
 	public void start()
 	{
+		try {
+			background = getColor("background");
+		} catch (Exception e) {
+		}
+		setBackground(background);
+		try {
+			foreground = getColor("foreground");
+		} catch (Exception e) {
+		}
 		String filename = getParameter("file");
 		if (filename == null)
 			return;
