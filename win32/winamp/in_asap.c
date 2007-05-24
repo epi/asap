@@ -257,9 +257,11 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 
 static int infoBox(char *file, HWND hwndParent)
 {
-	if (loadFile(file)) {
+	char filename[MAX_PATH];
+	extractSongNumber(file, filename);
+	if (loadFile(filename)) {
 		ASAP_ModuleInfo module_info;
-		if (ASAP_GetModuleInfo(&module_info, file, module, module_len))
+		if (ASAP_GetModuleInfo(&module_info, filename, module, module_len))
 			MessageBox(hwndParent, module_info.all_info, "File information",
 				MB_OK | MB_ICONINFORMATION);
 	}
