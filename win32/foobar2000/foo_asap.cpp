@@ -292,6 +292,7 @@ public:
 		if (play_loops && module_info.loops[p_subsong])
 			duration = 1000 * song_length;
 		ASAP_PlaySong(&asap, p_subsong, duration);
+		ASAP_MutePokeyChannels(&asap, mute_mask);
 	}
 
 	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort)
