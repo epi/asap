@@ -43,6 +43,7 @@ public class ASAPApplet extends Applet implements Runnable
 	private int song;
 	private SourceDataLine line;
 	private boolean running;
+	private boolean paused;
 
 	private static final int BITS_PER_SAMPLE = 16;
 	private static Color background = Color.BLACK;
@@ -91,8 +92,16 @@ public class ASAPApplet extends Applet implements Runnable
 		byte[] buffer = new byte[8192];
 		int len;
 		do {
-			synchronized(asap) {
+			synchronized (asap) {
 				len = asap.generate(buffer, BITS_PER_SAMPLE);
+			}
+			synchronized (this) {
+				while (paused)
+					try {
+						wait();
+					} catch (InterruptedException e) {
+						return;
+					}
 			}
 			line.write(buffer, 0, len);
 			repaint();
@@ -125,7 +134,7 @@ public class ASAPApplet extends Applet implements Runnable
 			return;
 		}
 		ASAP_ModuleInfo module_info;
-		synchronized(asap) {
+		synchronized (asap) {
 			asap.load(filename, module, module_len);
 			module_info = asap.getModuleInfo();
 			if (song < 0)
@@ -140,20 +149,22 @@ public class ASAPApplet extends Applet implements Runnable
 			}
 			asap.playSong(song, duration);
 		}
-		if (line == null) {
-			AudioFormat format = new AudioFormat(ASAP.SAMPLE_RATE, BITS_PER_SAMPLE, module_info.channels, BITS_PER_SAMPLE != 8, false);
-			try {
-				line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, format));
-				line.open(format);
-			} catch (LineUnavailableException e) {
-				showStatus("ERROR OPENING AUDIO");
-				return;
-			}
+		AudioFormat format = new AudioFormat(ASAP.SAMPLE_RATE, BITS_PER_SAMPLE, module_info.channels, BITS_PER_SAMPLE != 8, false);
+		try {
+			line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, format));
+			line.open(format);
+		} catch (LineUnavailableException e) {
+			showStatus("ERROR OPENING AUDIO");
+			return;
 		}
 		line.start();
 		if (!running) {
 			running = true;
 			new Thread(this).start();
+		}
+		synchronized (this) {
+			paused = false;
+			notify();
 		}
 		repaint();
 	}
@@ -192,15 +203,11 @@ public class ASAPApplet extends Applet implements Runnable
 		running = false;
 	}
 
-	public boolean togglePause()
+	public synchronized boolean togglePause()
 	{
-		if (line.isRunning()) {
-			line.stop();
-			return true;
-		}
-		else {
-			line.start();
-			return false;
-		}
+		paused = !paused;
+		if (!paused)
+			notify();
+		return paused;
 	}
 }
