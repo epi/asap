@@ -22,6 +22,12 @@
  */
 
 #include <windows.h>
+#include <tchar.h>
+
+#ifdef _WIN32_WCE
+#define CheckDlgButton(hwnd, id, val)  SendDlgItemMessage (hwnd, id, BM_SETCHECK, val, 0)
+#define IsDlgButtonChecked(hwnd, id)   (BOOL) SendDlgItemMessage (hwnd, id, BM_GETCHECK, 0, 0)
+#endif
 
 #include "asap.h"
 #include "settings.h"
@@ -50,7 +56,7 @@ static BOOL getDlgInt(HWND hDlg, int nID, int *result)
 	BOOL translated;
 	UINT r = GetDlgItemInt(hDlg, nID, &translated, FALSE);
 	if (!translated) {
-		MessageBox(hDlg, "Invalid number", "Error", MB_OK | MB_ICONERROR);
+		MessageBox(hDlg, _T("Invalid number"), _T("Error"), MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
 	*result = (int) r;
