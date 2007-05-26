@@ -1,4 +1,4 @@
-VERSION = 0.4.0
+VERSION = 1.0.0
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 
@@ -9,7 +9,7 @@ ASAP_CC = $(CC) /Fe$@ /I . /I ..
 PERL = perl
 XASM = xasm /q
 RC = rc /fo $@
-CLARM = clarm /nologo /O2 /W3 /DNDEBUG /DARM /D_ARM /DARM_ /DARMV4 /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
+CLARM = clarm /nologo /O2 /W3 /DNDEBUG /DARM /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
 GMAKE = make
 
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
@@ -140,9 +140,6 @@ news.txt: ..\NEWS
 readme.txt: ..\README
 	copy $** $@
 
-todo.txt: ..\TODO
-	copy $** $@
-
 asap2wav.txt: ..\asap2wav.1
 	groff -m man -r LL=78n -r IN=5n -T ascii -P -cbu ..\asap2wav.1 >$@
 
@@ -158,11 +155,12 @@ foo_asap.txt: foobar2000\README
 gspasap.txt: ..\gsplayer\gspasap.txt
 	copy $** $@
 
-dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.txt todo.txt \
+dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.txt \
 	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt \
 	..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	cd ..
 	del ..\asap-$(VERSION).tar.gz
+	del ..\asap-$(VERSION)-java.zip
 	del ..\asap-$(VERSION)-win32.zip
 	del ..\asap-$(VERSION)-wince-arm.zip
 	perl maketar.pl -d asap-$(VERSION) \
@@ -170,12 +168,13 @@ dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.tx
 		asap2wav.c asap2wav.1 asapscan.c \
 		players\cmc.asx players\mpt.asx players\rmt.asx players\tmc.asx players\tm2.asx \
 		configure.ac Makefile.in \
-		ChangeLog COPYING CREDITS INSTALL NEWS README TODO \
+		ChangeLog COPYING CREDITS INSTALL NEWS README \
 		gsplayer\gspasap.c gsplayer\mapplugin.h \
 		gsplayer\gspasap.def gsplayer\gspasap.txt \
 		java\ASAP.ppjava java\ASAP_ModuleInfo.java \
-		java\ASAP2WAV.java java\ASAPApplet.java \
-		java\ASAPMIDlet.java java\MIDLET_MANIFEST.MF \
+		java\ASAP2WAV.java java\asap2wav.MF \
+		java\ASAPApplet.java \
+		java\ASAPMIDlet.java java\asap_midlet.MF \
 		java\mf2jad.pl java\Makefile \
 		win32\Makefile \
 		win32\settings.c win32\settings.h win32\settings.rc \
@@ -192,11 +191,16 @@ dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.tx
 		win32\wasap\play.ico win32\wasap\stop.ico win32\wasap\wasap.ico \
 		-s install-sh configure chksap.pl maketar.pl raw2c.pl \
 		| 7z a -tgzip -si -mx=9 ..\asap-$(VERSION).tar.gz
-	cd win32
+	cd java
+	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-java.zip \
+		asap2wav.jar asap_applet.jar asap_midlet.jad asap_midlet.jar
+	cd ..\win32
+	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-java.zip \
+		copying.txt credits.txt news.txt readme.txt
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip \
-		copying.txt credits.txt news.txt readme.txt todo.txt \
+		copying.txt credits.txt news.txt readme.txt \
 		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt \
 		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-wince-arm.zip \
-		copying.txt credits.txt news.txt readme.txt todo.txt \
+		copying.txt credits.txt news.txt readme.txt \
 		..\gsplayer\gspasap.dll ..\gsplayer\gspasap.txt
