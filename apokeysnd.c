@@ -27,8 +27,7 @@
 
 #include "asap_internal.h"
 
-/* mute 20kHz pure sounds */
-#define ULTRASOUND_CYCLES  (ASAP_MAIN_CLOCK / 40000)
+#define ULTRASOUND_CYCLES  112
 
 #define MUTE_FREQUENCY     1
 #define MUTE_USER          2
@@ -456,8 +455,8 @@ ASAP_FUNC int PokeySound_Generate(ASAP_State PTR as, byte buffer[], int buffer_o
 		blocks = AS samples - sample_index;
 	for (i = 0; i < blocks; i++) {
 		int sample;
-		acc_left += (AS base_pokey.delta_buffer[sample_index + i] << 18) - (acc_left >> 8);
-		sample = acc_left >> 8;
+		acc_left += (AS base_pokey.delta_buffer[sample_index + i] << 20) - (acc_left * 3 >> 10);
+		sample = acc_left >> 10;
 #define STORE_SAMPLE \
 		if (sample < -32767) \
 			sample = -32767; \
@@ -478,8 +477,8 @@ ASAP_FUNC int PokeySound_Generate(ASAP_State PTR as, byte buffer[], int buffer_o
 		}
 		STORE_SAMPLE;
 		if (AS module_info.channels == 2) {
-			acc_right += (AS extra_pokey.delta_buffer[sample_index + i] << 18) - (acc_right >> 8);
-			sample = acc_right >> 8;
+			acc_right += (AS extra_pokey.delta_buffer[sample_index + i] << 20) - (acc_right * 3 >> 10);
+			sample = acc_right >> 10;
 			STORE_SAMPLE;
 		}
 	}
