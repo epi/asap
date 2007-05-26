@@ -9,7 +9,7 @@ PERL = perl
 XASM = xasm -q
 RM = rm -f
 RMR = rm -rf
-ME_CLASSES = ${WTK}/lib/cldcapi11.jar;${WTK}/lib/midpapi10.jar;${WTK}/lib/jsr75.jar
+ME_CLASSES = ${WTK}/lib/cldcapi11.jar;${WTK}/lib/midpapi20.jar;${WTK}/lib/jsr75.jar
 PREVERIFY = ${WTK}/bin/preverify1.1
 ME_EMU = ${WTK}/bin/emulatorw -gui
 
@@ -17,7 +17,10 @@ COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h ../players.h
 PLAYERS_OBX = net/sf/asap/cmc.obx net/sf/asap/mpt.obx net/sf/asap/rmt4.obx net/sf/asap/rmt8.obx net/sf/asap/tmc.obx net/sf/asap/tm2.obx
 
-all: ASAP2WAV.class asap_applet.jar asap_midlet.jar
+all: asap2wav.jar asap_applet.jar asap_midlet.jad
+
+asap2wav.jar: asap2wav.MF ASAP2WAV.class net/sf/asap/ASAP.class ${PLAYERS_OBX}
+	${JAR} cfm $@ asap2wav.MF ASAP2WAV.class net/sf/asap
 
 ASAP2WAV.class: ASAP2WAV.java net/sf/asap/ASAP.class ${PLAYERS_OBX}
 	${JAVAC} -classpath . ASAP2WAV.java
@@ -32,14 +35,14 @@ ASAPApplet.class: ASAPApplet.java net/sf/asap/ASAP.class
 emu: asap_midlet.jad
 	${ME_EMU} -Xdescriptor:asap_midlet.jad
 
-asap_midlet.jad: asap_midlet.jar MIDLET_MANIFEST.MF
+asap_midlet.jad: asap_midlet.jar asap_midlet.MF
 	${PERL} mf2jad.pl asap_midlet
 
-asap_midlet.jar: MIDLET_MANIFEST.MF preverified/ASAPMIDlet.class ${PLAYERS_OBX}
-	${JAR} cfm $@ MIDLET_MANIFEST.MF -C preverified . ${PLAYERS_OBX}
+asap_midlet.jar: asap_midlet.MF preverified/ASAPMIDlet.class ${PLAYERS_OBX}
+	${JAR} cfm $@ asap_midlet.MF -C preverified . ${PLAYERS_OBX}
 
 preverified/ASAPMIDlet.class: ASAPMIDlet.class net/sf/asap/ASAP.class net/sf/asap/ASAP_ModuleInfo.class
-	${PREVERIFY} -classpath "${ME_CLASSES};." -d preverified ASAPMIDlet net.sf.asap.ASAP net.sf.asap.ASAP_ModuleInfo net.sf.asap.ASAP_State net.sf.asap.PokeyState
+	${PREVERIFY} -classpath "${ME_CLASSES};." -d preverified ASAPMIDlet FileList ASAPInputStream net.sf.asap.ASAP net.sf.asap.ASAP_ModuleInfo net.sf.asap.ASAP_State net.sf.asap.PokeyState
 
 ASAPMIDlet.class: ASAPMIDlet.java net/sf/asap/ASAP.class
 	${JAVAC} -classpath . -bootclasspath "${ME_CLASSES}" ASAPMIDlet.java
@@ -72,8 +75,8 @@ net/sf/asap/tm2.obx: ../players/tm2.asx
 	${XASM} -o $@ ../players/tm2.asx
 
 doc: ASAP.java ASAP_ModuleInfo.java
-	$(JAVADOC) -d doc ASAP.java ASAP_ModuleInfo.java
+	${JAVADOC} -d doc ASAP.java ASAP_ModuleInfo.java
 
 clean:
-	$(RM) *.class ASAP.java
-	$(RMR) net doc
+	${RM} *.class ASAP.java
+	${RMR} net doc

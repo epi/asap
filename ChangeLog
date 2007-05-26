@@ -1,5 +1,19 @@
+2007-05-26  Piotr Fusik  <fox@scene.pl>
+* asap.c: fixed POKEY timer interrupts; name defaults to base filename;
+  all_info is updated for formats other than SAP
+
+* apokeysnd.c: changed pass band to 20-15834 Hz
+
+* java/ASAPMIDlet.java, java/Makefile, java/asap_midlet.MF: finished midlet
+  implementation
+
+* java/asap2wav.MF, java/Makefile, win32/Makefile: Java release package
+
+
 2007-05-25  Piotr Fusik  <fox@scene.pl>
 * java/ASAPApplet.java: fixed pause and switching between mono and stereo songs
+
+* win32/settings.c: small fixes for Windows CE
 
 
 2007-05-24  Piotr Fusik  <fox@scene.pl>
