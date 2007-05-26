@@ -29,10 +29,10 @@ extern "C" {
 #endif
 
 /* ASAP version. */
-#define ASAP_VERSION_MAJOR   0
-#define ASAP_VERSION_MINOR   4
+#define ASAP_VERSION_MAJOR   1
+#define ASAP_VERSION_MINOR   0
 #define ASAP_VERSION_MICRO   0
-#define ASAP_VERSION         "0.4.0"
+#define ASAP_VERSION         "1.0.0"
 
 /* Short credits of the ASAP engine. */
 #define ASAP_YEARS           "2005-2007"
