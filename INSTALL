@@ -22,8 +22,7 @@ Building ASAP2WAV on Unix-like systems
 
 You need Perl, Make and a C compiler.
 
-From your shell prompt navigate to the "asap" directory (the one that
-contains "asap.c").
+From your shell prompt navigate to the directory which contains "asap.c".
 
 If you got the sources from CVS, you additionally need the "autoconf"
 package and must run the following command first:
@@ -64,8 +63,8 @@ If you have other XMMS plugins that support Atari 8-bit music, make sure
 to remove them in order to avoid conflicts.
 
 
-Building ASAP2WAV *and* the XMMS plugin on Unix-like systems
-------------------------------------------------------------
+Building ASAP2WAV and the XMMS plugin on Unix-like systems
+----------------------------------------------------------
 
 If you want to compile and install both the converter and the XMMS plugin
 for all users, there is a shortcut:
@@ -83,7 +82,7 @@ and ActivePerl 5.8.7. Windows SDK for Windows Vista is also a good choice
 as it includes the compiler.
 
 You need to set "Path", "INCLUDE" and "LIB" environment variables
-to point at the correct locations in VC++ and Windows SDK.
+to point to the correct locations in VC++ and Windows SDK.
 "perl" should be on the "Path", too.
 
 From the command prompt navigate to the "win32" directory and run:
@@ -97,12 +96,12 @@ Building the foobar2000 plugin on Windows
 
 You need the Windows compilation prerequisites (see above)
 and foobar2000 0.9 SDK - extract it to a new directory called
-"foobar2000_SDK" under the directory that contains "asap" and "atari800".
+"foobar2000_SDK" under the directory that contains the "asap" directory.
 
 From the command prompt navigate to the "win32" directory and run:
 nmake foo
 
-This will produce foobar2000\foo_asap.dll.
+This will produce foo_asap.dll.
 
 
 Building the GSPlayer plugin for Windows CE
@@ -115,3 +114,19 @@ From the command prompt navigate to the "win32" directory and run:
 nmake wince
 
 This will produce ..\gsplayer\gspasap.dll for ARM processors.
+
+
+Building Java ASAP2WAV, applet and midlet
+-----------------------------------------
+
+You need Java Development Kit (JDK), a C preprocessor (part of C compiler)
+and a Make utility. To compile the midlet, you additionally need Perl
+and a Wireless Toolkit (WTK) - I use Sony Ericsson SDK for the Java ME
+Platform, although Sun's WTK should work too after adjusting paths.
+
+Edit the paths at the top of "java/Makefile" so they point to your installed
+tools. From the command prompt navigate to the "java" directory and run:
+make
+
+This will produce asap2wav.jar, asap_applet.jar, asap_midlet.jar
+and asap_midlet.jad.
