@@ -60,13 +60,15 @@ ASAP_FUNC void ASAP_PutByte(ASAP_State PTR as, int addr, int data)
 		if ((addr & (AS module_info.channels == 1 ? 0xf : 0x1f)) == 0xe) {
 			AS irqst |= data ^ 0xff;
 #define SET_TIMER_IRQ(ch) \
-			if ((data & AS irqst & ch) != 0 && AS timer##ch##_cycle == NEVER) { \
-				int t = AS base_pokey.tick_cycle##ch; \
-				while (t < AS cycle) \
-					t += AS base_pokey.period_cycles##ch ; \
-				AS timer##ch##_cycle = t; \
-				if (AS nearest_event_cycle > t) \
-					AS nearest_event_cycle = t; \
+			if ((data & AS irqst & ch) != 0) { \
+				if (AS timer##ch##_cycle == NEVER) { \
+					int t = AS base_pokey.tick_cycle##ch; \
+					while (t < AS cycle) \
+						t += AS base_pokey.period_cycles##ch ; \
+					AS timer##ch##_cycle = t; \
+					if (AS nearest_event_cycle > t) \
+						AS nearest_event_cycle = t; \
+				} \
 			} \
 			else \
 				AS timer##ch##_cycle = NEVER;
@@ -458,6 +460,8 @@ static abool parse_text(char *retval, const char *p)
 	if (*p != '"')
 		return FALSE;
 	p++;
+	if (p[0] == '<' && p[1] == '?' && p[2] == '>' && p[3] == '"')
+		return TRUE;
 	i = 0;
 	while (*p != '"') {
 		if (i >= 127)
@@ -516,9 +520,6 @@ FILE_FUNC abool parse_sap(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
                           const byte module[], int module_len)
 {
 	int module_index = 0;
-#ifndef JAVA
-	char *p;
-#endif
 	abool sap_signature = FALSE;
 	int duration_index = 0;
 	if (as != NULL) {
@@ -530,6 +531,9 @@ FILE_FUNC abool parse_sap(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	for (;;) {
 		char line NEW_ARRAY(char, 256);
 		int i;
+#ifndef JAVA
+		char *p;
+#endif
 		if (module_index + 8 >= module_len)
 			return FALSE;
 		if (UBYTE(module[module_index]) == 0xff)
@@ -615,20 +619,6 @@ FILE_FUNC abool parse_sap(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	}
 	if (MODULE_INFO default_song >= MODULE_INFO songs)
 		return FALSE;
-#ifdef JAVA
-	module_info.all_info = "Author: " + module_info.author
-		+ "\nName: " + module_info.name
-		+ "\nDate: " + module_info.date + "\n";
-#else
-	p = my_stpcpy(module_info->all_info, "Author: ");
-	p = my_stpcpy(p, module_info->author);
-	p = my_stpcpy(p, "\nName: ");
-	p = my_stpcpy(p, module_info->name);
-	p = my_stpcpy(p, "\nDate: ");
-	p = my_stpcpy(p, module_info->date);
-	*p++ = '\n';
-	*p = '\0';
-#endif
 	if (as == NULL)
 		return TRUE;
 	switch (AS sap_type) {
@@ -720,10 +710,42 @@ ASAP_FUNC abool ASAP_IsOurFile(STRING filename)
 FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
                            STRING filename, const byte module[], int module_len)
 {
+	abool r;
 	int i;
-	SET_STRING(MODULE_INFO author, "<?>");
-	SET_STRING(MODULE_INFO name, "<?>");
-	SET_STRING(MODULE_INFO date, "<?>");
+#ifdef JAVA
+	int basename = 0;
+	int ext = -1;
+	for (i = 0; i < filename.length(); i++) {
+		int c = filename.charAt(i);
+		if (c == '/' || c == '\\')
+			basename = i + 1;
+		else if (c == '.')
+			ext = i;
+	}
+	if (ext < 0)
+		ext = i;
+	module_info.author = "<?>";
+	module_info.name = filename.substring(basename, ext - basename);
+	module_info.date = "<?>";
+#else
+	const char *p;
+	const char *basename = filename;
+	const char *ext = NULL;
+	char *q;
+	for (p = filename; *p != '\0'; p++) {
+		if (*p == '/' || *p == '\\')
+			basename = p + 1;
+		else if (*p == '.')
+			ext = p;
+	}
+	if (ext == NULL)
+		ext = p;
+	strcpy(module_info->author, "<?>");
+	i = ext - basename;
+	memcpy(module_info->name, basename, i);
+	module_info->name[i] = '\0';
+	strcpy(module_info->date, "<?>");
+#endif
 	MODULE_INFO channels = 1;
 	MODULE_INFO songs = 1;
 	MODULE_INFO default_song = 0;
@@ -733,33 +755,58 @@ FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	}
 	switch (get_packed_ext(filename)) {
 	case ASAP_EXT('C', 'M', 'C'):
-		return parse_cmc(as, module_info, module, module_len, FALSE);
+		r = parse_cmc(as, module_info, module, module_len, FALSE);
+		break;
 	case ASAP_EXT('C', 'M', 'R'):
-		return parse_cmc(as, module_info, module, module_len, TRUE);
+		r = parse_cmc(as, module_info, module, module_len, TRUE);
+		break;
 	case ASAP_EXT('D', 'M', 'C'):
 		if (as != NULL)
 			AS sap_fastplay = 156;
-		return parse_cmc(as, module_info, module, module_len, FALSE);
+		r = parse_cmc(as, module_info, module, module_len, FALSE);
+		break;
 	case ASAP_EXT('M', 'P', 'D'):
 		if (as != NULL)
 			AS sap_fastplay = 156;
-		return parse_mpt(as, module_info, module, module_len);
+		r = parse_mpt(as, module_info, module, module_len);
+		break;
 	case ASAP_EXT('M', 'P', 'T'):
-		return parse_mpt(as, module_info, module, module_len);
+		r = parse_mpt(as, module_info, module, module_len);
+		break;
 	case ASAP_EXT('R', 'M', 'T'):
-		return parse_rmt(as, module_info, module, module_len);
+		r = parse_rmt(as, module_info, module, module_len);
+		break;
 	case ASAP_EXT('S', 'A', 'P'):
-		return parse_sap(as, module_info, module, module_len);
+		r = parse_sap(as, module_info, module, module_len);
+		break;
 	case ASAP_EXT('T', 'M', '2'):
-		return parse_tm2(as, module_info, module, module_len);
+		r = parse_tm2(as, module_info, module, module_len);
+		break;
 	case ASAP_EXT('T', 'M', '8'):
 		MODULE_INFO channels = 2;
-		return parse_tmc(as, module_info, module, module_len);
+		r = parse_tmc(as, module_info, module, module_len);
+		break;
 	case ASAP_EXT('T', 'M', 'C'):
-		return parse_tmc(as, module_info, module, module_len);
+		r = parse_tmc(as, module_info, module, module_len);
+		break;
 	default:
 		return FALSE;
 	}
+#ifdef JAVA
+	module_info.all_info = "Author: " + module_info.author
+		+ "\nName: " + module_info.name
+		+ "\nDate: " + module_info.date + "\n";
+#else
+	q = my_stpcpy(module_info->all_info, "Author: ");
+	q = my_stpcpy(q, module_info->author);
+	q = my_stpcpy(q, "\nName: ");
+	q = my_stpcpy(q, module_info->name);
+	q = my_stpcpy(q, "\nDate: ");
+	q = my_stpcpy(q, module_info->date);
+	*q++ = '\n';
+	*q = '\0';
+#endif
+	return r;
 }
 
 ASAP_FUNC abool ASAP_GetModuleInfo(ASAP_ModuleInfo PTR module_info, STRING filename,
