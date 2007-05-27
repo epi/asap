@@ -100,8 +100,11 @@ class FileList
 			v.addElement("..");
 			start = 1;
 		}
-		while (contents.hasMoreElements())
-			v.addElement(contents.nextElement());
+		while (contents.hasMoreElements()) {
+			String name = (String) contents.nextElement();
+			if (name.endsWith("/") || ASAP.isOurFile(name))
+				v.addElement(name);
+		}
 		int n = v.size();
 		names = new String[n];
 		sublists = new FileList[n];
