@@ -173,8 +173,8 @@ dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.tx
 		gsplayer\gspasap.def gsplayer\gspasap.txt \
 		java\ASAP.ppjava java\ASAP_ModuleInfo.java \
 		java\ASAP2WAV.java java\asap2wav.MF \
-		java\ASAPApplet.java \
-		java\ASAPMIDlet.java java\asap_midlet.MF \
+		java\ASAPApplet.java java\asap_applet.txt \
+		java\ASAPMIDlet.java java\asap_midlet.MF java\asap_midlet.txt \
 		java\mf2jad.pl java\Makefile \
 		win32\Makefile \
 		win32\settings.c win32\settings.h win32\settings.rc \
@@ -193,10 +193,11 @@ dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.tx
 		| 7z a -tgzip -si -mx=9 ..\asap-$(VERSION).tar.gz
 	cd java
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-java.zip \
-		asap2wav.jar asap_applet.jar asap_midlet.jad asap_midlet.jar
+		asap2wav.jar asap_applet.jar asap_midlet.jad asap_midlet.jar \
+		asap_applet.txt asap_midlet.txt
 	cd ..\win32
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-java.zip \
-		copying.txt credits.txt news.txt readme.txt
+		copying.txt credits.txt news.txt readme.txt asap2wav.txt
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip \
 		copying.txt credits.txt news.txt readme.txt \
 		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt \
