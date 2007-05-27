@@ -1,0 +1,11 @@
+Another Slight Atari Player - J2ME midlet
+-----------------------------------------
+
+This is an experimental port of ASAP to Java 2 MicroEdition.
+The midlet will not work on devices with old J2ME implementations.
+The midlet has a file browser for selecting Atari 8-bit music files,
+which should be stored in phone memory or on a memory card.
+
+Any feedback regarding the midlet (whether it works on your mobile
+phone or whether it doesn't) is appreciated. Please include your
+device model and error messages, if any.
