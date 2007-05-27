@@ -71,7 +71,7 @@ public class ASAPApplet extends Applet implements Runnable
 		int totalHeight = getHeight();
 		int unitHeight = totalHeight / 15;
 		for (int i = 0; i < channels; i++) {
-			int height = asap.getPokeyChannelVolume(i + 1) * unitHeight;
+			int height = asap.getPokeyChannelVolume(i) * unitHeight;
 			g.setColor(background);
 			g.fillRect(i * channelWidth, 0, channelWidth, totalHeight - height);
 			g.setColor(foreground);

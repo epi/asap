@@ -239,11 +239,18 @@ public final class ASAP
 
 	/** Prepares ASAP to play the specified song of the loaded module.
 	    @param song zero-based song index
-		@param duration playback time in milliseconds,
+	    @param duration playback time in milliseconds,
 	    -1 means indefinitely */
 	public void playSong(int song, int duration)
 	{
 		ASAP_PlaySong(as, song, duration);
+	}
+
+	/** Mutes the selected POKEY channels.
+	    @param mask an 8-bit mask which selects POKEY channels to be muted */
+	public void mutePokeyChannels(int mask)
+	{
+		ASAP_MutePokeyChannels(as, mask);
 	}
 
 	/** Rewinds the current song.
@@ -264,26 +271,26 @@ public final class ASAP
 	}
 
 	/** Returns POKEY channel volume.
-	    @param channel POKEY channel number (from 1 to 8)
+	    @param channel POKEY channel number (from 0 to 7)
 	    @return volume of the specified channel (from 0 to 15) */
 	public int getPokeyChannelVolume(int channel)
 	{
 		switch (channel) {
-		case 1:
+		case 0:
 			return as.base_pokey.audf1 & 0xf;
-		case 2:
+		case 1:
 			return as.base_pokey.audf2 & 0xf;
-		case 3:
+		case 2:
 			return as.base_pokey.audf3 & 0xf;
-		case 4:
+		case 3:
 			return as.base_pokey.audf4 & 0xf;
-		case 5:
+		case 4:
 			return as.extra_pokey.audf1 & 0xf;
-		case 6:
+		case 5:
 			return as.extra_pokey.audf2 & 0xf;
-		case 7:
+		case 6:
 			return as.extra_pokey.audf3 & 0xf;
-		case 8:
+		case 7:
 			return as.extra_pokey.audf4 & 0xf;
 		default:
 			return 0;
