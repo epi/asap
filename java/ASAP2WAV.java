@@ -35,6 +35,7 @@ public class ASAP2WAV
 	private static int song = -1;
 	private static boolean use16bit = true;
 	private static int duration = -1;
+	private static int muteMask = 0;
 
 	private static void printHelp()
 	{
@@ -50,6 +51,7 @@ public class ASAP2WAV
 			"-b          --byte-samples     Output 8-bit samples\n" +
 			"-w          --word-samples     Output 16-bit samples (default)\n" +
 			"            --raw              Output raw audio (no WAV header)\n" +
+			"-m CHANNELS --mute=CHANNELS    Mute POKEY chanels (1-8)\n" +
 			"-h          --help             Display this information\n" +
 			"-v          --version          Display version information\n"
 		);
@@ -70,6 +72,17 @@ public class ASAP2WAV
 	private static void setTime(String s)
 	{
 		duration = ASAP.parseDuration(s);
+	}
+
+	private static void setMuteMask(String s)
+	{
+		int mask = 0;
+		for (int i = 0; i < s.length(); i++) {
+			int c = s.charAt(i);
+			if (c >= '1' && c <= '8')
+				mask |= 1 << (c - '1');
+		}
+		muteMask = mask;
 	}
 
 	private static void writeTag(OutputStream os, String tag) throws IOException
@@ -111,6 +124,7 @@ public class ASAP2WAV
 				duration = 180 * 1000;
 		}
 		asap.playSong(song, duration);
+		asap.mutePokeyChannels(muteMask);
 		if (outputFilename == null) {
 			int i = inputFilename.lastIndexOf('.');
 			outputFilename = inputFilename.substring(0, i) + ".wav";
@@ -175,6 +189,10 @@ public class ASAP2WAV
 				use16bit = true;
 			else if (arg.equals("--raw"))
 				outputHeader = false;
+			else if (arg.equals("-m"))
+				setMuteMask(args[++i]);
+			else if (arg.startsWith("--mute="))
+				setMuteMask(arg.substring(7));
 			else if (arg.equals("-h") || arg.equals("--help"))
 				printHelp();
 			else if (arg.equals("-v") || arg.equals("--version"))
