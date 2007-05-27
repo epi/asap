@@ -14,7 +14,6 @@
 #define UBYTE(data)             (data)
 #define SBYTE                   signed char
 #define STRING                  const char *
-#define SET_STRING(dest, src)   strcpy(dest, src)
 #define ZERO_ARRAY(array)       memset(array, 0, sizeof(array))
 #define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
                                 memcpy(dest + dest_offset, src + src_offset, len)
@@ -57,5 +56,6 @@ void PokeySound_Mute(const ASAP_State *as, PokeyState *ps, int mask);
 #define dGetWord(addr)          (dGetByte(addr) + (dGetByte((addr) + 1) << 8))
 #define GetByte(addr)           (((addr) & 0xf900) == 0xd000 ? ASAP_GetByte(as, addr) : dGetByte(addr))
 #define PutByte(addr, data)     do { if (((addr) & 0xf900) == 0xd000) ASAP_PutByte(as, addr, data); else dPutByte(addr, data); } while (FALSE)
+#define RMW_GetByte(dest, addr) do { if (((addr) & 0xf900) == 0xd000) { dest = ASAP_GetByte(as, addr); AS cycle--; ASAP_PutByte(as, addr, dest); AS cycle++; } else dest = dGetByte(addr); } while (FALSE)
 
 #endif /* _ASAP_INTERNAL_H_ */

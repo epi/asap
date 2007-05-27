@@ -1,3 +1,18 @@
+2007-05-27  Piotr Fusik  <fox@scene.pl>
+* acpu.c, asap_internal.h: emulate two write cycles of Read-Modify-Write
+  instructions
+
+* java/ASAP.ppjava, java/ASAPApplet.java: getPokeyChannelVolume() uses
+  zero-based channel numbers
+
+* java/ASAP.ppjava, java/ASAP2WAV.java: "-m" option
+
+* java/asap_applet.txt, java/asap_midlet.txt, win32/Makefile: short info
+  about the applet and the midlet
+
+* java/ASAPMIDlet.java: show only supported files
+
+
 2007-05-26  Piotr Fusik  <fox@scene.pl>
 * asap.c: fixed POKEY timer interrupts; name defaults to base filename;
   all_info is updated for formats other than SAP

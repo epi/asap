@@ -157,14 +157,14 @@ CONST_LOOKUP int opcode_cycles[] =
 #define SBC          data = GetByte(addr); DO_SBC
 #define SBC_ZP       data = dGetByte(addr); DO_SBC
 
-#define ASL          nz = GetByte(addr); c = nz >> 7; nz = (nz << 1) & 0xff; PutByte(addr, nz)
+#define ASL          RMW_GetByte(nz, addr); c = nz >> 7; nz = (nz << 1) & 0xff; PutByte(addr, nz)
 #define ASL_ZP       nz = dGetByte(addr); c = nz >> 7; nz = (nz << 1) & 0xff; dPutByte(addr, nz)
-#define ROL          nz = GetByte(addr); nz = (nz << 1) + c; c = nz >> 8; nz &= 0xff; PutByte(addr, nz)
+#define ROL          RMW_GetByte(nz, addr); nz = (nz << 1) + c; c = nz >> 8; nz &= 0xff; PutByte(addr, nz)
 #define ROL_ZP       nz = dGetByte(addr); nz = (nz << 1) + c; c = nz >> 8; nz &= 0xff; dPutByte(addr, nz)
-#define LSR          nz = GetByte(addr); c = nz & 1; nz >>= 1; PutByte(addr, nz)
+#define LSR          RMW_GetByte(nz, addr); c = nz & 1; nz >>= 1; PutByte(addr, nz)
 #define LSR_ZP       nz = dGetByte(addr); c = nz & 1; nz >>= 1; dPutByte(addr, nz)
 #define ROR \
-	nz = GetByte(addr); \
+	RMW_GetByte(nz, addr); \
 	if (c == 0) { \
 		c = nz & 1; \
 		nz >>= 1; \
@@ -185,9 +185,9 @@ CONST_LOOKUP int opcode_cycles[] =
 		nz = (nz >> 1) + 128; \
 	} \
 	dPutByte(addr, nz)
-#define DEC          nz = GetByte(addr); nz = (nz - 1) & 0xff; PutByte(addr, nz)
+#define DEC          RMW_GetByte(nz, addr); nz = (nz - 1) & 0xff; PutByte(addr, nz)
 #define DEC_ZP       nz = dGetByte(addr); nz = (nz - 1) & 0xff; dPutByte(addr, nz)
-#define INC          nz = GetByte(addr); nz = (nz + 1) & 0xff; PutByte(addr, nz)
+#define INC          RMW_GetByte(nz, addr); nz = (nz + 1) & 0xff; PutByte(addr, nz)
 #define INC_ZP       nz = dGetByte(addr); nz = (nz + 1) & 0xff; dPutByte(addr, nz)
 
 #define ASO          ASL; nz = a |= nz
