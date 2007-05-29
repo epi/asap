@@ -1,6 +1,8 @@
 2007-05-29  Piotr Fusik  <fox@scene.pl>
 * asap.c: fixed a bug in Java version throwing StringIndexOutOfBoundsException
 
+* asap.c: TMC is now played in stereo, just like TM8
+
 
 ** 1.0.0 released on 2007-05-28
 

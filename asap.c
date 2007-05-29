@@ -783,10 +783,8 @@ FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 		r = parse_tm2(as, module_info, module, module_len);
 		break;
 	case ASAP_EXT('T', 'M', '8'):
-		MODULE_INFO channels = 2;
-		r = parse_tmc(as, module_info, module, module_len);
-		break;
 	case ASAP_EXT('T', 'M', 'C'):
+		MODULE_INFO channels = 2;
 		r = parse_tmc(as, module_info, module, module_len);
 		break;
 	default:

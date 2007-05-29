@@ -26,8 +26,7 @@ The following input formats are supported:
 * MPT (Music ProTracker)
 * MPD (MPT DoublePlay)
 * RMT (Raster Music Tracker)
-* TMC (Theta Music Composer 1.x - 4-channel music)
-* TM8 (Theta Music Composer 1.x - 8-channel music)
+* TMC, TM8 (Theta Music Composer 1.x)
 * TM2 (Theta Music Composer 2.x)
 
 If you are looking for Atari 8-bit music, there is a single big collection
