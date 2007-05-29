@@ -725,7 +725,7 @@ FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	if (ext < 0)
 		ext = i;
 	module_info.author = "<?>";
-	module_info.name = filename.substring(basename, ext - basename);
+	module_info.name = filename.substring(basename, ext);
 	module_info.date = "<?>";
 #else
 	const char *p;
