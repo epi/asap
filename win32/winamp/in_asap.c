@@ -430,8 +430,8 @@ static In_Module mod = {
 	"mpt\0Music ProTracker (*.MPT)\0"
 	"mpd\0Music ProTracker DoublePlay (*.MPD)\0"
 	"rmt\0Raster Music Tracker (*.RMT)\0"
-	"tmc\0Theta Music Composer 1.x 4-channel (*.TMC)\0"
-	"tm8\0Theta Music Composer 1.x 8-channel (*.TM8)\0"
+	"tmc\0Theta Music Composer 1.x (*.TMC)\0"
+	"tm8\0Theta Music Composer 1.x (*.TM8)\0"
 	"tm2\0Theta Music Composer 2.x (*.TM2)\0"
 	,
 	1,    // is_seekable

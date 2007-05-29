@@ -119,8 +119,8 @@ static const char *exts[] = {
 	"mpt", "Music ProTracker (*.mpt)",
 	"mpd", "Music ProTracker DoublePlay (*.mpd)",
 	"rmt", "Raster Music Tracker (*.rmt)",
-	"tmc", "Theta Music Composer 1.x 4-channel (*.tmc)",
-	"tm8", "Theta Music Composer 1.x 8-channel (*.tm8)",
+	"tmc", "Theta Music Composer 1.x (*.tmc)",
+	"tm8", "Theta Music Composer 1.x (*.tm8)",
 	"tm2", "Theta Music Composer 2.x (*.tm2)"
 };
 #define N_EXTS (sizeof(exts) / sizeof(exts[0]) / 2)
