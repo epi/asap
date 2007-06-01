@@ -5,6 +5,7 @@ mandir = @mandir@
 man1dir = ${mandir}/man1
 
 CC = @CC@
+AR = ar rc
 XASM = xasm -q
 INSTALL = ./install-sh
 INSTALL_PROGRAM = ${INSTALL}
@@ -15,6 +16,7 @@ LDFLAGS = @LDFLAGS@
 DEFS = @DEFS@
 LIBS = @LIBS@
 ASAP2WAV = asap2wav@EXEEXT@
+ASAPLIB = asap.a
 XMMS_CFLAGS = @XMMS_CFLAGS@
 XMMS_LIBS = @XMMS_LIBS@
 XMMS_INPUT_PLUGIN_DIR = @XMMS_INPUT_PLUGIN_DIR@
@@ -28,6 +30,12 @@ all: ${ASAP2WAV} asap-xmms
 
 ${ASAP2WAV}: asap2wav.c ${COMMON_C} ${COMMON_H}
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${DEFS} -I. asap2wav.c ${COMMON_C} ${LIBS}
+
+lib: ${ASAPLIB}
+
+${ASAPLIB}: ${COMMON_C} ${COMMON_H}
+	${CC} -c ${CFLAGS} ${DEFS} -I. ${COMMON_C} ${LIBS}
+	${AR} $@ asap.o acpu.o apokeysnd.o
 
 asap-xmms: libasap.so
 

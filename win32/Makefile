@@ -107,7 +107,15 @@ wince: ..\gsplayer\gspasap.dll
 asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_CC) ..\asapscan.c $(COMMON_C) $(LINKOPT)
 
-# java
+# library
+
+lib: asap.lib
+
+asap.lib: $(COMMON_C) $(COMMON_H)
+	$(CC) /c $(COMMON_C)
+	$(MKLIB) asap.obj acpu.obj apokeysnd.obj
+
+# Java
 
 java:
 	$(GMAKE) -C ../java

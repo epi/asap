@@ -1,3 +1,11 @@
+2007-06-01  Piotr Fusik  <fox@scene.pl>
+* java/Makefile: players.h not needed
+
+* raw2c.pl: restored the old version because the script is not used for Java
+
+* Makefile.in, win32/Makefile: "lib" static library target
+
+
 2007-05-29  Piotr Fusik  <fox@scene.pl>
 * asap.c: fixed a bug in Java version throwing StringIndexOutOfBoundsException
 
