@@ -447,15 +447,17 @@ ASAP_FUNC void PokeySound_EndFrame(ASAP_State PTR as, int current_cycle)
 
 ASAP_FUNC int PokeySound_Generate(ASAP_State PTR as, byte buffer[], int buffer_offset, int blocks, ASAP_SampleFormat format)
 {
-	int sample_index = AS sample_index;
+	int i = AS sample_index;
+	int samples = AS samples;
 	int acc_left = AS iir_acc_left;
 	int acc_right = AS iir_acc_right;
-	int i;
-	if (blocks > AS samples - sample_index)
-		blocks = AS samples - sample_index;
-	for (i = 0; i < blocks; i++) {
+	if (blocks < samples - i)
+		samples = i + blocks;
+	else
+		blocks = samples - i;
+	for (; i < samples; i++) {
 		int sample;
-		acc_left += (AS base_pokey.delta_buffer[sample_index + i] << 20) - (acc_left * 3 >> 10);
+		acc_left += (AS base_pokey.delta_buffer[i] << 20) - (acc_left * 3 >> 10);
 		sample = acc_left >> 10;
 #define STORE_SAMPLE \
 		if (sample < -32767) \
@@ -477,10 +479,14 @@ ASAP_FUNC int PokeySound_Generate(ASAP_State PTR as, byte buffer[], int buffer_o
 		}
 		STORE_SAMPLE;
 		if (AS module_info.channels == 2) {
-			acc_right += (AS extra_pokey.delta_buffer[sample_index + i] << 20) - (acc_right * 3 >> 10);
+			acc_right += (AS extra_pokey.delta_buffer[i] << 20) - (acc_right * 3 >> 10);
 			sample = acc_right >> 10;
 			STORE_SAMPLE;
 		}
+	}
+	if (i == AS samples) {
+		acc_left += AS base_pokey.delta_buffer[i] << 20;
+		acc_right += AS extra_pokey.delta_buffer[i] << 20;
 	}
 	AS sample_index += blocks;
 	AS iir_acc_left = acc_left;

@@ -1,3 +1,8 @@
+2007-06-02  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c: some delta_buffer values could be lost, resulting in clicks
+  (reported by Michal Szpilowski)
+
+
 2007-06-01  Piotr Fusik  <fox@scene.pl>
 * java/Makefile: players.h not needed
 
