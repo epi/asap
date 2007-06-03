@@ -838,7 +838,6 @@ FILE_FUNC void call_6502(ASAP_State PTR as, int addr, int max_scanlines)
 }
 
 /* 50 Atari frames for the initialization routine - some SAPs are self-extracting. */
-/* FIXME: not enough space in delta_buffers!!! */
 #define SCANLINES_FOR_INIT  (50 * 312)
 
 FILE_FUNC void call_6502_init(ASAP_State PTR as, int addr, int a, int x, int y)
@@ -896,6 +895,7 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR as, int song, int duration)
 		AS tmc_per_frame_counter = 1;
 		break;
 	}
+	ASAP_MutePokeyChannels(as, 0);
 }
 
 ASAP_FUNC void ASAP_MutePokeyChannels(ASAP_State PTR as, int mask)
