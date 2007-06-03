@@ -76,6 +76,7 @@ typedef struct {
    Not for use outside the ASAP engine. */
 typedef struct {
 	int audctl;
+	abool init;
 	int poly_index;
 	int div_cycles;
 	int mute1;

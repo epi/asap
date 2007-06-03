@@ -30,7 +30,8 @@
 #define ULTRASOUND_CYCLES  112
 
 #define MUTE_FREQUENCY     1
-#define MUTE_USER          2
+#define MUTE_INIT          2
+#define MUTE_USER          4
 
 CONST_LOOKUP byte poly4_lookup[] =
 	{ 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
@@ -41,12 +42,13 @@ CONST_LOOKUP byte poly5_lookup[] =
 FILE_FUNC void init_state(PokeyState PTR ps)
 {
 	PS audctl = 0;
+	PS init = FALSE;
 	PS poly_index = 15 * 31 * 131071;
 	PS div_cycles = 28;
-	PS mute1 = MUTE_FREQUENCY;
-	PS mute2 = MUTE_FREQUENCY;
-	PS mute3 = MUTE_FREQUENCY;
-	PS mute4 = MUTE_FREQUENCY;
+	PS mute1 = MUTE_FREQUENCY | MUTE_USER;
+	PS mute2 = MUTE_FREQUENCY | MUTE_USER;
+	PS mute3 = MUTE_FREQUENCY | MUTE_USER;
+	PS mute4 = MUTE_FREQUENCY | MUTE_USER;
 	PS audf1 = 0;
 	PS audf2 = 0;
 	PS audf3 = 0;
@@ -55,10 +57,10 @@ FILE_FUNC void init_state(PokeyState PTR ps)
 	PS audc2 = 0;
 	PS audc3 = 0;
 	PS audc4 = 0;
-	PS tick_cycle1 = 0;
-	PS tick_cycle2 = 0;
-	PS tick_cycle3 = 0;
-	PS tick_cycle4 = 0;
+	PS tick_cycle1 = NEVER;
+	PS tick_cycle2 = NEVER;
+	PS tick_cycle3 = NEVER;
+	PS tick_cycle4 = NEVER;
 	PS period_cycles1 = 28;
 	PS period_cycles2 = 28;
 	PS period_cycles3 = 28;
@@ -102,56 +104,67 @@ ASAP_FUNC void PokeySound_Initialize(ASAP_State PTR as)
 #define CYCLE_TO_SAMPLE(cycle)  (((cycle) * ASAP_SAMPLE_RATE + AS sample_offset) / ASAP_MAIN_CLOCK)
 
 #define DO_TICK(ch) \
-	poly = cycle + PS poly_index - (ch - 1); \
-	newout = PS out##ch; \
-	switch (PS audc##ch >> 4) { \
-	case 0: \
-		if (poly5_lookup[poly % 31] != 0) { \
+	if (PS init) { \
+		switch (PS audc##ch >> 4) { \
+		case 10: \
+		case 14: \
+			PS out##ch ^= 1; \
+			PS delta_buffer[CYCLE_TO_SAMPLE(cycle)] += PS delta##ch = -PS delta##ch; \
+			break; \
+		default: \
+			break; \
+		} \
+	} \
+	else { \
+		int poly = cycle + PS poly_index - (ch - 1); \
+		int newout = PS out##ch; \
+		switch (PS audc##ch >> 4) { \
+		case 0: \
+			if (poly5_lookup[poly % 31] != 0) { \
+				if ((PS audctl & 0x80) != 0) \
+					newout = AS poly9_lookup[poly % 511] & 1; \
+				else { \
+					poly %= 131071; \
+					newout = (AS poly17_lookup[poly >> 3] >> (poly & 7)) & 1; \
+				} \
+			} \
+			break; \
+		case 2: \
+		case 6: \
+			newout ^= poly5_lookup[poly % 31]; \
+			break; \
+		case 4: \
+			if (poly5_lookup[poly % 31] != 0) \
+				newout = poly4_lookup[poly % 15]; \
+			break; \
+		case 8: \
 			if ((PS audctl & 0x80) != 0) \
 				newout = AS poly9_lookup[poly % 511] & 1; \
 			else { \
 				poly %= 131071; \
 				newout = (AS poly17_lookup[poly >> 3] >> (poly & 7)) & 1; \
 			} \
-		} \
-		break; \
-	case 2: \
-	case 6: \
-		newout ^= poly5_lookup[poly % 31]; \
-		break; \
-	case 4:\
-		if (poly5_lookup[poly % 31] != 0) \
+			break; \
+		case 10: \
+		case 14: \
+			newout ^= 1; \
+			break; \
+		case 12: \
 			newout = poly4_lookup[poly % 15]; \
-		break; \
-	case 8: \
-		if ((PS audctl & 0x80) != 0) \
-			newout = AS poly9_lookup[poly % 511] & 1; \
-		else { \
-			poly %= 131071; \
-			newout = (AS poly17_lookup[poly >> 3] >> (poly & 7)) & 1; \
+			break; \
+		default: \
+			break; \
 		} \
-		break; \
-	case 10: \
-	case 14: \
-		newout ^= 1; \
-		break; \
-	case 12: \
-		newout = poly4_lookup[poly % 15]; \
-		break; \
-	default: \
-		break; \
-	} \
-	if (newout != PS out##ch) { \
-		PS out##ch = newout; \
-		PS delta_buffer[CYCLE_TO_SAMPLE(cycle)] += PS delta##ch = -PS delta##ch; \
+		if (newout != PS out##ch) { \
+			PS out##ch = newout; \
+			PS delta_buffer[CYCLE_TO_SAMPLE(cycle)] += PS delta##ch = -PS delta##ch; \
+		} \
 	}
 
 FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 {
 	for (;;) {
 		int cycle = current_cycle;
-		int poly;
-		int newout;
 		if (cycle > PS tick_cycle1)
 			cycle = PS tick_cycle1;
 		if (cycle > PS tick_cycle2)
@@ -201,7 +214,7 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 	}
 
 #define DO_ULTRASOUND(ch) \
-	MUTE_CHANNEL(ch, PS period_cycles##ch <= ULTRASOUND_CYCLES && (PS audc##ch >> 4 == 10 || PS audc##ch >> 4 == 14), MUTE_FREQUENCY);
+	MUTE_CHANNEL(ch, PS period_cycles##ch <= ULTRASOUND_CYCLES && (PS audc##ch >> 4 == 10 || PS audc##ch >> 4 == 14), MUTE_FREQUENCY)
 
 #define DO_AUDC(ch) \
 	if (data == PS audc##ch) \
@@ -228,6 +241,9 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 			PS delta##ch = -data; \
 	} \
 	break;
+
+#define DO_INIT(ch, cond) \
+	MUTE_CHANNEL(ch, PS init && cond, MUTE_INIT)
 
 ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 {
@@ -386,7 +402,11 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 		/* TODO: STIMER */
 		break;
 	case 0x0f:
-		/* TODO: SKCTLS */
+		PS init = ((data & 3) == 0);
+		DO_INIT(1, (PS audctl & 0x40) == 0);
+		DO_INIT(2, (PS audctl & 0x50) != 0x50);
+		DO_INIT(3, (PS audctl & 0x20) == 0);
+		DO_INIT(4, (PS audctl & 0x28) != 0x28);
 		break;
 	default:
 		break;
@@ -397,7 +417,10 @@ ASAP_FUNC int PokeySound_GetRandom(ASAP_State PTR as, int addr)
 {
 	PokeyState PTR ps = (addr & 0x10) != 0 && AS module_info.channels == 2
 		? ADDRESSOF AS extra_pokey : ADDRESSOF AS base_pokey;
-	int i = AS cycle + PS poly_index;
+	int i;
+	if (PS init)
+		return 0xff;
+	i = AS cycle + PS poly_index;
 	if ((PS audctl & 0x80) != 0)
 		return AS poly9_lookup[i % 511];
 	else {
@@ -488,7 +511,7 @@ ASAP_FUNC int PokeySound_Generate(ASAP_State PTR as, byte buffer[], int buffer_o
 		acc_left += AS base_pokey.delta_buffer[i] << 20;
 		acc_right += AS extra_pokey.delta_buffer[i] << 20;
 	}
-	AS sample_index += blocks;
+	AS sample_index = i;
 	AS iir_acc_left = acc_left;
 	AS iir_acc_right = acc_right;
 	return blocks;

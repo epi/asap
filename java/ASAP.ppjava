@@ -62,6 +62,7 @@ import java.io.IOException;
 class PokeyState
 {
 	int audctl;
+	boolean init;
 	int poly_index;
 	int div_cycles;
 	int mute1;

@@ -1,3 +1,11 @@
+2007-06-03  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c, asap.c: long initialization routines could cause overflow
+  of delta_buffer
+
+* apokeysnd.c, asap.h, java/ASAP.ppjava: emulate POKEY initialization
+  via SKCTL
+
+
 2007-06-02  Piotr Fusik  <fox@scene.pl>
 * apokeysnd.c: some delta_buffer values could be lost, resulting in clicks
   (reported by Michal Szpilowski)
