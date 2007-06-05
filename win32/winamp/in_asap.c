@@ -30,7 +30,7 @@
 #include "wa_ipc.h"
 
 #include "asap.h"
-#include "settings.h"
+#include "gui.h"
 
 // Winamp's equalizer works only with 16-bit samples
 #define SUPPORT_EQUALIZER  1
@@ -226,11 +226,41 @@ static void quit(void)
 {
 }
 
+static int song;
+static ASAP_ModuleInfo module_info;
+
+static void getTitle(char *title)
+{
+	char *p = my_stpcpy(title, module_info.name);
+	if (module_info.songs > 1) {
+		p = my_stpcpy(p, " (song ");
+		p = my_stpint(p, song + 1);
+		*p++ = ')';
+	}
+	*p = '\0';
+}
+
+static char *tagFunc(char *tag, void *p)
+{
+	if (stricmp(tag, "artist") == 0 && module_info.author[0] != '\0')
+		return strdup(module_info.author);
+	if (stricmp(tag, "title") == 0) {
+		char *title = malloc(strlen(module_info.name) + 11);
+		if (title != NULL)
+			getTitle(title);
+		return title;
+	}
+	return NULL;
+}
+
+static void tagFreeFunc(char *tag, void *p)
+{
+	free(tag);
+}
+
 static void getFileInfo(char *file, char *title, int *length_in_ms)
 {
 	char filename[MAX_PATH];
-	int song;
-	ASAP_ModuleInfo module_info;
 	if (file == NULL || file[0] == '\0')
 		file = current_filename;
 	song = extractSongNumber(file, filename);
@@ -243,13 +273,11 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 	if (song < 0)
 		song = module_info.default_song;
 	if (title != NULL) {
-		char *p = my_stpcpy(title, module_info.name);
-		if (module_info.songs > 1) {
-			p = my_stpcpy(p, " (song ");
-			p = my_stpint(p, song + 1);
-			*p++ = ')';
-		}
-		*p = '\0';
+		waFormatTitle fmt_title = {
+			NULL, NULL, title, 512, tagFunc, tagFreeFunc
+		};
+		getTitle(title); // in case IPC_FORMAT_TITLE doesn't work...
+		SendMessage(mod.hMainWindow, WM_WA_IPC, (WPARAM) &fmt_title, IPC_FORMAT_TITLE);
 	}
 	if (length_in_ms != NULL)
 		*length_in_ms = getSongDuration(&module_info, song);
@@ -262,8 +290,7 @@ static int infoBox(char *file, HWND hwndParent)
 	if (loadFile(filename)) {
 		ASAP_ModuleInfo module_info;
 		if (ASAP_GetModuleInfo(&module_info, filename, module, module_len))
-			MessageBox(hwndParent, module_info.all_info, "File information",
-				MB_OK | MB_ICONINFORMATION);
+			showInfoDialog(mod.hDllInstance, hwndParent, &module_info);
 	}
 	return 0;
 }
