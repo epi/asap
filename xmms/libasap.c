@@ -22,6 +22,7 @@
  */
 
 #include <pthread.h>
+#include <string.h>
 #ifdef USE_STDIO
 #include <stdio.h>
 #else
@@ -30,6 +31,7 @@
 #endif
 
 #include <xmms/plugin.h>
+#include <xmms/titlestring.h>
 #include <xmms/util.h>
 
 #include "asap.h"
@@ -127,10 +129,46 @@ static void *asap_play_thread(void *arg)
 	pthread_exit(NULL);
 }
 
+static char *asap_get_title(char *filename, ASAP_ModuleInfo *module_info)
+{
+	char *path;
+	char *filepart;
+	char *ext;
+	TitleInput *title_input;
+	char *title;
+
+	path = g_strdup(filename);
+	filepart = strrchr(path, '/');
+	if (filepart != NULL) {
+		filepart[1] = '\0';
+		filepart += 2;
+	}
+	else
+		filepart = path;
+	ext = strrchr(filepart, '.');
+	if (ext != NULL)
+		ext++;
+
+	XMMS_NEW_TITLEINPUT(title_input);
+	title_input->performer = module_info->author;
+	title_input->track_name = module_info->name;
+	title_input->date = module_info->date;
+	title_input->file_name = g_basename(filename);
+	title_input->file_ext = ext;
+	title_input->file_path = path;
+	title = xmms_get_titlestring(xmms_get_gentitle_format(), title_input);
+	if (title == NULL)
+		title = g_strdup(module_info->name);
+
+	g_free(path);
+	return title;
+}
+
 static void asap_play_file(char *filename)
 {
 	int song;
 	int duration;
+	char *title;
 	if (!asap_load_file(filename))
 		return;
 	if (!ASAP_Load(&asap, filename, module, module_len))
@@ -139,13 +177,12 @@ static void asap_play_file(char *filename)
 	duration = asap.module_info.durations[song];
 	ASAP_PlaySong(&asap, song, duration);
 	channels = asap.module_info.channels;
-
 	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
 		ASAP_SAMPLE_RATE, channels))
 		return;
-
-	mod.set_info((char *) asap.module_info.name, duration, BITS_PER_SAMPLE * 1000,
-		ASAP_SAMPLE_RATE, channels);
+	title = asap_get_title(filename, &asap.module_info);
+	mod.set_info(title, duration, BITS_PER_SAMPLE * 1000, ASAP_SAMPLE_RATE, channels);
+	g_free(title);
 	seek_to = -1;
 	thread_run = TRUE;
 	pthread_create(&thread_handle, NULL, asap_play_thread, NULL);
@@ -186,7 +223,7 @@ static void asap_get_song_info(char *filename, char **title, int *length)
 		return;
 	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
 		return;
-	*title = g_strdup(module_info.name);
+	*title = asap_get_title(filename, &module_info);
 	*length = module_info.durations[module_info.default_song];
 }
 

@@ -22,6 +22,10 @@
 * asap.c, win32/foobar2000/foo_asap.cpp: unknown author and date are now
   represented by empty strings rather than "<?>"
 
+* win32/Makefile: "srcdist" target
+
+* xmms/libasap.c: use XMMS title formatting
+
 
 2007-06-03  Piotr Fusik  <fox@scene.pl>
 * apokeysnd.c, asap.c: long initialization routines could cause overflow
