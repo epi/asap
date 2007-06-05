@@ -59,7 +59,7 @@ package net.sf.asap;
 import java.io.InputStream;
 import java.io.IOException;
 
-class PokeyState
+final class PokeyState
 {
 	int audctl;
 	boolean init;
@@ -95,10 +95,10 @@ class PokeyState
 	int delta2;
 	int delta3;
 	int delta4;
-	byte[] delta_buffer = new byte[1024];
+	final byte[] delta_buffer = new byte[1024];
 }
 
-class ASAP_State
+final class ASAP_State
 {
 	int cycle;
 	int cpu_pc;
@@ -116,14 +116,15 @@ class ASAP_State
 	int timer2_cycle;
 	int timer4_cycle;
 	int irqst;
-	PokeyState base_pokey = new PokeyState();
-	PokeyState extra_pokey = new PokeyState();
+	int extra_pokey_mask;
+	final PokeyState base_pokey = new PokeyState();
+	final PokeyState extra_pokey = new PokeyState();
 	int sample_offset;
 	int sample_index;
 	int samples;
 	int iir_acc_left;
 	int iir_acc_right;
-	public ASAP_ModuleInfo module_info = new ASAP_ModuleInfo();
+	public final ASAP_ModuleInfo module_info = new ASAP_ModuleInfo();
 	char sap_type;
 	int sap_player;
 	int sap_music;
@@ -136,10 +137,10 @@ class ASAP_State
 	int blocks_played;
 	int silence_cycles;
 	int silence_cycles_counter;
-	byte[] song_pos = new byte[128];
-	byte[] poly9_lookup = new byte[511];
-	byte[] poly17_lookup = new byte[16385];
-	byte[] memory = new byte[65536];
+	final byte[] song_pos = new byte[128];
+	final byte[] poly9_lookup = new byte[511];
+	final byte[] poly17_lookup = new byte[16385];
+	final byte[] memory = new byte[65536];
 }
 
 /** Another Slight Atari Player.
