@@ -24,7 +24,7 @@
 #include "foobar2000/SDK/foobar2000.h"
 
 #include "asap.h"
-#include "settings.h"
+#include "gui.h"
 
 
 /* Configuration --------------------------------------------------------- */
@@ -271,9 +271,11 @@ public:
 			p_info.set_length(duration / 1000.0);
 		p_info.info_set_int("channels", module_info.channels);
 		p_info.info_set_int("subsongs", module_info.songs);
-		p_info.meta_set("composer", module_info.author);
+		if (module_info.author[0] != '\0')
+			p_info.meta_set("composer", module_info.author);
 		p_info.meta_set("title", module_info.name);
-		p_info.meta_set("date", module_info.date);
+		if (module_info.date[0] != '\0')
+			p_info.meta_set("date", module_info.date);
 	}
 
 	t_filestats get_file_stats(abort_callback &p_abort)
