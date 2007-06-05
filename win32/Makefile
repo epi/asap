@@ -1,4 +1,4 @@
-VERSION = 1.0.0
+VERSION = 1.0.1
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 
@@ -163,14 +163,9 @@ foo_asap.txt: foobar2000\README
 gspasap.txt: ..\gsplayer\gspasap.txt
 	copy $** $@
 
-dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.txt \
-	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt \
-	..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
+srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	cd ..
 	del ..\asap-$(VERSION).tar.gz
-	del ..\asap-$(VERSION)-java.zip
-	del ..\asap-$(VERSION)-win32.zip
-	del ..\asap-$(VERSION)-wince-arm.zip
 	perl maketar.pl -d asap-$(VERSION) \
 		-t asap.c asap.h asap_internal.h acpu.c apokeysnd.c \
 		asap2wav.c asap2wav.1 asapscan.c \
@@ -198,6 +193,12 @@ dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.tx
 		win32\wasap\play.ico win32\wasap\stop.ico win32\wasap\wasap.ico \
 		-s install-sh configure chksap.pl maketar.pl raw2c.pl \
 		| 7z a -tgzip -si -mx=9 ..\asap-$(VERSION).tar.gz
+
+dist: all foo wince java srcdist copying.txt credits.txt news.txt readme.txt \
+	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt \
+	del ..\asap-$(VERSION)-java.zip
+	del ..\asap-$(VERSION)-win32.zip
+	del ..\asap-$(VERSION)-wince-arm.zip
 	cd java
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-java.zip \
 		asap2wav.jar asap_applet.jar asap_midlet.jad asap_midlet.jar \
