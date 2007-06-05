@@ -30,7 +30,9 @@
 #endif
 
 #include "asap.h"
-#include "settings.h"
+#include "gui.h"
+
+#ifndef WASAP
 
 int song_length = -1;
 int silence_seconds = -1;
@@ -196,3 +198,50 @@ int playSong(int song)
 	ASAP_MutePokeyChannels(&asap, mute_mask);
 	return duration;
 }
+
+#endif /* WASAP */
+
+#if defined(WASAP) || defined(WINAMP)
+
+static HWND infoDialog = NULL;
+
+static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_COMMAND) {
+		DestroyWindow(hDlg);
+		infoDialog = NULL;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const ASAP_ModuleInfo *module_info)
+{
+	if (infoDialog == NULL)
+		infoDialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_INFO), hwndParent, infoDialogProc);
+	updateInfoDialog(module_info);
+}
+
+void updateInfoDialog(const ASAP_ModuleInfo *module_info)
+{
+	const char *author;
+	const char *name;
+	const char *date;
+	if (infoDialog == NULL)
+		return;
+	if (module_info == NULL) {
+		author = "";
+		name = "";
+		date = "";
+	}
+	else {
+		author = module_info->author;
+		name = module_info->name;
+		date = module_info->date;
+	}
+	SendDlgItemMessage(infoDialog, IDC_AUTHOR, WM_SETTEXT, 0, (LPARAM) author);
+	SendDlgItemMessage(infoDialog, IDC_NAME, WM_SETTEXT, 0, (LPARAM) name);
+	SendDlgItemMessage(infoDialog, IDC_DATE, WM_SETTEXT, 0, (LPARAM) date);
+}
+
+#endif

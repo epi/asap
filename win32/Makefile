@@ -45,19 +45,19 @@ asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
 
 # WASAP
 
-wasap.exe: wasap\wasap.c $(COMMON_C) wasap\wasap.res $(COMMON_H) wasap\resource.h
-	$(ASAP_CC) wasap\wasap.c $(COMMON_C) wasap\wasap.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
+wasap.exe: wasap\wasap.c $(COMMON_C) wasap\wasap.res $(COMMON_H) gui.h
+	$(ASAP_CC) /DWASAP wasap\wasap.c $(COMMON_C) gui.c wasap\wasap.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
 
-wasap\wasap.res: wasap\wasap.rc ..\asap.h wasap\resource.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
-	$(RC) wasap\wasap.rc
+wasap\wasap.res: gui.rc ..\asap.h gui.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
+	$(RC) /D WASAP gui.rc
 
 # Winamp
 
-in_asap.dll: winamp\in_asap.c $(COMMON_C) settings.c winamp\in_asap.res $(COMMON_H) settings.h
-	$(ASAP_CC) /LD winamp\in_asap.c $(COMMON_C) settings.c winamp\in_asap.res user32.lib $(LINKOPT)
+in_asap.dll: winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap.res $(COMMON_H) gui.h
+	$(ASAP_CC) /DWINAMP /LD winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap.res user32.lib $(LINKOPT)
 
-winamp\in_asap.res: settings.rc ..\asap.h settings.h
-	$(RC) /D WINAMP settings.rc
+winamp\in_asap.res: gui.rc ..\asap.h gui.h
+	$(RC) /D WINAMP gui.rc
 
 # foobar2000
 
@@ -65,7 +65,7 @@ foo: foo_asap.dll
 
 FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)\foobar2000\foobar2000_component_client\component_client.cpp foobar2000\foobar2000_SDK.lib foobar2000\pfc.lib $(FOOBAR2000_SDK_DIR)\foobar2000\shared\shared.lib
 
-foo_asap.dll: foobar2000\foo_asap.cpp $(COMMON_C) foobar2000\foo_asap.res $(COMMON_H) settings.h $(FOOBAR2000_RUNTIME)
+foo_asap.dll: foobar2000\foo_asap.cpp $(COMMON_C) foobar2000\foo_asap.res $(COMMON_H) gui.h $(FOOBAR2000_RUNTIME)
 	$(ASAP_CC) /DFOOBAR2000 /LD /DWIN32 /DUNICODE /EHsc /I $(FOOBAR2000_SDK_DIR) foobar2000\foo_asap.cpp $(COMMON_C) foobar2000\foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
 
 foobar2000\foobar2000_SDK.lib: foobar2000\abort_callback.obj foobar2000\audio_chunk.obj foobar2000\audio_chunk_channel_config.obj foobar2000\file_info.obj foobar2000\filesystem.obj foobar2000\guids.obj foobar2000\preferences_page.obj foobar2000\replaygain_info.obj foobar2000\service.obj
@@ -80,27 +80,27 @@ foobar2000\pfc.lib: foobar2000\cfg_var.obj foobar2000\guid.obj foobar2000\other.
 {$(FOOBAR2000_SDK_DIR)\pfc\}.cpp{foobar2000\}.obj:
 	$(CC) /c /Fo$@ /DWIN32 /DUNICODE /EHsc $**
 
-foobar2000\foo_asap.res: settings.rc ..\asap.h settings.h
-	$(RC) /D FOOBAR2000 settings.rc
+foobar2000\foo_asap.res: gui.rc ..\asap.h gui.h
+	$(RC) /D FOOBAR2000 gui.rc
 
 # GSPlayer
 
-gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) settings.c gspasap.res ..\gsplayer\gspasap.def $(COMMON_H) settings.h
-	$(ASAP_CC) /LD ..\gsplayer\gspasap.c $(COMMON_C) settings.c gspasap.res ..\gsplayer\gspasap.def advapi32.lib user32.lib $(LINKOPT)
+gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) gui.c gspasap.res ..\gsplayer\gspasap.def $(COMMON_H) gui.h
+	$(ASAP_CC) /DGSPLAYER /LD ..\gsplayer\gspasap.c $(COMMON_C) gui.c gspasap.res ..\gsplayer\gspasap.def advapi32.lib user32.lib $(LINKOPT)
 
-gspasap.res: settings.rc ..\asap.h settings.h
-	$(RC) /D GSPLAYER settings.rc
+gspasap.res: gui.rc ..\asap.h gui.h
+	$(RC) /D GSPLAYER gui.rc
 
 # GSPlayer - Windows CE
 
 wince: ..\gsplayer\gspasap.dll
 
-..\gsplayer\gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) settings.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def $(COMMON_H) settings.h
-	$(CLARM) /Fe$@ /DHAVE_CONFIG_H /DASAP /DSOUND /I . /I .. \
-		/LD ..\gsplayer\gspasap.c $(COMMON_C) settings.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def /link /release /SUBSYSTEM:WINDOWSCE,3.00
+..\gsplayer\gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def $(COMMON_H) gui.h
+	$(CLARM) /Fe$@ /DGSPLAYER /DHAVE_CONFIG_H /DASAP /DSOUND /I . /I .. \
+		/LD ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def /link /release /SUBSYSTEM:WINDOWSCE,3.00
 
-..\gsplayer\gspasap.res: settings.rc ..\asap.h settings.h
-	$(RC) /D _WIN32_WCE /D GSPLAYER settings.rc
+..\gsplayer\gspasap.res: gui.rc ..\asap.h gui.h
+	$(RC) /D _WIN32_WCE /D GSPLAYER gui.rc
 
 # asapscan
 
@@ -185,10 +185,9 @@ dist: all foo wince java ..\configure copying.txt credits.txt news.txt readme.tx
 		java\ASAPMIDlet.java java\asap_midlet.MF java\asap_midlet.txt \
 		java\mf2jad.pl java\Makefile \
 		win32\Makefile \
-		win32\settings.c win32\settings.h win32\settings.rc \
+		win32\gui.c win32\gui.h win32\gui.rc \
 		win32\foobar2000\foo_asap.cpp win32\foobar2000\README \
 		win32\wasap\wasap.c win32\wasap\README \
-		win32\wasap\resource.h win32\wasap\wasap.rc \
 		win32\winamp\in_asap.c win32\winamp\README \
 		win32\winamp\in2.h win32\winamp\out.h \
 		win32\winamp\ipc_pe.h win32\winamp\wa_ipc.h \

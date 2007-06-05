@@ -2,19 +2,63 @@
 #ifdef WINAMP
 #include <commctrl.h>
 #endif
+
 #include "..\asap.h"
-#include "settings.h"
+#include "gui.h"
+
+#ifdef WASAP
+
+#define FILE_DESCRIPTION "WASAP - Windows Another Slight Atari Player"
+#define INTERNAL_NAME "wasap"
+#define ORIGINAL_FILENAME "wasap.exe"
+
+IDI_APP ICON "wasap\wasap.ico"
+IDI_STOP ICON "wasap\stop.ico"
+IDI_PLAY ICON "wasap\play.ico"
+
+IDR_TRAYMENU MENU
+{
+	POPUP "WASAP"
+	{
+		MENUITEM "&Open...", IDM_OPEN
+		MENUITEM "&Stop", IDM_STOP
+		MENUITEM "File &information...", IDM_FILE_INFO
+		MENUITEM "&About WASAP...", IDM_ABOUT
+		MENUITEM "&Exit", IDM_EXIT
+	}
+}
+
+1 24
+{
+	"<?xml version=\0421.0\042?>"
+	"<assembly xmlns=\042urn:schemas-microsoft-com:asm.v1\042 "
+		"manifestVersion=\0421.0\042>"
+	"<assemblyIdentity version=\0421.0.0.0\042 "
+		"processorArchitecture=\042X86\042 "
+		"name=\042WASAP\042 type=\042win32\042 />"
+	"<dependency><dependentAssembly>"
+	"<assemblyIdentity type=\042win32\042 "
+		"name=\042Microsoft.Windows.Common-Controls\042 "
+		"version=\0426.0.0.0\042 processorArchitecture=\042X86\042 "
+		"publicKeyToken=\0426595b64144ccf1df\042 language=\042*\042 />"
+	"</dependentAssembly></dependency>"
+	"</assembly>"
+}
+
+#else /* WASAP */
 
 #if defined(WINAMP)
-#define APP_NAME "Winamp"
-#define INTERNAL_NAME "in_asap"
+#  define APP_NAME "Winamp"
+#  define INTERNAL_NAME "in_asap"
 #elif defined(FOOBAR2000)
-#define APP_NAME "foobar2000 0.9"
-#define INTERNAL_NAME "foo_asap"
+#  define APP_NAME "foobar2000 0.9"
+#  define INTERNAL_NAME "foo_asap"
 #elif defined(GSPLAYER)
-#define APP_NAME "GSPlayer"
-#define INTERNAL_NAME "gspasap"
+#  define APP_NAME "GSPlayer"
+#  define INTERNAL_NAME "gspasap"
 #endif
+#define FILE_DESCRIPTION "ASAP " APP_NAME " plugin"
+#define ORIGINAL_FILENAME INTERNAL_NAME ".dll"
 
 #ifndef _WIN32_WCE
 IDD_SETTINGS DIALOG 0, 0, 184, 216
@@ -90,6 +134,23 @@ FONT 8, "MS Sans Serif"
 }
 #endif
 
+#endif /* WASAP */
+
+#if defined(WASAP) || defined(WINAMP)
+IDD_INFO DIALOG 0, 0, 300, 56
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | WS_POPUPWINDOW | WS_VISIBLE
+CAPTION "File information"
+FONT 8, "MS Sans Serif"
+{
+	RTEXT "Author:", IDC_STATIC, 8, 8, 24, 12
+	LTEXT "", IDC_AUTHOR, 40, 8, 252, 12, SS_LEFT | SS_NOPREFIX
+	RTEXT "Name:", IDC_STATIC, 8, 22, 24, 12
+	LTEXT "", IDC_NAME, 40, 22, 252, 12, SS_LEFT | SS_NOPREFIX
+	RTEXT "Date:", IDC_STATIC, 8, 36, 24, 12
+	LTEXT "", IDC_DATE, 40, 36, 252, 12, SS_LEFT | SS_NOPREFIX
+}
+#endif
+
 1 VERSIONINFO
 	FILEVERSION ASAP_VERSION_MAJOR, ASAP_VERSION_MINOR, ASAP_VERSION_MICRO, 0
 	PRODUCTVERSION ASAP_VERSION_MAJOR, ASAP_VERSION_MINOR, ASAP_VERSION_MICRO, 0
@@ -104,11 +165,11 @@ FONT 8, "MS Sans Serif"
 		BLOCK "040904b0"
 		{
 			VALUE "CompanyName", "ASAP Developers\0"
-			VALUE "FileDescription", "ASAP " APP_NAME " plugin\0"
+			VALUE "FileDescription", FILE_DESCRIPTION "\0"
 			VALUE "FileVersion", ASAP_VERSION "\0"
 			VALUE "InternalName", INTERNAL_NAME "\0"
 			VALUE "LegalCopyright", "Copyleft " ASAP_YEARS "\0"
-			VALUE "OriginalFilename", INTERNAL_NAME ".dll\0"
+			VALUE "OriginalFilename", ORIGINAL_FILENAME "\0"
 			VALUE "ProductName", "ASAP\0"
 			VALUE "ProductVersion", ASAP_VERSION "\0"
 		}

@@ -1,3 +1,28 @@
+2007-06-05  Piotr Fusik  <fox@scene.pl>
+* win32/winamp/in_asap.c: use Advanced Title Formatting - it simply means
+  that the displayed title can be customized in Winamp settings (the default
+  template includes author's name)
+
+* win32/settings.c, win32/settings.h, win32/settings.rc, win32/gui.c,
+  win32/gui.h, win32/gui.rc, win32/wasap/resource.h, win32/wasap/wasap.rc,
+  win32/Makefile, win32/winamp/in_asap.c, win32/foobar2000/foo_asap.cpp,
+  gsplayer/gspasap.c: renamed settings.* to gui.*; moved WASAP resources
+  to gui.*
+
+* java/ASAP.ppjava, java/ASAP_ModuleInfo.java: added some "final" modifiers
+
+* asap.c, asap.h, apokeysnd.c, java/ASAP.ppjava: added extra_pokey_mask field
+
+* asap.c, asap.h, java/ASAP_ModuleInfo.java, xmms/libasap.c: removed all_info
+  field
+
+* win32/gui.c, win32/gui.h, win32/gui.rc, win32/wasap/wasap.c,
+  win32/winamp/in_asap.c: modeless file information window
+
+* asap.c, win32/foobar2000/foo_asap.cpp: unknown author and date are now
+  represented by empty strings rather than "<?>"
+
+
 2007-06-03  Piotr Fusik  <fox@scene.pl>
 * apokeysnd.c, asap.c: long initialization routines could cause overflow
   of delta_buffer

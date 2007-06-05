@@ -27,7 +27,7 @@
 #include "mapplugin.h"
 
 #include "asap.h"
-#include "settings.h"
+#include "gui.h"
 
 #define REG_KEY _T("Software\\GreenSoftware\\GSPlayer\\Plug-ins\\gspasap")
 
