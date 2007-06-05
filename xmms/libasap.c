@@ -96,6 +96,43 @@ static int asap_load_file(const char *filename)
 	return TRUE;
 }
 
+static char *asap_get_title(char *filename, ASAP_ModuleInfo *module_info)
+{
+	char *path;
+	char *filepart;
+	char *ext;
+	TitleInput *title_input;
+	char *title;
+
+	path = g_strdup(filename);
+	filepart = strrchr(path, '/');
+	if (filepart != NULL) {
+		filepart[1] = '\0';
+		filepart += 2;
+	}
+	else
+		filepart = path;
+	ext = strrchr(filepart, '.');
+	if (ext != NULL)
+		ext++;
+
+	XMMS_NEW_TITLEINPUT(title_input);
+	if (module_info->author[0] != '\0')
+		title_input->performer = module_info->author;
+	title_input->track_name = module_info->name;
+	if (module_info->date[0] != '\0')
+		title_input->date = module_info->date;
+	title_input->file_name = g_basename(filename);
+	title_input->file_ext = ext;
+	title_input->file_path = path;
+	title = xmms_get_titlestring(xmms_get_gentitle_format(), title_input);
+	if (title == NULL)
+		title = g_strdup(module_info->name);
+
+	g_free(path);
+	return title;
+}
+
 static void *asap_play_thread(void *arg)
 {
 	for (;;) {
@@ -127,41 +164,6 @@ static void *asap_play_thread(void *arg)
 	mod.output->buffer_free();
 	mod.output->buffer_free();
 	pthread_exit(NULL);
-}
-
-static char *asap_get_title(char *filename, ASAP_ModuleInfo *module_info)
-{
-	char *path;
-	char *filepart;
-	char *ext;
-	TitleInput *title_input;
-	char *title;
-
-	path = g_strdup(filename);
-	filepart = strrchr(path, '/');
-	if (filepart != NULL) {
-		filepart[1] = '\0';
-		filepart += 2;
-	}
-	else
-		filepart = path;
-	ext = strrchr(filepart, '.');
-	if (ext != NULL)
-		ext++;
-
-	XMMS_NEW_TITLEINPUT(title_input);
-	title_input->performer = module_info->author;
-	title_input->track_name = module_info->name;
-	title_input->date = module_info->date;
-	title_input->file_name = g_basename(filename);
-	title_input->file_ext = ext;
-	title_input->file_path = path;
-	title = xmms_get_titlestring(xmms_get_gentitle_format(), title_input);
-	if (title == NULL)
-		title = g_strdup(module_info->name);
-
-	g_free(path);
-	return title;
 }
 
 static void asap_play_file(char *filename)
