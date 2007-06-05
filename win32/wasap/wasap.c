@@ -25,11 +25,10 @@
 #include <shellapi.h>
 
 #include "asap.h"
-#include "resource.h"
+#include "gui.h"
 
 #define APP_TITLE        "WASAP"
 #define WND_CLASS_NAME   "WASAP"
-#define BITS_PER_SAMPLE  16
 #define BUFFERED_BLOCKS  4096
 
 static ASAP_State asap;
@@ -194,6 +193,7 @@ static void Tray_Modify(HICON hIcon)
 
 /* GUI -------------------------------------------------------------------- */
 
+static HINSTANCE hInst;
 static HICON hStopIcon;
 static HICON hPlayIcon;
 static HMENU hTrayMenu;
@@ -243,7 +243,6 @@ static void UnloadFile(void)
 {
 	if (songs == 0)
 		return;
-	EnableMenuItem(hTrayMenu, IDM_FILE_INFO, MF_BYCOMMAND | MF_GRAYED);
 	ClearSongsMenu();
 	StopPlayback();
 	songs = 0;
@@ -271,11 +270,12 @@ static void LoadFile(void)
 			return;
 		}
 		songs = asap.module_info.songs;
-		EnableMenuItem(hTrayMenu, IDM_FILE_INFO, MF_BYCOMMAND | MF_ENABLED);
+		updateInfoDialog(&asap.module_info);
 		SetSongsMenu(songs);
 		PlaySong(asap.module_info.default_song);
 	}
 	else {
+		updateInfoDialog(NULL);
 		MessageBox(hWnd, "Unsupported file format", APP_TITLE,
 		           MB_OK | MB_ICONERROR);
 	}
@@ -348,8 +348,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			StopPlayback();
 			break;
 		case IDM_FILE_INFO:
-			if (songs > 0)
-				MessageBox(hWnd, asap.module_info.all_info, "File information", MB_OK | MB_ICONINFORMATION);
+			showInfoDialog(hInst, hWnd, songs > 0 ? &asap.module_info : NULL);
 			break;
 		case IDM_ABOUT:
 			MessageBox(hWnd,
@@ -451,6 +450,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		}
 		return 0;
 	}
+
+	hInst = hInstance;
 
 	wc.style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW;
 	wc.lpfnWndProc = MainWndProc;
