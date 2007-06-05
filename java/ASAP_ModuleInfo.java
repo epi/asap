@@ -31,8 +31,6 @@ public class ASAP_ModuleInfo {
 	public String name;
 	/** Music creation date. */
 	public String date;
-	/** Author, name and date formatted in multiple lines. */
-	public String all_info;
 	/** 1 for mono or 2 for stereo. */
 	public int channels;
 	/** Number of subsongs. */
@@ -40,7 +38,7 @@ public class ASAP_ModuleInfo {
 	/** 0-based index of the "main" subsong. */
 	public int default_song;
 	/** Lengths of songs, in milliseconds, -1 = unspecified. */
-	public int[] durations = new int[32];
+	public final int[] durations = new int[32];
 	/** Whether songs repeat or not. */
-	public boolean[] loops = new boolean[32];
+	public final boolean[] loops = new boolean[32];
 }

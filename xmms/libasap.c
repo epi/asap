@@ -49,6 +49,13 @@ static int seek_to;
 static pthread_t thread_handle;
 static volatile abool thread_run = FALSE;
 
+static char *asap_stpcpy(char *dest, const char *src)
+{
+	size_t len = strlen(src);
+	memcpy(dest, src, len);
+	return dest + len;
+}
+
 static void asap_show_message(gchar *title, gchar *text)
 {
 	xmms_show_message(title, text, "Ok", FALSE, NULL, NULL);
@@ -186,11 +193,20 @@ static void asap_get_song_info(char *filename, char **title, int *length)
 static void asap_file_info_box(char *filename)
 {
 	ASAP_ModuleInfo module_info;
+	char info[512];
+	char *p;
 	if (!asap_load_file(filename))
 		return;
 	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
 		return;
-	asap_show_message("File information", module_info.all_info);
+	p = asap_stpcpy(info, "Author: ");
+	p = asap_stpcpy(p, module_info.author);
+	p = asap_stpcpy(p, "\nName: ");
+	p = asap_stpcpy(p, module_info.name);
+	p = asap_stpcpy(p, "\nDate: ");
+	p = asap_stpcpy(p, module_info.date);
+	*p = '\0';
+	asap_show_message("File information", info);
 }
 
 static InputPlugin mod = {
