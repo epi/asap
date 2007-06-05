@@ -247,7 +247,7 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 
 ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 {
-	PokeyState PTR ps = (addr & 0x10) != 0 && AS module_info.channels == 2
+	PokeyState PTR ps = (addr & AS extra_pokey_mask) != 0
 		? ADDRESSOF AS extra_pokey : ADDRESSOF AS base_pokey;
 	switch (addr & 0xf) {
 	case 0x00:
@@ -415,7 +415,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 
 ASAP_FUNC int PokeySound_GetRandom(ASAP_State PTR as, int addr)
 {
-	PokeyState PTR ps = (addr & 0x10) != 0 && AS module_info.channels == 2
+	PokeyState PTR ps = (addr & AS extra_pokey_mask) != 0
 		? ADDRESSOF AS extra_pokey : ADDRESSOF AS base_pokey;
 	int i;
 	if (PS init)
@@ -453,14 +453,14 @@ FILE_FUNC void end_frame(ASAP_State PTR as, PokeyState PTR ps, int cycle_limit)
 ASAP_FUNC void PokeySound_StartFrame(ASAP_State PTR as)
 {
 	ZERO_ARRAY(AS base_pokey.delta_buffer);
-	if (AS module_info.channels == 2)
+	if (AS extra_pokey_mask != 0)
 		ZERO_ARRAY(AS extra_pokey.delta_buffer);
 }
 
 ASAP_FUNC void PokeySound_EndFrame(ASAP_State PTR as, int current_cycle)
 {
 	end_frame(as, ADDRESSOF AS base_pokey, current_cycle);
-	if (AS module_info.channels == 2)
+	if (AS extra_pokey_mask != 0)
 		end_frame(as, ADDRESSOF AS extra_pokey, current_cycle);
 	AS sample_offset += current_cycle * ASAP_SAMPLE_RATE;
 	AS sample_index = 0;
@@ -501,7 +501,7 @@ ASAP_FUNC int PokeySound_Generate(ASAP_State PTR as, byte buffer[], int buffer_o
 			break; \
 		}
 		STORE_SAMPLE;
-		if (AS module_info.channels == 2) {
+		if (AS extra_pokey_mask != 0) {
 			acc_right += (AS extra_pokey.delta_buffer[i] << 20) - (acc_right * 3 >> 10);
 			sample = acc_right >> 10;
 			STORE_SAMPLE;

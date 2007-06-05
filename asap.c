@@ -57,7 +57,7 @@ ASAP_FUNC int ASAP_GetByte(ASAP_State PTR as, int addr)
 ASAP_FUNC void ASAP_PutByte(ASAP_State PTR as, int addr, int data)
 {
 	if ((addr >> 8) == 0xd2) {
-		if ((addr & (AS module_info.channels == 1 ? 0xf : 0x1f)) == 0xe) {
+		if ((addr & (AS extra_pokey_mask + 0xf)) == 0xe) {
 			AS irqst |= data ^ 0xff;
 #define SET_TIMER_IRQ(ch) \
 			if ((data & AS irqst & ch) != 0) { \
@@ -507,13 +507,6 @@ int ASAP_ParseDuration(const char *duration)
 	return r;
 }
 
-static char *my_stpcpy(char *dest, const char *src)
-{
-	size_t len = strlen(src);
-	memcpy(dest, src, len);
-	return dest + len;
-}
-
 #endif /* JAVA */
 
 FILE_FUNC abool parse_sap(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
@@ -724,14 +717,13 @@ FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	}
 	if (ext < 0)
 		ext = i;
-	module_info.author = "<?>";
+	module_info.author = "";
 	module_info.name = filename.substring(basename, ext);
-	module_info.date = "<?>";
+	module_info.date = "";
 #else
 	const char *p;
 	const char *basename = filename;
 	const char *ext = NULL;
-	char *q;
 	for (p = filename; *p != '\0'; p++) {
 		if (*p == '/' || *p == '\\')
 			basename = p + 1;
@@ -740,11 +732,11 @@ FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	}
 	if (ext == NULL)
 		ext = p;
-	strcpy(module_info->author, "<?>");
+	module_info->author[0] = '\0';
 	i = ext - basename;
 	memcpy(module_info->name, basename, i);
 	module_info->name[i] = '\0';
-	strcpy(module_info->date, "<?>");
+	module_info->date[0] = '\0';
 #endif
 	MODULE_INFO channels = 1;
 	MODULE_INFO songs = 1;
@@ -790,20 +782,6 @@ FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	default:
 		return FALSE;
 	}
-#ifdef JAVA
-	module_info.all_info = "Author: " + module_info.author
-		+ "\nName: " + module_info.name
-		+ "\nDate: " + module_info.date + "\n";
-#else
-	q = my_stpcpy(module_info->all_info, "Author: ");
-	q = my_stpcpy(q, module_info->author);
-	q = my_stpcpy(q, "\nName: ");
-	q = my_stpcpy(q, module_info->name);
-	q = my_stpcpy(q, "\nDate: ");
-	q = my_stpcpy(q, module_info->date);
-	*q++ = '\n';
-	*q = '\0';
-#endif
 	return r;
 }
 
@@ -854,6 +832,7 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR as, int song, int duration)
 	AS current_duration = duration;
 	AS blocks_played = 0;
 	AS silence_cycles_counter = AS silence_cycles;
+	AS extra_pokey_mask = AS module_info.channels > 1 ? 0x10 : 0;
 	PokeySound_Initialize(as);
 	AS cycle = 0;
 	AS cpu_nz = 0;

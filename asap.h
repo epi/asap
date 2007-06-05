@@ -31,8 +31,8 @@ extern "C" {
 /* ASAP version. */
 #define ASAP_VERSION_MAJOR   1
 #define ASAP_VERSION_MINOR   0
-#define ASAP_VERSION_MICRO   0
-#define ASAP_VERSION         "1.0.0"
+#define ASAP_VERSION_MICRO   1
+#define ASAP_VERSION         "1.0.1"
 
 /* Short credits of the ASAP engine. */
 #define ASAP_YEARS           "2005-2007"
@@ -64,7 +64,6 @@ typedef struct {
 	char author[128];    /* author's name */
 	char name[128];      /* title */
 	char date[128];      /* creation date */
-	char all_info[512];  /* the above information formatted in multiple lines */
 	int channels;        /* 1 for mono or 2 for stereo */
 	int songs;           /* number of subsongs */
 	int default_song;    /* 0-based index of the "main" subsong */
@@ -131,6 +130,7 @@ typedef struct {
 	int timer2_cycle;
 	int timer4_cycle;
 	int irqst;
+	int extra_pokey_mask;
 	PokeyState base_pokey;
 	PokeyState extra_pokey;
 	int sample_offset;
