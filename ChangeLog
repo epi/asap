@@ -1,3 +1,11 @@
+2007-06-07  Piotr Fusik  <fox@scene.pl>
+* moc/libasap_decoder.c, configure.ac, Makefile.in, INSTALL, win32/Makefile:
+  MOC plugin
+
+* win32/gui.rc, win32/gui.c, win32/gui.h, win32/winamp/in_asap.c:
+  an option to display the file information for the currently playing file
+
+
 2007-06-05  Piotr Fusik  <fox@scene.pl>
 * win32/winamp/in_asap.c: use Advanced Title Formatting - it simply means
   that the displayed title can be customized in Winamp settings (the default

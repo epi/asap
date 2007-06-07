@@ -72,6 +72,19 @@ make
 make install
 
 
+Building the MOC plugin on Unix-like systems
+--------------------------------------------
+
+You need source code of MOC. The plugin is written for MOC 2.5.0 alpha1.
+Run the following commands:
+./configure MOC_INCLUDE=/path/to/moc/sources MOC_PLUGIN_DIR=/path/to/moc/plugins
+make asap-moc
+make install-moc
+
+You can omit MOC_INCLUDE (defaults to "../moc-2.5.0-alpha1")
+and MOC_PLUGIN_DIR (defaults to "/usr/local/lib/moc/decoder_plugins").
+
+
 Building ASAP2WAV, WASAP, the Winamp plugin and the GSPlayer plugin on Windows
 ------------------------------------------------------------------------------
 

@@ -179,6 +179,7 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 		java\ASAPApplet.java java\asap_applet.txt \
 		java\ASAPMIDlet.java java\asap_midlet.MF java\asap_midlet.txt \
 		java\mf2jad.pl java\Makefile \
+		moc\libasap_decoder.c \
 		win32\Makefile \
 		win32\gui.c win32\gui.h win32\gui.rc \
 		win32\foobar2000\foo_asap.cpp win32\foobar2000\README \

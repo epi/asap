@@ -21,6 +21,8 @@ XMMS_CFLAGS = @XMMS_CFLAGS@
 XMMS_LIBS = @XMMS_LIBS@
 XMMS_INPUT_PLUGIN_DIR = @XMMS_INPUT_PLUGIN_DIR@
 XMMS_USER_PLUGIN_DIR = ${HOME}/.xmms/Plugins
+MOC_INCLUDE = @MOC_INCLUDE@
+MOC_PLUGIN_DIR = @MOC_PLUGIN_DIR@
 
 COMMON_C = asap.c acpu.c apokeysnd.c
 COMMON_H = asap.h asap_internal.h players.h
@@ -41,6 +43,11 @@ asap-xmms: libasap.so
 
 libasap.so: xmms/libasap.c ${COMMON_C} ${COMMON_H}
 	${CC} ${CFLAGS} ${XMMS_CFLAGS} ${LDFLAGS} -shared -fPIC -Wl,--version-script=xmms/libasap.map -o $@ ${DEFS} -I. xmms/libasap.c ${COMMON_C} ${LIBS} ${XMMS_LIBS}
+
+asap-moc: libasap_decoder.so
+
+libasap_decoder.so: moc/libasap_decoder.c ${COMMON_C} ${COMMON_H}
+	${CC} ${CFLAGS} -shared -fPIC -o $@ ${DEFS} -I. -I${MOC_INCLUDE} moc/libasap_decoder.c ${COMMON_C}
 
 players.h: raw2c.pl ${PLAYERS_OBX}
 	perl raw2c.pl ${PLAYERS_OBX} >$@
@@ -83,6 +90,12 @@ install-user: libasap.so
 
 uninstall-user:
 	rm -f ${XMMS_USER_PLUGIN_DIR}/libasap.so
+
+install-moc: libasap_decoder.so
+	${INSTALL_PROGRAM} libasap_decoder.so ${MOC_PLUGIN_DIR}/libasap_decoder.so
+
+uninstall-moc:
+	rm -f ${MOC_PLUGIN_DIR}/libasap_decoder.so
 
 clean:
 	rm -f players.h ${ASAP2WAV} libasap.so
