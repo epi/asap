@@ -2,8 +2,9 @@
 * moc/libasap_decoder.c, configure.ac, Makefile.in, INSTALL, win32/Makefile:
   MOC plugin
 
-* win32/gui.rc, win32/gui.c, win32/gui.h, win32/winamp/in_asap.c:
-  an option to display the file information for the currently playing file
+* win32/gui.rc, win32/gui.c, win32/gui.h, win32/winamp/in_asap.c
+  win32/wasap/wasap.c: an option to display the file information
+  for the currently playing file; display filename
 
 * asap.c, asap.h, win32/gui.rc, win32/gui.c, win32/gui.h,
   win32/winamp/in_asap.c: editing author, name and date in SAP files
