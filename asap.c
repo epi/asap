@@ -681,9 +681,9 @@ FILE_FUNC int get_packed_ext(STRING filename)
 #endif
 }
 
-ASAP_FUNC abool ASAP_IsOurFile(STRING filename)
+FILE_FUNC abool is_our_ext(int ext)
 {
-	switch (get_packed_ext(filename)) {
+	switch (ext) {
 	case ASAP_EXT('C', 'M', 'C'):
 	case ASAP_EXT('C', 'M', 'R'):
 	case ASAP_EXT('D', 'M', 'C'):
@@ -698,6 +698,23 @@ ASAP_FUNC abool ASAP_IsOurFile(STRING filename)
 	default:
 		return FALSE;
 	}
+}
+
+ASAP_FUNC abool ASAP_IsOurFile(STRING filename)
+{
+	int ext = get_packed_ext(filename);
+	return is_our_ext(ext);
+}
+
+ASAP_FUNC abool ASAP_IsOurExt(STRING ext)
+{
+#ifdef JAVA
+	return ext.length() == 3
+		&& is_our_ext(ASAP_EXT(ext.charAt(0), ext.charAt(1), ext.charAt(2)));
+#else
+	return ext[0] > ' ' && ext[1] > ' ' && ext[2] > ' ' && ext[3] == '\0'
+		&& is_our_ext(ASAP_EXT(ext[0], ext[1], ext[2]));
+#endif
 }
 
 FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
@@ -997,3 +1014,72 @@ ASAP_FUNC int ASAP_Generate(ASAP_State PTR as, VOIDPTR buffer, int buffer_len,
 	} while (block < buffer_blocks && call_6502_player(as));
 	return block << block_shift;
 }
+
+#ifndef JAVA
+
+abool ASAP_CanSetModuleInfo(const char *filename)
+{
+	int ext = get_packed_ext(filename);
+	return ext == ASAP_EXT('S', 'A', 'P');
+}
+
+static byte *put_tag(byte *dest, const char *tag, const char *value)
+{
+	while (*tag != '\0')
+		*dest++ = *tag++;
+	if (value != NULL) {
+		*dest++ = ' ';
+		*dest++ = '"';
+		if (*value == '\0')
+			value = "<?>";
+		while (*value != '\0') {
+			if (*value < ' ' || *value > 'z' || *value == '"' || *value == '`')
+				return NULL;
+			*dest++ = *value++;
+		}
+		*dest++ = '"';
+	}
+	*dest++ = '\x0d';
+	*dest++ = '\x0a';
+	return dest;
+}
+
+int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const byte module[],
+                       int module_len, byte out_module[])
+{
+	byte *p = out_module;
+	int i;
+	if (memcmp(module, "SAP\r\n", 5) != 0)
+		return -1;
+	i = 5;
+	p = put_tag(p, "SAP", NULL);
+	p = put_tag(p, "AUTHOR", module_info->author);
+	if (p == NULL)
+		return -1;
+	p = put_tag(p, "NAME", module_info->name);
+	if (p == NULL)
+		return -1;
+	p = put_tag(p, "DATE", module_info->date);
+	if (p == NULL)
+		return -1;
+	while (i < module_len && module[i] != 0xff) {
+		if (memcmp(module + i, "AUTHOR ", 7) == 0
+		 || memcmp(module + i, "NAME ", 5) == 0
+		 || memcmp(module + i, "DATE ", 5) == 0) {
+			while (i < module_len && module[i++] != 0x0a);
+		}
+		else {
+			int b;
+			do {
+				b = module[i++];
+				*p++ = b;
+			} while (i < module_len && b != 0x0a);
+		}
+	}
+	module_len -= i;
+	memcpy(p, module + i, module_len);
+	p += module_len;
+	return p - out_module;
+}
+
+#endif /* JAVA */

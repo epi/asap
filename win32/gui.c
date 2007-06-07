@@ -208,14 +208,53 @@ int playSong(int song)
 
 static HWND infoDialog = NULL;
 
+static BOOL saveInfo(void)
+{
+	char filename[MAX_PATH];
+	HANDLE fh;
+	byte module[ASAP_MODULE_MAX];
+	DWORD module_len;
+	ASAP_ModuleInfo module_info;
+	byte out_module[ASAP_MODULE_MAX];
+	int out_len;
+	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
+	fh = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+	if (fh == INVALID_HANDLE_VALUE)
+		return FALSE;
+	if (!ReadFile(fh, module, sizeof(module), &module_len, NULL)) {
+		CloseHandle(fh);
+		return FALSE;
+	}
+	CloseHandle(fh);
+	SendDlgItemMessage(infoDialog, IDC_AUTHOR, WM_GETTEXT, sizeof(module_info.author), (LPARAM) module_info.author);
+	SendDlgItemMessage(infoDialog, IDC_NAME, WM_GETTEXT, sizeof(module_info.name), (LPARAM) module_info.name);
+	SendDlgItemMessage(infoDialog, IDC_DATE, WM_GETTEXT, sizeof(module_info.date), (LPARAM) module_info.date);
+	out_len = ASAP_SetModuleInfo(&module_info, module, module_len, out_module);
+	if (out_len <= 0)
+		return FALSE;
+	fh = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (fh == INVALID_HANDLE_VALUE)
+		return FALSE;
+	if (!WriteFile(fh, out_module, out_len, &module_len, NULL)) {
+		CloseHandle(fh);
+		return FALSE;
+	}
+	CloseHandle(fh);
+	return TRUE;
+}
+
 static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
-#ifdef WINAMP
 	case WM_INITDIALOG:
+#ifdef WINAMP
 		CheckDlgButton(hDlg, IDC_PLAYING, playing_info ? BST_CHECKED : BST_UNCHECKED);
-		return TRUE;
 #endif
+		SendDlgItemMessage(hDlg, IDC_AUTHOR, EM_LIMITTEXT, 127, 0);
+		SendDlgItemMessage(hDlg, IDC_NAME, EM_LIMITTEXT, 127, 0);
+		SendDlgItemMessage(hDlg, IDC_DATE, EM_LIMITTEXT, 127, 0);
+		return TRUE;
 	case WM_COMMAND:
 		if (HIWORD(wParam) == BN_CLICKED) {
 			switch (LOWORD(wParam)) {
@@ -223,9 +262,13 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			case IDC_PLAYING:
 				playing_info = (IsDlgButtonChecked(hDlg, IDC_PLAYING) == BST_CHECKED);
 				if (playing_info)
-					updateInfoDialog(&asap.module_info);
+					updateInfoDialog(current_filename, &asap.module_info);
 				return TRUE;
 #endif
+			case IDC_SAVE:
+				if (!saveInfo())
+					MessageBox(hDlg, "Cannot save information to file", "Error", MB_OK | MB_ICONERROR);
+				return TRUE;
 			case IDCANCEL:
 				DestroyWindow(hDlg);
 				infoDialog = NULL;
@@ -239,20 +282,27 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 	return FALSE;
 }
 
-void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const ASAP_ModuleInfo *module_info)
+void showInfoDialog(HINSTANCE hInstance, HWND hwndParent,
+                    const char *filename, const ASAP_ModuleInfo *module_info)
 {
 	if (infoDialog == NULL)
 		infoDialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_INFO), hwndParent, infoDialogProc);
-	updateInfoDialog(module_info);
+	updateInfoDialog(filename, module_info);
 }
 
-void updateInfoDialog(const ASAP_ModuleInfo *module_info)
+void updateInfoDialog(const char *filename, const ASAP_ModuleInfo *module_info)
 {
+	abool can_edit;
 	const char *author;
 	const char *name;
 	const char *date;
 	if (infoDialog == NULL)
 		return;
+	can_edit = filename != NULL && ASAP_CanSetModuleInfo(filename);
+	SendDlgItemMessage(infoDialog, IDC_AUTHOR, EM_SETREADONLY, !can_edit, 0);
+	SendDlgItemMessage(infoDialog, IDC_NAME, EM_SETREADONLY, !can_edit, 0);
+	SendDlgItemMessage(infoDialog, IDC_DATE, EM_SETREADONLY, !can_edit, 0);
+	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), can_edit);
 	if (module_info == NULL) {
 		author = "";
 		name = "";
@@ -263,6 +313,7 @@ void updateInfoDialog(const ASAP_ModuleInfo *module_info)
 		name = module_info->name;
 		date = module_info->date;
 	}
+	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_SETTEXT, 0, (LPARAM) filename);
 	SendDlgItemMessage(infoDialog, IDC_AUTHOR, WM_SETTEXT, 0, (LPARAM) author);
 	SendDlgItemMessage(infoDialog, IDC_NAME, WM_SETTEXT, 0, (LPARAM) name);
 	SendDlgItemMessage(infoDialog, IDC_DATE, WM_SETTEXT, 0, (LPARAM) date);

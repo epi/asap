@@ -2,12 +2,14 @@
 #define IDC_STATIC     -1
 #define IDD_INFO       300
 #define IDC_PLAYING    301
-#define IDC_AUTHOR     302
-#define IDC_NAME       303
-#define IDC_DATE       304
+#define IDC_FILENAME   302
+#define IDC_AUTHOR     303
+#define IDC_NAME       304
+#define IDC_DATE       305
+#define IDC_SAVE       306
 
-void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const ASAP_ModuleInfo *module_info);
-void updateInfoDialog(const ASAP_ModuleInfo *module_info);
+void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, const ASAP_ModuleInfo *module_info);
+void updateInfoDialog(const char *filename, const ASAP_ModuleInfo *module_info);
 
 #ifdef WASAP
 
@@ -38,6 +40,7 @@ extern BOOL play_loops;
 extern int mute_mask;
 #endif
 #ifdef WINAMP
+extern char current_filename[MAX_PATH];
 extern BOOL playing_info;
 #endif
 

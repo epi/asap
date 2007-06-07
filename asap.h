@@ -174,6 +174,9 @@ typedef enum {
 /* Checks whether the extension of the passed filename is known to ASAP. */
 abool ASAP_IsOurFile(const char *filename);
 
+/* Checks whether the filename extension is known to ASAP. */
+abool ASAP_IsOurExt(const char *ext);
+
 /* Gets information about a module.
    "filename" determines file format.
    "module" is the music data (contents of the file).
@@ -239,6 +242,20 @@ void ASAP_Seek(ASAP_State *as, int position);
    and call ASAP_Generate() in a loop or via a callback. */
 int ASAP_Generate(ASAP_State *as, void *buffer, int buffer_len,
                   ASAP_SampleFormat format);
+
+/* Checks whether information in the specified file can be edited. */
+abool ASAP_CanSetModuleInfo(const char *filename);
+
+/* Updates the specified module with author, name and date as specified
+   in "module_info".
+   "module_info" contains the new module information.
+   "module" is the source file contents.
+   "module_len" is the source file length.
+   "out_module" is the destination buffer of size ASAP_MODULE_MAX.
+   ASAP_SetModuleInfo() returns the resulting file length (number of bytes
+   written to "out_module") or -1 if illegal characters were found. */
+int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const byte module[],
+                       int module_len, byte out_module[]);
 
 #ifdef __cplusplus
 }

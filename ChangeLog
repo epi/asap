@@ -5,6 +5,9 @@
 * win32/gui.rc, win32/gui.c, win32/gui.h, win32/winamp/in_asap.c:
   an option to display the file information for the currently playing file
 
+* asap.c, asap.h, win32/gui.rc, win32/gui.c, win32/gui.h,
+  win32/winamp/in_asap.c: editing author, name and date in SAP files
+
 
 2007-06-05  Piotr Fusik  <fox@scene.pl>
 * win32/winamp/in_asap.c: use Advanced Title Formatting - it simply means
