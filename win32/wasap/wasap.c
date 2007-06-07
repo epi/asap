@@ -270,12 +270,12 @@ static void LoadFile(void)
 			return;
 		}
 		songs = asap.module_info.songs;
-		updateInfoDialog(&asap.module_info);
+		updateInfoDialog(strFile, &asap.module_info);
 		SetSongsMenu(songs);
 		PlaySong(asap.module_info.default_song);
 	}
 	else {
-		updateInfoDialog(NULL);
+		updateInfoDialog(NULL, NULL);
 		MessageBox(hWnd, "Unsupported file format", APP_TITLE,
 		           MB_OK | MB_ICONERROR);
 	}
@@ -348,7 +348,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			StopPlayback();
 			break;
 		case IDM_FILE_INFO:
-			showInfoDialog(hInst, hWnd, songs > 0 ? &asap.module_info : NULL);
+			showInfoDialog(hInst, hWnd, strFile, songs > 0 ? &asap.module_info : NULL);
 			break;
 		case IDM_ABOUT:
 			MessageBox(hWnd,
