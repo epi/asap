@@ -39,6 +39,9 @@ int silence_seconds = -1;
 BOOL play_loops = FALSE;
 int mute_mask = 0;
 static int saved_mute_mask;
+#ifdef WINAMP
+BOOL playing_info = FALSE;
+#endif
 
 static void enableTimeInput(HWND hDlg, BOOL enable)
 {
@@ -207,10 +210,20 @@ static HWND infoDialog = NULL;
 
 static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (uMsg == WM_COMMAND) {
-		DestroyWindow(hDlg);
-		infoDialog = NULL;
-		return TRUE;
+	if (uMsg == WM_COMMAND && HIWORD(wParam) == BN_CLICKED) {
+		switch (LOWORD(wParam)) {
+#ifdef WINAMP
+		case IDC_PLAYING:
+			playing_info = (IsDlgButtonChecked(hDlg, IDC_PLAYING) == BST_CHECKED);
+			if (playing_info)
+				updateInfoDialog(&asap.module_info);
+			return TRUE;
+#endif
+		case IDCANCEL:
+			DestroyWindow(hDlg);
+			infoDialog = NULL;
+			return TRUE;
+		}
 	}
 	return FALSE;
 }

@@ -1,9 +1,10 @@
 #define BITS_PER_SAMPLE          16
 #define IDC_STATIC     -1
 #define IDD_INFO       300
-#define IDC_AUTHOR     301
-#define IDC_NAME       302
-#define IDC_DATE       303
+#define IDC_PLAYING    301
+#define IDC_AUTHOR     302
+#define IDC_NAME       303
+#define IDC_DATE       304
 
 void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const ASAP_ModuleInfo *module_info);
 void updateInfoDialog(const ASAP_ModuleInfo *module_info);
@@ -35,6 +36,9 @@ extern int song_length;
 extern int silence_seconds;
 extern BOOL play_loops;
 extern int mute_mask;
+#endif
+#ifdef WINAMP
+extern BOOL playing_info;
 #endif
 
 /* resource identifiers */

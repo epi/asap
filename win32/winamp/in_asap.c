@@ -383,6 +383,8 @@ static int play(char *fn)
 	seek_needed = -1;
 	thread_run = TRUE;
 	thread_handle = CreateThread(NULL, 0, playThread, NULL, 0, &threadId);
+	if (playing_info)
+		updateInfoDialog(&asap.module_info);
 	return thread_handle != NULL ? 0 : 1;
 }
 
