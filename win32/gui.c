@@ -210,20 +210,31 @@ static HWND infoDialog = NULL;
 
 static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (uMsg == WM_COMMAND && HIWORD(wParam) == BN_CLICKED) {
-		switch (LOWORD(wParam)) {
+	switch (uMsg) {
 #ifdef WINAMP
-		case IDC_PLAYING:
-			playing_info = (IsDlgButtonChecked(hDlg, IDC_PLAYING) == BST_CHECKED);
-			if (playing_info)
-				updateInfoDialog(&asap.module_info);
-			return TRUE;
+	case WM_INITDIALOG:
+		CheckDlgButton(hDlg, IDC_PLAYING, playing_info ? BST_CHECKED : BST_UNCHECKED);
+		return TRUE;
 #endif
-		case IDCANCEL:
-			DestroyWindow(hDlg);
-			infoDialog = NULL;
-			return TRUE;
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED) {
+			switch (LOWORD(wParam)) {
+#ifdef WINAMP
+			case IDC_PLAYING:
+				playing_info = (IsDlgButtonChecked(hDlg, IDC_PLAYING) == BST_CHECKED);
+				if (playing_info)
+					updateInfoDialog(&asap.module_info);
+				return TRUE;
+#endif
+			case IDCANCEL:
+				DestroyWindow(hDlg);
+				infoDialog = NULL;
+				return TRUE;
+			}
 		}
+		break;
+	default:
+		break;
 	}
 	return FALSE;
 }
