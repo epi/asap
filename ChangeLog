@@ -3,6 +3,9 @@
 
 * win32/foobar2000/foo_asap.cpp: editing author, name and date in SAP files
 
+* xmms/libasap.c: fixed asap_get_time() - XMMS plugin didn't work on some
+  systems
+
 
 2007-06-07  Piotr Fusik  <fox@scene.pl>
 * moc/libasap_decoder.c, configure.ac, Makefile.in, INSTALL, win32/Makefile:
