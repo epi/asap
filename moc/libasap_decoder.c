@@ -169,8 +169,10 @@ struct decoder *plugin_init()
 		NULL,
 		asap_get_name,
 		NULL,
-		NULL,
 		NULL
+#if DECODER_API_VERSION >= 7
+		, NULL
+#endif
 	};
 	return &asap_decoder;
 }
