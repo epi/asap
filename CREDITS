@@ -13,6 +13,9 @@ Marcin Lewandowski  <jaskier@atari8.info>
 Kostas Nakos  <knakos@gmail.com>
 * compilation for Windows CE
 
+Slawomir Sledz  <slaves@scene.pl>
+* testing
+
 Radek Sterba  <raster@infos.cz>
 * 6502 routine for playing RMT
 * testing
