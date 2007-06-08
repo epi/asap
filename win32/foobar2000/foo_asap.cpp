@@ -21,6 +21,9 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <windows.h>
+#include <string.h>
+
 #include "foobar2000/SDK/foobar2000.h"
 
 #include "asap.h"
@@ -47,20 +50,20 @@ static cfg_int mute_mask(mute_mask_guid, 0);
 
 static ASAP_State asap;
 
-static void enableTimeInput(HWND hDlg, BOOL enable)
+static void enable_time_input(HWND hDlg, BOOL enable)
 {
 	EnableWindow(GetDlgItem(hDlg, IDC_MINUTES), enable);
 	EnableWindow(GetDlgItem(hDlg, IDC_SECONDS), enable);
 }
 
-static void setFocusAndSelect(HWND hDlg, int nID)
+static void set_focus_and_select(HWND hDlg, int nID)
 {
 	HWND hWnd = GetDlgItem(hDlg, nID);
 	SetFocus(hWnd);
 	SendMessage(hWnd, EM_SETSEL, 0, -1);
 }
 
-static void getTimeInput(HWND hDlg)
+static void get_time_input(HWND hDlg)
 {
 	BOOL minutesTranslated;
 	BOOL secondsTranslated;
@@ -70,7 +73,7 @@ static void getTimeInput(HWND hDlg)
 		song_length = (int) (60 * minutes + seconds);
 }
 
-static void getSilenceInput(HWND hDlg)
+static void get_silence_input(HWND hDlg)
 {
 	BOOL translated;
 	UINT seconds = GetDlgItemInt(hDlg, IDC_SILSECONDS, &translated, FALSE);
@@ -88,13 +91,13 @@ static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam
 			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_UNLIMITED);
 			SetDlgItemInt(hDlg, IDC_MINUTES, DEFAULT_SONG_LENGTH / 60, FALSE);
 			SetDlgItemInt(hDlg, IDC_SECONDS, DEFAULT_SONG_LENGTH % 60, FALSE);
-			enableTimeInput(hDlg, FALSE);
+			enable_time_input(hDlg, FALSE);
 		}
 		else {
 			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_LIMITED);
 			SetDlgItemInt(hDlg, IDC_MINUTES, (UINT) song_length / 60, FALSE);
 			SetDlgItemInt(hDlg, IDC_SECONDS, (UINT) song_length % 60, FALSE);
-			enableTimeInput(hDlg, TRUE);
+			enable_time_input(hDlg, TRUE);
 		}
 		if (silence_seconds <= 0) {
 			CheckDlgButton(hDlg, IDC_SILENCE, BST_UNCHECKED);
@@ -117,12 +120,12 @@ static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam
 		case IDC_UNLIMITED:
 		case IDC_LIMITED:
 			enabled = (wCtrl == IDC_LIMITED);
-			enableTimeInput(hDlg, enabled);
+			enable_time_input(hDlg, enabled);
 			if (!enabled)
 				song_length = -1;
 			else {
-				setFocusAndSelect(hDlg, IDC_MINUTES);
-				getTimeInput(hDlg);
+				set_focus_and_select(hDlg, IDC_MINUTES);
+				get_time_input(hDlg);
 			}
 			return TRUE;
 		case IDC_SILENCE:
@@ -131,18 +134,18 @@ static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam
 			if (!enabled)
 				silence_seconds = -1;
 			else {
-				setFocusAndSelect(hDlg, IDC_SILSECONDS);
-				getSilenceInput(hDlg);
+				set_focus_and_select(hDlg, IDC_SILSECONDS);
+				get_silence_input(hDlg);
 			}
 			return TRUE;
 		case IDC_MINUTES:
 		case IDC_SECONDS:
 			if (HIWORD(wParam) == EN_CHANGE && IsDlgButtonChecked(hDlg, IDC_LIMITED) == BST_CHECKED)
-				getTimeInput(hDlg);
+				get_time_input(hDlg);
 			return TRUE;
 		case IDC_SILSECONDS:
 			if (HIWORD(wParam) == EN_CHANGE && IsDlgButtonChecked(hDlg, IDC_SILENCE) == BST_CHECKED)
-				getSilenceInput(hDlg);
+				get_silence_input(hDlg);
 			return TRUE;
 		case IDC_LOOPS:
 		case IDC_NOLOOPS:
@@ -216,10 +219,23 @@ static service_factory_single_t<preferences_page_asap> g_preferences_page_asap_f
 
 /* Decoding -------------------------------------------------------------- */
 
+static void copy_info(char *dest, const file_info &p_info, const char *p_name)
+{
+	const char *src;
+	int i = 0;
+	src = p_info.meta_get(p_name, 0);
+	if (src != NULL)
+		for (; i < 127 && src[i] != '\0'; i++)
+			dest[i] = src[i];
+	dest[i] = '\0';
+}
+
 class input_asap
 {
 	service_ptr_t<file> m_file;
+	char filename[MAX_PATH];
 	byte module[ASAP_MODULE_MAX];
+	int module_len;
 	ASAP_ModuleInfo module_info;
 
 public:
@@ -236,18 +252,21 @@ public:
 
 	void open(service_ptr_t<file> p_filehint, const char *p_path, t_input_open_reason p_reason, abort_callback &p_abort)
 	{
-		if (p_reason != input_open_info_read && p_reason != input_open_decode)
-			throw exception_io_unsupported_format();
+		if (p_reason == input_open_info_write) {
+			int len = strlen(p_path);
+			if (len >= MAX_PATH || !ASAP_CanSetModuleInfo(p_path))
+				throw exception_io_unsupported_format();
+			memcpy(filename, p_path, len + 1);
+		}
 		if (p_filehint.is_empty())
 			filesystem::g_open(p_filehint, p_path, filesystem::open_mode_read, p_abort);
 		m_file = p_filehint;
-		int module_len = m_file->read(module, sizeof(module), p_abort);
+		module_len = m_file->read(module, sizeof(module), p_abort);
 		if (!ASAP_GetModuleInfo(&module_info, p_path, module, module_len))
 			throw exception_io_unsupported_format();
-		if (p_reason == input_open_info_read)
-			return;
-		if (!ASAP_Load(&asap, p_path, module, module_len))
-			throw exception_io_unsupported_format();
+		if (p_reason == input_open_decode)
+			if (!ASAP_Load(&asap, p_path, module, module_len))
+				throw exception_io_unsupported_format();
 	}
 
 	t_uint32 get_subsong_count()
@@ -319,7 +338,7 @@ public:
 		return true;
 	}
 
-	void decode_seek(double p_seconds, abort_callback& p_abort)
+	void decode_seek(double p_seconds, abort_callback &p_abort)
 	{
 		ASAP_Seek(&asap, (int) (p_seconds * 1000));
 	}
@@ -346,10 +365,20 @@ public:
 
 	void retag_set_info(t_uint32 p_subsong, const file_info &p_info, abort_callback &p_abort)
 	{
+		copy_info(module_info.author, p_info, "composer");
+		copy_info(module_info.name, p_info, "title");
+		copy_info(module_info.date, p_info, "date");
 	}
 
 	void retag_commit(abort_callback &p_abort)
 	{
+		byte out_module[ASAP_MODULE_MAX];
+		int out_len = ASAP_SetModuleInfo(&module_info, module, module_len, out_module);
+		if (out_len <= 0)
+			throw exception_io_unsupported_format();
+		m_file.release();
+		filesystem::g_open(m_file, filename, filesystem::open_mode_write_new, p_abort);
+		m_file->write(out_module, out_len, p_abort);
 	}
 };
 
