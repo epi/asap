@@ -213,7 +213,7 @@ static void asap_stop(void)
 
 static int asap_get_time(void)
 {
-	if (!thread_run || !mod.output->buffer_playing())
+	if (!thread_run && !mod.output->buffer_playing())
 		return -1;
 	return mod.output->output_time();
 }
