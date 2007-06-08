@@ -28,7 +28,7 @@
 #include "asap.h"
 
 #define BITS_PER_SAMPLE      16
-#define DEFAULT_SONG_LENGTH  180
+#define DEFAULT_SONG_LENGTH  -1
 
 typedef struct {
 	ASAP_State asap;
