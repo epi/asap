@@ -1,5 +1,5 @@
 /*
- * asapscan.c - SAP song length detector
+ * asapscan.c - Atari 8-bit music analyzer
  *
  * Copyright (C) 2007  Piotr Fusik
  *
@@ -138,7 +138,7 @@ void scan_song(int song)
 			if (is_silence) {
 				silence_run++;
 				if (silence_run >= silence_player_calls) {
-					int duration = player_calls_to_milliseconds(i - silence_run);
+					int duration = player_calls_to_milliseconds(i + 1 - silence_run);
 					printf("TIME %02d:%02d.%02d\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100);
 					return;
 				}
