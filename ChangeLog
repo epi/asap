@@ -1,3 +1,11 @@
+** 1.0.1 released on 2007-06-10
+
+2007-06-10  Piotr Fusik  <fox@scene.pl>
+* asapscan.c: fixed silence detection
+
+* chksap.pl: "-p" prints names of processed files
+
+
 2007-06-08  Piotr Fusik  <fox@scene.pl>
 * moc/libasap_decoder.c, INSTALL: MOC 2.4.1 compatibility
 

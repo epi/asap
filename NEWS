@@ -1,6 +1,14 @@
 History
 -------
 
+* ASAP 1.0.1 (2007-06-10)
+
+Plugin for MOC (Music On Console) has been created. WASAP, Winamp plugin
+and foobar2000 plugin can edit AUTHOR, NAME and DATE tags in SAP files.
+Winamp and XMMS plugins format titles as specified by the player.
+TMC files are now played in stereo. A few minor bugs have been fixed.
+
+
 * ASAP 1.0.0 (2007-05-28)
 
 This release introduces completely new 6502 and POKEY emulation.
@@ -48,5 +56,3 @@ Atari 8-bit music to WAV files, WASAP - a tiny player for Windows
 and in_asap - a Winamp plugin. Currently supported input formats are:
 SAP (except for samples and stereo), CMC, CMR, DMC, MPT (without samples),
 MPD, RMT (mono) and TMC (mono).
-
-
