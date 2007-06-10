@@ -130,7 +130,7 @@ clean:
 	del winamp\in_asap.res;in_asap.dll
 	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\foo_asap.res;foo_asap.dll
 	del gspasap.dll;gspasap.res
-	del ..\gsplayer\gspasap.dll;..\gsplayer\gspasap.res
+	del ..\gsplayer\gspasap.dll;..\gsplayer\gspasap.exp;..\gsplayer\gspasap.lib;..\gsplayer\gspasap.res
 	del asapscan.exe
 	$(GMAKE) -C ../java clean
 
@@ -194,13 +194,14 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 		win32\wasap\play.ico win32\wasap\stop.ico win32\wasap\wasap.ico \
 		-s install-sh configure chksap.pl maketar.pl raw2c.pl \
 		| 7z a -tgzip -si -mx=9 ..\asap-$(VERSION).tar.gz
+	cd win32
 
 dist: all foo wince java srcdist copying.txt credits.txt news.txt readme.txt \
-	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt \
-	del ..\asap-$(VERSION)-java.zip
-	del ..\asap-$(VERSION)-win32.zip
-	del ..\asap-$(VERSION)-wince-arm.zip
-	cd java
+	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt
+	del ..\..\asap-$(VERSION)-java.zip
+	del ..\..\asap-$(VERSION)-win32.zip
+	del ..\..\asap-$(VERSION)-wince-arm.zip
+	cd ..\java
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-java.zip \
 		asap2wav.jar asap_applet.jar asap_midlet.jad asap_midlet.jar \
 		asap_applet.txt asap_midlet.txt

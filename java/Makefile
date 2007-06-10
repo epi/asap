@@ -78,5 +78,5 @@ doc: ASAP.java ASAP_ModuleInfo.java
 	${JAVADOC} -d doc ASAP.java ASAP_ModuleInfo.java
 
 clean:
-	${RM} *.class ASAP.java
-	${RMR} net doc
+	${RM} asap2wav.jar asap_applet.jar asap_midlet.jar asap_midlet.jad *.class ASAP.java
+	${RMR} net preverified doc

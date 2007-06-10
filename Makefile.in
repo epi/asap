@@ -98,7 +98,7 @@ uninstall-moc:
 	rm -f ${MOC_PLUGIN_DIR}/libasap_decoder.so
 
 clean:
-	rm -f players.h ${ASAP2WAV} libasap.so
+	rm -f players.h ${ASAP2WAV} ${ASAPLIB} libasap.so libasap_decoder.so
 
 distclean: clean
 	rm -f Makefile config.log config.status config.h configure config.h.in
