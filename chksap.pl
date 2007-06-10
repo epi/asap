@@ -45,6 +45,16 @@ Compute and display statistics.
 
 =back
 
+The following options are available in any mode:
+
+=over 4
+
+=item B<-p>, B<--progress>
+
+Print name of the currently processed file.
+
+=back
+
 In the fix mode the following options are available:
 
 =over 4
@@ -275,7 +285,8 @@ use Pod::Usage;
 use strict;
 
 my $asapscan = File::Spec->rel2abs('asapscan');
-my ($check, $fix, $stat, $time, $overwrite_time, $features, $help, $version) = (0, 0, 0, 0, 0, 0, 0);
+my ($check, $fix, $stat) = (0, 0, 0);
+my ($progress, $time, $overwrite_time, $features, $help, $version) = (0, 0, 0, 0, 0, 0);
 my ($total_files, $sap_files, $stereo_files) = (0, 0, 0);
 my ($total_length, $min_length, $max_length) = (0, 100_000, 0);
 my ($min_filename, $max_filename);
@@ -287,6 +298,7 @@ sub process($$) {
 	my ($filename, $fullpath) = @_;
 	my (%fixed, %fatal);
 	my $sap;
+	print STDERR "$fullpath\n" if $progress;
 	open F, '<', $filename and binmode F and read F, $sap, 64513 and close F
 		or die "$filename: $!\n";
 	{
@@ -585,6 +597,7 @@ GetOptions(
 	'check|c' => \$check,
 	'fix|f' => \$fix,
 	'statistics|s' => \$stat,
+	'progress|p' => \$progress,
 	'time|t' => \$time,
 	'overwrite-time|T' => \$overwrite_time,
 	'features|u' => \$features,
@@ -594,7 +607,7 @@ GetOptions(
 
 pod2usage({ -verbose => 1, -exitval => 0 }) if $help;
 if ($version) {
-	print "chksap 1.2\n";
+	print "chksap 1.3\n";
 	exit 0;
 }
 
