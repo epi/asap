@@ -5,6 +5,8 @@
 
 * chksap.pl: "-p" prints names of processed files
 
+* Makefile.in, java/Makefile, win32/Makefile: updated "clean" targets
+
 
 2007-06-08  Piotr Fusik  <fox@scene.pl>
 * moc/libasap_decoder.c, INSTALL: MOC 2.4.1 compatibility
