@@ -593,6 +593,7 @@ sub wanted() {
 	process($_, $File::Find::name) if /\.sap$/is;
 }
 
+Getopt::Long::Configure('bundling');
 GetOptions(
 	'check|c' => \$check,
 	'fix|f' => \$fix,
