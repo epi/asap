@@ -211,6 +211,7 @@ public:
 		silence_seconds = -1;
 		play_loops = false;
 		mute_mask = 0;
+		ASAP_MutePokeyChannels(&asap, 0);
 	}
 };
 
