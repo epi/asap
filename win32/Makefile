@@ -105,7 +105,7 @@ wince: ..\gsplayer\gspasap.dll
 # asapscan
 
 asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_CC) ..\asapscan.c $(COMMON_C) $(LINKOPT)
+	$(ASAP_CC) /DASAPSCAN ..\asapscan.c $(COMMON_C) $(LINKOPT)
 
 # library
 

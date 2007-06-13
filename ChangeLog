@@ -1,3 +1,18 @@
+2007-06-13  Piotr Fusik  <fox@scene.pl>
+* asapscan.c, acpu.c, asap_internal.h, win32/Makefile: "asapscan -c" outputs
+  6502 trace
+
+* asap.c: return 0xff for SKSTAT
+
+* asap_internal.h: DEC $D40A suspends the 6502 once, not twice
+
+
+2007-06-11  Piotr Fusik  <fox@scene.pl>
+* chksap.pl: bundling single-character options ("-ftp" means "-f -t -p")
+
+* win32/foobar2000/foo_asap.cpp: un-mute when resetting options
+
+
 ** 1.0.1 released on 2007-06-10
 
 2007-06-10  Piotr Fusik  <fox@scene.pl>

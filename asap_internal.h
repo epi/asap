@@ -40,6 +40,12 @@ int PokeySound_Generate(ASAP_State *as, byte buffer[], int buffer_offset, int bl
 abool PokeySound_IsSilent(const PokeyState *ps);
 void PokeySound_Mute(const ASAP_State *as, PokeyState *ps, int mask);
 
+#ifdef ASAPSCAN
+abool call_6502_player(ASAP_State *as);
+extern abool cpu_trace;
+void print_cpu_state(const ASAP_State *as, int pc, int a, int x, int y, int s, int nz, int vdi, int c);
+#endif
+
 #endif /* JAVA */
 
 #define ASAP_MAIN_CLOCK         1773447
@@ -56,6 +62,6 @@ void PokeySound_Mute(const ASAP_State *as, PokeyState *ps, int mask);
 #define dGetWord(addr)          (dGetByte(addr) + (dGetByte((addr) + 1) << 8))
 #define GetByte(addr)           (((addr) & 0xf900) == 0xd000 ? ASAP_GetByte(as, addr) : dGetByte(addr))
 #define PutByte(addr, data)     do { if (((addr) & 0xf900) == 0xd000) ASAP_PutByte(as, addr, data); else dPutByte(addr, data); } while (FALSE)
-#define RMW_GetByte(dest, addr) do { if (((addr) & 0xf900) == 0xd000) { dest = ASAP_GetByte(as, addr); AS cycle--; ASAP_PutByte(as, addr, dest); AS cycle++; } else dest = dGetByte(addr); } while (FALSE)
+#define RMW_GetByte(dest, addr) do { if (((addr) >> 8) == 0xd2) { dest = ASAP_GetByte(as, addr); AS cycle--; ASAP_PutByte(as, addr, dest); AS cycle++; } else dest = dGetByte(addr); } while (FALSE)
 
 #endif /* _ASAP_INTERNAL_H_ */
