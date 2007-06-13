@@ -47,6 +47,8 @@ ASAP_FUNC int ASAP_GetByte(ASAP_State PTR as, int addr)
 		return PokeySound_GetRandom(as, addr);
 	case 0xd20e:
 		return AS irqst;
+	case 0xd20f:
+		return 0xff;
 	case 0xd40b:
 		return AS scanline_number >> 1;
 	default:
