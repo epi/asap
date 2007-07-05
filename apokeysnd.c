@@ -187,7 +187,7 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 		}
 		if (cycle == PS tick_cycle3) {
 			PS tick_cycle3 += PS period_cycles3;
-			if ((PS audctl & 4) != 0 && PS delta1 > 0)
+			if ((PS audctl & 4) != 0 && PS delta1 > 0 && PS mute1 == 0)
 				PS delta_buffer[CYCLE_TO_SAMPLE(cycle)] += PS delta1 = -PS delta1;
 			DO_TICK(3);
 		}
@@ -195,7 +195,7 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 			PS tick_cycle4 += PS period_cycles4;
 			if ((PS audctl & 8) != 0)
 				PS tick_cycle3 = cycle + PS reload_cycles3;
-			if ((PS audctl & 2) != 0 && PS delta2 > 0)
+			if ((PS audctl & 2) != 0 && PS delta2 > 0 && PS mute2 == 0)
 				PS delta_buffer[CYCLE_TO_SAMPLE(cycle)] += PS delta2 = -PS delta2;
 			DO_TICK(4);
 		}
@@ -519,8 +519,7 @@ ASAP_FUNC int PokeySound_Generate(ASAP_State PTR as, byte buffer[], int buffer_o
 
 ASAP_FUNC abool PokeySound_IsSilent(const PokeyState PTR ps)
 {
-	return (PS audc1 & 0xf) == 0 && (PS audc2 & 0xf) == 0
-		&& (PS audc3 & 0xf) == 0 && (PS audc4 & 0xf) == 0;
+	return ((PS audc1 | PS audc2 | PS audc3 | PS audc4) & 0xf) == 0;
 }
 
 ASAP_FUNC void PokeySound_Mute(const ASAP_State PTR as, PokeyState PTR ps, int mask)
