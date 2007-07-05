@@ -46,6 +46,8 @@ ASAP_FUNC int ASAP_GetByte(ASAP_State PTR as, int addr)
 	case 0xd20a:
 		return PokeySound_GetRandom(as, addr);
 	case 0xd20e:
+		if ((addr & AS extra_pokey_mask) != 0)
+			return 0xff;
 		return AS irqst;
 	case 0xd20f:
 		return 0xff;
@@ -170,9 +172,9 @@ FILE_FUNC abool parse_cmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	/* auto-detect number of subsongs */
 	pos = 0x54;
 	while (--pos >= 0) {
-		if (UBYTE(module[0x206 + pos]) < 0xfe
-		 || UBYTE(module[0x25b + pos]) < 0xfe
-		 || UBYTE(module[0x2b0 + pos]) < 0xfe)
+		if (UBYTE(module[0x206 + pos]) < 0xb0
+		 || UBYTE(module[0x25b + pos]) < 0xb0
+		 || UBYTE(module[0x2b0 + pos]) < 0xb0)
 			break;
 	}
 	while (--pos >= 0) {
