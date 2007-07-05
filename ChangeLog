@@ -1,3 +1,16 @@
+2007-07-05  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c: channel mute works for hi-pass filters
+
+* asap.c: IRQST=0xff for the extra POKEY; skip trailing "end-of-song" marks
+  in detection of subsongs in CMC
+
+* asap_internal.h: header comment
+
+* asapscan.c: "-s SONG" option
+
+* win32/gui.rc: only digits can be entered in text boxes
+
+
 2007-06-13  Piotr Fusik  <fox@scene.pl>
 * asapscan.c, acpu.c, asap_internal.h, win32/Makefile: "asapscan -c" outputs
   6502 trace
