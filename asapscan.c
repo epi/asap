@@ -100,7 +100,7 @@ static void show_instruction(const ASAP_State *as, int pc)
 		if (*p == '1') {
 			int value = dGetByte(pc);
 			printf("%04X: %02X %02X     %.*s$%02X%s\n",
-			       addr, insn, value, (int) (p - mnemonic), mnemonic, dGetByte(pc), p + 1);
+			       addr, insn, value, (int) (p - mnemonic), mnemonic, value, p + 1);
 			return;
 		}
 		if (*p == '2') {
@@ -132,12 +132,14 @@ void print_cpu_state(const ASAP_State *as, int pc, int a, int x, int y, int s, i
 static void print_help(void)
 {
 	printf(
-		"Usage: asapscan COMMAND INPUTFILE\n"
+		"Usage: asapscan COMMAND [OPTIONS] INPUTFILE\n"
 		"Commands:\n"
 		"-d  Dump POKEY registers\n"
 		"-f  List POKEY features used\n"
 		"-t  Detect silence and loops\n"
 		"-c  Dump 6502 trace\n"
+		"Options:\n"
+		"-s SONG  Process the specified subsong (zero-based)\n"
 	);
 }
 
@@ -190,11 +192,7 @@ void scan_song(int song)
 	int loop_bytes = 18 * loop_check_player_calls;
 	ASAP_PlaySong(&asap, song, -1);
 	for (i = 0; i < scan_player_calls; i++) {
-		byte *p = registers_dump + 18 * i;
-		abool is_silence;
 		call_6502_player(&asap);
-		is_silence = store_pokey(p, &asap.base_pokey);
-		is_silence &= store_pokey(p + 9, &asap.extra_pokey);
 		if (dump) {
 			printf("%6.2f: ", i * asap.sap_fastplay * 114.0 / 1773447.0);
 			print_pokey(&asap.base_pokey);
@@ -218,6 +216,9 @@ void scan_song(int song)
 				features |= FEATURE_9_BIT_POLY;
 		}
 		if (detect_time) {
+			byte *p = registers_dump + 18 * i;
+			abool is_silence = store_pokey(p, &asap.base_pokey);
+			is_silence &= store_pokey(p + 9, &asap.extra_pokey);
 			if (is_silence) {
 				silence_run++;
 				if (silence_run >= silence_player_calls) {
@@ -252,7 +253,9 @@ void scan_song(int song)
 
 int main(int argc, char *argv[])
 {
-	const char *input_file;
+	int i;
+	const char *input_file = NULL;
+	int song = -1;
 	int scan_seconds = 15 * 60;
 	int silence_seconds = 5;
 	int loop_check_seconds = 3 * 60;
@@ -260,24 +263,30 @@ int main(int argc, char *argv[])
 	FILE *fp;
 	static byte module[ASAP_MODULE_MAX];
 	int module_len;
-	int song;
-	if (argc != 3) {
+	
+	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-d") == 0)
+			dump = TRUE;
+		else if (strcmp(argv[i], "-f") == 0)
+			features = 1;
+		else if (strcmp(argv[i], "-t") == 0)
+			detect_time = TRUE;
+		else if (strcmp(argv[i], "-c") == 0)
+			cpu_trace = TRUE;
+		else if (strcmp(argv[i], "-s") == 0)
+			song = atoi(argv[++i]);
+		else {
+			if (input_file != NULL) {
+				print_help();
+				return 1;
+			}
+			input_file = argv[i];
+		}
+	}
+	if (dump + features + detect_time + cpu_trace == 0 || input_file == NULL) {
 		print_help();
 		return 1;
 	}
-	if (strcmp(argv[1], "-d") == 0)
-		dump = TRUE;
-	else if (strcmp(argv[1], "-f") == 0)
-		features = 1;
-	else if (strcmp(argv[1], "-t") == 0)
-		detect_time = TRUE;
-	else if (strcmp(argv[1], "-c") == 0)
-		cpu_trace = TRUE;
-	else {
-		print_help();
-		return 1;
-	}
-	input_file = argv[2];
 	fp = fopen(input_file, "rb");
 	if (fp == NULL) {
 		fprintf(stderr, "asapscan: cannot open %s\n", argv[2]);
@@ -298,8 +307,11 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "asapscan: out of memory\n");
 		return 1;
 	}
-	for (song = 0; song < asap.module_info.songs; song++)
+	if (song >= 0)
 		scan_song(song);
+	else
+		for (song = 0; song < asap.module_info.songs; song++)
+			scan_song(song);
 	free(registers_dump);
 	if (features != 0) {
 		if ((features & FEATURE_15_KHZ) != 0)
