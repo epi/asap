@@ -111,7 +111,7 @@ static void WINAPI asapShowConfigDlg(HWND hwndParent)
 	}
 }
 
-static const char *exts[] = {
+static const char * const exts[] = {
 	"sap", "Slight Atari Player (*.sap)",
 	"cmc", "Chaos Music Composer (*.cmc)",
 	"cmr", "Chaos Music Composer / Rzog (*.cmr)",
