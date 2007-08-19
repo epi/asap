@@ -1,5 +1,5 @@
 /*
- * settings.c - settings dialog box for Winamp and GSPlayer plugins
+ * gui.c - settings and file information dialog boxes
  *
  * Copyright (C) 2007  Piotr Fusik
  *
@@ -206,7 +206,7 @@ int playSong(int song)
 
 #if defined(WASAP) || defined(WINAMP)
 
-static HWND infoDialog = NULL;
+HWND infoDialog = NULL;
 
 static BOOL saveInfo(void)
 {
