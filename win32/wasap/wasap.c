@@ -337,8 +337,6 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 	PCOPYDATASTRUCT pcds;
 	switch (msg) {
 	case WM_COMMAND:
-		if (opening)
-			break;
 		idc = LOWORD(wParam);
 		switch (idc) {
 		case IDM_OPEN:
@@ -497,8 +495,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	else
 		SelectAndLoadFile();
 	while (GetMessage(&msg, NULL, 0, 0)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		if (infoDialog == NULL || !IsDialogMessage(infoDialog, &msg)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
 	WaveOut_Close();
 	Shell_NotifyIcon(NIM_DELETE, &nid);
