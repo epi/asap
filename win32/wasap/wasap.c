@@ -383,7 +383,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			if (songs <= 1)
 				break;
 			/* FALLTHROUGH */
-		case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
 			GetCursorPos(&pt);
 			SetForegroundWindow(hWnd);
 			TrackPopupMenu(lParam == WM_MBUTTONDOWN ? hSongMenu : hTrayMenu,
