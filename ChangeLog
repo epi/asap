@@ -1,3 +1,8 @@
+2007-09-14  Piotr Fusik  <fox@scene.pl>
+* win32/wasap/wasap.c: the menu appears when the right button is released
+  - this fixes the problem of the taskbar menu opening on top of WASAP's menu
+
+
 2007-08-19  Piotr Fusik  <fox@scene.pl>
 * java/Makefile: added "-source 1.2" option for new Java compilers
 
