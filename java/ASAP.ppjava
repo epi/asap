@@ -95,7 +95,7 @@ final class PokeyState
 	int delta2;
 	int delta3;
 	int delta4;
-	final byte[] delta_buffer = new byte[1024];
+	final byte[] delta_buffer = new byte[888];
 }
 
 final class ASAP_State

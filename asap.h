@@ -108,7 +108,7 @@ typedef struct {
 	int delta2;
 	int delta3;
 	int delta4;
-	char delta_buffer[1024];
+	char delta_buffer[888];
 } PokeyState;
 
 /* Player state.
@@ -171,6 +171,13 @@ typedef enum {
 	ASAP_FORMAT_S16_BE = -16  /* signed short, big-endian */
 } ASAP_SampleFormat;
 
+/* Parses the string in the "mm:ss.xxx" format
+   and returns the number of milliseconds or -1 if an error occurs. */
+int ASAP_ParseDuration(const char *s);
+
+/* Converts number of milliseconds to a string in the "mm:ss.xxx" format. */
+void ASAP_DurationToString(char *s, int duration);
+
 /* Checks whether the extension of the passed filename is known to ASAP. */
 abool ASAP_IsOurFile(const char *filename);
 
@@ -178,17 +185,13 @@ abool ASAP_IsOurFile(const char *filename);
 abool ASAP_IsOurExt(const char *ext);
 
 /* Gets information about a module.
+   "module_info" is the structure where the information is returned.
    "filename" determines file format.
    "module" is the music data (contents of the file).
    "module_len" is the number of data bytes.
-   "module_info" is the structure where the information is returned.
    ASAP_GetModuleInfo() returns true on success. */
 abool ASAP_GetModuleInfo(ASAP_ModuleInfo *module_info, const char *filename,
                          const byte module[], int module_len);
-
-/* A helper function. Parses the string in the "mm:ss.xxx" format
-   and returns the number of milliseconds or -1 if an error occurs. */
-int ASAP_ParseDuration(const char *duration);
 
 /* Loads music data.
    "as" is the destination structure.
@@ -222,8 +225,8 @@ void ASAP_PlaySong(ASAP_State *as, int song, int duration);
    instruments.
    "as" is ASAP state after calling ASAP_PlaySong().
    "mask" is a bit mask which selects POKEY channels to be muted.
-   Four low-order bits control the base POKEY channels,
-   four high-order bits control the extra POKEY channels. */
+   Bits 0-3 control the base POKEY channels,
+   bits 4-7 control the extra POKEY channels. */
 void ASAP_MutePokeyChannels(ASAP_State *as, int mask);
 
 /* Rewinds the current song.

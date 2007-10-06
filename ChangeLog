@@ -1,3 +1,9 @@
+2007-10-06  Piotr Fusik  <fox@scene.pl>
+* asap.h, java/ASAP.ppjava: reduced delta_buffer from 1024 to 888 bytes
+
+* asapscan.c: corrected "cannot open" error message
+
+
 2007-09-14  Piotr Fusik  <fox@scene.pl>
 * win32/wasap/wasap.c: the menu appears when the right button is released
   - this fixes the problem of the taskbar menu opening on top of WASAP's menu
