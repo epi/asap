@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
 	}
 	fp = fopen(input_file, "rb");
 	if (fp == NULL) {
-		fprintf(stderr, "asapscan: cannot open %s\n", argv[2]);
+		fprintf(stderr, "asapscan: cannot open %s\n", input_file);
 		return 1;
 	}
 	module_len = fread(module, 1, sizeof(module), fp);
