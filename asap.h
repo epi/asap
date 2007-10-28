@@ -31,8 +31,8 @@ extern "C" {
 /* ASAP version. */
 #define ASAP_VERSION_MAJOR   1
 #define ASAP_VERSION_MINOR   0
-#define ASAP_VERSION_MICRO   1
-#define ASAP_VERSION         "1.0.1"
+#define ASAP_VERSION_MICRO   2
+#define ASAP_VERSION         "1.0.2"
 
 /* Short credits of the ASAP engine. */
 #define ASAP_YEARS           "2005-2007"
@@ -157,12 +157,15 @@ typedef struct {
 	byte memory[65536];
 } ASAP_State;
 
+/* Maximum length of a "mm:ss.xxx" string including the terminator. */
+#define ASAP_DURATION_CHARS  10
+
 /* Maximum length of a supported input file.
    You can assume that files longer than this are not supported by ASAP. */
-#define ASAP_MODULE_MAX   65000
+#define ASAP_MODULE_MAX      65000
 
 /* Output sample rate. */
-#define ASAP_SAMPLE_RATE  44100
+#define ASAP_SAMPLE_RATE     44100
 
 /* Output formats. */
 typedef enum {

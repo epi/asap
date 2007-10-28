@@ -1,4 +1,4 @@
-VERSION = 1.0.1
+VERSION = 1.0.2
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 
@@ -45,7 +45,7 @@ asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
 
 # WASAP
 
-wasap.exe: wasap\wasap.c $(COMMON_C) wasap\wasap.res $(COMMON_H) gui.h
+wasap.exe: wasap\wasap.c $(COMMON_C) gui.c wasap\wasap.res $(COMMON_H) gui.h
 	$(ASAP_CC) /DWASAP wasap\wasap.c $(COMMON_C) gui.c wasap\wasap.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
 
 wasap\wasap.res: gui.rc ..\asap.h gui.h wasap\wasap.ico wasap\play.ico wasap\stop.ico

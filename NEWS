@@ -1,6 +1,13 @@
 History
 -------
 
+* ASAP 1.0.2 (2007-10-28)
+
+TIME tags can be edited in the file information window of WASAP
+and the Winamp plugin. A few emulation bugs have been fixed.
+Some user interface issues in WASAP have been fixed.
+
+
 * ASAP 1.0.1 (2007-06-10)
 
 Plugin for MOC (Music On Console) has been created. WASAP, Winamp plugin
