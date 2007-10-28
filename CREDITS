@@ -4,11 +4,17 @@ People who have contributed to ASAP
 Atari800 Development Team  (http://atari800.sourceforge.net)
 * 6502 and POKEY emulation used in 0.x.y versions of ASAP
 
+Zdenek Eisenhammer  <pg@pinknet.cz>
+* testing
+
 Piotr Fusik  <fox@scene.pl>
 * author and maintainer of ASAP
 
 Marcin Lewandowski  <jaskier@atari8.info>
-* original 6502 routines for playing CMC, MPT, TMC and TM2
+* 6502 routines for playing CMC, MPT, TMC and TM2
+
+Perry McFarlane  <perry_m@fastmail.fm>
+* POKEY reverse-engineering
 
 Kostas Nakos  <knakos@gmail.com>
 * compilation for Windows CE
