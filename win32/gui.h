@@ -30,11 +30,14 @@
 #define IDC_AUTHOR     303
 #define IDC_NAME       304
 #define IDC_DATE       305
-#define IDC_SAVE       306
+#define IDC_SONGNO     306
+#define IDC_TIME       307
+#define IDC_LOOP       308
+#define IDC_SAVE       309
 
 extern HWND infoDialog;
-void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, const ASAP_ModuleInfo *module_info);
-void updateInfoDialog(const char *filename, const ASAP_ModuleInfo *module_info);
+void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, int song, ASAP_ModuleInfo *module_info);
+void updateInfoDialog(const char *filename, int song, ASAP_ModuleInfo *module_info);
 
 #ifdef WASAP
 
@@ -66,6 +69,7 @@ extern int mute_mask;
 #endif
 #ifdef WINAMP
 extern char current_filename[MAX_PATH];
+extern int current_song;
 extern BOOL playing_info;
 #endif
 

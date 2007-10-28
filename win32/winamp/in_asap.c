@@ -55,6 +55,7 @@ static const char *ini_file;
 ASAP_State asap;
 char current_filename[MAX_PATH] = "";
 char current_filename_with_song[MAX_PATH + 3] = "";
+int current_song;
 static byte module[ASAP_MODULE_MAX];
 static DWORD module_len;
 static int duration;
@@ -227,15 +228,15 @@ static void quit(void)
 {
 }
 
-static int song;
-static ASAP_ModuleInfo module_info;
+static int title_song;
+static ASAP_ModuleInfo title_module_info;
 
 static void getTitle(char *title)
 {
-	char *p = my_stpcpy(title, module_info.name);
-	if (module_info.songs > 1) {
+	char *p = my_stpcpy(title, title_module_info.name);
+	if (title_module_info.songs > 1) {
 		p = my_stpcpy(p, " (song ");
-		p = my_stpint(p, song + 1);
+		p = my_stpint(p, title_song + 1);
 		*p++ = ')';
 	}
 	*p = '\0';
@@ -243,10 +244,10 @@ static void getTitle(char *title)
 
 static char *tagFunc(char *tag, void *p)
 {
-	if (stricmp(tag, "artist") == 0 && module_info.author[0] != '\0')
-		return strdup(module_info.author);
+	if (stricmp(tag, "artist") == 0 && title_module_info.author[0] != '\0')
+		return strdup(title_module_info.author);
 	if (stricmp(tag, "title") == 0) {
-		char *title = malloc(strlen(module_info.name) + 11);
+		char *title = malloc(strlen(title_module_info.name) + 11);
 		if (title != NULL)
 			getTitle(title);
 		return title;
@@ -264,15 +265,15 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 	char filename[MAX_PATH];
 	if (file == NULL || file[0] == '\0')
 		file = current_filename_with_song;
-	song = extractSongNumber(file, filename);
-	if (song < 0)
+	title_song = extractSongNumber(file, filename);
+	if (title_song < 0)
 		expandPlaylistSongs();
 	if (!loadFile(filename))
 		return;
-	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
+	if (!ASAP_GetModuleInfo(&title_module_info, filename, module, module_len))
 		return;
-	if (song < 0)
-		song = module_info.default_song;
+	if (title_song < 0)
+		title_song = title_module_info.default_song;
 	if (title != NULL) {
 		waFormatTitle fmt_title = {
 			NULL, NULL, title, 512, tagFunc, tagFreeFunc
@@ -281,17 +282,18 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 		SendMessage(mod.hMainWindow, WM_WA_IPC, (WPARAM) &fmt_title, IPC_FORMAT_TITLE);
 	}
 	if (length_in_ms != NULL)
-		*length_in_ms = getSongDuration(&module_info, song);
+		*length_in_ms = getSongDuration(&title_module_info, title_song);
 }
 
 static int infoBox(char *file, HWND hwndParent)
 {
 	char filename[MAX_PATH];
-	extractSongNumber(file, filename);
+	int song;
+	song = extractSongNumber(file, filename);
 	if (loadFile(filename)) {
 		ASAP_ModuleInfo module_info;
 		if (ASAP_GetModuleInfo(&module_info, filename, module, module_len))
-			showInfoDialog(mod.hDllInstance, hwndParent, filename, &module_info);
+			showInfoDialog(mod.hDllInstance, hwndParent, filename, song, &module_info);
 	}
 	return 0;
 }
@@ -384,7 +386,7 @@ static int play(char *fn)
 	thread_run = TRUE;
 	thread_handle = CreateThread(NULL, 0, playThread, NULL, 0, &threadId);
 	if (playing_info)
-		updateInfoDialog(current_filename, &asap.module_info);
+		updateInfoDialog(current_filename, song, &asap.module_info);
 	return thread_handle != NULL ? 0 : 1;
 }
 

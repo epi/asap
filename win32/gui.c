@@ -207,14 +207,50 @@ int playSong(int song)
 #if defined(WASAP) || defined(WINAMP)
 
 HWND infoDialog = NULL;
+static ASAP_ModuleInfo *saved_module_info;
+static ASAP_ModuleInfo edited_module_info;
+static int edited_song;
 
-static BOOL saveInfo(void)
+static void showSongTime(void)
+{
+	char str[ASAP_DURATION_CHARS];
+	ASAP_DurationToString(str, edited_module_info.durations[edited_song]);
+	SendDlgItemMessage(infoDialog, IDC_TIME, WM_SETTEXT, 0, (LPARAM) str);
+	CheckDlgButton(infoDialog, IDC_LOOP, edited_module_info.loops[edited_song] ? BST_CHECKED : BST_UNCHECKED);
+}
+
+static BOOL infoChanged(void)
+{
+	int i;
+	if (saved_module_info == NULL)
+		return FALSE;
+	if (strcmp(saved_module_info->author, edited_module_info.author) != 0)
+		return TRUE;
+	if (strcmp(saved_module_info->name, edited_module_info.name) != 0)
+		return TRUE;
+	if (strcmp(saved_module_info->date, edited_module_info.date) != 0)
+		return TRUE;
+	for (i = 0; i < saved_module_info->songs; i++) {
+		if (saved_module_info->durations[i] != edited_module_info.durations[i])
+			return TRUE;
+		if (edited_module_info.durations[i] >= 0
+		 && saved_module_info->loops[i] != edited_module_info.loops[i])
+			return TRUE;
+	}
+	return FALSE;
+}
+
+static void updateSaveButton(void)
+{
+	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), infoChanged());
+}
+
+static BOOL saveFile(void)
 {
 	char filename[MAX_PATH];
 	HANDLE fh;
 	byte module[ASAP_MODULE_MAX];
 	DWORD module_len;
-	ASAP_ModuleInfo module_info;
 	byte out_module[ASAP_MODULE_MAX];
 	int out_len;
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
@@ -227,10 +263,7 @@ static BOOL saveInfo(void)
 		return FALSE;
 	}
 	CloseHandle(fh);
-	SendDlgItemMessage(infoDialog, IDC_AUTHOR, WM_GETTEXT, sizeof(module_info.author), (LPARAM) module_info.author);
-	SendDlgItemMessage(infoDialog, IDC_NAME, WM_GETTEXT, sizeof(module_info.name), (LPARAM) module_info.name);
-	SendDlgItemMessage(infoDialog, IDC_DATE, WM_GETTEXT, sizeof(module_info.date), (LPARAM) module_info.date);
-	out_len = ASAP_SetModuleInfo(&module_info, module, module_len, out_module);
+	out_len = ASAP_SetModuleInfo(&edited_module_info, module, module_len, out_module);
 	if (out_len <= 0)
 		return FALSE;
 	fh = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -241,39 +274,94 @@ static BOOL saveInfo(void)
 		return FALSE;
 	}
 	CloseHandle(fh);
+	*saved_module_info = edited_module_info;
+	showSongTime();
+	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
+	return TRUE;
+}
+
+static BOOL saveInfo(void)
+{
+	int song = edited_module_info.songs;
+	while (--song >= 0 && edited_module_info.durations[song] < 0);
+	while (--song >= 0)
+		if (edited_module_info.durations[song] < 0) {
+			MessageBox(infoDialog, "Cannot save file because time not set for all songs", "Error", MB_OK | MB_ICONERROR);
+			return FALSE;
+		}
+	if (!saveFile()) {
+		MessageBox(infoDialog, "Cannot save information to file", "Error", MB_OK | MB_ICONERROR);
+		return FALSE;
+	}
 	return TRUE;
 }
 
 static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	char str[ASAP_DURATION_CHARS];
 	switch (uMsg) {
 	case WM_INITDIALOG:
 #ifdef WINAMP
 		CheckDlgButton(hDlg, IDC_PLAYING, playing_info ? BST_CHECKED : BST_UNCHECKED);
 #endif
-		SendDlgItemMessage(hDlg, IDC_AUTHOR, EM_LIMITTEXT, 127, 0);
-		SendDlgItemMessage(hDlg, IDC_NAME, EM_LIMITTEXT, 127, 0);
-		SendDlgItemMessage(hDlg, IDC_DATE, EM_LIMITTEXT, 127, 0);
+		SendDlgItemMessage(hDlg, IDC_AUTHOR, EM_LIMITTEXT, sizeof(edited_module_info.author) - 1, 0);
+		SendDlgItemMessage(hDlg, IDC_NAME, EM_LIMITTEXT, sizeof(edited_module_info.name) - 1, 0);
+		SendDlgItemMessage(hDlg, IDC_DATE, EM_LIMITTEXT, sizeof(edited_module_info.date) - 1, 0);
+		SendDlgItemMessage(hDlg, IDC_TIME, EM_LIMITTEXT, 9, 0);
 		return TRUE;
 	case WM_COMMAND:
-		if (HIWORD(wParam) == BN_CLICKED) {
-			switch (LOWORD(wParam)) {
+		switch (wParam) {
 #ifdef WINAMP
-			case IDC_PLAYING:
-				playing_info = (IsDlgButtonChecked(hDlg, IDC_PLAYING) == BST_CHECKED);
-				if (playing_info)
-					updateInfoDialog(current_filename, &asap.module_info);
-				return TRUE;
+		case MAKEWPARAM(IDC_PLAYING, BN_CLICKED):
+			playing_info = (IsDlgButtonChecked(hDlg, IDC_PLAYING) == BST_CHECKED);
+			if (playing_info)
+				updateInfoDialog(current_filename, current_song, &asap.module_info);
+			return TRUE;
 #endif
-			case IDC_SAVE:
-				if (!saveInfo())
-					MessageBox(hDlg, "Cannot save information to file", "Error", MB_OK | MB_ICONERROR);
-				return TRUE;
-			case IDCANCEL:
-				DestroyWindow(hDlg);
-				infoDialog = NULL;
-				return TRUE;
+		case MAKEWPARAM(IDC_AUTHOR, EN_CHANGE):
+			SendDlgItemMessage(hDlg, IDC_AUTHOR, WM_GETTEXT, sizeof(edited_module_info.author), (LPARAM) edited_module_info.author);
+			updateSaveButton();
+			return TRUE;
+		case MAKEWPARAM(IDC_NAME, EN_CHANGE):
+			SendDlgItemMessage(hDlg, IDC_NAME, WM_GETTEXT, sizeof(edited_module_info.name), (LPARAM) edited_module_info.name);
+			updateSaveButton();
+			return TRUE;
+		case MAKEWPARAM(IDC_DATE, EN_CHANGE):
+			SendDlgItemMessage(hDlg, IDC_DATE, WM_GETTEXT, sizeof(edited_module_info.date), (LPARAM) edited_module_info.date);
+			updateSaveButton();
+			return TRUE;
+		case MAKEWPARAM(IDC_TIME, EN_CHANGE):
+			SendDlgItemMessage(hDlg, IDC_TIME, WM_GETTEXT, sizeof(str), (LPARAM) str);
+			edited_module_info.durations[edited_song] = ASAP_ParseDuration(str);
+			updateSaveButton();
+			return TRUE;
+		case MAKEWPARAM(IDC_LOOP, BN_CLICKED):
+			edited_module_info.loops[edited_song] = (IsDlgButtonChecked(hDlg, IDC_LOOP) == BST_CHECKED);
+			updateSaveButton();
+			return TRUE;
+		case MAKEWPARAM(IDC_SONGNO, CBN_SELCHANGE):
+			edited_song = SendDlgItemMessage(hDlg, IDC_SONGNO, CB_GETCURSEL, 0, 0);
+			showSongTime();
+			return TRUE;
+		case MAKEWPARAM(IDC_SAVE, BN_CLICKED):
+			saveInfo();
+			return TRUE;
+		case MAKEWPARAM(IDCANCEL, BN_CLICKED):
+			if (infoChanged()) {
+				switch (MessageBox(hDlg, "Save changes?", "ASAP", MB_YESNOCANCEL | MB_ICONQUESTION)) {
+				case IDYES:
+					if (!saveInfo())
+						return TRUE;
+					break;
+				case IDCANCEL:
+					return TRUE;
+				default:
+					break;
+				}
 			}
+			DestroyWindow(hDlg);
+			infoDialog = NULL;
+			return TRUE;
 		}
 		break;
 	default:
@@ -283,32 +371,33 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 }
 
 void showInfoDialog(HINSTANCE hInstance, HWND hwndParent,
-                    const char *filename, const ASAP_ModuleInfo *module_info)
+                    const char *filename, int song, ASAP_ModuleInfo *module_info)
 {
-	if (infoDialog == NULL)
+	if (infoDialog == NULL) {
+		saved_module_info = NULL;
 		infoDialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_INFO), hwndParent, infoDialogProc);
-	updateInfoDialog(filename, module_info);
+	}
+	updateInfoDialog(filename, song, module_info);
 }
 
-void updateInfoDialog(const char *filename, const ASAP_ModuleInfo *module_info)
+void updateInfoDialog(const char *filename, int song, ASAP_ModuleInfo *module_info)
 {
-	abool can_edit;
 	const char *author;
 	const char *name;
 	const char *date;
-	if (infoDialog == NULL)
+	if (infoDialog == NULL || infoChanged())
 		return;
-	can_edit = filename != NULL && ASAP_CanSetModuleInfo(filename);
-	SendDlgItemMessage(infoDialog, IDC_AUTHOR, EM_SETREADONLY, !can_edit, 0);
-	SendDlgItemMessage(infoDialog, IDC_NAME, EM_SETREADONLY, !can_edit, 0);
-	SendDlgItemMessage(infoDialog, IDC_DATE, EM_SETREADONLY, !can_edit, 0);
-	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), can_edit);
+	saved_module_info = (filename != NULL && ASAP_CanSetModuleInfo(filename)) ? module_info : NULL;
+	SendDlgItemMessage(infoDialog, IDC_AUTHOR, EM_SETREADONLY, saved_module_info == NULL, 0);
+	SendDlgItemMessage(infoDialog, IDC_NAME, EM_SETREADONLY, saved_module_info == NULL, 0);
+	SendDlgItemMessage(infoDialog, IDC_DATE, EM_SETREADONLY, saved_module_info == NULL, 0);
 	if (module_info == NULL) {
 		author = "";
 		name = "";
 		date = "";
 	}
 	else {
+		edited_module_info = *module_info;
 		author = module_info->author;
 		name = module_info->name;
 		date = module_info->date;
@@ -317,6 +406,36 @@ void updateInfoDialog(const char *filename, const ASAP_ModuleInfo *module_info)
 	SendDlgItemMessage(infoDialog, IDC_AUTHOR, WM_SETTEXT, 0, (LPARAM) author);
 	SendDlgItemMessage(infoDialog, IDC_NAME, WM_SETTEXT, 0, (LPARAM) name);
 	SendDlgItemMessage(infoDialog, IDC_DATE, WM_SETTEXT, 0, (LPARAM) date);
+	SendDlgItemMessage(infoDialog, IDC_SONGNO, CB_RESETCONTENT, 0, 0);
+	EnableWindow(GetDlgItem(infoDialog, IDC_SONGNO), module_info != NULL && module_info->songs > 1);
+	if (module_info == NULL) {
+		SendDlgItemMessage(infoDialog, IDC_TIME, WM_SETTEXT, 0, (LPARAM) "");
+		CheckDlgButton(infoDialog, IDC_LOOP, BST_UNCHECKED);
+	}
+	else {
+		int i;
+		for (i = 1; i <= module_info->songs; i++) {
+			char str[3];
+			if (i < 10) {
+				str[0] = '0' + i;
+				str[1] = '\0';
+			}
+			else {
+				str[0] = '0' + i / 10;
+				str[1] = '0' + i % 10;
+				str[2] = '\0';
+			}
+			SendDlgItemMessage(infoDialog, IDC_SONGNO, CB_ADDSTRING, 0, (LPARAM) str);
+		}
+		if (song < 0)
+			song = module_info->default_song;
+		SendDlgItemMessage(infoDialog, IDC_SONGNO, CB_SETCURSEL, song, 0);
+		edited_song = song;
+		showSongTime();
+	}
+	SendDlgItemMessage(infoDialog, IDC_TIME, EM_SETREADONLY, saved_module_info == NULL, 0);
+	EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), saved_module_info != NULL);
+	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
 }
 
 #endif

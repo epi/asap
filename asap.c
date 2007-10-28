@@ -478,37 +478,64 @@ static abool parse_text(char *retval, const char *p)
 	return TRUE;
 }
 
-int ASAP_ParseDuration(const char *duration)
+int ASAP_ParseDuration(const char *s)
 {
 	int r;
-	if (*duration < '0' || *duration > '9')
+	if (*s < '0' || *s > '9')
 		return -1;
-	r = *duration++ - '0';
-	if (*duration >= '0' && *duration <= '9')
-		r = 10 * r + *duration++ - '0';
-	if (*duration == ':') {
-		duration++;
-		if (*duration < '0' || *duration > '5')
+	r = *s++ - '0';
+	if (*s >= '0' && *s <= '9')
+		r = 10 * r + *s++ - '0';
+	if (*s == ':') {
+		s++;
+		if (*s < '0' || *s > '5')
 			return -1;
-		r = 60 * r + (*duration++ - '0') * 10;
-		if (*duration < '0' || *duration > '9')
+		r = 60 * r + (*s++ - '0') * 10;
+		if (*s < '0' || *s > '9')
 			return -1;
-		r += *duration++ - '0';
+		r += *s++ - '0';
 	}
 	r *= 1000;
-	if (*duration != '.')
+	if (*s != '.')
 		return r;
-	duration++;
-	if (*duration < '0' || *duration > '9')
+	s++;
+	if (*s < '0' || *s > '9')
 		return r;
-	r += 100 * (*duration++ - '0');
-	if (*duration < '0' || *duration > '9')
+	r += 100 * (*s++ - '0');
+	if (*s < '0' || *s > '9')
 		return r;
-	r += 10 * (*duration++ - '0');
-	if (*duration < '0' || *duration > '9')
+	r += 10 * (*s++ - '0');
+	if (*s < '0' || *s > '9')
 		return r;
-	r += *duration - '0';
+	r += *s - '0';
 	return r;
+}
+
+static char *two_digits(char *s, int x)
+{
+	s[0] = '0' + x / 10;
+	s[1] = '0' + x % 10;
+	return s + 2;
+}
+
+void ASAP_DurationToString(char *s, int duration)
+{
+	if (duration >= 0) {
+		int seconds = duration / 1000;
+		int minutes = seconds / 60;
+		s = two_digits(s, minutes);
+		*s++ = ':';
+		s = two_digits(s, seconds % 60);
+		duration %= 1000;
+		if (duration != 0) {
+			*s++ = '.';
+			s = two_digits(s, duration / 10);
+			duration %= 10;
+			if (duration != 0)
+				*s++ = '0' + duration;
+		}
+	}
+	*s = '\0';
 }
 
 #endif /* JAVA */
@@ -1027,10 +1054,16 @@ abool ASAP_CanSetModuleInfo(const char *filename)
 	return ext == ASAP_EXT('S', 'A', 'P');
 }
 
+static byte *put_string(byte *dest, const char *str)
+{
+	while (*str != '\0')
+		*dest++ = *str++;
+	return dest;
+}
+
 static byte *put_tag(byte *dest, const char *tag, const char *value)
 {
-	while (*tag != '\0')
-		*dest++ = *tag++;
+	dest = put_string(dest, tag);
 	if (value != NULL) {
 		*dest++ = ' ';
 		*dest++ = '"';
@@ -1053,6 +1086,7 @@ int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const byte module[],
 {
 	byte *p = out_module;
 	int i;
+	int song;
 	if (memcmp(module, "SAP\r\n", 5) != 0)
 		return -1;
 	i = 5;
@@ -1069,7 +1103,8 @@ int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const byte module[],
 	while (i < module_len && module[i] != 0xff) {
 		if (memcmp(module + i, "AUTHOR ", 7) == 0
 		 || memcmp(module + i, "NAME ", 5) == 0
-		 || memcmp(module + i, "DATE ", 5) == 0) {
+		 || memcmp(module + i, "DATE ", 5) == 0
+		 || memcmp(module + i, "TIME ", 5) == 0) {
 			while (i < module_len && module[i++] != 0x0a);
 		}
 		else {
@@ -1079,6 +1114,18 @@ int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const byte module[],
 				*p++ = b;
 			} while (i < module_len && b != 0x0a);
 		}
+	}
+	for (song = 0; song < module_info->songs; song++) {
+		if (module_info->durations[song] < 0)
+			break;
+		p = put_string(p, "TIME ");
+		ASAP_DurationToString(p, module_info->durations[song]);
+		while (*p != '\0')
+			p++;
+		if (module_info->loops[song])
+			p = put_string(p, " LOOP");
+		*p++ = '\x0d';
+		*p++ = '\x0a';
 	}
 	module_len -= i;
 	memcpy(p, module + i, module_len);

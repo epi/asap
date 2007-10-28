@@ -264,18 +264,20 @@ static void LoadFile(void)
 	CloseHandle(fh);
 	UnloadFile();
 	if (ASAP_Load(&asap, strFile, module, module_len)) {
+		int song;
 		if (!WaveOut_Open(asap.module_info.channels)) {
 			MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
 					   MB_OK | MB_ICONERROR);
 			return;
 		}
+		song = asap.module_info.default_song;
 		songs = asap.module_info.songs;
-		updateInfoDialog(strFile, &asap.module_info);
+		updateInfoDialog(strFile, song, &asap.module_info);
 		SetSongsMenu(songs);
-		PlaySong(asap.module_info.default_song);
+		PlaySong(song);
 	}
 	else {
-		updateInfoDialog(NULL, NULL);
+		updateInfoDialog(NULL, 0, NULL);
 		MessageBox(hWnd, "Unsupported file format", APP_TITLE,
 		           MB_OK | MB_ICONERROR);
 	}
@@ -346,7 +348,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			StopPlayback();
 			break;
 		case IDM_FILE_INFO:
-			showInfoDialog(hInst, hWnd, strFile, songs > 0 ? &asap.module_info : NULL);
+			showInfoDialog(hInst, hWnd, strFile, current_song, songs > 0 ? &asap.module_info : NULL);
 			break;
 		case IDM_ABOUT:
 			MessageBox(hWnd,
