@@ -2,6 +2,7 @@ JRE = C:/java/jdk/jre
 WTK = C:/java/sesdk/PC_Emulation/WTK2
 
 JAVAC = javac -source 1.2 -d .
+#JAVAC = gcj -C -d .
 JAR = jar
 JAVADOC = javadoc
 PP = cpp -C -P -I..
