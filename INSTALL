@@ -75,13 +75,13 @@ make install
 Building the MOC plugin on Unix-like systems
 --------------------------------------------
 
-You need source code of MOC. The plugin is compatible with MOC 2.4.1
-and MOC 2.5.0 alpha1. Use the following commands:
+You need source code of MOC. The plugin is compatible with MOC 2.4.x
+and MOC 2.5.0 alpha. Use the following commands:
 ./configure MOC_INCLUDE=/path/to/moc/sources MOC_PLUGIN_DIR=/path/to/moc/plugins
 make asap-moc
 make install-moc
 
-You can omit MOC_INCLUDE (defaults to "../moc-2.4.1")
+You can omit MOC_INCLUDE (defaults to "../moc-2.4.3")
 and MOC_PLUGIN_DIR (defaults to "/usr/local/lib/moc/decoder_plugins").
 
 
