@@ -1,3 +1,11 @@
+** 1.0.2 released on 2007-11-02
+
+2007-11-02  Piotr Fusik  <fox@scene.pl>
+* win32/gui.c, win32/gui.h, win32/gui.rc, win32/wasap/wasap.c,
+  win32/winamp/in_asap.c: fixed loading a new file when the file information
+  window is open; minor refactoring
+
+
 2007-10-28  Piotr Fusik  <fox@scene.pl>
 * asap.c, win32/gui.c, win32/gui.h, win32/gui.rc, win32/wasap/wasap.c,
   win32/winamp/in_asap.c: TIME tag editor
