@@ -35,9 +35,13 @@
 #define IDC_LOOP       308
 #define IDC_SAVE       309
 
+char *appendString(char *dest, const char *src);
+char *appendInt(char *dest, int x);
+BOOL loadModule(const char *filename, byte *module, int *module_len);
+
 extern HWND infoDialog;
-void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, int song, ASAP_ModuleInfo *module_info);
-void updateInfoDialog(const char *filename, int song, ASAP_ModuleInfo *module_info);
+void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, int song);
+void updateInfoDialog(const char *filename, int song);
 
 #ifdef WASAP
 

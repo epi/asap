@@ -54,7 +54,7 @@ static const char *ini_file;
 // current file
 ASAP_State asap;
 char current_filename[MAX_PATH] = "";
-char current_filename_with_song[MAX_PATH + 3] = "";
+static char current_filename_with_song[MAX_PATH + 3] = "";
 int current_song;
 static byte module[ASAP_MODULE_MAX];
 static DWORD module_len;
@@ -70,21 +70,9 @@ static int seek_needed;
 
 static void writeIniInt(const char *name, int value)
 {
-	char s[16];
-	char *p = s + 15;
-	BOOL negative = FALSE;
-	if (value < 0) {
-		negative = TRUE;
-		value = -value;
-	}
-	*p = '\0';
-	do {
-		*--p = value % 10 + '0';
-		value /= 10;
-	} while (value > 0);
-	if (negative)
-		*--p = '-';
-	WritePrivateProfileString(INI_SECTION, name, p, ini_file);
+	char str[16];
+	*appendInt(str, value) = '\0';
+	WritePrivateProfileString(INI_SECTION, name, str, ini_file);
 }
 
 static void config(HWND hwndParent)
@@ -101,23 +89,6 @@ static void about(HWND hwndParent)
 {
 	MessageBox(hwndParent, ASAP_CREDITS "\n" ASAP_COPYRIGHT,
 		"About ASAP Winamp plugin " ASAP_VERSION, MB_OK);
-}
-
-static char *my_stpcpy(char *dest, const char *src)
-{
-	size_t len = strlen(src);
-	memcpy(dest, src, len);
-	return dest + len;
-}
-
-static char *my_stpint(char *dest, int i)
-{
-	if (i >= 10) {
-		*dest++ = i / 10 + '0';
-		i %= 10;
-	}
-	*dest++ = i + '0';
-	return dest;
 }
 
 static int extractSongNumber(const char *s, char *filename)
@@ -139,21 +110,6 @@ static int extractSongNumber(const char *s, char *filename)
 	return song;
 }
 
-static BOOL loadFile(const char *filename)
-{
-	HANDLE fh;
-	fh = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-	if (fh == INVALID_HANDLE_VALUE)
-		return FALSE;
-	if (!ReadFile(fh, module, sizeof(module), &module_len, NULL)) {
-		CloseHandle(fh);
-		return FALSE;
-	}
-	CloseHandle(fh);
-	return TRUE;
-}
-
 static void expandFileSongs(HWND playlistWnd, int index)
 {
 	const char *fn;
@@ -166,7 +122,7 @@ static void expandFileSongs(HWND playlistWnd, int index)
 	song = extractSongNumber(fn, fi.file);
 	if (song >= 0 || !ASAP_IsOurFile(fi.file))
 		return;
-	if (!loadFile(fi.file))
+	if (!loadModule(fi.file, module, &module_len))
 		return;
 	if (!ASAP_GetModuleInfo(&module_info, fi.file, module, module_len))
 		return;
@@ -175,7 +131,7 @@ static void expandFileSongs(HWND playlistWnd, int index)
 	for (j = 0; j < module_info.songs; j++) {
 		COPYDATASTRUCT cds;
 		*p = '#';
-		*my_stpint(p + 1, j + 1) = '\0';
+		*appendInt(p + 1, j + 1) = '\0';
 		fi.index = index + j;
 		cds.dwData = IPC_PE_INSERTFILENAME;
 		cds.lpData = &fi;
@@ -233,10 +189,10 @@ static ASAP_ModuleInfo title_module_info;
 
 static void getTitle(char *title)
 {
-	char *p = my_stpcpy(title, title_module_info.name);
+	char *p = appendString(title, title_module_info.name);
 	if (title_module_info.songs > 1) {
-		p = my_stpcpy(p, " (song ");
-		p = my_stpint(p, title_song + 1);
+		p = appendString(p, " (song ");
+		p = appendInt(p, title_song + 1);
 		*p++ = ')';
 	}
 	*p = '\0';
@@ -268,7 +224,7 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 	title_song = extractSongNumber(file, filename);
 	if (title_song < 0)
 		expandPlaylistSongs();
-	if (!loadFile(filename))
+	if (!loadModule(filename, module, &module_len))
 		return;
 	if (!ASAP_GetModuleInfo(&title_module_info, filename, module, module_len))
 		return;
@@ -290,11 +246,7 @@ static int infoBox(char *file, HWND hwndParent)
 	char filename[MAX_PATH];
 	int song;
 	song = extractSongNumber(file, filename);
-	if (loadFile(filename)) {
-		ASAP_ModuleInfo module_info;
-		if (ASAP_GetModuleInfo(&module_info, filename, module, module_len))
-			showInfoDialog(mod.hDllInstance, hwndParent, filename, song, &module_info);
-	}
+	showInfoDialog(mod.hDllInstance, hwndParent, filename, song);
 	return 0;
 }
 
@@ -366,7 +318,7 @@ static int play(char *fn)
 	DWORD threadId;
 	strcpy(current_filename_with_song, fn);
 	song = extractSongNumber(fn, current_filename);
-	if (!loadFile(current_filename))
+	if (!loadModule(current_filename, module, &module_len))
 		return -1;
 	if (!ASAP_Load(&asap, current_filename, module, module_len))
 		return 1;
@@ -386,7 +338,7 @@ static int play(char *fn)
 	thread_run = TRUE;
 	thread_handle = CreateThread(NULL, 0, playThread, NULL, 0, &threadId);
 	if (playing_info)
-		updateInfoDialog(current_filename, song, &asap.module_info);
+		updateInfoDialog(current_filename, song);
 	return thread_handle != NULL ? 0 : 1;
 }
 

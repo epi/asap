@@ -33,28 +33,10 @@
 
 static ASAP_State asap;
 static int songs = 0;
+static char current_filename[MAX_PATH] = "";
 static int current_song;
 
 static HWND hWnd;
-
-static char *Util_stpcpy(char *dest, const char *src)
-{
-	size_t len = strlen(src);
-	memcpy(dest, src, len + 1);
-	return dest + len;
-}
-
-static char *Util_utoa(char *dest, int x)
-{
-	char tmpbuf[16];
-	char *p = tmpbuf + 15;
-	*p = '\0';
-	do {
-		*--p = x % 10 + '0';
-		x /= 10;
-	} while (x > 0);
-	return Util_stpcpy(dest, p);
-}
 
 
 /* WaveOut ---------------------------------------------------------------- */
@@ -138,7 +120,6 @@ static void WaveOut_Close(void)
 
 /* Tray ------------------------------------------------------------------- */
 
-static char strFile[MAX_PATH] = "";
 #define MYWM_NOTIFYICON  (WM_APP + 1)
 static NOTIFYICONDATA nid = {
 	sizeof(NOTIFYICONDATA),
@@ -156,37 +137,38 @@ static void Tray_Modify(HICON hIcon)
 	char *p;
 	nid.hIcon = hIcon;
 	/* we need to be careful because szTip is only 64 characters */
-	/* 8 */
-	p = Util_stpcpy(nid.szTip, APP_TITLE);
+	/* 5 */
+	p = appendString(nid.szTip, APP_TITLE);
 	if (songs > 0) {
 		const char *pb;
 		const char *pe;
-		for (pe = strFile; *pe != '\0'; pe++);
-		for (pb = pe; pb > strFile && pb[-1] != '\\' && pb[-1] != '/'; pb--);
+		for (pe = current_filename; *pe != '\0'; pe++);
+		for (pb = pe; pb > current_filename && pb[-1] != '\\' && pb[-1] != '/'; pb--);
 		/* 2 */
 		*p++ = ':';
 		*p++ = ' ';
 		/* max 33 */
 		if (pe - pb <= 33)
-			p = Util_stpcpy(p, pb);
+			p = appendString(p, pb);
 		else {
 			memcpy(p, pb, 30);
-			p = Util_stpcpy(p + 30, "...");
+			p = appendString(p + 30, "...");
 		}
 		if (current_song >= 0 && songs > 1) {
 			/* 7 */
-			p = Util_stpcpy(p, " (song ");
+			p = appendString(p, " (song ");
 			/* max 3 */
-			p = Util_utoa(p, current_song + 1);
+			p = appendInt(p, current_song + 1);
 			/* 4 */
-			p = Util_stpcpy(p, " of ");
+			p = appendString(p, " of ");
 			/* max 3 */
-			p = Util_utoa(p, songs);
-			/* 2 */
-			p[0] = ')';
-			p[1] = '\0';
+			p = appendInt(p, songs);
+			/* 1 */
+			*p++ = ')';
 		}
 	}
+	/* 1 */
+	*p = '\0';
 	Shell_NotifyIcon(NIM_MODIFY, &nid);
 }
 
@@ -210,26 +192,10 @@ static void SetSongsMenu(int n)
 {
 	int i;
 	for (i = 1; i <= n; i++) {
-		char tmp_buf[16];
-		Util_utoa(tmp_buf, i);
-		AppendMenu(hSongMenu, MF_ENABLED | MF_STRING,
-		           IDM_SONG1 + i - 1, tmp_buf);
+		char str[16];
+		*appendInt(str, i) = '\0';
+		AppendMenu(hSongMenu, MF_ENABLED | MF_STRING, IDM_SONG1 + i - 1, str);
 	}
-}
-
-static void PlaySong(int n)
-{
-	int duration;
-	if (songs == 0)
-		return;
-	CheckMenuRadioItem(hSongMenu, 0, songs - 1, n, MF_BYPOSITION);
-	current_song = n;
-	duration = asap.module_info.durations[n];
-	if (asap.module_info.loops[n])
-		duration = -1;
-	ASAP_PlaySong(&asap, n, duration);
-	Tray_Modify(hPlayIcon);
-	WaveOut_Start();
 }
 
 static void StopPlayback(void)
@@ -239,48 +205,41 @@ static void StopPlayback(void)
 	Tray_Modify(hStopIcon);
 }
 
-static void UnloadFile(void)
+static void LoadAndPlay(int song)
 {
-	if (songs == 0)
+	byte module[ASAP_MODULE_MAX];
+	int module_len;
+	int duration;
+	if (!loadModule(current_filename, module, &module_len))
 		return;
-	ClearSongsMenu();
-	StopPlayback();
-	songs = 0;
-}
-
-static void LoadFile(void)
-{
-	HANDLE fh;
-	static byte module[ASAP_MODULE_MAX];
-	DWORD module_len;
-	fh = CreateFile(strFile, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-	if (fh == INVALID_HANDLE_VALUE)
-		return;
-	if (!ReadFile(fh, module, sizeof(module), &module_len, NULL)) {
-		CloseHandle(fh);
-		return;
+	if (songs > 0) {
+		ClearSongsMenu();
+		StopPlayback();
+		songs = 0;
 	}
-	CloseHandle(fh);
-	UnloadFile();
-	if (ASAP_Load(&asap, strFile, module, module_len)) {
-		int song;
-		if (!WaveOut_Open(asap.module_info.channels)) {
-			MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
-					   MB_OK | MB_ICONERROR);
-			return;
-		}
-		song = asap.module_info.default_song;
-		songs = asap.module_info.songs;
-		updateInfoDialog(strFile, song, &asap.module_info);
-		SetSongsMenu(songs);
-		PlaySong(song);
-	}
-	else {
-		updateInfoDialog(NULL, 0, NULL);
+	if (!ASAP_Load(&asap, current_filename, module, module_len)) {
 		MessageBox(hWnd, "Unsupported file format", APP_TITLE,
 		           MB_OK | MB_ICONERROR);
+		return;
 	}
+	if (!WaveOut_Open(asap.module_info.channels)) {
+		MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
+				   MB_OK | MB_ICONERROR);
+		return;
+	}
+	if (song < 0)
+		song = asap.module_info.default_song;
+	songs = asap.module_info.songs;
+	updateInfoDialog(current_filename, song);
+	SetSongsMenu(songs);
+	CheckMenuRadioItem(hSongMenu, 0, songs - 1, song, MF_BYPOSITION);
+	current_song = song;
+	duration = asap.module_info.durations[song];
+	if (asap.module_info.loops[song])
+		duration = -1;
+	ASAP_PlaySong(&asap, song, duration);
+	Tray_Modify(hPlayIcon);
+	WaveOut_Start();
 }
 
 static int opening = FALSE;
@@ -309,7 +268,7 @@ static void SelectAndLoadFile(void)
 		NULL,
 		0,
 		1,
-		strFile,
+		current_filename,
 		MAX_PATH,
 		NULL,
 		0,
@@ -327,7 +286,7 @@ static void SelectAndLoadFile(void)
 	opening = TRUE;
 	ofn.hwndOwner = hWnd;
 	if (GetOpenFileName(&ofn))
-		LoadFile();
+		LoadAndPlay(-1);
 	opening = FALSE;
 }
 
@@ -348,7 +307,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			StopPlayback();
 			break;
 		case IDM_FILE_INFO:
-			showInfoDialog(hInst, hWnd, strFile, current_song, songs > 0 ? &asap.module_info : NULL);
+			showInfoDialog(hInst, hWnd, current_filename, current_song);
 			break;
 		case IDM_ABOUT:
 			MessageBox(hWnd,
@@ -362,10 +321,8 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			PostQuitMessage(0);
 			break;
 		default:
-			if (idc >= IDM_SONG1 && idc < IDM_SONG1 + songs) {
-				StopPlayback();
-				PlaySong(idc - IDM_SONG1);
-			}
+			if (idc >= IDM_SONG1 && idc < IDM_SONG1 + songs)
+				LoadAndPlay(idc - IDM_SONG1);
 			break;
 		}
 		break;
@@ -399,9 +356,9 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 		break;
 	case WM_COPYDATA:
 		pcds = (PCOPYDATASTRUCT) lParam;
-		if (pcds->dwData == 'O' && pcds->cbData <= sizeof(strFile)) {
-			memcpy(strFile, pcds->lpData, pcds->cbData);
-			LoadFile();
+		if (pcds->dwData == 'O' && pcds->cbData <= sizeof(current_filename)) {
+			memcpy(current_filename, pcds->lpData, pcds->cbData);
+			LoadAndPlay(-1);
 		}
 		break;
 	default:
@@ -491,8 +448,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	Shell_NotifyIcon(NIM_ADD, &nid);
 	taskbarCreatedMessage = RegisterWindowMessage("TaskbarCreated");
 	if (*pb != '\0') {
-		memcpy(strFile, pb, pe + 1 - pb);
-		LoadFile();
+		memcpy(current_filename, pb, pe + 1 - pb);
+		LoadAndPlay(-1);
 	}
 	else
 		SelectAndLoadFile();
