@@ -146,22 +146,20 @@ static void print_help(void)
 static abool store_pokey(byte *p, PokeyState *ps)
 {
 	abool is_silence = TRUE;
-	p[0] = ps->audf1;
-	p[1] = ps->audc1;
-	if ((ps->audc1 & 0xf) != 0)
-		is_silence = FALSE;
-	p[2] = ps->audf2;
-	p[3] = ps->audc2;
-	if ((ps->audc2 & 0xf) != 0)
-		is_silence = FALSE;
-	p[4] = ps->audf3;
-	p[5] = ps->audc3;
-	if ((ps->audc3 & 0xf) != 0)
-		is_silence = FALSE;
-	p[6] = ps->audf4;
-	p[7] = ps->audc4;
-	if ((ps->audc4 & 0xf) != 0)
-		is_silence = FALSE;
+#define STORE_CHANNEL(ch) \
+	if ((ps->audc##ch & 0xf) != 0) { \
+		is_silence = FALSE; \
+		p[ch * 2 - 2] = ps->audf##ch; \
+		p[ch * 2 - 1] = ps->audc##ch; \
+	} \
+	else { \
+		p[ch * 2 - 2] = 0; \
+		p[ch * 2 - 1] = 0; \
+	}
+	STORE_CHANNEL(1)
+	STORE_CHANNEL(2)
+	STORE_CHANNEL(3)
+	STORE_CHANNEL(4)
 	p[8] = ps->audctl;
 	return is_silence;
 }
