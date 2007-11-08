@@ -1,3 +1,7 @@
+2007-11-08  Piotr Fusik  <fox@scene.pl>
+* asapscan.c: improved LOOP detection
+
+
 ** 1.0.2 released on 2007-11-02
 
 2007-11-02  Piotr Fusik  <fox@scene.pl>
