@@ -1,3 +1,7 @@
+2007-11-24  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c: improved hi-pass filters
+
+
 2007-11-08  Piotr Fusik  <fox@scene.pl>
 * asapscan.c: improved LOOP detection
 

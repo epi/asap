@@ -175,16 +175,6 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 			cycle = PS tick_cycle4;
 		if (cycle == current_cycle)
 			break;
-		if (cycle == PS tick_cycle1) {
-			PS tick_cycle1 += PS period_cycles1;
-			DO_TICK(1);
-		}
-		if (cycle == PS tick_cycle2) {
-			PS tick_cycle2 += PS period_cycles2;
-			if ((PS audctl & 0x10) != 0)
-				PS tick_cycle1 = cycle + PS reload_cycles1;
-			DO_TICK(2);
-		}
 		if (cycle == PS tick_cycle3) {
 			PS tick_cycle3 += PS period_cycles3;
 			if ((PS audctl & 4) != 0 && PS delta1 > 0 && PS mute1 == 0)
@@ -198,6 +188,16 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 			if ((PS audctl & 2) != 0 && PS delta2 > 0 && PS mute2 == 0)
 				PS delta_buffer[CYCLE_TO_SAMPLE(cycle)] += PS delta2 = -PS delta2;
 			DO_TICK(4);
+		}
+		if (cycle == PS tick_cycle1) {
+			PS tick_cycle1 += PS period_cycles1;
+			DO_TICK(1);
+		}
+		if (cycle == PS tick_cycle2) {
+			PS tick_cycle2 += PS period_cycles2;
+			if ((PS audctl & 0x10) != 0)
+				PS tick_cycle1 = cycle + PS reload_cycles1;
+			DO_TICK(2);
 		}
 	}
 }
