@@ -1,3 +1,8 @@
+2007-11-26  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap_internal.h, java/ASAP.ppjava: determine duration of CMC/CMR/DMC
+  music
+
+
 2007-11-24  Piotr Fusik  <fox@scene.pl>
 * apokeysnd.c: improved hi-pass filters
 

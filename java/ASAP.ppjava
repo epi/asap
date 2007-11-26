@@ -42,6 +42,7 @@
                                 System.arraycopy(src, src_offset, dest, dest_offset, len)
 #define NEW_ARRAY(type, size)   [] = new type[size]
 #define INIT_BOOL_ARRAY(array)
+#define INIT_BYTE_ARRAY(array)
 
 #define AS                      as.
 #define PS                      ps.

@@ -42,6 +42,7 @@
                                 memcpy(dest + dest_offset, src + src_offset, len)
 #define NEW_ARRAY(type, size)   [size]
 #define INIT_BOOL_ARRAY(array)  memset(array, FALSE, sizeof(array))
+#define INIT_BYTE_ARRAY(array)  memset(array, 0, sizeof(array))
 
 #define AS                      as->
 #define PS                      ps->
