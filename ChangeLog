@@ -1,3 +1,7 @@
+2007-12-02  Piotr Fusik  <fox@scene.pl>
+* asap.c: determine duration of MPT/MPD music
+
+
 2007-11-26  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap_internal.h, java/ASAP.ppjava: determine duration of CMC/CMR/DMC
   music

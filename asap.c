@@ -93,7 +93,7 @@ ASAP_FUNC void ASAP_PutByte(ASAP_State PTR as, int addr, int data)
 		dPutByte(addr, data);
 }
 
-#define MAX_DURATIONS  32
+#define MAX_SONGS  32
 
 CONST_LOOKUP int perframe2fastplay[] = { 312, 312 / 2, 312 / 3, 312 / 4 };
 
@@ -155,6 +155,12 @@ FILE_FUNC abool load_native(ASAP_State PTR as, const byte module[], int module_l
 #endif
 	AS sap_type = type;
 	return TRUE;
+}
+
+FILE_FUNC void set_song_duration(ASAP_ModuleInfo PTR module_info, int fastplay, int player_calls)
+{
+	MODULE_INFO durations[MODULE_INFO songs] = (int) (player_calls * fastplay * 114000.0 / 1773447);
+	MODULE_INFO songs++;
 }
 
 #define SEEN_THIS_CALL  1
@@ -233,8 +239,7 @@ FILE_FUNC void parse_cmc_song(ASAP_ModuleInfo PTR module_info, const byte module
 		player_calls += tempo << 6;
 		pos++;
 	}
-	MODULE_INFO durations[MODULE_INFO songs] = (int) (player_calls * fastplay * 114000.0 / 1773447);
-	MODULE_INFO songs++;
+	set_song_duration(module_info, fastplay, player_calls);
 }
 
 FILE_FUNC abool parse_cmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
@@ -249,6 +254,7 @@ FILE_FUNC abool parse_cmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 			return FALSE;
 		if (cmr)
 			COPY_ARRAY(AS memory, 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, 0, sizeof(cmr_bass_table));
+		AS sap_fastplay = fastplay;
 	}
 	/* auto-detect number of subsongs */
 	last_pos = 0x54;
@@ -260,74 +266,118 @@ FILE_FUNC abool parse_cmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	}
 	MODULE_INFO songs = 0;
 	parse_cmc_song(module_info, module, fastplay, 0);
-	for (pos = 0; pos < last_pos; pos++)
+	for (pos = 0; pos < last_pos && MODULE_INFO songs < MAX_SONGS; pos++)
 		if (UBYTE(module[0x206 + pos]) == 0x8f || UBYTE(module[0x206 + pos]) == 0xef)
 			parse_cmc_song(module_info, module, fastplay, pos + 1);
 	return TRUE;
 }
 
+FILE_FUNC void parse_mpt_song(ASAP_ModuleInfo PTR module_info, const byte module[],
+                              abool global_seen[], int song_len, int fastplay, int pos)
+{
+	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
+	int pattern_rows;
+	int tempo = UBYTE(module[0x1cf]);
+	int player_calls = 0;
+	byte seen NEW_ARRAY(byte, 256);
+	int pattern_offset NEW_ARRAY(int, 4);
+	int blank_rows NEW_ARRAY(int, 4);
+	int blank_rows_counter NEW_ARRAY(int, 4);
+	INIT_BYTE_ARRAY(seen);
+	blank_rows[3] = blank_rows[2] = blank_rows[1] = blank_rows[0] = 0;
+	while (pos < song_len) {
+		int i;
+		int ch;
+		if (seen[pos] != 0) {
+			if (seen[pos] != SEEN_THIS_CALL)
+				MODULE_INFO loops[MODULE_INFO songs] = TRUE;
+			break;
+		}
+		seen[pos] = SEEN_THIS_CALL;
+		global_seen[pos] = TRUE;
+		i = UBYTE(module[0x1d0 + pos * 2]);
+		if (i == 0xff) {
+			pos = UBYTE(module[0x1d1 + pos * 2]);
+			continue;
+		}
+		for (ch = 3; ch >= 0; ch--) {
+			i = UBYTE(module[0x1c6 + ch]) + (UBYTE(module[0x1ca + ch]) << 8) - addr_to_offset;
+			i = UBYTE(module[i + pos * 2]);
+			if (i >= 0x40)
+				break;
+			i <<= 1;
+			i = UBYTE(module[0x46 + i]) + (UBYTE(module[0x47 + i]) << 8);
+			pattern_offset[ch] = i == 0 ? 0 : i - addr_to_offset;
+			blank_rows_counter[ch] = 0;
+		}
+		if (ch >= 0)
+			break;
+		for (i = 0; i < song_len; i++)
+			if (seen[i] == SEEN_THIS_CALL)
+				seen[i] = SEEN_BEFORE;
+		for (pattern_rows = UBYTE(module[0x1ce]); --pattern_rows >= 0; ) {
+			for (ch = 3; ch >= 0; ch--) {
+				if (pattern_offset[ch] == 0 || --blank_rows_counter[ch] >= 0)
+					continue;
+				for (;;) {
+					i = UBYTE(module[pattern_offset[ch]++]);
+					if (i < 0x40 || i == 0xfe)
+						break;
+					if (i < 0x80)
+						continue;
+					if (i < 0xc0) {
+						blank_rows[ch] = i - 0x80;
+						continue;
+					}
+					if (i < 0xd0)
+						continue;
+					if (i < 0xe0) {
+						tempo = i - 0xcf;
+						continue;
+					}
+					pattern_rows = 0;
+				}
+				blank_rows_counter[ch] = blank_rows[ch];
+			}
+			player_calls += tempo;
+		}
+		pos++;
+	}
+	if (player_calls > 0)
+		set_song_duration(module_info, fastplay, player_calls);
+}
+
 FILE_FUNC abool parse_mpt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
-                          const byte module[], int module_len)
+                          const byte module[], int module_len, int fastplay)
 {
 	int track0_addr;
-	int i;
+	int pos;
 	int song_len;
 	/* seen[i] == TRUE if the track position i is already processed */
-	abool seen NEW_ARRAY(abool, 256);
+	abool global_seen NEW_ARRAY(abool, 256);
 	if (module_len < 0x1d0)
 		return FALSE;
 	if (as != NULL) {
 		if (!load_native(as, module, module_len, PLAYER_OBX(mpt), 'm'))
 			return FALSE;
+		AS sap_fastplay = fastplay;
 	}
 	track0_addr = UBYTE(module[2]) + (UBYTE(module[3]) << 8) + 0x1ca;
-	/* do not auto-detect number of subsongs if the address
-	   of the first track is non-standard */
-	if (UBYTE(module[0x1c6]) + (UBYTE(module[0x1ca]) << 8) != track0_addr) {
-		if (as != NULL)
-			AS song_pos[0] = 0;
-		return TRUE;
-	}
+	if (UBYTE(module[0x1c6]) + (UBYTE(module[0x1ca]) << 8) != track0_addr)
+		return FALSE;
 	/* Calculate the length of the first track. Address of the second track minus
 	   address of the first track equals the length of the first track in bytes.
 	   Divide by two to get number of track positions. */
 	song_len = (UBYTE(module[0x1c7]) + (UBYTE(module[0x1cb]) << 8) - track0_addr) >> 1;
 	if (song_len > 0xfe)
 		return FALSE;
-	INIT_BOOL_ARRAY(seen);
+	INIT_BOOL_ARRAY(global_seen);
 	MODULE_INFO songs = 0;
-	for (i = 0; i < song_len; i++) {
-		int j;
-		int c;
-		if (seen[i])
-			continue;
-		j = i;
-		/* follow jump commands until a pattern or a stop command is found */
-		do {
-			seen[j] = TRUE;
-			c = UBYTE(module[0x1d0 + j * 2]);
-			if (c != 0xff)
-				break;
-			j = UBYTE(module[0x1d1 + j * 2]);
-		} while (j < song_len && !seen[j]);
-		/* if no pattern found then this is not a subsong */
-		if (c >= 64)
-			continue;
-		/* found subsong */
-		if (as != NULL)
-			AS song_pos[MODULE_INFO songs] = (byte) j;
-		MODULE_INFO songs++;
-		j++;
-		/* follow this subsong */
-		while (j < song_len && !seen[j]) {
-			seen[j] = TRUE;
-			c = UBYTE(module[0x1d0 + j * 2]);
-			if (c < 64)
-				j++;
-			else if (c == 0xff)
-				j = UBYTE(module[0x1d1 + j * 2]);
-			else
-				break;
+	for (pos = 0; pos < song_len && MODULE_INFO songs < MAX_SONGS; pos++) {
+		if (!global_seen[pos]) {
+			if (as != NULL)
+				AS song_pos[MODULE_INFO songs] = (byte) pos;
+			parse_mpt_song(module_info, module, global_seen, song_len, fastplay, pos);
 		}
 	}
 	return MODULE_INFO songs != 0;
@@ -420,6 +470,7 @@ FILE_FUNC abool parse_tmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 			return FALSE;
 		AS sap_fastplay = perframe2fastplay[AS tmc_per_frame - 1];
 	}
+	MODULE_INFO channels = 2;
 	i = 0;
 	/* find first instrument */
 	while (module[0x66 + i] == 0) {
@@ -715,7 +766,7 @@ FILE_FUNC abool parse_sap(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 			MODULE_INFO channels = 2;
 		else if (TAG_IS("TIME")) {
 			int duration = DURATION_ARG;
-			if (duration < 0 || duration_index >= MAX_DURATIONS)
+			if (duration < 0 || duration_index >= MAX_SONGS)
 				return FALSE;
 			MODULE_INFO durations[duration_index] = duration;
 			if (ARG_CONTAINS("LOOP"))
@@ -833,7 +884,6 @@ ASAP_FUNC abool ASAP_IsOurExt(STRING ext)
 FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
                            STRING filename, const byte module[], int module_len)
 {
-	abool r;
 	int i;
 #ifdef JAVA
 	int basename = 0;
@@ -871,48 +921,34 @@ FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	MODULE_INFO channels = 1;
 	MODULE_INFO songs = 1;
 	MODULE_INFO default_song = 0;
-	for (i = 0; i < MAX_DURATIONS; i++) {
+	for (i = 0; i < MAX_SONGS; i++) {
 		MODULE_INFO durations[i] = -1;
 		MODULE_INFO loops[i] = FALSE;
 	}
 	switch (get_packed_ext(filename)) {
 	case ASAP_EXT('C', 'M', 'C'):
-		r = parse_cmc(as, module_info, module, module_len, FALSE, 312);
-		break;
+		return parse_cmc(as, module_info, module, module_len, FALSE, 312);
 	case ASAP_EXT('C', 'M', 'R'):
-		r = parse_cmc(as, module_info, module, module_len, TRUE, 312);
-		break;
+		return parse_cmc(as, module_info, module, module_len, TRUE, 312);
 	case ASAP_EXT('D', 'M', 'C'):
-		if (as != NULL)
-			AS sap_fastplay = 156;
-		r = parse_cmc(as, module_info, module, module_len, FALSE, 156);
-		break;
+		return parse_cmc(as, module_info, module, module_len, FALSE, 156);
 	case ASAP_EXT('M', 'P', 'D'):
-		if (as != NULL)
-			AS sap_fastplay = 156;
-		r = parse_mpt(as, module_info, module, module_len);
-		break;
+		return parse_mpt(as, module_info, module, module_len, 156);
 	case ASAP_EXT('M', 'P', 'T'):
-		r = parse_mpt(as, module_info, module, module_len);
-		break;
+		return parse_mpt(as, module_info, module, module_len, 312);
 	case ASAP_EXT('R', 'M', 'T'):
-		r = parse_rmt(as, module_info, module, module_len);
-		break;
+		return parse_rmt(as, module_info, module, module_len);
 	case ASAP_EXT('S', 'A', 'P'):
-		r = parse_sap(as, module_info, module, module_len);
-		break;
+		return parse_sap(as, module_info, module, module_len);
 	case ASAP_EXT('T', 'M', '2'):
-		r = parse_tm2(as, module_info, module, module_len);
-		break;
+		return parse_tm2(as, module_info, module, module_len);
 	case ASAP_EXT('T', 'M', '8'):
 	case ASAP_EXT('T', 'M', 'C'):
-		MODULE_INFO channels = 2;
-		r = parse_tmc(as, module_info, module, module_len);
-		break;
+		return parse_tmc(as, module_info, module, module_len);
 	default:
-		return FALSE;
+		break;
 	}
-	return r;
+	return FALSE;
 }
 
 ASAP_FUNC abool ASAP_GetModuleInfo(ASAP_ModuleInfo PTR module_info, STRING filename,
