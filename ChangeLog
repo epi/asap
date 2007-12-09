@@ -1,6 +1,8 @@
 2007-12-09  Piotr Fusik  <fox@scene.pl>
 * asap.c: determine duration of TM2 music
 
+* win32/winamp/in_asap.c: group similar file types
+
 
 2007-12-08  Piotr Fusik  <fox@scene.pl>
 * asap.c: determine duration of TMC music
