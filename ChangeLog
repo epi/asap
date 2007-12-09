@@ -1,3 +1,7 @@
+2007-12-09  Piotr Fusik  <fox@scene.pl>
+* asap.c: determine duration of TM2 music
+
+
 2007-12-08  Piotr Fusik  <fox@scene.pl>
 * asap.c: determine duration of TMC music
 

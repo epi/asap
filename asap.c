@@ -464,11 +464,11 @@ FILE_FUNC void parse_tmc_song(ASAP_ModuleInfo PTR module_info, const byte module
 	int player_calls = 0;
 	int pattern_offset NEW_ARRAY(int, 8);
 	int blank_rows NEW_ARRAY(int, 8);
-	while (UBYTE(module[0x1b5 + pos]) < 0x80) {
+	while (UBYTE(module[0x1a6 + 15 + pos]) < 0x80) {
 		int ch;
 		int pattern_rows;
 		for (ch = 7; ch >= 0; ch--) {
-			int pat = UBYTE(module[0x1b5 + pos - 2 * ch]);
+			int pat = UBYTE(module[0x1a6 + 15 + pos - 2 * ch]);
 			pattern_offset[ch] = UBYTE(module[0xa6 + pat]) + (UBYTE(module[0x126 + pat]) << 8) - addr_to_offset;
 			blank_rows[ch] = 0;
 		}
@@ -511,7 +511,7 @@ FILE_FUNC void parse_tmc_song(ASAP_ModuleInfo PTR module_info, const byte module
 		}
 		pos += 16;
 	}
-	if (UBYTE(module[0x1b4 + pos]) < 0x80)
+	if (UBYTE(module[0x1a6 + 14 + pos]) < 0x80)
 		MODULE_INFO loops[MODULE_INFO songs] = TRUE;
 	set_song_duration(module_info, 312, player_calls);
 }
@@ -556,57 +556,128 @@ FILE_FUNC abool parse_tmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	return TRUE;
 }
 
+FILE_FUNC void parse_tm2_song(ASAP_ModuleInfo PTR module_info, const byte module[],
+                              int fastplay, int pos)
+{
+	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
+	int tempo = UBYTE(module[0x24]) + 1;
+	int player_calls = 0;
+	int pattern_offset NEW_ARRAY(int, 8);
+	int blank_rows NEW_ARRAY(int, 8);
+	for (;;) {
+		int ch;
+		int pattern_rows = UBYTE(module[0x386 + 16 + pos]);
+		if (pattern_rows == 0)
+			break;
+		if (pattern_rows >= 0x80) {
+			MODULE_INFO loops[MODULE_INFO songs] = TRUE;
+			break;
+		}
+		for (ch = 7; ch >= 0; ch--) {
+			int pat = UBYTE(module[0x386 + 15 + pos - 2 * ch]);
+			pattern_offset[ch] = UBYTE(module[0x106 + pat]) + (UBYTE(module[0x206 + pat]) << 8) - addr_to_offset;
+			blank_rows[ch] = 0;
+		}
+		while (--pattern_rows >= 0) {
+			for (ch = 7; ch >= 0; ch--) {
+				if (--blank_rows[ch] >= 0)
+					continue;
+				for (;;) {
+					int i = UBYTE(module[pattern_offset[ch]++]);
+					if (i == 0) {
+						pattern_offset[ch]++;
+						break;
+					}
+					if (i < 0x40) {
+						if (UBYTE(module[pattern_offset[ch]++]) >= 0x80)
+							pattern_offset[ch]++;
+						break;
+					}
+					if (i < 0x80) {
+						pattern_offset[ch]++;
+						break;
+					}
+					if (i == 0x80) {
+						blank_rows[ch] = UBYTE(module[pattern_offset[ch]++]);
+						break;
+					}
+					if (i < 0xc0)
+						break;
+					if (i < 0xd0) {
+						tempo = i - 0xbf;
+						continue;
+					}
+					if (i < 0xe0) {
+						pattern_offset[ch]++;
+						break;
+					}
+					if (i < 0xf0) {
+						pattern_offset[ch] += 2;
+						break;
+					}
+					if (i < 0xff) {
+						blank_rows[ch] = i - 0xf0;
+						break;
+					}
+					blank_rows[ch] = 64;
+					break;
+				}
+			}
+			player_calls += tempo;
+		}
+		pos += 17;
+	}
+	set_song_duration(module_info, fastplay, player_calls);
+}
+
 FILE_FUNC abool parse_tm2(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
                           const byte module[], int module_len)
 {
 	int i;
-	int song_end;
+	int fastplay;
+	int last_pos;
 	int c;
-	int song_start;
 	if (module_len < 0x3a4)
 		return FALSE;
+	i = module[0x25];
+	if (i < 1 || i > 4)
+		return FALSE;
+	fastplay = perframe2fastplay[i - 1];
 	if (as != NULL) {
-		i = module[0x25];
-		if (i < 1 || i > 4)
-			return FALSE;
-		AS sap_fastplay = perframe2fastplay[i - 1];
+		AS sap_fastplay = fastplay;
 		if (!load_native(as, module, module_len, PLAYER_OBX(tm2), 'T'))
 			return FALSE;
 		AS sap_player = 0x500;
 	}
 	if (module[0x1f] != 0)
 		MODULE_INFO channels = 2;
-	song_end = 0xffff;
+	last_pos = 0xffff;
 	for (i = 0; i < 0x80; i++) {
 		int instr_addr = UBYTE(module[0x86 + i]) + (UBYTE(module[0x306 + i]) << 8);
-		if (instr_addr != 0 && instr_addr < song_end)
-			song_end = instr_addr;
+		if (instr_addr != 0 && instr_addr < last_pos)
+			last_pos = instr_addr;
 	}
 	for (i = 0; i < 0x100; i++) {
 		int pattern_addr = UBYTE(module[0x106 + i]) + (UBYTE(module[0x206 + i]) << 8);
-		if (pattern_addr != 0 && pattern_addr < song_end)
-			song_end = pattern_addr;
+		if (pattern_addr != 0 && pattern_addr < last_pos)
+			last_pos = pattern_addr;
 	}
-	song_start = UBYTE(module[2]) + (UBYTE(module[3]) << 8) + 0x380;
-	if (song_end < song_start + 2 * 17)
+	last_pos -= UBYTE(module[2]) + (UBYTE(module[3]) << 8) + 0x380;
+	if (0x386 + last_pos >= module_len)
 		return FALSE;
-	i = song_end - song_start;
-	if (0x386 + i >= module_len)
-		return FALSE;
-	i -= i % 17;
 	/* skip trailing stop/jump commands */
 	do {
-		if (i == 0)
+		if (last_pos <= 0)
 			return FALSE;
-		i -= 17;
-		c = UBYTE(module[0x386 + 16 + i]);
+		last_pos -= 17;
+		c = UBYTE(module[0x386 + 16 + last_pos]);
 	} while (c == 0 || c >= 0x80);
-	/* count stop/jump commands */
-	while (i > 0) {
-		i -= 17;
+	MODULE_INFO songs = 0;
+	parse_tm2_song(module_info, module, fastplay, 0);
+	for (i = 0; i < last_pos && MODULE_INFO songs < MAX_SONGS; i += 17) {
 		c = UBYTE(module[0x386 + 16 + i]);
 		if (c == 0 || c >= 0x80)
-			MODULE_INFO songs++;
+			parse_tm2_song(module_info, module, fastplay, i + 17);
 	}
 	return TRUE;
 }
