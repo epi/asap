@@ -406,16 +406,12 @@ static In_Module mod = {
 	IN_VER,
 	"ASAP " ASAP_VERSION,
 	0, 0, // filled by Winamp
-	"sap\0Slight Atari Player (*.SAP)\0"
-	"cmc\0Chaos Music Composer (*.CMC)\0"
-	"cmr\0Chaos Music Composer / Rzog (*.CMR)\0"
-	"dmc\0DoublePlay Chaos Music Composer (*.DMC)\0"
-	"mpt\0Music ProTracker (*.MPT)\0"
-	"mpd\0Music ProTracker DoublePlay (*.MPD)\0"
-	"rmt\0Raster Music Tracker (*.RMT)\0"
-	"tmc\0Theta Music Composer 1.x (*.TMC)\0"
-	"tm8\0Theta Music Composer 1.x (*.TM8)\0"
-	"tm2\0Theta Music Composer 2.x (*.TM2)\0"
+	"SAP\0Slight Atari Player (*.SAP)\0"
+	"CMC;CMR;DMC\0Chaos Music Composer (*.CMC;*.CMR;*.DMC)\0"
+	"MPT;MPD\0Music ProTracker (*.MPT;*.MPD)\0"
+	"RMT\0Raster Music Tracker (*.RMT)\0"
+	"TMC;TM8\0Theta Music Composer 1.x (*.TMC;*.TM8)\0"
+	"TM2\0Theta Music Composer 2.x (*.TM2)\0"
 	,
 	1,    // is_seekable
 	1,    // UsesOutputPlug
