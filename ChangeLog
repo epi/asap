@@ -1,3 +1,7 @@
+2008-01-08  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c, asap.h, java/ASAP.ppjava: two-tone POKEY mode emulation
+
+
 2007-12-31  Piotr Fusik  <fox@scene.pl>
 * win32/foobar2000/foo_asap.cpp: conversion no longer interferes
   with the playback

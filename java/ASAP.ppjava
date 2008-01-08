@@ -96,6 +96,7 @@ final class PokeyState
 	int delta2;
 	int delta3;
 	int delta4;
+	int skctl;
 	final byte[] delta_buffer = new byte[888];
 }
 
@@ -159,7 +160,7 @@ public final class ASAP
 	private final ASAP_State as = new ASAP_State();
 
 	/** ASAP version. */
-	public static final String VERSION = "1.0.1";
+	public static final String VERSION = "1.1.0";
 
 	/** Maximum length of a supported input file.
 	    You can assume that files longer than this are not supported by ASAP. */

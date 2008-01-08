@@ -75,6 +75,7 @@ FILE_FUNC void init_state(PokeyState PTR ps)
 	PS delta2 = 0;
 	PS delta3 = 0;
 	PS delta4 = 0;
+	PS skctl = 3;
 	ZERO_ARRAY(PS delta_buffer);
 }
 
@@ -191,12 +192,16 @@ FILE_FUNC void generate(ASAP_State PTR as, PokeyState PTR ps, int current_cycle)
 		}
 		if (cycle == PS tick_cycle1) {
 			PS tick_cycle1 += PS period_cycles1;
+			if ((PS skctl & 0x88) == 8)
+				PS tick_cycle2 = cycle + PS period_cycles2;
 			DO_TICK(1);
 		}
 		if (cycle == PS tick_cycle2) {
 			PS tick_cycle2 += PS period_cycles2;
 			if ((PS audctl & 0x10) != 0)
 				PS tick_cycle1 = cycle + PS reload_cycles1;
+			else if ((PS skctl & 8) != 0)
+				PS tick_cycle1 = cycle + PS period_cycles1;
 			DO_TICK(2);
 		}
 	}
@@ -402,6 +407,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR as, int addr, int data)
 		/* TODO: STIMER */
 		break;
 	case 0x0f:
+		PS skctl = data;
 		PS init = ((data & 3) == 0);
 		DO_INIT(1, (PS audctl & 0x40) == 0);
 		DO_INIT(2, (PS audctl & 0x50) != 0x50);

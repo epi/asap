@@ -1,7 +1,7 @@
 /*
  * asap.h - public interface of the ASAP engine
  *
- * Copyright (C) 2005-2007  Piotr Fusik
+ * Copyright (C) 2005-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -30,14 +30,14 @@ extern "C" {
 
 /* ASAP version. */
 #define ASAP_VERSION_MAJOR   1
-#define ASAP_VERSION_MINOR   0
-#define ASAP_VERSION_MICRO   2
-#define ASAP_VERSION         "1.0.2"
+#define ASAP_VERSION_MINOR   1
+#define ASAP_VERSION_MICRO   0
+#define ASAP_VERSION         "1.1.0"
 
 /* Short credits of the ASAP engine. */
-#define ASAP_YEARS           "2005-2007"
+#define ASAP_YEARS           "2005-2008"
 #define ASAP_CREDITS \
-	"Another Slight Atari Player (C) 2005-2007 Piotr Fusik\n" \
+	"Another Slight Atari Player (C) 2005-2008 Piotr Fusik\n" \
 	"CMC, MPT, TMC players (C) 1994-2005 Marcin Lewandowski\n" \
 	"RMT player (C) 2002-2005 Radek Sterba\n"
 
@@ -108,6 +108,7 @@ typedef struct {
 	int delta2;
 	int delta3;
 	int delta4;
+	int skctl;
 	char delta_buffer[888];
 } PokeyState;
 
@@ -252,8 +253,8 @@ int ASAP_Generate(ASAP_State *as, void *buffer, int buffer_len,
 /* Checks whether information in the specified file can be edited. */
 abool ASAP_CanSetModuleInfo(const char *filename);
 
-/* Updates the specified module with author, name and date as specified
-   in "module_info".
+/* Updates the specified module with author, name, date
+   and song durations as specified in "module_info".
    "module_info" contains the new module information.
    "module" is the source file contents.
    "module_len" is the source file length.
