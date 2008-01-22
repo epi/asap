@@ -1,7 +1,7 @@
 /*
  * ASAP2WAV.java - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2007  Piotr Fusik
+ * Copyright (C) 2007-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -27,13 +27,11 @@ import net.sf.asap.ASAP_ModuleInfo;
 
 public class ASAP2WAV
 {
-	private static final int BITS_PER_SAMPLE = 16;
-
 	private static boolean noInputFiles = true;
 	private static String outputFilename = null;
 	private static boolean outputHeader = true;
 	private static int song = -1;
-	private static boolean use16bit = true;
+	private static int bitsPerSample = 16;
 	private static int duration = -1;
 	private static int muteMask = 0;
 
@@ -136,7 +134,7 @@ public class ASAP2WAV
 			os = new FileOutputStream(outputFilename);
 		int n_bytes;
 		if (outputHeader) {
-			int block_size = module_info.channels * (BITS_PER_SAMPLE / 8);
+			int block_size = module_info.channels * (bitsPerSample / 8);
 			int bytes_per_second = ASAP.SAMPLE_RATE * block_size;
 			n_bytes = duration * (ASAP.SAMPLE_RATE / 100) / 10 * block_size;
 			writeTag(os, "RIFF");
@@ -149,13 +147,13 @@ public class ASAP2WAV
 			writeInt(os, ASAP.SAMPLE_RATE);
 			writeInt(os, bytes_per_second);
 			writeShort(os, block_size);
-			writeShort(os, BITS_PER_SAMPLE);
+			writeShort(os, bitsPerSample);
 			writeTag(os, "data");
 			writeInt(os, n_bytes);
 		}
 		byte[] buffer = new byte[8192];
 		do {
-			n_bytes = asap.generate(buffer, BITS_PER_SAMPLE);
+			n_bytes = asap.generate(buffer, bitsPerSample);
 			os.write(buffer, 0, n_bytes);
 		}  while (n_bytes == buffer.length);
 		os.close();
@@ -184,9 +182,9 @@ public class ASAP2WAV
 			else if (arg.startsWith("--time="))
 				setTime(arg.substring(7));
 			else if (arg.equals("-b") || arg.equals("--byte-samples"))
-				use16bit = false;
+				bitsPerSample = 8;
 			else if (arg.equals("-w") || arg.equals("--word-samples"))
-				use16bit = true;
+				bitsPerSample = 16;
 			else if (arg.equals("--raw"))
 				outputHeader = false;
 			else if (arg.equals("-m"))
