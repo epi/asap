@@ -1,7 +1,7 @@
 /*
  * ASAP.ppjava - Java version of ASAP
  *
- * Copyright (C) 2007  Piotr Fusik
+ * Copyright (C) 2007-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -281,21 +281,21 @@ public final class ASAP
 	{
 		switch (channel) {
 		case 0:
-			return as.base_pokey.audf1 & 0xf;
+			return as.base_pokey.audc1 & 0xf;
 		case 1:
-			return as.base_pokey.audf2 & 0xf;
+			return as.base_pokey.audc2 & 0xf;
 		case 2:
-			return as.base_pokey.audf3 & 0xf;
+			return as.base_pokey.audc3 & 0xf;
 		case 3:
-			return as.base_pokey.audf4 & 0xf;
+			return as.base_pokey.audc4 & 0xf;
 		case 4:
-			return as.extra_pokey.audf1 & 0xf;
+			return as.extra_pokey.audc1 & 0xf;
 		case 5:
-			return as.extra_pokey.audf2 & 0xf;
+			return as.extra_pokey.audc2 & 0xf;
 		case 6:
-			return as.extra_pokey.audf3 & 0xf;
+			return as.extra_pokey.audc3 & 0xf;
 		case 7:
-			return as.extra_pokey.audf4 & 0xf;
+			return as.extra_pokey.audc4 & 0xf;
 		default:
 			return 0;
 		}
