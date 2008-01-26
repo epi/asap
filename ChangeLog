@@ -1,3 +1,7 @@
+2008-01-26  Piotr Fusik  <fox@scene.pl>
+* java/ASAP.ppjava: corrected applet volume bars (use AUDC not AUDF)
+
+
 2008-01-22  Piotr Fusik  <fox@scene.pl>
 * java/ASAP2WAV.java: made "-b" option work
 
