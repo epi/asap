@@ -1,3 +1,10 @@
+2008-02-10  Piotr Fusik  <fox@scene.pl>
+* xmms/libasap.c: corrected two bugs reported by Hennie:
+  1. xmms did not advance to the next track after a SAP file has been played;
+  2. when one seeks to another part of the track during the last +-3 seconds
+     of play (after the playing thread has quit), xmms hangs completely
+
+
 2008-01-26  Piotr Fusik  <fox@scene.pl>
 * java/ASAP.ppjava: corrected applet volume bars (use AUDC not AUDF)
 
