@@ -1,7 +1,7 @@
 /*
  * libasap.c - ASAP plugin for XMMS
  *
- * Copyright (C) 2006-2007  Piotr Fusik
+ * Copyright (C) 2006-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -47,7 +47,7 @@ static byte module[ASAP_MODULE_MAX];
 static int module_len;
 static ASAP_State asap;
 
-static int seek_to;
+static volatile int seek_to;
 static pthread_t thread_handle;
 static volatile abool thread_run = FALSE;
 
@@ -150,6 +150,10 @@ static void *asap_play_thread(void *arg)
 			seek_to = -1;
 		}
 		buffered_bytes = ASAP_Generate(&asap, buffer, buffered_bytes, BITS_PER_SAMPLE);
+		if (buffered_bytes == 0) {
+			thread_run = FALSE;
+			break;
+		}
 		mod.add_vis_pcm(mod.output->written_time(),
 			BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
 			channels, buffered_bytes, buffer);
@@ -158,11 +162,10 @@ static void *asap_play_thread(void *arg)
 		if (!thread_run)
 			break;
 		mod.output->write_audio(buffer, buffered_bytes);
-		if (buffered_bytes == 0)
-			break;
 	}
 	mod.output->buffer_free();
 	mod.output->buffer_free();
+	mod.output->close_audio();
 	pthread_exit(NULL);
 }
 
@@ -193,7 +196,7 @@ static void asap_play_file(char *filename)
 static void asap_seek(int time)
 {
 	seek_to = time * 1000;
-	while (seek_to >= 0)
+	while (thread_run && seek_to >= 0)
 		xmms_usleep(10000);
 }
 
@@ -207,7 +210,6 @@ static void asap_stop(void)
 	if (thread_run) {
 		thread_run = FALSE;
 		pthread_join(thread_handle, NULL);
-		mod.output->close_audio();
 	}
 }
 
