@@ -50,6 +50,7 @@ static ASAP_State asap;
 static volatile int seek_to;
 static pthread_t thread_handle;
 static volatile abool thread_run = FALSE;
+static volatile abool generated_eof = FALSE;
 
 static char *asap_stpcpy(char *dest, const char *src)
 {
@@ -135,7 +136,7 @@ static char *asap_get_title(char *filename, ASAP_ModuleInfo *module_info)
 
 static void *asap_play_thread(void *arg)
 {
-	for (;;) {
+	while (thread_run) {
 		static
 #if BITS_PER_SAMPLE == 8
 			byte
@@ -143,29 +144,32 @@ static void *asap_play_thread(void *arg)
 			short
 #endif
 			buffer[BUFFERED_BLOCKS * 2];
-		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
+		int buffered_bytes;
+		if (generated_eof) {
+			xmms_usleep(10000);
+			continue;
+		}
 		if (seek_to >= 0) {
 			mod.output->flush(seek_to);
 			ASAP_Seek(&asap, seek_to);
 			seek_to = -1;
 		}
+		buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
 		buffered_bytes = ASAP_Generate(&asap, buffer, buffered_bytes, BITS_PER_SAMPLE);
 		if (buffered_bytes == 0) {
-			thread_run = FALSE;
-			break;
+			generated_eof = TRUE;
+			mod.output->buffer_free();
+			mod.output->buffer_free();
+			continue;
 		}
 		mod.add_vis_pcm(mod.output->written_time(),
 			BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
 			channels, buffered_bytes, buffer);
 		while (thread_run && mod.output->buffer_free() < buffered_bytes)
 			xmms_usleep(20000);
-		if (!thread_run)
-			break;
-		mod.output->write_audio(buffer, buffered_bytes);
+		if (thread_run)
+			mod.output->write_audio(buffer, buffered_bytes);
 	}
-	mod.output->buffer_free();
-	mod.output->buffer_free();
-	mod.output->close_audio();
 	pthread_exit(NULL);
 }
 
@@ -190,12 +194,14 @@ static void asap_play_file(char *filename)
 	g_free(title);
 	seek_to = -1;
 	thread_run = TRUE;
+	generated_eof = FALSE;
 	pthread_create(&thread_handle, NULL, asap_play_thread, NULL);
 }
 
 static void asap_seek(int time)
 {
 	seek_to = time * 1000;
+	generated_eof = FALSE;
 	while (thread_run && seek_to >= 0)
 		xmms_usleep(10000);
 }
@@ -210,12 +216,13 @@ static void asap_stop(void)
 	if (thread_run) {
 		thread_run = FALSE;
 		pthread_join(thread_handle, NULL);
+		mod.output->close_audio();
 	}
 }
 
 static int asap_get_time(void)
 {
-	if (!thread_run && !mod.output->buffer_playing())
+	if (!thread_run || (generated_eof && !mod.output->buffer_playing()))
 		return -1;
 	return mod.output->output_time();
 }
