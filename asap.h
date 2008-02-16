@@ -69,6 +69,14 @@ typedef struct {
 	int default_song;    /* 0-based index of the "main" subsong */
 	int durations[32];   /* lengths of songs, in milliseconds, -1 = unspecified */
 	abool loops[32];     /* whether songs repeat or not */
+	/* the following technical information should not be used outside ASAP. */
+	char type;
+	int fastplay;
+	int music;
+	int init;
+	int player;
+	int header_len;
+	byte song_pos[128];
 } ASAP_ModuleInfo;
 
 /* POKEY state.
@@ -140,11 +148,6 @@ typedef struct {
 	int iir_acc_left;
 	int iir_acc_right;
 	ASAP_ModuleInfo module_info;
-	char sap_type;
-	int sap_player;
-	int sap_music;
-	int sap_init;
-	int sap_fastplay;
 	int tmc_per_frame;
 	int tmc_per_frame_counter;
 	int current_song;
@@ -152,7 +155,6 @@ typedef struct {
 	int blocks_played;
 	int silence_cycles;
 	int silence_cycles_counter;
-	byte song_pos[128];
 	byte poly9_lookup[511];
 	byte poly17_lookup[16385];
 	byte memory[65536];
@@ -187,6 +189,9 @@ abool ASAP_IsOurFile(const char *filename);
 
 /* Checks whether the filename extension is known to ASAP. */
 abool ASAP_IsOurExt(const char *ext);
+
+/* Changes the filename extension, returns true on success. */
+abool ASAP_ChangeExt(char *filename, const char *ext);
 
 /* Gets information about a module.
    "module_info" is the structure where the information is returned.
@@ -253,7 +258,7 @@ int ASAP_Generate(ASAP_State *as, void *buffer, int buffer_len,
 /* Checks whether information in the specified file can be edited. */
 abool ASAP_CanSetModuleInfo(const char *filename);
 
-/* Updates the specified module with author, name, date
+/* Updates the specified module with author, name, date, stereo
    and song durations as specified in "module_info".
    "module_info" contains the new module information.
    "module" is the source file contents.
@@ -263,6 +268,29 @@ abool ASAP_CanSetModuleInfo(const char *filename);
    written to "out_module") or -1 if illegal characters were found. */
 int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const byte module[],
                        int module_len, byte out_module[]);
+
+/* Checks whether the specified module can be converted to another format.
+   "filename" determines the source format.
+   "module_info" contains the information about the source module,
+   with possibly modified public fields.
+   "module" is the source file contents.
+   "module_len" is the source file length.
+   ASAP_CanConvert() returns the extension of the target format
+   or NULL if there's no possible conversion. */
+const char *ASAP_CanConvert(const char *filename, const ASAP_ModuleInfo *module_info,
+                            const byte module[], int module_len);
+
+/* Converts the specified module to the format returned by ASAP_CanConvert().
+   "filename" determines the source format.
+   "module_info" contains the information about the source module,
+   with possibly modified public fields.
+   "module" is the source file contents.
+   "module_len" is the source file length.
+   "out_module" is the destination buffer of size ASAP_MODULE_MAX.
+   ASAP_Convert() returns the resulting file length (number of bytes
+   written to "out_module"). */
+int ASAP_Convert(const char *filename, const ASAP_ModuleInfo *module_info,
+                 const byte module[], int module_len, byte out_module[]);
 
 #ifdef __cplusplus
 }

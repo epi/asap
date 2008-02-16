@@ -127,11 +127,6 @@ final class ASAP_State
 	int iir_acc_left;
 	int iir_acc_right;
 	public final ASAP_ModuleInfo module_info = new ASAP_ModuleInfo();
-	char sap_type;
-	int sap_player;
-	int sap_music;
-	int sap_init;
-	int sap_fastplay;
 	int tmc_per_frame;
 	int tmc_per_frame_counter;
 	int current_song;
@@ -139,7 +134,6 @@ final class ASAP_State
 	int blocks_played;
 	int silence_cycles;
 	int silence_cycles_counter;
-	final byte[] song_pos = new byte[128];
 	final byte[] poly9_lookup = new byte[511];
 	final byte[] poly17_lookup = new byte[16385];
 	final byte[] memory = new byte[65536];

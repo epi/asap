@@ -1,3 +1,10 @@
+2008-02-16  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, java/ASAP.ppjava, java/ASAP_ModuleInfo.java, win32/gui.c,
+  win32/gui.h, win32/gui.rc, win32/Makefile: conversion to and from SAP
+
+* asap2wav.c: use ASAP_ChangeExt()
+
+
 2008-02-10  Piotr Fusik  <fox@scene.pl>
 * xmms/libasap.c: corrected two bugs reported by Hennie:
   1. xmms did not advance to the next track after a SAP file has been played;

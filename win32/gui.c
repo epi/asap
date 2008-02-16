@@ -1,7 +1,7 @@
 /*
  * gui.c - settings and file information dialog boxes
  *
- * Copyright (C) 2007  Piotr Fusik
+ * Copyright (C) 2007-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -213,12 +213,14 @@ static int saved_module_len;
 static ASAP_ModuleInfo saved_module_info;
 static ASAP_ModuleInfo edited_module_info;
 static int edited_song;
+static char convert_filename[MAX_PATH];
+static const char *convert_ext;
 
 char *appendString(char *dest, const char *src)
 {
-	size_t len = strlen(src);
-	memcpy(dest, src, len);
-	return dest + len;
+	while (*src != '\0')
+		*dest++ = *src++;
+	return dest;
 }
 
 char *appendInt(char *dest, int x)
@@ -282,25 +284,30 @@ static void updateSaveButton(void)
 	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), infoChanged());
 }
 
-static BOOL saveFile(void)
+static BOOL saveFile(const char *filename, const byte *data, int len)
+{
+	HANDLE fh;
+	DWORD written;
+	BOOL ok;
+	fh = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (fh == INVALID_HANDLE_VALUE)
+		return FALSE;
+	ok = WriteFile(fh, data, len, &written, NULL);
+	CloseHandle(fh);
+	return ok;
+}
+
+static BOOL doSaveInfo(void)
 {
 	char filename[MAX_PATH];
 	byte out_module[ASAP_MODULE_MAX];
 	int out_len;
-	HANDLE fh;
-	DWORD out_bytes;
 	out_len = ASAP_SetModuleInfo(&edited_module_info, saved_module, saved_module_len, out_module);
 	if (out_len <= 0)
 		return FALSE;
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
-	fh = CreateFile(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (fh == INVALID_HANDLE_VALUE)
+	if (!saveFile(filename, out_module, out_len))
 		return FALSE;
-	if (!WriteFile(fh, out_module, out_len, &out_bytes, NULL)) {
-		CloseHandle(fh);
-		return FALSE;
-	}
-	CloseHandle(fh);
 	saved_module_info = edited_module_info;
 	showSongTime();
 	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
@@ -316,11 +323,52 @@ static BOOL saveInfo(void)
 			MessageBox(infoDialog, "Cannot save file because time not set for all songs", "Error", MB_OK | MB_ICONERROR);
 			return FALSE;
 		}
-	if (!saveFile()) {
+	if (!doSaveInfo()) {
 		MessageBox(infoDialog, "Cannot save information to file", "Error", MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
 	return TRUE;
+}
+
+static void convert(void)
+{
+	char filename[MAX_PATH];
+	byte out_module[ASAP_MODULE_MAX];
+	int out_len;
+	static OPENFILENAME ofn = {
+		sizeof(OPENFILENAME),
+		NULL,
+		0,
+		NULL,
+		NULL,
+		0,
+		0,
+		convert_filename,
+		MAX_PATH,
+		NULL,
+		0,
+		NULL,
+		"Select output file",
+		OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT,
+		0,
+		0,
+		NULL,
+		0,
+		NULL,
+		NULL
+	};
+	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
+	out_len = ASAP_Convert(filename, &edited_module_info, saved_module, saved_module_len, out_module);
+	if (out_len <= 0) {
+		MessageBox(infoDialog, "Cannot convert file", "Error", MB_OK | MB_ICONERROR);
+		return;
+	}
+	ofn.hwndOwner = infoDialog;
+	ofn.lpstrDefExt = convert_ext;
+	if (!GetSaveFileName(&ofn))
+		return;
+	if (!saveFile(convert_filename, out_module, out_len))
+		MessageBox(infoDialog, "Cannot save file", "Error", MB_OK | MB_ICONERROR);
 }
 
 static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -372,6 +420,9 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			return TRUE;
 		case MAKEWPARAM(IDC_SAVE, BN_CLICKED):
 			saveInfo();
+			return TRUE;
+		case MAKEWPARAM(IDC_CONVERT, BN_CLICKED):
+			convert();
 			return TRUE;
 		case MAKEWPARAM(IDCANCEL, BN_CLICKED):
 			if (infoChanged()) {
@@ -443,6 +494,22 @@ void updateInfoDialog(const char *filename, int song)
 	SendDlgItemMessage(infoDialog, IDC_TIME, EM_SETREADONLY, !can_edit, 0);
 	EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), can_edit);
 	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
+	convert_ext = ASAP_CanConvert(filename, &edited_module_info, saved_module, saved_module_len);
+	if (convert_ext != NULL) {
+		char convert_command[24] = "&Convert to ";
+		i = 0;
+		do
+			convert_command[12 + i] = convert_ext[i] >= 'a' ? convert_ext[i] - 'a' + 'A' : convert_ext[i];
+		while (convert_ext[i++] != '\0');
+		SendDlgItemMessage(infoDialog, IDC_CONVERT, WM_SETTEXT, 0, (LPARAM) convert_command);
+		strcpy(convert_filename, filename);
+		ASAP_ChangeExt(convert_filename, convert_ext);
+		EnableWindow(GetDlgItem(infoDialog, IDC_CONVERT), TRUE);
+	}
+	else {
+		SendDlgItemMessage(infoDialog, IDC_CONVERT, WM_SETTEXT, 0, (LPARAM) "&Convert");
+		EnableWindow(GetDlgItem(infoDialog, IDC_CONVERT), FALSE);
+	}
 }
 
 #endif

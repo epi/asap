@@ -1,7 +1,7 @@
 /*
  * gui.h - settings and file information dialog boxes
  *
- * Copyright (C) 2007  Piotr Fusik
+ * Copyright (C) 2007-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -34,6 +34,7 @@
 #define IDC_TIME       307
 #define IDC_LOOP       308
 #define IDC_SAVE       309
+#define IDC_CONVERT    310
 
 char *appendString(char *dest, const char *src);
 char *appendInt(char *dest, int x);

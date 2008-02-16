@@ -1,4 +1,4 @@
-VERSION = 1.0.2
+VERSION = 1.1.0
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 
@@ -54,7 +54,7 @@ wasap\wasap.res: gui.rc ..\asap.h gui.h wasap\wasap.ico wasap\play.ico wasap\sto
 # Winamp
 
 in_asap.dll: winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap.res $(COMMON_H) gui.h
-	$(ASAP_CC) /DWINAMP /LD winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap.res user32.lib $(LINKOPT)
+	$(ASAP_CC) /DWINAMP /LD winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap.res comdlg32.lib user32.lib $(LINKOPT)
 
 winamp\in_asap.res: gui.rc ..\asap.h gui.h
 	$(RC) /D WINAMP gui.rc
