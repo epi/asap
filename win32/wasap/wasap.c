@@ -1,7 +1,7 @@
 /*
  * wasap.c - Another Slight Atari Player for Win32 systems
  *
- * Copyright (C) 2005-2007  Piotr Fusik
+ * Copyright (C) 2005-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -64,7 +64,7 @@ static void WaveOut_Write(LPWAVEHDR pwh)
 		int len = ASAP_Generate(&asap, pwh->lpData, pwh->dwBufferLength, BITS_PER_SAMPLE);
 		if (len < (int) pwh->dwBufferLength
 		 || waveOutWrite(hwo, pwh, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) {
-			// calling StopPlayback() here causes a deadlock
+			/* calling StopPlayback() here causes a deadlock */
 			PostMessage(hWnd, WM_COMMAND, IDM_STOP, 0);
 		}
 	}
@@ -273,7 +273,7 @@ static void SelectAndLoadFile(void)
 		NULL,
 		0,
 		NULL,
-		"Select Atari 8-bit music",
+		"Select 8-bit Atari music",
 		OFN_ENABLESIZING | OFN_EXPLORER | OFN_HIDEREADONLY
 			| OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
 		0,
@@ -393,7 +393,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	hWnd = FindWindow(WND_CLASS_NAME, NULL);
 	if (hWnd != NULL) {
-		/* as instance of WASAP is already running */
+		/* an instance of WASAP is already running */
 		if (*pb != '\0') {
 			/* pass the filename */
 			COPYDATASTRUCT cds = { 'O', (DWORD) (pe + 1 - pb), pb };
