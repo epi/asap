@@ -1,7 +1,7 @@
 # Run "autoconf" to generate "configure" from this file.
 
 AC_PREREQ(2.56)
-AC_INIT(asap, 1.0.2, fox@scene.pl)
+AC_INIT(asap, 1.1.0, fox@scene.pl)
 AC_CONFIG_SRCDIR(asap.c)
 
 if [[ "X_$CFLAGS" = "X_" ]]; then
