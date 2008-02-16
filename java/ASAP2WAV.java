@@ -155,7 +155,7 @@ public class ASAP2WAV
 		do {
 			n_bytes = asap.generate(buffer, bitsPerSample);
 			os.write(buffer, 0, n_bytes);
-		}  while (n_bytes == buffer.length);
+		} while (n_bytes == buffer.length);
 		os.close();
 		outputFilename = null;
 		song = -1;
