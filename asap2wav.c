@@ -1,7 +1,7 @@
 /*
  * asap2wav.c - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2005-2007  Piotr Fusik
+ * Copyright (C) 2005-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -46,7 +46,7 @@ static void print_help(void)
 		"-o FILE     --output=FILE      Set output file name\n"
 		"-o -        --output=-         Write to standard output\n"
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
-		"-t TIME     --time=TIME        Set output length MM:SS\n"
+		"-t TIME     --time=TIME        Set output length (MM:SS)\n"
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
 		"            --raw              Output raw audio (no WAV header)\n"
@@ -152,13 +152,9 @@ static void process_file(const char *input_file)
 	ASAP_PlaySong(&asap, song, duration);
 	ASAP_MutePokeyChannels(&asap, mute_mask);
 	if (output_file == NULL) {
-		const char *dot;
 		static char output_default[FILENAME_MAX];
-		/* we are sure to find a dot because ASAP_Load()
-		   accepts only filenames with an extension */
-		dot = strrchr(input_file, '.');
-		sprintf(output_default, "%.*s.%s", (int) (dot - input_file), input_file,
-			output_header ? "wav" : "raw");
+		strcpy(output_default, input_file);
+		ASAP_ChangeExt(output_default, output_header ? "wav" : "raw");
 		output_file = output_default;
 	}
 	if (output_file[0] == '-' && output_file[1] == '\0')
