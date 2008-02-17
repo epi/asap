@@ -1,3 +1,9 @@
+** 1.1.0 released on 2008-02-17
+
+2008-02-17  Piotr Fusik  <fox@scene.pl>
+* win32/gui.c: can edit file information before converting to SAP
+
+
 2008-02-16  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, java/ASAP.ppjava, java/ASAP_ModuleInfo.java, win32/gui.c,
   win32/gui.h, win32/gui.rc, win32/Makefile: conversion to and from SAP

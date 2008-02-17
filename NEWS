@@ -1,6 +1,15 @@
 History
 -------
 
+* ASAP 1.1.0 (2008-02-17)
+
+All formats supported by ASAP can be converted to and from the SAP format,
+using the file information window of WASAP or the Winamp plugin.
+Unlike SAP Maker, ASAP supports subsongs and TIME tags.
+POKEY emulation has improved a little. Bugs in the XMMS plugin, the foobar2000
+plugin and the applet have been fixed.
+
+
 * ASAP 1.0.2 (2007-11-02)
 
 TIME tags can be edited in the file information window of WASAP
@@ -54,12 +63,12 @@ WASAP supports Windows Explorer's "Open with".
 * ASAP 0.1.0 (2005-12-31)
 
 This is the initial release of ASAP (Another Slight Atari Player)
-- a player/converter of Atari 8-bit music for modern computers.
+- a player/converter of 8-bit Atari music for modern computers.
 ASAP provides high-quality, identical to the popular Atari800 emulator,
 emulation of the POKEY sound chip and the 6502 processor.
 
 This release includes: ASAP2WAV - portable command-line utility for converting
-Atari 8-bit music to WAV files, WASAP - a tiny player for Windows
+8-bit Atari music to WAV files, WASAP - a tiny player for Windows
 and in_asap - a Winamp plugin. Currently supported input formats are:
 SAP (except for samples and stereo), CMC, CMR, DMC, MPT (without samples),
 MPD, RMT (mono) and TMC (mono).
