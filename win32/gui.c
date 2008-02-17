@@ -213,6 +213,7 @@ static int saved_module_len;
 static ASAP_ModuleInfo saved_module_info;
 static ASAP_ModuleInfo edited_module_info;
 static int edited_song;
+static BOOL can_save;
 static char convert_filename[MAX_PATH];
 static const char *convert_ext;
 
@@ -281,7 +282,8 @@ static BOOL infoChanged(void)
 
 static void updateSaveButton(void)
 {
-	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), infoChanged());
+	if (can_save)
+		EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), infoChanged());
 }
 
 static BOOL saveFile(const char *filename, const byte *data, int len)
@@ -330,7 +332,7 @@ static BOOL saveInfo(void)
 	return TRUE;
 }
 
-static void convert(void)
+static BOOL convert(void)
 {
 	char filename[MAX_PATH];
 	byte out_module[ASAP_MODULE_MAX];
@@ -361,14 +363,19 @@ static void convert(void)
 	out_len = ASAP_Convert(filename, &edited_module_info, saved_module, saved_module_len, out_module);
 	if (out_len <= 0) {
 		MessageBox(infoDialog, "Cannot convert file", "Error", MB_OK | MB_ICONERROR);
-		return;
+		return FALSE;
 	}
 	ofn.hwndOwner = infoDialog;
 	ofn.lpstrDefExt = convert_ext;
 	if (!GetSaveFileName(&ofn))
-		return;
-	if (!saveFile(convert_filename, out_module, out_len))
+		return FALSE;
+	if (!saveFile(convert_filename, out_module, out_len)) {
 		MessageBox(infoDialog, "Cannot save file", "Error", MB_OK | MB_ICONERROR);
+		return FALSE;
+	}
+	if (strcmp(convert_ext, "sap") == 0)
+		saved_module_info = edited_module_info;
+	return TRUE;
 }
 
 static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -426,9 +433,11 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			return TRUE;
 		case MAKEWPARAM(IDCANCEL, BN_CLICKED):
 			if (infoChanged()) {
-				switch (MessageBox(hDlg, "Save changes?", "ASAP", MB_YESNOCANCEL | MB_ICONQUESTION)) {
+				BOOL ok;
+				switch (MessageBox(hDlg, can_save ? "Save changes?" : "Convert to SAP?", "ASAP", MB_YESNOCANCEL | MB_ICONQUESTION)) {
 				case IDYES:
-					if (!saveInfo())
+					ok = can_save ? saveInfo() : convert();
+					if (!ok)
 						return TRUE;
 					break;
 				case IDCANCEL:
@@ -471,7 +480,9 @@ void updateInfoDialog(const char *filename, int song)
 		return;
 	}
 	edited_module_info = saved_module_info;
-	can_edit = ASAP_CanSetModuleInfo(filename);
+	can_save = ASAP_CanSetModuleInfo(filename);
+	convert_ext = ASAP_CanConvert(filename, &edited_module_info, saved_module, saved_module_len);
+	can_edit = can_save || convert_ext != NULL;
 	SendDlgItemMessage(infoDialog, IDC_AUTHOR, EM_SETREADONLY, !can_edit, 0);
 	SendDlgItemMessage(infoDialog, IDC_NAME, EM_SETREADONLY, !can_edit, 0);
 	SendDlgItemMessage(infoDialog, IDC_DATE, EM_SETREADONLY, !can_edit, 0);
@@ -494,7 +505,6 @@ void updateInfoDialog(const char *filename, int song)
 	SendDlgItemMessage(infoDialog, IDC_TIME, EM_SETREADONLY, !can_edit, 0);
 	EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), can_edit);
 	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
-	convert_ext = ASAP_CanConvert(filename, &edited_module_info, saved_module, saved_module_len);
 	if (convert_ext != NULL) {
 		char convert_command[24] = "&Convert to ";
 		i = 0;
