@@ -1732,6 +1732,7 @@ int ASAP_Convert(const char *filename, const ASAP_ModuleInfo *module_info,
 		switch (module[0x25]) {
 		case 2:
 			*dest++ = 0x06; /* asl 0 */
+			*dest++ = 0;
 			*dest++ = 0x4c; /* jmp player */
 			*dest++ = (byte) module_info->player;
 			*dest++ = (byte) (module_info->player >> 8);
