@@ -56,9 +56,17 @@ IDR_TRAYMENU MENU
 #elif defined(GSPLAYER)
 #  define APP_NAME "GSPlayer"
 #  define INTERNAL_NAME "gspasap"
+#elif defined(DSHOW)
+#  define INTERNAL_NAME "asap_dsf"
 #endif
+#ifdef DSHOW
+#define FILE_DESCRIPTION "ASAP DirectShow source filter"
+#else
 #define FILE_DESCRIPTION "ASAP " APP_NAME " plugin"
+#endif
 #define ORIGINAL_FILENAME INTERNAL_NAME ".dll"
+
+#ifndef DSHOW
 
 #ifndef _WIN32_WCE
 IDD_SETTINGS DIALOG 0, 0, 184, 216
@@ -122,6 +130,8 @@ FONT 8, "MS Sans Serif"
 	PUSHBUTTON "Cancel", IDCANCEL, 96, 122, 50, 14
 #endif
 }
+
+#endif /* DSHOW */
 
 #ifdef WINAMP
 IDD_PROGRESS DIALOG 0, 0, 160, 48

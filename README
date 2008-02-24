@@ -14,6 +14,7 @@ The ASAP project includes the following programs:
 * plugin for MOC
 * plugin for Winamp
 * plugin for XMMS
+* DirectShow source filter (for Windows Media Player)
 * Java version of ASAP2WAV
 * Java applet
 * experimental Java midlet

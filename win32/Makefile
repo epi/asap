@@ -1,6 +1,7 @@
-VERSION = 1.1.0
+VERSION = 1.1.1
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
+DSHOW_BASECLASSES_DIR = "C:\Program Files\Microsoft SDKs\Windows\v6.0\Samples\Multimedia\DirectShow\BaseClasses"
 
 CC = cl /nologo /O2 /GL /GR- /GS- /fp:fast /W3 /wd4996 /DNDEBUG
 LINKOPT = /link /release /opt:nowin98
@@ -15,7 +16,7 @@ GMAKE = make
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
 
-all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll
+all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asap_dsf.dll
 
 ..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	$(PERL) $** >$@
@@ -102,6 +103,16 @@ wince: ..\gsplayer\gspasap.dll
 ..\gsplayer\gspasap.res: gui.rc ..\asap.h gui.h
 	$(RC) /D _WIN32_WCE /D GSPLAYER gui.rc
 
+# DirectShow
+
+DSHOW_BASECLASSES = $(DSHOW_BASECLASSES_DIR)\amfilter.cpp $(DSHOW_BASECLASSES_DIR)\combase.cpp $(DSHOW_BASECLASSES_DIR)\dllentry.cpp $(DSHOW_BASECLASSES_DIR)\dllsetup.cpp $(DSHOW_BASECLASSES_DIR)\mtype.cpp $(DSHOW_BASECLASSES_DIR)\source.cpp $(DSHOW_BASECLASSES_DIR)\wxlist.cpp $(DSHOW_BASECLASSES_DIR)\wxutil.cpp
+
+asap_dsf.dll: dshow\asap_dsf.cpp $(COMMON_C) asap_dsf.res dshow\asap_dsf.def $(COMMON_H)
+	$(ASAP_CC) /DDSHOW /LD /I$(DSHOW_BASECLASSES_DIR) dshow\asap_dsf.cpp $(COMMON_C) $(DSHOW_BASECLASSES) asap_dsf.res dshow\asap_dsf.def advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(LINKOPT)
+
+asap_dsf.res: gui.rc ..\asap.h gui.h
+	$(RC) /D DSHOW gui.rc
+
 # asapscan
 
 asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
@@ -130,6 +141,7 @@ clean:
 	del winamp\in_asap.res;in_asap.dll
 	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\foo_asap.res;foo_asap.dll
 	del gspasap.dll;gspasap.res
+	del asap_dsf.dll;asap_dsf.res;install_dsf.bat;uninstall_dsf.bat
 	del ..\gsplayer\gspasap.dll;..\gsplayer\gspasap.exp;..\gsplayer\gspasap.lib;..\gsplayer\gspasap.res
 	del asapscan.exe
 	$(GMAKE) -C ../java clean
@@ -163,6 +175,15 @@ foo_asap.txt: foobar2000\README
 gspasap.txt: ..\gsplayer\gspasap.txt
 	copy $** $@
 
+asap_dsf.txt: dshow\README
+	copy $** $@
+
+install_dsf.bat:
+	echo regsvr32 asap_dsf.dll >$@
+
+uninstall_dsf.bat:
+	echo regsvr32 /u asap_dsf.dll >$@
+
 srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	cd ..
 	del ..\asap-$(VERSION).tar.gz
@@ -182,6 +203,7 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 		moc\libasap_decoder.c \
 		win32\Makefile \
 		win32\gui.c win32\gui.h win32\gui.rc \
+		win32\dshow\asap_dsf.cpp win32\dshow\asap_dsf.def win32\dshow\README \
 		win32\foobar2000\foo_asap.cpp win32\foobar2000\README \
 		win32\wasap\wasap.c win32\wasap\README \
 		win32\winamp\in_asap.c win32\winamp\README \
@@ -197,7 +219,8 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 	cd win32
 
 dist: all foo wince java srcdist copying.txt credits.txt news.txt readme.txt \
-	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt
+	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt asap_dsf.txt \
+	install_dsf.bat uninstall_dsf.bat
 	del ..\..\asap-$(VERSION)-java.zip
 	del ..\..\asap-$(VERSION)-win32.zip
 	del ..\..\asap-$(VERSION)-wince-arm.zip
@@ -210,8 +233,9 @@ dist: all foo wince java srcdist copying.txt credits.txt news.txt readme.txt \
 		copying.txt credits.txt news.txt readme.txt asap2wav.txt
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip \
 		copying.txt credits.txt news.txt readme.txt \
-		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt \
-		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll
+		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt asap_dsf.txt \
+		install_dsf.bat uninstall_dsf.bat \
+		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-wince-arm.zip \
 		copying.txt credits.txt news.txt readme.txt \
 		..\gsplayer\gspasap.dll ..\gsplayer\gspasap.txt

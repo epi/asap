@@ -1,3 +1,9 @@
+2008-02-24  Piotr Fusik  <fox@scene.pl>
+* win32/dshow/asap_dsf.cpp, win32/dshow/asap_dsf.def, win32/dshow/README,
+  win32/gui.rc, win32/Makefile, README: created DirectShow source filter
+  (usable in Windows Media Player)
+
+
 2008-02-19  Piotr Fusik  <fox@scene.pl>
 * asap.c: fixed conversion of TMC (playing twice per frame) to SAP
 
