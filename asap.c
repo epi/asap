@@ -922,9 +922,9 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 		else if (TAG_IS("DATE"))
 			SET_TEXT(MODULE_INFO date);
 		else if (TAG_IS("SONGS"))
-			SET_DEC(MODULE_INFO songs, 1, 32);
+			SET_DEC(MODULE_INFO songs, 1, MAX_SONGS);
 		else if (TAG_IS("DEFSONG"))
-			SET_DEC(MODULE_INFO default_song, 0, 31);
+			SET_DEC(MODULE_INFO default_song, 0, MAX_SONGS - 1);
 		else if (TAG_IS("STEREO"))
 			MODULE_INFO channels = 2;
 		else if (TAG_IS("TIME")) {
