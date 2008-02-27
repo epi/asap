@@ -46,8 +46,11 @@ class CASAPSourceStream : public CSourceStream
 	LONGLONG blocks;
 
 public:
+
+	int duration;
+
 	CASAPSourceStream(HRESULT *phr, CSource *pFilter)
-		: CSourceStream(NAME("ASAPSourceStream"), phr, pFilter, L"Out"), loaded(FALSE), blocks(0)
+		: CSourceStream(NAME("ASAPSourceStream"), phr, pFilter, L"Out"), loaded(FALSE), blocks(0), duration(0)
 	{
 	}
 
@@ -69,11 +72,15 @@ public:
 		if (!loaded)
 			return FALSE;
 		int song = asap.module_info.default_song;
-		int duration = asap.module_info.durations[song];
-		if (asap.module_info.loops[song])
-			duration = -1;
+		duration = asap.module_info.durations[song];
 		ASAP_PlaySong(&asap, song, duration);
 		return TRUE;
+	}
+
+	void Seek(int position)
+	{
+		CAutoLock lck(&cs);
+		ASAP_Seek(&asap, position);
 	}
 
 	HRESULT GetMediaType(CMediaType *pMediaType)
@@ -145,7 +152,7 @@ public:
 	}
 };
 
-class CASAPSource : public CSource, IFileSourceFilter
+class CASAPSource : public CSource, IFileSourceFilter, IMediaSeeking
 {
 	CASAPSourceStream *m_pin;
 	WCHAR *m_filename;
@@ -175,6 +182,8 @@ public:
 	{
 		if (riid == IID_IFileSourceFilter)
 			return GetInterface((IFileSourceFilter *) this, ppv);
+		if (riid == IID_IMediaSeeking)
+			return GetInterface((IMediaSeeking *) this, ppv);
 		return CSource::NonDelegatingQueryInterface(riid, ppv);
 	}
 
@@ -215,6 +224,124 @@ public:
 		if (pmt != NULL)
 			CopyMediaType(pmt, &m_mt);
 		return S_OK;
+	}
+
+	STDMETHODIMP GetCapabilities(DWORD *pCapabilities)
+	{
+		CheckPointer(pCapabilities, E_POINTER);
+		*pCapabilities = AM_SEEKING_CanSeekAbsolute | AM_SEEKING_CanGetDuration;
+		return S_OK;
+	}
+
+	STDMETHODIMP CheckCapabilities(DWORD *pCapabilities)
+	{
+		CheckPointer(pCapabilities, E_POINTER);
+		DWORD result = *pCapabilities & (AM_SEEKING_CanSeekAbsolute | AM_SEEKING_CanGetDuration);
+		if (result == *pCapabilities)
+			return S_OK;
+		*pCapabilities = result;
+		if (result != 0)
+			return S_FALSE;
+		return E_FAIL;
+	}
+
+	STDMETHODIMP IsFormatSupported(const GUID *pFormat)
+	{
+		CheckPointer(pFormat, E_POINTER);
+		if (IsEqualGUID(*pFormat, TIME_FORMAT_MEDIA_TIME))
+			return S_OK;
+		return S_FALSE;
+	}
+
+	STDMETHODIMP QueryPreferredFormat(GUID *pFormat)
+	{
+		CheckPointer(pFormat, E_POINTER);
+		*pFormat = TIME_FORMAT_MEDIA_TIME;
+		return S_OK;
+	}
+
+	STDMETHODIMP GetTimeFormat(GUID *pFormat)
+	{
+		CheckPointer(pFormat, E_POINTER);
+		*pFormat = TIME_FORMAT_MEDIA_TIME;
+		return S_OK;
+	}
+
+	STDMETHODIMP IsUsingTimeFormat(const GUID *pFormat)
+	{
+		CheckPointer(pFormat, E_POINTER);
+		if (IsEqualGUID(*pFormat, TIME_FORMAT_MEDIA_TIME))
+			return S_OK;
+		return S_FALSE;
+	}
+
+	STDMETHODIMP SetTimeFormat(const GUID *pFormat)
+	{
+		CheckPointer(pFormat, E_POINTER);
+		if (IsEqualGUID(*pFormat, TIME_FORMAT_MEDIA_TIME))
+			return S_OK;
+		return E_INVALIDARG;
+	}
+
+	STDMETHODIMP GetDuration(LONGLONG *pDuration)
+	{
+		CheckPointer(pDuration, E_POINTER);
+		*pDuration = m_pin->duration * (UNITS / MILLISECONDS);
+		return S_OK;
+	}
+
+	STDMETHODIMP GetStopPosition(LONGLONG *pStop)
+	{
+		return E_NOTIMPL;
+	}
+
+	STDMETHODIMP GetCurrentPosition(LONGLONG *pCurrent)
+	{
+		return E_NOTIMPL;
+	}
+
+	STDMETHODIMP ConvertTimeFormat(LONGLONG *pTarget, const GUID *pTargetFormat, LONGLONG Source, const GUID *pSourceFormat)
+	{
+		return E_NOTIMPL;
+	}
+
+	STDMETHODIMP SetPositions(LONGLONG *pCurrent, DWORD dwCurrentFlags, LONGLONG *pStop, DWORD dwStopFlags)
+	{
+		if ((dwCurrentFlags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_AbsolutePositioning)
+		{
+			CheckPointer(pCurrent, E_POINTER);
+			int position = (int) (*pCurrent / (UNITS / MILLISECONDS));
+			m_pin->Seek(position);
+			if ((dwCurrentFlags & AM_SEEKING_ReturnTime) != 0)
+				*pCurrent = position * (UNITS / MILLISECONDS);
+			return S_OK;
+		}
+		return E_INVALIDARG;
+	}
+
+	STDMETHODIMP GetPositions(LONGLONG *pCurrent, LONGLONG *pStop)
+	{
+		return E_NOTIMPL;
+	}
+
+	STDMETHODIMP GetAvailable(LONGLONG *pEarliest, LONGLONG *pLatest)
+	{
+		return E_NOTIMPL;
+	}
+
+	STDMETHODIMP SetRate(double dRate)
+	{
+		return E_NOTIMPL;
+	}
+
+	STDMETHODIMP GetRate(double *dRate)
+	{
+		return E_NOTIMPL;
+	}
+
+	STDMETHODIMP GetPreroll(LONGLONG *pllPreroll)
+	{
+		return E_NOTIMPL;
 	}
 
 	static CUnknown * WINAPI CreateInstance(IUnknown *pUnk, HRESULT *phr)
