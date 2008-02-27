@@ -50,7 +50,7 @@ public:
 	int duration;
 
 	CASAPSourceStream(HRESULT *phr, CSource *pFilter)
-		: CSourceStream(NAME("ASAPSourceStream"), phr, pFilter, L"Out"), loaded(FALSE), blocks(0), duration(0)
+		: CSourceStream(NAME("ASAPSourceStream"), phr, pFilter, L"Out"), loaded(FALSE), duration(0)
 	{
 	}
 
@@ -74,6 +74,7 @@ public:
 		int song = asap.module_info.default_song;
 		duration = asap.module_info.durations[song];
 		ASAP_PlaySong(&asap, song, duration);
+		blocks = 0;
 		return TRUE;
 	}
 
