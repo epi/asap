@@ -38,20 +38,28 @@ static const char CLSID_ASAPSource_str[] = "{8E6205A0-19E2-4037-AF32-B29A9B9D0C9
 static const GUID CLSID_ASAPSource = 
 	{ 0x8e6205a0, 0x19e2, 0x4037, { 0xaf, 0x32, 0xb2, 0x9a, 0x9b, 0x9d, 0xc, 0x93 } };
 
-class CASAPSourceStream : public CSourceStream
+class CASAPSourceStream : public CSourceStream, IMediaSeeking
 {
 	CCritSec cs;
 	ASAP_State asap;
 	BOOL loaded;
+	int duration;
 	LONGLONG blocks;
 
 public:
 
-	int duration;
-
 	CASAPSourceStream(HRESULT *phr, CSource *pFilter)
 		: CSourceStream(NAME("ASAPSourceStream"), phr, pFilter, L"Out"), loaded(FALSE), duration(0)
 	{
+	}
+
+	DECLARE_IUNKNOWN
+
+	STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void **ppv)
+	{
+		if (riid == IID_IMediaSeeking)
+			return GetInterface((IMediaSeeking *) this, ppv);
+		return CSourceStream::NonDelegatingQueryInterface(riid, ppv);
 	}
 
 	BOOL Load(const char *filename)
@@ -62,11 +70,10 @@ public:
 			return FALSE;
 		byte module[ASAP_MODULE_MAX];
 		int module_len;
-		if (!ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) &module_len, NULL)) {
-			CloseHandle(fh);
-			return FALSE;
-		}
+		BOOL ok = ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) &module_len, NULL);
 		CloseHandle(fh);
+		if (!ok)
+			return FALSE;
 		CAutoLock lck(&cs);
 		loaded = ASAP_Load(&asap, filename, module, module_len);
 		if (!loaded)
@@ -76,12 +83,6 @@ public:
 		ASAP_PlaySong(&asap, song, duration);
 		blocks = 0;
 		return TRUE;
-	}
-
-	void Seek(int position)
-	{
-		CAutoLock lck(&cs);
-		ASAP_Seek(&asap, position);
 	}
 
 	HRESULT GetMediaType(CMediaType *pMediaType)
@@ -151,93 +152,18 @@ public:
 		pSample->SetSyncPoint(TRUE);
 		return S_OK;
 	}
-};
-
-class CASAPSource : public CSource, IFileSourceFilter, IMediaSeeking
-{
-	CASAPSourceStream *m_pin;
-	WCHAR *m_filename;
-	CMediaType m_mt;
-
-	CASAPSource(IUnknown *pUnk, HRESULT *phr)
-		: CSource(NAME("ASAPSource"), pUnk, CLSID_ASAPSource), m_pin(NULL), m_filename(NULL)
-	{
-		m_pin = new CASAPSourceStream(phr, this);
-		if (phr != NULL)
-			*phr = m_pin == NULL ? E_OUTOFMEMORY : S_OK;
-	}
-
-	~CASAPSource()
-	{
-		if (m_pin != NULL)
-			delete m_pin;
-		if (m_filename != NULL)
-			delete[] m_filename;
-	}
-
-public:
-
-	DECLARE_IUNKNOWN
-
-	STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void **ppv)
-	{
-		if (riid == IID_IFileSourceFilter)
-			return GetInterface((IFileSourceFilter *) this, ppv);
-		if (riid == IID_IMediaSeeking)
-			return GetInterface((IMediaSeeking *) this, ppv);
-		return CSource::NonDelegatingQueryInterface(riid, ppv);
-	}
-
-	STDMETHODIMP Load(LPCOLESTR pszFileName, const AM_MEDIA_TYPE *pmt)
-	{
-		CheckPointer(pszFileName, E_POINTER);
-		int cch = lstrlenW(pszFileName) + 1;
-		char *filename = new char[cch * 2];
-		CheckPointer(filename, E_OUTOFMEMORY);
-		if (WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, filename, cch, NULL, NULL) <= 0)
-			return HRESULT_FROM_WIN32(GetLastError());
-		if (!m_pin->Load(filename))
-			return E_FAIL;
-		delete[] filename;
-		if (m_filename != NULL)
-			delete[] m_filename;
-		m_filename = new WCHAR[cch];
-		CheckPointer(m_filename, E_OUTOFMEMORY);
-		CopyMemory(m_filename, pszFileName, cch * sizeof(WCHAR));
-		if (pmt == NULL) {
-			m_mt.SetType(&MEDIATYPE_Stream);
-			m_mt.SetSubtype(&MEDIASUBTYPE_NULL);
-		}
-		else
-			m_mt = *pmt;
-		return S_OK;
-	}
-
-	STDMETHODIMP GetCurFile(LPOLESTR *ppszFileName, AM_MEDIA_TYPE *pmt)
-	{
-		CheckPointer(ppszFileName, E_POINTER);
-		if (m_filename == NULL)
-			return E_FAIL;
-		DWORD n = (lstrlenW(m_filename) + 1) * sizeof(WCHAR);
-		*ppszFileName = (LPOLESTR) CoTaskMemAlloc(n);
-		CheckPointer(*ppszFileName, E_OUTOFMEMORY);
-		CopyMemory(*ppszFileName, m_filename, n);
-		if (pmt != NULL)
-			CopyMediaType(pmt, &m_mt);
-		return S_OK;
-	}
 
 	STDMETHODIMP GetCapabilities(DWORD *pCapabilities)
 	{
 		CheckPointer(pCapabilities, E_POINTER);
-		*pCapabilities = AM_SEEKING_CanSeekAbsolute | AM_SEEKING_CanGetDuration;
+		*pCapabilities = AM_SEEKING_CanSeekAbsolute | AM_SEEKING_CanSeekForwards | AM_SEEKING_CanSeekBackwards | AM_SEEKING_CanGetDuration;
 		return S_OK;
 	}
 
 	STDMETHODIMP CheckCapabilities(DWORD *pCapabilities)
 	{
 		CheckPointer(pCapabilities, E_POINTER);
-		DWORD result = *pCapabilities & (AM_SEEKING_CanSeekAbsolute | AM_SEEKING_CanGetDuration);
+		DWORD result = *pCapabilities & (AM_SEEKING_CanSeekAbsolute | AM_SEEKING_CanSeekForwards | AM_SEEKING_CanSeekBackwards | AM_SEEKING_CanGetDuration);
 		if (result == *pCapabilities)
 			return S_OK;
 		*pCapabilities = result;
@@ -287,7 +213,7 @@ public:
 	STDMETHODIMP GetDuration(LONGLONG *pDuration)
 	{
 		CheckPointer(pDuration, E_POINTER);
-		*pDuration = m_pin->duration * (UNITS / MILLISECONDS);
+		*pDuration = duration * (UNITS / MILLISECONDS);
 		return S_OK;
 	}
 
@@ -312,7 +238,9 @@ public:
 		{
 			CheckPointer(pCurrent, E_POINTER);
 			int position = (int) (*pCurrent / (UNITS / MILLISECONDS));
-			m_pin->Seek(position);
+			CAutoLock lck(&cs);
+			ASAP_Seek(&asap, position);
+			blocks = 0;
 			if ((dwCurrentFlags & AM_SEEKING_ReturnTime) != 0)
 				*pCurrent = position * (UNITS / MILLISECONDS);
 			return S_OK;
@@ -343,6 +271,80 @@ public:
 	STDMETHODIMP GetPreroll(LONGLONG *pllPreroll)
 	{
 		return E_NOTIMPL;
+	}
+};
+
+class CASAPSource : public CSource, IFileSourceFilter
+{
+	CASAPSourceStream *m_pin;
+	WCHAR *m_filename;
+	CMediaType m_mt;
+
+	CASAPSource(IUnknown *pUnk, HRESULT *phr)
+		: CSource(NAME("ASAPSource"), pUnk, CLSID_ASAPSource), m_pin(NULL), m_filename(NULL)
+	{
+		m_pin = new CASAPSourceStream(phr, this);
+		if (phr != NULL)
+			*phr = m_pin == NULL ? E_OUTOFMEMORY : S_OK;
+	}
+
+	~CASAPSource()
+	{
+		if (m_pin != NULL)
+			delete m_pin;
+		if (m_filename != NULL)
+			delete[] m_filename;
+	}
+
+public:
+
+	DECLARE_IUNKNOWN
+
+	STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void **ppv)
+	{
+		if (riid == IID_IFileSourceFilter)
+			return GetInterface((IFileSourceFilter *) this, ppv);
+		return CSource::NonDelegatingQueryInterface(riid, ppv);
+	}
+
+	STDMETHODIMP Load(LPCOLESTR pszFileName, const AM_MEDIA_TYPE *pmt)
+	{
+		CheckPointer(pszFileName, E_POINTER);
+		int cch = lstrlenW(pszFileName) + 1;
+		char *filename = new char[cch * 2];
+		CheckPointer(filename, E_OUTOFMEMORY);
+		if (WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, filename, cch, NULL, NULL) <= 0)
+			return HRESULT_FROM_WIN32(GetLastError());
+		BOOL ok = m_pin->Load(filename);
+		delete[] filename;
+		if (!ok)
+			return E_FAIL;
+		if (m_filename != NULL)
+			delete[] m_filename;
+		m_filename = new WCHAR[cch];
+		CheckPointer(m_filename, E_OUTOFMEMORY);
+		CopyMemory(m_filename, pszFileName, cch * sizeof(WCHAR));
+		if (pmt == NULL) {
+			m_mt.SetType(&MEDIATYPE_Stream);
+			m_mt.SetSubtype(&MEDIASUBTYPE_NULL);
+		}
+		else
+			m_mt = *pmt;
+		return S_OK;
+	}
+
+	STDMETHODIMP GetCurFile(LPOLESTR *ppszFileName, AM_MEDIA_TYPE *pmt)
+	{
+		CheckPointer(ppszFileName, E_POINTER);
+		if (m_filename == NULL)
+			return E_FAIL;
+		DWORD n = (lstrlenW(m_filename) + 1) * sizeof(WCHAR);
+		*ppszFileName = (LPOLESTR) CoTaskMemAlloc(n);
+		CheckPointer(*ppszFileName, E_OUTOFMEMORY);
+		CopyMemory(*ppszFileName, m_filename, n);
+		if (pmt != NULL)
+			CopyMediaType(pmt, &m_mt);
+		return S_OK;
 	}
 
 	static CUnknown * WINAPI CreateInstance(IUnknown *pUnk, HRESULT *phr)
