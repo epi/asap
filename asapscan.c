@@ -1,7 +1,7 @@
 /*
  * asapscan.c - Atari 8-bit music analyzer
  *
- * Copyright (C) 2007  Piotr Fusik
+ * Copyright (C) 2007-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -175,12 +175,12 @@ static void print_pokey(PokeyState *ps)
 
 static int seconds_to_player_calls(int seconds)
 {
-	return (int) (seconds * 1773447.0 / 114.0 / asap.sap_fastplay);
+	return (int) (seconds * 1773447.0 / 114.0 / asap.module_info.fastplay);
 }
 
 static int player_calls_to_milliseconds(int player_calls)
 {
-	return (int) ceil(player_calls * asap.sap_fastplay * 114.0 * 1000 / 1773447.0);
+	return (int) ceil(player_calls * asap.module_info.fastplay * 114.0 * 1000 / 1773447.0);
 }
 
 void scan_song(int song)
@@ -192,7 +192,7 @@ void scan_song(int song)
 	for (i = 0; i < scan_player_calls; i++) {
 		call_6502_player(&asap);
 		if (dump) {
-			printf("%6.2f: ", i * asap.sap_fastplay * 114.0 / 1773447.0);
+			printf("%6.2f: ", i * asap.module_info.fastplay * 114.0 / 1773447.0);
 			print_pokey(&asap.base_pokey);
 			if (asap.module_info.channels == 2) {
 				printf("  |  ");
