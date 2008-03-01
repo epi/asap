@@ -1,3 +1,13 @@
+2008-03-01  Piotr Fusik  <fox@scene.pl>
+* asap.c: corrected RMT duration determining routine ("jump in pattern" wasn't
+  handled correctly) and extended it with detection of trailing silence
+
+* asap.c, asap_internal.h, acpu.c, apokeysnd.c, java/ASAP.ppjava:
+  changed C/Java abstraction macros so they can be used for C#
+
+* asapscan.c: wasn't compilable
+
+
 2008-02-28  Piotr Fusik  <fox@scene.pl>
 * win32/dshow/asap_dsf.cpp: fixed seeking, restarting and a memory leak
 
