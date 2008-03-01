@@ -1,7 +1,7 @@
 /*
  * apokeysnd.c - another POKEY sound emulator
  *
- * Copyright (C) 2007  Piotr Fusik
+ * Copyright (C) 2007-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -33,9 +33,9 @@
 #define MUTE_INIT          2
 #define MUTE_USER          4
 
-CONST_LOOKUP byte poly4_lookup[] =
+CONST_LOOKUP(byte, poly4_lookup) =
 	{ 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
-CONST_LOOKUP byte poly5_lookup[] =
+CONST_LOOKUP(byte, poly5_lookup) =
 	{ 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1,
 	  0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1 };
 

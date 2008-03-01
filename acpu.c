@@ -1,7 +1,7 @@
 /*
  * acpu.c - another 6502 CPU emulator
  *
- * Copyright (C) 2007  Piotr Fusik
+ * Copyright (C) 2007-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,7 +23,7 @@
 
 #include "asap_internal.h"
 
-CONST_LOOKUP int opcode_cycles[] =
+CONST_LOOKUP(int, opcode_cycles) =
 {
 /*	0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 	7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, /* 0x */
@@ -205,7 +205,7 @@ CONST_LOOKUP int opcode_cycles[] =
 
 #define BRANCH(cond) \
 	if (cond) { \
-		addr = (SBYTE) FETCH; \
+		addr = SBYTE(FETCH); \
 		addr += pc; \
 		if (((addr ^ pc) & 0xff00) != 0) \
 			AS cycle++; \

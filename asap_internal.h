@@ -1,7 +1,7 @@
 /*
  * asap_internal.h - private interface of the ASAP engine
  *
- * Copyright (C) 2005-2007  Piotr Fusik
+ * Copyright (C) 2005-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -28,21 +28,22 @@
 
 #include "asap.h"
 
-#define CONST_LOOKUP            static const
+#define CONST_LOOKUP(type, name) \
+                                static const type name[]
 #define FILE_FUNC               static
 #define ASAP_FUNC
 #define PTR                     *
 #define ADDRESSOF               &
 #define VOIDPTR                 void *
 #define UBYTE(data)             (data)
-#define SBYTE                   signed char
+#define SBYTE(data)             (signed char) (data)
 #define STRING                  const char *
 #define ZERO_ARRAY(array)       memset(array, 0, sizeof(array))
 #define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
                                 memcpy(dest + dest_offset, src + src_offset, len)
-#define NEW_ARRAY(type, size)   [size]
-#define INIT_BOOL_ARRAY(array)  memset(array, FALSE, sizeof(array))
-#define INIT_BYTE_ARRAY(array)  memset(array, 0, sizeof(array))
+#define NEW_ARRAY(type, name, size) \
+                                type name[size]
+#define INIT_ARRAY(array)       memset(array, 0, sizeof(array))
 
 #define AS                      as->
 #define PS                      ps->

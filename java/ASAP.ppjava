@@ -27,22 +27,23 @@
 #define TRUE                    true
 #define NULL                    null
 #define const
-#define CONST_LOOKUP            private static final
+#define CONST_LOOKUP(type, name) \
+                                private static final type[] name
 #define FILE_FUNC               private static
 #define ASAP_FUNC               private static
 #define PTR
 #define ADDRESSOF
 #define VOIDPTR                 byte[]
 #define UBYTE(data)             ((data) & 0xff)
-#define SBYTE                   byte
+#define SBYTE(data)             (byte) (data)
 #define STRING                  String
 #define sizeof(array)           array.length
 #define ZERO_ARRAY(array)       for (int ii = 0; ii < array.length; ii++) array[ii] = 0
 #define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
                                 System.arraycopy(src, src_offset, dest, dest_offset, len)
-#define NEW_ARRAY(type, size)   [] = new type[size]
-#define INIT_BOOL_ARRAY(array)
-#define INIT_BYTE_ARRAY(array)
+#define NEW_ARRAY(type, name, size) \
+                                type[] name = new type[size]
+#define INIT_ARRAY(array)
 
 #define AS                      as.
 #define PS                      ps.
