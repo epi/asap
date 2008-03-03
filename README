@@ -9,6 +9,7 @@ but the current version has a completely new original emulation core.
 The ASAP project includes the following programs:
 * ASAP2WAV - portable command-line utility that generates WAV files
 * WASAP - tiny player for Windows
+* plugin for Apollo
 * plugin for foobar2000 0.9
 * plugin for GSPlayer
 * plugin for MOC

@@ -205,7 +205,7 @@ int playSong(int song)
 
 #endif /* WASAP */
 
-#if defined(WASAP) || defined(WINAMP)
+#if defined(WASAP) || defined(WINAMP) || defined(APOLLO)
 
 HWND infoDialog = NULL;
 static byte saved_module[ASAP_MODULE_MAX];

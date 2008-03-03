@@ -16,7 +16,7 @@ GMAKE = make
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
 
-all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asap_dsf.dll
+all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll
 
 ..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	$(PERL) $** >$@
@@ -113,6 +113,14 @@ asap_dsf.dll: dshow\asap_dsf.cpp $(COMMON_C) asap_dsf.res dshow\asap_dsf.def $(C
 asap_dsf.res: gui.rc ..\asap.h gui.h
 	$(RC) /D DSHOW gui.rc
 
+# Apollo
+
+ASAP_Apollo.dll: apollo\ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo.res $(COMMON_H) gui.h
+	$(ASAP_CC) /DAPOLLO /LD apollo\ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo.res comdlg32.lib user32.lib $(LINKOPT)
+
+ASAP_Apollo.res: gui.rc ..\asap.h gui.h
+	$(RC) /D APOLLO gui.rc
+
 # asapscan
 
 asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
@@ -184,6 +192,9 @@ install_dsf.bat:
 uninstall_dsf.bat:
 	echo regsvr32 /u asap_dsf.dll >$@
 
+ASAP_Apollo.txt: apollo\README
+	copy $** $@
+
 srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	cd ..
 	del ..\asap-$(VERSION).tar.gz
@@ -203,6 +214,7 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 		moc\libasap_decoder.c \
 		win32\Makefile \
 		win32\gui.c win32\gui.h win32\gui.rc \
+		win32\apollo\ASAP_Apollo.cpp win32\apollo\InputPlugin.h win32\apollo\README \
 		win32\dshow\asap_dsf.cpp win32\dshow\asap_dsf.def win32\dshow\README \
 		win32\foobar2000\foo_asap.cpp win32\foobar2000\README \
 		win32\wasap\wasap.c win32\wasap\README \
@@ -219,7 +231,7 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 	cd win32
 
 dist: all foo wince java srcdist copying.txt credits.txt news.txt readme.txt \
-	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt asap_dsf.txt \
+	asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt asap_dsf.txt ASAP_Apollo.txt \
 	install_dsf.bat uninstall_dsf.bat
 	del ..\..\asap-$(VERSION)-java.zip
 	del ..\..\asap-$(VERSION)-win32.zip
@@ -233,9 +245,9 @@ dist: all foo wince java srcdist copying.txt credits.txt news.txt readme.txt \
 		copying.txt credits.txt news.txt readme.txt asap2wav.txt
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip \
 		copying.txt credits.txt news.txt readme.txt \
-		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt asap_dsf.txt \
+		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt asap_dsf.txt ASAP_Apollo.txt \
 		install_dsf.bat uninstall_dsf.bat \
-		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll
+		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-wince-arm.zip \
 		copying.txt credits.txt news.txt readme.txt \
 		..\gsplayer\gspasap.dll ..\gsplayer\gspasap.txt

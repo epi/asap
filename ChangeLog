@@ -1,3 +1,11 @@
+2008-03-03  Piotr Fusik  <fox@scene.pl>
+* asap.c: improved RMT loop detection
+
+* README, win32/apollo/ASAP_Apollo.cpp, win32/apollo/InputPlugin.h,
+  win32/apollo/README, win32/gui.c, win32/gui.h, win32/gui.rc, win32/Makefile:
+  Apollo plugin
+
+
 2008-03-01  Piotr Fusik  <fox@scene.pl>
 * asap.c: corrected RMT duration determining routine ("jump in pattern" wasn't
   handled correctly) and extended it with detection of trailing silence

@@ -21,6 +21,10 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifdef __cplusplus
+extern "C" {
+ #endif
+
 #define BITS_PER_SAMPLE          16
 
 #define IDC_STATIC     -1
@@ -98,3 +102,7 @@ int getSongDuration(const ASAP_ModuleInfo *module_info, int song);
 int playSong(int song);
 
 #endif /* WASAP */
+
+#ifdef __cplusplus
+}
+#endif

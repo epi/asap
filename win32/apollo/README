@@ -1,0 +1,6 @@
+Another Slight Atari Player - Apollo plugin
+-------------------------------------------
+
+This is a plugin for Apollo that makes it possible to play Atari 8-bit
+computer music stored in several formats. To install the plugin, simply extract
+ASAP_Apollo.dll to the "Plug-ins" directory of your Apollo installation.

@@ -58,6 +58,9 @@ IDR_TRAYMENU MENU
 #  define INTERNAL_NAME "gspasap"
 #elif defined(DSHOW)
 #  define INTERNAL_NAME "asap_dsf"
+#elif defined(APOLLO)
+#  define APP_NAME "Apollo"
+#  define INTERNAL_NAME "ASAP_Apollo"
 #endif
 #ifdef DSHOW
 #define FILE_DESCRIPTION "ASAP DirectShow source filter"
@@ -146,7 +149,7 @@ FONT 8, "MS Sans Serif"
 
 #endif /* WASAP */
 
-#if defined(WASAP) || defined(WINAMP)
+#if defined(WASAP) || defined(WINAMP) || defined(APOLLO)
 #ifdef WINAMP
 #define INFO_Y  18
 #else
