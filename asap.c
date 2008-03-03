@@ -395,6 +395,8 @@ FILE_FUNC int rmt_instrument_frames(const byte module[], int instrument, int vol
 	int volume_slide;
 	abool silent_loop;
 	instrument = UBYTE(module[0xe]) + (UBYTE(module[0xf]) << 8) - addr_to_offset + (instrument << 1);
+	if (module[instrument + 1] == 0)
+		return 0;
 	instrument = UBYTE(module[instrument]) + (UBYTE(module[instrument + 1]) << 8) - addr_to_offset;
 	player_calls = player_call = volume_frame * per_frame;
 	index = UBYTE(module[instrument]) + 1 + player_call * 3;
@@ -551,8 +553,11 @@ FILE_FUNC void parse_rmt_song(ASAP_ModuleInfo PTR module_info, const byte module
 		if (instrument_frames < frame)
 			instrument_frames = frame;
 	}
-	if (frames > instrument_frames)
+	if (frames > instrument_frames) {
+		if (frames - instrument_frames > 100)
+			MODULE_INFO loops[MODULE_INFO songs] = FALSE;
 		frames = instrument_frames;
+	}
 	if (frames > 0)
 		set_song_duration(module_info, frames);
 }
@@ -586,8 +591,13 @@ FILE_FUNC abool parse_rmt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	if (!load_native(as, module_info, module, module_len,
 		MODULE_INFO channels == 2 ? PLAYER_OBX(rmt8) : PLAYER_OBX(rmt4)))
 		return FALSE;
-	song_len = (UBYTE(module[4]) + (UBYTE(module[5]) << 8) + 1
-		- UBYTE(module[0x14]) - (UBYTE(module[0x15]) << 8)) >> pos_shift;
+	song_len = UBYTE(module[4]) + (UBYTE(module[5]) << 8) + 1
+		- UBYTE(module[0x14]) - (UBYTE(module[0x15]) << 8);
+	if (pos_shift == 3 && (song_len & 4) != 0
+	 && UBYTE(module[6 + UBYTE(module[4]) + (UBYTE(module[5]) << 8)
+		- UBYTE(module[2]) - (UBYTE(module[3]) << 8) - 3]) == 0xfe)
+		song_len += 4;
+	song_len >>= pos_shift;
 	if (song_len >= 0x100)
 		return FALSE;
 	INIT_ARRAY(global_seen);
