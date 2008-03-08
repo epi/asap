@@ -24,7 +24,8 @@
 package net.sf.asap;
 
 /** Information about a file recognized by ASAP. */
-public class ASAP_ModuleInfo {
+public class ASAP_ModuleInfo
+{
 	/** Music author's name. */
 	public String author;
 	/** Music title. */
