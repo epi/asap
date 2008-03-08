@@ -112,8 +112,8 @@ CONST_LOOKUP(int, opcode_cycles) =
 #define ZPAGE_Y      addr = (FETCH + y) & 0xff
 #define INDIRECT_X   addr = (FETCH + x) & 0xff; addr = dGetByte(addr) + (zGetByte(addr + 1) << 8)
 #define INDIRECT_Y   addr = FETCH; addr = (dGetByte(addr) + (zGetByte(addr + 1) << 8) + y) & 0xffff
-#define NCYCLES_X    if ((addr & 0xff) < x) AS cycle++
-#define NCYCLES_Y    if ((addr & 0xff) < y) AS cycle++
+#define NCYCLES_X    if ((addr & 0xff) < x) AST cycle++
+#define NCYCLES_Y    if ((addr & 0xff) < y) AST cycle++
 
 #define PL(dest)     s = (s + 1) & 0xff; dest = dGetByte(0x0100 + s)
 #define PLP          PL(vdi); nz = ((vdi & 0x80) << 1) + (~vdi & Z_FLAG); c = vdi & 1; vdi &= V_FLAG | D_FLAG | I_FLAG
@@ -208,8 +208,8 @@ CONST_LOOKUP(int, opcode_cycles) =
 		addr = SBYTE(FETCH); \
 		addr += pc; \
 		if (((addr ^ pc) & 0xff00) != 0) \
-			AS cycle++; \
-		AS cycle++; \
+			AST cycle++; \
+		AST cycle++; \
 		pc = addr; \
 		break; \
 	} \
@@ -217,15 +217,15 @@ CONST_LOOKUP(int, opcode_cycles) =
 	break
 
 #define CHECK_IRQ \
-	if ((vdi & I_FLAG) == 0 && AS irqst != 0xff) { \
+	if ((vdi & I_FLAG) == 0 && AST irqst != 0xff) { \
 		PHPC; \
 		PHPB0; \
 		vdi |= I_FLAG; \
 		pc = dGetWord(0xfffe); \
-		AS cycle += 7; \
+		AST cycle += 7; \
 	}
 
-ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR as, int scanlines)
+ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 {
 	int pc;
 	int nz;
@@ -237,50 +237,50 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR as, int scanlines)
 	int vdi;
 	int next_event_cycle;
 	int cycle_limit;
-	pc = AS cpu_pc;
-	nz = AS cpu_nz;
-	a = AS cpu_a;
-	x = AS cpu_x;
-	y = AS cpu_y;
-	c = AS cpu_c;
-	s = AS cpu_s;
-	vdi = AS cpu_vdi;
-	AS next_scanline_cycle = 114;
+	pc = AST cpu_pc;
+	nz = AST cpu_nz;
+	a = AST cpu_a;
+	x = AST cpu_x;
+	y = AST cpu_y;
+	c = AST cpu_c;
+	s = AST cpu_s;
+	vdi = AST cpu_vdi;
+	AST next_scanline_cycle = 114;
 	next_event_cycle = 114;
 	cycle_limit = 114 * scanlines;
-	if (next_event_cycle > AS timer1_cycle)
-		next_event_cycle = AS timer1_cycle;
-	if (next_event_cycle > AS timer2_cycle)
-		next_event_cycle = AS timer2_cycle;
-	if (next_event_cycle > AS timer4_cycle)
-		next_event_cycle = AS timer4_cycle;
-	AS nearest_event_cycle = next_event_cycle;
+	if (next_event_cycle > AST timer1_cycle)
+		next_event_cycle = AST timer1_cycle;
+	if (next_event_cycle > AST timer2_cycle)
+		next_event_cycle = AST timer2_cycle;
+	if (next_event_cycle > AST timer4_cycle)
+		next_event_cycle = AST timer4_cycle;
+	AST nearest_event_cycle = next_event_cycle;
 	for (;;) {
 		int cycle;
 		int addr;
 		int data;
-		cycle = AS cycle;
-		if (cycle >= AS nearest_event_cycle) {
-			if (cycle >= AS next_scanline_cycle) {
-				if (++AS scanline_number == 312)
-					AS scanline_number = 0;
-				AS cycle = cycle += 9;
-				AS next_scanline_cycle += 114;
+		cycle = AST cycle;
+		if (cycle >= AST nearest_event_cycle) {
+			if (cycle >= AST next_scanline_cycle) {
+				if (++AST scanline_number == 312)
+					AST scanline_number = 0;
+				AST cycle = cycle += 9;
+				AST next_scanline_cycle += 114;
 				if (--scanlines <= 0)
 					break;
 			}
-			next_event_cycle = AS next_scanline_cycle;
+			next_event_cycle = AST next_scanline_cycle;
 #define CHECK_TIMER_IRQ(ch) \
-			if (cycle >= AS timer##ch##_cycle) { \
-				AS irqst &= ~ch; \
-				AS timer##ch##_cycle = NEVER; \
+			if (cycle >= AST timer##ch##_cycle) { \
+				AST irqst &= ~ch; \
+				AST timer##ch##_cycle = NEVER; \
 			} \
-			else if (next_event_cycle > AS timer##ch##_cycle) \
-				next_event_cycle = AS timer##ch##_cycle;
+			else if (next_event_cycle > AST timer##ch##_cycle) \
+				next_event_cycle = AST timer##ch##_cycle;
 			CHECK_TIMER_IRQ(1);
 			CHECK_TIMER_IRQ(2);
 			CHECK_TIMER_IRQ(4);
-			AS nearest_event_cycle = next_event_cycle;
+			AST nearest_event_cycle = next_event_cycle;
 			CHECK_IRQ;
 		}
 #ifdef ASAPSCAN
@@ -288,7 +288,7 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR as, int scanlines)
 			print_cpu_state(as, pc, a, x, y, s, nz, vdi, c);
 #endif
 		data = FETCH;
-		AS cycle += opcode_cycles[data];
+		AST cycle += opcode_cycles[data];
 		switch (data) {
 		case 0x00: /* BRK */
 			pc++;
@@ -313,9 +313,9 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR as, int scanlines)
 		case 0xb2:
 		case 0xd2:
 		case 0xf2:
-			AS scanline_number = (AS scanline_number + scanlines - 1) % 312;
+			AST scanline_number = (AST scanline_number + scanlines - 1) % 312;
 			scanlines = 1;
-			AS cycle = cycle_limit;
+			AST cycle = cycle_limit;
 			break;
 		case 0x03: /* ASO (ab,x) [unofficial] */
 			INDIRECT_X;
@@ -421,7 +421,7 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR as, int scanlines)
 		case 0xdc:
 		case 0xfc:
 			if (FETCH + x >= 0x100)
-				AS cycle++;
+				AST cycle++;
 			pc++;
 			break;
 		case 0x1d: /* ORA abcd,x */
@@ -1244,19 +1244,19 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR as, int scanlines)
 			break;
 		}
 	}
-	AS cpu_pc = pc;
-	AS cpu_nz = nz;
-	AS cpu_a = a;
-	AS cpu_x = x;
-	AS cpu_y = y;
-	AS cpu_c = c;
-	AS cpu_s = s;
-	AS cpu_vdi = vdi;
-	AS cycle -= cycle_limit;
-	if (AS timer1_cycle != NEVER)
-		AS timer1_cycle -= cycle_limit;
-	if (AS timer2_cycle != NEVER)
-		AS timer2_cycle -= cycle_limit;
-	if (AS timer4_cycle != NEVER)
-		AS timer4_cycle -= cycle_limit;
+	AST cpu_pc = pc;
+	AST cpu_nz = nz;
+	AST cpu_a = a;
+	AST cpu_x = x;
+	AST cpu_y = y;
+	AST cpu_c = c;
+	AST cpu_s = s;
+	AST cpu_vdi = vdi;
+	AST cycle -= cycle_limit;
+	if (AST timer1_cycle != NEVER)
+		AST timer1_cycle -= cycle_limit;
+	if (AST timer2_cycle != NEVER)
+		AST timer2_cycle -= cycle_limit;
+	if (AST timer4_cycle != NEVER)
+		AST timer4_cycle -= cycle_limit;
 }

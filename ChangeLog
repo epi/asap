@@ -1,3 +1,9 @@
+2008-03-08  Maciek Konecki  <maciusk1@wp.pl>  and  Piotr Fusik  <fox@scene.pl>
+* acpu.c, apokeysnd.c, asap.c, asap_internal.h, csharp/ASAP.ppcs,
+  csharp/asap2wav.cs, csharp/Makefile, java/ASAP.ppjava, win32/Makefile:
+  ASAP can be compiled as C#
+
+
 2008-03-03  Piotr Fusik  <fox@scene.pl>
 * asap.c: improved RMT loop detection
 

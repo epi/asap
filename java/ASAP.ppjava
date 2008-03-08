@@ -33,6 +33,7 @@
 #define ASAP_FUNC               private static
 #define PTR
 #define ADDRESSOF
+#define ARRAY                   []
 #define VOIDPTR                 byte[]
 #define UBYTE(data)             ((data) & 0xff)
 #define SBYTE(data)             (byte) (data)
@@ -45,16 +46,16 @@
                                 type[] name = new type[size]
 #define INIT_ARRAY(array)
 
-#define AS                      as.
-#define PS                      ps.
+#define AST                     ast.
+#define PST                     pst.
 #define MODULE_INFO             module_info.
 #define ASAP_SAMPLE_RATE        44100
 #define ASAP_FORMAT_U8          8
 #define ASAP_FORMAT_S16_LE      16
 #define ASAP_FORMAT_S16_BE      -16
 #define ASAP_SampleFormat       int
-#define ASAP_Player             InputStream
-#define PLAYER_OBX(name)        ASAP.class.getResourceAsStream(#name + ".obx")
+#define ASAP_OBX                InputStream
+#define GET_OBX(name)           ASAP.class.getResourceAsStream(#name + ".obx")
 
 package net.sf.asap;
 
@@ -152,10 +153,10 @@ public final class ASAP
 #include "apokeysnd.c"
 #include "asap.c"
 
-	private final ASAP_State as = new ASAP_State();
+	private final ASAP_State ast = new ASAP_State();
 
 	/** ASAP version. */
-	public static final String VERSION = "1.1.0";
+	public static final String VERSION = "1.2.0";
 
 	/** Maximum length of a supported input file.
 	    You can assume that files longer than this are not supported by ASAP. */
@@ -225,7 +226,7 @@ public final class ASAP
 	    @param module_len length of the file */
 	public void load(String filename, byte[] module, int module_len)
 	{
-		if (!ASAP_Load(as, filename, module, module_len))
+		if (!ASAP_Load(ast, filename, module, module_len))
 			throw new IllegalArgumentException();
 	}
 
@@ -233,7 +234,7 @@ public final class ASAP
 	    @return information about the loaded module */
 	public ASAP_ModuleInfo getModuleInfo()
 	{
-		return as.module_info;
+		return ast.module_info;
 	}
 
 	/** Prepares ASAP to play the specified song of the loaded module.
@@ -242,21 +243,21 @@ public final class ASAP
 	    -1 means indefinitely */
 	public void playSong(int song, int duration)
 	{
-		ASAP_PlaySong(as, song, duration);
+		ASAP_PlaySong(ast, song, duration);
 	}
 
 	/** Mutes the selected POKEY channels.
 	    @param mask an 8-bit mask which selects POKEY channels to be muted */
 	public void mutePokeyChannels(int mask)
 	{
-		ASAP_MutePokeyChannels(as, mask);
+		ASAP_MutePokeyChannels(ast, mask);
 	}
 
 	/** Rewinds the current song.
 	    @param position the requested absolute position in milliseconds */
 	public void seek(int position)
 	{
-		ASAP_Seek(as, position);
+		ASAP_Seek(ast, position);
 	}
 
 	/** Fills the specified buffer with generated samples.
@@ -266,7 +267,7 @@ public final class ASAP
 	    (less than <code>buffer.length</code> if reached the end of the song) */
 	public int generate(byte[] buffer, int format)
 	{
-		return ASAP_Generate(as, buffer, buffer.length, format);
+		return ASAP_Generate(ast, buffer, buffer.length, format);
 	}
 
 	/** Returns POKEY channel volume.
@@ -276,21 +277,21 @@ public final class ASAP
 	{
 		switch (channel) {
 		case 0:
-			return as.base_pokey.audc1 & 0xf;
+			return ast.base_pokey.audc1 & 0xf;
 		case 1:
-			return as.base_pokey.audc2 & 0xf;
+			return ast.base_pokey.audc2 & 0xf;
 		case 2:
-			return as.base_pokey.audc3 & 0xf;
+			return ast.base_pokey.audc3 & 0xf;
 		case 3:
-			return as.base_pokey.audc4 & 0xf;
+			return ast.base_pokey.audc4 & 0xf;
 		case 4:
-			return as.extra_pokey.audc1 & 0xf;
+			return ast.extra_pokey.audc1 & 0xf;
 		case 5:
-			return as.extra_pokey.audc2 & 0xf;
+			return ast.extra_pokey.audc2 & 0xf;
 		case 6:
-			return as.extra_pokey.audc3 & 0xf;
+			return ast.extra_pokey.audc3 & 0xf;
 		case 7:
-			return as.extra_pokey.audc4 & 0xf;
+			return ast.extra_pokey.audc4 & 0xf;
 		default:
 			return 0;
 		}

@@ -21,12 +21,12 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef JAVA
+#if !defined(JAVA) && !defined(CSHARP)
 #include <string.h>
 #endif
 
 #include "asap_internal.h"
-#ifndef JAVA
+#if !defined(JAVA) && !defined(CSHARP)
 #include "players.h"
 #endif
 
@@ -40,54 +40,54 @@ CONST_LOOKUP(byte, cmr_bass_table) = {
 	0x25, 0x24, 0x21, 0x1F, 0x1E
 };
 
-ASAP_FUNC int ASAP_GetByte(ASAP_State PTR as, int addr)
+ASAP_FUNC int ASAP_GetByte(ASAP_State PTR ast, int addr)
 {
 	switch (addr & 0xff0f) {
 	case 0xd20a:
-		return PokeySound_GetRandom(as, addr);
+		return PokeySound_GetRandom(ast, addr);
 	case 0xd20e:
-		if ((addr & AS extra_pokey_mask) != 0)
+		if ((addr & AST extra_pokey_mask) != 0)
 			return 0xff;
-		return AS irqst;
+		return AST irqst;
 	case 0xd20f:
 		return 0xff;
 	case 0xd40b:
-		return AS scanline_number >> 1;
+		return AST scanline_number >> 1;
 	default:
 		return dGetByte(addr);
 	}
 }
 
-ASAP_FUNC void ASAP_PutByte(ASAP_State PTR as, int addr, int data)
+ASAP_FUNC void ASAP_PutByte(ASAP_State PTR ast, int addr, int data)
 {
 	if ((addr >> 8) == 0xd2) {
-		if ((addr & (AS extra_pokey_mask + 0xf)) == 0xe) {
-			AS irqst |= data ^ 0xff;
+		if ((addr & (AST extra_pokey_mask + 0xf)) == 0xe) {
+			AST irqst |= data ^ 0xff;
 #define SET_TIMER_IRQ(ch) \
-			if ((data & AS irqst & ch) != 0) { \
-				if (AS timer##ch##_cycle == NEVER) { \
-					int t = AS base_pokey.tick_cycle##ch; \
-					while (t < AS cycle) \
-						t += AS base_pokey.period_cycles##ch; \
-					AS timer##ch##_cycle = t; \
-					if (AS nearest_event_cycle > t) \
-						AS nearest_event_cycle = t; \
+			if ((data & AST irqst & ch) != 0) { \
+				if (AST timer##ch##_cycle == NEVER) { \
+					int t = AST base_pokey.tick_cycle##ch; \
+					while (t < AST cycle) \
+						t += AST base_pokey.period_cycles##ch; \
+					AST timer##ch##_cycle = t; \
+					if (AST nearest_event_cycle > t) \
+						AST nearest_event_cycle = t; \
 				} \
 			} \
 			else \
-				AS timer##ch##_cycle = NEVER;
+				AST timer##ch##_cycle = NEVER;
 			SET_TIMER_IRQ(1);
 			SET_TIMER_IRQ(2);
 			SET_TIMER_IRQ(4);
 		}
 		else
-			PokeySound_PutByte(as, addr, data);
+			PokeySound_PutByte(ast, addr, data);
 	}
 	else if ((addr & 0xff0f) == 0xd40a) {
-		if (AS cycle <= AS next_scanline_cycle - 8)
-			AS cycle = AS next_scanline_cycle - 8;
+		if (AST cycle <= AST next_scanline_cycle - 8)
+			AST cycle = AST next_scanline_cycle - 8;
 		else
-			AS cycle = AS next_scanline_cycle + 106;
+			AST cycle = AST next_scanline_cycle + 106;
 	}
 	else
 		dPutByte(addr, data);
@@ -97,65 +97,98 @@ ASAP_FUNC void ASAP_PutByte(ASAP_State PTR as, int addr, int data)
 
 CONST_LOOKUP(int, perframe2fastplay) = { 312, 312 / 2, 312 / 3, 312 / 4 };
 
-FILE_FUNC abool load_native(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
-                            const byte module[], int module_len, ASAP_Player player)
+FILE_FUNC abool load_native(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+                            const byte ARRAY module, int module_len, ASAP_OBX player)
 {
-	int player_last_byte;
-	int block_len;
-	if (UBYTE(module[0]) != 0xff || UBYTE(module[1]) != 0xff)
-		return FALSE;
-#ifdef JAVA
-	try {
-		player.read();
-		player.read();
-		MODULE_INFO player = player.read();
-		MODULE_INFO player += player.read() << 8;
-		player_last_byte = player.read();
-		player_last_byte += player.read() << 8;
-	} catch (IOException e) {
-		throw new RuntimeException();
-	}
-#else
-	MODULE_INFO player = UBYTE(player[2]) + (UBYTE(player[3]) << 8);
-	player_last_byte = UBYTE(player[4]) + (UBYTE(player[5]) << 8);
+#if defined(JAVA) || defined(CSHARP)
+	try
 #endif
-	MODULE_INFO music = UBYTE(module[2]) + (UBYTE(module[3]) << 8);
-	if (MODULE_INFO music <= player_last_byte)
-		return FALSE;
-	block_len = UBYTE(module[4]) + (UBYTE(module[5]) << 8) + 1 - MODULE_INFO music;
-	if (6 + block_len != module_len) {
-		int info_addr;
-		int info_len;
-		if (MODULE_INFO type != 'r' || 11 + block_len > module_len)
+	{
+		int player_last_byte;
+		int block_len;
+		if (UBYTE(module[0]) != 0xff || UBYTE(module[1]) != 0xff)
 			return FALSE;
-		/* allow optional info for Raster Music Tracker */
-		info_addr = UBYTE(module[6 + block_len]) + (UBYTE(module[7 + block_len]) << 8);
-		if (info_addr != MODULE_INFO music + block_len)
-			return FALSE;
-		info_len = UBYTE(module[8 + block_len]) + (UBYTE(module[9 + block_len]) << 8) + 1 - info_addr;
-		if (10 + block_len + info_len != module_len)
-			return FALSE;
-	}
-	if (as != NULL) {
-		COPY_ARRAY(AS memory, MODULE_INFO music, module, 6, block_len);
 #ifdef JAVA
-		int addr = MODULE_INFO player;
-		do {
-			int i;
-			try {
-				i = player.read(AS memory, addr, player_last_byte + 1 - addr);
-			} catch (IOException e) {
-				throw new RuntimeException();
-			}
-			if (i <= 0)
-				throw new RuntimeException();
-			addr += i;
-		} while (addr <= player_last_byte);
+		try {
+			player.read();
+			player.read();
+			MODULE_INFO player = player.read();
+			MODULE_INFO player += player.read() << 8;
+			player_last_byte = player.read();
+			player_last_byte += player.read() << 8;
+		} catch (IOException e) {
+			throw new RuntimeException();
+		}
+#elif defined(CSHARP)
+		player.ReadByte();
+		player.ReadByte();
+		MODULE_INFO player = player.ReadByte();
+		MODULE_INFO player += player.ReadByte() << 8;
+		player_last_byte = player.ReadByte();
+		player_last_byte += player.ReadByte() << 8;
 #else
-		COPY_ARRAY(AS memory, MODULE_INFO player, player, 6, player_last_byte + 1 - MODULE_INFO player);
+		MODULE_INFO player = UBYTE(player[2]) + (UBYTE(player[3]) << 8);
+		player_last_byte = UBYTE(player[4]) + (UBYTE(player[5]) << 8);
 #endif
+		MODULE_INFO music = UBYTE(module[2]) + (UBYTE(module[3]) << 8);
+		if (MODULE_INFO music <= player_last_byte)
+			return FALSE;
+		block_len = UBYTE(module[4]) + (UBYTE(module[5]) << 8) + 1 - MODULE_INFO music;
+		if (6 + block_len != module_len) {
+			int info_addr;
+			int info_len;
+			if (MODULE_INFO type != 'r' || 11 + block_len > module_len)
+				return FALSE;
+			/* allow optional info for Raster Music Tracker */
+			info_addr = UBYTE(module[6 + block_len]) + (UBYTE(module[7 + block_len]) << 8);
+			if (info_addr != MODULE_INFO music + block_len)
+				return FALSE;
+			info_len = UBYTE(module[8 + block_len]) + (UBYTE(module[9 + block_len]) << 8) + 1 - info_addr;
+			if (10 + block_len + info_len != module_len)
+				return FALSE;
+		}
+		if (ast != NULL) {
+			COPY_ARRAY(AST memory, MODULE_INFO music, module, 6, block_len);
+#ifdef JAVA
+			int addr = MODULE_INFO player;
+			do {
+				int i;
+				try {
+					i = player.read(AST memory, addr, player_last_byte + 1 - addr);
+				} catch (IOException e) {
+					throw new RuntimeException();
+				}
+				if (i <= 0)
+					throw new RuntimeException();
+				addr += i;
+			} while (addr <= player_last_byte);
+#elif defined(CSHARP)
+			int addr = MODULE_INFO player;
+			do {
+				int i = player.Read(AST memory, addr, player_last_byte + 1 - addr);
+				if (i <= 0)
+					throw new Exception();
+				addr += i;
+			} while (addr <= player_last_byte);
+#else
+			COPY_ARRAY(AST memory, MODULE_INFO player, player, 6, player_last_byte + 1 - MODULE_INFO player);
+#endif
+		}
+		return TRUE;
 	}
-	return TRUE;
+#ifdef JAVA
+	finally {
+		try {
+			player.close();
+		} catch (IOException e) {
+			throw new RuntimeException();
+		}
+	}
+#elif defined(CSHARP)
+	finally {
+		player.Close();
+	}
+#endif
 }
 
 FILE_FUNC void set_song_duration(ASAP_ModuleInfo PTR module_info, int player_calls)
@@ -168,7 +201,7 @@ FILE_FUNC void set_song_duration(ASAP_ModuleInfo PTR module_info, int player_cal
 #define SEEN_BEFORE     2
 #define SEEN_REPEAT     3
 
-FILE_FUNC void parse_cmc_song(ASAP_ModuleInfo PTR module_info, const byte module[], int pos)
+FILE_FUNC void parse_cmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
 {
 	int tempo = UBYTE(module[0x19]);
 	int player_calls = 0;
@@ -242,18 +275,18 @@ FILE_FUNC void parse_cmc_song(ASAP_ModuleInfo PTR module_info, const byte module
 	set_song_duration(module_info, player_calls);
 }
 
-FILE_FUNC abool parse_cmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
-                          const byte module[], int module_len, abool cmr)
+FILE_FUNC abool parse_cmc(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+                          const byte ARRAY module, int module_len, abool cmr)
 {
 	int last_pos;
 	int pos;
 	if (module_len < 0x306)
 		return FALSE;
 	MODULE_INFO type = cmr ? 'z' : 'c';
-	if (!load_native(as, module_info, module, module_len, PLAYER_OBX(cmc)))
+	if (!load_native(ast, module_info, module, module_len, GET_OBX(cmc)))
 		return FALSE;
-	if (as != NULL && cmr)
-		COPY_ARRAY(AS memory, 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, 0, sizeof(cmr_bass_table));
+	if (ast != NULL && cmr)
+		COPY_ARRAY(AST memory, 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, 0, sizeof(cmr_bass_table));
 	/* auto-detect number of subsongs */
 	last_pos = 0x54;
 	while (--last_pos >= 0) {
@@ -270,8 +303,8 @@ FILE_FUNC abool parse_cmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	return TRUE;
 }
 
-FILE_FUNC void parse_mpt_song(ASAP_ModuleInfo PTR module_info, const byte module[],
-                              abool global_seen[], int song_len, int pos)
+FILE_FUNC void parse_mpt_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module,
+                              abool ARRAY global_seen, int song_len, int pos)
 {
 	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
 	int tempo = UBYTE(module[0x1cf]);
@@ -345,8 +378,8 @@ FILE_FUNC void parse_mpt_song(ASAP_ModuleInfo PTR module_info, const byte module
 		set_song_duration(module_info, player_calls);
 }
 
-FILE_FUNC abool parse_mpt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
-                          const byte module[], int module_len)
+FILE_FUNC abool parse_mpt(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+                          const byte ARRAY module, int module_len)
 {
 	int track0_addr;
 	int pos;
@@ -356,7 +389,7 @@ FILE_FUNC abool parse_mpt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	if (module_len < 0x1d0)
 		return FALSE;
 	MODULE_INFO type = 'm';
-	if (!load_native(as, module_info, module, module_len, PLAYER_OBX(mpt)))
+	if (!load_native(ast, module_info, module, module_len, GET_OBX(mpt)))
 		return FALSE;
 	track0_addr = UBYTE(module[2]) + (UBYTE(module[3]) << 8) + 0x1ca;
 	if (UBYTE(module[0x1c6]) + (UBYTE(module[0x1ca]) << 8) != track0_addr)
@@ -380,7 +413,7 @@ FILE_FUNC abool parse_mpt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 
 CONST_LOOKUP(byte, rmt_volume_silent) = { 16, 8, 4, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 };
 
-FILE_FUNC int rmt_instrument_frames(const byte module[], int instrument, int volume, int volume_frame, abool extra_pokey)
+FILE_FUNC int rmt_instrument_frames(const byte ARRAY module, int instrument, int volume, int volume_frame, abool extra_pokey)
 {
 	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
 	int per_frame = module[0xc];
@@ -451,8 +484,8 @@ FILE_FUNC int rmt_instrument_frames(const byte module[], int instrument, int vol
 	return player_calls / per_frame;
 }
 
-FILE_FUNC void parse_rmt_song(ASAP_ModuleInfo PTR module_info, const byte module[],
-                              abool global_seen[], int song_len, int pos_shift, int pos)
+FILE_FUNC void parse_rmt_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module,
+                              abool ARRAY global_seen, int song_len, int pos_shift, int pos)
 {
 	int ch;
 	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
@@ -562,8 +595,8 @@ FILE_FUNC void parse_rmt_song(ASAP_ModuleInfo PTR module_info, const byte module
 		set_song_duration(module_info, frames);
 }
 
-FILE_FUNC abool parse_rmt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
-                          const byte module[], int module_len)
+FILE_FUNC abool parse_rmt(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+                          const byte ARRAY module, int module_len)
 {
 	int per_frame;
 	int pos_shift;
@@ -573,7 +606,7 @@ FILE_FUNC abool parse_rmt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	if (module_len < 0x30 || module[6] != 'R' || module[7] != 'M'
 	 || module[8] != 'T' || module[0xd] != 1)
 		return FALSE;
-	switch (module[9]) {
+	switch ((char) module[9]) {
 	case '4':
 		pos_shift = 2;
 		break;
@@ -588,8 +621,8 @@ FILE_FUNC abool parse_rmt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	if (per_frame < 1 || per_frame > 4)
 		return FALSE;
 	MODULE_INFO type = 'r';
-	if (!load_native(as, module_info, module, module_len,
-		MODULE_INFO channels == 2 ? PLAYER_OBX(rmt8) : PLAYER_OBX(rmt4)))
+	if (!load_native(ast, module_info, module, module_len,
+		MODULE_INFO channels == 2 ? GET_OBX(rmt8) : GET_OBX(rmt4)))
 		return FALSE;
 	song_len = UBYTE(module[4]) + (UBYTE(module[5]) << 8) + 1
 		- UBYTE(module[0x14]) - (UBYTE(module[0x15]) << 8);
@@ -614,7 +647,7 @@ FILE_FUNC abool parse_rmt(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	return MODULE_INFO songs != 0;
 }
 
-FILE_FUNC void parse_tmc_song(ASAP_ModuleInfo PTR module_info, const byte module[], int pos)
+FILE_FUNC void parse_tmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
 {
 	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
 	int tempo = UBYTE(module[0x24]) + 1;
@@ -673,15 +706,15 @@ FILE_FUNC void parse_tmc_song(ASAP_ModuleInfo PTR module_info, const byte module
 	set_song_duration(module_info, frames);
 }
 
-FILE_FUNC abool parse_tmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
-                          const byte module[], int module_len)
+FILE_FUNC abool parse_tmc(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+                          const byte ARRAY module, int module_len)
 {
 	int i;
 	int last_pos;
 	if (module_len < 0x1d0)
 		return FALSE;
 	MODULE_INFO type = 't';
-	if (!load_native(as, module_info, module, module_len, PLAYER_OBX(tmc)))
+	if (!load_native(ast, module_info, module, module_len, GET_OBX(tmc)))
 		return FALSE;
 	MODULE_INFO channels = 2;
 	i = 0;
@@ -709,13 +742,13 @@ FILE_FUNC abool parse_tmc(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	i = module[0x25];
 	if (i < 1 || i > 4)
 		return FALSE;
-	if (as != NULL)
-		AS tmc_per_frame = module[0x25];
+	if (ast != NULL)
+		AST tmc_per_frame = module[0x25];
 	MODULE_INFO fastplay = perframe2fastplay[i - 1];
 	return TRUE;
 }
 
-FILE_FUNC void parse_tm2_song(ASAP_ModuleInfo PTR module_info, const byte module[], int pos)
+FILE_FUNC void parse_tm2_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
 {
 	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
 	int tempo = UBYTE(module[0x24]) + 1;
@@ -788,8 +821,8 @@ FILE_FUNC void parse_tm2_song(ASAP_ModuleInfo PTR module_info, const byte module
 	set_song_duration(module_info, player_calls);
 }
 
-FILE_FUNC abool parse_tm2(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
-                          const byte module[], int module_len)
+FILE_FUNC abool parse_tm2(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+                          const byte ARRAY module, int module_len)
 {
 	int i;
 	int last_pos;
@@ -797,7 +830,7 @@ FILE_FUNC abool parse_tm2(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	if (module_len < 0x3a4)
 		return FALSE;
 	MODULE_INFO type = 'T';
-	if (!load_native(as, module_info, module, module_len, PLAYER_OBX(tm2)))
+	if (!load_native(ast, module_info, module, module_len, GET_OBX(tm2)))
 		return FALSE;
 	i = module[0x25];
 	if (i < 1 || i > 4)
@@ -837,7 +870,7 @@ FILE_FUNC abool parse_tm2(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	return TRUE;
 }
 
-#ifndef JAVA
+#if !defined(JAVA) && !defined(CSHARP)
 
 static abool parse_hex(int *retval, const char *p)
 {
@@ -958,10 +991,10 @@ void ASAP_DurationToString(char *s, int duration)
 	*s = '\0';
 }
 
-#endif /* JAVA */
+#endif /* !defined(JAVA) && !defined(CSHARP) */
 
 FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
-                                 const byte module[], int module_len)
+                                 const byte ARRAY module, int module_len)
 {
 	int module_index = 0;
 	abool sap_signature = FALSE;
@@ -969,7 +1002,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 	for (;;) {
 		NEW_ARRAY(char, line, 256);
 		int i;
-#ifndef JAVA
+#if !defined(JAVA) && !defined(CSHARP)
 		char *p;
 #endif
 		if (module_index + 8 >= module_len)
@@ -1000,6 +1033,21 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 #define SET_TEXT(v)             v = arg.substring(1, arg.length() - 1)
 #define DURATION_ARG            parseDuration(arg)
 #define ARG_CONTAINS(t)         (arg.indexOf(t) >= 0)
+#elif defined(CSHARP)
+		string tag = new string(line, 0, i);
+		string arg = null;
+		i = tag.IndexOf(' ');
+		if (i >= 0) {
+			arg = tag.Substring(i + 1);
+			tag = tag.Substring(0, i);
+		}
+#define TAG_IS(t)               tag == t
+#define CHAR_ARG                arg[0]
+#define SET_HEX(v)              v = int.Parse(arg, System.Globalization.NumberStyles.HexNumber)
+#define SET_DEC(v, min, max)    do { v = int.Parse(arg); if (v < min || v > max) return FALSE; } while (FALSE)
+#define SET_TEXT(v)             v = arg.Substring(1, arg.Length - 1)
+#define DURATION_ARG            ParseDuration(arg)
+#define ARG_CONTAINS(t)         (arg.IndexOf(t) >= 0)
 #else
 		line[i] = '\0';
 		for (p = line; *p != '\0'; p++) {
@@ -1079,15 +1127,15 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 	return TRUE;
 }
 
-FILE_FUNC abool parse_sap(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
-                          const byte module[], int module_len)
+FILE_FUNC abool parse_sap(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+                          const byte ARRAY module, int module_len)
 {
 	int module_index;
 	if (!parse_sap_header(module_info, module, module_len))
 		return FALSE;
-	if (as == NULL)
+	if (ast == NULL)
 		return TRUE;
-	ZERO_ARRAY(AS memory);
+	ZERO_ARRAY(AST memory);
 	module_index = MODULE_INFO header_len + 2;
 	while (module_index + 5 <= module_len) {
 		int start_addr = UBYTE(module[module_index]) + (UBYTE(module[module_index + 1]) << 8);
@@ -1095,7 +1143,7 @@ FILE_FUNC abool parse_sap(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 		if (block_len <= 0 || module_index + block_len > module_len)
 			return FALSE;
 		module_index += 4;
-		COPY_ARRAY(AS memory, start_addr, module, module_index, block_len);
+		COPY_ARRAY(AST memory, start_addr, module, module_index, block_len);
 		module_index += block_len;
 		if (module_index == module_len)
 			return TRUE;
@@ -1117,6 +1165,15 @@ FILE_FUNC int get_packed_ext(STRING filename)
 		if (filename.charAt(i) == '.')
 			return ext | 0x202020;
 		ext = (ext << 8) + filename.charAt(i);
+	}
+	return 0;
+#elif defined(CSHARP)
+	int i = filename.Length;
+	int ext = 0;
+	while (--i > 0) {
+		if (filename[i] == '.')
+			return ext | 0x202020;
+		ext = (ext << 8) + filename[i];
 	}
 	return 0;
 #else
@@ -1170,8 +1227,8 @@ ASAP_FUNC abool ASAP_IsOurExt(STRING ext)
 #endif
 }
 
-FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
-                           STRING filename, const byte module[], int module_len)
+FILE_FUNC abool parse_file(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+                           STRING filename, const byte ARRAY module, int module_len)
 {
 	int i;
 #ifdef JAVA
@@ -1189,6 +1246,21 @@ FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	module_info.author = "";
 	module_info.name = filename.substring(basename, ext);
 	module_info.date = "";
+#elif defined(CSHARP)
+	int basename = 0;
+	int ext = -1;
+	for (i = 0; i < filename.Length; i++) {
+		int c = filename[i];
+		if (c == '/' || c == '\\')
+			basename = i + 1;
+		else if (c == '.')
+			ext = i;
+	}
+	if (ext < 0)
+		ext = i;
+	module_info.author = string.Empty;
+	module_info.name = filename.Substring(basename, ext - basename);
+	module_info.date = string.Empty;
 #else
 	const char *p;
 	const char *basename = filename;
@@ -1221,170 +1293,170 @@ FILE_FUNC abool parse_file(ASAP_State PTR as, ASAP_ModuleInfo PTR module_info,
 	MODULE_INFO player = -1;
 	switch (get_packed_ext(filename)) {
 	case ASAP_EXT('C', 'M', 'C'):
-		return parse_cmc(as, module_info, module, module_len, FALSE);
+		return parse_cmc(ast, module_info, module, module_len, FALSE);
 	case ASAP_EXT('C', 'M', 'R'):
-		return parse_cmc(as, module_info, module, module_len, TRUE);
+		return parse_cmc(ast, module_info, module, module_len, TRUE);
 	case ASAP_EXT('D', 'M', 'C'):
 		MODULE_INFO fastplay = 156;
-		return parse_cmc(as, module_info, module, module_len, FALSE);
+		return parse_cmc(ast, module_info, module, module_len, FALSE);
 	case ASAP_EXT('M', 'P', 'D'):
 		MODULE_INFO fastplay = 156;
-		return parse_mpt(as, module_info, module, module_len);
+		return parse_mpt(ast, module_info, module, module_len);
 	case ASAP_EXT('M', 'P', 'T'):
-		return parse_mpt(as, module_info, module, module_len);
+		return parse_mpt(ast, module_info, module, module_len);
 	case ASAP_EXT('R', 'M', 'T'):
-		return parse_rmt(as, module_info, module, module_len);
+		return parse_rmt(ast, module_info, module, module_len);
 	case ASAP_EXT('S', 'A', 'P'):
-		return parse_sap(as, module_info, module, module_len);
+		return parse_sap(ast, module_info, module, module_len);
 	case ASAP_EXT('T', 'M', '2'):
-		return parse_tm2(as, module_info, module, module_len);
+		return parse_tm2(ast, module_info, module, module_len);
 	case ASAP_EXT('T', 'M', '8'):
 	case ASAP_EXT('T', 'M', 'C'):
-		return parse_tmc(as, module_info, module, module_len);
+		return parse_tmc(ast, module_info, module, module_len);
 	default:
 		return FALSE;
 	}
 }
 
 ASAP_FUNC abool ASAP_GetModuleInfo(ASAP_ModuleInfo PTR module_info, STRING filename,
-                                   const byte module[], int module_len)
+                                   const byte ARRAY module, int module_len)
 {
 	return parse_file(NULL, module_info, filename, module, module_len);
 }
 
-ASAP_FUNC abool ASAP_Load(ASAP_State PTR as, STRING filename,
-                          const byte module[], int module_len)
+ASAP_FUNC abool ASAP_Load(ASAP_State PTR ast, STRING filename,
+                          const byte ARRAY module, int module_len)
 {
-	AS silence_cycles = 0;
-	return parse_file(as, ADDRESSOF AS module_info, filename, module, module_len);
+	AST silence_cycles = 0;
+	return parse_file(ast, ADDRESSOF AST module_info, filename, module, module_len);
 }
 
-ASAP_FUNC void ASAP_DetectSilence(ASAP_State PTR as, int seconds)
+ASAP_FUNC void ASAP_DetectSilence(ASAP_State PTR ast, int seconds)
 {
-	AS silence_cycles = seconds * ASAP_MAIN_CLOCK;
+	AST silence_cycles = seconds * ASAP_MAIN_CLOCK;
 }
 
-FILE_FUNC void call_6502(ASAP_State PTR as, int addr, int max_scanlines)
+FILE_FUNC void call_6502(ASAP_State PTR ast, int addr, int max_scanlines)
 {
-	AS cpu_pc = addr;
+	AST cpu_pc = addr;
 	/* put a CIM at 0xd20a and a return address on stack */
 	dPutByte(0xd20a, 0xd2);
 	dPutByte(0x01fe, 0x09);
 	dPutByte(0x01ff, 0xd2);
-	AS cpu_s = 0xfd;
-	Cpu_RunScanlines(as, max_scanlines);
+	AST cpu_s = 0xfd;
+	Cpu_RunScanlines(ast, max_scanlines);
 }
 
 /* 50 Atari frames for the initialization routine - some SAPs are self-extracting. */
 #define SCANLINES_FOR_INIT  (50 * 312)
 
-FILE_FUNC void call_6502_init(ASAP_State PTR as, int addr, int a, int x, int y)
+FILE_FUNC void call_6502_init(ASAP_State PTR ast, int addr, int a, int x, int y)
 {
-	AS cpu_a = a & 0xff;
-	AS cpu_x = x & 0xff;
-	AS cpu_y = y & 0xff;
-	call_6502(as, addr, SCANLINES_FOR_INIT);
+	AST cpu_a = a & 0xff;
+	AST cpu_x = x & 0xff;
+	AST cpu_y = y & 0xff;
+	call_6502(ast, addr, SCANLINES_FOR_INIT);
 }
 
-ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR as, int song, int duration)
+ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 {
-	AS current_song = song;
-	AS current_duration = duration;
-	AS blocks_played = 0;
-	AS silence_cycles_counter = AS silence_cycles;
-	AS extra_pokey_mask = AS module_info.channels > 1 ? 0x10 : 0;
-	PokeySound_Initialize(as);
-	AS cycle = 0;
-	AS cpu_nz = 0;
-	AS cpu_c = 0;
-	AS cpu_vdi = 0;
-	AS scanline_number = 0;
-	AS next_scanline_cycle = 0;
-	AS timer1_cycle = NEVER;
-	AS timer2_cycle = NEVER;
-	AS timer4_cycle = NEVER;
-	AS irqst = 0xff;
-	switch (AS module_info.type) {
+	AST current_song = song;
+	AST current_duration = duration;
+	AST blocks_played = 0;
+	AST silence_cycles_counter = AST silence_cycles;
+	AST extra_pokey_mask = AST module_info.channels > 1 ? 0x10 : 0;
+	PokeySound_Initialize(ast);
+	AST cycle = 0;
+	AST cpu_nz = 0;
+	AST cpu_c = 0;
+	AST cpu_vdi = 0;
+	AST scanline_number = 0;
+	AST next_scanline_cycle = 0;
+	AST timer1_cycle = NEVER;
+	AST timer2_cycle = NEVER;
+	AST timer4_cycle = NEVER;
+	AST irqst = 0xff;
+	switch (AST module_info.type) {
 	case 'B':
-		call_6502_init(as, AS module_info.init, song, 0, 0);
+		call_6502_init(ast, AST module_info.init, song, 0, 0);
 		break;
 	case 'C':
 	case 'c':
 	case 'z':
-		call_6502_init(as, AS module_info.player + 3, 0x70, AS module_info.music, AS module_info.music >> 8);
-		call_6502_init(as, AS module_info.player + 3, 0x00, song, 0);
+		call_6502_init(ast, AST module_info.player + 3, 0x70, AST module_info.music, AST module_info.music >> 8);
+		call_6502_init(ast, AST module_info.player + 3, 0x00, song, 0);
 		break;
 	case 'D':
 	case 'S':
-		AS cpu_a = song;
-		AS cpu_x = 0x00;
-		AS cpu_y = 0x00;
-		AS cpu_s = 0xff;
-		AS cpu_pc = AS module_info.init;
+		AST cpu_a = song;
+		AST cpu_x = 0x00;
+		AST cpu_y = 0x00;
+		AST cpu_s = 0xff;
+		AST cpu_pc = AST module_info.init;
 		break;
 	case 'm':
-		call_6502_init(as, AS module_info.player, 0x00, AS module_info.music >> 8, AS module_info.music);
-		call_6502_init(as, AS module_info.player, 0x02, AS module_info.song_pos[song], 0);
+		call_6502_init(ast, AST module_info.player, 0x00, AST module_info.music >> 8, AST module_info.music);
+		call_6502_init(ast, AST module_info.player, 0x02, AST module_info.song_pos[song], 0);
 		break;
 	case 'r':
-		call_6502_init(as, AS module_info.player, AS module_info.song_pos[song], AS module_info.music, AS module_info.music >> 8);
+		call_6502_init(ast, AST module_info.player, AST module_info.song_pos[song], AST module_info.music, AST module_info.music >> 8);
 		break;
 	case 't':
 	case 'T':
-		call_6502_init(as, AS module_info.player, 0x70, AS module_info.music >> 8, AS module_info.music);
-		call_6502_init(as, AS module_info.player, 0x00, song, 0);
-		AS tmc_per_frame_counter = 1;
+		call_6502_init(ast, AST module_info.player, 0x70, AST module_info.music >> 8, AST module_info.music);
+		call_6502_init(ast, AST module_info.player, 0x00, song, 0);
+		AST tmc_per_frame_counter = 1;
 		break;
 	}
-	ASAP_MutePokeyChannels(as, 0);
+	ASAP_MutePokeyChannels(ast, 0);
 }
 
-ASAP_FUNC void ASAP_MutePokeyChannels(ASAP_State PTR as, int mask)
+ASAP_FUNC void ASAP_MutePokeyChannels(ASAP_State PTR ast, int mask)
 {
-	PokeySound_Mute(as, ADDRESSOF AS base_pokey, mask);
-	PokeySound_Mute(as, ADDRESSOF AS extra_pokey, mask >> 4);
+	PokeySound_Mute(ast, ADDRESSOF AST base_pokey, mask);
+	PokeySound_Mute(ast, ADDRESSOF AST extra_pokey, mask >> 4);
 }
 
-ASAP_FUNC abool call_6502_player(ASAP_State PTR as)
+ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 {
 	int s;
-	PokeySound_StartFrame(as);
-	switch (AS module_info.type) {
+	PokeySound_StartFrame(ast);
+	switch (AST module_info.type) {
 	case 'B':
-		call_6502(as, AS module_info.player, AS module_info.fastplay);
+		call_6502(ast, AST module_info.player, AST module_info.fastplay);
 		break;
 	case 'C':
 	case 'c':
 	case 'z':
-		call_6502(as, AS module_info.player + 6, AS module_info.fastplay);
+		call_6502(ast, AST module_info.player + 6, AST module_info.fastplay);
 		break;
 	case 'D':
-		s = AS cpu_s;
+		s = AST cpu_s;
 #define PUSH_ON_6502_STACK(x)  dPutByte(0x100 + s, x); s = (s - 1) & 0xff
 #define RETURN_FROM_PLAYER_ADDR  0xd200
 		/* save 6502 state on 6502 stack */
-		PUSH_ON_6502_STACK(AS cpu_pc >> 8);
-		PUSH_ON_6502_STACK(AS cpu_pc & 0xff);
-		PUSH_ON_6502_STACK(((AS cpu_nz | (AS cpu_nz >> 1)) & 0x80) + AS cpu_vdi + \
-			((AS cpu_nz & 0xff) == 0 ? Z_FLAG : 0) + AS cpu_c + 0x20);
-		PUSH_ON_6502_STACK(AS cpu_a);
-		PUSH_ON_6502_STACK(AS cpu_x);
-		PUSH_ON_6502_STACK(AS cpu_y);
+		PUSH_ON_6502_STACK(AST cpu_pc >> 8);
+		PUSH_ON_6502_STACK(AST cpu_pc & 0xff);
+		PUSH_ON_6502_STACK(((AST cpu_nz | (AST cpu_nz >> 1)) & 0x80) + AST cpu_vdi + \
+			((AST cpu_nz & 0xff) == 0 ? Z_FLAG : 0) + AST cpu_c + 0x20);
+		PUSH_ON_6502_STACK(AST cpu_a);
+		PUSH_ON_6502_STACK(AST cpu_x);
+		PUSH_ON_6502_STACK(AST cpu_y);
 		/* RTS will jump to 6502 code that restores the state */
 		PUSH_ON_6502_STACK((RETURN_FROM_PLAYER_ADDR - 1) >> 8);
 		PUSH_ON_6502_STACK((RETURN_FROM_PLAYER_ADDR - 1) & 0xff);
-		AS cpu_s = s;
+		AST cpu_s = s;
 		dPutByte(RETURN_FROM_PLAYER_ADDR, 0x68);     /* PLA */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 1, 0xa8); /* TAY */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 2, 0x68); /* PLA */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 3, 0xaa); /* TAX */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 4, 0x68); /* PLA */
 		dPutByte(RETURN_FROM_PLAYER_ADDR + 5, 0x40); /* RTI */
-		AS cpu_pc = AS module_info.player;
-		Cpu_RunScanlines(as, AS module_info.fastplay);
+		AST cpu_pc = AST module_info.player;
+		Cpu_RunScanlines(ast, AST module_info.fastplay);
 		break;
 	case 'S':
-		Cpu_RunScanlines(as, AS module_info.fastplay);
+		Cpu_RunScanlines(ast, AST module_info.fastplay);
 		{
 			int i = dGetByte(0x45) - 1;
 			dPutByte(0x45, i);
@@ -1395,27 +1467,27 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR as)
 	case 'm':
 	case 'r':
 	case 'T':
-		call_6502(as, AS module_info.player + 3, AS module_info.fastplay);
+		call_6502(ast, AST module_info.player + 3, AST module_info.fastplay);
 		break;
 	case 't':
-		if (--AS tmc_per_frame_counter <= 0) {
-			AS tmc_per_frame_counter = AS tmc_per_frame;
-			call_6502(as, AS module_info.player + 3, AS module_info.fastplay);
+		if (--AST tmc_per_frame_counter <= 0) {
+			AST tmc_per_frame_counter = AST tmc_per_frame;
+			call_6502(ast, AST module_info.player + 3, AST module_info.fastplay);
 		}
 		else
-			call_6502(as, AS module_info.player + 6, AS module_info.fastplay);
+			call_6502(ast, AST module_info.player + 6, AST module_info.fastplay);
 		break;
 	}
-	PokeySound_EndFrame(as, AS module_info.fastplay * 114);
-	if (AS silence_cycles > 0) {
-		if (PokeySound_IsSilent(ADDRESSOF AS base_pokey)
-		 && PokeySound_IsSilent(ADDRESSOF AS extra_pokey)) {
-			AS silence_cycles_counter -= AS module_info.fastplay * 114;
-			if (AS silence_cycles_counter <= 0)
+	PokeySound_EndFrame(ast, AST module_info.fastplay * 114);
+	if (AST silence_cycles > 0) {
+		if (PokeySound_IsSilent(ADDRESSOF AST base_pokey)
+		 && PokeySound_IsSilent(ADDRESSOF AST extra_pokey)) {
+			AST silence_cycles_counter -= AST module_info.fastplay * 114;
+			if (AST silence_cycles_counter <= 0)
 				return FALSE;
 		}
 		else
-			AS silence_cycles_counter = AS silence_cycles;
+			AST silence_cycles_counter = AST silence_cycles;
 	}
 	return TRUE;
 }
@@ -1425,44 +1497,44 @@ FILE_FUNC int milliseconds_to_blocks(int milliseconds)
 	return milliseconds * (ASAP_SAMPLE_RATE / 100) / 10;
 }
 
-ASAP_FUNC void ASAP_Seek(ASAP_State PTR as, int position)
+ASAP_FUNC void ASAP_Seek(ASAP_State PTR ast, int position)
 {
 	int block = milliseconds_to_blocks(position);
-	if (block < AS blocks_played)
-		ASAP_PlaySong(as, AS current_song, AS current_duration);
-	while (AS blocks_played + AS samples - AS sample_index < block) {
-		AS blocks_played += AS samples - AS sample_index;
-		call_6502_player(as);
+	if (block < AST blocks_played)
+		ASAP_PlaySong(ast, AST current_song, AST current_duration);
+	while (AST blocks_played + AST samples - AST sample_index < block) {
+		AST blocks_played += AST samples - AST sample_index;
+		call_6502_player(ast);
 	}
-	AS sample_index += block - AS blocks_played;
-	AS blocks_played = block;
+	AST sample_index += block - AST blocks_played;
+	AST blocks_played = block;
 }
 
-ASAP_FUNC int ASAP_Generate(ASAP_State PTR as, VOIDPTR buffer, int buffer_len,
+ASAP_FUNC int ASAP_Generate(ASAP_State PTR ast, VOIDPTR buffer, int buffer_len,
                             ASAP_SampleFormat format)
 {
 	int block_shift;
 	int buffer_blocks;
 	int block;
-	if (AS silence_cycles > 0 && AS silence_cycles_counter <= 0)
+	if (AST silence_cycles > 0 && AST silence_cycles_counter <= 0)
 		return 0;
-	block_shift = (AS module_info.channels - 1) + (format != ASAP_FORMAT_U8 ? 1 : 0);
+	block_shift = (AST module_info.channels - 1) + (format != ASAP_FORMAT_U8 ? 1 : 0);
 	buffer_blocks = buffer_len >> block_shift;
-	if (AS current_duration > 0) {
-		int total_blocks = milliseconds_to_blocks(AS current_duration);
-		if (buffer_blocks > total_blocks - AS blocks_played)
-			buffer_blocks = total_blocks - AS blocks_played;
+	if (AST current_duration > 0) {
+		int total_blocks = milliseconds_to_blocks(AST current_duration);
+		if (buffer_blocks > total_blocks - AST blocks_played)
+			buffer_blocks = total_blocks - AST blocks_played;
 	}
 	block = 0;
 	do {
-		int blocks = PokeySound_Generate(as, buffer, block << block_shift, buffer_blocks - block, format);
-		AS blocks_played += blocks;
+		int blocks = PokeySound_Generate(ast, buffer, block << block_shift, buffer_blocks - block, format);
+		AST blocks_played += blocks;
 		block += blocks;
-	} while (block < buffer_blocks && call_6502_player(as));
+	} while (block < buffer_blocks && call_6502_player(ast));
 	return block << block_shift;
 }
 
-#ifndef JAVA
+#if !defined(JAVA) && !defined(CSHARP)
 
 abool ASAP_ChangeExt(char *filename, const char *ext)
 {
@@ -1605,8 +1677,8 @@ static byte *put_sap_header(byte *dest, const ASAP_ModuleInfo *module_info, char
 	return dest;
 }
 
-int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const byte module[],
-                       int module_len, byte out_module[])
+int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const byte ARRAY module,
+                       int module_len, byte ARRAY out_module)
 {
 	byte *dest;
 	int i;
@@ -1645,7 +1717,7 @@ int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const byte module[],
 #define TM2_INIT  0x1080
 
 const char *ASAP_CanConvert(const char *filename, const ASAP_ModuleInfo *module_info,
-                            const byte module[], int module_len)
+                            const byte ARRAY module, int module_len)
 {
 	switch (module_info->type) {
 	case 'B':
@@ -1681,7 +1753,7 @@ const char *ASAP_CanConvert(const char *filename, const ASAP_ModuleInfo *module_
 }
 
 int ASAP_Convert(const char *filename, const ASAP_ModuleInfo *module_info,
-                 const byte module[], int module_len, byte out_module[])
+                 const byte ARRAY module, int module_len, byte ARRAY out_module)
 {
 	int out_len;
 	byte *dest;
@@ -1925,4 +1997,4 @@ int ASAP_Convert(const char *filename, const ASAP_ModuleInfo *module_info,
 	}
 }
 
-#endif /* JAVA */
+#endif /* !defined(JAVA) && !defined(CSHARP) */

@@ -152,6 +152,7 @@ clean:
 	del asap_dsf.dll;asap_dsf.res;install_dsf.bat;uninstall_dsf.bat
 	del ..\gsplayer\gspasap.dll;..\gsplayer\gspasap.exp;..\gsplayer\gspasap.lib;..\gsplayer\gspasap.res
 	del asapscan.exe
+	del csharp\asap2wav.exe;csharp\ASAP.cs
 	$(GMAKE) -C ../java clean
 
 # prepare files for release
@@ -204,6 +205,7 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 		players\cmc.asx players\mpt.asx players\rmt.asx players\tmc.asx players\tm2.asx \
 		configure.ac Makefile.in \
 		ChangeLog COPYING CREDITS INSTALL NEWS README \
+		csharp\ASAP.ppcs csharp\asap2wav.cs csharp\Makefile \
 		gsplayer\gspasap.c gsplayer\mapplugin.h \
 		gsplayer\gspasap.def gsplayer\gspasap.txt \
 		java\ASAP.ppjava java\ASAP_ModuleInfo.java \
