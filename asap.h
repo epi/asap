@@ -288,7 +288,7 @@ const char *ASAP_CanConvert(const char *filename, const ASAP_ModuleInfo *module_
    "module_len" is the source file length.
    "out_module" is the destination buffer of size ASAP_MODULE_MAX.
    ASAP_Convert() returns the resulting file length (number of bytes
-   written to "out_module"). */
+   written to "out_module") or -1 on error. */
 int ASAP_Convert(const char *filename, const ASAP_ModuleInfo *module_info,
                  const byte module[], int module_len, byte out_module[]);
 
