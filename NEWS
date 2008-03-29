@@ -1,6 +1,13 @@
 History
 -------
 
+* ASAP 1.2.0 (2008-03-29)
+
+Plugins for Windows Media Player and Apollo have been created.
+RMT duration detection has been improved. A bug in TMC to SAP conversion
+has been fixed. ASAP can be compiled as C#.
+
+
 * ASAP 1.1.0 (2008-02-17)
 
 All formats supported by ASAP can be converted to and from the SAP format,
