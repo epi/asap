@@ -10,6 +10,9 @@ Zdenek Eisenhammer  <pg@pinknet.cz>
 Piotr Fusik  <fox@scene.pl>
 * author and maintainer of ASAP
 
+Maciek Konecki  <maciusk1@wp.pl>
+* porting to C#
+
 Marcin Lewandowski  <jaskier@atari8.info>
 * 6502 routines for playing CMC, MPT, TMC and TM2
 
