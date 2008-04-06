@@ -1,4 +1,4 @@
-VERSION = 1.2.0
+VERSION = 1.2.1
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 DSHOW_BASECLASSES_DIR = "C:\Program Files\Microsoft SDKs\Windows\v6.0\Samples\Multimedia\DirectShow\BaseClasses"
@@ -16,7 +16,7 @@ GMAKE = make
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
 
-all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll
+all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll xbmc_asap.dll
 
 ..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	$(PERL) $** >$@
@@ -121,6 +121,14 @@ ASAP_Apollo.dll: apollo\ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo.res $(COMM
 ASAP_Apollo.res: gui.rc ..\asap.h gui.h
 	$(RC) /D APOLLO gui.rc
 
+# XBMC
+
+xbmc_asap.dll: ..\xbmc\xbmc_asap.c $(COMMON_C) xbmc_asap.res $(COMMON_H)
+	$(ASAP_CC) /LD ..\xbmc\xbmc_asap.c $(COMMON_C) $(LINKOPT)
+
+xbmc_asap.res: gui.rc ..\asap.h gui.h
+	$(RC) /D XBMC gui.rc
+
 # asapscan
 
 asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
@@ -223,6 +231,7 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 		win32\winamp\in_asap.c win32\winamp\README \
 		win32\winamp\in2.h win32\winamp\out.h \
 		win32\winamp\ipc_pe.h win32\winamp\wa_ipc.h \
+		xbmc\xbmc_asap.c xbmc\README \
 		xmms\libasap.c xmms\libasap.map \
 		-b players\cmc.obx players\mpt.obx \
 		players\rmt4.obx players\rmt8.obx \

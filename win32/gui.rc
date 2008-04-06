@@ -61,6 +61,9 @@ IDR_TRAYMENU MENU
 #elif defined(APOLLO)
 #  define APP_NAME "Apollo"
 #  define INTERNAL_NAME "ASAP_Apollo"
+#elif defined(XBMC)
+#  define APP_NAME "XBMC"
+#  define INTERNAL_NAME "xbmc_asap"
 #endif
 #ifdef DSHOW
 #define FILE_DESCRIPTION "ASAP DirectShow source filter"
@@ -69,7 +72,7 @@ IDR_TRAYMENU MENU
 #endif
 #define ORIGINAL_FILENAME INTERNAL_NAME ".dll"
 
-#ifndef DSHOW
+#if !defined(DSHOW) && !defined(XBMC)
 
 #ifndef _WIN32_WCE
 IDD_SETTINGS DIALOG 0, 0, 184, 216
@@ -134,7 +137,7 @@ FONT 8, "MS Sans Serif"
 #endif
 }
 
-#endif /* DSHOW */
+#endif /* !defined(DSHOW) && !defined(XBMC) */
 
 #ifdef WINAMP
 IDD_PROGRESS DIALOG 0, 0, 160, 48
