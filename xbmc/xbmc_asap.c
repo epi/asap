@@ -98,7 +98,7 @@ static void parseDate(const char *s, ASAP_SongInfo *song_info)
 	song_info->year = 100 * x + y;
 }
 
-__declspec(dllexport) abool asapGetSongs(const char *filename)
+__declspec(dllexport) int asapGetSongs(const char *filename)
 {
 	ASAP_ModuleInfo module_info;
 	if (!getModuleInfo(filename, &module_info))
