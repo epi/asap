@@ -1,3 +1,7 @@
+2008-04-11  Piotr Fusik  <fox@scene.pl>
+* xbmc/xbmc_asap.c: metadata and subsongs
+
+
 2008-04-06  Piotr Fusik  <fox@scene.pl>
 * xbmc/xbmc_asap.c, win32/Makefile, win32/gui.rc: XBMC plugin
 
