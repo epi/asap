@@ -21,7 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <windows.h>
+#include <stdio.h>
 
 #include "asap.h"
 
@@ -39,15 +39,13 @@ static ASAP_State asap;
 
 static abool loadModule(const char *filename, byte *module, int *module_len)
 {
-	HANDLE fh;
-	abool ok;
-	fh = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-	if (fh == INVALID_HANDLE_VALUE)
+	FILE *fp;
+	fp = fopen(filename, "rb");
+	if (fp == NULL)
 		return FALSE;
-	ok = ReadFile(fh, module, ASAP_MODULE_MAX, module_len, NULL);
-	CloseHandle(fh);
-	return ok;
+	*module_len = (int) fread(module, 1, ASAP_MODULE_MAX, fp);
+	fclose(fp);
+	return TRUE;
 }
 
 static abool getModuleInfo(const char *filename, ASAP_ModuleInfo *module_info)
