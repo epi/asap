@@ -1,6 +1,8 @@
 2008-04-12  Piotr Fusik  <fox@scene.pl>
 * asapscan.c, acpu.c: asapscan wasn't compilable
 
+* xbmc/xbmc_asap.c: use stdio instead of Win32 API
+
 
 2008-04-11  Piotr Fusik  <fox@scene.pl>
 * xbmc/xbmc_asap.c: metadata and subsongs
