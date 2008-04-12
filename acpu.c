@@ -285,7 +285,7 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		}
 #ifdef ASAPSCAN
 		if (cpu_trace)
-			print_cpu_state(as, pc, a, x, y, s, nz, vdi, c);
+			print_cpu_state(ast, pc, a, x, y, s, nz, vdi, c);
 #endif
 		data = FETCH;
 		AST cycle += opcode_cycles[data];

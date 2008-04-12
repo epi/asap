@@ -1,5 +1,5 @@
 /*
- * asapscan.c - Atari 8-bit music analyzer
+ * asapscan.c - 8-bit Atari music analyzer
  *
  * Copyright (C) 2007-2008  Piotr Fusik
  *
@@ -87,7 +87,7 @@ static const char cpu_instructions[256][10] = {
 	"SED", "SBC 2,Y", "NOP !", "INS 2,Y", "NOP 2,X", "SBC 2,X", "INC 2,X", "INS 2,X"
 };
 
-static void show_instruction(const ASAP_State *as, int pc)
+static void show_instruction(const ASAP_State *ast, int pc)
 {
 	int addr = pc;
 	int insn;
@@ -120,13 +120,13 @@ static void show_instruction(const ASAP_State *as, int pc)
 	printf("%04X: %02X        %s\n", addr, insn, mnemonic);
 }
 
-void print_cpu_state(const ASAP_State *as, int pc, int a, int x, int y, int s, int nz, int vdi, int c)
+void print_cpu_state(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz, int vdi, int c)
 {
 	printf("%3d %3d A=%02X X=%02X Y=%02X S=%02X P=%c%c*-%c%c%c%c PC=",
-		as->scanline_number, as->cycle + 114 - as->next_scanline_cycle, a, x, y, s,
+		ast->scanline_number, ast->cycle + 114 - ast->next_scanline_cycle, a, x, y, s,
 		nz >= 0x80 ? 'N' : '-', (vdi & V_FLAG) != 0 ? 'V' : '-', (vdi & D_FLAG) != 0 ? 'D' : '-',
 		(vdi & I_FLAG) != 0 ? 'I' : '-', (nz & 0xff) == 0 ? 'Z' : '-', c != 0 ? 'C' : '-');
-	show_instruction(as, pc);
+	show_instruction(ast, pc);
 }
 
 static void print_help(void)
@@ -143,14 +143,14 @@ static void print_help(void)
 	);
 }
 
-static abool store_pokey(byte *p, PokeyState *ps)
+static abool store_pokey(byte *p, PokeyState *pst)
 {
 	abool is_silence = TRUE;
 #define STORE_CHANNEL(ch) \
-	if ((ps->audc##ch & 0xf) != 0) { \
+	if ((pst->audc##ch & 0xf) != 0) { \
 		is_silence = FALSE; \
-		p[ch * 2 - 2] = ps->audf##ch; \
-		p[ch * 2 - 1] = ps->audc##ch; \
+		p[ch * 2 - 2] = pst->audf##ch; \
+		p[ch * 2 - 1] = pst->audc##ch; \
 	} \
 	else { \
 		p[ch * 2 - 2] = 0; \
@@ -160,16 +160,16 @@ static abool store_pokey(byte *p, PokeyState *ps)
 	STORE_CHANNEL(2)
 	STORE_CHANNEL(3)
 	STORE_CHANNEL(4)
-	p[8] = ps->audctl;
+	p[8] = pst->audctl;
 	return is_silence;
 }
 
-static void print_pokey(PokeyState *ps)
+static void print_pokey(PokeyState *pst)
 {
 	printf(
 		"%02X %02X  %02X %02X  %02X %02X  %02X %02X  %02X",
-		ps->audf1, ps->audc1, ps->audf2, ps->audc2,
-		ps->audf3, ps->audc3, ps->audf4, ps->audc4, ps->audctl
+		pst->audf1, pst->audc1, pst->audf2, pst->audc2,
+		pst->audf3, pst->audc3, pst->audf4, pst->audc4, pst->audctl
 	);
 }
 
