@@ -7,6 +7,7 @@ CC = cl /nologo /O2 /GL /GR- /GS- /W3 /wd4996 /DNDEBUG
 LINKOPT = /link /release /opt:nowin98
 MKLIB = lib /nologo /ltcg /out:$@
 ASAP_CC = $(CC) /Fe$@ /I . /I ..
+ASAP_CC71 = cl /nologo /O2 /GL /GR- /W3 /wd4996 /DNDEBUG /Fe$@ /I . /I ..
 PERL = perl
 XASM = xasm /q /o:$@
 RC = rc /fo $@
@@ -126,7 +127,7 @@ ASAP_Apollo.res: gui.rc ..\asap.h gui.h
 xbmc: xbmc_asap.dll
 
 xbmc_asap.dll: ..\xbmc\xbmc_asap.c $(COMMON_C) xbmc_asap.res $(COMMON_H)
-	$(ASAP_CC) /LD /MD ..\xbmc\xbmc_asap.c $(COMMON_C) $(LINKOPT)
+	$(ASAP_CC71) /LD /MD ..\xbmc\xbmc_asap.c $(COMMON_C) $(LINKOPT)
 
 xbmc_asap.res: gui.rc ..\asap.h gui.h
 	$(RC) /D XBMC gui.rc
