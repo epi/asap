@@ -3,12 +3,12 @@ ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 DSHOW_BASECLASSES_DIR = "C:\Program Files\Microsoft SDKs\Windows\v6.0\Samples\Multimedia\DirectShow\BaseClasses"
 
-CC = cl /nologo /O2 /GL /GR- /GS- /fp:fast /W3 /wd4996 /DNDEBUG
+CC = cl /nologo /O2 /GL /GR- /GS- /W3 /wd4996 /DNDEBUG
 LINKOPT = /link /release /opt:nowin98
 MKLIB = lib /nologo /ltcg /out:$@
 ASAP_CC = $(CC) /Fe$@ /I . /I ..
 PERL = perl
-XASM = xasm /q
+XASM = xasm /q /o:$@
 RC = rc /fo $@
 CLARM = clarm /nologo /O2 /W3 /DNDEBUG /DARM /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
 GMAKE = make
@@ -16,28 +16,28 @@ GMAKE = make
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
 
-all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll xbmc_asap.dll
+all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll
 
 ..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	$(PERL) $** >$@
 
 ..\players\cmc.obx: ..\players\cmc.asx
-	$(XASM) $** /o:$@
+	$(XASM) $**
 
 ..\players\mpt.obx: ..\players\mpt.asx
-	$(XASM) $** /o:$@
+	$(XASM) $**
 
 ..\players\rmt4.obx: ..\players\rmt.asx
-	$(XASM) $** /d:STEREOMODE=0 /o:$@
+	$(XASM) /d:STEREOMODE=0 $**
 
 ..\players\rmt8.obx: ..\players\rmt.asx
-	$(XASM) $** /d:STEREOMODE=1 /o:$@
+	$(XASM) /d:STEREOMODE=1 $**
 
 ..\players\tmc.obx: ..\players\tmc.asx
-	$(XASM) $** /o:$@
+	$(XASM) $**
 
 ..\players\tm2.obx: ..\players\tm2.asx
-	$(XASM) $** /o:$@
+	$(XASM) $**
 
 # ASAP2WAV
 
@@ -123,8 +123,10 @@ ASAP_Apollo.res: gui.rc ..\asap.h gui.h
 
 # XBMC
 
+xbmc: xbmc_asap.dll
+
 xbmc_asap.dll: ..\xbmc\xbmc_asap.c $(COMMON_C) xbmc_asap.res $(COMMON_H)
-	$(ASAP_CC) /LD ..\xbmc\xbmc_asap.c $(COMMON_C) $(LINKOPT)
+	$(ASAP_CC) /LD /MD ..\xbmc\xbmc_asap.c $(COMMON_C) $(LINKOPT)
 
 xbmc_asap.res: gui.rc ..\asap.h gui.h
 	$(RC) /D XBMC gui.rc

@@ -156,3 +156,15 @@ From the command prompt navigate to the "csharp" directory and run:
 nmake
 
 This should produce asap2wav.exe.
+
+
+Building the XBMC plugin on Windows
+-----------------------------------
+
+You need Microsoft Visual C++ 2003 and Perl.
+Open the Visual Studio 2003 Command Prompt, navigate to the "win32" directory
+and run:
+nmake xbmc
+
+This should produce xbmc_asap.dll, which you can use with XBox
+or Windows version of XBMC. The XBMC must include support for ASAP.
