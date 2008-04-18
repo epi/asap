@@ -1,3 +1,7 @@
+2008-04-18  Piotr Fusik  <fox@scene.pl>
+* win32/gui.rc: don't require Windows SDK for building XBMC plugin
+
+
 2008-04-12  Piotr Fusik  <fox@scene.pl>
 * asapscan.c, acpu.c: asapscan wasn't compilable
 

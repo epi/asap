@@ -1,4 +1,6 @@
+#if !defined(DSHOW) && !defined(XBMC)
 #include <windows.h>
+#endif
 #ifdef WINAMP
 #include <commctrl.h>
 #endif
