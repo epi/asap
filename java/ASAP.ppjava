@@ -45,6 +45,9 @@
 #define NEW_ARRAY(type, name, size) \
                                 type[] name = new type[size]
 #define INIT_ARRAY(array)
+#define READ_BYTE               read
+#define READ_ARRAY              read
+#define RUNTIME_EXCEPTION       RuntimeException
 
 #define AST                     ast.
 #define PST                     pst.

@@ -108,24 +108,13 @@ FILE_FUNC abool load_native(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 		int block_len;
 		if (UBYTE(module[0]) != 0xff || UBYTE(module[1]) != 0xff)
 			return FALSE;
-#ifdef JAVA
-		try {
-			player.read();
-			player.read();
-			MODULE_INFO player = player.read();
-			MODULE_INFO player += player.read() << 8;
-			player_last_byte = player.read();
-			player_last_byte += player.read() << 8;
-		} catch (IOException e) {
-			throw new RuntimeException();
-		}
-#elif defined(CSHARP)
-		player.ReadByte();
-		player.ReadByte();
-		MODULE_INFO player = player.ReadByte();
-		MODULE_INFO player += player.ReadByte() << 8;
-		player_last_byte = player.ReadByte();
-		player_last_byte += player.ReadByte() << 8;
+#if defined(JAVA) || defined(CSHARP)
+		player.READ_BYTE();
+		player.READ_BYTE();
+		MODULE_INFO player = player.READ_BYTE();
+		MODULE_INFO player += player.READ_BYTE() << 8;
+		player_last_byte = player.READ_BYTE();
+		player_last_byte += player.READ_BYTE() << 8;
 #else
 		MODULE_INFO player = UBYTE(player[2]) + (UBYTE(player[3]) << 8);
 		player_last_byte = UBYTE(player[4]) + (UBYTE(player[5]) << 8);
@@ -149,25 +138,12 @@ FILE_FUNC abool load_native(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 		}
 		if (ast != NULL) {
 			COPY_ARRAY(AST memory, MODULE_INFO music, module, 6, block_len);
-#ifdef JAVA
+#if defined(JAVA) || defined(CSHARP)
 			int addr = MODULE_INFO player;
 			do {
-				int i;
-				try {
-					i = player.read(AST memory, addr, player_last_byte + 1 - addr);
-				} catch (IOException e) {
-					throw new RuntimeException();
-				}
+				int i = player.READ_ARRAY(AST memory, addr, player_last_byte + 1 - addr);
 				if (i <= 0)
-					throw new RuntimeException();
-				addr += i;
-			} while (addr <= player_last_byte);
-#elif defined(CSHARP)
-			int addr = MODULE_INFO player;
-			do {
-				int i = player.Read(AST memory, addr, player_last_byte + 1 - addr);
-				if (i <= 0)
-					throw new Exception();
+					throw new RUNTIME_EXCEPTION();
 				addr += i;
 			} while (addr <= player_last_byte);
 #else
@@ -177,6 +153,9 @@ FILE_FUNC abool load_native(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 		return TRUE;
 	}
 #ifdef JAVA
+	catch (IOException e) {
+		throw new RuntimeException();
+	}
 	finally {
 		try {
 			player.close();
