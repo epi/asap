@@ -296,7 +296,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		DO_ULTRASOUND(1);
 		break;
 	case 0x01:
-		DO_AUDC(1);
+		DO_AUDC(1)
 	case 0x02:
 		DO_STORE(audf2);
 		switch (PST audctl & 0x50) {
@@ -314,7 +314,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		DO_ULTRASOUND(2);
 		break;
 	case 0x03:
-		DO_AUDC(2);
+		DO_AUDC(2)
 	case 0x04:
 		DO_STORE(audf3);
 		switch (PST audctl & 0x28) {
@@ -338,7 +338,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		DO_ULTRASOUND(3);
 		break;
 	case 0x05:
-		DO_AUDC(3);
+		DO_AUDC(3)
 	case 0x06:
 		DO_STORE(audf4);
 		switch (PST audctl & 0x28) {
@@ -356,7 +356,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		DO_ULTRASOUND(4);
 		break;
 	case 0x07:
-		DO_AUDC(4);
+		DO_AUDC(4)
 	case 0x08:
 		DO_STORE(audctl);
 		PST div_cycles = ((data & 1) != 0) ? 114 : 28;
