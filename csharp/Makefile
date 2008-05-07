@@ -1,6 +1,6 @@
 CSC = csc /nologo /o+
 PP = cpp -P -I..
-XASM = xasm /q
+XASM = xasm /q /o:$@
 
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h
@@ -19,22 +19,22 @@ ASAP.cs: ASAP.ppcs $(COMMON_C) $(COMMON_H)
 	$(PP) ASAP.ppcs > ASAP.cs
 
 ..\players\cmc.obx: ..\players\cmc.asx
-	$(XASM) $** /o:$@
+	$(XASM) $**
 
 ..\players\mpt.obx: ..\players\mpt.asx
-	$(XASM) $** /o:$@
+	$(XASM) $**
 
 ..\players\rmt4.obx: ..\players\rmt.asx
-	$(XASM) $** /d:STEREOMODE=0 /o:$@
+	$(XASM) /d:STEREOMODE=0 $**
 
 ..\players\rmt8.obx: ..\players\rmt.asx
-	$(XASM) $** /d:STEREOMODE=1 /o:$@
+	$(XASM) /d:STEREOMODE=1 $**
 
 ..\players\tmc.obx: ..\players\tmc.asx
-	$(XASM) $** /o:$@
+	$(XASM) $**
 
 ..\players\tm2.obx: ..\players\tm2.asx
-	$(XASM) $** /o:$@
+	$(XASM) $**
 
 clean:
 	del asap2wav.exe
