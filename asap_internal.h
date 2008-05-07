@@ -60,7 +60,7 @@ void Cpu_RunScanlines(ASAP_State *ast, int scanlines);
 void PokeySound_Initialize(ASAP_State *ast);
 void PokeySound_StartFrame(ASAP_State *ast);
 void PokeySound_PutByte(ASAP_State *ast, int addr, int data);
-int PokeySound_GetRandom(ASAP_State *ast, int addr);
+int PokeySound_GetRandom(ASAP_State *ast, int addr, int cycle);
 void PokeySound_EndFrame(ASAP_State *ast, int cycle_limit);
 int PokeySound_Generate(ASAP_State *ast, byte buffer[], int buffer_offset, int blocks, ASAP_SampleFormat format);
 abool PokeySound_IsSilent(const PokeyState *pst);

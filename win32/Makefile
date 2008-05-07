@@ -17,7 +17,7 @@ GMAKE = make
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
 
-all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll
+all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll
 
 ..\players.h: ..\raw2c.pl ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	$(PERL) $** >$@
@@ -111,7 +111,7 @@ DSHOW_BASECLASSES = $(DSHOW_BASECLASSES_DIR)\amfilter.cpp $(DSHOW_BASECLASSES_DI
 asap_dsf.dll: dshow\asap_dsf.cpp $(COMMON_C) asap_dsf.res dshow\asap_dsf.def $(COMMON_H)
 	$(ASAP_CC) /DDSHOW /LD /I$(DSHOW_BASECLASSES_DIR) dshow\asap_dsf.cpp $(COMMON_C) $(DSHOW_BASECLASSES) asap_dsf.res dshow\asap_dsf.def advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(LINKOPT)
 
-asap_dsf.res: gui.rc ..\asap.h gui.h
+asap_dsf.res: gui.rc ..\asap.h
 	$(RC) /D DSHOW gui.rc
 
 # Apollo
@@ -129,8 +129,16 @@ xbmc: xbmc_asap.dll
 xbmc_asap.dll: ..\xbmc\xbmc_asap.c $(COMMON_C) xbmc_asap.res $(COMMON_H)
 	$(ASAP_CC71) /LD /MD ..\xbmc\xbmc_asap.c $(COMMON_C) $(LINKOPT)
 
-xbmc_asap.res: gui.rc ..\asap.h gui.h
+xbmc_asap.res: gui.rc ..\asap.h
 	$(RC) /D XBMC gui.rc
+
+# APokeySound
+
+apokeysnd.dll: ..\apokeysnd.c apokeysnd.res ..\asap.h ..\asap_internal.h
+	$(ASAP_CC) /DAPOKEYSND /LD ..\apokeysnd.c apokeysnd.res $(LINKOPT)
+
+apokeysnd.res: gui.rc ..\asap.h
+	$(RC) /D APOKEYSND gui.rc
 
 # asapscan
 
@@ -161,6 +169,8 @@ clean:
 	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\foo_asap.res;foo_asap.dll
 	del gspasap.dll;gspasap.res
 	del asap_dsf.dll;asap_dsf.res;install_dsf.bat;uninstall_dsf.bat
+	del xbmc_asap.dll;xbmc_asap.res
+	del apokeysnd.dll;apokeysnd.res
 	del ..\gsplayer\gspasap.dll;..\gsplayer\gspasap.exp;..\gsplayer\gspasap.lib;..\gsplayer\gspasap.res
 	del asapscan.exe
 	del csharp\asap2wav.exe;csharp\ASAP.cs

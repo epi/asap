@@ -44,7 +44,7 @@ ASAP_FUNC int ASAP_GetByte(ASAP_State PTR ast, int addr)
 {
 	switch (addr & 0xff0f) {
 	case 0xd20a:
-		return PokeySound_GetRandom(ast, addr);
+		return PokeySound_GetRandom(ast, addr, AST cycle);
 	case 0xd20e:
 		if ((addr & AST extra_pokey_mask) != 0)
 			return 0xff;

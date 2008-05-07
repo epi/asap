@@ -207,6 +207,27 @@ FILE_FUNC void generate(ASAP_State PTR ast, PokeyState PTR pst, int current_cycl
 	}
 }
 
+#ifdef APOKEYSND
+
+#define CURRENT_CYCLE  0
+#define CURRENT_SAMPLE 0
+#define DO_STORE(reg) \
+	if (data == PST reg) \
+		break; \
+	PST reg = data;
+
+#else
+
+#define CURRENT_CYCLE  AST cycle
+#define CURRENT_SAMPLE CYCLE_TO_SAMPLE(AST cycle)
+#define DO_STORE(reg) \
+	if (data == PST reg) \
+		break; \
+	generate(ast, pst, AST cycle); \
+	PST reg = data;
+
+#endif
+
 #define MUTE_CHANNEL(ch, cond, mask) \
 	if (cond) { \
 		PST mute##ch |= mask; \
@@ -215,21 +236,18 @@ FILE_FUNC void generate(ASAP_State PTR ast, PokeyState PTR pst, int current_cycl
 	else { \
 		PST mute##ch &= ~mask; \
 		if (PST tick_cycle##ch == NEVER && PST mute##ch == 0) \
-			PST tick_cycle##ch = AST cycle; \
+			PST tick_cycle##ch = CURRENT_CYCLE; \
 	}
 
 #define DO_ULTRASOUND(ch) \
 	MUTE_CHANNEL(ch, PST period_cycles##ch <= ULTRASOUND_CYCLES && (PST audc##ch >> 4 == 10 || PST audc##ch >> 4 == 14), MUTE_FREQUENCY)
 
 #define DO_AUDC(ch) \
-	if (data == PST audc##ch) \
-		break; \
-	generate(ast, pst, AST cycle); \
-	PST audc##ch = data; \
+	DO_STORE(audc##ch); \
 	if ((data & 0x10) != 0) { \
 		data &= 0xf; \
 		if ((PST mute##ch & MUTE_USER) == 0) \
-			PST delta_buffer[CYCLE_TO_SAMPLE(AST cycle)] \
+			PST delta_buffer[CURRENT_SAMPLE] \
 				+= PST delta##ch > 0 ? data - PST delta##ch : data; \
 		PST delta##ch = data; \
 	} \
@@ -238,7 +256,7 @@ FILE_FUNC void generate(ASAP_State PTR ast, PokeyState PTR pst, int current_cycl
 		DO_ULTRASOUND(ch); \
 		if (PST delta##ch > 0) { \
 			if ((PST mute##ch & MUTE_USER) == 0) \
-				PST delta_buffer[CYCLE_TO_SAMPLE(AST cycle)] \
+				PST delta_buffer[CURRENT_SAMPLE] \
 					+= data - PST delta##ch; \
 			PST delta##ch = data; \
 		} \
@@ -256,10 +274,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		? ADDRESSOF AST extra_pokey : ADDRESSOF AST base_pokey;
 	switch (addr & 0xf) {
 	case 0x00:
-		if (data == PST audf1)
-			break;
-		generate(ast, pst, AST cycle);
-		PST audf1 = data;
+		DO_STORE(audf1);
 		switch (PST audctl & 0x50) {
 		case 0x00:
 			PST period_cycles1 = PST div_cycles * (data + 1);
@@ -281,12 +296,9 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		DO_ULTRASOUND(1);
 		break;
 	case 0x01:
-		DO_AUDC(1)
+		DO_AUDC(1);
 	case 0x02:
-		if (data == PST audf2)
-			break;
-		generate(ast, pst, AST cycle);
-		PST audf2 = data;
+		DO_STORE(audf2);
 		switch (PST audctl & 0x50) {
 		case 0x00:
 		case 0x40:
@@ -302,12 +314,9 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		DO_ULTRASOUND(2);
 		break;
 	case 0x03:
-		DO_AUDC(2)
+		DO_AUDC(2);
 	case 0x04:
-		if (data == PST audf3)
-			break;
-		generate(ast, pst, AST cycle);
-		PST audf3 = data;
+		DO_STORE(audf3);
 		switch (PST audctl & 0x28) {
 		case 0x00:
 			PST period_cycles3 = PST div_cycles * (data + 1);
@@ -329,12 +338,9 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		DO_ULTRASOUND(3);
 		break;
 	case 0x05:
-		DO_AUDC(3)
+		DO_AUDC(3);
 	case 0x06:
-		if (data == PST audf4)
-			break;
-		generate(ast, pst, AST cycle);
-		PST audf4 = data;
+		DO_STORE(audf4);
 		switch (PST audctl & 0x28) {
 		case 0x00:
 		case 0x20:
@@ -350,12 +356,9 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		DO_ULTRASOUND(4);
 		break;
 	case 0x07:
-		DO_AUDC(4)
+		DO_AUDC(4);
 	case 0x08:
-		if (data == PST audctl)
-			break;
-		generate(ast, pst, AST cycle);
-		PST audctl = data;
+		DO_STORE(audctl);
 		PST div_cycles = ((data & 1) != 0) ? 114 : 28;
 		/* TODO: tick_cycles */
 		switch (data & 0x50) {
@@ -419,14 +422,14 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 	}
 }
 
-ASAP_FUNC int PokeySound_GetRandom(ASAP_State PTR ast, int addr)
+ASAP_FUNC int PokeySound_GetRandom(ASAP_State PTR ast, int addr, int cycle)
 {
 	PokeyState PTR pst = (addr & AST extra_pokey_mask) != 0
 		? ADDRESSOF AST extra_pokey : ADDRESSOF AST base_pokey;
 	int i;
 	if (PST init)
 		return 0xff;
-	i = AST cycle + PST poly_index;
+	i = cycle + PST poly_index;
 	if ((PST audctl & 0x80) != 0)
 		return AST poly9_lookup[i % 511];
 	else {
@@ -520,7 +523,11 @@ ASAP_FUNC int PokeySound_Generate(ASAP_State PTR ast, byte ARRAY buffer, int buf
 	AST sample_index = i;
 	AST iir_acc_left = acc_left;
 	AST iir_acc_right = acc_right;
+#ifdef APOKEYSND
+	return buffer_offset;
+#else
 	return blocks;
+#endif
 }
 
 ASAP_FUNC abool PokeySound_IsSilent(const PokeyState PTR pst)
@@ -535,3 +542,42 @@ ASAP_FUNC void PokeySound_Mute(const ASAP_State PTR ast, PokeyState PTR pst, int
 	MUTE_CHANNEL(3, (mask & 4) != 0, MUTE_USER);
 	MUTE_CHANNEL(4, (mask & 8) != 0, MUTE_USER);
 }
+
+#ifdef APOKEYSND
+
+static ASAP_State asap;
+
+__declspec(dllexport) void APokeySound_Initialize(abool stereo)
+{
+	asap.extra_pokey_mask = stereo ? 0x10 : 0;
+	PokeySound_Initialize(&asap);
+	PokeySound_StartFrame(&asap);
+}
+
+__declspec(dllexport) void APokeySound_PutByte(int addr, int data)
+{
+	PokeySound_PutByte(&asap, addr, data);
+}
+
+__declspec(dllexport) int APokeySound_GetRandom(int addr, int cycle)
+{
+	return PokeySound_GetRandom(&asap, addr, cycle);
+}
+
+__declspec(dllexport) int APokeySound_Generate(int cycles, byte buffer[], ASAP_SampleFormat format)
+{
+	int len;
+	PokeySound_EndFrame(&asap, cycles);
+	len = PokeySound_Generate(&asap, buffer, 0, asap.samples, format);
+	PokeySound_StartFrame(&asap);
+	return len;
+}
+
+__declspec(dllexport) void APokeySound_About(const char **name, const char **author, const char **description)
+{
+	*name = "Another POKEY sound emulator, v" ASAP_VERSION;
+	*author = "Piotr Fusik, (C) " ASAP_YEARS;
+	*description = "Part of ASAP, http://asap.sourceforge.net";
+}
+
+#endif /* APOKEYSND */

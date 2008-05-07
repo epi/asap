@@ -1,3 +1,8 @@
+2008-05-07  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c, asap.c, asap_internal.h, win32/gui.rc, win32/Makefile:
+  POKEY sound emulator DLL for RMT
+
+
 2008-04-19  Piotr Fusik  <fox@scene.pl>
 * asap.c, csharp/ASAP.ppcs, java/ASAP.ppjava: refactoring of load_native()
 
