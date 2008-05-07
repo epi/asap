@@ -23,7 +23,7 @@
 
 #ifdef __cplusplus
 extern "C" {
- #endif
+#endif
 
 #define BITS_PER_SAMPLE          16
 
