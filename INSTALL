@@ -85,6 +85,18 @@ You can omit MOC_INCLUDE (defaults to "../moc-2.4.3")
 and MOC_PLUGIN_DIR (defaults to "/usr/local/lib/moc/decoder_plugins").
 
 
+Building the XBMC plugin on Linux
+---------------------------------
+
+You need source code of the Linux port of XBMC. Make sure it includes
+support for ASAP. Run "./configure", then edit Makefile.
+XBMC_DLL_LOADER_EXPORTS must point to the directory in XBMC sources
+which contains wrapper.def and wrapper.o. Run:
+make asap-xbmc
+
+This should produce xbmc_asap-i486-linux.so.
+
+
 Building ASAP2WAV, WASAP, the Winamp plugin, the GSPlayer plugin,
 the DirectShow source filter and the Apollo plugin on Windows
 -----------------------------------------------------------------

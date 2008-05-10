@@ -22,6 +22,11 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
+#ifdef __linux__
+#define __declspec(x)
+#endif
 
 #include "asap.h"
 
