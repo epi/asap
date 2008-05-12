@@ -551,6 +551,8 @@ __declspec(dllexport) void APokeySound_Initialize(abool stereo)
 {
 	asap.extra_pokey_mask = stereo ? 0x10 : 0;
 	PokeySound_Initialize(&asap);
+	PokeySound_Mute(&asap, &asap.base_pokey, 0);
+	PokeySound_Mute(&asap, &asap.extra_pokey, 0);
 	PokeySound_StartFrame(&asap);
 }
 

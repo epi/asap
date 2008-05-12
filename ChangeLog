@@ -1,3 +1,7 @@
+2008-05-12  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c: un-mute for RMT DLL
+
+
 2008-05-10  Piotr Fusik  <fox@scene.pl>
 * Makefile.in, xbmc/xbmc_asap.c, INSTALL: Linux XBMC plugin
 
