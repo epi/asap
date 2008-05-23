@@ -1009,7 +1009,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 #define CHAR_ARG                arg.charAt(0)
 #define SET_HEX(v)              v = Integer.parseInt(arg, 16)
 #define SET_DEC(v, min, max)    do { v = Integer.parseInt(arg); if (v < min || v > max) return FALSE; } while (FALSE)
-#define SET_TEXT(v)             v = arg.substring(1, arg.length() - 1)
+#define SET_TEXT(v)             do { if (!arg.equals("\"<?>\"")) v = arg.substring(1, arg.length() - 1); } while (FALSE)
 #define DURATION_ARG            parseDuration(arg)
 #define ARG_CONTAINS(t)         (arg.indexOf(t) >= 0)
 #elif defined(CSHARP)
@@ -1024,7 +1024,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 #define CHAR_ARG                arg[0]
 #define SET_HEX(v)              v = int.Parse(arg, System.Globalization.NumberStyles.HexNumber)
 #define SET_DEC(v, min, max)    do { v = int.Parse(arg); if (v < min || v > max) return FALSE; } while (FALSE)
-#define SET_TEXT(v)             v = arg.Substring(1, arg.Length - 1)
+#define SET_TEXT(v)             do { if (arg != "\"<?>\"") v = arg.Substring(1, arg.Length - 1); } while (FALSE)
 #define DURATION_ARG            ParseDuration(arg)
 #define ARG_CONTAINS(t)         (arg.IndexOf(t) >= 0)
 #else
