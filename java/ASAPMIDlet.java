@@ -1,7 +1,7 @@
 /*
  * ASAPMIDlet.java - ASAP midlet
  *
- * Copyright (C) 2007  Piotr Fusik
+ * Copyright (C) 2007-2008  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -37,6 +37,7 @@ import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
 import javax.microedition.lcdui.Gauge;
 import javax.microedition.lcdui.List;
+import javax.microedition.lcdui.StringItem;
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Player;
@@ -126,12 +127,11 @@ class ASAPInputStream extends InputStream
 
 	private static final int BITS_PER_SAMPLE = 8;
 
-	ASAPInputStream(ASAP asap, Gauge gauge)
+	ASAPInputStream(ASAP asap, int song, Gauge gauge)
 	{
 		this.asap = asap;
 		this.gauge = gauge;
 		ASAP_ModuleInfo module_info = asap.getModuleInfo();
-		int song = module_info.default_song;
 		int duration = module_info.durations[song];
 		if (duration < 0)
 			duration = 180000;
@@ -180,13 +180,15 @@ class ASAPInputStream extends InputStream
 public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListener
 {
 	private Command selectCommand;
+	private Command backCommand;
 	private Command stopCommand;
 	private Command exitCommand;
 	private FileList fileList;
-	private List listControl;
+	private List fileListControl;
 	private byte[] module;
 	private ASAP asap;
 	private Player player;
+	private List songListControl;
 
 	public ASAPMIDlet()
 	{
@@ -195,11 +197,11 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 	private void displayFileList(FileList fileList)
 	{
 		this.fileList = fileList;
-		this.listControl = new List(fileList.caption, List.IMPLICIT, fileList.names, null);
-		listControl.addCommand(selectCommand);
-		listControl.addCommand(exitCommand);
-		listControl.setCommandListener(this);
-		Display.getDisplay(this).setCurrent(listControl);
+		this.fileListControl = new List(fileList.caption, List.IMPLICIT, fileList.names, null);
+		fileListControl.addCommand(selectCommand);
+		fileListControl.addCommand(exitCommand);
+		fileListControl.setCommandListener(this);
+		Display.getDisplay(this).setCurrent(fileListControl);
 	}
 
 	private void displayError(String message)
@@ -208,9 +210,38 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 		Display.getDisplay(this).setCurrent(alert);
 	}
 
+	private static void appendStringItem(Form form, String label, String text)
+	{
+		if (text.length() == 0)
+			return;
+		StringItem si = new StringItem(label, text);
+		si.setLayout(StringItem.LAYOUT_NEWLINE_AFTER);
+		form.append(si);
+	}
+
+	private void playSong(int song) throws IOException, MediaException
+	{
+		ASAP_ModuleInfo module_info = asap.getModuleInfo();
+		Gauge gauge = new Gauge(null, false, 1, 0);
+		InputStream is = new ASAPInputStream(asap, song, gauge);
+		Form playForm = new Form("ASAP " + ASAP.VERSION);
+		appendStringItem(playForm, "Author: ", module_info.author);
+		appendStringItem(playForm, "Name: ", module_info.name);
+		appendStringItem(playForm, "Date: ", module_info.date);
+		playForm.append(gauge);
+		playForm.addCommand(stopCommand);
+		playForm.addCommand(exitCommand);
+		playForm.setCommandListener(this);
+		Display.getDisplay(this).setCurrent(playForm);
+		player = Manager.createPlayer(is, "audio/x-wav");
+		player.addPlayerListener(this);
+		player.start();
+	}
+
 	public void startApp()
 	{
 		selectCommand = new Command("Select", Command.ITEM, 1);
+		backCommand = new Command("Back", Command.BACK, 1);
 		stopCommand = new Command("Stop", Command.STOP, 1);
 		exitCommand = new Command("Exit", Command.EXIT, 2);
 		module = new byte[ASAP.MODULE_MAX];
@@ -221,14 +252,19 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 	public void commandAction(Command c, Displayable s)
 	{
 		if (c == selectCommand || c == List.SELECT_COMMAND) {
-			int index = listControl.getSelectedIndex();
-			String filename = fileList.names[index];
-			if (filename.equals("..")) {
-				displayFileList(fileList.parent);
-				return;
-			}
-			String path = fileList.path + filename;
 			try {
+				if (songListControl != null) {
+					playSong(songListControl.getSelectedIndex());
+					songListControl = null;
+					return;
+				}
+				int index = fileListControl.getSelectedIndex();
+				String filename = fileList.names[index];
+				if (filename.equals("..")) {
+					displayFileList(fileList.parent);
+					return;
+				}
+				String path = fileList.path + filename;
 				FileList newList = fileList.sublists[index];
 				if (newList != null) {
 					displayFileList(newList);
@@ -251,27 +287,33 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 				}
 				is.close();
 				asap.load(filename, module, module_len);
-				Gauge gauge = new Gauge(filename, false, 1, 0);
-				is = new ASAPInputStream(asap, gauge);
-				player = Manager.createPlayer(is, "audio/x-wav");
-				player.addPlayerListener(this);
-				player.start();
-				Form playForm = new Form("ASAP");
-				playForm.append(gauge);
-				playForm.addCommand(stopCommand);
-				playForm.addCommand(exitCommand);
-				playForm.setCommandListener(this);
-				Display.getDisplay(this).setCurrent(playForm);
+				int songs = asap.getModuleInfo().songs;
+				if (songs > 1) {
+					songListControl = new List(asap.getModuleInfo().name, List.IMPLICIT);
+					for (int i = 1; i <= songs; i++)
+						songListControl.append("Song " + i, null);
+					songListControl.setSelectedIndex(asap.getModuleInfo().default_song, true);
+					songListControl.addCommand(selectCommand);
+					songListControl.addCommand(backCommand);
+					songListControl.setCommandListener(this);
+					Display.getDisplay(this).setCurrent(songListControl);
+				}
+				else
+					playSong(0);
 			} catch (Exception ex) {
 				displayError(ex.toString());
 			}
+		}
+		else if (c == backCommand) {
+			songListControl = null;
+			Display.getDisplay(this).setCurrent(fileListControl);
 		}
 		else if (c == stopCommand) {
 			try {
 				player.stop();
 			} catch (MediaException ex) {
 			}
-			Display.getDisplay(this).setCurrent(listControl);
+			Display.getDisplay(this).setCurrent(fileListControl);
 		}
 		else if (c == exitCommand)
 			notifyDestroyed();
@@ -280,7 +322,7 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 	public void playerUpdate(Player player, String event, Object eventData)
 	{
 		if (event == PlayerListener.END_OF_MEDIA)
-			Display.getDisplay(this).setCurrent(listControl);
+			Display.getDisplay(this).setCurrent(fileListControl);
 		else if (event == PlayerListener.ERROR)
 			displayError((String) eventData);
 	}
