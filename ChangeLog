@@ -1,3 +1,11 @@
+2008-05-23  Piotr Fusik  <fox@scene.pl>
+* asap.c: author, name and date are blank strings in Java and C#
+  if specified as "<?>" in a SAP file
+
+* java/ASAPMIDlet.java: display author, name, date, progress bar
+  and ASAP version; subsong selection
+
+
 2008-05-12  Piotr Fusik  <fox@scene.pl>
 * apokeysnd.c: un-mute for RMT DLL
 
