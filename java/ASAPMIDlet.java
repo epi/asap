@@ -49,11 +49,11 @@ import net.sf.asap.ASAP_ModuleInfo;
 
 class FileList
 {
-	String caption;
-	String path;
-	String[] names;
-	FileList parent;
-	FileList[] sublists;
+	final String caption;
+	final String path;
+	final String[] names;
+	final FileList parent;
+	final FileList[] sublists;
 
 	private static boolean lessOrEqual(String name1, String name2)
 	{
@@ -117,12 +117,12 @@ class FileList
 
 class ASAPInputStream extends InputStream
 {
-	private ASAP asap;
-	private Gauge gauge;
-	private int[] header = new int[11];
-	private byte[] buffer = new byte[4096];
+	private final ASAP asap;
+	private final Gauge gauge;
+	private final int[] header = new int[11];
+	private final byte[] buffer = new byte[16384];
 	private int buffer_len;
-	private int offset = 0;
+	private int offset = -44;
 	private int position = 0;
 
 	private static final int BITS_PER_SAMPLE = 8;
@@ -158,22 +158,43 @@ class ASAPInputStream extends InputStream
 	public int read()
 	{
 		int i = offset;
-		if (i < 44)
-			i = header[i >> 2] >> ((i & 3) << 3);
-		else {
-			i -= 44;
-			if (i >= buffer_len) {
-				if (buffer_len < buffer.length)
-					return -1;
-				buffer_len = asap.generate(buffer, BITS_PER_SAMPLE);
-				gauge.setValue(++position);
-				i = 0;
-				offset = 44;
-			}
-			i = buffer[i];
+		if (i < 0) {
+			offset++;
+			i += 44;
+			return (header[i >> 2] >> ((i & 3) << 3)) & 0xff;
 		}
-		offset++;
-		return i & 0xff;
+		if (i >= buffer_len) {
+			if (buffer_len < buffer.length)
+				return -1;
+			buffer_len = asap.generate(buffer, BITS_PER_SAMPLE);
+			if (buffer_len == 0)
+				return -1;
+			gauge.setValue(++position);
+			i = 0;
+		}
+		offset = i + 1;
+		return buffer[i] & 0xff;
+	}
+
+	public int read(byte[] b, int off, int len) throws IOException
+	{
+		int i = offset;
+		if (i < 0)
+			return super.read(b, off, len);
+		if (i >= buffer_len) {
+			if (buffer_len < buffer.length)
+				return -1;
+			buffer_len = asap.generate(buffer, BITS_PER_SAMPLE);
+			if (buffer_len == 0)
+				return -1;
+			gauge.setValue(++position);
+			i = 0;
+		}
+		if (len > buffer_len - i)
+			len = buffer_len - i;
+		System.arraycopy(buffer, i, b, off, len);
+		offset = i + len;
+		return len;
 	}
 }
 
