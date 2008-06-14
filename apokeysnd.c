@@ -405,6 +405,10 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		}
 		DO_ULTRASOUND(3);
 		DO_ULTRASOUND(4);
+		DO_INIT(1, (data & 0x40) == 0);
+		DO_INIT(2, (data & 0x50) != 0x50);
+		DO_INIT(3, (data & 0x20) == 0);
+		DO_INIT(4, (data & 0x28) != 0x28);
 		break;
 	case 0x09:
 		/* TODO: STIMER */

@@ -1,3 +1,7 @@
+2008-06-14  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c: fixed 1.77 MHz sound enabled in the INIT state
+
+
 2008-05-25  Piotr Fusik  <fox@scene.pl>
 * java/ASAPMIDlet.java: increased buffer size and implemented array read
   for improved performance
