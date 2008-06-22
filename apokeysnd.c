@@ -414,7 +414,7 @@ ASAP_FUNC void PokeySound_PutByte(ASAP_State PTR ast, int addr, int data)
 		/* TODO: STIMER */
 		break;
 	case 0x0f:
-		PST skctl = data;
+		DO_STORE(skctl);
 		PST init = ((data & 3) == 0);
 		DO_INIT(1, (PST audctl & 0x40) == 0);
 		DO_INIT(2, (PST audctl & 0x50) != 0x50);

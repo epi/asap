@@ -1,3 +1,7 @@
+2008-06-22  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c: DO_STORE(skctl)
+
+
 2008-06-14  Piotr Fusik  <fox@scene.pl>
 * apokeysnd.c: fixed 1.77 MHz sound enabled in the INIT state
 
