@@ -1,3 +1,7 @@
+2008-08-01  Dominik Wenger  <domonoky@googlemail.com>
+* asap.h: added "signed" to "delta_buffer" declaration
+
+
 2008-06-22  Piotr Fusik  <fox@scene.pl>
 * apokeysnd.c: DO_STORE(skctl)
 
