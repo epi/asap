@@ -1,10 +1,10 @@
 VERSION = 1.2.1
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
-DSHOW_BASECLASSES_DIR = "C:\Program Files\Microsoft SDKs\Windows\v6.0\Samples\Multimedia\DirectShow\BaseClasses"
+DSHOW_BASECLASSES_DIR = "C:\Program Files\Microsoft SDKs\Windows\v6.1\Samples\Multimedia\DirectShow\BaseClasses"
 
 CC = cl /nologo /O2 /GL /GR- /GS- /W3 /wd4996 /DNDEBUG
-LINKOPT = /link /release /opt:nowin98
+LINKOPT = /link /release
 MKLIB = lib /nologo /ltcg /out:$@
 ASAP_CC = $(CC) /Fe$@ /I . /I ..
 ASAP_CC71 = cl /nologo /O2 /GL /GR- /W3 /wd4996 /DNDEBUG /Fe$@ /I . /I ..

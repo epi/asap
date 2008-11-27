@@ -1,3 +1,7 @@
+2008-11-27  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile: removed "/opt:nowin98" because it's not supported in VS2008
+
+
 2008-08-01  Dominik Wenger  <domonoky@googlemail.com>
 * asap.h: added "signed" to "delta_buffer" declaration
 
