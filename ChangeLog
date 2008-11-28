@@ -1,6 +1,8 @@
 2008-11-28  Piotr Fusik  <fox@scene.pl>
 * chksap.pl: support millisecond precision of TIME tags
 
+* win32/Makefile: updated for foobar2000 SDK 2008-09-22
+
 
 2008-11-27  Piotr Fusik  <fox@scene.pl>
 * win32/Makefile: removed "/opt:nowin98" because it's not supported in VS2008
