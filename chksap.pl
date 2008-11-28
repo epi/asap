@@ -449,7 +449,7 @@ sub process($$) {
 				}
 			}
 			elsif ($tag eq 'TIME') {
-				if ($arg !~ /^\d?\d:\d\d(?:\.\d\d)?(?: LOOP)?$/s) {
+				if ($arg !~ /^\d?\d:\d\d(?:\.\d\d\d?)?(?: LOOP)?$/s) {
 					$fatal{'invalid argument of TIME'} = 1;
 				}
 				push @times, $arg;
@@ -518,8 +518,8 @@ sub process($$) {
 						if (!$times) {
 							$fatal{'error running asapscan'} = 1;
 						}
-						elsif ($times =~ /^(?:TIME \d?\d:\d\d(?:\.\d\d)?(?: LOOP)?\n)+$/s) {
-							my @new_times = $times =~ /\d?\d:\d\d(?:\.\d\d)?(?: LOOP)?/gs;
+						elsif ($times =~ /^(?:TIME \d?\d:\d\d(?:\.\d\d\d?)?(?: LOOP)?\n)+$/s) {
+							my @new_times = $times =~ /\d?\d:\d\d(?:\.\d\d\d?)?(?: LOOP)?/gs;
 							if (!@times) {
 								@times = @new_times;
 								$fixed{'added TIME tags'} = 1;
@@ -570,8 +570,8 @@ sub process($$) {
 		if (@times) {
 			++$time_files;
 			for (@times) {
-				my ($minutes, $seconds, $hundredths) = /(\d?\d):(\d\d)(?:\.(\d\d))?/;
-				$total_millis += 60_000 * $minutes + 1000 * $seconds + $hundredths * 10;
+				my ($minutes, $seconds, $hundredths, $millis) = /(\d?\d):(\d\d)(?:\.(\d\d)(\d?))?/;
+				$total_millis += 60_000 * $minutes + 1000 * $seconds + $hundredths * 10 + $millis;
 			}
 		}
 	}
@@ -608,7 +608,7 @@ GetOptions(
 
 pod2usage({ -verbose => 1, -exitval => 0 }) if $help;
 if ($version) {
-	print "chksap 1.3\n";
+	print "chksap 1.4\n";
 	exit 0;
 }
 
