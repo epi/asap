@@ -1,4 +1,4 @@
-JRE = C:/java/jdk/jre
+JRE = C:/Program Files/Java/jdk1.6.0_10/jre
 WTK = C:/java/sesdk/PC_Emulation/WTK2
 
 JAVAC = javac -source 1.2 -d .
@@ -81,3 +81,5 @@ doc: ASAP.java ASAP_ModuleInfo.java
 clean:
 	${RM} asap2wav.jar asap_applet.jar asap_midlet.jar asap_midlet.jad *.class ASAP.java
 	${RMR} net preverified doc
+
+.DELETE_ON_ERROR:
