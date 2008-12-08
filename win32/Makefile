@@ -2,6 +2,10 @@ VERSION = 1.2.1
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 DSHOW_BASECLASSES_DIR = "C:\Program Files\Microsoft SDKs\Windows\v6.1\Samples\Multimedia\DirectShow\BaseClasses"
+WINCE_PATH = C:\Program Files\Microsoft Visual Studio 9.0\VC\ce\bin\x86_arm;C:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE;C:\Program Files\Microsoft Visual Studio 9.0\VC\bin
+WINCE_SDK_DIR = C:\Program Files\Microsoft Visual Studio 9.0\SmartDevices\SDK\PocketPC2003
+WINCE_INCLUDE = $(WINCE_SDK_DIR)\Include
+WINCE_LIB=$(WINCE_SDK_DIR)\Lib\armv4;C:\Program Files\Microsoft Visual Studio 9.0\VC\ce\lib\armv4;C:\Program Files\Microsoft Visual Studio 9.0\VC\lib
 
 CC = cl /nologo /O2 /GL /GR- /GS- /W3 /wd4996 /DNDEBUG
 LINKOPT = /link /release
@@ -11,8 +15,9 @@ ASAP_CC71 = cl /nologo /O2 /GL /GR- /W3 /wd4996 /DNDEBUG /Fe$@ /I . /I ..
 PERL = perl
 XASM = xasm /q /o:$@
 RC = rc /fo $@
-CLARM = clarm /nologo /O2 /W3 /DNDEBUG /DARM /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
+WINCE_CL = cl /nologo /O2 /W3 /wd4996 /DNDEBUG /DARM /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
 GMAKE = make
+CRLF = $(PERL) -pe ""
 
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
@@ -98,8 +103,11 @@ gspasap.res: gui.rc ..\asap.h gui.h
 wince: ..\gsplayer\gspasap.dll
 
 ..\gsplayer\gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def $(COMMON_H) gui.h
-	$(CLARM) /Fe$@ /DGSPLAYER /DHAVE_CONFIG_H /DASAP /DSOUND /I . /I .. \
-		/LD ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def /link /release /SUBSYSTEM:WINDOWSCE,3.00
+	set Path=$(WINCE_PATH)
+	set INCLUDE=$(WINCE_INCLUDE)
+	set LIB=$(WINCE_LIB)
+	$(WINCE_CL) /Fe$@ /DGSPLAYER /DHAVE_CONFIG_H /DASAP /DSOUND /I . /I .. \
+		/LD ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def coredll.lib corelibc.lib /link /release
 
 ..\gsplayer\gspasap.res: gui.rc ..\asap.h gui.h
 	$(RC) /D _WIN32_WCE /D GSPLAYER gui.rc
@@ -179,43 +187,43 @@ clean:
 # prepare files for release
 
 copying.txt: ..\COPYING
-	copy $** $@
+	$(CRLF) $** >$@
 
 credits.txt: ..\CREDITS
-	copy $** $@
+	$(CRLF) $** >$@
 
 news.txt: ..\NEWS
-	copy $** $@
+	$(CRLF) $** >$@
 
 readme.txt: ..\README
-	copy $** $@
+	$(CRLF) $** >$@
 
 asap2wav.txt: ..\asap2wav.1
-	groff -m man -r LL=78n -r IN=5n -T ascii -P -cbu ..\asap2wav.1 >$@
+	groff -m man -r LL=78n -r IN=5n -T ascii -P -cbu ..\asap2wav.1 | $(CRLF) >$@
 
 wasap.txt: wasap\README
-	copy $** $@
+	$(CRLF) $** >$@
 
 in_asap.txt: winamp\README
-	copy $** $@
+	$(CRLF) $** >$@
 
 foo_asap.txt: foobar2000\README
-	copy $** $@
+	$(CRLF) $** >$@
 
 gspasap.txt: ..\gsplayer\gspasap.txt
-	copy $** $@
+	$(CRLF) $** >$@
 
 asap_dsf.txt: dshow\README
-	copy $** $@
+	$(CRLF) $** >$@
 
 install_dsf.bat:
-	echo regsvr32 asap_dsf.dll >$@
+	echo regsvr32 asap_dsf.dll>$@
 
 uninstall_dsf.bat:
-	echo regsvr32 /u asap_dsf.dll >$@
+	echo regsvr32 /u asap_dsf.dll>$@
 
 ASAP_Apollo.txt: apollo\README
-	copy $** $@
+	$(CRLF) $** >$@
 
 srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
 	cd ..
@@ -271,7 +279,7 @@ dist: all foo wince java srcdist copying.txt credits.txt news.txt readme.txt \
 		copying.txt credits.txt news.txt readme.txt \
 		asap2wav.txt wasap.txt in_asap.txt foo_asap.txt gspasap.txt asap_dsf.txt ASAP_Apollo.txt \
 		install_dsf.bat uninstall_dsf.bat \
-		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll
+		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-wince-arm.zip \
 		copying.txt credits.txt news.txt readme.txt \
 		..\gsplayer\gspasap.dll ..\gsplayer\gspasap.txt
