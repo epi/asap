@@ -1,3 +1,16 @@
+2008-12-08  Piotr Fusik  <fox@scene.pl>
+* win32/dshow/asap_dsf.cpp: an error code could be overwritten
+
+* Makefile.in, java/Makefile: added ".DELETE_ON_ERROR"
+
+* win32/Makefile: convert text files for Windows to CR/LF
+  if checked out by CVS with LFs
+
+* asap2wav.1: slightly improved
+
+* asap.c: C# implementation of ASAP_IsOurExt()
+
+
 2008-11-28  Piotr Fusik  <fox@scene.pl>
 * chksap.pl: support millisecond precision of TIME tags
 
