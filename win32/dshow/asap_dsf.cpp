@@ -284,8 +284,8 @@ class CASAPSource : public CSource, IFileSourceFilter
 		: CSource(NAME("ASAPSource"), pUnk, CLSID_ASAPSource), m_pin(NULL), m_filename(NULL)
 	{
 		m_pin = new CASAPSourceStream(phr, this);
-		if (phr != NULL)
-			*phr = m_pin == NULL ? E_OUTOFMEMORY : S_OK;
+		if (m_pin == NULL && phr != NULL)
+			*phr = E_OUTOFMEMORY;
 	}
 
 	~CASAPSource()
