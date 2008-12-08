@@ -403,7 +403,6 @@ FILE_FUNC int rmt_instrument_frames(const byte ARRAY module, int instrument, int
 	int index_loop;
 	int volume_slide_depth;
 	int volume_min;
-	abool looping;
 	int volume_slide;
 	abool silent_loop;
 	instrument = UBYTE(module[0xe]) + (UBYTE(module[0xf]) << 8) - addr_to_offset + (instrument << 1);
@@ -418,8 +417,7 @@ FILE_FUNC int rmt_instrument_frames(const byte ARRAY module, int instrument, int
 		return 0; /* error */
 	volume_slide_depth = UBYTE(module[instrument + 6]);
 	volume_min = UBYTE(module[instrument + 7]);
-	looping = index >= index_end;
-	if (looping)
+	if (index >= index_end)
 		index = (index - index_end) % (index_end - index_loop) + index_loop;
 	else {
 		do {
@@ -1200,6 +1198,9 @@ ASAP_FUNC abool ASAP_IsOurExt(STRING ext)
 #ifdef JAVA
 	return ext.length() == 3
 		&& is_our_ext(ASAP_EXT(ext.charAt(0), ext.charAt(1), ext.charAt(2)));
+#elif defined(CSHARP)
+	return ext.Length == 3
+		&& is_our_ext(ASAP_EXT(ext[0], ext[1], ext[2]));
 #else
 	return ext[0] > ' ' && ext[1] > ' ' && ext[2] > ' ' && ext[3] == '\0'
 		&& is_our_ext(ASAP_EXT(ext[0], ext[1], ext[2]));
