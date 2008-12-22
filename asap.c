@@ -1507,7 +1507,7 @@ ASAP_FUNC int ASAP_Generate(ASAP_State PTR ast, VOIDPTR buffer, int buffer_len,
 	}
 	block = 0;
 	do {
-		int blocks = PokeySound_Generate(ast, buffer, block << block_shift, buffer_blocks - block, format);
+		int blocks = PokeySound_Generate(ast, (byte *) buffer, block << block_shift, buffer_blocks - block, format);
 		AST blocks_played += blocks;
 		block += blocks;
 	} while (block < buffer_blocks && call_6502_player(ast));
