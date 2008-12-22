@@ -1,6 +1,8 @@
 2008-12-22  Piotr Fusik  <fox@scene.pl>
 * asap.c: added explicit cast of "void *" to "byte *"
 
+* win32/Makefile: WinCE compilation using VS 2008
+
 
 2008-12-08  Piotr Fusik  <fox@scene.pl>
 * win32/dshow/asap_dsf.cpp: an error code could be overwritten

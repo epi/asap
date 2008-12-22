@@ -15,7 +15,7 @@ ASAP_CC71 = cl /nologo /O2 /GL /GR- /W3 /wd4996 /DNDEBUG /Fe$@ /I . /I ..
 PERL = perl
 XASM = xasm /q /o:$@
 RC = rc /fo $@
-WINCE_CL = cl /nologo /O2 /W3 /wd4996 /DNDEBUG /DARM /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
+WINCE_CL = cl /nologo /O2 /GS- /W3 /wd4996 /DNDEBUG /DARM /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
 GMAKE = make
 CRLF = $(PERL) -pe ""
 
@@ -106,8 +106,7 @@ wince: ..\gsplayer\gspasap.dll
 	set Path=$(WINCE_PATH)
 	set INCLUDE=$(WINCE_INCLUDE)
 	set LIB=$(WINCE_LIB)
-	$(WINCE_CL) /Fe$@ /DGSPLAYER /DHAVE_CONFIG_H /DASAP /DSOUND /I . /I .. \
-		/LD ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def coredll.lib corelibc.lib /link /release
+	$(WINCE_CL) /Fe$@ /DGSPLAYER /I . /I .. /LD ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def coredll.lib corelibc.lib /link /release
 
 ..\gsplayer\gspasap.res: gui.rc ..\asap.h gui.h
 	$(RC) /D _WIN32_WCE /D GSPLAYER gui.rc
