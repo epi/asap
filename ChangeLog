@@ -1,3 +1,9 @@
+2008-12-29  Piotr Fusik  <fox@scene.pl>
+* java/Makefile: configured my new WTK path
+
+* java/ASAPMIDlet.java: swapped positions of "Name" and "Author"
+
+
 2008-12-22  Piotr Fusik  <fox@scene.pl>
 * asap.c: added explicit cast of "void *" to "byte *"
 
