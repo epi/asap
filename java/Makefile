@@ -1,5 +1,5 @@
 JRE = C:/Program Files/Java/jdk1.6.0_10/jre
-WTK = C:/java/sesdk/PC_Emulation/WTK2
+WTK = C:/Program Files/Java/SE_SDK/WTK2
 
 JAVAC = javac -source 1.2 -d .
 #JAVAC = gcj -C -d .
@@ -11,8 +11,8 @@ XASM = xasm -q
 RM = rm -f
 RMR = rm -rf
 ME_CLASSES = ${WTK}/lib/cldcapi11.jar;${WTK}/lib/midpapi20.jar;${WTK}/lib/jsr75.jar
-PREVERIFY = ${WTK}/bin/preverify1.1
-ME_EMU = ${WTK}/bin/emulatorw -gui
+PREVERIFY = "${WTK}/bin/preverify1.1"
+ME_EMU = "${WTK}/bin/emulatorw" -gui
 
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h
