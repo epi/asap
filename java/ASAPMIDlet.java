@@ -246,8 +246,8 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 		Gauge gauge = new Gauge(null, false, 1, 0);
 		InputStream is = new ASAPInputStream(asap, song, gauge);
 		Form playForm = new Form("ASAP " + ASAP.VERSION);
-		appendStringItem(playForm, "Author: ", module_info.author);
 		appendStringItem(playForm, "Name: ", module_info.name);
+		appendStringItem(playForm, "Author: ", module_info.author);
 		appendStringItem(playForm, "Date: ", module_info.date);
 		playForm.append(gauge);
 		playForm.addCommand(stopCommand);
@@ -285,12 +285,12 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 					displayFileList(fileList.parent);
 					return;
 				}
-				String path = fileList.path + filename;
 				FileList newList = fileList.sublists[index];
 				if (newList != null) {
 					displayFileList(newList);
 					return;
 				}
+				String path = fileList.path + filename;
 				FileConnection fc = (FileConnection) Connector.open("file:///" + path, Connector.READ);
 				if (fc.isDirectory()) {
 					newList = new FileList(filename, path, fileList, fc.list());
