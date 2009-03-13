@@ -1,7 +1,7 @@
 /*
  * asap.c - ASAP engine
  *
- * Copyright (C) 2005-2008  Piotr Fusik
+ * Copyright (C) 2005-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,6 +26,9 @@
 #endif
 
 #include "asap_internal.h"
+
+#ifndef ASAP_ONLY_SAP
+
 #if !defined(JAVA) && !defined(CSHARP)
 #include "players.h"
 #endif
@@ -39,6 +42,8 @@ CONST_LOOKUP(byte, cmr_bass_table) = {
 	0x3D, 0x39, 0x34, 0x33, 0x30, 0x2D, 0x2A, 0x28,
 	0x25, 0x24, 0x21, 0x1F, 0x1E
 };
+
+#endif /* ASAP_ONLY_SAP */
 
 ASAP_FUNC int ASAP_GetByte(ASAP_State PTR ast, int addr)
 {
@@ -94,6 +99,8 @@ ASAP_FUNC void ASAP_PutByte(ASAP_State PTR ast, int addr, int data)
 }
 
 #define MAX_SONGS  32
+
+#ifndef ASAP_ONLY_SAP
 
 CONST_LOOKUP(int, perframe2fastplay) = { 312, 312 / 2, 312 / 3, 312 / 4 };
 
@@ -847,6 +854,8 @@ FILE_FUNC abool parse_tm2(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	return TRUE;
 }
 
+#endif /* ASAP_ONLY_SAP */
+
 #if !defined(JAVA) && !defined(CSHARP)
 
 static abool parse_hex(int *retval, const char *p)
@@ -906,6 +915,16 @@ static abool parse_text(char *retval, const char *p)
 	}
 	retval[i] = '\0';
 	return TRUE;
+}
+
+static abool parse_loop(const char *p)
+{
+	while (*p != '\0') {
+		if (p[0] == 'L' && p[1] == 'O' && p[2] == 'O' && p[3] == 'P')
+			return TRUE;
+		p++;
+	}
+	return FALSE;
 }
 
 int ASAP_ParseDuration(const char *s)
@@ -1009,7 +1028,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 #define SET_DEC(v, min, max)    do { v = Integer.parseInt(arg); if (v < min || v > max) return FALSE; } while (FALSE)
 #define SET_TEXT(v)             do { if (!arg.equals("\"<?>\"")) v = arg.substring(1, arg.length() - 1); } while (FALSE)
 #define DURATION_ARG            parseDuration(arg)
-#define ARG_CONTAINS(t)         (arg.indexOf(t) >= 0)
+#define LOOP_ARG                (arg.indexOf("LOOP") >= 0)
 #elif defined(CSHARP)
 		string tag = new string(line, 0, i);
 		string arg = null;
@@ -1024,7 +1043,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 #define SET_DEC(v, min, max)    do { v = int.Parse(arg); if (v < min || v > max) return FALSE; } while (FALSE)
 #define SET_TEXT(v)             do { if (arg != "\"<?>\"") v = arg.Substring(1, arg.Length - 1); } while (FALSE)
 #define DURATION_ARG            ParseDuration(arg)
-#define ARG_CONTAINS(t)         (arg.IndexOf(t) >= 0)
+#define LOOP_ARG                (arg.IndexOf("LOOP") >= 0)
 #else
 		line[i] = '\0';
 		for (p = line; *p != '\0'; p++) {
@@ -1039,7 +1058,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 #define SET_DEC(v, min, max)    do { if (!parse_dec(&v, p, min, max)) return FALSE; } while (FALSE)
 #define SET_TEXT(v)             do { if (!parse_text(v, p)) return FALSE; } while (FALSE)
 #define DURATION_ARG            ASAP_ParseDuration(p)
-#define ARG_CONTAINS(t)         (strstr(p, t) != NULL)
+#define LOOP_ARG                parse_loop(p)
 #endif
 
 		if (TAG_IS("SAP"))
@@ -1063,8 +1082,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 			if (duration < 0 || duration_index >= MAX_SONGS)
 				return FALSE;
 			MODULE_INFO durations[duration_index] = duration;
-			if (ARG_CONTAINS("LOOP"))
-				MODULE_INFO loops[duration_index] = TRUE;
+			MODULE_INFO loops[duration_index] = LOOP_ARG;
 			duration_index++;
 		}
 		else if (TAG_IS("TYPE"))
@@ -1171,16 +1189,18 @@ FILE_FUNC int get_packed_ext(STRING filename)
 FILE_FUNC abool is_our_ext(int ext)
 {
 	switch (ext) {
+	case ASAP_EXT('S', 'A', 'P'):
+#ifndef ASAP_ONLY_SAP
 	case ASAP_EXT('C', 'M', 'C'):
 	case ASAP_EXT('C', 'M', 'R'):
 	case ASAP_EXT('D', 'M', 'C'):
 	case ASAP_EXT('M', 'P', 'D'):
 	case ASAP_EXT('M', 'P', 'T'):
 	case ASAP_EXT('R', 'M', 'T'):
-	case ASAP_EXT('S', 'A', 'P'):
 	case ASAP_EXT('T', 'M', '2'):
 	case ASAP_EXT('T', 'M', '8'):
 	case ASAP_EXT('T', 'M', 'C'):
+#endif
 		return TRUE;
 	default:
 		return FALSE;
@@ -1254,8 +1274,8 @@ FILE_FUNC abool parse_file(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	if (ext == NULL)
 		ext = p;
 	module_info->author[0] = '\0';
-	i = ext - basename;
-	memcpy(module_info->name, basename, i);
+	for (i = 0, p = basename; p < ext; p++)
+		module_info->name[i++] = *p;
 	module_info->name[i] = '\0';
 	module_info->date[0] = '\0';
 #endif
@@ -1272,6 +1292,9 @@ FILE_FUNC abool parse_file(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	MODULE_INFO init = -1;
 	MODULE_INFO player = -1;
 	switch (get_packed_ext(filename)) {
+	case ASAP_EXT('S', 'A', 'P'):
+		return parse_sap(ast, module_info, module, module_len);
+#ifndef ASAP_ONLY_SAP
 	case ASAP_EXT('C', 'M', 'C'):
 		return parse_cmc(ast, module_info, module, module_len, FALSE);
 	case ASAP_EXT('C', 'M', 'R'):
@@ -1286,13 +1309,12 @@ FILE_FUNC abool parse_file(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 		return parse_mpt(ast, module_info, module, module_len);
 	case ASAP_EXT('R', 'M', 'T'):
 		return parse_rmt(ast, module_info, module, module_len);
-	case ASAP_EXT('S', 'A', 'P'):
-		return parse_sap(ast, module_info, module, module_len);
 	case ASAP_EXT('T', 'M', '2'):
 		return parse_tm2(ast, module_info, module, module_len);
 	case ASAP_EXT('T', 'M', '8'):
 	case ASAP_EXT('T', 'M', 'C'):
 		return parse_tmc(ast, module_info, module, module_len);
+#endif
 	default:
 		return FALSE;
 	}
@@ -1374,6 +1396,7 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 		AST cpu_s = 0xff;
 		AST cpu_pc = AST module_info.init;
 		break;
+#ifndef ASAP_ONLY_SAP
 	case 'm':
 		call_6502_init(ast, AST module_info.player, 0x00, AST module_info.music >> 8, AST module_info.music);
 		call_6502_init(ast, AST module_info.player, 0x02, AST module_info.song_pos[song], 0);
@@ -1387,6 +1410,7 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 		call_6502_init(ast, AST module_info.player, 0x00, song, 0);
 		AST tmc_per_frame_counter = 1;
 		break;
+#endif
 	}
 	ASAP_MutePokeyChannels(ast, 0);
 }
@@ -1514,7 +1538,7 @@ ASAP_FUNC int ASAP_Generate(ASAP_State PTR ast, VOIDPTR buffer, int buffer_len,
 	return block << block_shift;
 }
 
-#if !defined(JAVA) && !defined(CSHARP)
+#if !defined(JAVA) && !defined(CSHARP) && !defined(ASAP_ONLY_SAP)
 
 abool ASAP_ChangeExt(char *filename, const char *ext)
 {
@@ -1977,4 +2001,4 @@ int ASAP_Convert(const char *filename, const ASAP_ModuleInfo *module_info,
 	}
 }
 
-#endif /* !defined(JAVA) && !defined(CSHARP) */
+#endif /* !defined(JAVA) && !defined(CSHARP) && !defined(ASAP_ONLY_SAP) */

@@ -1,3 +1,11 @@
+2009-03-13  Piotr Fusik  <fox@scene.pl>
+* asap.c: ASAP_ONLY_SAP disables support of formats other than SAP
+  at compile time; avoid strstr()
+
+* acpu.c: ACPU_NO_UNOFFICIAL and ACPU_NO_DECIMAL reduce code by removing
+  emulation of undocumented opcodes and decimal mode
+
+
 2008-12-29  Piotr Fusik  <fox@scene.pl>
 * java/Makefile: configured my new WTK path
 

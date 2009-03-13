@@ -44,6 +44,32 @@ CONST_LOOKUP(int, opcode_cycles) =
 	2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7  /* Fx */
 };
 
+#ifdef ACPU_NO_DECIMAL
+
+#define DO_ADC \
+	{ \
+		/* binary mode */ \
+		int tmp = a + data + c; \
+		c = tmp >> 8; \
+		vdi &= D_FLAG | I_FLAG; \
+		if (((a ^ data) & 0x80) == 0 && ((data ^ tmp) & 0x80) != 0) \
+			vdi += V_FLAG; \
+		nz = a = tmp & 0xff; \
+	}
+
+#define DO_SBC \
+	{ \
+		/* binary mode */ \
+		int tmp = a - data - 1 + c; \
+		c = (tmp >= 0) ? 1 : 0; \
+		vdi &= D_FLAG | I_FLAG; \
+		if (((a ^ tmp) & 0x80) != 0 && ((a ^ data) & 0x80) != 0) \
+			vdi += V_FLAG; \
+		nz = a = tmp & 0xff; \
+	}
+
+#else /* ACPU_NO_DECIMAL */
+
 #define DO_ADC \
 	if ((vdi & D_FLAG) == 0) { \
 		/* binary mode */ \
@@ -98,6 +124,8 @@ CONST_LOOKUP(int, opcode_cycles) =
 		nz = tmp & 0xff; \
 		a = ((ah & 0xf) << 4) + (al & 0x0f); \
 	}
+
+#endif /* ACPU_NO_DECIMAL */
 
 #define zGetByte(addr)  dGetByte((addr) & 0xff)
 
@@ -317,6 +345,7 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			scanlines = 1;
 			AST cycle = cycle_limit;
 			break;
+#ifndef ACPU_NO_UNOFFICIAL
 		case 0x03: /* ASO (ab,x) [unofficial] */
 			INDIRECT_X;
 			ASO;
@@ -337,27 +366,9 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0xe2:
 			pc++;
 			break;
-		case 0x05: /* ORA ab */
-			ZPAGE;
-			ORA_ZP;
-			break;
-		case 0x06: /* ASL ab */
-			ZPAGE;
-			ASL_ZP;
-			break;
 		case 0x07: /* ASO ab [unofficial] */
 			ZPAGE;
 			ASO_ZP;
-			break;
-		case 0x08: /* PHP */
-			PHPB1;
-			break;
-		case 0x09: /* ORA #ab */
-			nz = a |= FETCH;
-			break;
-		case 0x0a: /* ASL */
-			c = a >> 7;
-			nz = a = (a << 1) & 0xff;
 			break;
 		case 0x0b: /* ANC #ab [unofficial] */
 		case 0x2b:
@@ -367,48 +378,17 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0x0c: /* NOP abcd [unofficial] */
 			pc += 2;
 			break;
-		case 0x0d: /* ORA abcd */
-			ABSOLUTE;
-			ORA;
-			break;
-		case 0x0e: /* ASL abcd */
-			ABSOLUTE;
-			ASL;
-			break;
 		case 0x0f: /* ASO abcd [unofficial] */
 			ABSOLUTE;
 			ASO;
-			break;
-		case 0x10: /* BPL */
-			BRANCH(nz < 0x80);
-		case 0x11: /* ORA (ab),y */
-			INDIRECT_Y;
-			NCYCLES_Y;
-			ORA;
 			break;
 		case 0x13: /* ASO (ab),y [unofficial] */
 			INDIRECT_Y;
 			ASO;
 			break;
-		case 0x15: /* ORA ab,x */
-			ZPAGE_X;
-			ORA_ZP;
-			break;
-		case 0x16: /* ASL ab,x */
-			ZPAGE_X;
-			ASL_ZP;
-			break;
 		case 0x17: /* ASO ab,x [unofficial] */
 			ZPAGE_X;
 			ASO_ZP;
-			break;
-		case 0x18: /* CLC */
-			c = 0;
-			break;
-		case 0x19: /* ORA abcd,y */
-			ABSOLUTE_Y;
-			NCYCLES_Y;
-			ORA;
 			break;
 		case 0x1b: /* ASO abcd,y [unofficial] */
 			ABSOLUTE_Y;
@@ -424,6 +404,326 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 				AST cycle++;
 			pc++;
 			break;
+		case 0x1f: /* ASO abcd,x [unofficial] */
+			ABSOLUTE_X;
+			ASO;
+			break;
+		case 0x23: /* RLA (ab,x) [unofficial] */
+			INDIRECT_X;
+			RLA;
+			break;
+		case 0x27: /* RLA ab [unofficial] */
+			ZPAGE;
+			RLA_ZP;
+			break;
+		case 0x2f: /* RLA abcd [unofficial] */
+			ABSOLUTE;
+			RLA;
+			break;
+		case 0x33: /* RLA (ab),y [unofficial] */
+			INDIRECT_Y;
+			RLA;
+			break;
+		case 0x37: /* RLA ab,x [unofficial] */
+			ZPAGE_X;
+			RLA_ZP;
+			break;
+		case 0x3b: /* RLA abcd,y [unofficial] */
+			ABSOLUTE_Y;
+			RLA;
+			break;
+		case 0x3f: /* RLA abcd,x [unofficial] */
+			ABSOLUTE_X;
+			RLA;
+			break;
+		case 0x43: /* LSE (ab,x) [unofficial] */
+			INDIRECT_X;
+			LSE;
+			break;
+		case 0x47: /* LSE ab [unofficial] */
+			ZPAGE;
+			LSE_ZP;
+			break;
+		case 0x4b: /* ALR #ab [unofficial] */
+			a &= FETCH;
+			c = a & 1;
+			nz = a >>= 1;
+			break;
+		case 0x4f: /* LSE abcd [unofficial] */
+			ABSOLUTE;
+			LSE;
+			break;
+		case 0x53: /* LSE (ab),y [unofficial] */
+			INDIRECT_Y;
+			LSE;
+			break;
+		case 0x57: /* LSE ab,x [unofficial] */
+			ZPAGE_X;
+			LSE_ZP;
+			break;
+		case 0x5b: /* LSE abcd,y [unofficial] */
+			ABSOLUTE_Y;
+			LSE;
+			break;
+		case 0x5f: /* LSE abcd,x [unofficial] */
+			ABSOLUTE_X;
+			LSE;
+			break;
+		case 0x63: /* RRA (ab,x) [unofficial] */
+			INDIRECT_X;
+			RRA;
+			break;
+		case 0x67: /* RRA ab [unofficial] */
+			ZPAGE;
+			RRA_ZP;
+			break;
+		case 0x6b: /* ARR #ab [unofficial] */
+			data = a & FETCH;
+			nz = a = (data >> 1) + (c << 7);
+			vdi = (vdi & (D_FLAG | I_FLAG)) + ((a ^ data) & V_FLAG);
+#ifdef ACPU_NO_DECIMAL
+			c = data >> 7;
+#else
+			if ((vdi & D_FLAG) == 0)
+				c = data >> 7;
+			else {
+				if ((data & 0xf) + (data & 1) > 5)
+					a = (a & 0xf0) + ((a + 6) & 0xf);
+				if (data + (data & 0x10) >= 0x60) {
+					a += 0x60;
+					c = 1;
+				}
+				else
+					c = 0;
+				a &= 0xff;
+			}
+#endif
+			break;
+		case 0x6f: /* RRA abcd [unofficial] */
+			ABSOLUTE;
+			RRA;
+			break;
+		case 0x73: /* RRA (ab),y [unofficial] */
+			INDIRECT_Y;
+			RRA;
+			break;
+		case 0x77: /* RRA ab,x [unofficial] */
+			ZPAGE_X;
+			RRA_ZP;
+			break;
+		case 0x7b: /* RRA abcd,y [unofficial] */
+			ABSOLUTE_Y;
+			RRA;
+			break;
+		case 0x7f: /* RRA abcd,x [unofficial] */
+			ABSOLUTE_X;
+			RRA;
+			break;
+		case 0x83: /* SAX (ab,x) [unofficial] */
+			INDIRECT_X;
+			SAX;
+			break;
+		case 0x87: /* SAX ab [unofficial] */
+			ZPAGE;
+			SAX_ZP;
+			break;
+		case 0x8b: /* ANE #ab [unofficial] */
+			data = FETCH;
+			a &= x;
+			nz = a & data;
+			a &= data | 0xef;
+			break;
+		case 0x8f: /* SAX abcd [unofficial] */
+			ABSOLUTE;
+			SAX;
+			break;
+		case 0x93: /* SHA (ab),y [unofficial, unstable] */
+			ZPAGE;
+			data = zGetByte(addr + 1);
+			addr = (dGetByte(addr) + (data << 8) + y) & 0xffff;
+			data = a & x & (data + 1);
+			PutByte(addr, data);
+			break;
+		case 0x97: /* SAX ab,y [unofficial] */
+			ZPAGE_Y;
+			SAX_ZP;
+			break;
+		case 0x9b: /* SHS abcd,y [unofficial, unstable] */
+			/* S seems to be stable, only memory values vary */
+			addr = FETCH;
+			data = FETCH;
+			addr = (addr + (data << 8) + y) & 0xffff;
+			s = a & x;
+			data = s & (data + 1);
+			PutByte(addr, data);
+			break;
+		case 0x9c: /* SHY abcd,x [unofficial] */
+			addr = FETCH;
+			data = FETCH;
+			addr = (addr + (data << 8) + x) & 0xffff;
+			data = y & (data + 1);
+			PutByte(addr, data);
+			break;
+		case 0x9e: /* SHX abcd,y [unofficial] */
+			addr = FETCH;
+			data = FETCH;
+			addr = (addr + (data << 8) + y) & 0xffff;
+			data = x & (data + 1);
+			PutByte(addr, data);
+			break;
+		case 0x9f: /* SHA abcd,y [unofficial, unstable] */
+			addr = FETCH;
+			data = FETCH;
+			addr = (addr + (data << 8) + y) & 0xffff;
+			data = a & x & (data + 1);
+			PutByte(addr, data);
+			break;
+		case 0xa3: /* LAX (ab,x) [unofficial] */
+			INDIRECT_X;
+			LAX;
+			break;
+		case 0xa7: /* LAX ab [unofficial] */
+			ZPAGE;
+			LAX_ZP;
+			break;
+		case 0xab: /* ANX #ab [unofficial] */
+			nz = x = a &= FETCH;
+			break;
+		case 0xaf: /* LAX abcd [unofficial] */
+			ABSOLUTE;
+			LAX;
+			break;
+		case 0xb3: /* LAX (ab),y [unofficial] */
+			INDIRECT_Y;
+			NCYCLES_Y;
+			LAX;
+			break;
+		case 0xb7: /* LAX ab,y [unofficial] */
+			ZPAGE_Y;
+			LAX_ZP;
+			break;
+		case 0xbb: /* LAS abcd,y [unofficial] */
+			ABSOLUTE_Y;
+			NCYCLES_Y;
+			nz = x = a = s &= GetByte(addr);
+			break;
+		case 0xbf: /* LAX abcd,y [unofficial] */
+			ABSOLUTE_Y;
+			NCYCLES_Y;
+			LAX;
+			break;
+		case 0xc3: /* DCM (ab,x) [unofficial] */
+			INDIRECT_X;
+			DCM;
+			break;
+		case 0xc7: /* DCM ab [unofficial] */
+			ZPAGE;
+			DCM_ZP;
+			break;
+		case 0xcb: /* SBX #ab [unofficial] */
+			nz = FETCH;
+			x &= a;
+			c = (x >= nz) ? 1 : 0;
+			nz = x = (x - nz) & 0xff;
+			break;
+		case 0xcf: /* DCM abcd [unofficial] */
+			ABSOLUTE;
+			DCM;
+			break;
+		case 0xd3: /* DCM (ab),y [unofficial] */
+			INDIRECT_Y;
+			DCM;
+			break;
+		case 0xd7: /* DCM ab,x [unofficial] */
+			ZPAGE_X;
+			DCM_ZP;
+			break;
+		case 0xdb: /* DCM abcd,y [unofficial] */
+			ABSOLUTE_Y;
+			DCM;
+			break;
+		case 0xdf: /* DCM abcd,x [unofficial] */
+			ABSOLUTE_X;
+			DCM;
+			break;
+		case 0xe3: /* INS (ab,x) [unofficial] */
+			INDIRECT_X;
+			INS;
+			break;
+		case 0xe7: /* INS ab [unofficial] */
+			ZPAGE;
+			INS_ZP;
+			break;
+		case 0xef: /* INS abcd [unofficial] */
+			ABSOLUTE;
+			INS;
+			break;
+		case 0xf3: /* INS (ab),y [unofficial] */
+			INDIRECT_Y;
+			INS;
+			break;
+		case 0xf7: /* INS ab,x [unofficial] */
+			ZPAGE_X;
+			INS_ZP;
+			break;
+		case 0xfb: /* INS abcd,y [unofficial] */
+			ABSOLUTE_Y;
+			INS;
+			break;
+		case 0xff: /* INS abcd,x [unofficial] */
+			ABSOLUTE_X;
+			INS;
+			break;
+#endif /* ACPU_NO_UNOFFICIAL */
+		case 0x05: /* ORA ab */
+			ZPAGE;
+			ORA_ZP;
+			break;
+		case 0x06: /* ASL ab */
+			ZPAGE;
+			ASL_ZP;
+			break;
+		case 0x08: /* PHP */
+			PHPB1;
+			break;
+		case 0x09: /* ORA #ab */
+			nz = a |= FETCH;
+			break;
+		case 0x0a: /* ASL */
+			c = a >> 7;
+			nz = a = (a << 1) & 0xff;
+			break;
+		case 0x0d: /* ORA abcd */
+			ABSOLUTE;
+			ORA;
+			break;
+		case 0x0e: /* ASL abcd */
+			ABSOLUTE;
+			ASL;
+			break;
+		case 0x10: /* BPL */
+			BRANCH(nz < 0x80);
+		case 0x11: /* ORA (ab),y */
+			INDIRECT_Y;
+			NCYCLES_Y;
+			ORA;
+			break;
+		case 0x15: /* ORA ab,x */
+			ZPAGE_X;
+			ORA_ZP;
+			break;
+		case 0x16: /* ASL ab,x */
+			ZPAGE_X;
+			ASL_ZP;
+			break;
+		case 0x18: /* CLC */
+			c = 0;
+			break;
+		case 0x19: /* ORA abcd,y */
+			ABSOLUTE_Y;
+			NCYCLES_Y;
+			ORA;
+			break;
 		case 0x1d: /* ORA abcd,x */
 			ABSOLUTE_X;
 			NCYCLES_X;
@@ -433,10 +733,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE_X;
 			ASL;
 			break;
-		case 0x1f: /* ASO abcd,x [unofficial] */
-			ABSOLUTE_X;
-			ASO;
-			break;
 		case 0x20: /* JSR abcd */
 			addr = FETCH;
 			PHPC;
@@ -445,10 +741,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0x21: /* AND (ab,x) */
 			INDIRECT_X;
 			AND;
-			break;
-		case 0x23: /* RLA (ab,x) [unofficial] */
-			INDIRECT_X;
-			RLA;
 			break;
 		case 0x24: /* BIT ab */
 			ZPAGE;
@@ -463,10 +755,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0x26: /* ROL ab */
 			ZPAGE;
 			ROL_ZP;
-			break;
-		case 0x27: /* RLA ab [unofficial] */
-			ZPAGE;
-			RLA_ZP;
 			break;
 		case 0x28: /* PLP */
 			PLP;
@@ -494,20 +782,12 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE;
 			ROL;
 			break;
-		case 0x2f: /* RLA abcd [unofficial] */
-			ABSOLUTE;
-			RLA;
-			break;
 		case 0x30: /* BMI */
 			BRANCH(nz >= 0x80);
 		case 0x31: /* AND (ab),y */
 			INDIRECT_Y;
 			NCYCLES_Y;
 			AND;
-			break;
-		case 0x33: /* RLA (ab),y [unofficial] */
-			INDIRECT_Y;
-			RLA;
 			break;
 		case 0x35: /* AND ab,x */
 			ZPAGE_X;
@@ -517,10 +797,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ZPAGE_X;
 			ROL_ZP;
 			break;
-		case 0x37: /* RLA ab,x [unofficial] */
-			ZPAGE_X;
-			RLA_ZP;
-			break;
 		case 0x38: /* SEC */
 			c = 1;
 			break;
@@ -528,10 +804,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE_Y;
 			NCYCLES_Y;
 			AND;
-			break;
-		case 0x3b: /* RLA abcd,y [unofficial] */
-			ABSOLUTE_Y;
-			RLA;
 			break;
 		case 0x3d: /* AND abcd,x */
 			ABSOLUTE_X;
@@ -541,10 +813,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0x3e: /* ROL abcd,x */
 			ABSOLUTE_X;
 			ROL;
-			break;
-		case 0x3f: /* RLA abcd,x [unofficial] */
-			ABSOLUTE_X;
-			RLA;
 			break;
 		case 0x40: /* RTI */
 			PLP;
@@ -557,10 +825,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			INDIRECT_X;
 			EOR;
 			break;
-		case 0x43: /* LSE (ab,x) [unofficial] */
-			INDIRECT_X;
-			LSE;
-			break;
 		case 0x45: /* EOR ab */
 			ZPAGE;
 			EOR_ZP;
@@ -569,10 +833,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ZPAGE;
 			LSR_ZP;
 			break;
-		case 0x47: /* LSE ab [unofficial] */
-			ZPAGE;
-			LSE_ZP;
-			break;
 		case 0x48: /* PHA */
 			PH(a);
 			break;
@@ -580,11 +840,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			nz = a ^= FETCH;
 			break;
 		case 0x4a: /* LSR */
-			c = a & 1;
-			nz = a >>= 1;
-			break;
-		case 0x4b: /* ALR #ab [unofficial] */
-			a &= FETCH;
 			c = a & 1;
 			nz = a >>= 1;
 			break;
@@ -600,20 +855,12 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE;
 			LSR;
 			break;
-		case 0x4f: /* LSE abcd [unofficial] */
-			ABSOLUTE;
-			LSE;
-			break;
 		case 0x50: /* BVC */
 			BRANCH((vdi & V_FLAG) == 0);
 		case 0x51: /* EOR (ab),y */
 			INDIRECT_Y;
 			NCYCLES_Y;
 			EOR;
-			break;
-		case 0x53: /* LSE (ab),y [unofficial] */
-			INDIRECT_Y;
-			LSE;
 			break;
 		case 0x55: /* EOR ab,x */
 			ZPAGE_X;
@@ -622,10 +869,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0x56: /* LSR ab,x */
 			ZPAGE_X;
 			LSR_ZP;
-			break;
-		case 0x57: /* LSE ab,x [unofficial] */
-			ZPAGE_X;
-			LSE_ZP;
 			break;
 		case 0x58: /* CLI */
 			vdi &= V_FLAG | D_FLAG;
@@ -636,10 +879,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			NCYCLES_Y;
 			EOR;
 			break;
-		case 0x5b: /* LSE abcd,y [unofficial] */
-			ABSOLUTE_Y;
-			LSE;
-			break;
 		case 0x5d: /* EOR abcd,x */
 			ABSOLUTE_X;
 			NCYCLES_X;
@@ -648,10 +887,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0x5e: /* LSR abcd,x */
 			ABSOLUTE_X;
 			LSR;
-			break;
-		case 0x5f: /* LSE abcd,x [unofficial] */
-			ABSOLUTE_X;
-			LSE;
 			break;
 		case 0x60: /* RTS */
 			PL(pc);
@@ -662,10 +897,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			INDIRECT_X;
 			ADC;
 			break;
-		case 0x63: /* RRA (ab,x) [unofficial] */
-			INDIRECT_X;
-			RRA;
-			break;
 		case 0x65: /* ADC ab */
 			ZPAGE;
 			ADC_ZP;
@@ -673,10 +904,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0x66: /* ROR ab */
 			ZPAGE;
 			ROR_ZP;
-			break;
-		case 0x67: /* RRA ab [unofficial] */
-			ZPAGE;
-			RRA_ZP;
 			break;
 		case 0x68: /* PLA */
 			PL(a);
@@ -690,24 +917,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			nz = (c << 7) + (a >> 1);
 			c = a & 1;
 			a = nz;
-			break;
-		case 0x6b: /* ARR #ab [unofficial] */
-			data = a & FETCH;
-			nz = a = (data >> 1) + (c << 7);
-			vdi = (vdi & (D_FLAG | I_FLAG)) + ((a ^ data) & V_FLAG);
-			if ((vdi & D_FLAG) == 0)
-				c = data >> 7;
-			else {
-				if ((data & 0xf) + (data & 1) > 5)
-					a = (a & 0xf0) + ((a + 6) & 0xf);
-				if (data + (data & 0x10) >= 0x60) {
-					a += 0x60;
-					c = 1;
-				}
-				else
-					c = 0;
-				a &= 0xff;
-			}
 			break;
 		case 0x6c: /* JMP (abcd) */
 			ABSOLUTE;
@@ -724,20 +933,12 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE;
 			ROR;
 			break;
-		case 0x6f: /* RRA abcd [unofficial] */
-			ABSOLUTE;
-			RRA;
-			break;
 		case 0x70: /* BVS */
 			BRANCH((vdi & V_FLAG) != 0);
 		case 0x71: /* ADC (ab),y */
 			INDIRECT_Y;
 			NCYCLES_Y;
 			ADC;
-			break;
-		case 0x73: /* RRA (ab),y [unofficial] */
-			INDIRECT_Y;
-			RRA;
 			break;
 		case 0x75: /* ADC ab,x */
 			ZPAGE_X;
@@ -747,10 +948,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ZPAGE_X;
 			ROR_ZP;
 			break;
-		case 0x77: /* RRA ab,x [unofficial] */
-			ZPAGE_X;
-			RRA_ZP;
-			break;
 		case 0x78: /* SEI */
 			vdi |= I_FLAG;
 			break;
@@ -758,10 +955,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE_Y;
 			NCYCLES_Y;
 			ADC;
-			break;
-		case 0x7b: /* RRA abcd,y [unofficial] */
-			ABSOLUTE_Y;
-			RRA;
 			break;
 		case 0x7d: /* ADC abcd,x */
 			ABSOLUTE_X;
@@ -772,17 +965,9 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE_X;
 			ROR;
 			break;
-		case 0x7f: /* RRA abcd,x [unofficial] */
-			ABSOLUTE_X;
-			RRA;
-			break;
 		case 0x81: /* STA (ab,x) */
 			INDIRECT_X;
 			STA;
-			break;
-		case 0x83: /* SAX (ab,x) [unofficial] */
-			INDIRECT_X;
-			SAX;
 			break;
 		case 0x84: /* STY ab */
 			ZPAGE;
@@ -796,21 +981,11 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ZPAGE;
 			STX_ZP;
 			break;
-		case 0x87: /* SAX ab [unofficial] */
-			ZPAGE;
-			SAX_ZP;
-			break;
 		case 0x88: /* DEY */
 			nz = y = (y - 1) & 0xff;
 			break;
 		case 0x8a: /* TXA */
 			nz = a = x;
-			break;
-		case 0x8b: /* ANE #ab [unofficial] */
-			data = FETCH;
-			a &= x;
-			nz = a & data;
-			a &= data | 0xef;
 			break;
 		case 0x8c: /* STY abcd */
 			ABSOLUTE;
@@ -824,22 +999,11 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE;
 			STX;
 			break;
-		case 0x8f: /* SAX abcd [unofficial] */
-			ABSOLUTE;
-			SAX;
-			break;
 		case 0x90: /* BCC */
 			BRANCH(c == 0);
 		case 0x91: /* STA (ab),y */
 			INDIRECT_Y;
 			STA;
-			break;
-		case 0x93: /* SHA (ab),y [unofficial, unstable] */
-			ZPAGE;
-			data = zGetByte(addr + 1);
-			addr = (dGetByte(addr) + (data << 8) + y) & 0xffff;
-			data = a & x & (data + 1);
-			PutByte(addr, data);
 			break;
 		case 0x94: /* STY ab,x */
 			ZPAGE_X;
@@ -853,10 +1017,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ZPAGE_Y;
 			STX_ZP;
 			break;
-		case 0x97: /* SAX ab,y [unofficial] */
-			ZPAGE_Y;
-			SAX_ZP;
-			break;
 		case 0x98: /* TYA */
 			nz = a = y;
 			break;
@@ -867,39 +1027,9 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0x9a: /* TXS */
 			s = x;
 			break;
-		case 0x9b: /* SHS abcd,y [unofficial, unstable] */
-			/* S seems to be stable, only memory values vary */
-			addr = FETCH;
-			data = FETCH;
-			addr = (addr + (data << 8) + y) & 0xffff;
-			s = a & x;
-			data = s & (data + 1);
-			PutByte(addr, data);
-			break;
-		case 0x9c: /* SHY abcd,x [unofficial] */
-			addr = FETCH;
-			data = FETCH;
-			addr = (addr + (data << 8) + x) & 0xffff;
-			data = y & (data + 1);
-			PutByte(addr, data);
-			break;
 		case 0x9d: /* STA abcd,x */
 			ABSOLUTE_X;
 			STA;
-			break;
-		case 0x9e: /* SHX abcd,y [unofficial] */
-			addr = FETCH;
-			data = FETCH;
-			addr = (addr + (data << 8) + y) & 0xffff;
-			data = x & (data + 1);
-			PutByte(addr, data);
-			break;
-		case 0x9f: /* SHA abcd,y [unofficial, unstable] */
-			addr = FETCH;
-			data = FETCH;
-			addr = (addr + (data << 8) + y) & 0xffff;
-			data = a & x & (data + 1);
-			PutByte(addr, data);
 			break;
 		case 0xa0: /* LDY #ab */
 			nz = y = FETCH;
@@ -910,10 +1040,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			break;
 		case 0xa2: /* LDX #ab */
 			nz = x = FETCH;
-			break;
-		case 0xa3: /* LAX (ab,x) [unofficial] */
-			INDIRECT_X;
-			LAX;
 			break;
 		case 0xa4: /* LDY ab */
 			ZPAGE;
@@ -927,10 +1053,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ZPAGE;
 			LDX_ZP;
 			break;
-		case 0xa7: /* LAX ab [unofficial] */
-			ZPAGE;
-			LAX_ZP;
-			break;
 		case 0xa8: /* TAY */
 			nz = y = a;
 			break;
@@ -939,9 +1061,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			break;
 		case 0xaa: /* TAX */
 			nz = x = a;
-			break;
-		case 0xab: /* ANX #ab [unofficial] */
-			nz = x = a &= FETCH;
 			break;
 		case 0xac: /* LDY abcd */
 			ABSOLUTE;
@@ -955,21 +1074,12 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE;
 			LDX;
 			break;
-		case 0xaf: /* LAX abcd [unofficial] */
-			ABSOLUTE;
-			LAX;
-			break;
 		case 0xb0: /* BCS */
 			BRANCH(c != 0);
 		case 0xb1: /* LDA (ab),y */
 			INDIRECT_Y;
 			NCYCLES_Y;
 			LDA;
-			break;
-		case 0xb3: /* LAX (ab),y [unofficial] */
-			INDIRECT_Y;
-			NCYCLES_Y;
-			LAX;
 			break;
 		case 0xb4: /* LDY ab,x */
 			ZPAGE_X;
@@ -983,12 +1093,10 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ZPAGE_Y;
 			LDX_ZP;
 			break;
-		case 0xb7: /* LAX ab,y [unofficial] */
-			ZPAGE_Y;
-			LAX_ZP;
-			break;
 		case 0xb8: /* CLV */
+#ifndef ACPU_NO_DECIMAL
 			vdi &= D_FLAG | I_FLAG;
+#endif
 			break;
 		case 0xb9: /* LDA abcd,y */
 			ABSOLUTE_Y;
@@ -997,11 +1105,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			break;
 		case 0xba: /* TSX */
 			nz = x = s;
-			break;
-		case 0xbb: /* LAS abcd,y [unofficial] */
-			ABSOLUTE_Y;
-			NCYCLES_Y;
-			nz = x = a = s &= GetByte(addr);
 			break;
 		case 0xbc: /* LDY abcd,x */
 			ABSOLUTE_X;
@@ -1018,11 +1121,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			NCYCLES_Y;
 			LDX;
 			break;
-		case 0xbf: /* LAX abcd,y [unofficial] */
-			ABSOLUTE_Y;
-			NCYCLES_Y;
-			LAX;
-			break;
 		case 0xc0: /* CPY #ab */
 			nz = FETCH;
 			c = (y >= nz) ? 1 : 0;
@@ -1031,10 +1129,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0xc1: /* CMP (ab,x) */
 			INDIRECT_X;
 			CMP;
-			break;
-		case 0xc3: /* DCM (ab,x) [unofficial] */
-			INDIRECT_X;
-			DCM;
 			break;
 		case 0xc4: /* CPY ab */
 			ZPAGE;
@@ -1048,10 +1142,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ZPAGE;
 			DEC_ZP;
 			break;
-		case 0xc7: /* DCM ab [unofficial] */
-			ZPAGE;
-			DCM_ZP;
-			break;
 		case 0xc8: /* INY */
 			nz = y = (y + 1) & 0xff;
 			break;
@@ -1062,12 +1152,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			break;
 		case 0xca: /* DEX */
 			nz = x = (x - 1) & 0xff;
-			break;
-		case 0xcb: /* SBX #ab [unofficial] */
-			nz = FETCH;
-			x &= a;
-			c = (x >= nz) ? 1 : 0;
-			nz = x = (x - nz) & 0xff;
 			break;
 		case 0xcc: /* CPY abcd */
 			ABSOLUTE;
@@ -1081,20 +1165,12 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE;
 			DEC;
 			break;
-		case 0xcf: /* DCM abcd [unofficial] */
-			ABSOLUTE;
-			DCM;
-			break;
 		case 0xd0: /* BNE */
 			BRANCH((nz & 0xff) != 0);
 		case 0xd1: /* CMP (ab),y */
 			INDIRECT_Y;
 			NCYCLES_Y;
 			CMP;
-			break;
-		case 0xd3: /* DCM (ab),y [unofficial] */
-			INDIRECT_Y;
-			DCM;
 			break;
 		case 0xd5: /* CMP ab,x */
 			ZPAGE_X;
@@ -1104,10 +1180,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ZPAGE_X;
 			DEC_ZP;
 			break;
-		case 0xd7: /* DCM ab,x [unofficial] */
-			ZPAGE_X;
-			DCM_ZP;
-			break;
 		case 0xd8: /* CLD */
 			vdi &= V_FLAG | I_FLAG;
 			break;
@@ -1115,10 +1187,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE_Y;
 			NCYCLES_Y;
 			CMP;
-			break;
-		case 0xdb: /* DCM abcd,y [unofficial] */
-			ABSOLUTE_Y;
-			DCM;
 			break;
 		case 0xdd: /* CMP abcd,x */
 			ABSOLUTE_X;
@@ -1129,10 +1197,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE_X;
 			DEC;
 			break;
-		case 0xdf: /* DCM abcd,x [unofficial] */
-			ABSOLUTE_X;
-			DCM;
-			break;
 		case 0xe0: /* CPX #ab */
 			nz = FETCH;
 			c = (x >= nz) ? 1 : 0;
@@ -1141,10 +1205,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0xe1: /* SBC (ab,x) */
 			INDIRECT_X;
 			SBC;
-			break;
-		case 0xe3: /* INS (ab,x) [unofficial] */
-			INDIRECT_X;
-			INS;
 			break;
 		case 0xe4: /* CPX ab */
 			ZPAGE;
@@ -1157,10 +1217,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0xe6: /* INC ab */
 			ZPAGE;
 			INC_ZP;
-			break;
-		case 0xe7: /* INS ab [unofficial] */
-			ZPAGE;
-			INS_ZP;
 			break;
 		case 0xe8: /* INX */
 			nz = x = (x + 1) & 0xff;
@@ -1190,20 +1246,12 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE;
 			INC;
 			break;
-		case 0xef: /* INS abcd [unofficial] */
-			ABSOLUTE;
-			INS;
-			break;
 		case 0xf0: /* BEQ */
 			BRANCH((nz & 0xff) == 0);
 		case 0xf1: /* SBC (ab),y */
 			INDIRECT_Y;
 			NCYCLES_Y;
 			SBC;
-			break;
-		case 0xf3: /* INS (ab),y [unofficial] */
-			INDIRECT_Y;
-			INS;
 			break;
 		case 0xf5: /* SBC ab,x */
 			ZPAGE_X;
@@ -1213,10 +1261,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ZPAGE_X;
 			INC_ZP;
 			break;
-		case 0xf7: /* INS ab,x [unofficial] */
-			ZPAGE_X;
-			INS_ZP;
-			break;
 		case 0xf8: /* SED */
 			vdi |= D_FLAG;
 			break;
@@ -1224,10 +1268,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			ABSOLUTE_Y;
 			NCYCLES_Y;
 			SBC;
-			break;
-		case 0xfb: /* INS abcd,y [unofficial] */
-			ABSOLUTE_Y;
-			INS;
 			break;
 		case 0xfd: /* SBC abcd,x */
 			ABSOLUTE_X;
@@ -1237,10 +1277,6 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0xfe: /* INC abcd,x */
 			ABSOLUTE_X;
 			INC;
-			break;
-		case 0xff: /* INS abcd,x */
-			ABSOLUTE_X;
-			INS;
 			break;
 		}
 	}
