@@ -1,7 +1,7 @@
 /*
  * asapscan.c - 8-bit Atari music analyzer
  *
- * Copyright (C) 2007-2008  Piotr Fusik
+ * Copyright (C) 2007-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -46,9 +46,11 @@ static abool dump = FALSE;
 #define FEATURE_9_BIT_POLY     16
 static int features = 0;
 
-abool cpu_trace = FALSE;
+#define CPU_TRACE_PRINT        1
+#define CPU_TRACE_UNOFFICIAL   2
+int cpu_trace = 0;
 
-static const char cpu_instructions[256][10] = {
+static const char cpu_mnemonics[256][10] = {
 	"BRK", "ORA (1,X)", "CIM", "ASO (1,X)", "NOP 1", "ORA 1", "ASL 1", "ASO 1",
 	"PHP", "ORA #1", "ASL", "ANC #1", "NOP 2", "ORA 2", "ASL 2", "ASO 2",
 	"BPL 0", "ORA (1),Y", "CIM", "ASO (1),Y", "NOP 1,X", "ORA 1,X", "ASL 1,X", "ASO 1,X",
@@ -87,46 +89,89 @@ static const char cpu_instructions[256][10] = {
 	"SED", "SBC 2,Y", "NOP !", "INS 2,Y", "NOP 2,X", "SBC 2,X", "INC 2,X", "INS 2,X"
 };
 
+#define CPU_OPCODE_UNOFFICIAL  1
+#define CPU_OPCODE_USED        2
+static char cpu_opcodes[256] = {
+	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1,
+	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1,
+	0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
+	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1,
+	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
+	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1,
+	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
+	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1,
+	1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1,
+	0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1,
+	0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
+	0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
+	0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
+	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1,
+	0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
+	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1
+};
+
 static void show_instruction(const ASAP_State *ast, int pc)
 {
 	int addr = pc;
-	int insn;
+	int opcode;
 	const char *mnemonic;
 	const char *p;
 
-	insn = dGetByte(pc++);
-	mnemonic = cpu_instructions[insn];
+	opcode = dGetByte(pc++);
+	mnemonic = cpu_mnemonics[opcode];
 	for (p = mnemonic + 3; *p != '\0'; p++) {
 		if (*p == '1') {
 			int value = dGetByte(pc);
 			printf("%04X: %02X %02X     %.*s$%02X%s\n",
-			       addr, insn, value, (int) (p - mnemonic), mnemonic, value, p + 1);
+			       addr, opcode, value, (int) (p - mnemonic), mnemonic, value, p + 1);
 			return;
 		}
 		if (*p == '2') {
 			int lo = dGetByte(pc);
 			int hi = dGetByte(pc + 1);
 			printf("%04X: %02X %02X %02X  %.*s$%02X%02X%s\n",
-			       addr, insn, lo, hi, (int) (p - mnemonic), mnemonic, hi, lo, p + 1);
+			       addr, opcode, lo, hi, (int) (p - mnemonic), mnemonic, hi, lo, p + 1);
 			return;
 		}
 		if (*p == '0') {
 			int offset = dGetByte(pc++);
 			int target = (pc + (signed char) offset) & 0xffff;
-			printf("%04X: %02X %02X     %.4s$%04X\n", addr, insn, offset, mnemonic, target);
+			printf("%04X: %02X %02X     %.4s$%04X\n", addr, opcode, offset, mnemonic, target);
 			return;
 		}
 	}
-	printf("%04X: %02X        %s\n", addr, insn, mnemonic);
+	printf("%04X: %02X        %s\n", addr, opcode, mnemonic);
 }
 
-void print_cpu_state(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz, int vdi, int c)
+void trace_cpu(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz, int vdi, int c)
 {
-	printf("%3d %3d A=%02X X=%02X Y=%02X S=%02X P=%c%c*-%c%c%c%c PC=",
-		ast->scanline_number, ast->cycle + 114 - ast->next_scanline_cycle, a, x, y, s,
-		nz >= 0x80 ? 'N' : '-', (vdi & V_FLAG) != 0 ? 'V' : '-', (vdi & D_FLAG) != 0 ? 'D' : '-',
-		(vdi & I_FLAG) != 0 ? 'I' : '-', (nz & 0xff) == 0 ? 'Z' : '-', c != 0 ? 'C' : '-');
-	show_instruction(ast, pc);
+	if ((cpu_trace & CPU_TRACE_PRINT) != 0) {
+		printf("%3d %3d A=%02X X=%02X Y=%02X S=%02X P=%c%c*-%c%c%c%c PC=",
+			ast->scanline_number, ast->cycle + 114 - ast->next_scanline_cycle, a, x, y, s,
+			nz >= 0x80 ? 'N' : '-', (vdi & V_FLAG) != 0 ? 'V' : '-', (vdi & D_FLAG) != 0 ? 'D' : '-',
+			(vdi & I_FLAG) != 0 ? 'I' : '-', (nz & 0xff) == 0 ? 'Z' : '-', c != 0 ? 'C' : '-');
+		show_instruction(ast, pc);
+	}
+	if (pc != 0xd20a) /* don't count 0xd2 used by call_6502() */
+		cpu_opcodes[dGetByte(pc)] |= CPU_OPCODE_USED;
+}
+
+static void print_unofficial_mnemonic(int opcode)
+{
+	const char *mnemonic = cpu_mnemonics[opcode];
+	const char *p;
+	for (p = mnemonic + 3; *p != '\0'; p++) {
+		if (*p == '1') {
+			printf("%02X: %.*s$xx%s\n", opcode, (int) (p - mnemonic), mnemonic, p + 1);
+			return;
+		}
+		if (*p == '2') {
+			printf("%02X: %.*s$xxxx%s\n", opcode, (int) (p - mnemonic), mnemonic, p + 1);
+			return;
+		}
+		/* no undocumented branches ('0') */
+	}
+	printf("%02X: %s\n", opcode, mnemonic);
 }
 
 static void print_help(void)
@@ -138,6 +183,8 @@ static void print_help(void)
 		"-f  List POKEY features used\n"
 		"-t  Detect silence and loops\n"
 		"-c  Dump 6502 trace\n"
+		"-u  List unofficial 6502 instructions used\n"
+		"-v  Display version information\n"
 		"Options:\n"
 		"-s SONG  Process the specified subsong (zero-based)\n"
 	);
@@ -266,13 +313,19 @@ int main(int argc, char *argv[])
 		if (strcmp(argv[i], "-d") == 0)
 			dump = TRUE;
 		else if (strcmp(argv[i], "-f") == 0)
-			features = 1;
+			features = FEATURE_CHECK;
 		else if (strcmp(argv[i], "-t") == 0)
 			detect_time = TRUE;
 		else if (strcmp(argv[i], "-c") == 0)
-			cpu_trace = TRUE;
+			cpu_trace |= CPU_TRACE_PRINT;
+		else if (strcmp(argv[i], "-u") == 0)
+			cpu_trace |= CPU_TRACE_UNOFFICIAL;
 		else if (strcmp(argv[i], "-s") == 0)
 			song = atoi(argv[++i]);
+		else if (strcmp(argv[i], "-v") == 0) {
+			printf("asapscan " ASAP_VERSION "\n");
+			return 0;
+		}
 		else {
 			if (input_file != NULL) {
 				print_help();
@@ -320,6 +373,12 @@ int main(int argc, char *argv[])
 			printf("Low byte of 16-bit counter\n");
 		if ((features & FEATURE_9_BIT_POLY) != 0)
 			printf("9-bit poly\n");
+	}
+	if ((cpu_trace & CPU_TRACE_UNOFFICIAL) != 0) {
+		for (i = 0; i < 256; i++) {
+			if (cpu_opcodes[i] == (CPU_OPCODE_UNOFFICIAL | CPU_OPCODE_USED))
+				print_unofficial_mnemonic(i);
+		}                             
 	}
 	return 0;
 }
