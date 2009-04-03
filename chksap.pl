@@ -6,7 +6,7 @@ chksap - check, fix or calculate statistics for *.sap files
 
 =head1 SYNOPSIS
 
-  perl chksap.pl option file...
+  perl chksap.pl option... file...
 
 =head1 DESCRIPTION
 
@@ -71,13 +71,17 @@ in TIME tags, possibly overwriting the current values.
 
 =back
 
-In the statistics mode the following option is available:
+In the statistics mode the following options are available:
 
 =over 4
 
+=item B<-t>, B<--time>
+
+Lists files with no TIME tags.
+
 =item B<-u>, B<--features>
 
-Lists files with rarely used POKEY features.
+Lists files with rarely used POKEY and 6502 features.
 
 =back
 
@@ -284,6 +288,7 @@ use Getopt::Long;
 use Pod::Usage;
 use strict;
 
+my $VERSION = '1.2.1';
 my $asapscan = File::Spec->rel2abs('asapscan');
 my ($check, $fix, $stat) = (0, 0, 0);
 my ($progress, $time, $overwrite_time, $features, $help, $version) = (0, 0, 0, 0, 0, 0);
@@ -291,7 +296,7 @@ my ($total_files, $sap_files, $stereo_files) = (0, 0, 0);
 my ($total_length, $min_length, $max_length) = (0, 100_000, 0);
 my ($min_filename, $max_filename);
 my ($time_files, $total_millis) = (0, 0);
-my (@fixed_messages, @notfixed_messages, @fatal_messages);
+my (@fixed_messages, @notfixed_messages, @fatal_messages, @no_time_files);
 my (%stat, %types, %features);
 
 sub process($$) {
@@ -506,7 +511,7 @@ sub process($$) {
 				$fixed{'FFFF inside binary part'} = 1;
 			}
 		}
-		if (%fixed || ($time && !@times) || $overwrite_time) {
+		if (%fixed || ($fix && $time && !@times) || $overwrite_time) {
 			if (%fatal) {
 				push @notfixed_messages,
 					"$fullpath (" . join('; ', sort(keys(%fixed))) . ")\n";
@@ -574,9 +579,12 @@ sub process($$) {
 				$total_millis += 60_000 * $minutes + 1000 * $seconds + $hundredths * 10 + $millis;
 			}
 		}
+		elsif ($stat && $time) {
+			push @no_time_files, $fullpath
+		}
 	}
 	if ($features) {
-		my @features = `$asapscan -f $filename`;
+		my @features = `$asapscan -f -u $filename`;
 		chomp(@features);
 		if ($?) {
 			$fatal{'error running asapscan'} = 1;
@@ -608,11 +616,11 @@ GetOptions(
 
 pod2usage({ -verbose => 1, -exitval => 0 }) if $help;
 if ($version) {
-	print "chksap 1.4\n";
+	print "chksap $VERSION\n";
 	exit 0;
 }
 
-pod2usage(2) if $check + $fix + $stat != 1 || $time > $fix || $overwrite_time > $fix || @ARGV == 0;
+pod2usage(2) if $check + $fix + $stat != 1 || $time > $fix +$stat || $overwrite_time > $fix || @ARGV == 0;
 
 find(\&wanted, @ARGV);
 
@@ -677,12 +685,14 @@ elsif ($stat) {
 			}
 		}
 	}
+	if (@no_time_files) {
+		print "\nFiles with no TIME tags:\n";
+		print "$_\n" for sort @no_time_files;
+	}
 	if ($features) {
 		for (sort keys %features) {
 			print "\nFiles which use $_:\n";
-			for (sort @{$features{$_}}) {
-				print "$_\n";
-			}
+			print "$_\n" for sort @{$features{$_}};
 		}
 	}
 }
