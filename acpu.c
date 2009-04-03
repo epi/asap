@@ -1,7 +1,7 @@
 /*
  * acpu.c - another 6502 CPU emulator
  *
- * Copyright (C) 2007-2008  Piotr Fusik
+ * Copyright (C) 2007-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -312,8 +312,8 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			CHECK_IRQ;
 		}
 #ifdef ASAPSCAN
-		if (cpu_trace)
-			print_cpu_state(ast, pc, a, x, y, s, nz, vdi, c);
+		if (cpu_trace != 0)
+			trace_cpu(ast, pc, a, x, y, s, nz, vdi, c);
 #endif
 		data = FETCH;
 		AST cycle += opcode_cycles[data];

@@ -1,7 +1,7 @@
 /*
  * asap_internal.h - private interface of the ASAP engine
  *
- * Copyright (C) 2005-2008  Piotr Fusik
+ * Copyright (C) 2005-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -68,8 +68,8 @@ void PokeySound_Mute(const ASAP_State *ast, PokeyState *pst, int mask);
 
 #ifdef ASAPSCAN
 abool call_6502_player(ASAP_State *ast);
-extern abool cpu_trace;
-void print_cpu_state(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz, int vdi, int c);
+extern int cpu_trace;
+void trace_cpu(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz, int vdi, int c);
 #endif
 
 #endif /* !defined(JAVA) && !defined(CSHARP) */
