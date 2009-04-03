@@ -1,3 +1,12 @@
+2009-04-03  Piotr Fusik  <fox@scene.pl>
+* asapscan.c, asap_internal.h, acpu.c, chksap.pl:
+  "-u" lists unofficial 6502 opcodes used
+
+* chksap.pl: "-st" lists files without TIME tags
+
+* asapscan.c, chksap.pl: "-v" displays ASAP release
+
+
 2009-03-13  Piotr Fusik  <fox@scene.pl>
 * asap.c: ASAP_ONLY_SAP disables support of formats other than SAP
   at compile time; avoid strstr()
