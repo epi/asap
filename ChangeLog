@@ -1,3 +1,15 @@
+2009-05-01  Piotr Fusik  <fox@scene.pl>
+* README, NEWS, CREDITS, gsplayer/gspasap.txt, java/asap_applet.txt,
+  java/asap_midlet.txt, java/USAGE, win32/USAGE, win32/Makefile,
+  win32/apollo/README, win32/dshow/README, win32/foobar2000/README,
+  win32/wasap/README, win32/winamp/README, xbmc/README:
+  converted documentation to AsciiDoc format
+
+* INSTALL: upgraded Visual C++ and Perl
+
+* asap.h, configure.ac, csharp/ASAP.ppcs, java/ASAP.ppjava, java/asap_midlet.MF: 1.2.1
+
+
 2009-04-03  Piotr Fusik  <fox@scene.pl>
 * asapscan.c, asap_internal.h, acpu.c, chksap.pl:
   "-u" lists unofficial 6502 opcodes used

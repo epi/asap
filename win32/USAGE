@@ -1,0 +1,35 @@
+How to install and use
+----------------------
+
+WASAP::
+Extract `wasap.exe` to a directory of your choice.
++
+When you run WASAP, an "Open file" dialog appears. Simply select the file
+you want to listen to. WASAP is later controlled by its tray icon.
+When you hover the mouse pointer over the icon, the name of the loaded file appears.
+To open another file, left-click the tray icon. The other options are
+available in the menu which appears when you right-click the icon.
+
+Apollo plugin::
+Extract `ASAP_Apollo.dll` to the `Plug-ins` directory
+of your Apollo installation.
+
+foobar2000 plugin::
+Extract `foo_asap.dll` to the `components` directory of your foobar2000 installation.
+
+GSPlayer plugin::
+Put `gspasap.dll` in the directory that contains the GSPlayer executable.
+
+Winamp plugin::
+Extract `in_asap.dll` to the `Plugins` directory of your Winamp installation.
+It is also recommended that you remove other plugins that support 8-bit Atari music.
+
+XBMC plugin::
+Put `xbmc_asap.dll` in the directory of paplayer plugins.
+Your XBMC must include support for ASAP.
+
+DirectShow source filter::
+To install: extract `asap_dsf.dll`, `install_dsf.bat` and `uninstall_dsf.bat`
+to a directory of your choice, then run `install_dsf.bat`.
++
+To uninstall: run `uninstall_dsf.bat`, then delete the files.

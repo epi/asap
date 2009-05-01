@@ -1,7 +1,0 @@
-Another Slight Atari Player - XBMC plugin
------------------------------------------
-
-This is a plugin for XBMC that makes it possible to play Atari 8-bit
-computer music stored in several formats. To install the plugin,
-put xbmc_asap.dll (xbmc_asap-i486-linux.so on linux) in the directory
-of paplayer plugins. Your XBMC must include support for ASAP.

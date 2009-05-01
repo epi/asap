@@ -1,0 +1,45 @@
+Java applet
+-----------
+
+To embed the applet in a web page, use the following HTML syntax:
+
+---------------------------------------------------------------------------
+<applet width="40" height="45" code="ASAPApplet" archive="asap_applet.jar">
+    <param name="file" value="File.sap" />
+</applet>
+---------------------------------------------------------------------------
+
+The applet will play the specified file and display POKEY channel volume
+meters scaled to the applet size (you can specify a different size).
+There are four volume meters for mono music and eight for stereo.
+
+The applet understands the following parameters:
+
+- `file` - URL of the file to play
+- `song` - zero-based subsong number
+- `defaultPlaybackTime` - playback time for songs with unspecified duration,
+  in the "mm:ss.xxx" format
+- `loopPlaybackTime` - playback time for songs marked as looping
+- `background` - background color specified as six hexadecimal digits ("rrggbb")
+- `foreground` - volume bars color specified as six hexadecimal digits ("rrggbb")
+- `onPlaybackEnd` - JavaScript to be executed when playback ends
+
+The applet contains the following methods that can be called from JavaScript:
+
+- `void play(String filename, int song, String defaultPlaybackTime, String loopPlaybackTime)` -
+  plays the specified song
+- `void stop()` - stops playback
+- `boolean togglePause()` - toggles pause and returns `true` if pause has been enabled
+
+Remember to add the `mayscript` attribute to the `applet` element
+when interfacing with JavaScript.
+
+
+Java midlet
+-----------
+
+Midlet is an application for mobile phones.
+The ASAP midlet requires CLDC 1.1 and MIDP 2.0
+and thus will not work on old Java implementations.
+The midlet has a file browser for selecting music files,
+which should be stored in phone memory or on a memory card.
