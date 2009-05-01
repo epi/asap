@@ -1,7 +1,7 @@
 /*
  * asap.h - public interface of the ASAP engine
  *
- * Copyright (C) 2005-2008  Piotr Fusik
+ * Copyright (C) 2005-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -31,13 +31,13 @@ extern "C" {
 /* ASAP version. */
 #define ASAP_VERSION_MAJOR   1
 #define ASAP_VERSION_MINOR   2
-#define ASAP_VERSION_MICRO   0
-#define ASAP_VERSION         "1.2.0"
+#define ASAP_VERSION_MICRO   1
+#define ASAP_VERSION         "1.2.1"
 
 /* Short credits of the ASAP engine. */
-#define ASAP_YEARS           "2005-2008"
+#define ASAP_YEARS           "2005-2009"
 #define ASAP_CREDITS \
-	"Another Slight Atari Player (C) 2005-2008 Piotr Fusik\n" \
+	"Another Slight Atari Player (C) 2005-2009 Piotr Fusik\n" \
 	"CMC, MPT, TMC players (C) 1994-2005 Marcin Lewandowski\n" \
 	"RMT player (C) 2002-2005 Radek Sterba\n"
 
