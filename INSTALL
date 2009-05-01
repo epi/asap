@@ -102,7 +102,7 @@ the DirectShow source filter and the Apollo plugin on Windows
 -----------------------------------------------------------------
 
 You need a Microsoft C/C++ compiler, a Windows SDK and Perl.
-I use Visual C++ 2005, Windows SDK for Windows Vista and ActivePerl 5.8.8.
+I use Visual C++ 2008, Windows SDK for Windows Vista and ActivePerl 5.10.0.
 
 You need to set "Path", "INCLUDE" and "LIB" environment variables
 to point to the correct locations in VC++ and Windows SDK.
