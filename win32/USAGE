@@ -33,3 +33,6 @@ To install: extract `asap_dsf.dll`, `install_dsf.bat` and `uninstall_dsf.bat`
 to a directory of your choice, then run `install_dsf.bat`.
 +
 To uninstall: run `uninstall_dsf.bat`, then delete the files.
+
+DLL for Raster Music Tracker::
+Extract `apokeysnd.dll` to the directory which contains `Rmt.exe`.
