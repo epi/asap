@@ -1,6 +1,14 @@
 History
 -------
 
+ASAP 1.2.1 (2009-05-08)::
+
+XBMC plugin and POKEY emulation DLL for RMT have been created.
+The midlet has a progress bar, tags display, subsong selection
+and better performance. SKCTL emulation has been slightly improved.
+Documentation has been converted from plain text to HTML.
+
+
 ASAP 1.2.0 (2008-03-29)::
 
 Plugins for Windows Media Player and Apollo have been created.

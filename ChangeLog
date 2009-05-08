@@ -1,3 +1,5 @@
+** 1.2.1 released on 2009-05-08
+
 2009-05-08  Piotr Fusik  <fox@scene.pl>
 * asap2wav.c, java/ASAP2WAV.java, csharp/asap2wav.cs:
   small refactoring of no_input_files and print_version
