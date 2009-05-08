@@ -31,7 +31,7 @@ AC_SUBST(XMMS_LIBS)
 AC_SUBST(XMMS_INPUT_PLUGIN_DIR)
 
 if [[ "X_$MOC_INCLUDE" = "X_" ]]; then
-    MOC_INCLUDE="../moc-2.4.3"
+    MOC_INCLUDE="../moc-2.4.4"
 fi
 if [[ "X_$MOC_PLUGIN_DIR" = "X_" ]]; then
     MOC_PLUGIN_DIR="/usr/local/lib/moc/decoder_plugins"

@@ -10,6 +10,8 @@
 * INSTALL, README, Makefile.in, win32/Makefile: INSTALL converted
   to AsciiDoc format, README.html distributed with source code
 
+* configure.ac, INSTALL: MOC upgraded to 2.4.4
+
 
 2009-05-01  Piotr Fusik  <fox@scene.pl>
 * README, NEWS, CREDITS, gsplayer/gspasap.txt, java/asap_applet.txt,

@@ -121,7 +121,7 @@ make asap-moc
 make install-moc
 --------------------------------------------------------------------------------
 
-You can omit `MOC_INCLUDE` (defaults to `../moc-2.4.3`)
+You can omit `MOC_INCLUDE` (defaults to `../moc-2.4.4`)
 and `MOC_PLUGIN_DIR` (defaults to `/usr/local/lib/moc/decoder_plugins`).
 
 
