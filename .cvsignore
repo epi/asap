@@ -6,3 +6,4 @@ config.status
 configure
 Makefile
 players.h
+README.html
