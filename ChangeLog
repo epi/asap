@@ -1,3 +1,16 @@
+2009-05-08  Piotr Fusik  <fox@scene.pl>
+* asap2wav.c, java/ASAP2WAV.java, csharp/asap2wav.cs:
+  small refactoring of no_input_files and print_version
+
+* asap2wav.1, Makefile.in, win32/USAGE, win32/Makefile, java/USAGE:
+  removed the man page
+
+* README: more information about input file formats
+
+* INSTALL, README, Makefile.in, win32/Makefile: INSTALL converted
+  to AsciiDoc format, README.html distributed with source code
+
+
 2009-05-01  Piotr Fusik  <fox@scene.pl>
 * README, NEWS, CREDITS, gsplayer/gspasap.txt, java/asap_applet.txt,
   java/asap_midlet.txt, java/USAGE, win32/USAGE, win32/Makefile,
@@ -7,7 +20,8 @@
 
 * INSTALL: upgraded Visual C++ and Perl
 
-* asap.h, configure.ac, csharp/ASAP.ppcs, java/ASAP.ppjava, java/asap_midlet.MF: 1.2.1
+* asap.h, configure.ac, csharp/ASAP.ppcs, java/ASAP.ppjava,
+  java/asap_midlet.MF: 1.2.1
 
 
 2009-04-03  Piotr Fusik  <fox@scene.pl>
