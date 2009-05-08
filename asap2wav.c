@@ -1,7 +1,7 @@
 /*
  * asap2wav.c - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2005-2008  Piotr Fusik
+ * Copyright (C) 2005-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -28,7 +28,6 @@
 
 #include "asap.h"
 
-static abool no_input_files = TRUE;
 static const char *output_file = NULL;
 static abool output_header = TRUE;
 static int song = -1;
@@ -46,7 +45,7 @@ static void print_help(void)
 		"-o FILE     --output=FILE      Set output file name\n"
 		"-o -        --output=-         Write to standard output\n"
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
-		"-t TIME     --time=TIME        Set output length (MM:SS)\n"
+		"-t TIME     --time=TIME        Set output length (MM:SS format)\n"
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
 		"            --raw              Output raw audio (no WAV header)\n"
@@ -54,13 +53,6 @@ static void print_help(void)
 		"-h          --help             Display this information\n"
 		"-v          --version          Display version information\n"
 	);
-	no_input_files = FALSE;
-}
-
-static void print_version(void)
-{
-	printf("ASAP2WAV " ASAP_VERSION "\n");
-	no_input_files = FALSE;
 }
 
 static void fatal_error(const char *format, ...)
@@ -192,16 +184,18 @@ static void process_file(const char *input_file)
 	output_file = NULL;
 	song = -1;
 	duration = -1;
-	no_input_files = FALSE;
 }
 
 int main(int argc, char *argv[])
 {
+	abool no_input_files = TRUE;
 	int i;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		if (arg[0] != '-')
+		if (arg[0] != '-') {
 			process_file(arg);
+			no_input_files = FALSE;
+		}
 		else if (arg[1] == 'o' && arg[2] == '\0')
 			output_file = argv[++i];
 		else if (strncmp(arg, "--output=", 9) == 0)
@@ -227,11 +221,15 @@ int main(int argc, char *argv[])
 		else if (strncmp(arg, "--mute=", 7) == 0)
 			set_mute_mask(arg + 7);
 		else if ((arg[1] == 'h' && arg[2] == '\0')
-			|| strcmp(arg, "--help") == 0)
+			|| strcmp(arg, "--help") == 0) {
 			print_help();
+			no_input_files = FALSE;
+		}
 		else if ((arg[1] == 'v' && arg[2] == '\0')
-			|| strcmp(arg, "--version") == 0)
-			print_version();
+			|| strcmp(arg, "--version") == 0) {
+			printf("ASAP2WAV " ASAP_VERSION "\n");
+			no_input_files = FALSE;
+		}
 		else
 			fatal_error("unknown option: %s", arg);
 	}

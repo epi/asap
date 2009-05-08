@@ -1,7 +1,7 @@
 /*
  * ASAP2WAV.cs - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2008  Piotr Fusik
+ * Copyright (C) 2008-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -28,7 +28,6 @@ using ASAP;
 
 public class asap2wav
 {
-	static bool noInputFiles = true;
 	static string outputFilename = null;
 	static bool outputHeader = true;
 	static int song = -1;
@@ -45,7 +44,7 @@ public class asap2wav
 			"Options:\n" +
 			"-o FILE     --output=FILE      Set output file name\n" +
 			"-s SONG     --song=SONG        Select subsong number (zero-based)\n" +
-			"-t TIME     --time=TIME        Set output length MM:SS\n" +
+			"-t TIME     --time=TIME        Set output length (MM:SS format)\n" +
 			"-b          --byte-samples     Output 8-bit samples\n" +
 			"-w          --word-samples     Output 16-bit samples (default)\n" +
 			"            --raw              Output raw audio (no WAV header)\n" +
@@ -53,13 +52,6 @@ public class asap2wav
 			"-h          --help             Display this information\n" +
 			"-v          --version          Display version information\n"
 		);
-		noInputFiles = false;
-	}
-
-	static void PrintVersion()
-	{
-		Console.WriteLine("ASAP2WAV " + ASAP_Player.Version);
-		noInputFiles = false;
 	}
 
 	static void SetSong(string s)
@@ -155,15 +147,17 @@ public class asap2wav
 		outputFilename = null;
 		song = -1;
 		duration = -1;
-		noInputFiles = false;
 	}
 
 	public static int Main(string[] args)
 	{
+		bool noInputFiles = true;
 		for (int i = 0; i < args.Length; i++) {
 			string arg = args[i];
-			if (arg[0] != '-')
+			if (arg[0] != '-') {
 				ProcessFile(arg);
+				noInputFiles = false;
+			}
 			else if (arg == "-o")
 				outputFilename = args[++i];
 			else if (arg.StartsWith("--output="))
@@ -186,10 +180,14 @@ public class asap2wav
 				SetMuteMask(args[++i]);
 			else if (arg.StartsWith("--mute="))
 				SetMuteMask(arg.Substring(7));
-			else if (arg == "-h" || arg == "--help")
+			else if (arg == "-h" || arg == "--help") {
 				PrintHelp();
-			else if (arg == "-v" || arg == "--version")
-				PrintVersion();
+				noInputFiles = false;
+			}
+			else if (arg == "-v" || arg == "--version") {
+				Console.WriteLine("ASAP2WAV (.NET) " + ASAP_Player.Version);
+				noInputFiles = false;
+			}
 			else
 				throw new ArgumentException("unknown option: " + arg);
 		}

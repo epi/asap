@@ -1,7 +1,7 @@
 /*
  * ASAP2WAV.java - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2007-2008  Piotr Fusik
+ * Copyright (C) 2007-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -27,7 +27,6 @@ import net.sf.asap.ASAP_ModuleInfo;
 
 public class ASAP2WAV
 {
-	private static boolean noInputFiles = true;
 	private static String outputFilename = null;
 	private static boolean outputHeader = true;
 	private static int song = -1;
@@ -38,14 +37,14 @@ public class ASAP2WAV
 	private static void printHelp()
 	{
 		System.out.print(
-			"Usage: java ASAP2WAV [OPTIONS] INPUTFILE...\n" +
+			"Usage: java -jar asap2wav.jar [OPTIONS] INPUTFILE...\n" +
 			"Each INPUTFILE must be in a supported format:\n" +
 			"SAP, CMC, CMR, DMC, MPT, MPD, RMT, TMC, TM8 or TM2.\n" +
 			"Options:\n" +
 			"-o FILE     --output=FILE      Set output file name\n" +
 			"-o -        --output=-         Write to standard output\n" +
 			"-s SONG     --song=SONG        Select subsong number (zero-based)\n" +
-			"-t TIME     --time=TIME        Set output length MM:SS\n" +
+			"-t TIME     --time=TIME        Set output length (MM:SS format)\n" +
 			"-b          --byte-samples     Output 8-bit samples\n" +
 			"-w          --word-samples     Output 16-bit samples (default)\n" +
 			"            --raw              Output raw audio (no WAV header)\n" +
@@ -53,13 +52,6 @@ public class ASAP2WAV
 			"-h          --help             Display this information\n" +
 			"-v          --version          Display version information\n"
 		);
-		noInputFiles = false;
-	}
-
-	private static void printVersion()
-	{
-		System.out.println("ASAP2WAV " + ASAP.VERSION);
-		noInputFiles = false;
 	}
 
 	private static void setSong(String s)
@@ -160,15 +152,17 @@ public class ASAP2WAV
 		outputFilename = null;
 		song = -1;
 		duration = -1;
-		noInputFiles = false;
 	}
 
 	public static void main(String[] args) throws IOException
 	{
+		boolean noInputFiles = true;
 		for (int i = 0; i < args.length; i++) {
 			String arg = args[i];
-			if (arg.charAt(0) != '-')
+			if (arg.charAt(0) != '-') {
 				processFile(arg);
+				noInputFiles = false;
+			}
 			else if (arg.equals("-o"))
 				outputFilename = args[++i];
 			else if (arg.startsWith("--output="))
@@ -191,10 +185,14 @@ public class ASAP2WAV
 				setMuteMask(args[++i]);
 			else if (arg.startsWith("--mute="))
 				setMuteMask(arg.substring(7));
-			else if (arg.equals("-h") || arg.equals("--help"))
+			else if (arg.equals("-h") || arg.equals("--help")) {
 				printHelp();
-			else if (arg.equals("-v") || arg.equals("--version"))
-				printVersion();
+				noInputFiles = false;
+			}
+			else if (arg.equals("-v") || arg.equals("--version")) {
+				System.out.println("ASAP2WAV (Java) " + ASAP.VERSION);
+				noInputFiles = false;
+			}
 			else
 				throw new IllegalArgumentException("unknown option: " + arg);
 		}
