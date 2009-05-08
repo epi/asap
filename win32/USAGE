@@ -32,7 +32,7 @@ Extract `in_asap.dll` to the `Plugins` directory of your Winamp installation.
 It is also recommended that you remove other plugins that support 8-bit Atari music.
 
 XBMC plugin::
-Put `xbmc_asap.dll` in the directory of paplayer plugins.
+Put `xbmc_asap.dll` in the `system/players/paplayer` directory.
 This DLL can be used with XBox and Windows versions of XBMC.
 Your XBMC must include support for ASAP.
 
