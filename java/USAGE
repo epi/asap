@@ -1,5 +1,21 @@
+How to use
+----------
+
+ASAP2WAV
+~~~~~~~~
+
+Enter the following command line to see the syntax:
+
+---------------------------------------------------------------------------
+java -jar asap2wav.jar
+---------------------------------------------------------------------------
+
+Unless you specify the `-o`/`--output` option, the output filename will be
+constructed from the input filename with the extension changed to `wav`.
+
+
 Java applet
------------
+~~~~~~~~~~~
 
 To embed the applet in a web page, use the following HTML syntax:
 
@@ -10,7 +26,7 @@ To embed the applet in a web page, use the following HTML syntax:
 ---------------------------------------------------------------------------
 
 The applet will play the specified file and display POKEY channel volume
-meters scaled to the applet size (you can specify a different size).
+meters scaled to the applet area (you can specify a different size).
 There are four volume meters for mono music and eight for stereo.
 
 The applet understands the following parameters:
@@ -36,7 +52,7 @@ when interfacing with JavaScript.
 
 
 Java midlet
------------
+~~~~~~~~~~~
 
 Midlet is an application for mobile phones.
 The ASAP midlet requires CLDC 1.1 and MIDP 2.0

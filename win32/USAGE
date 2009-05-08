@@ -1,6 +1,14 @@
 How to install and use
 ----------------------
 
+ASAP2WAV::
+Extract `asap2wav.exe` to a directory of your choice
+(for convenience, this directory should be included in your `Path` environment variable).
++
+Run the program from command line to see the syntax.
+Unless you specify the `-o`/`--output` option, the output filename will be
+constructed from the input filename with the extension changed to `wav`.
+
 WASAP::
 Extract `wasap.exe` to a directory of your choice.
 +
@@ -11,8 +19,7 @@ To open another file, left-click the tray icon. The other options are
 available in the menu which appears when you right-click the icon.
 
 Apollo plugin::
-Extract `ASAP_Apollo.dll` to the `Plug-ins` directory
-of your Apollo installation.
+Extract `ASAP_Apollo.dll` to the `Plug-ins` directory of your Apollo installation.
 
 foobar2000 plugin::
 Extract `foo_asap.dll` to the `components` directory of your foobar2000 installation.
@@ -26,6 +33,7 @@ It is also recommended that you remove other plugins that support 8-bit Atari mu
 
 XBMC plugin::
 Put `xbmc_asap.dll` in the directory of paplayer plugins.
+This DLL can be used with XBox and Windows versions of XBMC.
 Your XBMC must include support for ASAP.
 
 DirectShow source filter::
