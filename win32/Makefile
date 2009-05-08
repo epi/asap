@@ -18,7 +18,7 @@ RC = rc /fo $@
 WINCE_CL = cl /nologo /O2 /GS- /W3 /wd4996 /DNDEBUG /DARM /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
 GMAKE = make
 CRLF = $(PERL) -pe ""
-ASCIIDOC = asciidoc -o $@ -a doctime=
+ASCIIDOC = asciidoc -o $@ -a doctime
 ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/" $@
 
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
@@ -170,7 +170,7 @@ java:
 # delete generated files
 
 clean:
-	del ..\players\*.obx;..\players.h
+	del ..\players\*.obx;..\players.h;..\README.html
 	del *.txt;*.html;*.obj;*.exp;*.lib
 	del asap2wav.exe
 	del wasap\wasap.res;wasap.exe
@@ -190,6 +190,11 @@ clean:
 COPYING.txt: ..\COPYING
 	$(CRLF) $** >$@
 
+..\README.html: ..\README ..\NEWS ..\CREDITS ..\INSTALL
+	$(ASCIIDOC) -a asapsrc ..\README
+	$(ASCIIDOC_POSTPROCESS)
+	del $@.bak
+
 README_Java.html: ..\README ..\NEWS ..\CREDITS ..\java\USAGE
 	$(ASCIIDOC) -a asapjava="(included in this binary package)" ..\README
 	$(ASCIIDOC_POSTPROCESS)
@@ -205,24 +210,21 @@ README_WindowsCE.html: ..\README ..\NEWS ..\CREDITS
 	$(ASCIIDOC_POSTPROCESS)
 	del $@.bak
 
-asap2wav.txt: ..\asap2wav.1
-	groff -m man -r LL=78n -r IN=5n -T ascii -P -cbu ..\asap2wav.1 | $(CRLF) >$@
-
 install_dsf.bat:
 	echo regsvr32 asap_dsf.dll>$@
 
 uninstall_dsf.bat:
 	echo regsvr32 /u asap_dsf.dll>$@
 
-srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx
+srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx ..\README.html
 	cd ..
 	del ..\asap-$(VERSION).tar.gz
 	perl maketar.pl -d asap-$(VERSION) \
 		-t asap.c asap.h asap_internal.h acpu.c apokeysnd.c \
-		asap2wav.c asap2wav.1 asapscan.c \
+		asap2wav.c asapscan.c \
 		players\cmc.asx players\mpt.asx players\rmt.asx players\tmc.asx players\tm2.asx \
 		configure.ac Makefile.in \
-		ChangeLog COPYING CREDITS INSTALL NEWS README \
+		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
 		csharp\ASAP.ppcs csharp\asap2wav.cs csharp\Makefile \
 		gsplayer\gspasap.c gsplayer\mapplugin.h gsplayer\gspasap.def \
 		java\ASAP.ppjava java\ASAP_ModuleInfo.java \
@@ -230,6 +232,7 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 		java\ASAPApplet.java \
 		java\ASAPMIDlet.java java\asap_midlet.MF \
 		java\mf2jad.pl java\Makefile \
+		java\USAGE \
 		moc\libasap_decoder.c \
 		win32\Makefile \
 		win32\USAGE \
@@ -253,7 +256,6 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 
 dist: all foo wince java xbmc srcdist \
 	COPYING.txt README_Java.html README_Windows.html README_WindowsCE.html \
-	asap2wav.txt \
 	install_dsf.bat uninstall_dsf.bat
 	del ..\..\asap-$(VERSION)-java.zip
 	del ..\..\asap-$(VERSION)-win32.zip
@@ -263,9 +265,9 @@ dist: all foo wince java xbmc srcdist \
 		asap2wav.jar asap_applet.jar asap_midlet.jad asap_midlet.jar
 	cd ..\win32
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-java.zip \
-		COPYING.txt README_Java.html asap2wav.txt
+		COPYING.txt README_Java.html
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip \
-		COPYING.txt README_Windows.html asap2wav.txt \
+		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
 		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-wince-arm.zip \
