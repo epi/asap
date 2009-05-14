@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.Enumeration;
@@ -118,25 +119,18 @@ class FileList
 class ASAPInputStream extends InputStream
 {
 	private final ASAP asap;
-	private final Gauge gauge;
+	private final ASAPMIDlet midlet;
 	private final byte[] buffer = new byte[16384];
 	private int buffer_len = ASAP.WAV_HEADER_BYTES;
 	private int buffer_offset = 0;
-	private int gauge_position = 0;
 
 	private static final int FORMAT = ASAP.FORMAT_U8;
 
-	ASAPInputStream(ASAP asap, int song, Gauge gauge)
+	ASAPInputStream(ASAP asap, ASAPMIDlet midlet)
 	{
 		this.asap = asap;
-		this.gauge = gauge;
-		ASAP_ModuleInfo module_info = asap.getModuleInfo();
-		int duration = module_info.durations[song];
-		if (duration < 0)
-			duration = 180000;
-		asap.playSong(song, duration);
-		int n_bytes = asap.getWavHeader(buffer, FORMAT);
-		gauge.setMaxValue(n_bytes / buffer.length);
+		this.midlet = midlet;
+		asap.getWavHeader(buffer, FORMAT);
 	}
 
 	public int read()
@@ -146,7 +140,7 @@ class ASAPInputStream extends InputStream
 			buffer_len = asap.generate(buffer, FORMAT);
 			if (buffer_len == 0)
 				return -1;
-			gauge.setValue(++gauge_position);
+			midlet.updatePosition();
 			i = 0;
 		}
 		buffer_offset = i + 1;
@@ -160,7 +154,7 @@ class ASAPInputStream extends InputStream
 			buffer_len = asap.generate(buffer, FORMAT);
 			if (buffer_len == 0)
 				return -1;
-			gauge.setValue(++gauge_position);
+			midlet.updatePosition();
 			i = 0;
 		}
 		if (len > buffer_len - i)
@@ -173,6 +167,9 @@ class ASAPInputStream extends InputStream
 
 public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListener
 {
+	private boolean useSmallStreams = false; // TODO: work in progress
+	private static final int SMALL_STREAM_BLOCKS = 16384;
+
 	private Command selectCommand;
 	private Command backCommand;
 	private Command stopCommand;
@@ -182,7 +179,9 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 	private byte[] module;
 	private ASAP asap;
 	private Player player;
+	private Player nextPlayer;
 	private List songListControl;
+	private Gauge gauge;
 
 	public ASAPMIDlet()
 	{
@@ -213,21 +212,56 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 		form.append(si);
 	}
 
+	public void updatePosition()
+	{
+		gauge.setValue(asap.getPosition());
+	}
+
+	private Player createSmallPlayer() throws IOException, MediaException
+	{
+		int len = asap.getModuleInfo().channels * SMALL_STREAM_BLOCKS;
+		byte[] wav = new byte[ASAP.WAV_HEADER_BYTES + len];
+		asap.getWavHeaderForPart(wav, ASAP.FORMAT_U8, SMALL_STREAM_BLOCKS);
+		len = asap.generate(wav, ASAP.WAV_HEADER_BYTES, len, ASAP.FORMAT_U8);
+		if (len == 0)
+			return null;
+		updatePosition();
+		InputStream is = new ByteArrayInputStream(wav, 0, ASAP.WAV_HEADER_BYTES + len);
+		return Manager.createPlayer(is, "audio/x-wav");
+	}
+
 	private void playSong(int song) throws IOException, MediaException
 	{
 		ASAP_ModuleInfo module_info = asap.getModuleInfo();
-		Gauge gauge = new Gauge(null, false, 1, 0);
-		InputStream is = new ASAPInputStream(asap, song, gauge);
+		int duration = module_info.durations[song];
+
+		gauge = new Gauge(null, false, 1, 0);
 		Form playForm = new Form("ASAP " + ASAP.VERSION);
 		appendStringItem(playForm, "Name: ", module_info.name);
 		appendStringItem(playForm, "Author: ", module_info.author);
 		appendStringItem(playForm, "Date: ", module_info.date);
+		appendStringItem(playForm, "Time: ", ASAP.durationToString(duration));
 		playForm.append(gauge);
 		playForm.addCommand(stopCommand);
 		playForm.addCommand(exitCommand);
 		playForm.setCommandListener(this);
 		Display.getDisplay(this).setCurrent(playForm);
-		player = Manager.createPlayer(is, "audio/x-wav");
+
+		if (duration < 0)
+			duration = 180000;
+		gauge.setMaxValue(duration);
+		asap.playSong(song, duration);
+		if (useSmallStreams) {
+			player = createSmallPlayer();
+			player.realize();
+			nextPlayer = createSmallPlayer();
+			if (nextPlayer != null)
+				nextPlayer.realize();
+		}
+		else {
+			InputStream is = new ASAPInputStream(asap, this);
+			player = Manager.createPlayer(is, "audio/x-wav");
+		}
 		player.addPlayerListener(this);
 		player.start();
 	}
@@ -303,6 +337,7 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 			Display.getDisplay(this).setCurrent(fileListControl);
 		}
 		else if (c == stopCommand) {
+			nextPlayer = null;
 			try {
 				player.stop();
 			} catch (MediaException ex) {
@@ -315,8 +350,22 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 
 	public void playerUpdate(Player player, String event, Object eventData)
 	{
-		if (event == PlayerListener.END_OF_MEDIA)
-			Display.getDisplay(this).setCurrent(fileListControl);
+		if (event == PlayerListener.END_OF_MEDIA) {
+			if (nextPlayer != null) {
+				player = nextPlayer;
+				player.addPlayerListener(this);
+				try {
+					player.start();
+					nextPlayer = createSmallPlayer();
+					if (nextPlayer != null)
+						nextPlayer.realize();
+				} catch (Exception ex) {
+					displayError(ex.toString());
+				}
+			}
+			else
+				Display.getDisplay(this).setCurrent(fileListControl);
+		}
 		else if (event == PlayerListener.ERROR)
 			displayError((String) eventData);
 	}

@@ -11,6 +11,17 @@
 * java/ASAP2WAV.java, csharp/asap2wav.cs: with "--raw" option the default
   output filename extension is "raw"
 
+* java/ASAP.ppjava, java/ASAPMIDlet.java: display TIME tags
+
+* asap.c, asap.h, java/ASAP.ppjava, java/ASAPMIDlet.java, csharp/ASAP.ppcs:
+  ASAP_GetPosition()
+
+* csharp/ASAP.ppcs, csharp/asap2wav.cs: made ASAP_SampleFormat
+  an enum and not int
+
+* java/ASAPMIDlet.java, asap.c, java/ASAP.ppjava: started implementation
+  of a "small streams" algorithm
+
 
 ** 1.2.1 released on 2009-05-08
 

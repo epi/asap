@@ -226,6 +226,37 @@ public final class ASAP
 		return r;
 	}
 
+	private static void appendTwoDigits(StringBuffer sb, int x)
+	{
+		sb.append((char) ('0' + x / 10));
+		sb.append((char) ('0' + x % 10));
+	}
+
+	/** Converts number of milliseconds to the <code>"mm:ss"</code> format.
+	    @param duration number of milliseconds
+	    @return string representation of time */
+	public static String durationToString(int duration)
+	{
+		StringBuffer sb = new StringBuffer();
+		if (duration >= 0) {
+			int seconds = duration / 1000;
+			appendTwoDigits(sb, seconds / 60);
+			sb.append(':');
+			appendTwoDigits(sb, seconds % 60);
+			/*
+			duration %= 1000;
+			if (duration != 0) {
+				sb.append('.');
+				appendTwoDigits(sb, duration / 10);
+				duration %= 10;
+				if (duration != 0)
+					sb.append((char) ('0' + duration));
+			}
+			*/
+		}
+		return sb.toString();
+	}
+
 	/** Loads music data.
 	    @param filename determines file format
 	    @param module contents of the file
@@ -259,6 +290,12 @@ public final class ASAP
 		ASAP_MutePokeyChannels(ast, mask);
 	}
 
+	/** Returns current position in milliseconds. */
+	public int getPosition()
+	{
+		return ASAP_GetPosition(ast);
+	}
+
 	/** Rewinds the current song.
 	    @param position the requested absolute position in milliseconds */
 	public void seek(int position)
@@ -269,12 +306,21 @@ public final class ASAP
 	/** Fills <code>WAV_HEADER_BYTES</code> leading bytes
 	    of the specified buffer with WAV file header.
 	    @param buffer the destination buffer
-	    @param format format of samples
-	    @return number of sample bytes to be written
-	    to the WAV file after the returned header */
-	public int getWavHeader(byte[] buffer, int format)
+	    @param format format of samples */
+	public void getWavHeader(byte[] buffer, int format)
 	{
-		return ASAP_GetWavHeader(ast, buffer, format);
+		ASAP_GetWavHeader(ast, buffer, format);
+	}
+
+	/** Fills <code>WAV_HEADER_BYTES</code> leading bytes
+	    of the specified buffer with WAV file header
+	    for at most <code>blocks</code> samples.
+	    @param buffer the destination buffer
+	    @param format format of samples
+	    @param blocks number of samples */
+	public void getWavHeaderForPart(byte[] buffer, int format, int blocks)
+	{
+		ASAP_GetWavHeaderForPart(ast, buffer, format, blocks);
 	}
 
 	/** Fills the specified buffer with generated samples.
@@ -284,7 +330,19 @@ public final class ASAP
 	    (less than <code>buffer.length</code> if reached the end of the song) */
 	public int generate(byte[] buffer, int format)
 	{
-		return ASAP_Generate(ast, buffer, buffer.length, format);
+		return ASAP_Generate(ast, buffer, 0, buffer.length, format);
+	}
+
+	/** Fills a part of the specified buffer with generated samples.
+	    @param buffer the destination buffer
+	    @param offset starting offset in the buffer
+	    @param length number of bytes beginning from offset
+	    @param format format of samples
+	    @return number of bytes written in the buffer
+	    (less than <code>length</code> if reached the end of the song) */
+	public int generate(byte[] buffer, int offset, int length, int format)
+	{
+		return ASAP_Generate(ast, buffer, offset, length, format);
 	}
 
 	/** Returns POKEY channel volume.

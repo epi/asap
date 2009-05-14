@@ -971,8 +971,7 @@ void ASAP_DurationToString(char *s, int duration)
 {
 	if (duration >= 0) {
 		int seconds = duration / 1000;
-		int minutes = seconds / 60;
-		s = two_digits(s, minutes);
+		s = two_digits(s, seconds / 60);
 		*s++ = ':';
 		s = two_digits(s, seconds % 60);
 		duration %= 1000;
@@ -1496,6 +1495,11 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 	return TRUE;
 }
 
+ASAP_FUNC int ASAP_GetPosition(ASAP_State PTR ast)
+{
+	return AST blocks_played * 10 / (ASAP_SAMPLE_RATE / 100);
+}
+
 FILE_FUNC int milliseconds_to_blocks(int milliseconds)
 {
 	return milliseconds * (ASAP_SAMPLE_RATE / 100) / 10;
@@ -1522,14 +1526,17 @@ FILE_FUNC void serialize_int(byte ARRAY buffer, int offset, int value)
 	buffer[offset + 3] = (byte) (value >> 24);
 }
 
-ASAP_FUNC int ASAP_GetWavHeader(ASAP_State PTR ast, byte ARRAY buffer,
-                                ASAP_SampleFormat format)
+ASAP_FUNC void ASAP_GetWavHeaderForPart(ASAP_State PTR ast, byte ARRAY buffer,
+                                        ASAP_SampleFormat format, int blocks)
 {
 	int use_16bit = format != ASAP_FORMAT_U8 ? 1 : 0;
 	int block_size = AST module_info.channels << use_16bit;
 	int bytes_per_second = ASAP_SAMPLE_RATE * block_size;
-	int total_blocks = milliseconds_to_blocks(AST current_duration);
-	int n_bytes = (total_blocks - AST blocks_played) * block_size;
+	int remaining_blocks = milliseconds_to_blocks(AST current_duration) - AST blocks_played;
+	int n_bytes;
+	if (blocks > remaining_blocks)
+		blocks = remaining_blocks;
+	n_bytes = blocks * block_size;
 	buffer[0] = (byte) 'R';
 	buffer[1] = (byte) 'I';
 	buffer[2] = (byte) 'F';
@@ -1562,11 +1569,20 @@ ASAP_FUNC int ASAP_GetWavHeader(ASAP_State PTR ast, byte ARRAY buffer,
 	buffer[38] = (byte) 't';
 	buffer[39] = (byte) 'a';
 	serialize_int(buffer, 40, n_bytes);
-	return n_bytes;
 }
 
-ASAP_FUNC int ASAP_Generate(ASAP_State PTR ast, VOIDPTR buffer, int buffer_len,
-                            ASAP_SampleFormat format)
+ASAP_FUNC void ASAP_GetWavHeader(ASAP_State PTR ast, byte ARRAY buffer,
+                                 ASAP_SampleFormat format)
+{
+	int remaining_blocks = milliseconds_to_blocks(AST current_duration) - AST blocks_played;
+	ASAP_GetWavHeaderForPart(ast, buffer, format, remaining_blocks);
+}
+
+ASAP_FUNC int ASAP_Generate(ASAP_State PTR ast, VOIDPTR buffer,
+#ifdef JAVA
+                            int buffer_offset,
+#endif
+                            int buffer_len, ASAP_SampleFormat format)
 {
 	int block_shift;
 	int buffer_blocks;
@@ -1582,7 +1598,11 @@ ASAP_FUNC int ASAP_Generate(ASAP_State PTR ast, VOIDPTR buffer, int buffer_len,
 	}
 	block = 0;
 	do {
-		int blocks = PokeySound_Generate(ast, (byte ARRAY) buffer, block << block_shift, buffer_blocks - block, format);
+		int blocks = PokeySound_Generate(ast, (byte ARRAY) buffer,
+#ifdef JAVA
+			buffer_offset +
+#endif
+			(block << block_shift), buffer_blocks - block, format);
 		AST blocks_played += blocks;
 		block += blocks;
 	} while (block < buffer_blocks && call_6502_player(ast));
