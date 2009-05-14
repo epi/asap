@@ -31,7 +31,7 @@ public class asap2wav
 	static string outputFilename = null;
 	static bool outputHeader = true;
 	static int song = -1;
-	static int format = ASAP_Player.FormatS16LE;
+	static ASAP_SampleFormat format = ASAP_SampleFormat.S16LE;
 	static int duration = -1;
 	static int muteMask = 0;
 
@@ -135,9 +135,9 @@ public class asap2wav
 			else if (arg.StartsWith("--time="))
 				SetTime(arg.Substring(7));
 			else if (arg == "-b" || arg == "--byte-samples")
-				format = ASAP_Player.FormatU8;
+				format = ASAP_SampleFormat.U8;
 			else if (arg == "-w" || arg == "--word-samples")
-				format = ASAP_Player.FormatS16LE;
+				format = ASAP_SampleFormat.S16LE;
 			else if (arg == "--raw")
 				outputHeader = false;
 			else if (arg == "-m")

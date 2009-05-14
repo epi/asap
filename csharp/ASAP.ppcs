@@ -53,10 +53,9 @@
 #define PST                     pst.
 #define MODULE_INFO             module_info.
 #define ASAP_SAMPLE_RATE        44100
-#define ASAP_FORMAT_U8          8
-#define ASAP_FORMAT_S16_LE      16
-#define ASAP_FORMAT_S16_BE      -16
-#define ASAP_SampleFormat       int
+#define ASAP_FORMAT_U8          ASAP_SampleFormat.U8
+#define ASAP_FORMAT_S16_LE      ASAP_SampleFormat.S16LE
+#define ASAP_FORMAT_S16_BE      ASAP_SampleFormat.S16BE
 #define ASAP_OBX                Stream
 #define GET_OBX(name)           System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(#name)
 
@@ -65,6 +64,13 @@ using System.IO;
 
 namespace ASAP
 {
+	public enum ASAP_SampleFormat
+	{
+		U8,
+		S16LE,
+		S16BE
+	}
+
 	public class ASAP_ModuleInfo
 	{
 		public string author;
@@ -183,12 +189,6 @@ namespace ASAP
 
 		public const int WavHeaderBytes = 44;
 
-		public const int FormatU8 = ASAP_FORMAT_U8;
-
-		public const int FormatS16LE = ASAP_FORMAT_S16_LE;
-
-		public const int FormatS16BE = ASAP_FORMAT_S16_BE;
-
 		public static bool IsOurFile(string filename)
 		{
 			return ASAP_IsOurFile(filename);
@@ -238,17 +238,22 @@ namespace ASAP
 			ASAP_MutePokeyChannels(ast, mask);
 		}
 
+		public int GetPosition()
+		{
+			return ASAP_GetPosition(ast);
+		}
+
 		public void Seek(int position)
 		{
 			ASAP_Seek(ast, position);
 		}
 
-		public int GetWavHeader(byte[] buffer, int format)
+		public void GetWavHeader(byte[] buffer, ASAP_SampleFormat format)
 		{
-			return ASAP_GetWavHeader(ast, buffer, format);
+			ASAP_GetWavHeader(ast, buffer, format);
 		}
 
-		public int Generate(byte[] buffer, int format)
+		public int Generate(byte[] buffer, ASAP_SampleFormat format)
 		{
 			return ASAP_Generate(ast, buffer, buffer.Length, format);
 		}
