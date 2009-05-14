@@ -1,7 +1,7 @@
 /*
  * ASAPMIDlet.java - ASAP midlet
  *
- * Copyright (C) 2007-2008  Piotr Fusik
+ * Copyright (C) 2007-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -119,13 +119,12 @@ class ASAPInputStream extends InputStream
 {
 	private final ASAP asap;
 	private final Gauge gauge;
-	private final int[] header = new int[11];
 	private final byte[] buffer = new byte[16384];
-	private int buffer_len;
-	private int offset = -44;
-	private int position = 0;
+	private int buffer_len = ASAP.WAV_HEADER_BYTES;
+	private int buffer_offset = 0;
+	private int gauge_position = 0;
 
-	private static final int BITS_PER_SAMPLE = 8;
+	private static final int FORMAT = ASAP.FORMAT_U8;
 
 	ASAPInputStream(ASAP asap, int song, Gauge gauge)
 	{
@@ -136,64 +135,38 @@ class ASAPInputStream extends InputStream
 		if (duration < 0)
 			duration = 180000;
 		asap.playSong(song, duration);
-		int channels = module_info.channels;
-		int block_size = channels * (BITS_PER_SAMPLE / 8);
-		int bytes_per_second = ASAP.SAMPLE_RATE * block_size;
-		int n_bytes = duration * (ASAP.SAMPLE_RATE / 100) / 10 * block_size;
+		int n_bytes = asap.getWavHeader(buffer, FORMAT);
 		gauge.setMaxValue(n_bytes / buffer.length);
-		header[0] = 'R' + ('I' << 8) + ('F' << 16) + ('F' << 24);
-		header[1] = n_bytes + 36;
-		header[2] = 'W' + ('A' << 8) + ('V' << 16) + ('E' << 24);
-		header[3] = 'f' + ('m' << 8) + ('t' << 16) + (' ' << 24);
-		header[4] = 16;
-		header[5] = 1 + (channels << 16);
-		header[6] = ASAP.SAMPLE_RATE;
-		header[7] = bytes_per_second;
-		header[8] = block_size + (BITS_PER_SAMPLE << 16);
-		header[9] = 'd' + ('a' << 8) + ('t' << 16) + ('a' << 24);
-		header[10] = n_bytes;
-		buffer_len = asap.generate(buffer, BITS_PER_SAMPLE);
 	}
 
 	public int read()
 	{
-		int i = offset;
-		if (i < 0) {
-			offset++;
-			i += 44;
-			return (header[i >> 2] >> ((i & 3) << 3)) & 0xff;
-		}
+		int i = buffer_offset;
 		if (i >= buffer_len) {
-			if (buffer_len < buffer.length)
-				return -1;
-			buffer_len = asap.generate(buffer, BITS_PER_SAMPLE);
+			buffer_len = asap.generate(buffer, FORMAT);
 			if (buffer_len == 0)
 				return -1;
-			gauge.setValue(++position);
+			gauge.setValue(++gauge_position);
 			i = 0;
 		}
-		offset = i + 1;
+		buffer_offset = i + 1;
 		return buffer[i] & 0xff;
 	}
 
-	public int read(byte[] b, int off, int len) throws IOException
+	public int read(byte[] b, int off, int len)
 	{
-		int i = offset;
-		if (i < 0)
-			return super.read(b, off, len);
+		int i = buffer_offset;
 		if (i >= buffer_len) {
-			if (buffer_len < buffer.length)
-				return -1;
-			buffer_len = asap.generate(buffer, BITS_PER_SAMPLE);
+			buffer_len = asap.generate(buffer, FORMAT);
 			if (buffer_len == 0)
 				return -1;
-			gauge.setValue(++position);
+			gauge.setValue(++gauge_position);
 			i = 0;
 		}
 		if (len > buffer_len - i)
 			len = buffer_len - i;
 		System.arraycopy(buffer, i, b, off, len);
-		offset = i + len;
+		buffer_offset = i + len;
 		return len;
 	}
 }

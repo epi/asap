@@ -168,6 +168,9 @@ public final class ASAP
 	/** Output sample rate. */
 	public static final int SAMPLE_RATE = ASAP_SAMPLE_RATE;
 
+	/** WAV file header length. */
+	public static final int WAV_HEADER_BYTES = 44;
+
 	/** Output format: 8-bit unsigned. */
 	public static final int FORMAT_U8 = ASAP_FORMAT_U8;
 
@@ -261,6 +264,17 @@ public final class ASAP
 	public void seek(int position)
 	{
 		ASAP_Seek(ast, position);
+	}
+
+	/** Fills <code>WAV_HEADER_BYTES</code> leading bytes
+	    of the specified buffer with WAV file header.
+	    @param buffer the destination buffer
+	    @param format format of samples
+	    @return number of sample bytes to be written
+	    to the WAV file after the returned header */
+	public int getWavHeader(byte[] buffer, int format)
+	{
+		return ASAP_GetWavHeader(ast, buffer, format);
 	}
 
 	/** Fills the specified buffer with generated samples.

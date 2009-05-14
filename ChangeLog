@@ -1,3 +1,17 @@
+2009-05-14  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile: shortened and fixed "clean" target; shortened "dist" target;
+  backup file removal within ASCIIDOC_POSTPROCESS
+
+* acpu.c: optimized ROR
+
+* asap.c, asap.h, asap2wav.c, java/ASAP.ppjava, java/ASAP2WAV.java,
+  java/ASAPMIDlet.java, csharp/ASAP.ppcs, csharp/asap2wav.cs:
+  ASAP_GetWavHeader()
+
+* java/ASAP2WAV.java, csharp/asap2wav.cs: with "--raw" option the default
+  output filename extension is "raw"
+
+
 ** 1.2.1 released on 2009-05-08
 
 2009-05-08  Piotr Fusik  <fox@scene.pl>

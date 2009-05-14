@@ -31,7 +31,7 @@ public class asap2wav
 	static string outputFilename = null;
 	static bool outputHeader = true;
 	static int song = -1;
-	static int bitsPerSample = 16;
+	static int format = ASAP_Player.FormatS16LE;
 	static int duration = -1;
 	static int muteMask = 0;
 
@@ -74,28 +74,6 @@ public class asap2wav
 		muteMask = mask;
 	}
 
-	static void WriteTag(Stream s, string tag)
-	{
-		s.WriteByte((byte) tag[0]);
-		s.WriteByte((byte) tag[1]);
-		s.WriteByte((byte) tag[2]);
-		s.WriteByte((byte) tag[3]);
-	}
-
-	static void WriteShort(Stream s, int x)
-	{
-		s.WriteByte((byte) x);
-		s.WriteByte((byte) (x >> 8));
-	}
-
-	static void WriteInt(Stream s, int x)
-	{
-		s.WriteByte((byte) x);
-		s.WriteByte((byte) (x >> 8));
-		s.WriteByte((byte) (x >> 16));
-		s.WriteByte((byte) (x >> 24));
-	}
-
 	static void ProcessFile(string inputFilename)
 	{
 		Stream s = File.OpenRead(inputFilename);
@@ -116,31 +94,17 @@ public class asap2wav
 		asap.MutePokeyChannels(muteMask);
 		if (outputFilename == null) {
 			int i = inputFilename.LastIndexOf('.');
-			outputFilename = inputFilename.Substring(0, i) + ".wav";
+			outputFilename = inputFilename.Substring(0, i + 1) + (outputHeader ? "wav" : "raw");
 		}
 		s = File.Create(outputFilename);
-		int n_bytes;
-		if (outputHeader) {
-			int block_size = module_info.channels * (bitsPerSample / 8);
-			int bytes_per_second = ASAP_Player.SampleRate * block_size;
-			n_bytes = duration * (ASAP_Player.SampleRate / 100) / 10 * block_size;
-			WriteTag(s, "RIFF");
-			WriteInt(s, n_bytes + 36);
-			WriteTag(s, "WAVE");
-			WriteTag(s, "fmt ");
-			WriteInt(s, 16);
-			WriteShort(s, 1);
-			WriteShort(s, module_info.channels);
-			WriteInt(s, ASAP_Player.SampleRate);
-			WriteInt(s, bytes_per_second);
-			WriteShort(s, block_size);
-			WriteShort(s, bitsPerSample);
-			WriteTag(s, "data");
-			WriteInt(s, n_bytes);
-		}
 		byte[] buffer = new byte[8192];
+		if (outputHeader) {
+			asap.GetWavHeader(buffer, format);
+			s.Write(buffer, 0, ASAP_Player.WavHeaderBytes);
+		}
+		int n_bytes;
 		do {
-			n_bytes = asap.Generate(buffer, bitsPerSample);
+			n_bytes = asap.Generate(buffer, format);
 			s.Write(buffer, 0, n_bytes);
 		} while (n_bytes == buffer.Length);
 		s.Close();
@@ -171,9 +135,9 @@ public class asap2wav
 			else if (arg.StartsWith("--time="))
 				SetTime(arg.Substring(7));
 			else if (arg == "-b" || arg == "--byte-samples")
-				bitsPerSample = 8;
+				format = ASAP_Player.FormatU8;
 			else if (arg == "-w" || arg == "--word-samples")
-				bitsPerSample = 16;
+				format = ASAP_Player.FormatS16LE;
 			else if (arg == "--raw")
 				outputHeader = false;
 			else if (arg == "-m")

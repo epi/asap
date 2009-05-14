@@ -1514,6 +1514,57 @@ ASAP_FUNC void ASAP_Seek(ASAP_State PTR ast, int position)
 	AST blocks_played = block;
 }
 
+FILE_FUNC void serialize_int(byte ARRAY buffer, int offset, int value)
+{
+	buffer[offset] = (byte) value;
+	buffer[offset + 1] = (byte) (value >> 8);
+	buffer[offset + 2] = (byte) (value >> 16);
+	buffer[offset + 3] = (byte) (value >> 24);
+}
+
+ASAP_FUNC int ASAP_GetWavHeader(ASAP_State PTR ast, byte ARRAY buffer,
+                                ASAP_SampleFormat format)
+{
+	int use_16bit = format != ASAP_FORMAT_U8 ? 1 : 0;
+	int block_size = AST module_info.channels << use_16bit;
+	int bytes_per_second = ASAP_SAMPLE_RATE * block_size;
+	int total_blocks = milliseconds_to_blocks(AST current_duration);
+	int n_bytes = (total_blocks - AST blocks_played) * block_size;
+	buffer[0] = (byte) 'R';
+	buffer[1] = (byte) 'I';
+	buffer[2] = (byte) 'F';
+	buffer[3] = (byte) 'F';
+	serialize_int(buffer, 4, n_bytes + 36);
+	buffer[8] = (byte) 'W';
+	buffer[9] = (byte) 'A';
+	buffer[10] = (byte) 'V';
+	buffer[11] = (byte) 'E';
+	buffer[12] = (byte) 'f';
+	buffer[13] = (byte) 'm';
+	buffer[14] = (byte) 't';
+	buffer[15] = (byte) ' ';
+	buffer[16] = 16;
+	buffer[17] = 0;
+	buffer[18] = 0;
+	buffer[19] = 0;
+	buffer[20] = 1;
+	buffer[21] = 0;
+	buffer[22] = (byte) AST module_info.channels;
+	buffer[23] = 0;
+	serialize_int(buffer, 24, ASAP_SAMPLE_RATE);
+	serialize_int(buffer, 28, bytes_per_second);
+	buffer[32] = (byte) block_size;
+	buffer[33] = 0;
+	buffer[34] = (byte) (8 << use_16bit);
+	buffer[35] = 0;
+	buffer[36] = (byte) 'd';
+	buffer[37] = (byte) 'a';
+	buffer[38] = (byte) 't';
+	buffer[39] = (byte) 'a';
+	serialize_int(buffer, 40, n_bytes);
+	return n_bytes;
+}
+
 ASAP_FUNC int ASAP_Generate(ASAP_State PTR ast, VOIDPTR buffer, int buffer_len,
                             ASAP_SampleFormat format)
 {

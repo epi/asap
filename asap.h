@@ -161,14 +161,17 @@ typedef struct {
 } ASAP_State;
 
 /* Maximum length of a "mm:ss.xxx" string including the terminator. */
-#define ASAP_DURATION_CHARS  10
+#define ASAP_DURATION_CHARS     10
 
 /* Maximum length of a supported input file.
    You can assume that files longer than this are not supported by ASAP. */
-#define ASAP_MODULE_MAX      65000
+#define ASAP_MODULE_MAX         65000
 
 /* Output sample rate. */
-#define ASAP_SAMPLE_RATE     44100
+#define ASAP_SAMPLE_RATE        44100
+
+/* WAV file header length. */
+#define ASAP_WAV_HEADER_BYTES   44
 
 /* Output formats. */
 typedef enum {
@@ -203,7 +206,7 @@ abool ASAP_GetModuleInfo(ASAP_ModuleInfo *module_info, const char *filename,
                          const byte module[], int module_len);
 
 /* Loads music data.
-   "as" is the destination structure.
+   "ast" is the destination structure.
    "filename" determines file format.
    "module" is the music data (contents of the file).
    "module_len" is the number of data bytes.
@@ -212,39 +215,48 @@ abool ASAP_GetModuleInfo(ASAP_ModuleInfo *module_info, const char *filename,
    ASAP_Load() returns true on success.
    If false is returned, the structure is invalid and you cannot
    call the following functions. */
-abool ASAP_Load(ASAP_State *as, const char *filename,
+abool ASAP_Load(ASAP_State *ast, const char *filename,
                 const byte module[], int module_len);
 
 /* Enables silence detection.
    Makes ASAP finish playing after the specified period of silence.
-   "as" is ASAP state initialized by ASAP_Load().
+   "ast" is ASAP state initialized by ASAP_Load().
    "seconds" is the minimum length of silence that ends playback. */
-void ASAP_DetectSilence(ASAP_State *as, int seconds);
+void ASAP_DetectSilence(ASAP_State *ast, int seconds);
 
 /* Prepares ASAP to play the specified song of the loaded module.
-   "as" is ASAP state initialized by ASAP_Load().
+   "ast" is ASAP state initialized by ASAP_Load().
    "song" is a zero-based index which must be less than the "songs" field
    of the ASAP_ModuleInfo structure.
    "duration" is playback time in milliseconds - use durations[song]
    unless you want to override it. -1 means indefinitely. */
-void ASAP_PlaySong(ASAP_State *as, int song, int duration);
+void ASAP_PlaySong(ASAP_State *ast, int song, int duration);
 
 /* Mutes the selected POKEY channels.
    This is only useful for people who want to grab samples of individual
    instruments.
-   "as" is ASAP state after calling ASAP_PlaySong().
+   "ast" is ASAP state after calling ASAP_PlaySong().
    "mask" is a bit mask which selects POKEY channels to be muted.
    Bits 0-3 control the base POKEY channels,
    bits 4-7 control the extra POKEY channels. */
-void ASAP_MutePokeyChannels(ASAP_State *as, int mask);
+void ASAP_MutePokeyChannels(ASAP_State *ast, int mask);
 
 /* Rewinds the current song.
-   "as" is ASAP state initialized by ASAP_PlaySong().
+   "ast" is ASAP state initialized by ASAP_PlaySong().
    "position" is the requested absolute position in milliseconds. */
-void ASAP_Seek(ASAP_State *as, int position);
+void ASAP_Seek(ASAP_State *ast, int position);
+
+/* Fills the specified buffer with WAV file header.
+   "ast" is ASAP state initialized by ASAP_PlaySong() with a positive "duration".
+   "buffer" is buffer of ASAP_WAV_HEADER_BYTES bytes.
+   "format" is the format of samples.
+   ASAP_GetWavHeader() returns number of sample bytes to be written
+   to the WAV file after the returned header. */
+int ASAP_GetWavHeader(ASAP_State *ast, byte buffer[],
+                      ASAP_SampleFormat format);
 
 /* Fills the specified buffer with generated samples.
-   "as" is ASAP state initialized by ASAP_PlaySong().
+   "ast" is ASAP state initialized by ASAP_PlaySong().
    "buffer" is the destination buffer.
    "buffer_len" is the length of this buffer in bytes.
    "format" is the format of samples.
@@ -252,7 +264,7 @@ void ASAP_Seek(ASAP_State *as, int position);
    (less than buffer_len if reached the end of the song).
    Normally you use a buffer of a few kilobytes or less,
    and call ASAP_Generate() in a loop or via a callback. */
-int ASAP_Generate(ASAP_State *as, void *buffer, int buffer_len,
+int ASAP_Generate(ASAP_State *ast, void *buffer, int buffer_len,
                   ASAP_SampleFormat format);
 
 /* Checks whether information in the specified file can be edited. */

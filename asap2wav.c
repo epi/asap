@@ -31,7 +31,7 @@
 static const char *output_file = NULL;
 static abool output_header = TRUE;
 static int song = -1;
-static abool use_16bit = TRUE;
+static ASAP_SampleFormat format = ASAP_FORMAT_S16_LE;
 static int duration = -1;
 static int mute_mask = 0;
 
@@ -96,22 +96,6 @@ static void set_mute_mask(const char *s)
 	mute_mask = mask;
 }
 
-/* write 16-bit word as little endian */
-static void fput16(int x, FILE *fp)
-{
-	fputc(x & 0xff, fp);
-	fputc((x >> 8) & 0xff, fp);
-}
-
-/* write 32-bit word as little endian */
-static void fput32(int x, FILE *fp)
-{
-	fputc(x & 0xff, fp);
-	fputc((x >> 8) & 0xff, fp);
-	fputc((x >> 16) & 0xff, fp);
-	fputc((x >> 24) & 0xff, fp);
-}
-
 static void process_file(const char *input_file)
 {
 	FILE *fp;
@@ -157,23 +141,11 @@ static void process_file(const char *input_file)
 			fatal_error("cannot write %s", output_file);
 	}
 	if (output_header) {
-		int block_size = asap.module_info.channels << use_16bit;
-		int bytes_per_second = ASAP_SAMPLE_RATE * block_size;
-		n_bytes = duration * (ASAP_SAMPLE_RATE / 100) / 10 * block_size;
-		fwrite("RIFF", 1, 4, fp);
-		fput32(n_bytes + 36, fp);
-		fwrite("WAVEfmt \x10\0\0\0\1\0", 1, 14, fp);
-		fput16(asap.module_info.channels, fp);
-		fput32(ASAP_SAMPLE_RATE, fp);
-		fput32(bytes_per_second, fp);
-		fput16(block_size, fp);
-		fput16(8 << use_16bit, fp);
-		fwrite("data", 1, 4, fp);
-		fput32(n_bytes, fp);
+		ASAP_GetWavHeader(&asap, buffer, format);
+		fwrite(buffer, 1, ASAP_WAV_HEADER_BYTES, fp);
 	}
 	do {
-		n_bytes = ASAP_Generate(&asap, buffer, sizeof(buffer),
-			use_16bit ? ASAP_FORMAT_S16_LE : ASAP_FORMAT_U8);
+		n_bytes = ASAP_Generate(&asap, buffer, sizeof(buffer), format);
 		if (fwrite(buffer, 1, n_bytes, fp) != n_bytes) {
 			fclose(fp);
 			fatal_error("error writing to %s", output_file);
@@ -210,10 +182,10 @@ int main(int argc, char *argv[])
 			set_time(arg + 7);
 		else if ((arg[1] == 'b' && arg[2] == '\0')
 			|| strcmp(arg, "--byte-samples") == 0)
-			use_16bit = FALSE;
+			format = ASAP_FORMAT_U8;
 		else if ((arg[1] == 'w' && arg[2] == '\0')
 			|| strcmp(arg, "--word-samples") == 0)
-			use_16bit = TRUE;
+			format = ASAP_FORMAT_S16_LE;
 		else if (strcmp(arg, "--raw") == 0)
 			output_header = FALSE;
 		else if (arg[1] == 'm' && arg[2] == '\0')

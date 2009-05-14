@@ -30,7 +30,7 @@ public class ASAP2WAV
 	private static String outputFilename = null;
 	private static boolean outputHeader = true;
 	private static int song = -1;
-	private static int bitsPerSample = 16;
+	private static int format = ASAP.FORMAT_S16_LE;
 	private static int duration = -1;
 	private static int muteMask = 0;
 
@@ -75,28 +75,6 @@ public class ASAP2WAV
 		muteMask = mask;
 	}
 
-	private static void writeTag(OutputStream os, String tag) throws IOException
-	{
-		os.write(tag.charAt(0));
-		os.write(tag.charAt(1));
-		os.write(tag.charAt(2));
-		os.write(tag.charAt(3));
-	}
-
-	private static void writeShort(OutputStream os, int x) throws IOException
-	{
-		os.write(x);
-		os.write(x >> 8);
-	}
-
-	private static void writeInt(OutputStream os, int x) throws IOException
-	{
-		os.write(x);
-		os.write(x >> 8);
-		os.write(x >> 16);
-		os.write(x >> 24);
-	}
-
 	private static void processFile(String inputFilename) throws IOException
 	{
 		InputStream is = new FileInputStream(inputFilename);
@@ -117,35 +95,21 @@ public class ASAP2WAV
 		asap.mutePokeyChannels(muteMask);
 		if (outputFilename == null) {
 			int i = inputFilename.lastIndexOf('.');
-			outputFilename = inputFilename.substring(0, i) + ".wav";
+			outputFilename = inputFilename.substring(0, i + 1) + (outputHeader ? "wav" : "raw");
 		}
 		OutputStream os;
 		if (outputFilename.equals("-"))
 			os = System.out;
 		else
 			os = new FileOutputStream(outputFilename);
-		int n_bytes;
-		if (outputHeader) {
-			int block_size = module_info.channels * (bitsPerSample / 8);
-			int bytes_per_second = ASAP.SAMPLE_RATE * block_size;
-			n_bytes = duration * (ASAP.SAMPLE_RATE / 100) / 10 * block_size;
-			writeTag(os, "RIFF");
-			writeInt(os, n_bytes + 36);
-			writeTag(os, "WAVE");
-			writeTag(os, "fmt ");
-			writeInt(os, 16);
-			writeShort(os, 1);
-			writeShort(os, module_info.channels);
-			writeInt(os, ASAP.SAMPLE_RATE);
-			writeInt(os, bytes_per_second);
-			writeShort(os, block_size);
-			writeShort(os, bitsPerSample);
-			writeTag(os, "data");
-			writeInt(os, n_bytes);
-		}
 		byte[] buffer = new byte[8192];
+		if (outputHeader) {
+			asap.getWavHeader(buffer, format);
+			os.write(buffer, 0, ASAP.WAV_HEADER_BYTES);
+		}
+		int n_bytes;
 		do {
-			n_bytes = asap.generate(buffer, bitsPerSample);
+			n_bytes = asap.generate(buffer, format);
 			os.write(buffer, 0, n_bytes);
 		} while (n_bytes == buffer.length);
 		os.close();
@@ -176,9 +140,9 @@ public class ASAP2WAV
 			else if (arg.startsWith("--time="))
 				setTime(arg.substring(7));
 			else if (arg.equals("-b") || arg.equals("--byte-samples"))
-				bitsPerSample = 8;
+				format = ASAP.FORMAT_U8;
 			else if (arg.equals("-w") || arg.equals("--word-samples"))
-				bitsPerSample = 16;
+				format = ASAP.FORMAT_S16_LE;
 			else if (arg.equals("--raw"))
 				outputHeader = false;
 			else if (arg.equals("-m"))
