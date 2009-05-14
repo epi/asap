@@ -191,28 +191,8 @@ CONST_LOOKUP(int, opcode_cycles) =
 #define ROL_ZP       nz = dGetByte(addr); nz = (nz << 1) + c; c = nz >> 8; nz &= 0xff; dPutByte(addr, nz)
 #define LSR          RMW_GetByte(nz, addr); c = nz & 1; nz >>= 1; PutByte(addr, nz)
 #define LSR_ZP       nz = dGetByte(addr); c = nz & 1; nz >>= 1; dPutByte(addr, nz)
-#define ROR \
-	RMW_GetByte(nz, addr); \
-	if (c == 0) { \
-		c = nz & 1; \
-		nz >>= 1; \
-	} \
-	else { \
-		c = nz & 1; \
-		nz = (nz >> 1) + 128; \
-	} \
-	PutByte(addr, nz)
-#define ROR_ZP \
-	nz = dGetByte(addr); \
-	if (c == 0) { \
-		c = nz & 1; \
-		nz >>= 1; \
-	} \
-	else { \
-		c = nz & 1; \
-		nz = (nz >> 1) + 128; \
-	} \
-	dPutByte(addr, nz)
+#define ROR          RMW_GetByte(nz, addr); nz += c << 8; c = nz & 1; nz >>= 1; PutByte(addr, nz)
+#define ROR_ZP       nz = dGetByte(addr) + (c << 8); c = nz & 1; nz >>= 1; dPutByte(addr, nz)
 #define DEC          RMW_GetByte(nz, addr); nz = (nz - 1) & 0xff; PutByte(addr, nz)
 #define DEC_ZP       nz = dGetByte(addr); nz = (nz - 1) & 0xff; dPutByte(addr, nz)
 #define INC          RMW_GetByte(nz, addr); nz = (nz + 1) & 0xff; PutByte(addr, nz)
