@@ -11,15 +11,15 @@ CC = cl /nologo /O2 /GL /GR- /GS- /W3 /wd4996 /DNDEBUG
 LINKOPT = /link /release
 MKLIB = lib /nologo /ltcg /out:$@
 ASAP_CC = $(CC) /Fe$@ /I . /I ..
-ASAP_CC71 = cl /nologo /O2 /GL /GR- /W3 /wd4996 /DNDEBUG /Fe$@ /I . /I ..
+ASAP_CC71 = cl /nologo /O2 /GL /GR- /W3 /DNDEBUG /Fe$@ /I . /I ..
 PERL = perl
 XASM = xasm /q /o:$@
 RC = rc /fo $@
 WINCE_CL = cl /nologo /O2 /GS- /W3 /wd4996 /DNDEBUG /DARM /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
 GMAKE = make
-CRLF = $(PERL) -pe ""
+CRLF = $(PERL) -pe 1
 ASCIIDOC = asciidoc -o $@ -a doctime
-ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/" $@
+ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/;END{unlink '$@.bak'}" $@
 
 COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
 COMMON_H = ..\asap.h ..\asap_internal.h ..\players.h
@@ -170,19 +170,13 @@ java:
 # delete generated files
 
 clean:
-	del ..\players\*.obx;..\players.h;..\README.html
-	del *.txt;*.html;*.obj;*.exp;*.lib
-	del asap2wav.exe
+	del *.txt;*.html;*.dll;*.exe;*.obj;*.exp;*.lib;*.res
 	del wasap\wasap.res;wasap.exe
 	del winamp\in_asap.res;in_asap.dll
-	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\foo_asap.res;foo_asap.dll
-	del gspasap.dll;gspasap.res
-	del asap_dsf.dll;asap_dsf.res;install_dsf.bat;uninstall_dsf.bat
-	del xbmc_asap.dll;xbmc_asap.res
-	del apokeysnd.dll;apokeysnd.res
-	del ..\gsplayer\gspasap.dll;..\gsplayer\gspasap.exp;..\gsplayer\gspasap.lib;..\gsplayer\gspasap.res
-	del asapscan.exe
-	del csharp\asap2wav.exe;csharp\ASAP.cs
+	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\foo_asap.res
+	del install_dsf.bat;uninstall_dsf.bat
+	del ..\csharp\asap2wav.exe;..\csharp\ASAP.cs
+	del ..\players\*.obx;..\players.h;..\README.html
 	$(GMAKE) -C ../java clean
 
 # prepare files for release
@@ -193,22 +187,18 @@ COPYING.txt: ..\COPYING
 ..\README.html: ..\README ..\NEWS ..\CREDITS ..\INSTALL
 	$(ASCIIDOC) -a asapsrc ..\README
 	$(ASCIIDOC_POSTPROCESS)
-	del $@.bak
 
 README_Java.html: ..\README ..\NEWS ..\CREDITS ..\java\USAGE
 	$(ASCIIDOC) -a asapjava="(included in this binary package)" ..\README
 	$(ASCIIDOC_POSTPROCESS)
-	del $@.bak
 
 README_Windows.html: ..\README ..\NEWS ..\CREDITS USAGE
 	$(ASCIIDOC) -a asapwin="(included in this binary package)" ..\README
 	$(ASCIIDOC_POSTPROCESS)
-	del $@.bak
 
 README_WindowsCE.html: ..\README ..\NEWS ..\CREDITS
 	$(ASCIIDOC) -a asapwince="(included in this binary package)" ..\README
 	$(ASCIIDOC_POSTPROCESS)
-	del $@.bak
 
 install_dsf.bat:
 	echo regsvr32 asap_dsf.dll>$@
@@ -260,12 +250,9 @@ dist: all foo wince java xbmc srcdist \
 	del ..\..\asap-$(VERSION)-java.zip
 	del ..\..\asap-$(VERSION)-win32.zip
 	del ..\..\asap-$(VERSION)-wince-arm.zip
-	cd ..\java
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-java.zip \
-		asap2wav.jar asap_applet.jar asap_midlet.jad asap_midlet.jar
-	cd ..\win32
-	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-java.zip \
-		COPYING.txt README_Java.html
+		COPYING.txt README_Java.html \
+		..\java\asap2wav.jar ..\java\asap_applet.jar ..\java\asap_midlet.jad ..\java\asap_midlet.jar
 	7z a -tzip -mx=9 ..\..\asap-$(VERSION)-win32.zip \
 		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
