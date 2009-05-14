@@ -241,6 +241,10 @@ void ASAP_PlaySong(ASAP_State *ast, int song, int duration);
    bits 4-7 control the extra POKEY channels. */
 void ASAP_MutePokeyChannels(ASAP_State *ast, int mask);
 
+/* Returns current position in milliseconds.
+   "ast" is ASAP state initialized by ASAP_PlaySong(). */
+int ASAP_GetPosition(ASAP_State *ast);
+
 /* Rewinds the current song.
    "ast" is ASAP state initialized by ASAP_PlaySong().
    "position" is the requested absolute position in milliseconds. */
@@ -249,11 +253,9 @@ void ASAP_Seek(ASAP_State *ast, int position);
 /* Fills the specified buffer with WAV file header.
    "ast" is ASAP state initialized by ASAP_PlaySong() with a positive "duration".
    "buffer" is buffer of ASAP_WAV_HEADER_BYTES bytes.
-   "format" is the format of samples.
-   ASAP_GetWavHeader() returns number of sample bytes to be written
-   to the WAV file after the returned header. */
-int ASAP_GetWavHeader(ASAP_State *ast, byte buffer[],
-                      ASAP_SampleFormat format);
+   "format" is the format of samples. */
+void ASAP_GetWavHeader(ASAP_State *ast, byte buffer[],
+                       ASAP_SampleFormat format);
 
 /* Fills the specified buffer with generated samples.
    "ast" is ASAP state initialized by ASAP_PlaySong().
