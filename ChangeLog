@@ -1,3 +1,8 @@
+2009-05-18  Piotr Fusik  <fox@scene.pl>
+* apokeysnd.c: apokeysnd.dll stripped from 50k to 11k by not using
+  the C library
+
+
 2009-05-14  Piotr Fusik  <fox@scene.pl>
 * win32/Makefile: shortened and fixed "clean" target; shortened "dist" target;
   backup file removal within ASCIIDOC_POSTPROCESS

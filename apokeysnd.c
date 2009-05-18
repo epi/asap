@@ -1,7 +1,7 @@
 /*
  * apokeysnd.c - another POKEY sound emulator
  *
- * Copyright (C) 2007-2008  Piotr Fusik
+ * Copyright (C) 2007-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,11 +21,40 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#if !defined(JAVA) && !defined(CSHARP)
+#if !defined(JAVA) && !defined(CSHARP) && !defined(APOKEYSND)
 #include <string.h>
 #endif
 
 #include "asap_internal.h"
+
+#ifdef APOKEYSND
+
+#include <windows.h>
+
+/* This makes apokeysnd.dll 5 times smaller. */
+BOOL WINAPI _DllMainCRTStartup(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
+{
+	return TRUE;
+}
+
+/* This nasty trick is just because Visual C++
+   replaces "for (i = 0; i < n; i++) a[i] = 0;" with a call to memset */
+static void ZERO_DELTA_BUFFER(signed char *delta_buffer)
+{
+	__asm
+	{
+		mov edi, delta_buffer
+		mov ecx, 222 ; must be == sizeof(PokeyState.delta_buffer) / 4
+		xor eax, eax
+		rep stosd
+	}
+}
+
+#else
+
+#define ZERO_DELTA_BUFFER(delta_buffer)  ZERO_ARRAY(delta_buffer)
+
+#endif /* APOKEYSND */
 
 #define ULTRASOUND_CYCLES  112
 
@@ -76,7 +105,7 @@ FILE_FUNC void init_state(PokeyState PTR pst)
 	PST delta3 = 0;
 	PST delta4 = 0;
 	PST skctl = 3;
-	ZERO_ARRAY(PST delta_buffer);
+	ZERO_DELTA_BUFFER(PST delta_buffer);
 }
 
 ASAP_FUNC void PokeySound_Initialize(ASAP_State PTR ast)
@@ -465,9 +494,9 @@ FILE_FUNC void end_frame(ASAP_State PTR ast, PokeyState PTR pst, int cycle_limit
 
 ASAP_FUNC void PokeySound_StartFrame(ASAP_State PTR ast)
 {
-	ZERO_ARRAY(AST base_pokey.delta_buffer);
+	ZERO_DELTA_BUFFER(AST base_pokey.delta_buffer);
 	if (AST extra_pokey_mask != 0)
-		ZERO_ARRAY(AST extra_pokey.delta_buffer);
+		ZERO_DELTA_BUFFER(AST extra_pokey.delta_buffer);
 }
 
 ASAP_FUNC void PokeySound_EndFrame(ASAP_State PTR ast, int current_cycle)
