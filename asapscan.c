@@ -266,7 +266,7 @@ void scan_song(int song)
 			is_silence &= store_pokey(p + 9, &asap.extra_pokey);
 			if (is_silence) {
 				silence_run++;
-				if (silence_run >= silence_player_calls) {
+				if (silence_run >= silence_player_calls && /* do not trigger at the initial silence */ silence_run < i) {
 					int duration = player_calls_to_milliseconds(i + 1 - silence_run);
 					printf("TIME %02d:%02d.%02d\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100);
 					return;

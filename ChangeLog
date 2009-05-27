@@ -1,3 +1,7 @@
+2009-05-27  Piotr Fusik  <fox@scene.pl>
+* asapscan.c: do not trigger silence detection at the initial silence
+
+
 2009-05-18  Piotr Fusik  <fox@scene.pl>
 * apokeysnd.c: apokeysnd.dll stripped from 50k to 11k by not using
   the C library
