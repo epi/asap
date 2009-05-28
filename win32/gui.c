@@ -1,7 +1,7 @@
 /*
  * gui.c - settings and file information dialog boxes
  *
- * Copyright (C) 2007-2008  Piotr Fusik
+ * Copyright (C) 2007-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -245,7 +245,7 @@ BOOL loadModule(const char *filename, byte *module, int *module_len)
 	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
 		return FALSE;
-	if (!ReadFile(fh, module, ASAP_MODULE_MAX, module_len, NULL)) {
+	if (!ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) module_len, NULL)) {
 		CloseHandle(fh);
 		return FALSE;
 	}
