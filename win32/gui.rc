@@ -14,9 +14,9 @@
 #define INTERNAL_NAME "wasap"
 #define ORIGINAL_FILENAME "wasap.exe"
 
-IDI_APP ICON "wasap\wasap.ico"
-IDI_STOP ICON "wasap\stop.ico"
-IDI_PLAY ICON "wasap\play.ico"
+IDI_APP ICON "wasap/wasap.ico"
+IDI_STOP ICON "wasap/stop.ico"
+IDI_PLAY ICON "wasap/play.ico"
 
 IDR_TRAYMENU MENU
 {
