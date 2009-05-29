@@ -1,7 +1,7 @@
 /*
  * in_asap.c - ASAP plugin for Winamp
  *
- * Copyright (C) 2005-2007  Piotr Fusik
+ * Copyright (C) 2005-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -35,16 +35,6 @@
 // Winamp's equalizer works only with 16-bit samples
 #define SUPPORT_EQUALIZER  1
 
-#if 0
-// This is used in Winamp examples to disable C runtime in order to produce smaller DLL.
-// Currently it doesn't work here, because the following CRT functions are used:
-// memset, memcpy, strstr
-BOOL WINAPI _DllMainCRTStartup(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
-{
-	return TRUE;
-}
-#endif
-
 static In_Module mod;
 
 // configuration
@@ -57,7 +47,7 @@ char current_filename[MAX_PATH] = "";
 static char current_filename_with_song[MAX_PATH + 3] = "";
 int current_song;
 static byte module[ASAP_MODULE_MAX];
-static DWORD module_len;
+static int module_len;
 static int duration;
 #define channels  asap.module_info.channels
 
