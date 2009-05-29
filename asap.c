@@ -1007,7 +1007,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info,
 		i = 0;
 		while (module[module_index] != 0x0d) {
 			line[i++] = (char) module[module_index++];
-			if (module_index >= module_len || i >= sizeof(line) - 1)
+			if (module_index >= module_len || i >= (int) sizeof(line) - 1)
 				return FALSE;
 		}
 		if (++module_index >= module_len || module[module_index++] != 0x0a)
