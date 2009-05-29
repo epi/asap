@@ -2,10 +2,6 @@ VERSION = 1.2.2
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 DSHOW_BASECLASSES_DIR = "C:\Program Files\Microsoft SDKs\Windows\v6.1\Samples\Multimedia\DirectShow\BaseClasses"
-WINCE_PATH = C:\Program Files\Microsoft Visual Studio 9.0\VC\ce\bin\x86_arm;C:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE;C:\Program Files\Microsoft Visual Studio 9.0\VC\bin
-WINCE_SDK_DIR = C:\Program Files\Microsoft Visual Studio 9.0\SmartDevices\SDK\PocketPC2003
-WINCE_INCLUDE = $(WINCE_SDK_DIR)\Include
-WINCE_LIB=$(WINCE_SDK_DIR)\Lib\armv4;C:\Program Files\Microsoft Visual Studio 9.0\VC\ce\lib\armv4;C:\Program Files\Microsoft Visual Studio 9.0\VC\lib
 
 CC = cl /nologo /O2 /GL /GR- /GS- /W3 /wd4996 /DNDEBUG
 LINKOPT = /link /release
@@ -18,7 +14,8 @@ WINDRES = windres -o $@
 PERL = perl
 XASM = xasm /q /o:$@
 RC = rc /fo $@
-WINCE_CL = cl /nologo /O2 /GS- /W3 /wd4996 /DNDEBUG /DARM /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
+WINCE_CC = arm-wince-mingw32ce-gcc -s -O2 -Wall -o $@ -I. -I..
+WINCE_WINDRES = arm-wince-mingw32ce-windres -o $@
 GMAKE = mingw32-make
 CRLF = $(PERL) -pe 1
 ASCIIDOC = asciidoc -o $@ -a doctime
@@ -58,7 +55,7 @@ asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
 # WASAP
 
 wasap.exe: wasap\wasap.c $(COMMON_C) gui.c wasap\wasap-res.o $(COMMON_H) gui.h
-	$(ASAP_GCC) -DWASAP wasap\wasap.c $(COMMON_C) gui.c wasap\wasap-res.o -lcomdlg32 -lwinmm
+	$(ASAP_GCC) -Wl,-subsystem,windows -DWASAP wasap\wasap.c $(COMMON_C) gui.c wasap\wasap-res.o -lcomdlg32 -lwinmm
 
 wasap\wasap-res.o: gui.rc ..\asap.h gui.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
 	$(WINDRES) -DWASAP gui.rc
@@ -66,7 +63,7 @@ wasap\wasap-res.o: gui.rc ..\asap.h gui.h wasap\wasap.ico wasap\play.ico wasap\s
 # Winamp
 
 in_asap.dll: winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap-res.o $(COMMON_H) gui.h winamp\in2.h winamp\ipc_pe.h winamp\wa_ipc.h
-	$(ASAP_GCC) -shared -DWINAMP winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap-res.o -lcomdlg32
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DWINAMP winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap-res.o -lcomdlg32
 
 winamp\in_asap-res.o: gui.rc ..\asap.h gui.h
 	$(WINDRES) -DWINAMP gui.rc
@@ -107,14 +104,11 @@ gspasap.res: gui.rc ..\asap.h gui.h
 
 wince: ..\gsplayer\gspasap.dll
 
-..\gsplayer\gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def $(COMMON_H) gui.h
-	set Path=$(WINCE_PATH)
-	set INCLUDE=$(WINCE_INCLUDE)
-	set LIB=$(WINCE_LIB)
-	$(WINCE_CL) /Fe$@ /DGSPLAYER /I . /I .. /LD ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap.res ..\gsplayer\gspasap.def coredll.lib corelibc.lib /link /release
+..\gsplayer\gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap-res.o $(COMMON_H) gui.h
+	$(WINCE_CC) -shared ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap-res.o
 
-..\gsplayer\gspasap.res: gui.rc ..\asap.h gui.h
-	$(RC) /D _WIN32_WCE /D GSPLAYER gui.rc
+..\gsplayer\gspasap-res.o: gui.rc ..\asap.h gui.h
+	$(WINCE_WINDRES) -D_WIN32_WCE -DGSPLAYER gui.rc
 
 # DirectShow
 
@@ -129,7 +123,7 @@ asap_dsf.res: gui.rc ..\asap.h
 # Apollo
 
 ASAP_Apollo.dll: apollo\ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo-res.o $(COMMON_H) gui.h
-	$(ASAP_GPP) -shared -DAPOLLO apollo\ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo-res.o -lcomdlg32
+	$(ASAP_GPP) -shared -Wl,-subsystem,windows -DAPOLLO apollo\ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo-res.o -lcomdlg32
 
 ASAP_Apollo-res.o: gui.rc ..\asap.h gui.h
 	$(WINDRES) -DAPOLLO gui.rc
@@ -147,7 +141,7 @@ xbmc_asap.res: gui.rc ..\asap.h
 # APokeySound
 
 apokeysnd.dll: ..\apokeysnd.c apokeysnd-res.o ..\asap.h ..\asap_internal.h
-	$(ASAP_GCC) -shared -DAPOKEYSND ..\apokeysnd.c apokeysnd-res.o
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DAPOKEYSND ..\apokeysnd.c apokeysnd-res.o
 
 apokeysnd-res.o: gui.rc ..\asap.h
 	$(WINDRES) -DAPOKEYSND gui.rc

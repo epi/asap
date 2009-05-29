@@ -25,11 +25,6 @@
 #include <string.h>
 #include <tchar.h>
 
-#ifdef _WIN32_WCE
-#define CheckDlgButton(hwnd, id, val)  SendDlgItemMessage (hwnd, id, BM_SETCHECK, val, 0)
-#define IsDlgButtonChecked(hwnd, id)   (BOOL) SendDlgItemMessage (hwnd, id, BM_GETCHECK, 0, 0)
-#endif
-
 #include "asap.h"
 #include "gui.h"
 
