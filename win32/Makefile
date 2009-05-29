@@ -1,4 +1,4 @@
-VERSION = 1.2.1
+VERSION = 1.2.2
 ASAP_DIR = ..\..\asap
 FOOBAR2000_SDK_DIR = ..\..\foobar2000_SDK
 DSHOW_BASECLASSES_DIR = "C:\Program Files\Microsoft SDKs\Windows\v6.1\Samples\Multimedia\DirectShow\BaseClasses"
@@ -12,11 +12,14 @@ LINKOPT = /link /release
 MKLIB = lib /nologo /ltcg /out:$@
 ASAP_CC = $(CC) /Fe$@ /I . /I ..
 ASAP_CC71 = cl /nologo /O2 /GL /GR- /W3 /DNDEBUG /Fe$@ /I . /I ..
+ASAP_GCC = mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
+ASAP_GPP = mingw32-g++ -s -O2 -Wall -o $@ -I. -I..
+WINDRES = windres -o $@
 PERL = perl
 XASM = xasm /q /o:$@
 RC = rc /fo $@
 WINCE_CL = cl /nologo /O2 /GS- /W3 /wd4996 /DNDEBUG /DARM /D_WIN32_WCE=300 /DWIN32 /DUNDER_CE=300 /DUNICODE /D_UNICODE
-GMAKE = make
+GMAKE = mingw32-make
 CRLF = $(PERL) -pe 1
 ASCIIDOC = asciidoc -o $@ -a doctime
 ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/;END{unlink '$@.bak'}" $@
@@ -50,23 +53,23 @@ all: asap2wav.exe wasap.exe in_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll
 # ASAP2WAV
 
 asap2wav.exe: ..\asap2wav.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_CC) ..\asap2wav.c $(COMMON_C) $(LINKOPT)
+	$(ASAP_GCC) ..\asap2wav.c $(COMMON_C)
 
 # WASAP
 
-wasap.exe: wasap\wasap.c $(COMMON_C) gui.c wasap\wasap.res $(COMMON_H) gui.h
-	$(ASAP_CC) /DWASAP wasap\wasap.c $(COMMON_C) gui.c wasap\wasap.res comdlg32.lib shell32.lib user32.lib winmm.lib $(LINKOPT)
+wasap.exe: wasap\wasap.c $(COMMON_C) gui.c wasap\wasap-res.o $(COMMON_H) gui.h
+	$(ASAP_GCC) -DWASAP wasap\wasap.c $(COMMON_C) gui.c wasap\wasap-res.o -lcomdlg32 -lwinmm
 
-wasap\wasap.res: gui.rc ..\asap.h gui.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
-	$(RC) /D WASAP gui.rc
+wasap\wasap-res.o: gui.rc ..\asap.h gui.h wasap\wasap.ico wasap\play.ico wasap\stop.ico
+	$(WINDRES) -DWASAP gui.rc
 
 # Winamp
 
-in_asap.dll: winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap.res $(COMMON_H) gui.h
-	$(ASAP_CC) /DWINAMP /LD winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap.res comdlg32.lib user32.lib $(LINKOPT)
+in_asap.dll: winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap-res.o $(COMMON_H) gui.h winamp\in2.h winamp\ipc_pe.h winamp\wa_ipc.h
+	$(ASAP_GCC) -shared -DWINAMP winamp\in_asap.c $(COMMON_C) gui.c winamp\in_asap-res.o -lcomdlg32
 
-winamp\in_asap.res: gui.rc ..\asap.h gui.h
-	$(RC) /D WINAMP gui.rc
+winamp\in_asap-res.o: gui.rc ..\asap.h gui.h
+	$(WINDRES) -DWINAMP gui.rc
 
 # foobar2000
 
@@ -125,11 +128,11 @@ asap_dsf.res: gui.rc ..\asap.h
 
 # Apollo
 
-ASAP_Apollo.dll: apollo\ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo.res $(COMMON_H) gui.h
-	$(ASAP_CC) /DAPOLLO /LD apollo\ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo.res comdlg32.lib user32.lib $(LINKOPT)
+ASAP_Apollo.dll: apollo\ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo-res.o $(COMMON_H) gui.h
+	$(ASAP_GPP) -shared -DAPOLLO apollo\ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo-res.o -lcomdlg32
 
-ASAP_Apollo.res: gui.rc ..\asap.h gui.h
-	$(RC) /D APOLLO gui.rc
+ASAP_Apollo-res.o: gui.rc ..\asap.h gui.h
+	$(WINDRES) -DAPOLLO gui.rc
 
 # XBMC
 
@@ -143,16 +146,16 @@ xbmc_asap.res: gui.rc ..\asap.h
 
 # APokeySound
 
-apokeysnd.dll: ..\apokeysnd.c apokeysnd.res ..\asap.h ..\asap_internal.h
-	$(ASAP_CC) /DAPOKEYSND /LD ..\apokeysnd.c apokeysnd.res $(LINKOPT)
+apokeysnd.dll: ..\apokeysnd.c apokeysnd-res.o ..\asap.h ..\asap_internal.h
+	$(ASAP_GCC) -shared -DAPOKEYSND ..\apokeysnd.c apokeysnd-res.o
 
-apokeysnd.res: gui.rc ..\asap.h
-	$(RC) /D APOKEYSND gui.rc
+apokeysnd-res.o: gui.rc ..\asap.h
+	$(WINDRES) -DAPOKEYSND gui.rc
 
 # asapscan
 
 asapscan.exe: ..\asapscan.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_CC) /DASAPSCAN ..\asapscan.c $(COMMON_C) $(LINKOPT)
+	$(ASAP_GCC) -DASAPSCAN ..\asapscan.c $(COMMON_C)
 
 # library
 
@@ -170,9 +173,9 @@ java:
 # delete generated files
 
 clean:
-	del *.txt;*.html;*.dll;*.exe;*.obj;*.exp;*.lib;*.res
-	del wasap\wasap.res;wasap.exe
-	del winamp\in_asap.res;in_asap.dll
+	del *.txt;*.html;*.dll;*.exe;*.obj;*.exp;*.lib;*.res;*.o
+	del wasap\wasap-res.o;wasap.exe
+	del winamp\in_asap-res.o;in_asap.dll
 	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\foo_asap.res
 	del install_dsf.bat;uninstall_dsf.bat
 	del ..\csharp\asap2wav.exe;..\csharp\ASAP.cs

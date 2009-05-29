@@ -1,3 +1,8 @@
+2009-05-29  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile, asap.c, win32/winamp/in_asap.c, win32/winamp/ipc_pe.h,
+  win32/winamp/wa_ipc.h: switched from VS2008 to MinGW
+
+
 2009-05-28  Piotr Fusik  <fox@scene.pl>
 * win32/gui.rc: backslashes in icon paths changed to slashes for windres
 
