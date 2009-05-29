@@ -105,7 +105,7 @@ gspasap.res: gui.rc ..\asap.h gui.h
 wince: ..\gsplayer\gspasap.dll
 
 ..\gsplayer\gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap-res.o $(COMMON_H) gui.h
-	$(WINCE_CC) -shared ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap-res.o
+	$(WINCE_CC) -shared -DGSPLAYER ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap-res.o
 
 ..\gsplayer\gspasap-res.o: gui.rc ..\asap.h gui.h
 	$(WINCE_WINDRES) -D_WIN32_WCE -DGSPLAYER gui.rc
