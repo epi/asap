@@ -160,15 +160,17 @@ static void process_file(const char *input_file)
 
 int main(int argc, char *argv[])
 {
-	abool no_input_files = TRUE;
+	const char *options_error = "no input files";
 	int i;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (arg[0] != '-') {
 			process_file(arg);
-			no_input_files = FALSE;
+			options_error = NULL;
+			continue;
 		}
-		else if (arg[1] == 'o' && arg[2] == '\0')
+		options_error = "options must be specified before the input file";
+		if (arg[1] == 'o' && arg[2] == '\0')
 			output_file = argv[++i];
 		else if (strncmp(arg, "--output=", 9) == 0)
 			output_file = arg + 9;
@@ -195,17 +197,18 @@ int main(int argc, char *argv[])
 		else if ((arg[1] == 'h' && arg[2] == '\0')
 			|| strcmp(arg, "--help") == 0) {
 			print_help();
-			no_input_files = FALSE;
+			options_error = NULL;
 		}
 		else if ((arg[1] == 'v' && arg[2] == '\0')
 			|| strcmp(arg, "--version") == 0) {
 			printf("ASAP2WAV " ASAP_VERSION "\n");
-			no_input_files = FALSE;
+			options_error = NULL;
 		}
 		else
 			fatal_error("unknown option: %s", arg);
 	}
-	if (no_input_files) {
+	if (options_error != NULL) {
+		fprintf(stderr, "asap2wav: %s\n", options_error);
 		print_help();
 		return 1;
 	}
