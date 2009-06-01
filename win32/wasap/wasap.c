@@ -1,7 +1,7 @@
 /*
  * wasap.c - Another Slight Atari Player for Win32 systems
  *
- * Copyright (C) 2005-2008  Piotr Fusik
+ * Copyright (C) 2005-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -154,7 +154,7 @@ static void Tray_Modify(HICON hIcon)
 			memcpy(p, pb, 30);
 			p = appendString(p + 30, "...");
 		}
-		if (current_song >= 0 && songs > 1) {
+		if (songs > 1) {
 			/* 7 */
 			p = appendString(p, " (song ");
 			/* max 3 */
@@ -200,9 +200,17 @@ static void SetSongsMenu(int n)
 
 static void StopPlayback(void)
 {
-	current_song = -1;
 	WaveOut_Stop();
 	Tray_Modify(hStopIcon);
+}
+
+static BOOL DoLoad(ASAP_State *asap, byte module[], int module_len)
+{
+	if (!ASAP_Load(asap, current_filename, module, module_len)) {
+		MessageBox(hWnd, "Unsupported file format", APP_TITLE, MB_OK | MB_ICONERROR);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static void LoadAndPlay(int song)
@@ -216,12 +224,10 @@ static void LoadAndPlay(int song)
 		ClearSongsMenu();
 		StopPlayback();
 		songs = 0;
+		EnableMenuItem(hTrayMenu, IDM_SAVE_WAV, MF_BYCOMMAND | MF_GRAYED);
 	}
-	if (!ASAP_Load(&asap, current_filename, module, module_len)) {
-		MessageBox(hWnd, "Unsupported file format", APP_TITLE,
-		           MB_OK | MB_ICONERROR);
+	if (!DoLoad(&asap, module, module_len))
 		return;
-	}
 	if (!WaveOut_Open(asap.module_info.channels)) {
 		MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
 				   MB_OK | MB_ICONERROR);
@@ -230,6 +236,7 @@ static void LoadAndPlay(int song)
 	if (song < 0)
 		song = asap.module_info.default_song;
 	songs = asap.module_info.songs;
+	EnableMenuItem(hTrayMenu, IDM_SAVE_WAV, MF_BYCOMMAND | MF_ENABLED);
 	updateInfoDialog(current_filename, song);
 	SetSongsMenu(songs);
 	CheckMenuRadioItem(hSongMenu, 0, songs - 1, song, MF_BYPOSITION);
@@ -290,6 +297,81 @@ static void SelectAndLoadFile(void)
 	opening = FALSE;
 }
 
+static char wav_filename[MAX_PATH];
+
+static BOOL DoSaveWav(ASAP_State *asap)
+{
+	HANDLE fh;
+	byte buffer[8192];
+	DWORD len;
+	fh = CreateFile(wav_filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (fh == INVALID_HANDLE_VALUE)
+		return FALSE;
+	ASAP_GetWavHeader(asap, buffer, BITS_PER_SAMPLE);
+	len = ASAP_WAV_HEADER_BYTES;
+	while (len > 0) {
+		if (!WriteFile(fh, buffer, len, &len, NULL)) {
+			CloseHandle(fh);
+			return FALSE;
+		}
+		len = ASAP_Generate(asap, buffer, sizeof(buffer), BITS_PER_SAMPLE);
+	}
+	CloseHandle(fh);
+	return TRUE;
+}
+
+static void SaveWav(void)
+{
+	byte module[ASAP_MODULE_MAX];
+	int module_len;
+	ASAP_State asap;
+	int duration;
+	static OPENFILENAME ofn = {
+		sizeof(OPENFILENAME),
+		NULL,
+		0,
+		"WAV files (*.wav)\0*.wav\0\0",
+		NULL,
+		0,
+		0,
+		wav_filename,
+		MAX_PATH,
+		NULL,
+		0,
+		NULL,
+		"Select output file",
+		OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT,
+		0,
+		0,
+		"wav",
+		0,
+		NULL,
+		NULL
+	};
+	if (!loadModule(current_filename, module, &module_len))
+		return;
+	if (!DoLoad(&asap, module, module_len))
+		return;
+	duration = asap.module_info.durations[current_song];
+	if (duration < 0) {
+		if (MessageBox(hWnd,
+			"This song has unknown duration.\n"
+			"Use \"File information\" to update the source file with the correct duration.\n"
+			"Do you want to save 3 minutes?",
+			"Unknown duration", MB_YESNO | MB_ICONWARNING) != IDYES)
+			return;
+		duration = 180000;
+	}
+	ASAP_PlaySong(&asap, current_song, duration);
+	strcpy(wav_filename, current_filename);
+	ASAP_ChangeExt(wav_filename, "wav");
+	ofn.hwndOwner = hWnd;
+	if (!GetSaveFileName(&ofn))
+		return;
+	if (!DoSaveWav(&asap))
+		MessageBox(hWnd, "Cannot save file", "Error", MB_OK | MB_ICONERROR);
+}
+
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
                                     LPARAM lParam)
 {
@@ -308,6 +390,9 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 			break;
 		case IDM_FILE_INFO:
 			showInfoDialog(hInst, hWnd, current_filename, current_song);
+			break;
+		case IDM_SAVE_WAV:
+			SaveWav();
 			break;
 		case IDM_ABOUT:
 			MessageBox(hWnd,

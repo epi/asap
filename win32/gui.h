@@ -57,8 +57,9 @@ void updateInfoDialog(const char *filename, int song);
 #define IDM_OPEN       201
 #define IDM_STOP       202
 #define IDM_FILE_INFO  203
-#define IDM_ABOUT      204
-#define IDM_EXIT       205
+#define IDM_SAVE_WAV   204
+#define IDM_ABOUT      205
+#define IDM_EXIT       206
 #define IDM_SONG1      211
 
 #else /* WASAP */
