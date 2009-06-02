@@ -32,7 +32,7 @@ extern "C" {
 #define ASAP_VERSION_MAJOR   1
 #define ASAP_VERSION_MINOR   2
 #define ASAP_VERSION_MICRO   1
-#define ASAP_VERSION         "1.2.1"
+#define ASAP_VERSION         "1.2.2"
 
 /* Short credits of the ASAP engine. */
 #define ASAP_YEARS           "2005-2009"
@@ -243,7 +243,7 @@ void ASAP_MutePokeyChannels(ASAP_State *ast, int mask);
 
 /* Returns current position in milliseconds.
    "ast" is ASAP state initialized by ASAP_PlaySong(). */
-int ASAP_GetPosition(ASAP_State *ast);
+int ASAP_GetPosition(const ASAP_State *ast);
 
 /* Rewinds the current song.
    "ast" is ASAP state initialized by ASAP_PlaySong().
@@ -254,7 +254,7 @@ void ASAP_Seek(ASAP_State *ast, int position);
    "ast" is ASAP state initialized by ASAP_PlaySong() with a positive "duration".
    "buffer" is buffer of ASAP_WAV_HEADER_BYTES bytes.
    "format" is the format of samples. */
-void ASAP_GetWavHeader(ASAP_State *ast, byte buffer[],
+void ASAP_GetWavHeader(const ASAP_State *ast, byte buffer[],
                        ASAP_SampleFormat format);
 
 /* Fills the specified buffer with generated samples.

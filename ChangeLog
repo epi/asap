@@ -1,3 +1,7 @@
+2009-06-02  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h: added const to ASAP_GetPosition and ASAP_GetWavHeader
+
+
 2009-06-01  Piotr Fusik  <fox@scene.pl>
 * win32/wasap/wasap.c, win32/gui.rc, win32/gui.h: added "Save as WAV"
 

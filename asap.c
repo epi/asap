@@ -1495,7 +1495,7 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 	return TRUE;
 }
 
-ASAP_FUNC int ASAP_GetPosition(ASAP_State PTR ast)
+ASAP_FUNC int ASAP_GetPosition(const ASAP_State PTR ast)
 {
 	return AST blocks_played * 10 / (ASAP_SAMPLE_RATE / 100);
 }
@@ -1526,7 +1526,7 @@ FILE_FUNC void serialize_int(byte ARRAY buffer, int offset, int value)
 	buffer[offset + 3] = (byte) (value >> 24);
 }
 
-ASAP_FUNC void ASAP_GetWavHeaderForPart(ASAP_State PTR ast, byte ARRAY buffer,
+ASAP_FUNC void ASAP_GetWavHeaderForPart(const ASAP_State PTR ast, byte ARRAY buffer,
                                         ASAP_SampleFormat format, int blocks)
 {
 	int use_16bit = format != ASAP_FORMAT_U8 ? 1 : 0;
@@ -1571,7 +1571,7 @@ ASAP_FUNC void ASAP_GetWavHeaderForPart(ASAP_State PTR ast, byte ARRAY buffer,
 	serialize_int(buffer, 40, n_bytes);
 }
 
-ASAP_FUNC void ASAP_GetWavHeader(ASAP_State PTR ast, byte ARRAY buffer,
+ASAP_FUNC void ASAP_GetWavHeader(const ASAP_State PTR ast, byte ARRAY buffer,
                                  ASAP_SampleFormat format)
 {
 	int remaining_blocks = milliseconds_to_blocks(AST current_duration) - AST blocks_played;
