@@ -1,42 +1,29 @@
-CSC = csc /nologo /o+
+CSC = csc -nologo -o+ -out:$@
 PP = cpp -P -I..
-XASM = xasm /q /o:$@
-
-COMMON_C = ..\asap.c ..\acpu.c ..\apokeysnd.c
-COMMON_H = ..\asap.h ..\asap_internal.h
-PLAYERS_OBX = ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx ..\players\rmt8.obx ..\players\tmc.obx ..\players\tm2.obx 
+XASM = xasm -q -o $@
 
 all: asap2wav.exe
 
-asap2wav.exe: asap2wav.cs ASAP.cs $(PLAYERS_OBX)
-	$(CSC) /out:asap2wav.exe \
-	/res:..\players\cmc.obx,cmc /res:..\players\mpt.obx,mpt \
-	/res:..\players\rmt4.obx,rmt4 /res:..\players\rmt8.obx,rmt8 \
-	/res:..\players\tmc.obx,tmc /res:..\players\tm2.obx,tm2 \
+asap2wav.exe: asap2wav.cs ASAP.cs ../players/cmc.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx
+	$(CSC) \
+	-res:../players/cmc.obx,cmc -res:../players/mpt.obx,mpt \
+	-res:../players/rmt4.obx,rmt4 -res:../players/rmt8.obx,rmt8 \
+	-res:../players/tmc.obx,tmc -res:../players/tm2.obx,tm2 \
 	asap2wav.cs ASAP.cs
 
-ASAP.cs: ASAP.ppcs $(COMMON_C) $(COMMON_H)
-	$(PP) ASAP.ppcs > ASAP.cs
+ASAP.cs: ASAP.ppcs ../asap.c ../acpu.c ../apokeysnd.c ../asap.h ../asap_internal.h
+	$(PP) ASAP.ppcs > $@
 
-..\players\cmc.obx: ..\players\cmc.asx
-	$(XASM) $**
+../players/%.obx: ../players/%.asx
+	$(XASM) $<
 
-..\players\mpt.obx: ..\players\mpt.asx
-	$(XASM) $**
+../players/rmt4.obx: ../players/rmt.asx
+	$(XASM) -d STEREOMODE=0 $<
 
-..\players\rmt4.obx: ..\players\rmt.asx
-	$(XASM) /d:STEREOMODE=0 $**
-
-..\players\rmt8.obx: ..\players\rmt.asx
-	$(XASM) /d:STEREOMODE=1 $**
-
-..\players\tmc.obx: ..\players\tmc.asx
-	$(XASM) $**
-
-..\players\tm2.obx: ..\players\tm2.asx
-	$(XASM) $**
+../players/rmt8.obx: ../players/rmt.asx
+	$(XASM) -d STEREOMODE=1 $<
 
 clean:
-	del asap2wav.exe
-	del ASAP.cs
-	del ..\players\*.obx
+	rm -f asap2wav.exe ASAP.cs ../players/*.obx
+
+.DELETE_ON_ERROR:
