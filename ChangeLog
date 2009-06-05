@@ -1,3 +1,13 @@
+2009-06-05  Piotr Fusik  <fox@scene.pl>
+* gsplayer/USAGE, README, win32/Makefile: created wince usage doc
+
+* gsplayer/Makefile, win32/Makefile: created wince Makefile
+
+* csharp/Makefile: converted from nmake to gmake
+
+* win32/Makefile: use unix2dos and not perl (cygwin's perl outputs LFs)
+
+
 2009-06-02  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h: added const to ASAP_GetPosition and ASAP_GetWavHeader
 

@@ -12,12 +12,12 @@ ASAP_GCC = mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
 ASAP_GPP = mingw32-g++ -s -O2 -Wall -o $@ -I. -I..
 WINDRES = windres -o $@
 PERL = perl
-XASM = xasm /q /o:$@
+XASM = xasm -q -o $@
 RC = rc /fo $@
 WINCE_CC = arm-wince-mingw32ce-gcc -s -O2 -Wall -o $@ -I. -I..
 WINCE_WINDRES = arm-wince-mingw32ce-windres -o $@
 GMAKE = mingw32-make
-CRLF = $(PERL) -pe 1
+UNIX2DOS = unix2dos
 ASCIIDOC = asciidoc -o $@ -a doctime
 ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/;END{unlink '$@.bak'}" $@
 
@@ -102,13 +102,8 @@ gspasap.res: gui.rc ..\asap.h gui.h
 
 # GSPlayer - Windows CE
 
-wince: ..\gsplayer\gspasap.dll
-
-..\gsplayer\gspasap.dll: ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap-res.o $(COMMON_H) gui.h
-	$(WINCE_CC) -shared -DGSPLAYER ..\gsplayer\gspasap.c $(COMMON_C) gui.c ..\gsplayer\gspasap-res.o
-
-..\gsplayer\gspasap-res.o: gui.rc ..\asap.h gui.h
-	$(WINCE_WINDRES) -D_WIN32_WCE -DGSPLAYER gui.rc
+wince:
+	$(GMAKE) -C ../gsplayer
 
 # DirectShow
 
@@ -172,14 +167,15 @@ clean:
 	del winamp\in_asap-res.o;in_asap.dll
 	del foobar2000\*.obj;foobar2000\*.lib;foobar2000\foo_asap.res
 	del install_dsf.bat;uninstall_dsf.bat
-	del ..\csharp\asap2wav.exe;..\csharp\ASAP.cs
 	del ..\players\*.obx;..\players.h;..\README.html
+	$(GMAKE) -C ../csharp clean
+	$(GMAKE) -C ../gsplayer clean
 	$(GMAKE) -C ../java clean
 
 # prepare files for release
 
 COPYING.txt: ..\COPYING
-	$(CRLF) $** >$@
+	$(UNIX2DOS) <$** >$@
 
 ..\README.html: ..\README ..\NEWS ..\CREDITS ..\INSTALL
 	$(ASCIIDOC) -a asapsrc ..\README
@@ -193,7 +189,7 @@ README_Windows.html: ..\README ..\NEWS ..\CREDITS USAGE
 	$(ASCIIDOC) -a asapwin="(included in this binary package)" ..\README
 	$(ASCIIDOC_POSTPROCESS)
 
-README_WindowsCE.html: ..\README ..\NEWS ..\CREDITS
+README_WindowsCE.html: ..\README ..\NEWS ..\CREDITS ..\gsplayer\USAGE
 	$(ASCIIDOC) -a asapwince="(included in this binary package)" ..\README
 	$(ASCIIDOC_POSTPROCESS)
 
@@ -214,6 +210,7 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
 		csharp\ASAP.ppcs csharp\asap2wav.cs csharp\Makefile \
 		gsplayer\gspasap.c gsplayer\mapplugin.h gsplayer\gspasap.def \
+		gsplayer\Makefile gsplayer\USAGE \
 		java\ASAP.ppjava java\ASAP_ModuleInfo.java \
 		java\ASAP2WAV.java java\asap2wav.MF \
 		java\ASAPApplet.java \
@@ -221,8 +218,7 @@ srcdist: ..\configure ..\players\cmc.obx ..\players\mpt.obx ..\players\rmt4.obx 
 		java\mf2jad.pl java\Makefile \
 		java\USAGE \
 		moc\libasap_decoder.c \
-		win32\Makefile \
-		win32\USAGE \
+		win32\Makefile win32\USAGE \
 		win32\gui.c win32\gui.h win32\gui.rc \
 		win32\apollo\ASAP_Apollo.cpp win32\apollo\InputPlugin.h \
 		win32\dshow\asap_dsf.cpp win32\dshow\asap_dsf.def \
