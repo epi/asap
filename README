@@ -81,12 +81,7 @@ include::win32/USAGE[]
 endif::asapwin[]
 
 ifdef::asapwince[]
-
-How to install
---------------
-
-Put `gspasap.dll` in the directory that contains the GSPlayer executable.
-
+include::gsplayer/USAGE[]
 endif::asapwince[]
 
 Feedback
