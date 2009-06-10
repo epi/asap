@@ -969,7 +969,7 @@ static char *two_digits(char *s, int x)
 
 void ASAP_DurationToString(char *s, int duration)
 {
-	if (duration >= 0) {
+	if (duration >= 0 && duration < 100 * 60 * 1000) {
 		int seconds = duration / 1000;
 		s = two_digits(s, seconds / 60);
 		*s++ = ':';

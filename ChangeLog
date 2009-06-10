@@ -1,3 +1,8 @@
+2009-06-10  Piotr Fusik  <fox@scene.pl>
+* asap.c, java/ASAP.ppjava: ASAP_DurationToString() returns an empty string
+  and not garbage if passed 100 minutes or more
+
+
 2009-06-05  Piotr Fusik  <fox@scene.pl>
 * gsplayer/USAGE, README, win32/Makefile: created wince usage doc
 

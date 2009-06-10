@@ -238,7 +238,7 @@ public final class ASAP
 	public static String durationToString(int duration)
 	{
 		StringBuffer sb = new StringBuffer();
-		if (duration >= 0) {
+		if (duration >= 0 && duration < 100 * 60 * 1000) {
 			int seconds = duration / 1000;
 			appendTwoDigits(sb, seconds / 60);
 			sb.append(':');
