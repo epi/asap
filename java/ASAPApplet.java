@@ -1,7 +1,7 @@
 /*
  * ASAPApplet.java - ASAP applet
  *
- * Copyright (C) 2007  Piotr Fusik
+ * Copyright (C) 2007-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -39,20 +39,15 @@ import net.sf.asap.ASAP_ModuleInfo;
 
 public class ASAPApplet extends Applet implements Runnable
 {
-	private ASAP asap;
+	private final ASAP asap = new ASAP();
 	private int song;
 	private SourceDataLine line;
 	private boolean running;
 	private boolean paused;
 
 	private static final int BITS_PER_SAMPLE = 16;
-	private static Color background = Color.BLACK;
-	private static Color foreground = Color.GREEN;
-
-	public ASAPApplet()
-	{
-		asap = new ASAP();
-	}
+	private Color background;
+	private Color foreground;
 
 	public void update(Graphics g)
 	{
@@ -96,12 +91,13 @@ public class ASAPApplet extends Applet implements Runnable
 				len = asap.generate(buffer, BITS_PER_SAMPLE);
 			}
 			synchronized (this) {
-				while (paused)
+				while (paused) {
 					try {
 						wait();
 					} catch (InterruptedException e) {
 						return;
 					}
+				}
 			}
 			line.write(buffer, 0, len);
 			repaint();
@@ -169,22 +165,20 @@ public class ASAPApplet extends Applet implements Runnable
 		repaint();
 	}
 
-	private Color getColor(String parameter)
+	private Color getColor(String parameter, Color defaultColor)
 	{
-		return new Color(Integer.parseInt(getParameter(parameter), 16));
+		try {
+			return new Color(Integer.parseInt(getParameter(parameter), 16));
+		} catch (Exception e) {
+			return defaultColor;
+		}
 	}
 
 	public void start()
 	{
-		try {
-			background = getColor("background");
-		} catch (Exception e) {
-		}
+		background = getColor("background", Color.BLACK);
 		setBackground(background);
-		try {
-			foreground = getColor("foreground");
-		} catch (Exception e) {
-		}
+		foreground = getColor("foreground", Color.GREEN);
 		String filename = getParameter("file");
 		if (filename == null)
 			return;

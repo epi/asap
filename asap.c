@@ -100,6 +100,8 @@ ASAP_FUNC void ASAP_PutByte(ASAP_State PTR ast, int addr, int data)
 
 #define MAX_SONGS  32
 
+#define UWORD(array, index)  (UBYTE(array[index]) + (UBYTE(array[(index) + 1]) << 8))
+
 #ifndef ASAP_ONLY_SAP
 
 CONST_LOOKUP(int, perframe2fastplay) = { 312, 312 / 2, 312 / 3, 312 / 4 };
@@ -123,23 +125,23 @@ FILE_FUNC abool load_native(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 		player_last_byte = player.READ_BYTE();
 		player_last_byte += player.READ_BYTE() << 8;
 #else
-		MODULE_INFO player = UBYTE(player[2]) + (UBYTE(player[3]) << 8);
-		player_last_byte = UBYTE(player[4]) + (UBYTE(player[5]) << 8);
+		MODULE_INFO player = UWORD(player, 2);
+		player_last_byte = UWORD(player, 4);
 #endif
-		MODULE_INFO music = UBYTE(module[2]) + (UBYTE(module[3]) << 8);
+		MODULE_INFO music = UWORD(module, 2);
 		if (MODULE_INFO music <= player_last_byte)
 			return FALSE;
-		block_len = UBYTE(module[4]) + (UBYTE(module[5]) << 8) + 1 - MODULE_INFO music;
+		block_len = UWORD(module, 4) + 1 - MODULE_INFO music;
 		if (6 + block_len != module_len) {
 			int info_addr;
 			int info_len;
 			if (MODULE_INFO type != 'r' || 11 + block_len > module_len)
 				return FALSE;
 			/* allow optional info for Raster Music Tracker */
-			info_addr = UBYTE(module[6 + block_len]) + (UBYTE(module[7 + block_len]) << 8);
+			info_addr = UWORD(module, 6 + block_len);
 			if (info_addr != MODULE_INFO music + block_len)
 				return FALSE;
-			info_len = UBYTE(module[8 + block_len]) + (UBYTE(module[9 + block_len]) << 8) + 1 - info_addr;
+			info_len = UWORD(module, 8 + block_len) + 1 - info_addr;
 			if (10 + block_len + info_len != module_len)
 				return FALSE;
 		}
@@ -292,7 +294,7 @@ FILE_FUNC abool parse_cmc(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 FILE_FUNC void parse_mpt_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module,
                               abool ARRAY global_seen, int song_len, int pos)
 {
-	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
+	int addr_to_offset = UWORD(module, 2) - 6;
 	int tempo = UBYTE(module[0x1cf]);
 	int player_calls = 0;
 	NEW_ARRAY(byte, seen, 256);
@@ -323,7 +325,7 @@ FILE_FUNC void parse_mpt_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY 
 			if (i >= 0x40)
 				break;
 			i <<= 1;
-			i = UBYTE(module[0x46 + i]) + (UBYTE(module[0x47 + i]) << 8);
+			i = UWORD(module, 0x46 + i);
 			pattern_offset[ch] = i == 0 ? 0 : i - addr_to_offset;
 			blank_rows_counter[ch] = 0;
 		}
@@ -377,7 +379,7 @@ FILE_FUNC abool parse_mpt(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	MODULE_INFO type = 'm';
 	if (!load_native(ast, module_info, module, module_len, GET_OBX(mpt)))
 		return FALSE;
-	track0_addr = UBYTE(module[2]) + (UBYTE(module[3]) << 8) + 0x1ca;
+	track0_addr = UWORD(module, 2) + 0x1ca;
 	if (UBYTE(module[0x1c6]) + (UBYTE(module[0x1ca]) << 8) != track0_addr)
 		return FALSE;
 	/* Calculate the length of the first track. Address of the second track minus
@@ -401,7 +403,7 @@ CONST_LOOKUP(byte, rmt_volume_silent) = { 16, 8, 4, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1
 
 FILE_FUNC int rmt_instrument_frames(const byte ARRAY module, int instrument, int volume, int volume_frame, abool extra_pokey)
 {
-	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
+	int addr_to_offset = UWORD(module, 2) - 6;
 	int per_frame = module[0xc];
 	int player_call;
 	int player_calls;
@@ -412,10 +414,10 @@ FILE_FUNC int rmt_instrument_frames(const byte ARRAY module, int instrument, int
 	int volume_min;
 	int volume_slide;
 	abool silent_loop;
-	instrument = UBYTE(module[0xe]) + (UBYTE(module[0xf]) << 8) - addr_to_offset + (instrument << 1);
+	instrument = UWORD(module, 0xe) - addr_to_offset + (instrument << 1);
 	if (module[instrument + 1] == 0)
 		return 0;
-	instrument = UBYTE(module[instrument]) + (UBYTE(module[instrument + 1]) << 8) - addr_to_offset;
+	instrument = UWORD(module, instrument) - addr_to_offset;
 	player_calls = player_call = volume_frame * per_frame;
 	index = UBYTE(module[instrument]) + 1 + player_call * 3;
 	index_end = UBYTE(module[instrument + 2]) + 3;
@@ -472,12 +474,12 @@ FILE_FUNC void parse_rmt_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY 
                               abool ARRAY global_seen, int song_len, int pos_shift, int pos)
 {
 	int ch;
-	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
+	int addr_to_offset = UWORD(module, 2) - 6;
 	int tempo = UBYTE(module[0xb]);
 	int frames = 0;
-	int song_offset = UBYTE(module[0x14]) + (UBYTE(module[0x15]) << 8) - addr_to_offset;
-	int pattern_lo_offset = UBYTE(module[0x10]) + (UBYTE(module[0x11]) << 8) - addr_to_offset;
-	int pattern_hi_offset = UBYTE(module[0x12]) + (UBYTE(module[0x13]) << 8) - addr_to_offset;
+	int song_offset = UWORD(module, 0x14) - addr_to_offset;
+	int pattern_lo_offset = UWORD(module, 0x10) - addr_to_offset;
+	int pattern_hi_offset = UWORD(module, 0x12) - addr_to_offset;
 	int instrument_frames;
 	NEW_ARRAY(byte, seen, 256);
 	NEW_ARRAY(int, pattern_begin, 8);
@@ -608,11 +610,9 @@ FILE_FUNC abool parse_rmt(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	if (!load_native(ast, module_info, module, module_len,
 		MODULE_INFO channels == 2 ? GET_OBX(rmt8) : GET_OBX(rmt4)))
 		return FALSE;
-	song_len = UBYTE(module[4]) + (UBYTE(module[5]) << 8) + 1
-		- UBYTE(module[0x14]) - (UBYTE(module[0x15]) << 8);
+	song_len = UWORD(module, 4) + 1 - UWORD(module, 0x14);
 	if (pos_shift == 3 && (song_len & 4) != 0
-	 && UBYTE(module[6 + UBYTE(module[4]) + (UBYTE(module[5]) << 8)
-		- UBYTE(module[2]) - (UBYTE(module[3]) << 8) - 3]) == 0xfe)
+	 && UBYTE(module[6 + UWORD(module, 4) - UWORD(module, 2) - 3]) == 0xfe)
 		song_len += 4;
 	song_len >>= pos_shift;
 	if (song_len >= 0x100)
@@ -633,7 +633,7 @@ FILE_FUNC abool parse_rmt(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 
 FILE_FUNC void parse_tmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
 {
-	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
+	int addr_to_offset = UWORD(module, 2) - 6;
 	int tempo = UBYTE(module[0x24]) + 1;
 	int frames = 0;
 	NEW_ARRAY(int, pattern_offset, 8);
@@ -708,7 +708,7 @@ FILE_FUNC abool parse_tmc(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 			return FALSE; /* no instrument */
 	}
 	last_pos = (UBYTE(module[0x66 + i]) << 8) + UBYTE(module[0x26 + i])
-		- UBYTE(module[2]) - (UBYTE(module[3]) << 8) - 0x1b0;
+		- UWORD(module, 2) - 0x1b0;
 	if (0x1b5 + last_pos >= module_len)
 		return FALSE;
 	/* skip trailing jumps */
@@ -734,7 +734,7 @@ FILE_FUNC abool parse_tmc(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 
 FILE_FUNC void parse_tm2_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
 {
-	int addr_to_offset = UBYTE(module[2]) + (UBYTE(module[3]) << 8) - 6;
+	int addr_to_offset = UWORD(module, 2) - 6;
 	int tempo = UBYTE(module[0x24]) + 1;
 	int player_calls = 0;
 	NEW_ARRAY(int, pattern_offset, 8);
@@ -834,7 +834,7 @@ FILE_FUNC abool parse_tm2(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 		if (pattern_addr != 0 && pattern_addr < last_pos)
 			last_pos = pattern_addr;
 	}
-	last_pos -= UBYTE(module[2]) + (UBYTE(module[3]) << 8) + 0x380;
+	last_pos -= UWORD(module, 2) + 0x380;
 	if (0x386 + last_pos >= module_len)
 		return FALSE;
 	/* skip trailing stop/jump commands */
@@ -1132,8 +1132,8 @@ FILE_FUNC abool parse_sap(ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	ZERO_ARRAY(AST memory);
 	module_index = MODULE_INFO header_len + 2;
 	while (module_index + 5 <= module_len) {
-		int start_addr = UBYTE(module[module_index]) + (UBYTE(module[module_index + 1]) << 8);
-		int block_len = UBYTE(module[module_index + 2]) + (UBYTE(module[module_index + 3]) << 8) + 1 - start_addr;
+		int start_addr = UWORD(module, module_index);
+		int block_len = UWORD(module, module_index + 2) + 1 - start_addr;
 		if (block_len <= 0 || module_index + block_len > module_len)
 			return FALSE;
 		module_index += 4;
