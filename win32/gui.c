@@ -236,16 +236,14 @@ char *appendInt(char *dest, int x)
 BOOL loadModule(const char *filename, byte *module, int *module_len)
 {
 	HANDLE fh;
+	BOOL ok;
 	fh = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
 		return FALSE;
-	if (!ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) module_len, NULL)) {
-		CloseHandle(fh);
-		return FALSE;
-	}
+	ok = ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) module_len, NULL);
 	CloseHandle(fh);
-	return TRUE;
+	return ok;
 }
 
 static void showSongTime(void)
@@ -452,8 +450,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 	return FALSE;
 }
 
-void showInfoDialog(HINSTANCE hInstance, HWND hwndParent,
-                    const char *filename, int song)
+void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, int song)
 {
 	if (infoDialog == NULL) {
 		edited_module_info = saved_module_info;
