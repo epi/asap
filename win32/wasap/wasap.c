@@ -70,8 +70,7 @@ static void WaveOut_Write(LPWAVEHDR pwh)
 	}
 }
 
-static void CALLBACK WaveOut_Proc(HWAVEOUT hwo2, UINT uMsg, DWORD dwInstance,
-                                  DWORD dwParam1, DWORD dwParam2)
+static void CALLBACK WaveOut_Proc(HWAVEOUT hwo2, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
 {
 	if (uMsg == WOM_DONE)
 		WaveOut_Write((LPWAVEHDR) dwParam1);
@@ -87,8 +86,7 @@ static int WaveOut_Open(int channels)
 	wfx.nAvgBytesPerSec = ASAP_SAMPLE_RATE * wfx.nBlockAlign;
 	wfx.wBitsPerSample = BITS_PER_SAMPLE;
 	wfx.cbSize = 0;
-	if (waveOutOpen(&hwo, WAVE_MAPPER, &wfx, (DWORD) WaveOut_Proc, 0,
-	                CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
+	if (waveOutOpen(&hwo, WAVE_MAPPER, &wfx, (DWORD) WaveOut_Proc, 0, CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
 		return FALSE;
 	wh[1].dwBufferLength = wh[0].dwBufferLength = BUFFERED_BLOCKS * wfx.nBlockAlign;
 	if (waveOutPrepareHeader(hwo, &wh[0], sizeof(wh[0])) != MMSYSERR_NOERROR
@@ -229,8 +227,7 @@ static void LoadAndPlay(int song)
 	if (!DoLoad(&asap, module, module_len))
 		return;
 	if (!WaveOut_Open(asap.module_info.channels)) {
-		MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE,
-				   MB_OK | MB_ICONERROR);
+		MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE, MB_OK | MB_ICONERROR);
 		return;
 	}
 	if (song < 0)
@@ -372,8 +369,7 @@ static void SaveWav(void)
 		MessageBox(hWnd, "Cannot save file", "Error", MB_OK | MB_ICONERROR);
 }
 
-static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
-                                    LPARAM lParam)
+static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	int idc;
 	POINT pt;
@@ -454,8 +450,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 	return 0;
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                   LPSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	char *pb;
 	char *pe;
@@ -466,9 +461,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	for (pb = lpCmdLine; *pb == ' ' || *pb == '\t'; pb++);
 	for (pe = pb; *pe != '\0'; pe++);
 	while (--pe > pb && (*pe == ' ' || *pe == '\t'));
-	/* Now pb and pe point at respectively the first and last
-	   non-blank character in lpCmdLine. If pb > pe then the command line
-	   is blank. */
+	/* Now pb and pe point at respectively the first and last non-blank
+	   character in lpCmdLine. If pb > pe then the command line is blank. */
 	if (*pb == '"' && *pe == '"')
 		pb++;
 	else
@@ -526,24 +520,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	hTrayMenu = GetSubMenu(hMainMenu, 0);
 	hSongMenu = CreatePopupMenu();
 	InsertMenu(hTrayMenu, 1, MF_BYPOSITION | MF_ENABLED | MF_STRING | MF_POPUP,
-	           (UINT_PTR) hSongMenu, "So&ng");
+		(UINT_PTR) hSongMenu, "So&ng");
 	SetMenuDefaultItem(hTrayMenu, 0, TRUE);
 	nid.hWnd = hWnd;
 	nid.hIcon = hStopIcon;
 	Shell_NotifyIcon(NIM_ADD, &nid);
 	taskbarCreatedMessage = RegisterWindowMessage("TaskbarCreated");
+
 	if (*pb != '\0') {
 		memcpy(current_filename, pb, pe + 1 - pb);
 		LoadAndPlay(-1);
 	}
 	else
 		SelectAndLoadFile();
+
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		if (infoDialog == NULL || !IsDialogMessage(infoDialog, &msg)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
 	}
+
 	WaveOut_Close();
 	Shell_NotifyIcon(NIM_DELETE, &nid);
 	DestroyMenu(hMainMenu);

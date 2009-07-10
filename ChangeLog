@@ -1,3 +1,7 @@
+2009-07-10  Piotr Fusik  <fox@scene.pl>
+* asap.c, win32/gui.c, win32/wasap/wasap.c: source code indentation
+
+
 2009-07-02  Piotr Fusik  <fox@scene.pl>
 * asap.c: source code shortened using the UWORD macro
 
