@@ -82,10 +82,10 @@ foobar2000/foo_asap.res: gui.rc ../asap.h gui.h
 
 # GSPlayer
 
-gspasap.dll: ../gsplayer/gspasap.c $(COMMON_C) gui.c gspasap.res ../gsplayer/gspasap.def $(COMMON_H) gui.h
-	$(ASAP_CL) -DGSPLAYER -LD ../gsplayer/gspasap.c $(COMMON_C) gui.c gspasap.res ../gsplayer/gspasap.def advapi32.lib user32.lib $(LINKOPT)
+gspasap.dll: ../gsplayer/gspasap.c $(COMMON_C) gui.c gspasap-res.o $(COMMON_H) gui.h
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DGSPLAYER ../gsplayer/gspasap.c $(COMMON_C) gui.c gspasap-res.o
 
-gspasap.res: gui.rc ../asap.h gui.h
+gspasap-res.o: gui.rc ../asap.h gui.h
 	$(WINDRES) -DGSPLAYER gui.rc
 
 # GSPlayer - Windows CE
@@ -196,7 +196,7 @@ srcdist: ../configure ../players/cmc.obx ../players/mpt.obx ../players/rmt4.obx 
 		configure.ac Makefile.in \
 		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
 		csharp/ASAP.ppcs csharp/asap2wav.cs csharp/Makefile \
-		gsplayer/gspasap.c gsplayer/mapplugin.h gsplayer/gspasap.def \
+		gsplayer/gspasap.c gsplayer/mapplugin.h \
 		gsplayer/Makefile gsplayer/USAGE \
 		java/ASAP.ppjava java/ASAP_ModuleInfo.java \
 		java/ASAP2WAV.java java/asap2wav.MF \
