@@ -14,16 +14,16 @@ but the current version has a completely new original emulation core.
 
 The project includes the following programs:
 
-- ASAP2WAV - portable command-line utility that generates WAV files {asapwin=}
+- ASAP2WAV - portable command-line converter to WAV files {asapwin=}
 - WASAP - tiny player for Windows {asapwin=}
 - plugin for http://koti.welho.com/hylinen/apollo/[Apollo] {asapwin=}
 - plugin for http://foobar2000.org/[foobar2000 0.9] {asapwin=}
 - plugin for http://hp.vector.co.jp/authors/VA032810/[GSPlayer] {asapwin=}{asapwince=}
 - plugin for http://moc.daper.net/[MOC]
 - plugin for http://www.winamp.com/[Winamp] {asapwin=}
+- plugin for http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player] {asapwin=}
 - plugin for http://xbmc.org/[XBMC] {asapwin=}
 - plugin for http://xmms.org/[XMMS]
-- DirectShow source filter (for http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player]) {asapwin=}
 - POKEY sound emulation DLL for http://raster.infos.cz/atari/rmt/rmt.htm[Raster Music Tracker] {asapwin=}
 - Java version of ASAP2WAV {asapjava=}
 - Java applet {asapjava=}

@@ -203,7 +203,7 @@ FONT 8, "MS Sans Serif"
 	{
 		BLOCK "040904b0"
 		{
-			VALUE "CompanyName", "ASAP Developers\0"
+			VALUE "CompanyName", "Piotr Fusik\0"
 			VALUE "FileDescription", FILE_DESCRIPTION "\0"
 			VALUE "FileVersion", ASAP_VERSION "\0"
 			VALUE "InternalName", INTERNAL_NAME "\0"
