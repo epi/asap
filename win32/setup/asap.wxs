@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="*" Name="ASAP - Another Slight Atari Player" Language="1033"
+		Version="$(var.VERSION)" Manufacturer="Piotr Fusik"
+		UpgradeCode="4250B3CB-D4A1-4486-828C-AC26A84D00D9">
+
+		<Package Description="ASAP - Another Slight Atari Player"
+			Manufacturer="Piotr Fusik" InstallerVersion="200" Compressed="yes" />
+		<Media Id="1" Cabinet="asap.cab" EmbedCab="yes" />
+
+		<Icon Id="wasap.ico" SourceFile="wasap/wasap.ico" />
+		<Property Id="ARPHELPLINK" Value="http://asap.sourceforge.net/" />
+		<Property Id="ARPPRODUCTICON" Value="wasap.ico" />
+		<Property Id="ARPNOREPAIR" Value="1" />
+		<UIRef Id="WixUI_FeatureTree" />
+		<!-- <WixVariable Id="WixUILicenseRtf" Value="COPYING.rtf" /> -->
+		<!-- <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" /> -->
+		<!-- <WixVariable Id="WixUIBannerBmp" Value="banner.bmp" /> -->
+
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="ASAP.DIR" Name="ASAP">
+					<Component Id="wasap.exe" Guid="*">
+						<File Id="wasap.exe" Name="wasap.exe" Source="wasap.exe" Checksum="yes" KeyPath="yes" />
+					</Component>
+					<Component Id="asap2wav.exe" Guid="*">
+						<File Id="asap2wav.exe" Name="asap2wav.exe" Source="asap2wav.exe" Checksum="yes" KeyPath="yes" />
+					</Component>
+					<Component Id="asap_dsf.dll" Guid="*">
+						<File Id="asap_dsf.dll" Name="asap_dsf.dll" Source="asap_dsf.dll" Checksum="yes" KeyPath="yes" />
+					</Component>
+					<Component Id="in_asap.dll" Guid="*">
+						<File Id="in_asap.dll" Name="in_asap.dll" Source="in_asap.dll" Checksum="yes" KeyPath="yes" />
+					</Component>
+					<Component Id="foo_asap.dll" Guid="*">
+						<File Id="foo_asap.dll" Name="foo_asap.dll" Source="foo_asap.dll" Checksum="yes" KeyPath="yes" />
+					</Component>
+					<Component Id="xbmc_asap.dll" Guid="*">
+						<File Id="xbmc_asap.dll" Name="xbmc_asap.dll" Source="xbmc_asap.dll" Checksum="yes" KeyPath="yes" />
+					</Component>
+					<Component Id="ASAP_Apollo.dll" Guid="*">
+						<File Id="ASAP_Apollo.dll" Name="ASAP_Apollo.dll" Source="ASAP_Apollo.dll" Checksum="yes" KeyPath="yes" />
+					</Component>
+					<Component Id="gspasap.dll" Guid="*">
+						<File Id="gspasap.dll" Name="gspasap.dll" Source="gspasap.dll" Checksum="yes" KeyPath="yes" />
+					</Component>
+					<Component Id="apokeysnd.dll" Guid="*">
+						<File Id="apokeysnd.dll" Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
+					</Component>
+					<Component Id="README_WindowsSetup.html" Guid="*">
+						<File Id="README_WindowsSetup.html" Name="README_WindowsSetup.html" Source="README_WindowsSetup.html" KeyPath="yes" />
+					</Component>
+				</Directory>
+			</Directory>
+		</Directory>
+
+		<Feature Id="wasap" Title="WASAP" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Tiny player controlled by a tray icon.">
+			<ComponentRef Id="wasap.exe" />
+		</Feature>
+		<Feature Id="asap2wav" Title="ASAP2WAV" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Command-line converter to WAV files.">
+			<ComponentRef Id="asap2wav.exe" />
+		</Feature>
+		<Feature Id="asap_dsf" Title="Windows Media Player plugin" Level="1" Description="Plugin for Windows Media Player.">
+			<ComponentRef Id="asap_dsf.dll" />
+		</Feature>
+		<Feature Id="in_asap" Title="Winamp plugin" Level="1" Description="Plugin for Winamp.">
+			<ComponentRef Id="in_asap.dll" />
+		</Feature>
+		<Feature Id="foo_asap" Title="foobar2000 0.9 plugin" Level="1" Description="Plugin for foobar2000 (version 0.9.x only).">
+			<ComponentRef Id="foo_asap.dll" />
+		</Feature>
+		<Feature Id="xbmc_asap" Title="XBMC plugin" Level="1" Description="Plugin for XBMC (Windows and XBox).">
+			<ComponentRef Id="xbmc_asap.dll" />
+		</Feature>
+		<Feature Id="ASAP_Apollo" Title="Apollo plugin" Level="1" Description="Plugin for Apollo.">
+			<ComponentRef Id="ASAP_Apollo.dll" />
+		</Feature>
+		<Feature Id="gspasap" Title="GSPlayer plugin" Level="1" Description="Plugin for GSPlayer (desktop Windows only).">
+			<ComponentRef Id="gspasap.dll" />
+		</Feature>
+		<Feature Id="apokeysnd" Title="Raster Music Tracker sound emulation" Level="1" Description="POKEY sound emulation engine for Raster Music Tracker.">
+			<ComponentRef Id="apokeysnd.dll" />
+		</Feature>
+		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file.">
+			<ComponentRef Id="README_WindowsSetup.html" />
+		</Feature>
+	</Product>
+</Wix>
