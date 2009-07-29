@@ -1,5 +1,7 @@
 2009-07-29  Piotr Fusik  <fox@scene.pl>
-* win32/setup/asap.wxs: register Windows Media Player plugin
+* win32/setup/asap.wxs: register Windows Media Player plugin;
+  update Path environment variable;
+  got rid of "Feature will be installed when required"
 
 
 2009-07-19  Piotr Fusik  <fox@scene.pl>
