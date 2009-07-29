@@ -27,7 +27,42 @@
 						<File Id="asap2wav.exe" Name="asap2wav.exe" Source="asap2wav.exe" Checksum="yes" KeyPath="yes" />
 					</Component>
 					<Component Id="asap_dsf.dll" Guid="*">
-						<File Id="asap_dsf.dll" Name="asap_dsf.dll" Source="asap_dsf.dll" Checksum="yes" KeyPath="yes" />
+						<File Id="asap_dsf.dll" Name="asap_dsf.dll" Source="asap_dsf.dll" Checksum="yes" KeyPath="yes">
+							<Class Id="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Context="InprocServer32" Description="ASAP source filter" ThreadingModel="both" />
+						</File>
+						<RegistryValue Root="HKCR" Key="CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance\{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Name="FriendlyName" Value="ASAP source filter" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance\{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Name="CLSID" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance\{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Name="FilterData" Value="02000000000060000100000000000000307069330800000000000000010000000000000000000000307479330000000038000000480000006175647300001000800000AA00389B710100000000001000800000AA00389B71" Type="binary" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.cmc" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.cmr" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.dmc" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.mpd" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.mpt" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.rmt" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.sap" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.tm2" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.tm8" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.tmc" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.cmc" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.cmc" Name="Runtime" Value="7" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.cmr" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.cmr" Name="Runtime" Value="7" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.dmc" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.dmc" Name="Runtime" Value="7" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.mpd" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.mpd" Name="Runtime" Value="7" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.mpt" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.mpt" Name="Runtime" Value="7" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.rmt" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.rmt" Name="Runtime" Value="7" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.sap" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.sap" Name="Runtime" Value="7" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.tm2" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.tm2" Name="Runtime" Value="7" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.tm8" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.tm8" Name="Runtime" Value="7" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.tmc" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.tmc" Name="Runtime" Value="7" Type="integer" Action="write" />
 					</Component>
 					<Component Id="in_asap.dll" Guid="*">
 						<File Id="in_asap.dll" Name="in_asap.dll" Source="in_asap.dll" Checksum="yes" KeyPath="yes" />
