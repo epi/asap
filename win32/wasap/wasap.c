@@ -179,6 +179,25 @@ static HICON hPlayIcon;
 static HMENU hTrayMenu;
 static HMENU hSongMenu;
 
+static void ShowAbout(void)
+{
+	MSGBOXPARAMS mbp = {
+		sizeof(MSGBOXPARAMS),
+		hWnd,
+		hInst,
+		ASAP_CREDITS
+		"WASAP icons (C) 2005 Lukasz Sychowicz\n\n"
+		ASAP_COPYRIGHT,
+		APP_TITLE " " ASAP_VERSION,
+		MB_OK | MB_USERICON,
+		MAKEINTRESOURCE(IDI_APP),
+		0,
+		NULL,
+		0
+	};
+	MessageBoxIndirect(&mbp);
+}
+
 static void ClearSongsMenu(void)
 {
 	int n = GetMenuItemCount(hSongMenu);
@@ -391,12 +410,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 			SaveWav();
 			break;
 		case IDM_ABOUT:
-			MessageBox(hWnd,
-				ASAP_CREDITS
-				"WASAP icons (C) 2005 Lukasz Sychowicz\n\n"
-				ASAP_COPYRIGHT,
-				APP_TITLE " " ASAP_VERSION,
-				MB_OK | MB_ICONINFORMATION);
+			ShowAbout();
 			break;
 		case IDM_EXIT:
 			PostQuitMessage(0);
