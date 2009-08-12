@@ -4,10 +4,30 @@ Compilation instructions
 ------------------------
 
 
-Getting released source code
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Required tools
+~~~~~~~~~~~~~~
 
-If you want to compile an official release of ASAP, get the source distribution
+For all builds you will need:
+
+C/C++ compiler and Make utility::
+On Windows download http://www.mingw.org/[MinGW]
+and install binutils, core compiler, g++ compiler, w32api and MinGW Make.
+
+Perl::
+On Windows install either http://www.activestate.com/activeperl[ActivePerl]
+or http://cygwin.com/[Cygwin]'s Perl.
+
+xasm::
+If you are compiling latest source code from CVS, install
+http://xasm.atari.org[xasm].
+
+Make sure these tools are on your `PATH`.
+
+
+Getting officially released source code
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to compile an official release of ASAP, download source distribution
 (`asap-*.tar.gz`) and uncompress it to a directory of your choice.
 
 On Unix-like systems:
@@ -24,19 +44,13 @@ Getting latest source code
 Alternatively you may get the latest version from the CVS repository.
 To do this using a command-line CVS client:
 --------------------------------------------------------------------------------
-mkdir asap-cvs
-cd asap-cvs
 cvs -z9 -d:pserver:anonymous@asap.cvs.sourceforge.net:/cvsroot/asap co -P asap
 --------------------------------------------------------------------------------
 
-In this case you also need to install http://xasm.atari.org[xasm]
-to a directory on your `PATH`.
-
+This will fetch the latest code to a new directory called `asap`.
 
 Building ASAP2WAV on Unix-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You need Perl, Make and a C compiler.
 
 From your shell prompt navigate to the directory which contains `asap.c`.
 
@@ -89,7 +103,7 @@ in your home directory:
 make install-user
 --------------------------------------------------------------------------------
 
-or, if you are `root`, for all users:
+or, if you are root, for all users:
 --------------------------------------------------------------------------------
 make install-xmms
 --------------------------------------------------------------------------------
@@ -114,7 +128,9 @@ Building the MOC plugin on Unix-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You need source code of MOC. The plugin is compatible with MOC 2.4.x
-and MOC 2.5.0 alpha. Use the following commands:
+and MOC 2.5.0 alpha.
+
+Use the following commands:
 --------------------------------------------------------------------------------
 ./configure MOC_INCLUDE=/path/to/moc/sources MOC_PLUGIN_DIR=/path/to/moc/plugins
 make asap-moc
@@ -129,7 +145,9 @@ Building the XBMC plugin on Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You need source code of the Linux port of XBMC. Make sure it includes
-support for ASAP. Run:
+support for ASAP.
+
+Run:
 --------------------------------------------------------------------------------
 ./configure
 --------------------------------------------------------------------------------
@@ -143,39 +161,49 @@ Then run:
 make asap-xbmc
 --------------------------------------------------------------------------------
 
-This should produce `xbmc_asap-i486-linux.so`.
+You will get `xbmc_asap-i486-linux.so`.
 
 
-Building ASAP2WAV, WASAP, Winamp/GSPlayer/Windows Media Player/Apollo plugins and RMT DLL on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building ASAP2WAV, WASAP, Winamp/GSPlayer/Apollo plugins, RMT DLL, asapscan and libasap on Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need a Microsoft C/C+\+ compiler, a Windows SDK and Perl.
-I use Visual C++ 2008, Windows SDK for Windows Vista and ActivePerl 5.10.0.
+From the command prompt navigate to the `win32` directory and run:
+--------------------------------------------------------------------------------
+mingw32-make mingw
+--------------------------------------------------------------------------------
 
-You need to set `Path`, `INCLUDE` and `LIB` environment variables
-to point to the correct locations in VC++ and Windows SDK.
-`perl` should be on the `Path`, too.
+You should get `asap2wav.exe`, `wasap.exe`, `in_asap.dll`, `gspasap.dll`,
+`ASAP_Apollo.dll`, `apokeysnd.dll`, `asapscan.exe` and `libasap.a`.
+
+
+Building Windows Media Player plugin and asap.lib on Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You additionally need
+http://www.microsoft.com/downloads/details.aspx?FamilyID=e6e1c3df-a74f-4207-8586-711ebe331cdc&displaylang=en[Windows SDK]
+(install native C++ compiler, headers, libraries and samples).
+Set `Path`, `INCLUDE` and `LIB` environment variables
+to point to the right locations in the Windows SDK.
 Make sure `DSHOW_BASECLASSES_DIR` is set correctly in `win32\Makefile`.
 
 From the command prompt navigate to the `win32` directory and run:
 --------------------------------------------------------------------------------
-nmake
+mingw32-make dsf asap.lib
 --------------------------------------------------------------------------------
 
-This should produce `asap2wav.exe`, `wasap.exe`, `in_asap.dll`, `gspasap.dll`,
-`asap_dsf.dll`, `ASAP_Apollo.dll` and `apokeysnd.dll`.
+You will get `asap_dsf.dll` and `asap.lib`.
 
 
 Building the foobar2000 plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need the Windows compilation prerequisites (see above)
-and foobar2000 0.9 SDK - extract it to a new directory called
+In addition to the common prerequisites and Windows SDK you need
+foobar2000 0.9 SDK - extract it to a new directory called
 `foobar2000_SDK` next to (not inside!) the ASAP directory.
 
 From the command prompt navigate to the `win32` directory and run:
 --------------------------------------------------------------------------------
-nmake foo
+mingw32-make foo
 --------------------------------------------------------------------------------
 
 This should produce `foo_asap.dll`.
@@ -184,15 +212,13 @@ This should produce `foo_asap.dll`.
 Building the GSPlayer plugin for Windows CE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need Visual C++ 2008 (or Embedded Visual Tools) and Perl.
-Edit `WINCE_*` paths in `win32\Makefile`.
-
-From the command prompt navigate to the `win32` directory and run:
+You need http://cegcc.sourceforge.net/[CeGCC].
+From the command prompt navigate to the `gsplayer` directory and run:
 --------------------------------------------------------------------------------
-nmake wince
+mingw32-make wince
 --------------------------------------------------------------------------------
 
-This should produce `..\gsplayer\gspasap.dll` for ARM processors.
+This should produce `gspasap.dll` for ARM processors.
 
 
 Building Java ASAP2WAV, applet and midlet
@@ -217,12 +243,11 @@ and `asap_midlet.jad`.
 Building C# ASAP2WAV on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need .NET Framework, a C preprocessor and Microsoft NMake utility.
-I use .NET 3.5, MinGW GCC and NMake from Visual C++ 2008.
+You need .NET Framework, of course.
 
 From the command prompt navigate to the `csharp` directory and run:
 --------------------------------------------------------------------------------
-nmake
+mingw32-make
 --------------------------------------------------------------------------------
 
 This should produce `asap2wav.exe`.
@@ -231,11 +256,12 @@ This should produce `asap2wav.exe`.
 Building the XBMC plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need Microsoft Visual C++ 2003 and Perl.
-Open the Visual Studio 2003 Command Prompt, navigate to the `win32` directory
-and run:
+You need Visual C+\+ Toolkit (was free download from Microsoft,
+now search the internet for `VCToolkitSetup.exe`) or Microsoft Visual C++ 2003.
+
+Navigate to the `win32` directory and run:
 --------------------------------------------------------------------------------
-nmake xbmc
+mingw32-make xbmc
 --------------------------------------------------------------------------------
 
 This should produce `xbmc_asap.dll`, which you can use with XBox

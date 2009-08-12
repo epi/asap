@@ -1,3 +1,7 @@
+2009-08-12  Piotr Fusik  <fox@scene.pl>
+* INSTALL: updated for MinGW
+
+
 2009-07-30  Piotr Fusik  <fox@scene.pl>
 * win32/wasap/wasap.c: WASAP icon in "About"
 
