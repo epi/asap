@@ -1,7 +1,7 @@
 /*
  * gspasap.c - ASAP plugin for GSPlayer
  *
- * Copyright (C) 2007  Piotr Fusik
+ * Copyright (C) 2007-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -115,6 +115,7 @@ static const char * const exts[] = {
 	"sap", "Slight Atari Player (*.sap)",
 	"cmc", "Chaos Music Composer (*.cmc)",
 	"cmr", "Chaos Music Composer / Rzog (*.cmr)",
+	"cms", "Stereo Double Chaos Music Composer (*.cms)",
 	"dmc", "DoublePlay Chaos Music Composer (*.dmc)",
 	"mpt", "Music ProTracker (*.mpt)",
 	"mpd", "Music ProTracker DoublePlay (*.mpd)",

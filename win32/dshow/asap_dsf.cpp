@@ -1,7 +1,7 @@
 /*
  * asap_dsf.cpp - ASAP DirectShow source filter
  *
- * Copyright (C) 2008  Piotr Fusik
+ * Copyright (C) 2008-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,7 +26,7 @@
 #include "asap.h"
 
 static const char extensions[][5] =
-	{ ".sap", ".cmc", ".cmr", ".dmc", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2" };
+	{ ".sap", ".cmc", ".cmr", ".cms", ".dmc", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2" };
 #define N_EXTS (sizeof(extensions) / sizeof(extensions[0]))
 
 #define BITS_PER_SAMPLE      16

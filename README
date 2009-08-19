@@ -47,6 +47,9 @@ Atari music editor from early 1990s.
 CMR (CMC "Rzog")::
 CMC with modified bass sounds.
 
+CMS (Stereo Double CMC)::
+Stereo CMC.
+
 DMC (DoublePlay CMC)::
 CMC with 6502 routine executed at double rate of the original CMC.
 

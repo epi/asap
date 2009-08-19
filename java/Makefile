@@ -14,7 +14,7 @@ ME_EMU = "$(WTK)/bin/emulatorw" -gui
 
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h
-PLAYERS_OBX = net/sf/asap/cmc.obx net/sf/asap/mpt.obx net/sf/asap/rmt4.obx net/sf/asap/rmt8.obx net/sf/asap/tmc.obx net/sf/asap/tm2.obx
+PLAYERS_OBX = net/sf/asap/cmc.obx net/sf/asap/cms.obx net/sf/asap/mpt.obx net/sf/asap/rmt4.obx net/sf/asap/rmt8.obx net/sf/asap/tmc.obx net/sf/asap/tm2.obx
 
 all: asap2wav.jar asap_applet.jar asap_midlet.jad
 

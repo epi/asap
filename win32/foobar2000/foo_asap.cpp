@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000 0.9.x
  *
- * Copyright (C) 2006-2007  Piotr Fusik
+ * Copyright (C) 2006-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -422,7 +422,7 @@ static service_factory_single_t<preferences_page_asap> g_preferences_page_asap_f
 
 static const char * const names_and_masks[][2] = {
 	{ "Slight Atari Player (*.sap)", "*.SAP" },
-	{ "Chaos Music Composer (*.cmc;*.cmr;*.dmc)", "*.CMC;*.CMR;*.DMC" },
+	{ "Chaos Music Composer (*.cmc;*.cmr;*.cms;*.dmc)", "*.CMC;*.CMR;*.CMS;*.DMC" },
 	{ "Music ProTracker (*.mpt;*.mpd)", "*.MPT;*.MPD" },
 	{ "Raster Music Tracker (*.rmt)", "*.RMT" },
 	{ "Theta Music Composer 1.x (*.tmc;*.tm8)", "*.TMC;*.TM8" },

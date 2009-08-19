@@ -116,7 +116,8 @@ FILE_FUNC abool load_native(
 	{
 		int player_last_byte;
 		int block_len;
-		if (UBYTE(module[0]) != 0xff || UBYTE(module[1]) != 0xff)
+		if ((UBYTE(module[0]) != 0xff || UBYTE(module[1]) != 0xff)
+		 && (module[0] != 0 || module[1] != 0)) /* some CMC and clones start with zeros */
 			return FALSE;
 #if defined(JAVA) || defined(CSHARP)
 		player.READ_BYTE();
@@ -264,19 +265,10 @@ FILE_FUNC void parse_cmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY 
 	set_song_duration(module_info, player_calls);
 }
 
-FILE_FUNC abool parse_cmc(
-	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
-	const byte ARRAY module, int module_len, abool cmr)
+FILE_FUNC void parse_cmc_songs(ASAP_ModuleInfo PTR module_info, const byte ARRAY module)
 {
 	int last_pos;
 	int pos;
-	if (module_len < 0x306)
-		return FALSE;
-	MODULE_INFO type = cmr ? 'z' : 'c';
-	if (!load_native(ast, module_info, module, module_len, GET_OBX(cmc)))
-		return FALSE;
-	if (ast != NULL && cmr)
-		COPY_ARRAY(AST memory, 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, 0, sizeof(cmr_bass_table));
 	/* auto-detect number of subsongs */
 	last_pos = 0x54;
 	while (--last_pos >= 0) {
@@ -284,12 +276,46 @@ FILE_FUNC abool parse_cmc(
 		 || UBYTE(module[0x25b + last_pos]) < 0x40
 		 || UBYTE(module[0x2b0 + last_pos]) < 0x40)
 			break;
+		if (MODULE_INFO channels == 2) {
+			if (UBYTE(module[0x306 + last_pos]) < 0xb0
+			 || UBYTE(module[0x35b + last_pos]) < 0x40
+			 || UBYTE(module[0x3b0 + last_pos]) < 0x40)
+				break;
+		}
 	}
 	MODULE_INFO songs = 0;
 	parse_cmc_song(module_info, module, 0);
 	for (pos = 0; pos < last_pos && MODULE_INFO songs < MAX_SONGS; pos++)
 		if (UBYTE(module[0x206 + pos]) == 0x8f || UBYTE(module[0x206 + pos]) == 0xef)
 			parse_cmc_song(module_info, module, pos + 1);
+}
+
+FILE_FUNC abool parse_cmc(
+	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+	const byte ARRAY module, int module_len, abool cmr)
+{
+	if (module_len < 0x306)
+		return FALSE;
+	MODULE_INFO type = cmr ? 'z' : 'c';
+	if (!load_native(ast, module_info, module, module_len, GET_OBX(cmc)))
+		return FALSE;
+	if (ast != NULL && cmr)
+		COPY_ARRAY(AST memory, 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, 0, sizeof(cmr_bass_table));
+	parse_cmc_songs(module_info, module);
+	return TRUE;
+}
+
+FILE_FUNC abool parse_cms(
+	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+	const byte ARRAY module, int module_len)
+{
+	if (module_len < 0x406)
+		return FALSE;
+	MODULE_INFO type = 's';
+	MODULE_INFO channels = 2;
+	if (!load_native(ast, module_info, module, module_len, GET_OBX(cms)))
+		return FALSE;
+	parse_cmc_songs(module_info, module);
 	return TRUE;
 }
 
@@ -1202,6 +1228,7 @@ FILE_FUNC abool is_our_ext(int ext)
 #ifndef ASAP_ONLY_SAP
 	case ASAP_EXT('C', 'M', 'C'):
 	case ASAP_EXT('C', 'M', 'R'):
+	case ASAP_EXT('C', 'M', 'S'):
 	case ASAP_EXT('D', 'M', 'C'):
 	case ASAP_EXT('M', 'P', 'D'):
 	case ASAP_EXT('M', 'P', 'T'):
@@ -1309,6 +1336,8 @@ FILE_FUNC abool parse_file(
 		return parse_cmc(ast, module_info, module, module_len, FALSE);
 	case ASAP_EXT('C', 'M', 'R'):
 		return parse_cmc(ast, module_info, module, module_len, TRUE);
+	case ASAP_EXT('C', 'M', 'S'):
+		return parse_cms(ast, module_info, module, module_len);
 	case ASAP_EXT('D', 'M', 'C'):
 		MODULE_INFO fastplay = 156;
 		return parse_cmc(ast, module_info, module, module_len, FALSE);
@@ -1397,6 +1426,7 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 	case 'C':
 	case 'c':
 	case 'z':
+	case 's':
 		call_6502_init(ast, AST module_info.player + 3, 0x70, AST module_info.music, AST module_info.music >> 8);
 		call_6502_init(ast, AST module_info.player + 3, 0x00, song, 0);
 		break;
@@ -1444,6 +1474,7 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 	case 'C':
 	case 'c':
 	case 'z':
+	case 's':
 		call_6502(ast, AST module_info.player + 6, AST module_info.fastplay);
 		break;
 	case 'D':
@@ -1825,11 +1856,14 @@ const char *ASAP_CanConvert(
 		if (module_info->player == 0x500 || module_info->player == 0xf500) {
 			if (module_info->fastplay == 156)
 				return "dmc";
+			if (module_info->channels > 1)
+				return "cms";
 			return module[module_len - 170] == 0x1e ? "cmr" : "cmc";
 		}
 		break;
 	case 'c':
 	case 'z':
+	case 's':
 	case 'm':
 	case 'r':
 	case 't':
@@ -1861,15 +1895,22 @@ int ASAP_Convert(
 		return out_len;
 	case 'c':
 	case 'z':
+	case 's':
 		dest = put_sap_header(out_module, module_info, 'C', module_info->music, -1, module_info->player);
 		if (dest == NULL)
 			return -1;
 		memcpy(dest, module, module_len);
 		dest += module_len;
-		memcpy(dest, cmc_obx + 2, sizeof(cmc_obx) - 2);
-		if (module_info->type == 'z')
-			memcpy(dest + 4 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, sizeof(cmr_bass_table));
-		dest += sizeof(cmc_obx) - 2;
+		if (module_info->type == 's') {
+			memcpy(dest, cms_obx + 2, sizeof(cms_obx) - 2);
+			dest += sizeof(cms_obx) - 2;
+		}
+		else {
+			memcpy(dest, cmc_obx + 2, sizeof(cmc_obx) - 2);
+			if (module_info->type == 'z')
+				memcpy(dest + 4 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, sizeof(cmr_bass_table));
+			dest += sizeof(cmc_obx) - 2;
+		}
 		return dest - out_module;
 	case 'm':
 		if (module_info->songs != 1) {

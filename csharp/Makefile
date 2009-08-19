@@ -4,9 +4,9 @@ XASM = xasm -q -o $@
 
 all: asap2wav.exe
 
-asap2wav.exe: asap2wav.cs ASAP.cs ../players/cmc.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx
+asap2wav.exe: asap2wav.cs ASAP.cs ../players/cmc.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx
 	$(CSC) \
-	-res:../players/cmc.obx,cmc -res:../players/mpt.obx,mpt \
+	-res:../players/cmc.obx,cmc -res:../players/cms.obx,cms -res:../players/mpt.obx,mpt \
 	-res:../players/rmt4.obx,rmt4 -res:../players/rmt8.obx,rmt8 \
 	-res:../players/tmc.obx,tmc -res:../players/tm2.obx,tm2 \
 	asap2wav.cs ASAP.cs

@@ -34,7 +34,7 @@ win32: mingw dsf foo xbmc COPYING.txt
 
 mingw: asap2wav.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll apokeysnd.dll asapscan.exe libasap.a
 
-../players.h: ../raw2c.pl ../players/cmc.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx
+../players.h: ../raw2c.pl ../players/cmc.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx
 	$(PERL) $^ >$@
 
 ../players/%.obx: ../players/%.asx
@@ -216,12 +216,12 @@ setup: ../../asap-$(VERSION)-win32.msi
 setup/asap.wixobj: setup/asap.wxs
 	candle -nologo -o $@ -dVERSION=$(VERSION) $<
 
-srcdist: ../configure ../players/cmc.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx ../README.html
+srcdist: ../configure ../players/cmc.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx ../README.html
 	rm -f ../../asap-$(VERSION).tar.gz
 	perl -x.. ../maketar.pl -d asap-$(VERSION) \
 		-t asap.c asap.h asap_internal.h acpu.c apokeysnd.c \
 		asap2wav.c asapscan.c \
-		players/cmc.asx players/mpt.asx players/rmt.asx players/tmc.asx players/tm2.asx \
+		players/cmc.asx players/cms.asx players/mpt.asx players/rmt.asx players/tmc.asx players/tm2.asx \
 		configure.ac Makefile.in \
 		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
 		csharp/ASAP.ppcs csharp/asap2wav.cs csharp/Makefile \
@@ -246,7 +246,7 @@ srcdist: ../configure ../players/cmc.obx ../players/mpt.obx ../players/rmt4.obx 
 		win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h \
 		xbmc/xbmc_asap.c \
 		xmms/libasap.c xmms/libasap.map \
-		-b players/cmc.obx players/mpt.obx \
+		-b players/cmc.obx players/cms.obx players/mpt.obx \
 		players/rmt4.obx players/rmt8.obx \
 		players/tmc.obx players/tm2.obx \
 		win32/wasap/play.ico win32/wasap/stop.ico win32/wasap/wasap.ico \
