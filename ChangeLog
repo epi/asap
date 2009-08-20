@@ -1,3 +1,8 @@
+2009-08-20  Piotr Fusik  <fox@scene.pl>
+* asap.c: conversion from CMS to SAP now handles modules which start
+  with 0x00s instead of 0xFFs
+
+
 2009-08-19  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, asap2wav.c, Makefile.in, csharp/Makefile, csharp/asap2wav.cs,
   gsplayer/Makefile, gsplayer/gspasap.c, java/Makefile, java/ASAP2WAV.java,

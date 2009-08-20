@@ -1900,6 +1900,8 @@ int ASAP_Convert(
 		if (dest == NULL)
 			return -1;
 		memcpy(dest, module, module_len);
+		dest[0] = 0xff; /* some modules start with zeros */
+		dest[1] = 0xff;
 		dest += module_len;
 		if (module_info->type == 's') {
 			memcpy(dest, cms_obx + 2, sizeof(cms_obx) - 2);
