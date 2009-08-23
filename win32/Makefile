@@ -21,9 +21,13 @@ ASAP_CL71 = cl -nologo -O2 -GL -GR- -W3 -DNDEBUG -Fe$@ -I. -I..
 # common tools
 PERL = perl
 XASM = xasm -q -o $@
+RM = rm -f
 UNIX2DOS = unix2dos
 ASCIIDOC = python C:/bin/asciidoc/asciidoc.py -o $@ -a doctime
 ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/;END{unlink '$@.bak'}" $@
+SEVENZIP = 7z a -mx=9
+CANDLE = candle -nologo -o $@
+LIGHT = light -nologo -o $@
 
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h ../players.h
@@ -165,14 +169,14 @@ java:
 # delete generated files
 
 clean:
-	rm -f *.txt *.html *.dll *.exe *.obj *.exp *.lib *.res *.o
-	rm -f setup/asap.wixobj
-	rm -f libasap.a
-	rm -f wasap/wasap-res.o wasap.exe
-	rm -f winamp/in_asap-res.o in_asap.dll
-	rm -f foobar2000/*.obj foobar2000/*.lib foobar2000/foo_asap.res
-	rm -f install_dsf.bat uninstall_dsf.bat
-	rm -f ../players/*.obx ../players.h ../README.html
+	$(RM) *.txt *.html *.dll *.exe *.obj *.exp *.lib *.res *.o
+	$(RM) setup/asap.wixobj
+	$(RM) libasap.a
+	$(RM) wasap/wasap-res.o wasap.exe
+	$(RM) winamp/in_asap-res.o in_asap.dll
+	$(RM) foobar2000/*.obj foobar2000/*.lib foobar2000/foo_asap.res
+	$(RM) install_dsf.bat uninstall_dsf.bat
+	$(RM) ../players/*.obx ../players.h ../README.html
 	$(MAKE) -C ../csharp clean
 	$(MAKE) -C ../gsplayer clean
 	$(MAKE) -C ../java clean
@@ -211,17 +215,18 @@ uninstall_dsf.bat:
 setup: ../../asap-$(VERSION)-win32.msi
 
 ../../asap-$(VERSION)-win32.msi: setup/asap.wixobj wasap/wasap.ico win32 README_WindowsSetup.html
-	light -nologo -o $@ -ext WixUIExtension $<
+	$(LIGHT) -ext WixUIExtension $<
 
 setup/asap.wixobj: setup/asap.wxs
-	candle -nologo -o $@ -dVERSION=$(VERSION) $<
+	$(CANDLE) -dVERSION=$(VERSION) $<
 
 srcdist: ../configure ../players/cmc.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx ../README.html
-	rm -f ../../asap-$(VERSION).tar.gz
-	perl -x.. ../maketar.pl -d asap-$(VERSION) \
+	$(RM) ../../asap-$(VERSION).tar.gz
+	$(PERL) -x.. ../maketar.pl -d asap-$(VERSION) \
 		-t asap.c asap.h asap_internal.h acpu.c apokeysnd.c \
 		asap2wav.c asapscan.c \
-		players/cmc.asx players/cms.asx players/mpt.asx players/rmt.asx players/tmc.asx players/tm2.asx \
+		players/cmc.asx players/cms.asx players/mpt.asx \
+		players/rmt.asx players/tmc.asx players/tm2.asx \
 		configure.ac Makefile.in \
 		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
 		csharp/ASAP.ppcs csharp/asap2wav.cs csharp/Makefile \
@@ -247,26 +252,31 @@ srcdist: ../configure ../players/cmc.obx ../players/cms.obx ../players/mpt.obx .
 		xbmc/xbmc_asap.c \
 		xmms/libasap.c xmms/libasap.map \
 		-b players/cmc.obx players/cms.obx players/mpt.obx \
-		players/rmt4.obx players/rmt8.obx \
-		players/tmc.obx players/tm2.obx \
+		players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx \
 		win32/wasap/play.ico win32/wasap/stop.ico win32/wasap/wasap.ico \
 		-s install-sh configure chksap.pl maketar.pl raw2c.pl \
-		| 7z a -tgzip -si -mx=9 ../../asap-$(VERSION).tar.gz
+		| $(SEVENZIP) -tgzip -si ../../asap-$(VERSION).tar.gz
 
 dist: srcdist win32 wince java \
 	COPYING.txt README_Java.html README_Windows.html README_WindowsCE.html \
 	install_dsf.bat uninstall_dsf.bat
-	rm -f ../../asap-$(VERSION)-java.zip
-	rm -f ../../asap-$(VERSION)-win32.zip
-	rm -f ../../asap-$(VERSION)-wince-arm.zip
-	7z a -tzip -mx=9 ../../asap-$(VERSION)-java.zip \
+	$(RM) ../../asap-$(VERSION)-java.zip
+	$(RM) ../../asap-$(VERSION)-win32.zip
+	$(RM) ../../asap-$(VERSION)-wince-arm.zip
+	$(SEVENZIP) -tzip ../../asap-$(VERSION)-java.zip \
 		COPYING.txt README_Java.html \
 		../java/asap2wav.jar ../java/asap_applet.jar ../java/asap_midlet.jad ../java/asap_midlet.jar
-	7z a -tzip -mx=9 ../../asap-$(VERSION)-win32.zip \
+	$(SEVENZIP) -tzip ../../asap-$(VERSION)-win32.zip \
 		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
 		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll
-	7z a -tzip -mx=9 ../../asap-$(VERSION)-wince-arm.zip \
+	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ../gsplayer/gspasap.dll
+
+www: ../../www/index.html
+
+../../www/index.html: ../README ../NEWS ../CREDITS
+	$(ASCIIDOC) -a asapwww ../README
+	$(ASCIIDOC_POSTPROCESS)
 
 .DELETE_ON_ERROR:

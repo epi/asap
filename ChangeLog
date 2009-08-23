@@ -1,6 +1,10 @@
+2009-08-23  Piotr Fusik  <fox@scene.pl>
+* README, CREDITS, win32/Makefile: generate web page from project documentation
+
+
 2009-08-20  Piotr Fusik  <fox@scene.pl>
 * asap.c: conversion from CMS to SAP now handles modules which start
-  with 0x00s instead of 0xFFs
+  with zeros instead of 0xFFs
 
 
 2009-08-19  Piotr Fusik  <fox@scene.pl>

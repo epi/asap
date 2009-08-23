@@ -4,6 +4,12 @@ ASAP - Another Slight Atari Player
 // This file is in AsciiDoc format. It is converted to README.html.
 :Compact-Option:
 
+ifdef::asapwww[]
+http://sourceforge.net/project/showfiles.php?group_id=154391&package_id=171517[Download] |
+http://asap.cvs.sourceforge.net/asap/asap/[View source code (CVS)] |
+http://sourceforge.net/projects/asap/[SourceForge project page]
+endif::asapwww[]
+
 ASAP is a player of http://en.wikipedia.org/wiki/Atari_8-bit_family[8-bit Atari]
 music for modern computers.
 It emulates the http://en.wikipedia.org/wiki/POKEY[POKEY sound chip]
@@ -26,8 +32,8 @@ The project includes the following programs:
 - plugin for http://xmms.org/[XMMS]
 - POKEY sound emulation DLL for http://raster.infos.cz/atari/rmt/rmt.htm[Raster Music Tracker] {asapwin=}
 - Java version of ASAP2WAV {asapjava=}
-- Java applet {asapjava=}
-- Java midlet {asapjava=}
+- Java applet - for web pages {asapjava=}{asapwww?(see link:applet.html[online demo])}
+- Java midlet - for mobile devices {asapjava=}
 - C# version of ASAP2WAV
 
 Input file formats
@@ -87,6 +93,10 @@ ifdef::asapwince[]
 include::gsplayer/USAGE[]
 endif::asapwince[]
 
+include::NEWS[]
+
+include::CREDITS[]
+
 Feedback
 --------
 
@@ -99,6 +109,6 @@ They will be answered ASAP. ;-)
 Use http://sourceforge.net/tracker2/?group_id=154391[tracker]
 to submit bug reports, feature requests and small code patches.
 
-include::NEWS[]
-
-include::CREDITS[]
+ifdef::asapwww[]
+image::http://sflogo.sourceforge.net/sflogo.php?group_id=154391&type=13["Get ASAP - Another Slight Atari Player at SourceForge.net. Fast, secure and Free Open Source software downloads",width=120,height=30,link="http://sourceforge.net/projects/asap/"]
+endif::asapwww[]

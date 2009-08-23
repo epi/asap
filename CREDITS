@@ -1,40 +1,43 @@
-People who have contributed to ASAP
------------------------------------
+Authors
+-------
 
-Atari800 Development Team  (http://atari800.sourceforge.net)::
+Atari800 Development Team {asapwww!(http://atari800.sourceforge.net)}::
 6502 and POKEY emulation used in 0.x.y versions of ASAP.
 
-Zdenek Eisenhammer  <pg@pinknet.cz>::
+Zdenek Eisenhammer {asapwww!<pg@pinknet.cz>}::
 Testing.
 
-Piotr Fusik  <fox@scene.pl>::
-Author and maintainer of ASAP.
+Piotr Fusik {asapwww!<fox@scene.pl>}::
+Development.
 
-Maciek Konecki  <maciusk1@wp.pl>::
+Maciek Konecki {asapwww!<maciusk1@wp.pl>}::
 Porting to C#.
 
-Marcin Lewandowski  <jaskier@atari8.info>::
+Marcin Lewandowski {asapwww!<jaskier@atari8.info>}::
 6502 routines for playing CMC, MPT, TMC and TM2.
 
-Perry McFarlane  <perry_m@fastmail.fm>::
+Perry McFarlane {asapwww!<perry_m@fastmail.fm>}::
 POKEY reverse-engineering.
 
-Kostas Nakos  <knakos@gmail.com>::
+Kostas Nakos {asapwww!<knakos@gmail.com>}::
 Compilation for Windows CE.
 
-Slawomir Sledz  <slaves@scene.pl>::
+Slawomir Sledz {asapwww!<slaves@scene.pl>}::
 Testing.
 
-Radek Sterba  <raster@infos.cz>::
+David Spilka::
+6502 routine for playing CMS.
+
+Radek Sterba {asapwww!<raster@infos.cz>}::
 6502 routine for playing RMT.
 Testing.
 
-Lukasz Sychowicz  <xray@scene.pl>::
+Lukasz Sychowicz {asapwww!<xray@scene.pl>}::
 Windows icons.
 Testing.
 
-Michal Szpilowski  <miker@atari.pl>::
+Michal Szpilowski {asapwww!<miker@atari.pl>}::
 Testing.
 
-Grzegorz Zyla  <gsunr@poczta.onet.pl>::
+Grzegorz Zyla {asapwww!<gsunr@poczta.onet.pl>}::
 XBMC plugin compilation and testing.
