@@ -422,7 +422,7 @@ static service_factory_single_t<preferences_page_asap> g_preferences_page_asap_f
 
 static const char * const names_and_masks[][2] = {
 	{ "Slight Atari Player (*.sap)", "*.SAP" },
-	{ "Chaos Music Composer (*.cmc;*.cmr;*.cms;*.dmc)", "*.CMC;*.CMR;*.CMS;*.DMC" },
+	{ "Chaos Music Composer (*.cmc;*.cm3;*.cmr;*.cms;*.dmc)", "*.CMC;*.CM3;*.CMR;*.CMS;*.DMC" },
 	{ "Music ProTracker (*.mpt;*.mpd)", "*.MPT;*.MPD" },
 	{ "Raster Music Tracker (*.rmt)", "*.RMT" },
 	{ "Theta Music Composer 1.x (*.tmc;*.tm8)", "*.TMC;*.TM8" },

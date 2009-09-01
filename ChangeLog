@@ -1,3 +1,14 @@
+2009-09-01  Piotr Fusik  <fox@scene.pl>
+* CREDITS, Makefile.in, README, asap.c, asap2wav.c, csharp/Makefile,
+  csharp/asap2wav.cs, gsplayer/Makefile, java/ASAP2WAV.java, java/Makefile,
+  players/cmc.asx, win32/Makefile, win32/apollo/ASAP_Apollo.cpp,
+  win32/dshow/asap_dsf.cpp, win32/foobar2000/foo_asap.cpp,
+  win32/setup/asap.wxs, win32/wasap/wasap.c, win32/winamp/in_asap.c:
+  added CM3 format
+
+* README, win32/Makefile: fixed XHTML, added validation
+
+
 2009-08-23  Piotr Fusik  <fox@scene.pl>
 * README, CREDITS, win32/Makefile: generate web page from project documentation
 

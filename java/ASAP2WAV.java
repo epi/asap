@@ -39,7 +39,7 @@ public class ASAP2WAV
 		System.out.print(
 			"Usage: java -jar asap2wav.jar [OPTIONS] INPUTFILE...\n" +
 			"Each INPUTFILE must be in a supported format:\n" +
-			"SAP, CMC, CMR, CMS, DMC, MPT, MPD, RMT, TMC, TM8 or TM2.\n" +
+			"SAP, CMC, CM3, CMR, CMS, DMC, MPT, MPD, RMT, TMC, TM8 or TM2.\n" +
 			"Options:\n" +
 			"-o FILE     --output=FILE      Set output file name\n" +
 			"-o -        --output=-         Write to standard output\n" +

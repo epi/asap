@@ -28,7 +28,7 @@ XBMC_DLL_LOADER_EXPORTS = ../XBMC/xbmc/cores/DllLoader/exports
 
 COMMON_C = asap.c acpu.c apokeysnd.c
 COMMON_H = asap.h asap_internal.h players.h
-PLAYERS_OBX = players/cmc.obx players/cms.obx players/mpt.obx players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx
+PLAYERS_OBX = players/cmc.obx players/cm3.obx players/cms.obx players/mpt.obx players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx
 
 all: ${ASAP2WAV} asap-xmms
 
@@ -60,7 +60,10 @@ players.h: raw2c.pl ${PLAYERS_OBX}
 	${PERL} raw2c.pl ${PLAYERS_OBX} >$@
 
 players/cmc.obx: players/cmc.asx
-	${XASM} -o $@ players/cmc.asx
+	${XASM} -d CM3=0 -o $@ players/cmc.asx
+
+players/cm3.obx: players/cmc.asx
+	${XASM} -d CM3=1 -o $@ players/cmc.asx
 
 players/cms.obx: players/cms.asx
 	${XASM} -o $@ players/cms.asx

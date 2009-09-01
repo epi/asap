@@ -12,11 +12,17 @@ gspasap.dll: gspasap.c $(COMMON_C) ../win32/gui.c gspasap-res.o $(COMMON_H) ../w
 gspasap-res.o: ../win32/gui.rc ../asap.h ../win32/gui.h
 	$(WINDRES) -D_WIN32_WCE -DGSPLAYER ../win32/gui.rc
 
-../players.h: ../raw2c.pl ../players/cmc.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx
+../players.h: ../raw2c.pl ../players/cmc.obx ../players/cm3.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx
 	$(PERL) $^ >$@
 
 ../players/%.obx: ../players/%.asx
 	$(XASM) $<
+
+../players/cmc.obx: ../players/cmc.asx
+	$(XASM) -d CM3=0 $<
+
+../players/cm3.obx: ../players/cmc.asx
+	$(XASM) -d CM3=1 $<
 
 ../players/rmt4.obx: ../players/rmt.asx
 	$(XASM) -d STEREOMODE=0 $<

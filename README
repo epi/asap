@@ -5,8 +5,8 @@ ASAP - Another Slight Atari Player
 :Compact-Option:
 
 ifdef::asapwww[]
-http://sourceforge.net/project/showfiles.php?group_id=154391&package_id=171517[Download] |
-http://asap.cvs.sourceforge.net/asap/asap/[View source code (CVS)] |
+http://sourceforge.net/projects/asap/files/asap/[Download] |
+http://asap.cvs.sourceforge.net/asap/asap/[Browse source code (CVS)] |
 http://sourceforge.net/projects/asap/[SourceForge project page]
 endif::asapwww[]
 
@@ -49,6 +49,9 @@ is a single big collection of SAP files.
 
 CMC (Chaos Music Composer)::
 Atari music editor from early 1990s.
+
+CM3 (CMC "3/4")::
+CMC with modified pattern length.
 
 CMR (CMC "Rzog")::
 CMC with modified bass sounds.
@@ -106,9 +109,9 @@ This list is for users and developers.
 Once you subscribe, you can post comments, ideas and questions about ASAP.
 They will be answered ASAP. ;-)
 
-Use http://sourceforge.net/tracker2/?group_id=154391[tracker]
+Use http://sourceforge.net/tracker/?group_id=154391[tracker]
 to submit bug reports, feature requests and small code patches.
 
 ifdef::asapwww[]
-image::http://sflogo.sourceforge.net/sflogo.php?group_id=154391&type=13["Get ASAP - Another Slight Atari Player at SourceForge.net. Fast, secure and Free Open Source software downloads",width=120,height=30,link="http://sourceforge.net/projects/asap/"]
+image::http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get ASAP - Another Slight Atari Player at SourceForge.net. Fast, secure and Free Open Source software downloads",width=120,height=30,link="http://sourceforge.net/projects/asap/"]
 endif::asapwww[]

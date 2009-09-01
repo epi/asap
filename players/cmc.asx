@@ -564,9 +564,15 @@ v7 dex
 
  ldx posptr
  inx
+ ift CM3
+ cpx #$30
+ scc:ldx #0
+ stx posptr
+ els
  txa
  and #$3f
  sta posptr
+ eif
 
 dal2 dec ltemp
  bne dal3

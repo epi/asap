@@ -126,7 +126,7 @@ public:
 	{
 		return
 			"Slight Atari Player\0*.SAP\0"
-			"Chaos Music Composer\0*.CMC;*.CMR;*.CMS;*.DMC\0"
+			"Chaos Music Composer\0*.CMC;*.CM3;*.CMR;*.CMS;*.DMC\0"
 			"Music ProTracker\0*.MPT;*.MPD\0"
 			"Raster Music Tracker\0*.RMT\0"
 			"Theta Music Composer 1.x\0*.TMC;*.TM8\0"

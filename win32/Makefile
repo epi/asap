@@ -25,6 +25,7 @@ RM = rm -f
 UNIX2DOS = unix2dos
 ASCIIDOC = python C:/bin/asciidoc/asciidoc.py -o $@ -a doctime
 ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/;END{unlink '$@.bak'}" $@
+ASCIIDOC_VALIDATE = xmllint --noout --nonet --dtdvalid c:/bin/xhtml11-flat.dtd $@
 SEVENZIP = 7z a -mx=9
 CANDLE = candle -nologo -o $@
 LIGHT = light -nologo -o $@
@@ -38,11 +39,17 @@ win32: mingw dsf foo xbmc COPYING.txt
 
 mingw: asap2wav.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll apokeysnd.dll asapscan.exe libasap.a
 
-../players.h: ../raw2c.pl ../players/cmc.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx
+../players.h: ../raw2c.pl ../players/cmc.obx ../players/cm3.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx
 	$(PERL) $^ >$@
 
 ../players/%.obx: ../players/%.asx
 	$(XASM) $<
+
+../players/cmc.obx: ../players/cmc.asx
+	$(XASM) -d CM3=0 $<
+
+../players/cm3.obx: ../players/cmc.asx
+	$(XASM) -d CM3=1 $<
 
 ../players/rmt4.obx: ../players/rmt.asx
 	$(XASM) -d STEREOMODE=0 $<
@@ -189,22 +196,27 @@ COPYING.txt: ../COPYING
 ../README.html: ../README ../NEWS ../CREDITS ../INSTALL
 	$(ASCIIDOC) -a asapsrc ../README
 	$(ASCIIDOC_POSTPROCESS)
+	$(ASCIIDOC_VALIDATE)
 
 README_Java.html: ../README ../NEWS ../CREDITS ../java/USAGE
 	$(ASCIIDOC) -a asapjava="(included in this binary package)" ../README
 	$(ASCIIDOC_POSTPROCESS)
+	$(ASCIIDOC_VALIDATE)
 
 README_Windows.html: ../README ../NEWS ../CREDITS USAGE
 	$(ASCIIDOC) -a asapwin="(included in this binary package)" ../README
 	$(ASCIIDOC_POSTPROCESS)
+	$(ASCIIDOC_VALIDATE)
 
 README_WindowsSetup.html: ../README ../NEWS ../CREDITS USAGE
 	$(ASCIIDOC) -a asapwin="(included in this setup)" -a asapsetup ../README
 	$(ASCIIDOC_POSTPROCESS)
+	$(ASCIIDOC_VALIDATE)
 
 README_WindowsCE.html: ../README ../NEWS ../CREDITS ../gsplayer/USAGE
 	$(ASCIIDOC) -a asapwince="(included in this binary package)" ../README
 	$(ASCIIDOC_POSTPROCESS)
+	$(ASCIIDOC_VALIDATE)
 
 install_dsf.bat:
 	echo regsvr32 asap_dsf.dll>$@
@@ -220,7 +232,7 @@ setup: ../../asap-$(VERSION)-win32.msi
 setup/asap.wixobj: setup/asap.wxs
 	$(CANDLE) -dVERSION=$(VERSION) $<
 
-srcdist: ../configure ../players/cmc.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx ../README.html
+srcdist: ../configure ../players/cmc.obx ../players/cm3.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx ../README.html
 	$(RM) ../../asap-$(VERSION).tar.gz
 	$(PERL) -x.. ../maketar.pl -d asap-$(VERSION) \
 		-t asap.c asap.h asap_internal.h acpu.c apokeysnd.c \
@@ -251,7 +263,7 @@ srcdist: ../configure ../players/cmc.obx ../players/cms.obx ../players/mpt.obx .
 		win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h \
 		xbmc/xbmc_asap.c \
 		xmms/libasap.c xmms/libasap.map \
-		-b players/cmc.obx players/cms.obx players/mpt.obx \
+		-b players/cmc.obx players/cm3.obx players/cms.obx players/mpt.obx \
 		players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx \
 		win32/wasap/play.ico win32/wasap/stop.ico win32/wasap/wasap.ico \
 		-s install-sh configure chksap.pl maketar.pl raw2c.pl \
@@ -278,5 +290,6 @@ www: ../../www/index.html
 ../../www/index.html: ../README ../NEWS ../CREDITS
 	$(ASCIIDOC) -a asapwww ../README
 	$(ASCIIDOC_POSTPROCESS)
+	$(ASCIIDOC_VALIDATE)
 
 .DELETE_ON_ERROR:

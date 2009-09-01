@@ -10,6 +10,9 @@ Testing.
 Piotr Fusik {asapwww!<fox@scene.pl>}::
 Development.
 
+Henryk Karpowicz {asapwww!<henkar@poczta.tygrys.net>}::
+CMC player modified for CM3 format.
+
 Maciek Konecki {asapwww!<maciusk1@wp.pl>}::
 Porting to C#.
 
@@ -21,6 +24,9 @@ POKEY reverse-engineering.
 
 Kostas Nakos {asapwww!<knakos@gmail.com>}::
 Compilation for Windows CE.
+
+Mariusz Rozwadowski {asapwww!<ramosc64@o2.pl>}::
+CMS, CM3 format support.
 
 Slawomir Sledz {asapwww!<slaves@scene.pl>}::
 Testing.

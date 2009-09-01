@@ -274,11 +274,11 @@ static void SelectAndLoadFile(void)
 		NULL,
 		0,
 		"All supported\0"
-		"*.sap;*.cmc;*.cmr;*.cms;*.dmc;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2\0"
+		"*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2\0"
 		"Slight Atari Player (*.sap)\0"
 		"*.sap\0"
-		"Chaos Music Composer (*.cmc;*.cmr;*.cms;*.dmc)\0"
-		"*.cmc;*.cmr;*.cms;*.dmc\0"
+		"Chaos Music Composer (*.cmc;*.cm3;*.cmr;*.cms;*.dmc)\0"
+		"*.cmc;*.cm3;*.cmr;*.cms;*.dmc\0"
 		"Music ProTracker (*.mpt;*.mpd)\0"
 		"*.mpt;*.mpd\0"
 		"Raster Music Tracker (*.rmt)\0"
