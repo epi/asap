@@ -1,5 +1,5 @@
 /*
- * libasap.c - ASAP plugin for XMMS
+ * libasap-xmms.c - ASAP plugin for XMMS
  *
  * Copyright (C) 2006-2008  Piotr Fusik
  *
