@@ -49,30 +49,22 @@ cvs -z9 -d:pserver:anonymous@asap.cvs.sourceforge.net:/cvsroot/asap co -P asap
 
 This will fetch the latest code to a new directory called `asap`.
 
-Building ASAP2WAV on Unix-like systems
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Building ASAP2WAV and libasap on Unix-like systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 From your shell prompt navigate to the directory which contains `asap.c`.
 
-If you got the sources from CVS, you additionally need the `autoconf` package
-and must run the following command first:
---------------------------------------------------------------------------------
-autoconf
---------------------------------------------------------------------------------
-
 To compile and install, run the following commands:
 --------------------------------------------------------------------------------
-./configure
-make asap2wav
-make install-asap2wav
+make
+make install
 --------------------------------------------------------------------------------
 
-The last command must be run with super-user priviledges.
-
-If you have no super-user priviledges or want to install the program
-in a non-standard location, specify the `--prefix` option
-for the `configure` script, or simply copy the compiled program
-instead of executing `make install-asap2wav`.
+The second command must be run with super-user priviledges.
+It installs the command-line converter and the C library under the directory
+specified as `PREFIX` in the `Makefile`
+(`/usr/local`, feel free to edit `Makefile`).
 
 
 Using ASAP2WAV
@@ -83,24 +75,30 @@ Unless you specify the `-o`/`--output` option, the output filename will be
 constructed from the input filename with the extension changed to `wav`.
 
 
+Using libasap
+~~~~~~~~~~~~~
+
+The library is documented in the `asap.h` header file.
+Be warned there might be breaking changes in the future versions of the library.
+
+
 Building the XMMS plugin on Unix-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In addition to the above prerequisites you need a full XMMS installation.
+You need full XMMS installation.
 If you have just the XMMS binary package installed, you additionally need
 `xmms-devel`. I have tested only the 1.2.10 version of XMMS.
 XMMS itself depends on Gtk+ and Glib, so you need them too.
 
-To compile, run the following commands:
+To compile, run the following command:
 --------------------------------------------------------------------------------
-./configure
 make asap-xmms
 --------------------------------------------------------------------------------
 
 If the compilation finished successfully, you can install the plugin
 in your home directory:
 --------------------------------------------------------------------------------
-make install-user
+make install-xmms-user
 --------------------------------------------------------------------------------
 
 or, if you are root, for all users:
@@ -108,20 +106,8 @@ or, if you are root, for all users:
 make install-xmms
 --------------------------------------------------------------------------------
 
-If you have other XMMS plugins that support 8-bit Atari music, make sure
-to remove them in order to avoid conflicts.
-
-
-Building ASAP2WAV and the XMMS plugin on Unix-like systems
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you want to compile and install both the converter and the XMMS plugin
-for all users, there is a shortcut:
---------------------------------------------------------------------------------
-./configure
-make
-make install
---------------------------------------------------------------------------------
+If you have another XMMS plugin that supports 8-bit Atari music,
+remove it in order to avoid conflicts.
 
 
 Building the MOC plugin on Unix-like systems
@@ -130,15 +116,13 @@ Building the MOC plugin on Unix-like systems
 You need source code of MOC. The plugin is compatible with MOC 2.4.x
 and MOC 2.5.0 alpha.
 
-Use the following commands:
+Edit `Makefile`. Pay attention to `MOC_INCLUDE` and `MOC_PLUGIN_DIR`.
+
+Then use the following commands:
 --------------------------------------------------------------------------------
-./configure MOC_INCLUDE=/path/to/moc/sources MOC_PLUGIN_DIR=/path/to/moc/plugins
 make asap-moc
 make install-moc
 --------------------------------------------------------------------------------
-
-You can omit `MOC_INCLUDE` (defaults to `../moc-2.4.4`)
-and `MOC_PLUGIN_DIR` (defaults to `/usr/local/lib/moc/decoder_plugins`).
 
 
 Building the XBMC plugin on Linux
@@ -147,12 +131,7 @@ Building the XBMC plugin on Linux
 You need source code of the Linux port of XBMC. Make sure it includes
 support for ASAP.
 
-Run:
---------------------------------------------------------------------------------
-./configure
---------------------------------------------------------------------------------
-
-Then edit `Makefile`.
+Edit `Makefile`.
 `XBMC_DLL_LOADER_EXPORTS` must point to the directory in XBMC sources
 which contains `wrapper.def` and `wrapper.o`.
 
@@ -256,7 +235,7 @@ This should produce `asap2wav.exe`.
 Building the XBMC plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need Visual C+\+ Toolkit (was free download from Microsoft,
+You need Visual C\++ Toolkit (was free download from Microsoft,
 now search the internet for `VCToolkitSetup.exe`) or Microsoft Visual C++ 2003.
 
 Navigate to the `win32` directory and run:

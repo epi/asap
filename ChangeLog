@@ -1,3 +1,10 @@
+2009-09-12  Piotr Fusik  <fox@scene.pl>
+* configure.ac, INSTALL, Makefile.in, Makefile, win32/Makefile, xmms/libasap.c,
+  xmms/libasap-xmms.c, xmms/libasap.map, xmms/libasap-xmms.map:
+  dropped "configure"; added "install-lib";
+  XMMS plugin renamed to libasap-xmms.*
+
+
 2009-09-01  Piotr Fusik  <fox@scene.pl>
 * CREDITS, Makefile.in, README, asap.c, asap2wav.c, csharp/Makefile,
   csharp/asap2wav.cs, gsplayer/Makefile, java/ASAP2WAV.java, java/Makefile,

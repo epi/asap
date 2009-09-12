@@ -1,4 +1,4 @@
-VERSION = 1.2.2
+VERSION = 1.3.0
 
 # gcc for most ports
 ASAP_GCC = mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
@@ -232,14 +232,14 @@ setup: ../../asap-$(VERSION)-win32.msi
 setup/asap.wixobj: setup/asap.wxs
 	$(CANDLE) -dVERSION=$(VERSION) $<
 
-srcdist: ../configure ../players/cmc.obx ../players/cm3.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx ../README.html
+srcdist: ../players/cmc.obx ../players/cm3.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx ../README.html
 	$(RM) ../../asap-$(VERSION).tar.gz
 	$(PERL) -x.. ../maketar.pl -d asap-$(VERSION) \
 		-t asap.c asap.h asap_internal.h acpu.c apokeysnd.c \
 		asap2wav.c asapscan.c \
 		players/cmc.asx players/cms.asx players/mpt.asx \
 		players/rmt.asx players/tmc.asx players/tm2.asx \
-		configure.ac Makefile.in \
+		Makefile \
 		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
 		csharp/ASAP.ppcs csharp/asap2wav.cs csharp/Makefile \
 		gsplayer/gspasap.c gsplayer/mapplugin.h \
@@ -262,11 +262,11 @@ srcdist: ../configure ../players/cmc.obx ../players/cm3.obx ../players/cms.obx .
 		win32/winamp/in2.h win32/winamp/out.h \
 		win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h \
 		xbmc/xbmc_asap.c \
-		xmms/libasap.c xmms/libasap.map \
+		xmms/libasap-xmms.c xmms/libasap-xmms.map \
 		-b players/cmc.obx players/cm3.obx players/cms.obx players/mpt.obx \
 		players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx \
 		win32/wasap/play.ico win32/wasap/stop.ico win32/wasap/wasap.ico \
-		-s install-sh configure chksap.pl maketar.pl raw2c.pl \
+		-s install-sh chksap.pl maketar.pl raw2c.pl \
 		| $(SEVENZIP) -tgzip -si ../../asap-$(VERSION).tar.gz
 
 dist: srcdist win32 wince java \
