@@ -4,6 +4,8 @@
   dropped "configure"; added "install-lib";
   XMMS plugin renamed to libasap-xmms.*
 
+* java/Makefile, win32/Makefile: made "make -j 2" work
+
 
 2009-09-01  Piotr Fusik  <fox@scene.pl>
 * CREDITS, Makefile.in, README, asap.c, asap2wav.c, csharp/Makefile,

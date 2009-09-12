@@ -85,7 +85,7 @@ foo: foo_asap.dll
 FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp foobar2000/foobar2000_SDK.lib foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
 
 foo_asap.dll: foobar2000/foo_asap.cpp $(COMMON_C) foobar2000/foo_asap.res $(COMMON_H) gui.h $(FOOBAR2000_RUNTIME)
-	$(ASAP_CL) -DFOOBAR2000 -LD -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) foobar2000/foo_asap.cpp $(COMMON_C) foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
+	$(ASAP_CL) -Fofoobar2000/ -DFOOBAR2000 -LD -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) foobar2000/foo_asap.cpp $(COMMON_C) foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
 
 foobar2000/foobar2000_SDK.lib: foobar2000/abort_callback.obj foobar2000/audio_chunk.obj foobar2000/audio_chunk_channel_config.obj foobar2000/file_info.obj foobar2000/filesystem.obj foobar2000/guids.obj foobar2000/mem_block_container.obj foobar2000/preferences_page.obj foobar2000/replaygain_info.obj foobar2000/service.obj
 	$(MKLIB) $^
@@ -121,10 +121,10 @@ dsf: asap_dsf.dll
 
 DSHOW_BASECLASSES = $(DSHOW_BASECLASSES_DIR)/amfilter.cpp $(DSHOW_BASECLASSES_DIR)/combase.cpp $(DSHOW_BASECLASSES_DIR)/dllentry.cpp $(DSHOW_BASECLASSES_DIR)/dllsetup.cpp $(DSHOW_BASECLASSES_DIR)/mtype.cpp $(DSHOW_BASECLASSES_DIR)/source.cpp $(DSHOW_BASECLASSES_DIR)/wxlist.cpp $(DSHOW_BASECLASSES_DIR)/wxutil.cpp
 
-asap_dsf.dll: dshow/asap_dsf.cpp $(COMMON_C) asap_dsf.res dshow/asap_dsf.def $(COMMON_H)
-	$(ASAP_CL) -DDSHOW -LD -I$(DSHOW_BASECLASSES_DIR) dshow/asap_dsf.cpp $(COMMON_C) $(DSHOW_BASECLASSES) asap_dsf.res dshow/asap_dsf.def advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(LINKOPT)
+asap_dsf.dll: dshow/asap_dsf.cpp $(COMMON_C) dshow/asap_dsf.res dshow/asap_dsf.def $(COMMON_H)
+	$(ASAP_CL) -Fodshow/ -DDSHOW -LD -I$(DSHOW_BASECLASSES_DIR) dshow/asap_dsf.cpp $(COMMON_C) $(DSHOW_BASECLASSES) dshow/asap_dsf.res dshow/asap_dsf.def advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(LINKOPT)
 
-asap_dsf.res: gui.rc ../asap.h
+dshow/asap_dsf.res: gui.rc ../asap.h
 	$(WINDRES) -DDSHOW gui.rc
 
 # Apollo
@@ -139,10 +139,10 @@ ASAP_Apollo-res.o: gui.rc ../asap.h gui.h
 
 xbmc: xbmc_asap.dll
 
-xbmc_asap.dll: ../xbmc/xbmc_asap.c $(COMMON_C) xbmc_asap.res $(COMMON_H)
-	$(ASAP_CL71) -LD -MD ../xbmc/xbmc_asap.c $(COMMON_C) $(LINKOPT)
+xbmc_asap.dll: ../xbmc/xbmc_asap.c $(COMMON_C) ../xbmc/xbmc_asap.res $(COMMON_H)
+	$(ASAP_CL71) -Fo../xbmc/ -LD -MD ../xbmc/xbmc_asap.c $(COMMON_C) ../xbmc/xbmc_asap.res $(LINKOPT)
 
-xbmc_asap.res: gui.rc ../asap.h
+../xbmc/xbmc_asap.res: gui.rc ../asap.h
 	$(WINDRES) -DXBMC gui.rc
 
 # APokeySound
@@ -173,6 +173,11 @@ libasap.a: $(COMMON_C) $(COMMON_H)
 java:
 	$(MAKE) -C ../java
 
+# C#
+
+csharp:
+	$(MAKE) -C ../csharp
+
 # delete generated files
 
 clean:
@@ -182,6 +187,8 @@ clean:
 	$(RM) wasap/wasap-res.o wasap.exe
 	$(RM) winamp/in_asap-res.o in_asap.dll
 	$(RM) foobar2000/*.obj foobar2000/*.lib foobar2000/foo_asap.res
+	$(RM) dshow/*.obj dshow/asap_dsf.res
+	$(RM) ../xbmc/*.obj ../xbmc/xbmc_asap.res
 	$(RM) install_dsf.bat uninstall_dsf.bat
 	$(RM) ../players/*.obx ../players.h ../README.html
 	$(MAKE) -C ../csharp clean
@@ -269,7 +276,7 @@ srcdist: ../players/cmc.obx ../players/cm3.obx ../players/cms.obx ../players/mpt
 		-s install-sh chksap.pl maketar.pl raw2c.pl \
 		| $(SEVENZIP) -tgzip -si ../../asap-$(VERSION).tar.gz
 
-dist: srcdist win32 wince java \
+dist: srcdist win32 wince java csharp \
 	COPYING.txt README_Java.html README_Windows.html README_WindowsCE.html \
 	install_dsf.bat uninstall_dsf.bat
 	$(RM) ../../asap-$(VERSION)-java.zip

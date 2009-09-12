@@ -24,8 +24,7 @@ asap2wav.jar: asap2wav.MF ASAP2WAV.class net/sf/asap/ASAP.class $(PLAYERS_OBX)
 ASAP2WAV.class: ASAP2WAV.java net/sf/asap/ASAP.class $(PLAYERS_OBX)
 	$(JAVAC) -classpath . ASAP2WAV.java
 
-asap_applet.jar: ASAPApplet.class net/sf/asap/ASAP.class \
-	net/sf/asap/ASAP_ModuleInfo.class net/sf/asap/ASAP_State.class net/sf/asap/PokeyState.class $(PLAYERS_OBX)
+asap_applet.jar: ASAPApplet.class net/sf/asap/ASAP.class $(PLAYERS_OBX)
 	$(JAR) cf $@ ASAPApplet.class net/sf/asap
 
 ASAPApplet.class: ASAPApplet.java net/sf/asap/ASAP.class
