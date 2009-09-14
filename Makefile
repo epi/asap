@@ -5,6 +5,9 @@ AR = ar rc
 PERL = perl
 XASM = xasm -q
 RM = rm -f
+INSTALL = ./install-sh
+INSTALL_PROGRAM = ${INSTALL}
+INSTALL_DATA = ${INSTALL} -m 644
 ASCIIDOC = asciidoc -a doctime
 ASCIIDOC_POSTPROCESS = ${PERL} -pi -e 's/527bbd;/c02020;/'
 
