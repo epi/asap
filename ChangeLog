@@ -1,3 +1,11 @@
+2009-09-14  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, asap_internal.h, csharp/ASAP.ppcs, java/ASAP_ModuleInfo.java:
+  replaced character mnemonics with ASAP_TYPE_*
+
+* players/Makefile, csharp/Makefile, gsplayer/Makefile, java/Makefile,
+  win32/Makefile: created players/Makefile
+
+
 2009-09-12  Piotr Fusik  <fox@scene.pl>
 * configure.ac, INSTALL, Makefile.in, Makefile, win32/Makefile, xmms/libasap.c,
   xmms/libasap-xmms.c, xmms/libasap.map, xmms/libasap-xmms.map:
