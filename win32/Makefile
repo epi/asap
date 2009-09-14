@@ -20,7 +20,6 @@ ASAP_CL71 = cl -nologo -O2 -GL -GR- -W3 -DNDEBUG -Fe$@ -I. -I..
 
 # common tools
 PERL = perl
-XASM = xasm -q -o $@
 RM = rm -f
 UNIX2DOS = unix2dos
 ASCIIDOC = python C:/bin/asciidoc/asciidoc.py -o $@ -a doctime
@@ -39,23 +38,7 @@ win32: mingw dsf foo xbmc COPYING.txt
 
 mingw: asap2wav.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll apokeysnd.dll asapscan.exe libasap.a
 
-../players.h: ../raw2c.pl ../players/cmc.obx ../players/cm3.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx
-	$(PERL) $^ >$@
-
-../players/%.obx: ../players/%.asx
-	$(XASM) $<
-
-../players/cmc.obx: ../players/cmc.asx
-	$(XASM) -d CM3=0 $<
-
-../players/cm3.obx: ../players/cmc.asx
-	$(XASM) -d CM3=1 $<
-
-../players/rmt4.obx: ../players/rmt.asx
-	$(XASM) -d STEREOMODE=0 $<
-
-../players/rmt8.obx: ../players/rmt.asx
-	$(XASM) -d STEREOMODE=1 $<
+include ../players/Makefile
 
 # ASAP2WAV
 
@@ -239,14 +222,14 @@ setup: ../../asap-$(VERSION)-win32.msi
 setup/asap.wixobj: setup/asap.wxs
 	$(CANDLE) -dVERSION=$(VERSION) $<
 
-srcdist: ../players/cmc.obx ../players/cm3.obx ../players/cms.obx ../players/mpt.obx ../players/rmt4.obx ../players/rmt8.obx ../players/tmc.obx ../players/tm2.obx ../README.html
+srcdist: $(PLAYERS_OBX) ../README.html
 	$(RM) ../../asap-$(VERSION).tar.gz
 	$(PERL) -x.. ../maketar.pl -d asap-$(VERSION) \
 		-t asap.c asap.h asap_internal.h acpu.c apokeysnd.c \
 		asap2wav.c asapscan.c \
 		players/cmc.asx players/cms.asx players/mpt.asx \
 		players/rmt.asx players/tmc.asx players/tm2.asx \
-		Makefile \
+		players/Makefile Makefile \
 		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
 		csharp/ASAP.ppcs csharp/asap2wav.cs csharp/Makefile \
 		gsplayer/gspasap.c gsplayer/mapplugin.h \

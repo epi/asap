@@ -7,16 +7,17 @@ JAR = jar
 JAVADOC = javadoc
 PP = cpp -C -P -I..
 PERL = perl
-XASM = xasm -q -o $@
 ME_CLASSES = $(WTK)/lib/cldcapi11.jar;$(WTK)/lib/midpapi20.jar;$(WTK)/lib/jsr75.jar
 PREVERIFY = "$(WTK)/bin/preverify1.1"
 ME_EMU = "$(WTK)/bin/emulatorw" -gui
 
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h
-PLAYERS_OBX = net/sf/asap/cmc.obx net/sf/asap/cm3.obx net/sf/asap/cms.obx net/sf/asap/mpt.obx net/sf/asap/rmt4.obx net/sf/asap/rmt8.obx net/sf/asap/tmc.obx net/sf/asap/tm2.obx
+PLAYERS_OBX_DIR = net/sf/asap
 
 all: asap2wav.jar asap_applet.jar asap_midlet.jad
+
+include ../players/Makefile
 
 asap2wav.jar: asap2wav.MF ASAP2WAV.class net/sf/asap/ASAP.class $(PLAYERS_OBX)
 	$(JAR) cfm $@ asap2wav.MF ASAP2WAV.class net/sf/asap
@@ -53,21 +54,6 @@ ASAP.java: ASAP.ppjava $(COMMON_C) $(COMMON_H)
 
 net/sf/asap/ASAP_ModuleInfo.class: ASAP_ModuleInfo.java
 	$(JAVAC) -classpath . ASAP_ModuleInfo.java
-
-net/sf/asap/%.obx: ../players/%.asx
-	$(XASM) $<
-
-net/sf/asap/cmc.obx: ../players/cmc.asx
-	$(XASM) -d CM3=0 $<
-
-net/sf/asap/cm3.obx: ../players/cmc.asx
-	$(XASM) -d CM3=1 $<
-
-net/sf/asap/rmt4.obx: ../players/rmt.asx
-	$(XASM) -d STEREOMODE=0 $<
-
-net/sf/asap/rmt8.obx: ../players/rmt.asx
-	$(XASM) -d STEREOMODE=1 $<
 
 doc: ASAP.java ASAP_ModuleInfo.java
 	$(JAVADOC) -d doc ASAP.java ASAP_ModuleInfo.java
