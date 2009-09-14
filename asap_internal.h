@@ -83,6 +83,19 @@ void trace_cpu(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz
 
 #define NEVER                   0x800000
 
+#define ASAP_TYPE_SAP_B         1
+#define ASAP_TYPE_SAP_C         2
+#define ASAP_TYPE_SAP_D         3
+#define ASAP_TYPE_SAP_S         4
+#define ASAP_TYPE_CMC           5
+#define ASAP_TYPE_CM3           6
+#define ASAP_TYPE_CMR           7
+#define ASAP_TYPE_CMS           8
+#define ASAP_TYPE_MPT           9
+#define ASAP_TYPE_RMT           10
+#define ASAP_TYPE_TMC           11
+#define ASAP_TYPE_TM2           12
+
 #define dGetByte(addr)          UBYTE(AST memory[addr])
 #define dPutByte(addr, data)    AST memory[addr] = (byte) (data)
 #define dGetWord(addr)          (dGetByte(addr) + (dGetByte((addr) + 1) << 8))

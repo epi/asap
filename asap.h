@@ -71,7 +71,7 @@ typedef struct {
 	int durations[32];   /* lengths of songs, in milliseconds, -1 = unspecified */
 	abool loops[32];     /* whether songs repeat or not */
 	/* the following technical information should not be used outside ASAP. */
-	char type;
+	int type;
 	int fastplay;
 	int music;
 	int init;

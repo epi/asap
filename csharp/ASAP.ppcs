@@ -82,7 +82,7 @@ namespace ASAP
 		public readonly int[] durations = new int[32];
 		public readonly bool[] loops = new bool[32];
 
-		internal char type;
+		internal int type;
 		internal int fastplay;
 		internal int music;
 		internal int init;

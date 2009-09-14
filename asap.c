@@ -137,7 +137,7 @@ FILE_FUNC abool load_native(
 		if (6 + block_len != module_len) {
 			int info_addr;
 			int info_len;
-			if (MODULE_INFO type != 'r' || 11 + block_len > module_len)
+			if (MODULE_INFO type != ASAP_TYPE_RMT || 11 + block_len > module_len)
 				return FALSE;
 			/* allow optional info for Raster Music Tracker */
 			info_addr = UWORD(module, 6 + block_len);
@@ -259,7 +259,7 @@ FILE_FUNC void parse_cmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY 
 		for (p1 = 0; p1 < 0x55; p1++)
 			if (seen[p1] == SEEN_THIS_CALL)
 				seen[p1] = (byte) p2;
-		player_calls += tempo * (MODULE_INFO type == '3' ? 48 : 64);
+		player_calls += tempo * (MODULE_INFO type == ASAP_TYPE_CM3 ? 48 : 64);
 		pos++;
 	}
 	set_song_duration(module_info, player_calls);
@@ -292,14 +292,14 @@ FILE_FUNC void parse_cmc_songs(ASAP_ModuleInfo PTR module_info, const byte ARRAY
 
 FILE_FUNC abool parse_cmc(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
-	const byte ARRAY module, int module_len, abool cmr)
+	const byte ARRAY module, int module_len, int type)
 {
 	if (module_len < 0x306)
 		return FALSE;
-	MODULE_INFO type = cmr ? 'z' : 'c';
+	MODULE_INFO type = type;
 	if (!load_native(ast, module_info, module, module_len, GET_OBX(cmc)))
 		return FALSE;
-	if (ast != NULL && cmr)
+	if (ast != NULL && type == ASAP_TYPE_CMR)
 		COPY_ARRAY(AST memory, 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, 0, sizeof(cmr_bass_table));
 	parse_cmc_songs(module_info, module);
 	return TRUE;
@@ -311,7 +311,7 @@ FILE_FUNC abool parse_cm3(
 {
 	if (module_len < 0x306)
 		return FALSE;
-	MODULE_INFO type = '3';
+	MODULE_INFO type = ASAP_TYPE_CM3;
 	if (!load_native(ast, module_info, module, module_len, GET_OBX(cm3)))
 		return FALSE;
 	parse_cmc_songs(module_info, module);
@@ -324,7 +324,7 @@ FILE_FUNC abool parse_cms(
 {
 	if (module_len < 0x406)
 		return FALSE;
-	MODULE_INFO type = 's';
+	MODULE_INFO type = ASAP_TYPE_CMS;
 	MODULE_INFO channels = 2;
 	if (!load_native(ast, module_info, module, module_len, GET_OBX(cms)))
 		return FALSE;
@@ -419,7 +419,7 @@ FILE_FUNC abool parse_mpt(
 	NEW_ARRAY(abool, global_seen, 256);
 	if (module_len < 0x1d0)
 		return FALSE;
-	MODULE_INFO type = 'm';
+	MODULE_INFO type = ASAP_TYPE_MPT;
 	if (!load_native(ast, module_info, module, module_len, GET_OBX(mpt)))
 		return FALSE;
 	track0_addr = UWORD(module, 2) + 0x1ca;
@@ -653,7 +653,7 @@ FILE_FUNC abool parse_rmt(
 	per_frame = module[0xc];
 	if (per_frame < 1 || per_frame > 4)
 		return FALSE;
-	MODULE_INFO type = 'r';
+	MODULE_INFO type = ASAP_TYPE_RMT;
 	if (!load_native(ast, module_info, module, module_len,
 		MODULE_INFO channels == 2 ? GET_OBX(rmt8) : GET_OBX(rmt4)))
 		return FALSE;
@@ -745,7 +745,7 @@ FILE_FUNC abool parse_tmc(
 	int last_pos;
 	if (module_len < 0x1d0)
 		return FALSE;
-	MODULE_INFO type = 't';
+	MODULE_INFO type = ASAP_TYPE_TMC;
 	if (!load_native(ast, module_info, module, module_len, GET_OBX(tmc)))
 		return FALSE;
 	MODULE_INFO channels = 2;
@@ -862,7 +862,7 @@ FILE_FUNC abool parse_tm2(
 	int c;
 	if (module_len < 0x3a4)
 		return FALSE;
-	MODULE_INFO type = 'T';
+	MODULE_INFO type = ASAP_TYPE_TM2;
 	if (!load_native(ast, module_info, module, module_len, GET_OBX(tm2)))
 		return FALSE;
 	i = module[0x25];
@@ -1041,6 +1041,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info, const byte ARR
 {
 	int module_index = 0;
 	abool sap_signature = FALSE;
+	char type = '?';
 	int duration_index = 0;
 	for (;;) {
 		NEW_ARRAY(char, line, 256);
@@ -1133,7 +1134,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info, const byte ARR
 			duration_index++;
 		}
 		else if (TAG_IS("TYPE"))
-			MODULE_INFO type = CHAR_ARG;
+			type = CHAR_ARG;
 		else if (TAG_IS("FASTPLAY"))
 			SET_DEC(MODULE_INFO fastplay, 1, 312);
 		else if (TAG_IS("MUSIC"))
@@ -1145,19 +1146,26 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info, const byte ARR
 	}
 	if (MODULE_INFO default_song >= MODULE_INFO songs)
 		return FALSE;
-	switch (MODULE_INFO type) {
+	switch (type) {
 	case 'B':
-	case 'D':
 		if (MODULE_INFO player < 0 || MODULE_INFO init < 0)
 			return FALSE;
+		MODULE_INFO type = ASAP_TYPE_SAP_B;
 		break;
 	case 'C':
 		if (MODULE_INFO player < 0 || MODULE_INFO music < 0)
 			return FALSE;
+		MODULE_INFO type = ASAP_TYPE_SAP_C;
+		break;
+	case 'D':
+		if (MODULE_INFO player < 0 || MODULE_INFO init < 0)
+			return FALSE;
+		MODULE_INFO type = ASAP_TYPE_SAP_D;
 		break;
 	case 'S':
 		if (MODULE_INFO init < 0)
 			return FALSE;
+		MODULE_INFO type = ASAP_TYPE_SAP_S;
 		MODULE_INFO fastplay = 78;
 		break;
 	default:
@@ -1244,12 +1252,12 @@ FILE_FUNC abool is_our_ext(int ext)
 	case ASAP_EXT('C', 'M', 'R'):
 	case ASAP_EXT('C', 'M', 'S'):
 	case ASAP_EXT('D', 'M', 'C'):
-	case ASAP_EXT('M', 'P', 'D'):
 	case ASAP_EXT('M', 'P', 'T'):
+	case ASAP_EXT('M', 'P', 'D'):
 	case ASAP_EXT('R', 'M', 'T'):
-	case ASAP_EXT('T', 'M', '2'):
-	case ASAP_EXT('T', 'M', '8'):
 	case ASAP_EXT('T', 'M', 'C'):
+	case ASAP_EXT('T', 'M', '8'):
+	case ASAP_EXT('T', 'M', '2'):
 #endif
 		return TRUE;
 	default:
@@ -1337,7 +1345,6 @@ FILE_FUNC abool parse_file(
 		MODULE_INFO durations[i] = -1;
 		MODULE_INFO loops[i] = FALSE;
 	}
-	MODULE_INFO type = '?';
 	MODULE_INFO fastplay = 312;
 	MODULE_INFO music = -1;
 	MODULE_INFO init = -1;
@@ -1347,28 +1354,28 @@ FILE_FUNC abool parse_file(
 		return parse_sap(ast, module_info, module, module_len);
 #ifndef ASAP_ONLY_SAP
 	case ASAP_EXT('C', 'M', 'C'):
-		return parse_cmc(ast, module_info, module, module_len, FALSE);
+		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMC);
 	case ASAP_EXT('C', 'M', '3'):
 		return parse_cm3(ast, module_info, module, module_len);
 	case ASAP_EXT('C', 'M', 'R'):
-		return parse_cmc(ast, module_info, module, module_len, TRUE);
+		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMR);
 	case ASAP_EXT('C', 'M', 'S'):
 		return parse_cms(ast, module_info, module, module_len);
 	case ASAP_EXT('D', 'M', 'C'):
 		MODULE_INFO fastplay = 156;
-		return parse_cmc(ast, module_info, module, module_len, FALSE);
+		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMC);
+	case ASAP_EXT('M', 'P', 'T'):
+		return parse_mpt(ast, module_info, module, module_len);
 	case ASAP_EXT('M', 'P', 'D'):
 		MODULE_INFO fastplay = 156;
 		return parse_mpt(ast, module_info, module, module_len);
-	case ASAP_EXT('M', 'P', 'T'):
-		return parse_mpt(ast, module_info, module, module_len);
 	case ASAP_EXT('R', 'M', 'T'):
 		return parse_rmt(ast, module_info, module, module_len);
+	case ASAP_EXT('T', 'M', 'C'):
+	case ASAP_EXT('T', 'M', '8'):
+		return parse_tmc(ast, module_info, module, module_len);
 	case ASAP_EXT('T', 'M', '2'):
 		return parse_tm2(ast, module_info, module, module_len);
-	case ASAP_EXT('T', 'M', '8'):
-	case ASAP_EXT('T', 'M', 'C'):
-		return parse_tmc(ast, module_info, module, module_len);
 #endif
 	default:
 		return FALSE;
@@ -1436,19 +1443,21 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 	AST timer4_cycle = NEVER;
 	AST irqst = 0xff;
 	switch (AST module_info.type) {
-	case 'B':
+	case ASAP_TYPE_SAP_B:
 		call_6502_init(ast, AST module_info.init, song, 0, 0);
 		break;
-	case 'C':
-	case 'c':
-	case '3':
-	case 'z':
-	case 's':
+	case ASAP_TYPE_SAP_C:
+#ifndef ASAP_ONLY_SAP
+	case ASAP_TYPE_CMC:
+	case ASAP_TYPE_CM3:
+	case ASAP_TYPE_CMR:
+	case ASAP_TYPE_CMS:
+#endif
 		call_6502_init(ast, AST module_info.player + 3, 0x70, AST module_info.music, AST module_info.music >> 8);
 		call_6502_init(ast, AST module_info.player + 3, 0x00, song, 0);
 		break;
-	case 'D':
-	case 'S':
+	case ASAP_TYPE_SAP_D:
+	case ASAP_TYPE_SAP_S:
 		AST cpu_a = song;
 		AST cpu_x = 0x00;
 		AST cpu_y = 0x00;
@@ -1456,15 +1465,15 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 		AST cpu_pc = AST module_info.init;
 		break;
 #ifndef ASAP_ONLY_SAP
-	case 'm':
+	case ASAP_TYPE_MPT:
 		call_6502_init(ast, AST module_info.player, 0x00, AST module_info.music >> 8, AST module_info.music);
 		call_6502_init(ast, AST module_info.player, 0x02, AST module_info.song_pos[song], 0);
 		break;
-	case 'r':
+	case ASAP_TYPE_RMT:
 		call_6502_init(ast, AST module_info.player, AST module_info.song_pos[song], AST module_info.music, AST module_info.music >> 8);
 		break;
-	case 't':
-	case 'T':
+	case ASAP_TYPE_TMC:
+	case ASAP_TYPE_TM2:
 		call_6502_init(ast, AST module_info.player, 0x70, AST module_info.music >> 8, AST module_info.music);
 		call_6502_init(ast, AST module_info.player, 0x00, song, 0);
 		AST tmc_per_frame_counter = 1;
@@ -1485,17 +1494,17 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 	int s;
 	PokeySound_StartFrame(ast);
 	switch (AST module_info.type) {
-	case 'B':
+	case ASAP_TYPE_SAP_B:
 		call_6502(ast, AST module_info.player, AST module_info.fastplay);
 		break;
-	case 'C':
-	case 'c':
-	case '3':
-	case 'z':
-	case 's':
+	case ASAP_TYPE_SAP_C:
+	case ASAP_TYPE_CMC:
+	case ASAP_TYPE_CM3:
+	case ASAP_TYPE_CMR:
+	case ASAP_TYPE_CMS:
 		call_6502(ast, AST module_info.player + 6, AST module_info.fastplay);
 		break;
-	case 'D':
+	case ASAP_TYPE_SAP_D:
 		s = AST cpu_s;
 #define PUSH_ON_6502_STACK(x)  dPutByte(0x100 + s, x); s = (s - 1) & 0xff
 #define RETURN_FROM_PLAYER_ADDR  0xd200
@@ -1520,7 +1529,7 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 		AST cpu_pc = AST module_info.player;
 		Cpu_RunScanlines(ast, AST module_info.fastplay);
 		break;
-	case 'S':
+	case ASAP_TYPE_SAP_S:
 		Cpu_RunScanlines(ast, AST module_info.fastplay);
 		{
 			int i = dGetByte(0x45) - 1;
@@ -1529,12 +1538,12 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 				dPutByte(0xb07b, dGetByte(0xb07b) + 1);
 		}
 		break;
-	case 'm':
-	case 'r':
-	case 'T':
+	case ASAP_TYPE_MPT:
+	case ASAP_TYPE_RMT:
+	case ASAP_TYPE_TM2:
 		call_6502(ast, AST module_info.player + 3, AST module_info.fastplay);
 		break;
-	case 't':
+	case ASAP_TYPE_TMC:
 		if (--AST tmc_per_frame_counter <= 0) {
 			AST tmc_per_frame_counter = AST tmc_per_frame;
 			call_6502(ast, AST module_info.player + 3, AST module_info.fastplay);
@@ -1858,7 +1867,7 @@ const char *ASAP_CanConvert(
 	const byte ARRAY module, int module_len)
 {
 	switch (module_info->type) {
-	case 'B':
+	case ASAP_TYPE_SAP_B:
 		if (module_info->init == 0x4f3 || module_info->init == 0xf4f3 || module_info->init == 0x4ef)
 			return module_info->fastplay == 156 ? "mpd" : "mpt";
 		if (module_info->init == RMT_INIT)
@@ -1870,7 +1879,7 @@ const char *ASAP_CanConvert(
 		if (module_info->init == TM2_INIT)
 			return "tm2";
 		break;
-	case 'C':
+	case ASAP_TYPE_SAP_C:
 		if (module_info->player == 0x500 || module_info->player == 0xf500) {
 			if (module_info->fastplay == 156)
 				return "dmc";
@@ -1883,14 +1892,14 @@ const char *ASAP_CanConvert(
 			return "cmc";
 		}
 		break;
-	case 'c':
-	case '3':
-	case 'z':
-	case 's':
-	case 'm':
-	case 'r':
-	case 't':
-	case 'T':
+	case ASAP_TYPE_CMC:
+	case ASAP_TYPE_CM3:
+	case ASAP_TYPE_CMR:
+	case ASAP_TYPE_CMS:
+	case ASAP_TYPE_MPT:
+	case ASAP_TYPE_RMT:
+	case ASAP_TYPE_TMC:
+	case ASAP_TYPE_TM2:
 		return "sap";
 	default:
 		break;
@@ -1909,17 +1918,17 @@ int ASAP_Convert(
 	static const int tmc_player[4] = { 3, -9, -10, -10 };
 	static const int tmc_init[4] = { -14, -16, -17, -17 };
 	switch (module_info->type) {
-	case 'B':
-	case 'C':
+	case ASAP_TYPE_SAP_B:
+	case ASAP_TYPE_SAP_C:
 		out_len = UWORD(module, module_info->header_len + 4) - UWORD(module, module_info->header_len + 2) + 7;
 		if (out_len < 7 || module_info->header_len + out_len >= module_len)
 			return -1;
 		memcpy(out_module, module + module_info->header_len, out_len);
 		return out_len;
-	case 'c':
-	case '3':
-	case 'z':
-	case 's':
+	case ASAP_TYPE_CMC:
+	case ASAP_TYPE_CM3:
+	case ASAP_TYPE_CMR:
+	case ASAP_TYPE_CMS:
 		dest = put_sap_header(out_module, module_info, 'C', module_info->music, -1, module_info->player);
 		if (dest == NULL)
 			return -1;
@@ -1927,22 +1936,22 @@ int ASAP_Convert(
 		dest[0] = 0xff; /* some modules start with zeros */
 		dest[1] = 0xff;
 		dest += module_len;
-		if (module_info->type == '3') {
+		if (module_info->type == ASAP_TYPE_CM3) {
 			memcpy(dest, cm3_obx + 2, sizeof(cm3_obx) - 2);
 			dest += sizeof(cm3_obx) - 2;
 		}
-		else if (module_info->type == 's') {
+		else if (module_info->type == ASAP_TYPE_CMS) {
 			memcpy(dest, cms_obx + 2, sizeof(cms_obx) - 2);
 			dest += sizeof(cms_obx) - 2;
 		}
 		else {
 			memcpy(dest, cmc_obx + 2, sizeof(cmc_obx) - 2);
-			if (module_info->type == 'z')
+			if (module_info->type == ASAP_TYPE_CMR)
 				memcpy(dest + 4 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, sizeof(cmr_bass_table));
 			dest += sizeof(cmc_obx) - 2;
 		}
 		return dest - out_module;
-	case 'm':
+	case ASAP_TYPE_MPT:
 		if (module_info->songs != 1) {
 			addr = module_info->player - 17 - module_info->songs;
 			dest = put_sap_header(out_module, module_info, 'B', -1, module_info->player - 17, module_info->player + 3);
@@ -1989,7 +1998,7 @@ int ASAP_Convert(
 		memcpy(dest, mpt_obx + 6, sizeof(mpt_obx) - 6);
 		dest += sizeof(mpt_obx) - 6;
 		return dest - out_module;
-	case 'r':
+	case ASAP_TYPE_RMT:
 		dest = put_sap_header(out_module, module_info, 'B', -1, RMT_INIT, module_info->player + 3);
 		if (dest == NULL)
 			return -1;
@@ -2032,7 +2041,7 @@ int ASAP_Convert(
 			dest += sizeof(rmt8_obx) - 2;
 		}
 		return dest - out_module;
-	case 't':
+	case ASAP_TYPE_TMC:
 		player = module_info->player + tmc_player[module[0x25] - 1];
 		addr = player + tmc_init[module[0x25] - 1];
 		if (module_info->songs != 1)
@@ -2109,7 +2118,7 @@ int ASAP_Convert(
 		memcpy(dest, tmc_obx + 6, sizeof(tmc_obx) - 6);
 		dest += sizeof(tmc_obx) - 6;
 		return dest - out_module;
-	case 'T':
+	case ASAP_TYPE_TM2:
 		dest = put_sap_header(out_module, module_info, 'B', -1, TM2_INIT, module_info->player + 3);
 		if (dest == NULL)
 			return -1;
