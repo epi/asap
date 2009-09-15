@@ -16,6 +16,9 @@ CMC player modified for CM3 format.
 Maciek Konecki {asapwww!<maciusk1@wp.pl>}::
 Porting to C#.
 
+Marek Konopka {asapwww!<konop11@poczta.onet.pl>}::
+6502 routine for playing DLT.
+
 Marcin Lewandowski {asapwww!<jaskier@atari8.info>}::
 6502 routines for playing CMC, MPT, TMC and TM2.
 
@@ -26,7 +29,7 @@ Kostas Nakos {asapwww!<knakos@gmail.com>}::
 Compilation for Windows CE.
 
 Mariusz Rozwadowski {asapwww!<ramosc64@o2.pl>}::
-CMS, CM3 format support.
+Suggested CMS, CM3 and DLT format support.
 
 Slawomir Sledz {asapwww!<slaves@scene.pl>}::
 Testing.

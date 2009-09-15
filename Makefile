@@ -4,6 +4,7 @@ CC = gcc -s -O2 -Wall
 AR = ar rc
 PERL = perl
 XASM = xasm -q
+MADS = mads -s
 RM = rm -f
 INSTALL = ./install-sh
 INSTALL_PROGRAM = $(INSTALL)
@@ -60,6 +61,9 @@ players/cm3.obx: players/cmc.asx
 
 players/cms.obx: players/cms.asx
 	$(XASM) -o $@ players/cms.asx
+
+players/dlt.obx: players/dlt.as8
+	$(MADS) -o:$@ -c players/dlt.as8
 
 players/mpt.obx: players/mpt.asx
 	$(XASM) -o $@ players/mpt.asx

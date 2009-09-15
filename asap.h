@@ -40,6 +40,7 @@ extern "C" {
 	"Another Slight Atari Player (C) 2005-2009 Piotr Fusik\n" \
 	"CMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\n" \
 	"RMT player (C) 2002-2005 Radek Sterba\n" \
+	"DLT player (C) 2009 Marek Konopka\n" \
 	"CMS player (C) 1999 David Spilka\n"
 
 /* Short GPL notice.

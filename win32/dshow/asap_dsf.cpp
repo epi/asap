@@ -26,7 +26,7 @@
 #include "asap.h"
 
 static const char extensions[][5] =
-	{ ".sap", ".cmc", ".cm3", ".cmr", ".cms", ".dmc", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2" };
+	{ ".sap", ".cmc", ".cm3", ".cmr", ".cms", ".dmc", ".dlt", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2" };
 #define N_EXTS (sizeof(extensions) / sizeof(extensions[0]))
 
 #define BITS_PER_SAMPLE      16

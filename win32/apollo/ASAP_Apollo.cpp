@@ -1,7 +1,7 @@
 /*
  * ASAP_Apollo.cpp - ASAP plugin for Apollo
  *
- * Copyright (C) 2008  Piotr Fusik
+ * Copyright (C) 2008-2009  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -127,6 +127,7 @@ public:
 		return
 			"Slight Atari Player\0*.SAP\0"
 			"Chaos Music Composer\0*.CMC;*.CM3;*.CMR;*.CMS;*.DMC\0"
+			"Delta Music Composer\0*.DLT\0"
 			"Music ProTracker\0*.MPT;*.MPD\0"
 			"Raster Music Tracker\0*.RMT\0"
 			"Theta Music Composer 1.x\0*.TMC;*.TM8\0"

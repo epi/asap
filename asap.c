@@ -332,6 +332,20 @@ FILE_FUNC abool parse_cms(
 	return TRUE;
 }
 
+FILE_FUNC abool parse_dlt(
+	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
+	const byte ARRAY module, int module_len)
+{
+	if (module_len == 0x2c06)
+		AST memory[0x4c00] = 0;
+	else if (module_len != 0x2c07)
+		return FALSE;
+	MODULE_INFO type = ASAP_TYPE_DLT;
+	if (!load_native(ast, module_info, module, module_len, GET_OBX(dlt)))
+		return FALSE;
+	return TRUE;
+}
+
 FILE_FUNC void parse_mpt_song(
 	ASAP_ModuleInfo PTR module_info, const byte ARRAY module,
 	abool ARRAY global_seen, int song_len, int pos)
@@ -1252,6 +1266,7 @@ FILE_FUNC abool is_our_ext(int ext)
 	case ASAP_EXT('C', 'M', 'R'):
 	case ASAP_EXT('C', 'M', 'S'):
 	case ASAP_EXT('D', 'M', 'C'):
+	case ASAP_EXT('D', 'L', 'T'):
 	case ASAP_EXT('M', 'P', 'T'):
 	case ASAP_EXT('M', 'P', 'D'):
 	case ASAP_EXT('R', 'M', 'T'):
@@ -1364,6 +1379,8 @@ FILE_FUNC abool parse_file(
 	case ASAP_EXT('D', 'M', 'C'):
 		MODULE_INFO fastplay = 156;
 		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMC);
+	case ASAP_EXT('D', 'L', 'T'):
+		return parse_dlt(ast, module_info, module, module_len);
 	case ASAP_EXT('M', 'P', 'T'):
 		return parse_mpt(ast, module_info, module, module_len);
 	case ASAP_EXT('M', 'P', 'D'):
@@ -1465,6 +1482,9 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 		AST cpu_pc = AST module_info.init;
 		break;
 #ifndef ASAP_ONLY_SAP
+	case ASAP_TYPE_DLT:
+		call_6502_init(ast, AST module_info.player + 0x100, 0x00, 0x00, AST module_info.song_pos[song]);
+		break;
 	case ASAP_TYPE_MPT:
 		call_6502_init(ast, AST module_info.player, 0x00, AST module_info.music >> 8, AST module_info.music);
 		call_6502_init(ast, AST module_info.player, 0x02, AST module_info.song_pos[song], 0);
@@ -1498,10 +1518,12 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 		call_6502(ast, AST module_info.player, AST module_info.fastplay);
 		break;
 	case ASAP_TYPE_SAP_C:
+#ifndef ASAP_ONLY_SAP
 	case ASAP_TYPE_CMC:
 	case ASAP_TYPE_CM3:
 	case ASAP_TYPE_CMR:
 	case ASAP_TYPE_CMS:
+#endif
 		call_6502(ast, AST module_info.player + 6, AST module_info.fastplay);
 		break;
 	case ASAP_TYPE_SAP_D:
@@ -1538,6 +1560,10 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 				dPutByte(0xb07b, dGetByte(0xb07b) + 1);
 		}
 		break;
+#ifndef ASAP_ONLY_SAP
+	case ASAP_TYPE_DLT:
+		call_6502(ast, AST module_info.player + 0x103, AST module_info.fastplay);
+		break;
 	case ASAP_TYPE_MPT:
 	case ASAP_TYPE_RMT:
 	case ASAP_TYPE_TM2:
@@ -1551,6 +1577,7 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 		else
 			call_6502(ast, AST module_info.player + 6, AST module_info.fastplay);
 		break;
+#endif
 	}
 	PokeySound_EndFrame(ast, AST module_info.fastplay * 114);
 	if (AST silence_cycles > 0) {

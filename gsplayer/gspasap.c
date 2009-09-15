@@ -114,9 +114,11 @@ static void WINAPI asapShowConfigDlg(HWND hwndParent)
 static const char * const exts[] = {
 	"sap", "Slight Atari Player (*.sap)",
 	"cmc", "Chaos Music Composer (*.cmc)",
+	"cm3", "Chaos Music Composer 3/4 (*.cm3)",
 	"cmr", "Chaos Music Composer / Rzog (*.cmr)",
 	"cms", "Stereo Double Chaos Music Composer (*.cms)",
 	"dmc", "DoublePlay Chaos Music Composer (*.dmc)",
+	"dlt", "Delta Music Composer (*.dlt)",
 	"mpt", "Music ProTracker (*.mpt)",
 	"mpd", "Music ProTracker DoublePlay (*.mpd)",
 	"rmt", "Raster Music Tracker (*.rmt)",

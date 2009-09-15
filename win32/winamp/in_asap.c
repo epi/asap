@@ -398,6 +398,7 @@ static In_Module mod = {
 	0, 0, // filled by Winamp
 	"SAP\0Slight Atari Player (*.SAP)\0"
 	"CMC;CM3;CMR;CMS;DMC\0Chaos Music Composer (*.CMC;*.CM3;*.CMR;*.CMS;*.DMC)\0"
+	"DLT\0Delta Music Composer (*.DLT)\0"
 	"MPT;MPD\0Music ProTracker (*.MPT;*.MPD)\0"
 	"RMT\0Raster Music Tracker (*.RMT)\0"
 	"TMC;TM8\0Theta Music Composer 1.x (*.TMC;*.TM8)\0"

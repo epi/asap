@@ -41,6 +41,7 @@
 						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.cmc" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
 						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.cmr" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
 						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.cms" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
+						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.dlt" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
 						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.dmc" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
 						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.mpd" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
 						<RegistryValue Root="HKCR" Key="Media Type\Extensions\.mpt" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
@@ -57,6 +58,8 @@
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.cmr" Name="Runtime" Value="7" Type="integer" Action="write" />
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.cms" Name="Permissions" Value="15" Type="integer" Action="write" />
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.cms" Name="Runtime" Value="7" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.dlt" Name="Permissions" Value="15" Type="integer" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.dlt" Name="Runtime" Value="7" Type="integer" Action="write" />
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.dmc" Name="Permissions" Value="15" Type="integer" Action="write" />
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.dmc" Name="Runtime" Value="7" Type="integer" Action="write" />
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.mpd" Name="Permissions" Value="15" Type="integer" Action="write" />

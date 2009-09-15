@@ -227,7 +227,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 	$(PERL) -x.. ../maketar.pl -d asap-$(VERSION) \
 		-t asap.c asap.h asap_internal.h acpu.c apokeysnd.c \
 		asap2wav.c asapscan.c \
-		players/cmc.asx players/cms.asx players/mpt.asx \
+		players/cmc.asx players/cms.asx players/dlt.as8 players/mpt.asx \
 		players/rmt.asx players/tmc.asx players/tm2.asx \
 		players/Makefile Makefile \
 		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
@@ -253,7 +253,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h \
 		xbmc/xbmc_asap.c \
 		xmms/libasap-xmms.c xmms/libasap-xmms.map \
-		-b players/cmc.obx players/cm3.obx players/cms.obx players/mpt.obx \
+		-b players/cmc.obx players/cm3.obx players/cms.obx players/dlt.obx players/mpt.obx \
 		players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx \
 		win32/wasap/play.ico win32/wasap/stop.ico win32/wasap/wasap.ico \
 		-s install-sh chksap.pl maketar.pl raw2c.pl \

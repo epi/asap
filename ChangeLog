@@ -2,6 +2,13 @@
 * Makefile: changed variable references from braces to parentheses - to make
   it consistent with other Makefiles and get highlighting in SciTE
 
+* CREDITS, Makefile, README, asap.c, asap.h, asap2wav.c, asap_internal.h,
+  csharp/asap2wav.cs, gsplayer/gspasap.c, java/ASAP2WAV.java, players/dlt.as8,
+  players/Makefile, win32/Makefile, win32/apollo/ASAP_Apollo.cpp,
+  win32/dshow/asap_dsf.cpp, win32/foobar2000/foo_asap.cpp,
+  win32/setup/asap.wxs, win32/wasap/wasap.c, win32/winamp/in_asap.c:
+  added DLT format
+
 
 2009-09-14  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, asap_internal.h, csharp/ASAP.ppcs, java/ASAP_ModuleInfo.java:
