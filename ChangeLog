@@ -1,5 +1,5 @@
 2009-09-16  Piotr Fusik  <fox@scene.pl>
-* asap.c: detect DLT subsongs and duration
+* asap.c: detect DLT subsongs and duration, convert to and from SAP
 
 
 2009-09-16  Marek Konopka  <konop11@poczta.onet.pl>

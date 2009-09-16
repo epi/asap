@@ -397,12 +397,14 @@ FILE_FUNC abool parse_dlt(
 {
 	int pos;
 	NEW_ARRAY(abool, seen, 128);
-	if (module_len == 0x2c06)
-		AST memory[0x4c00] = 0;
+	if (module_len == 0x2c06) {
+		if (ast != NULL)
+			AST memory[0x4c00] = 0;
+	}
 	else if (module_len != 0x2c07)
 		return FALSE;
 	MODULE_INFO type = ASAP_TYPE_DLT;
-	if (!load_native(ast, module_info, module, module_len, GET_OBX(dlt)))
+	if (!load_native(ast, module_info, module, module_len, GET_OBX(dlt)) || MODULE_INFO music != 0x2000)
 		return FALSE;
 	INIT_ARRAY(seen);
 	MODULE_INFO songs = 0;
@@ -1962,6 +1964,8 @@ const char *ASAP_CanConvert(
 {
 	switch (module_info->type) {
 	case ASAP_TYPE_SAP_B:
+		if ((module_info->init == 0x3fb || module_info->init == 0x3f9) && module_info->player == 0x503)
+			return "dlt";
 		if (module_info->init == 0x4f3 || module_info->init == 0xf4f3 || module_info->init == 0x4ef)
 			return module_info->fastplay == 156 ? "mpd" : "mpt";
 		if (module_info->init == RMT_INIT)
@@ -1990,6 +1994,7 @@ const char *ASAP_CanConvert(
 	case ASAP_TYPE_CM3:
 	case ASAP_TYPE_CMR:
 	case ASAP_TYPE_CMS:
+	case ASAP_TYPE_DLT:
 	case ASAP_TYPE_MPT:
 	case ASAP_TYPE_RMT:
 	case ASAP_TYPE_TMC:
@@ -2044,6 +2049,46 @@ int ASAP_Convert(
 				memcpy(dest + 4 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, sizeof(cmr_bass_table));
 			dest += sizeof(cmc_obx) - 2;
 		}
+		return dest - out_module;
+	case ASAP_TYPE_DLT:
+		if (module_info->songs != 1) {
+			addr = module_info->player - 7 - module_info->songs;
+			dest = put_sap_header(out_module, module_info, 'B', -1, module_info->player - 7, module_info->player + 0x103);
+		}
+		else {
+			addr = module_info->player - 5;
+			dest = put_sap_header(out_module, module_info, 'B', -1, addr, module_info->player + 0x103);
+		}
+		if (dest == NULL)
+			return -1;
+		memcpy(dest, module, module_len);
+		if (module_len == 0x2c06) {
+			dest[4] = 0;
+			dest[5] = 0x4c;
+			dest[0x2c06] = 0;
+		}
+		dest += 0x2c07;
+		*dest++ = (byte) addr;
+		*dest++ = (byte) (addr >> 8);
+		*dest++ = dlt_obx[4];
+		*dest++ = dlt_obx[5];
+		if (module_info->songs != 1) {
+			memcpy(dest, module_info->song_pos, module_info->songs);
+			dest += module_info->songs;
+			*dest++ = 0xaa; /* tax */
+			*dest++ = 0xbc; /* ldy song2pos,x */
+			*dest++ = (byte) addr;
+			*dest++ = (byte) (addr >> 8);
+		}
+		else {
+			*dest++ = 0xa0; /* ldy #0 */
+			*dest++ = 0;
+		}
+		*dest++ = 0x4c; /* jmp init */
+		*dest++ = (byte) module_info->player;
+		*dest++ = (byte) ((module_info->player >> 8) + 1);
+		memcpy(dest, dlt_obx + 6, sizeof(dlt_obx) - 6);
+		dest += sizeof(dlt_obx) - 6;
 		return dest - out_module;
 	case ASAP_TYPE_MPT:
 		if (module_info->songs != 1) {
