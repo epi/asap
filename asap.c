@@ -332,10 +332,71 @@ FILE_FUNC abool parse_cms(
 	return TRUE;
 }
 
+FILE_FUNC abool is_dlt_track_empty(const byte ARRAY module, int pos)
+{
+	return UBYTE(module[0x2006 + pos]) >= 0x43
+		&& UBYTE(module[0x2106 + pos]) >= 0x40
+		&& UBYTE(module[0x2206 + pos]) >= 0x40
+		&& UBYTE(module[0x2306 + pos]) >= 0x40;
+}
+
+FILE_FUNC abool is_dlt_pattern_end(const byte ARRAY module, int pos, int i)
+{
+	int ch;
+	for (ch = 0; ch < 4; ch++) {
+		int pattern = UBYTE(module[0x2006 + (ch << 8) + pos]);
+		if (pattern < 64) {
+			int offset = 6 + (pattern << 7) + (i << 1);
+			if ((module[offset] & 0x80) == 0 && (module[offset + 1] & 0x80) != 0)
+				return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+FILE_FUNC void parse_dlt_song(
+	ASAP_ModuleInfo PTR module_info, const byte ARRAY module,
+	abool ARRAY seen, int pos)
+{
+	int player_calls = 0;
+	abool loop = FALSE;
+	int tempo = 6;
+	while (pos < 128 && !seen[pos] && is_dlt_track_empty(module, pos))
+		seen[pos++] = TRUE;
+	MODULE_INFO song_pos[MODULE_INFO songs] = (byte) pos;
+	while (pos < 128) {
+		int p1;
+		if (seen[pos]) {
+			loop = TRUE;
+			break;
+		}
+		seen[pos] = TRUE;
+		p1 = module[0x2006 + pos];
+		if (p1 == 0x40 || is_dlt_track_empty(module, pos))
+			break;
+		if (p1 == 0x41)
+			pos = UBYTE(module[0x2086 + pos]);
+		else if (p1 == 0x42)
+			tempo = UBYTE(module[0x2086 + pos++]);
+		else {
+			int i;
+			for (i = 0; i < 64 && !is_dlt_pattern_end(module, pos, i); i++)
+				player_calls += tempo;
+			pos++;
+		}
+	}
+	if (player_calls > 0) {
+		MODULE_INFO loops[MODULE_INFO songs] = loop;
+		set_song_duration(module_info, player_calls);
+	}
+}
+
 FILE_FUNC abool parse_dlt(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len)
 {
+	int pos;
+	NEW_ARRAY(abool, seen, 128);
 	if (module_len == 0x2c06)
 		AST memory[0x4c00] = 0;
 	else if (module_len != 0x2c07)
@@ -343,6 +404,12 @@ FILE_FUNC abool parse_dlt(
 	MODULE_INFO type = ASAP_TYPE_DLT;
 	if (!load_native(ast, module_info, module, module_len, GET_OBX(dlt)))
 		return FALSE;
+	INIT_ARRAY(seen);
+	MODULE_INFO songs = 0;
+	for (pos = 0; pos < 128 && MODULE_INFO songs < MAX_SONGS; pos++) {
+		if (!seen[pos])
+			parse_dlt_song(module_info, module, seen, pos);
+	}
 	return TRUE;
 }
 
