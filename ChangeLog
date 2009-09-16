@@ -1,3 +1,7 @@
+2009-09-16  Marek Konopka  <konop11@poczta.onet.pl>
+* players/dlt.as8: disabled MADS warnings
+
+
 2009-09-15  Piotr Fusik  <fox@scene.pl>
 * Makefile: changed variable references from braces to parentheses - to make
   it consistent with other Makefiles and get highlighting in SciTE
