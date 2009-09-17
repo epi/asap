@@ -51,10 +51,13 @@ ASAP_FUNC int ASAP_GetByte(ASAP_State PTR ast, int addr)
 	case 0xd20a:
 		return PokeySound_GetRandom(ast, addr, AST cycle);
 	case 0xd20e:
-		if ((addr & AST extra_pokey_mask) != 0)
+		if ((addr & AST extra_pokey_mask) != 0) {
+			/* interrupts in the extra POKEY not emulated at the moment */
 			return 0xff;
+		}
 		return AST irqst;
 	case 0xd20f:
+		/* just because some SAP files rely on this */
 		return 0xff;
 	case 0xd40b:
 		return AST scanline_number >> 1;
@@ -93,6 +96,16 @@ ASAP_FUNC void ASAP_PutByte(ASAP_State PTR ast, int addr, int data)
 			AST cycle = AST next_scanline_cycle - 8;
 		else
 			AST cycle = AST next_scanline_cycle + 106;
+	}
+	else if ((addr & 0xff1f) == 0xd01f) {
+		int sample = CYCLE_TO_SAMPLE(AST cycle);
+		int delta;
+		data &= 8;
+		/* NOT data - AST consol; reverse to the POKEY sound */
+		delta = AST consol - data;
+		AST consol = data;
+		AST base_pokey.delta_buffer[sample] += delta;
+		AST extra_pokey.delta_buffer[sample] += delta;
 	}
 	else
 		dPutByte(addr, data);
@@ -1517,6 +1530,7 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 	AST blocks_played = 0;
 	AST silence_cycles_counter = AST silence_cycles;
 	AST extra_pokey_mask = AST module_info.channels > 1 ? 0x10 : 0;
+	AST consol = 8;
 	PokeySound_Initialize(ast);
 	AST cycle = 0;
 	AST cpu_nz = 0;

@@ -104,4 +104,6 @@ void trace_cpu(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz
 #define PutByte(addr, data)     do { if (((addr) & 0xf900) == 0xd000) ASAP_PutByte(ast, addr, data); else dPutByte(addr, data); } while (FALSE)
 #define RMW_GetByte(dest, addr) do { if (((addr) >> 8) == 0xd2) { dest = ASAP_GetByte(ast, addr); AST cycle--; ASAP_PutByte(ast, addr, dest); AST cycle++; } else dest = dGetByte(addr); } while (FALSE)
 
+#define CYCLE_TO_SAMPLE(cycle)  (((cycle) * ASAP_SAMPLE_RATE + AST sample_offset) / ASAP_MAIN_CLOCK)
+
 #endif /* _ASAP_INTERNAL_H_ */

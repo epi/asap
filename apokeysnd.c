@@ -102,8 +102,6 @@ ASAP_FUNC void PokeySound_Initialize(ASAP_State PTR ast)
 	init_state(ADDRESSOF AST extra_pokey);
 }
 
-#define CYCLE_TO_SAMPLE(cycle)  (((cycle) * ASAP_SAMPLE_RATE + AST sample_offset) / ASAP_MAIN_CLOCK)
-
 #define DO_TICK(ch) \
 	if (PST init) { \
 		switch (PST audc##ch >> 4) { \

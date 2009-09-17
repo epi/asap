@@ -1,4 +1,7 @@
 2009-09-17  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, asap_internal.h, apokeysnd.c, csharp/ASAP.ppcs,
+  java/ASAP.ppjava: added GTIA CONSOL sound emulation
+
 * Makefile, install-sh, win32/Makefile:
   replaced "./install-sh" with "mkdir -p" and "install" because:
   - the ASAP directory can be "noexec"

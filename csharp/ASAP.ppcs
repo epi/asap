@@ -150,6 +150,7 @@ namespace ASAP
 		internal int timer4_cycle;
 		internal int irqst;
 		internal int extra_pokey_mask;
+		internal int consol;
 		internal readonly PokeyState base_pokey = new PokeyState();
 		internal readonly PokeyState extra_pokey = new PokeyState();
 		internal int sample_offset;

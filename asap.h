@@ -142,6 +142,7 @@ typedef struct {
 	int timer4_cycle;
 	int irqst;
 	int extra_pokey_mask;
+	int consol;
 	PokeyState base_pokey;
 	PokeyState extra_pokey;
 	int sample_offset;

@@ -124,6 +124,7 @@ final class ASAP_State
 	int timer4_cycle;
 	int irqst;
 	int extra_pokey_mask;
+	int consol;
 	final PokeyState base_pokey = new PokeyState();
 	final PokeyState extra_pokey = new PokeyState();
 	int sample_offset;
