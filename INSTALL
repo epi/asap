@@ -14,12 +14,12 @@ On Windows download http://www.mingw.org/[MinGW]
 and install binutils, core compiler, g++ compiler, w32api and MinGW Make.
 
 Perl::
-On Windows install either http://www.activestate.com/activeperl[ActivePerl]
+On Windows install either http://www.activestate.com/activeperl/[ActivePerl]
 or http://cygwin.com/[Cygwin]'s Perl.
 
-xasm::
+xasm and MADS::
 If you are compiling latest source code from CVS, install
-http://xasm.atari.org[xasm].
+http://xasm.atari.org/[xasm] and http://mads.atari8.info/[MADS].
 
 Make sure these tools are on your `PATH`.
 
@@ -35,7 +35,7 @@ On Unix-like systems:
 tar zxf asap-*.tar.gz
 --------------------------------------------------------------------------------
 
-On Windows you may use http://7-zip.org[7-Zip].
+On Windows you may use http://7-zip.org/[7-Zip].
 
 
 Getting latest source code

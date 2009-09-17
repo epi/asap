@@ -1,3 +1,7 @@
+2009-09-17  Piotr Fusik  <fox@scene.pl>
+* INSTALL: MADS
+
+
 2009-09-16  Piotr Fusik  <fox@scene.pl>
 * asap.c: detect DLT subsongs and duration, convert to and from SAP
 
