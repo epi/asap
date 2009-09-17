@@ -6,7 +6,8 @@ PERL = perl
 XASM = xasm -q
 MADS = mads -s
 RM = rm -f
-INSTALL = ./install-sh
+MKDIRS = mkdir -p
+INSTALL = install
 INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA = $(INSTALL) -m 644
 ASCIIDOC = asciidoc -a doctime
@@ -83,38 +84,44 @@ players/tm2.obx: players/tm2.asx
 install: install-asap2wav install-lib
 
 install-asap2wav: asap2wav
+	$(MKDIRS) $(PREFIX)/bin
 	$(INSTALL_PROGRAM) asap2wav $(PREFIX)/bin/asap2wav
 
 uninstall-asap2wav:
 	$(RM) $(PREFIX)/bin/asap2wav
 
 install-lib: libasap.a
+	$(MKDIRS) $(PREFIX)/include
 	$(INSTALL_DATA) asap.h $(PREFIX)/include/asap.h
+	$(MKDIRS) $(PREFIX)/lib
 	$(INSTALL_DATA) libasap.a $(PREFIX)/lib/libasap.a
 
 uninstall-lib:
 	$(RM) $(PREFIX)/include/asap.h $(PREFIX)/lib/libasap.a
 
 install-xmms: libasap-xmms.so
+	$(MKDIRS) $(XMMS_INPUT_PLUGIN_DIR)
 	$(INSTALL_PROGRAM) libasap-xmms.so $(XMMS_INPUT_PLUGIN_DIR)/libasap-xmms.so
 
 uninstall-xmms:
 	$(RM) $(XMMS_INPUT_PLUGIN_DIR)/libasap-xmms.so
 
 install-xmms-user: libasap-xmms.so
+	$(MKDIRS) $(XMMS_USER_PLUGIN_DIR)
 	$(INSTALL_PROGRAM) libasap-xmms.so $(XMMS_USER_PLUGIN_DIR)/libasap-xmms.so
 
 uninstall-xmms-user:
 	$(RM) $(XMMS_USER_PLUGIN_DIR)/libasap-xmms.so
 
 install-moc: libasap_decoder.so
+	$(MKDIRS) $(MOC_PLUGIN_DIR)
 	$(INSTALL_PROGRAM) libasap_decoder.so $(MOC_PLUGIN_DIR)/libasap_decoder.so
 
 uninstall-moc:
 	$(RM) $(MOC_PLUGIN_DIR)/libasap_decoder.so
 
 clean:
-	$(RM) players.h asap2wav libasap.a libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so
+	$(RM) asap2wav libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so players.h
 
 README.html: README INSTALL NEWS CREDITS
 	$(ASCIIDOC) -o $@ -a asapsrc README

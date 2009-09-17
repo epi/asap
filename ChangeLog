@@ -1,4 +1,11 @@
 2009-09-17  Piotr Fusik  <fox@scene.pl>
+* Makefile, install-sh, win32/Makefile:
+  replaced "./install-sh" with "mkdir -p" and "install" because:
+  - the ASAP directory can be "noexec"
+  - one might be afraid of running "install-sh" as "root"
+  - many "mkdir -p" are still shorter than "install-sh"
+  - "mkdir -p" should work on new systems
+
 * INSTALL: MADS
 
 
