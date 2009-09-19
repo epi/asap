@@ -26,6 +26,7 @@ ASCIIDOC = python C:/bin/asciidoc/asciidoc.py -o $@ -a doctime
 ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/;END{unlink '$@.bak'}" $@
 ASCIIDOC_VALIDATE = xmllint --noout --nonet --dtdvalid c:/bin/xhtml11-flat.dtd $@
 SEVENZIP = 7z a -mx=9
+GREP = grep
 CANDLE = candle -nologo -o $@
 LIGHT = light -nologo -o $@
 
@@ -274,6 +275,11 @@ dist: srcdist win32 wince java csharp \
 		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ../gsplayer/gspasap.dll
+	$(GREP) -m 1 " released on " ../ChangeLog
+	$(GREP) -m 1 ^ASAP ../NEWS
+	$(GREP) ASAP_VERSION ../asap.h
+	$(GREP) " Version =" ../csharp/ASAP.ppcs
+	$(GREP) " VERSION =" ../java/ASAP.ppjava
 
 www: ../../www/index.html
 

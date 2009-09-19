@@ -1,4 +1,8 @@
 2009-09-18  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile: grep version numbers from different files
+
+* win32/setup/asap.wxs: include version in the title; high compression
+
 * acpu.c: fixed CLV with ACPU_NO_DECIMAL; simplified ARR
 
 * asap.c, asap_internal.h, acpu.c, apokeysnd.c, csharp/ASAP.ppcs,
