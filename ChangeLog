@@ -1,3 +1,10 @@
+2009-09-18  Piotr Fusik  <fox@scene.pl>
+* acpu.c: fixed CLV with ACPU_NO_DECIMAL; simplified ARR
+
+* asap.c, asap_internal.h, acpu.c, apokeysnd.c, csharp/ASAP.ppcs,
+  java/ASAP.ppjava: minor refactoring, added some comments
+
+
 2009-09-17  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, asap_internal.h, apokeysnd.c, csharp/ASAP.ppcs,
   java/ASAP.ppjava: added GTIA CONSOL sound emulation

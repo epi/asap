@@ -21,6 +21,8 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* C# version of C/Java/C# abstraction macros */
+
 #define CSHARP
 #define abool                   bool
 #define FALSE                   false
@@ -29,8 +31,8 @@
 #define const
 #define CONST_LOOKUP(type, name) \
                                 private static readonly type[] name
-#define FILE_FUNC               private static
-#define ASAP_FUNC               private static
+#define PRIVATE_FUNC            private static
+#define PUBLIC_FUNC             private static
 #define PTR
 #define ADDRESSOF
 #define ARRAY                   []

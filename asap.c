@@ -21,10 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#if !defined(JAVA) && !defined(CSHARP)
-#include <string.h>
-#endif
-
 #include "asap_internal.h"
 
 #ifndef ASAP_ONLY_SAP
@@ -45,7 +41,7 @@ CONST_LOOKUP(byte, cmr_bass_table) = {
 
 #endif /* ASAP_ONLY_SAP */
 
-ASAP_FUNC int ASAP_GetByte(ASAP_State PTR ast, int addr)
+PUBLIC_FUNC int ASAP_GetByte(ASAP_State PTR ast, int addr)
 {
 	switch (addr & 0xff0f) {
 	case 0xd20a:
@@ -66,7 +62,7 @@ ASAP_FUNC int ASAP_GetByte(ASAP_State PTR ast, int addr)
 	}
 }
 
-ASAP_FUNC void ASAP_PutByte(ASAP_State PTR ast, int addr, int data)
+PUBLIC_FUNC void ASAP_PutByte(ASAP_State PTR ast, int addr, int data)
 {
 	if ((addr >> 8) == 0xd2) {
 		if ((addr & (AST extra_pokey_mask + 0xf)) == 0xe) {
@@ -119,7 +115,8 @@ ASAP_FUNC void ASAP_PutByte(ASAP_State PTR ast, int addr, int data)
 
 CONST_LOOKUP(int, perframe2fastplay) = { 312, 312 / 2, 312 / 3, 312 / 4 };
 
-FILE_FUNC abool load_native(
+/* Loads native module (anything except SAP) and 6502 player routine. */
+PRIVATE_FUNC abool load_native(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len, ASAP_OBX player)
 {
@@ -194,7 +191,7 @@ FILE_FUNC abool load_native(
 #endif
 }
 
-FILE_FUNC void set_song_duration(ASAP_ModuleInfo PTR module_info, int player_calls)
+PRIVATE_FUNC void set_song_duration(ASAP_ModuleInfo PTR module_info, int player_calls)
 {
 	MODULE_INFO durations[MODULE_INFO songs] = (int) (player_calls * MODULE_INFO fastplay * 114000.0 / 1773447);
 	MODULE_INFO songs++;
@@ -204,7 +201,7 @@ FILE_FUNC void set_song_duration(ASAP_ModuleInfo PTR module_info, int player_cal
 #define SEEN_BEFORE     2
 #define SEEN_REPEAT     3
 
-FILE_FUNC void parse_cmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
+PRIVATE_FUNC void parse_cmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
 {
 	int tempo = UBYTE(module[0x19]);
 	int player_calls = 0;
@@ -278,11 +275,10 @@ FILE_FUNC void parse_cmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY 
 	set_song_duration(module_info, player_calls);
 }
 
-FILE_FUNC void parse_cmc_songs(ASAP_ModuleInfo PTR module_info, const byte ARRAY module)
+PRIVATE_FUNC void parse_cmc_songs(ASAP_ModuleInfo PTR module_info, const byte ARRAY module)
 {
 	int last_pos;
 	int pos;
-	/* auto-detect number of subsongs */
 	last_pos = 0x54;
 	while (--last_pos >= 0) {
 		if (UBYTE(module[0x206 + last_pos]) < 0xb0
@@ -303,7 +299,7 @@ FILE_FUNC void parse_cmc_songs(ASAP_ModuleInfo PTR module_info, const byte ARRAY
 			parse_cmc_song(module_info, module, pos + 1);
 }
 
-FILE_FUNC abool parse_cmc(
+PRIVATE_FUNC abool parse_cmc(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len, int type)
 {
@@ -318,7 +314,7 @@ FILE_FUNC abool parse_cmc(
 	return TRUE;
 }
 
-FILE_FUNC abool parse_cm3(
+PRIVATE_FUNC abool parse_cm3(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len)
 {
@@ -331,7 +327,7 @@ FILE_FUNC abool parse_cm3(
 	return TRUE;
 }
 
-FILE_FUNC abool parse_cms(
+PRIVATE_FUNC abool parse_cms(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len)
 {
@@ -345,7 +341,7 @@ FILE_FUNC abool parse_cms(
 	return TRUE;
 }
 
-FILE_FUNC abool is_dlt_track_empty(const byte ARRAY module, int pos)
+PRIVATE_FUNC abool is_dlt_track_empty(const byte ARRAY module, int pos)
 {
 	return UBYTE(module[0x2006 + pos]) >= 0x43
 		&& UBYTE(module[0x2106 + pos]) >= 0x40
@@ -353,7 +349,7 @@ FILE_FUNC abool is_dlt_track_empty(const byte ARRAY module, int pos)
 		&& UBYTE(module[0x2306 + pos]) >= 0x40;
 }
 
-FILE_FUNC abool is_dlt_pattern_end(const byte ARRAY module, int pos, int i)
+PRIVATE_FUNC abool is_dlt_pattern_end(const byte ARRAY module, int pos, int i)
 {
 	int ch;
 	for (ch = 0; ch < 4; ch++) {
@@ -367,7 +363,7 @@ FILE_FUNC abool is_dlt_pattern_end(const byte ARRAY module, int pos, int i)
 	return FALSE;
 }
 
-FILE_FUNC void parse_dlt_song(
+PRIVATE_FUNC void parse_dlt_song(
 	ASAP_ModuleInfo PTR module_info, const byte ARRAY module,
 	abool ARRAY seen, int pos)
 {
@@ -404,7 +400,7 @@ FILE_FUNC void parse_dlt_song(
 	}
 }
 
-FILE_FUNC abool parse_dlt(
+PRIVATE_FUNC abool parse_dlt(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len)
 {
@@ -425,10 +421,10 @@ FILE_FUNC abool parse_dlt(
 		if (!seen[pos])
 			parse_dlt_song(module_info, module, seen, pos);
 	}
-	return TRUE;
+	return MODULE_INFO songs > 0;
 }
 
-FILE_FUNC void parse_mpt_song(
+PRIVATE_FUNC void parse_mpt_song(
 	ASAP_ModuleInfo PTR module_info, const byte ARRAY module,
 	abool ARRAY global_seen, int song_len, int pos)
 {
@@ -504,7 +500,7 @@ FILE_FUNC void parse_mpt_song(
 		set_song_duration(module_info, player_calls);
 }
 
-FILE_FUNC abool parse_mpt(
+PRIVATE_FUNC abool parse_mpt(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len)
 {
@@ -535,12 +531,12 @@ FILE_FUNC abool parse_mpt(
 			parse_mpt_song(module_info, module, global_seen, song_len, pos);
 		}
 	}
-	return MODULE_INFO songs != 0;
+	return MODULE_INFO songs > 0;
 }
 
 CONST_LOOKUP(byte, rmt_volume_silent) = { 16, 8, 4, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 };
 
-FILE_FUNC int rmt_instrument_frames(
+PRIVATE_FUNC int rmt_instrument_frames(
 	const byte ARRAY module, int instrument,
 	int volume, int volume_frame, abool extra_pokey)
 {
@@ -611,7 +607,7 @@ FILE_FUNC int rmt_instrument_frames(
 	return player_calls / per_frame;
 }
 
-FILE_FUNC void parse_rmt_song(
+PRIVATE_FUNC void parse_rmt_song(
 	ASAP_ModuleInfo PTR module_info, const byte ARRAY module,
 	abool ARRAY global_seen, int song_len, int pos_shift, int pos)
 {
@@ -723,7 +719,7 @@ FILE_FUNC void parse_rmt_song(
 		set_song_duration(module_info, frames);
 }
 
-FILE_FUNC abool parse_rmt(
+PRIVATE_FUNC abool parse_rmt(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len)
 {
@@ -771,10 +767,10 @@ FILE_FUNC abool parse_rmt(
 	/* must set fastplay after song durations calculations, so they assume 312 */
 	MODULE_INFO fastplay = perframe2fastplay[per_frame - 1];
 	MODULE_INFO player = 0x600;
-	return MODULE_INFO songs != 0;
+	return MODULE_INFO songs > 0;
 }
 
-FILE_FUNC void parse_tmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
+PRIVATE_FUNC void parse_tmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
 {
 	int addr_to_offset = UWORD(module, 2) - 6;
 	int tempo = UBYTE(module[0x24]) + 1;
@@ -833,7 +829,7 @@ FILE_FUNC void parse_tmc_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY 
 	set_song_duration(module_info, frames);
 }
 
-FILE_FUNC abool parse_tmc(
+PRIVATE_FUNC abool parse_tmc(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len)
 {
@@ -876,7 +872,7 @@ FILE_FUNC abool parse_tmc(
 	return TRUE;
 }
 
-FILE_FUNC void parse_tm2_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
+PRIVATE_FUNC void parse_tm2_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int pos)
 {
 	int addr_to_offset = UWORD(module, 2) - 6;
 	int tempo = UBYTE(module[0x24]) + 1;
@@ -949,7 +945,7 @@ FILE_FUNC void parse_tm2_song(ASAP_ModuleInfo PTR module_info, const byte ARRAY 
 	set_song_duration(module_info, player_calls);
 }
 
-FILE_FUNC abool parse_tm2(
+PRIVATE_FUNC abool parse_tm2(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len)
 {
@@ -1133,7 +1129,7 @@ void ASAP_DurationToString(char *s, int duration)
 
 #endif /* !defined(JAVA) && !defined(CSHARP) */
 
-FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int module_len)
+PRIVATE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info, const byte ARRAY module, int module_len)
 {
 	int module_index = 0;
 	abool sap_signature = FALSE;
@@ -1273,7 +1269,7 @@ FILE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info, const byte ARR
 	return TRUE;
 }
 
-FILE_FUNC abool parse_sap(
+PRIVATE_FUNC abool parse_sap(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	const byte ARRAY module, int module_len)
 {
@@ -1303,7 +1299,7 @@ FILE_FUNC abool parse_sap(
 
 #define ASAP_EXT(c1, c2, c3) (((c1) + ((c2) << 8) + ((c3) << 16)) | 0x202020)
 
-FILE_FUNC int get_packed_ext(STRING filename)
+PRIVATE_FUNC int get_packed_ext(STRING filename)
 {
 #ifdef JAVA
 	int i = filename.length();
@@ -1338,7 +1334,7 @@ FILE_FUNC int get_packed_ext(STRING filename)
 #endif
 }
 
-FILE_FUNC abool is_our_ext(int ext)
+PRIVATE_FUNC abool is_our_ext(int ext)
 {
 	switch (ext) {
 	case ASAP_EXT('S', 'A', 'P'):
@@ -1362,13 +1358,13 @@ FILE_FUNC abool is_our_ext(int ext)
 	}
 }
 
-ASAP_FUNC abool ASAP_IsOurFile(STRING filename)
+PUBLIC_FUNC abool ASAP_IsOurFile(STRING filename)
 {
 	int ext = get_packed_ext(filename);
 	return is_our_ext(ext);
 }
 
-ASAP_FUNC abool ASAP_IsOurExt(STRING ext)
+PUBLIC_FUNC abool ASAP_IsOurExt(STRING ext)
 {
 #ifdef JAVA
 	return ext.length() == 3
@@ -1382,7 +1378,7 @@ ASAP_FUNC abool ASAP_IsOurExt(STRING ext)
 #endif
 }
 
-FILE_FUNC abool parse_file(
+PRIVATE_FUNC abool parse_file(
 	ASAP_State PTR ast, ASAP_ModuleInfo PTR module_info,
 	STRING filename, const byte ARRAY module, int module_len)
 {
@@ -1481,14 +1477,14 @@ FILE_FUNC abool parse_file(
 	}
 }
 
-ASAP_FUNC abool ASAP_GetModuleInfo(
+PUBLIC_FUNC abool ASAP_GetModuleInfo(
 	ASAP_ModuleInfo PTR module_info, STRING filename,
 	const byte ARRAY module, int module_len)
 {
 	return parse_file(NULL, module_info, filename, module, module_len);
 }
 
-ASAP_FUNC abool ASAP_Load(
+PUBLIC_FUNC abool ASAP_Load(
 	ASAP_State PTR ast, STRING filename,
 	const byte ARRAY module, int module_len)
 {
@@ -1496,12 +1492,12 @@ ASAP_FUNC abool ASAP_Load(
 	return parse_file(ast, ADDRESSOF AST module_info, filename, module, module_len);
 }
 
-ASAP_FUNC void ASAP_DetectSilence(ASAP_State PTR ast, int seconds)
+PUBLIC_FUNC void ASAP_DetectSilence(ASAP_State PTR ast, int seconds)
 {
 	AST silence_cycles = seconds * ASAP_MAIN_CLOCK;
 }
 
-FILE_FUNC void call_6502(ASAP_State PTR ast, int addr, int max_scanlines)
+PRIVATE_FUNC void call_6502(ASAP_State PTR ast, int addr, int max_scanlines)
 {
 	AST cpu_pc = addr;
 	/* put a CIM at 0xd20a and a return address on stack */
@@ -1515,7 +1511,7 @@ FILE_FUNC void call_6502(ASAP_State PTR ast, int addr, int max_scanlines)
 /* 50 Atari frames for the initialization routine - some SAPs are self-extracting. */
 #define SCANLINES_FOR_INIT  (50 * 312)
 
-FILE_FUNC void call_6502_init(ASAP_State PTR ast, int addr, int a, int x, int y)
+PRIVATE_FUNC void call_6502_init(ASAP_State PTR ast, int addr, int a, int x, int y)
 {
 	AST cpu_a = a & 0xff;
 	AST cpu_x = x & 0xff;
@@ -1523,7 +1519,7 @@ FILE_FUNC void call_6502_init(ASAP_State PTR ast, int addr, int a, int x, int y)
 	call_6502(ast, addr, SCANLINES_FOR_INIT);
 }
 
-ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
+PUBLIC_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 {
 	AST current_song = song;
 	AST current_duration = duration;
@@ -1586,13 +1582,13 @@ ASAP_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 	ASAP_MutePokeyChannels(ast, 0);
 }
 
-ASAP_FUNC void ASAP_MutePokeyChannels(ASAP_State PTR ast, int mask)
+PUBLIC_FUNC void ASAP_MutePokeyChannels(ASAP_State PTR ast, int mask)
 {
 	PokeySound_Mute(ast, ADDRESSOF AST base_pokey, mask);
 	PokeySound_Mute(ast, ADDRESSOF AST extra_pokey, mask >> 4);
 }
 
-ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
+PUBLIC_FUNC abool call_6502_player(ASAP_State PTR ast)
 {
 	int s;
 	PokeySound_StartFrame(ast);
@@ -1676,17 +1672,17 @@ ASAP_FUNC abool call_6502_player(ASAP_State PTR ast)
 	return TRUE;
 }
 
-ASAP_FUNC int ASAP_GetPosition(const ASAP_State PTR ast)
+PUBLIC_FUNC int ASAP_GetPosition(const ASAP_State PTR ast)
 {
 	return AST blocks_played * 10 / (ASAP_SAMPLE_RATE / 100);
 }
 
-FILE_FUNC int milliseconds_to_blocks(int milliseconds)
+PRIVATE_FUNC int milliseconds_to_blocks(int milliseconds)
 {
 	return milliseconds * (ASAP_SAMPLE_RATE / 100) / 10;
 }
 
-ASAP_FUNC void ASAP_Seek(ASAP_State PTR ast, int position)
+PUBLIC_FUNC void ASAP_Seek(ASAP_State PTR ast, int position)
 {
 	int block = milliseconds_to_blocks(position);
 	if (block < AST blocks_played)
@@ -1699,7 +1695,7 @@ ASAP_FUNC void ASAP_Seek(ASAP_State PTR ast, int position)
 	AST blocks_played = block;
 }
 
-FILE_FUNC void serialize_int(byte ARRAY buffer, int offset, int value)
+PRIVATE_FUNC void serialize_int(byte ARRAY buffer, int offset, int value)
 {
 	buffer[offset] = (byte) value;
 	buffer[offset + 1] = (byte) (value >> 8);
@@ -1707,7 +1703,7 @@ FILE_FUNC void serialize_int(byte ARRAY buffer, int offset, int value)
 	buffer[offset + 3] = (byte) (value >> 24);
 }
 
-ASAP_FUNC void ASAP_GetWavHeaderForPart(
+PUBLIC_FUNC void ASAP_GetWavHeaderForPart(
 	const ASAP_State PTR ast, byte ARRAY buffer,
 	ASAP_SampleFormat format, int blocks)
 {
@@ -1753,13 +1749,13 @@ ASAP_FUNC void ASAP_GetWavHeaderForPart(
 	serialize_int(buffer, 40, n_bytes);
 }
 
-ASAP_FUNC void ASAP_GetWavHeader(const ASAP_State PTR ast, byte ARRAY buffer, ASAP_SampleFormat format)
+PUBLIC_FUNC void ASAP_GetWavHeader(const ASAP_State PTR ast, byte ARRAY buffer, ASAP_SampleFormat format)
 {
 	int remaining_blocks = milliseconds_to_blocks(AST current_duration) - AST blocks_played;
 	ASAP_GetWavHeaderForPart(ast, buffer, format, remaining_blocks);
 }
 
-ASAP_FUNC int ASAP_Generate(
+PUBLIC_FUNC int ASAP_Generate(
 	ASAP_State PTR ast, VOIDPTR buffer,
 #ifdef JAVA
 	int buffer_offset,

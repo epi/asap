@@ -21,6 +21,35 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* How 6502 registers are stored in this emulator:
+   All variables are int, because modern processors (and Java bytecode)
+   tend to operate more effectively on these type than narrower ones.
+   pc is really an unsigned 16-bit integer.
+   a, x, y and s are unsigned 8-bit integers.
+   Flags are decomposed into three variables for improved performance.
+   c is either 0 or 1.
+   nz contains 6502 flags N and Z.
+   N is set if (nz >= 0x80). Z is set if ((nz & 0xff) == 0).
+   Usually nz is simply assigned the unsigned 8-bit operation result.
+   The are just a few operations (ADC in decimal mode, BIT, PLP and RTI)
+   where both N and Z may be set. In these cases, N is reflected by the 8th
+   (not 7th) bit of nz.
+   vdi contains rarely used flags V, D and I, as a combination
+   of V_FLAG, D_FLAG and I_FLAG. Other vdi bits are clear.
+
+   "Unofficial" opcodes are not documented as "legal" 6502 opcodes.
+   Their operation has been reverse-engineered on Atari 800XL and Atari 65XE.
+   Almost all unofficial opcodes are identical to C64's 6510,
+   except for 0x8b and 0xab.
+   The operation of "unstable" opcodes is partially uncertain.
+   Explanations are welcome.
+
+   Emulation of POKEY timer interrupts is included.
+ 
+   Two preprocessor symbols may be used to strip the size of this emulator.
+   Define ACPU_NO_DECIMAL to disable emulation of the BCD mode.
+   Define ACPU_NO_UNOFFICIAL to disable emulation of unofficial opcodes. */
+
 #include "asap_internal.h"
 
 CONST_LOOKUP(int, opcode_cycles) =
@@ -215,7 +244,7 @@ CONST_LOOKUP(int, opcode_cycles) =
 	if (cond) { \
 		addr = SBYTE(FETCH); \
 		addr += pc; \
-		if (((addr ^ pc) & 0xff00) != 0) \
+		if ((addr ^ pc) >> 8 != 0) \
 			AST cycle++; \
 		AST cycle++; \
 		pc = addr; \
@@ -233,8 +262,11 @@ CONST_LOOKUP(int, opcode_cycles) =
 		AST cycle += 7; \
 	}
 
-ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
+/* Runs 6502 emulation for the specified number of Atari scanlines.
+   Each scanline is 114 cycles of which 9 is taken by ANTIC for memory refresh. */
+PUBLIC_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 {
+	/* copy registers from ASAP_State to local variables for improved performance */
 	int pc;
 	int nz;
 	int a;
@@ -467,15 +499,14 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			if ((vdi & D_FLAG) == 0)
 				c = data >> 7;
 			else {
-				if ((data & 0xf) + (data & 1) > 5)
+				if ((data & 0xf) >= 5)
 					a = (a & 0xf0) + ((a + 6) & 0xf);
-				if (data + (data & 0x10) >= 0x60) {
-					a += 0x60;
+				if (data >= 0x50) {
+					a = (a + 0x60) & 0xff;
 					c = 1;
 				}
 				else
 					c = 0;
-				a &= 0xff;
 			}
 #endif
 			break;
@@ -1074,9 +1105,7 @@ ASAP_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			LDX_ZP;
 			break;
 		case 0xb8: /* CLV */
-#ifndef ACPU_NO_DECIMAL
 			vdi &= D_FLAG | I_FLAG;
-#endif
 			break;
 		case 0xb9: /* LDA abcd,y */
 			ABSOLUTE_Y;

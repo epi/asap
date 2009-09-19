@@ -26,12 +26,16 @@
 
 #if !defined(JAVA) && !defined(CSHARP)
 
+#include <string.h>
+
 #include "asap.h"
+
+/* C version of C/Java/C# abstraction macros */
 
 #define CONST_LOOKUP(type, name) \
                                 static const type name[]
-#define FILE_FUNC               static
-#define ASAP_FUNC
+#define PRIVATE_FUNC            static
+#define PUBLIC_FUNC
 #define PTR                     *
 #define ADDRESSOF               &
 #define ARRAY                   *
@@ -51,6 +55,8 @@
 #define MODULE_INFO             module_info->
 #define ASAP_OBX                const byte *
 #define GET_OBX(name)           name##_obx
+
+/* inter-file declarations */
 
 int ASAP_GetByte(ASAP_State *ast, int addr);
 void ASAP_PutByte(ASAP_State *ast, int addr, int data);
@@ -83,6 +89,7 @@ void trace_cpu(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz
 
 #define NEVER                   0x800000
 
+/* 6502 player types */
 #define ASAP_TYPE_SAP_B         1
 #define ASAP_TYPE_SAP_C         2
 #define ASAP_TYPE_SAP_D         3
