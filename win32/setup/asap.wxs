@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" Name="ASAP - Another Slight Atari Player" Language="1033"
+	<Product Id="*" Name="ASAP - Another Slight Atari Player $(var.VERSION)" Language="1033"
 		Version="$(var.VERSION)" Manufacturer="Piotr Fusik"
 		UpgradeCode="4250B3CB-D4A1-4486-828C-AC26A84D00D9">
 
 		<Package Description="ASAP - Another Slight Atari Player"
 			Manufacturer="Piotr Fusik" InstallerVersion="200" Compressed="yes" />
-		<Media Id="1" Cabinet="asap.cab" EmbedCab="yes" />
+		<Media Id="1" Cabinet="asap.cab" EmbedCab="yes" CompressionLevel="high" />
 
 		<Icon Id="wasap.ico" SourceFile="wasap/wasap.ico" />
 		<Property Id="ARPHELPLINK" Value="http://asap.sourceforge.net/" />
@@ -129,7 +129,7 @@
 		<Feature Id="gspasap" Title="GSPlayer plugin" Level="1" Description="Plugin for GSPlayer (desktop Windows only)." AllowAdvertise="no">
 			<ComponentRef Id="gspasap.dll" />
 		</Feature>
-		<Feature Id="apokeysnd" Title="Raster Music Tracker sound emulation" Level="1" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
+		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="1" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
 			<ComponentRef Id="apokeysnd.dll" />
 		</Feature>
 		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file." AllowAdvertise="no">
