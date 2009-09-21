@@ -488,15 +488,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	hWnd = FindWindow(WND_CLASS_NAME, NULL);
 	if (hWnd != NULL) {
+		HWND hChild = GetLastActivePopup(hWnd);
 		/* an instance of WASAP is already running */
 		if (*pb != '\0') {
-			/* pass the filename */
 			COPYDATASTRUCT cds = { 'O', (DWORD) (pe + 1 - pb), pb };
+			if (hChild != hWnd)
+				SendMessage(hChild, WM_CLOSE, 0, 0);
+			/* pass the filename */
 			SendMessage(hWnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
 		}
 		else {
 			/* bring the open dialog to top */
-			HWND hChild = GetLastActivePopup(hWnd);
 			if (hChild != hWnd)
 				SetForegroundWindow(hChild);
 		}
