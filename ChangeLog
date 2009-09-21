@@ -1,4 +1,6 @@
 2009-09-21  Piotr Fusik  <fox@scene.pl>
+* java/ASAP.ppjava, java/ASAPApplet.java, java/USAGE: changed applet interface
+
 * win32/wasap/wasap.exe: close the open dialog or error message when opening
   file from the Explorer. Dragging a corrupted file to wasap.exe ten times
   caused a crash (reported by Ramos).

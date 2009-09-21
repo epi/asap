@@ -46,6 +46,9 @@ public class ASAPApplet extends Applet implements Runnable
 	private boolean paused;
 
 	private static final int BITS_PER_SAMPLE = 16;
+	private int defaultPlaybackTime = -1;
+	private int loopPlaybackTime = -1;
+	private static final int ONCE = -2; // for loopPlaybackTime
 	private Color background;
 	private Color foreground;
 
@@ -111,7 +114,16 @@ public class ASAPApplet extends Applet implements Runnable
 		repaint();
 	}
 
-	public void play(String filename, int song, String defaultPlaybackTime, String loopPlaybackTime)
+	public void setPlaybackTime(String defaultPlaybackTime, String loopPlaybackTime)
+	{
+		this.defaultPlaybackTime = ASAP.parseDuration(defaultPlaybackTime);
+		if ("ONCE".equals(loopPlaybackTime))
+			this.loopPlaybackTime = ONCE;
+		else
+			this.loopPlaybackTime = ASAP.parseDuration(loopPlaybackTime);
+	}
+
+	public void play(String filename, int song)
 	{
 		byte[] module;
 		int module_len = 0;
@@ -138,9 +150,9 @@ public class ASAPApplet extends Applet implements Runnable
 			int duration = module_info.durations[song];
 			try {
 				if (duration < 0)
-					duration = ASAP.parseDuration(defaultPlaybackTime);
-				else if (module_info.loops[song])
-					duration = ASAP.parseDuration(loopPlaybackTime);
+					duration = defaultPlaybackTime;
+				else if (module_info.loops[song] && loopPlaybackTime != ONCE)
+					duration = loopPlaybackTime;
 			} catch (Exception e) {
 			}
 			asap.playSong(song, duration);
@@ -176,6 +188,7 @@ public class ASAPApplet extends Applet implements Runnable
 
 	public void start()
 	{
+		setPlaybackTime(getParameter("defaultPlaybackTime"), getParameter("loopPlaybackTime"));
 		background = getColor("background", Color.BLACK);
 		setBackground(background);
 		foreground = getColor("foreground", Color.GREEN);
@@ -187,9 +200,7 @@ public class ASAPApplet extends Applet implements Runnable
 			song = Integer.parseInt(getParameter("song"));
 		} catch (Exception e) {
 		}
-		String defaultPlaybackTime = getParameter("defaultPlaybackTime");
-		String loopPlaybackTime = getParameter("loopPlaybackTime");
-		play(filename, song, defaultPlaybackTime, loopPlaybackTime);
+		play(filename, song);
 	}
 
 	public void stop()
@@ -203,5 +214,20 @@ public class ASAPApplet extends Applet implements Runnable
 		if (!paused)
 			notify();
 		return paused;
+	}
+
+	public String getAuthor()
+	{
+		return asap.getModuleInfo().author;
+	}
+
+	public String getName()
+	{
+		return asap.getModuleInfo().name;
+	}
+
+	public String getDate()
+	{
+		return asap.getModuleInfo().date;
 	}
 }
