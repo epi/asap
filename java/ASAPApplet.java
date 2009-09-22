@@ -179,11 +179,12 @@ public class ASAPApplet extends Applet implements Runnable
 
 	private Color getColor(String parameter, Color defaultColor)
 	{
-		try {
-			return new Color(Integer.parseInt(getParameter(parameter), 16));
-		} catch (Exception e) {
+		String s = getParameter(parameter);
+		if (s == null || s.length() == 0)
 			return defaultColor;
-		}
+		if (s.charAt(0) == '#')
+			s = s.substring(1);
+		return new Color(Integer.parseInt(s, 16));
 	}
 
 	public void start()
@@ -196,10 +197,11 @@ public class ASAPApplet extends Applet implements Runnable
 		if (filename == null)
 			return;
 		int song = -1;
-		try {
-			song = Integer.parseInt(getParameter("song"));
-		} catch (Exception e) {
-		}
+		String s = getParameter("song");
+		if (s == null || s.length() == 0)
+			song = -1;
+		else
+			song = Integer.parseInt(s);
 		play(filename, song);
 	}
 

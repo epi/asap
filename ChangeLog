@@ -1,3 +1,7 @@
+2009-09-22  Piotr Fusik  <fox@scene.pl>
+* java/ASAPApplet.java: ignore leading hash in colors
+
+
 2009-09-21  Piotr Fusik  <fox@scene.pl>
 * java/ASAP.ppjava, java/ASAPApplet.java, java/USAGE: changed applet interface
 
