@@ -173,11 +173,19 @@ static void Tray_Modify(HICON hIcon)
 
 /* GUI -------------------------------------------------------------------- */
 
+static BOOL errorShown = FALSE;
 static HINSTANCE hInst;
 static HICON hStopIcon;
 static HICON hPlayIcon;
 static HMENU hTrayMenu;
 static HMENU hSongMenu;
+
+static void ShowError(const char *message)
+{
+	errorShown = TRUE;
+	MessageBox(hWnd, message, APP_TITLE, MB_OK | MB_ICONERROR);
+	errorShown = FALSE;
+}
 
 static void ShowAbout(void)
 {
@@ -224,7 +232,7 @@ static void StopPlayback(void)
 static BOOL DoLoad(ASAP_State *asap, byte module[], int module_len)
 {
 	if (!ASAP_Load(asap, current_filename, module, module_len)) {
-		MessageBox(hWnd, "Unsupported file format", APP_TITLE, MB_OK | MB_ICONERROR);
+		ShowError("Unsupported file format");
 		return FALSE;
 	}
 	return TRUE;
@@ -246,7 +254,7 @@ static void LoadAndPlay(int song)
 	if (!DoLoad(&asap, module, module_len))
 		return;
 	if (!WaveOut_Open(asap.module_info.channels)) {
-		MessageBox(hWnd, "Error initalizing WaveOut", APP_TITLE, MB_OK | MB_ICONERROR);
+		ShowError("Error initalizing WaveOut");
 		return;
 	}
 	if (song < 0)
@@ -387,7 +395,7 @@ static void SaveWav(void)
 	if (!GetSaveFileName(&ofn))
 		return;
 	if (!DoSaveWav(&asap))
-		MessageBox(hWnd, "Cannot save file", "Error", MB_OK | MB_ICONERROR);
+		ShowError("Cannot save file");
 }
 
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -454,6 +462,11 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 	case WM_COPYDATA:
 		pcds = (PCOPYDATASTRUCT) lParam;
 		if (pcds->dwData == 'O' && pcds->cbData <= sizeof(current_filename)) {
+			if (errorShown) {
+				HWND hChild = GetLastActivePopup(hWnd);
+				if (hChild != hWnd)
+					SendMessage(hChild, WM_CLOSE, 0, 0);
+			}
 			memcpy(current_filename, pcds->lpData, pcds->cbData);
 			LoadAndPlay(-1);
 		}
@@ -488,17 +501,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	hWnd = FindWindow(WND_CLASS_NAME, NULL);
 	if (hWnd != NULL) {
-		HWND hChild = GetLastActivePopup(hWnd);
 		/* an instance of WASAP is already running */
 		if (*pb != '\0') {
-			COPYDATASTRUCT cds = { 'O', (DWORD) (pe + 1 - pb), pb };
-			if (hChild != hWnd)
-				SendMessage(hChild, WM_CLOSE, 0, 0);
 			/* pass the filename */
+			COPYDATASTRUCT cds = { 'O', (DWORD) (pe + 1 - pb), pb };
 			SendMessage(hWnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
 		}
 		else {
 			/* bring the open dialog to top */
+			HWND hChild = GetLastActivePopup(hWnd);
 			if (hChild != hWnd)
 				SetForegroundWindow(hChild);
 		}
