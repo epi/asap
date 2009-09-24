@@ -240,14 +240,14 @@ PRIVATE_FUNC void generate(ASAP_State PTR ast, PokeyState PTR pst, int current_c
 #define DO_AUDC(ch) \
 	DO_STORE(audc##ch); \
 	if ((data & 0x10) != 0) { \
-		data &= 0xf; \
+		data = (data & 0xf) << DELTA_SHIFT_POKEY; \
 		if ((PST mute##ch & MUTE_USER) == 0) \
 			PST delta_buffer[CURRENT_SAMPLE] \
 				+= PST delta##ch > 0 ? data - PST delta##ch : data; \
 		PST delta##ch = data; \
 	} \
 	else { \
-		data &= 0xf; \
+		data = (data & 0xf) << DELTA_SHIFT_POKEY; \
 		DO_ULTRASOUND(ch); \
 		if (PST delta##ch > 0) { \
 			if ((PST mute##ch & MUTE_USER) == 0) \
@@ -489,7 +489,7 @@ PUBLIC_FUNC int PokeySound_Generate(ASAP_State PTR ast, byte ARRAY buffer, int b
 		blocks = samples - i;
 	for (; i < samples; i++) {
 		int sample;
-		acc_left += (AST base_pokey.delta_buffer[i] << 20) - (acc_left * 3 >> 10);
+		acc_left += AST base_pokey.delta_buffer[i] - (acc_left * 3 >> 10);
 		sample = acc_left >> 10;
 #define STORE_SAMPLE \
 		if (sample < -32767) \
@@ -511,14 +511,14 @@ PUBLIC_FUNC int PokeySound_Generate(ASAP_State PTR ast, byte ARRAY buffer, int b
 		}
 		STORE_SAMPLE;
 		if (AST extra_pokey_mask != 0) {
-			acc_right += (AST extra_pokey.delta_buffer[i] << 20) - (acc_right * 3 >> 10);
+			acc_right += AST extra_pokey.delta_buffer[i] - (acc_right * 3 >> 10);
 			sample = acc_right >> 10;
 			STORE_SAMPLE;
 		}
 	}
 	if (i == AST samples) {
-		acc_left += AST base_pokey.delta_buffer[i] << 20;
-		acc_right += AST extra_pokey.delta_buffer[i] << 20;
+		acc_left += AST base_pokey.delta_buffer[i];
+		acc_right += AST extra_pokey.delta_buffer[i];
 	}
 	AST sample_index = i;
 	AST iir_acc_left = acc_left;

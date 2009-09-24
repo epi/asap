@@ -48,6 +48,7 @@ public class ASAP_ModuleInfo
 	int music;
 	int init;
 	int player;
+	int covox_addr;
 	int header_len;
 	final byte[] song_pos = new byte[128];
 }

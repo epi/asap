@@ -1,3 +1,9 @@
+2009-09-24  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, asap_internal.h, apokeysnd.c, csharp/ASAP.ppcs,
+  java/ASAP.ppjava, java/ASAP_ModuleInfo.java: added COVOX emulation
+  (use "COVOX D600" in SAP header)
+
+
 2009-09-23  Piotr Fusik  <fox@scene.pl>
 * win32/wasap/wasap.c: when opening file from the Explorer, close only error
   messages, not file information

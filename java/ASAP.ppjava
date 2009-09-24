@@ -104,7 +104,7 @@ final class PokeyState
 	int delta3;
 	int delta4;
 	int skctl;
-	final byte[] delta_buffer = new byte[888];
+	final int[] delta_buffer = new int[888];
 }
 
 final class ASAP_State
@@ -127,6 +127,7 @@ final class ASAP_State
 	int irqst;
 	int extra_pokey_mask;
 	int consol;
+	final byte[] covox = new byte[4];
 	final PokeyState base_pokey = new PokeyState();
 	final PokeyState extra_pokey = new PokeyState();
 	int sample_offset;

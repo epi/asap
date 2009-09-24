@@ -77,6 +77,7 @@ typedef struct {
 	int music;
 	int init;
 	int player;
+	int covox_addr;
 	int header_len;
 	byte song_pos[128];
 } ASAP_ModuleInfo;
@@ -119,7 +120,7 @@ typedef struct {
 	int delta3;
 	int delta4;
 	int skctl;
-	signed char delta_buffer[888];
+	int delta_buffer[888];
 } PokeyState;
 
 /* Player state.
@@ -143,6 +144,7 @@ typedef struct {
 	int irqst;
 	int extra_pokey_mask;
 	int consol;
+	byte covox[4];
 	PokeyState base_pokey;
 	PokeyState extra_pokey;
 	int sample_offset;

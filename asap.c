@@ -93,12 +93,22 @@ PUBLIC_FUNC void ASAP_PutByte(ASAP_State PTR ast, int addr, int data)
 		else
 			AST cycle = AST next_scanline_cycle + 106;
 	}
+	else if ((addr & 0xff00) == AST module_info.covox_addr) {
+		PokeyState PTR pst;
+		addr &= 3;
+		if (addr == 0 || addr == 3)
+			pst = ADDRESSOF AST base_pokey;
+		else
+			pst = ADDRESSOF AST extra_pokey;
+		PST delta_buffer[CYCLE_TO_SAMPLE(AST cycle)] += (data - UBYTE(AST covox[addr])) << DELTA_SHIFT_COVOX;
+		AST covox[addr] = (byte) data;
+	}
 	else if ((addr & 0xff1f) == 0xd01f) {
 		int sample = CYCLE_TO_SAMPLE(AST cycle);
 		int delta;
 		data &= 8;
 		/* NOT data - AST consol; reverse to the POKEY sound */
-		delta = AST consol - data;
+		delta = (AST consol - data) << DELTA_SHIFT_GTIA;
 		AST consol = data;
 		AST base_pokey.delta_buffer[sample] += delta;
 		AST extra_pokey.delta_buffer[sample] += delta;
@@ -1235,6 +1245,12 @@ PRIVATE_FUNC abool parse_sap_header(ASAP_ModuleInfo PTR module_info, const byte 
 			SET_HEX(MODULE_INFO init);
 		else if (TAG_IS("PLAYER"))
 			SET_HEX(MODULE_INFO player);
+		else if (TAG_IS("COVOX")) {
+			SET_HEX(MODULE_INFO covox_addr);
+			if (MODULE_INFO covox_addr != 0xd600)
+				return FALSE;
+			MODULE_INFO channels = 2;
+		}
 	}
 	if (MODULE_INFO default_song >= MODULE_INFO songs)
 		return FALSE;
@@ -1442,6 +1458,7 @@ PRIVATE_FUNC abool parse_file(
 	MODULE_INFO music = -1;
 	MODULE_INFO init = -1;
 	MODULE_INFO player = -1;
+	MODULE_INFO covox_addr = -1;
 	switch (get_packed_ext(filename)) {
 	case ASAP_EXT('S', 'A', 'P'):
 		return parse_sap(ast, module_info, module, module_len);
@@ -1527,6 +1544,10 @@ PUBLIC_FUNC void ASAP_PlaySong(ASAP_State PTR ast, int song, int duration)
 	AST silence_cycles_counter = AST silence_cycles;
 	AST extra_pokey_mask = AST module_info.channels > 1 ? 0x10 : 0;
 	AST consol = 8;
+	AST covox[0] = (byte) 0x80;
+	AST covox[1] = (byte) 0x80;
+	AST covox[2] = (byte) 0x80;
+	AST covox[3] = (byte) 0x80;
 	PokeySound_Initialize(ast);
 	AST cycle = 0;
 	AST cpu_nz = 0;
