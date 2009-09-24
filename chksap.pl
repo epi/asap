@@ -141,11 +141,11 @@ because the default song defaults to 0.
 
 =item B<hexadecimal values should be 4-digit>
 
-The arguments of INIT, PLAYER and MUSIC should specify all 4 digits.
+The arguments of INIT, PLAYER, MUSIC and COVOX should specify all 4 digits.
 
 =item B<hexadecimal values should be uppercase>
 
-The arguments of INIT, PLAYER and MUSIC should use C<A-F> letters
+The arguments of INIT, PLAYER, MUSIC and COVOX should use C<A-F> letters
 rather than C<a-f>.
 
 =item B<non-standard order of tags>
@@ -155,7 +155,7 @@ about it makes it easier to create new tools that process SAP files.
 The canonical order is: first SAP, then AUTHOR, then NAME, then DATE.
 After DATE, the following tags should be used in any order: SONGS, TYPE,
 FASTPLAY and STEREO.  DEFSONG must appear after SONGS.
-The tags that should appear last are: INIT, PLAYER and MUSIC,
+The tags that should appear last are: INIT, PLAYER, MUSIC and COVOX,
 in any order.
 
 =item B<FFFF inside binary part>
@@ -247,7 +247,7 @@ C<TYPE C> uses PLAYER and MUSIC tags, but not INIT.
 
 The MUSIC tag should be used only with C<TYPE C>.
 
-=item B<invalid argument of INIT, PLAYER or MUSIC>
+=item B<invalid argument of INIT, PLAYER, MUSIC or COVOX>
 
 The argument of these tags must be 4-digit hexadecimal number.
 
@@ -258,7 +258,7 @@ The same tag appears several times within the header.
 =item B<unknown tag: ...>
 
 Known tags are: SAP, AUTHOR, NAME, DATE, SONGS, DEFSONG, TYPE, FASTPLAY,
-STEREO, INIT, PLAYER, MUSIC.
+STEREO, INIT, PLAYER, MUSIC, COVOX.
 
 =item B<duplicate FFFF in the binary part>
 
@@ -439,7 +439,7 @@ sub process($$) {
 					or $fixed{'non-standard order of tags'} = 1;
 				$fatal{'unexpected argument of STEREO'} = 1 if $arg ne '';
 			}
-			elsif ($tag eq 'INIT' || $tag eq 'PLAYER' || $tag eq 'MUSIC') {
+			elsif ($tag eq 'INIT' || $tag eq 'PLAYER' || $tag eq 'MUSIC' || $tag eq 'COVOX') {
 				exists($tags{'TYPE'})
 					or $fixed{'non-standard order of tags'} = 1;
 				if ($arg !~ /^[0-9A-Fa-f]{1,4}$/s) {
@@ -556,7 +556,7 @@ sub process($$) {
 						print F "DEFSONG $tags{'DEFSONG'}\x0D\x0A"
 							if exists($tags{'DEFSONG'});
 						print F "STEREO\x0D\x0A" if exists($tags{'STEREO'});
-						for ('TYPE', 'FASTPLAY', 'INIT', 'MUSIC', 'PLAYER') {
+						for ('TYPE', 'FASTPLAY', 'INIT', 'MUSIC', 'PLAYER', 'COVOX') {
 							print F "$_ $tags{$_}\x0D\x0A" if exists($tags{$_});
 						}
 						for (@times) {

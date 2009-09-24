@@ -1,6 +1,6 @@
 2009-09-24  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, asap_internal.h, apokeysnd.c, csharp/ASAP.ppcs,
-  java/ASAP.ppjava, java/ASAP_ModuleInfo.java: added COVOX emulation
+  java/ASAP.ppjava, java/ASAP_ModuleInfo.java, chksap.pl: added COVOX emulation
   (use "COVOX D600" in SAP header)
 
 
