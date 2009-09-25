@@ -10,7 +10,7 @@ MKDIRS = mkdir -p
 INSTALL = install
 INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA = $(INSTALL) -m 644
-ASCIIDOC = asciidoc -a doctime
+ASCIIDOC = asciidoc -a localtime -a doctime
 ASCIIDOC_POSTPROCESS = $(PERL) -pi -e 's/527bbd;/c02020;/'
 
 XMMS_CFLAGS = `xmms-config --cflags`

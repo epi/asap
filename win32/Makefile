@@ -22,9 +22,9 @@ ASAP_CL71 = cl -nologo -O2 -GL -GR- -W3 -DNDEBUG -Fe$@ -I. -I..
 PERL = perl
 RM = rm -f
 UNIX2DOS = unix2dos
-ASCIIDOC = python C:/bin/asciidoc/asciidoc.py -o $@ -a doctime
+ASCIIDOC = asciidoc -o $@ -a localtime -a doctime
 ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/;END{unlink '$@.bak'}" $@
-ASCIIDOC_VALIDATE = xmllint --noout --nonet --dtdvalid c:/bin/xhtml11-flat.dtd $@
+ASCIIDOC_VALIDATE = xmllint --valid --noout --nonet $@
 SEVENZIP = 7z a -mx=9
 GREP = grep
 CANDLE = candle -nologo -o $@

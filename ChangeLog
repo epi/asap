@@ -1,3 +1,10 @@
+2009-09-25  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile: removed absolute paths to asciidoc (use Cygwin's)
+  and XHTML DTD (use /etc/xml/catalog)
+
+* Makefile, win32/Makefile: "-a localtime" for old asciidoc (e.g. Cygwin's)
+
+
 2009-09-24  Piotr Fusik  <fox@scene.pl>
 * asap.c, asap.h, asap_internal.h, apokeysnd.c, csharp/ASAP.ppcs,
   java/ASAP.ppjava, java/ASAP_ModuleInfo.java, chksap.pl: added COVOX emulation
