@@ -1,5 +1,5 @@
 /*
- * ASAP2WAV.cs - converter of ASAP-supported formats to WAV files
+ * asap2wav.cs - converter of ASAP-supported formats to WAV files
  *
  * Copyright (C) 2008-2009  Piotr Fusik
  *

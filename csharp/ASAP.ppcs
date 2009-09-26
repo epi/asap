@@ -148,7 +148,7 @@ namespace ASAP
 
 		readonly ASAP_State ast = new ASAP_State();
 
-		public const string Version = "1.3.0";
+		public const string Version = "2.0.0";
 
 		public const int ModuleMax = 65000;
 

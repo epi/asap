@@ -12,7 +12,7 @@ PREVERIFY = "$(WTK)/bin/preverify1.1"
 ME_EMU = "$(WTK)/bin/emulatorw" -gui
 
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
-COMMON_H = ../asap.h ../asap_internal.h
+COMMON_H = ../asap.h ../asap_internal.h ../anylang.h
 PLAYERS_OBX_DIR = net/sf/asap
 
 all: asap2wav.jar asap_applet.jar asap_midlet.jad

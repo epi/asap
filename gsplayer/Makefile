@@ -2,7 +2,7 @@ CC = arm-wince-mingw32ce-gcc -s -O2 -Wall -o $@ -I.. -I../win32
 WINDRES = arm-wince-mingw32ce-windres -o $@
 
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
-COMMON_H = ../asap.h ../asap_internal.h ../players.h
+COMMON_H = ../asap.h ../asap_internal.h ../anylang.h ../players.h
 
 all: gspasap.dll
 
