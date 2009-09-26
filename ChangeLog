@@ -1,3 +1,8 @@
+2009-09-26  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap_internal.h, anylang.h, acpu.c, apokeysnd.c, csharp/ASAP.ppcs,
+  java/ASAP.ppjava: C/Java/C# macros moved to anylang.h and improved
+
+
 2009-09-25  Piotr Fusik  <fox@scene.pl>
 * win32/Makefile: removed absolute paths to asciidoc (use Cygwin's)
   and XHTML DTD (use /etc/xml/catalog)

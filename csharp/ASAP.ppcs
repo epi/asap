@@ -21,45 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* C# version of C/Java/C# abstraction macros */
-
 #define CSHARP
-#define abool                   bool
-#define FALSE                   false
-#define TRUE                    true
-#define NULL                    null
-#define const
-#define CONST_LOOKUP(type, name) \
-                                private static readonly type[] name
-#define PRIVATE_FUNC            private static
-#define PUBLIC_FUNC             private static
-#define PTR
-#define ADDRESSOF
-#define ARRAY                   []
-#define VOIDPTR                 byte[]
-#define UBYTE(data)             (data)
-#define SBYTE(data)             (sbyte) (data)
-#define STRING                  string
-#define sizeof(array)           array.Length
-#define ZERO_ARRAY(array)       Array.Clear(array, 0, array.Length)
-#define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
-                                Array.Copy(src, src_offset, dest, dest_offset, len)
-#define NEW_ARRAY(type, name, size) \
-                                type[] name = new type[size]
-#define INIT_ARRAY(array)
-#define READ_BYTE               ReadByte
-#define READ_ARRAY              Read
-#define RUNTIME_EXCEPTION       Exception
-
-#define AST                     ast.
-#define PST                     pst.
-#define MODULE_INFO             module_info.
-#define ASAP_SAMPLE_RATE        44100
-#define ASAP_FORMAT_U8          ASAP_SampleFormat.U8
-#define ASAP_FORMAT_S16_LE      ASAP_SampleFormat.S16LE
-#define ASAP_FORMAT_S16_BE      ASAP_SampleFormat.S16BE
-#define ASAP_OBX                Stream
-#define GET_OBX(name)           System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(#name)
 
 using System;
 using System.IO;

@@ -22,7 +22,7 @@ MOC_PLUGIN_DIR = /usr/local/lib/moc/decoder_plugins
 XBMC_DLL_LOADER_EXPORTS = ../XBMC/xbmc/cores/DllLoader/exports
 
 COMMON_C = asap.c acpu.c apokeysnd.c
-COMMON_H = asap.h asap_internal.h players.h
+COMMON_H = asap.h asap_internal.h anylang.h players.h
 PLAYERS_OBX = players/cmc.obx players/cm3.obx players/cms.obx players/dlt.obx players/mpt.obx players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx
 
 all: asap2wav libasap.a

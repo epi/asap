@@ -24,39 +24,26 @@
 #ifndef _ASAP_INTERNAL_H_
 #define _ASAP_INTERNAL_H_
 
-#if !defined(JAVA) && !defined(CSHARP)
+#include "anylang.h"
 
-#include <string.h>
+#ifdef JAVA
+
+#define ASAP_SAMPLE_RATE        44100
+#define ASAP_FORMAT_U8          8
+#define ASAP_FORMAT_S16_LE      16
+#define ASAP_FORMAT_S16_BE      -16
+#define ASAP_SampleFormat       int
+
+#elif defined(CSHARP)
+
+#define ASAP_SAMPLE_RATE        44100
+#define ASAP_FORMAT_U8          ASAP_SampleFormat.U8
+#define ASAP_FORMAT_S16_LE      ASAP_SampleFormat.S16LE
+#define ASAP_FORMAT_S16_BE      ASAP_SampleFormat.S16BE
+
+#else /* C */
 
 #include "asap.h"
-
-/* C version of C/Java/C# abstraction macros */
-
-#define CONST_LOOKUP(type, name) \
-                                static const type name[]
-#define PRIVATE_FUNC            static
-#define PUBLIC_FUNC
-#define PTR                     *
-#define ADDRESSOF               &
-#define ARRAY                   *
-#define VOIDPTR                 void *
-#define UBYTE(data)             (data)
-#define SBYTE(data)             (signed char) (data)
-#define STRING                  const char *
-#define ZERO_ARRAY(array)       memset(array, 0, sizeof(array))
-#define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
-                                memcpy(dest + dest_offset, src + src_offset, len)
-#define NEW_ARRAY(type, name, size) \
-                                type name[size]
-#define INIT_ARRAY(array)       memset(array, 0, sizeof(array))
-
-#define AST                     ast->
-#define PST                     pst->
-#define MODULE_INFO             module_info->
-#define ASAP_OBX                const byte *
-#define GET_OBX(name)           name##_obx
-
-/* inter-file declarations */
 
 int ASAP_GetByte(ASAP_State *ast, int addr);
 void ASAP_PutByte(ASAP_State *ast, int addr, int data);
@@ -78,7 +65,7 @@ extern int cpu_trace;
 void trace_cpu(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz, int vdi, int c);
 #endif
 
-#endif /* !defined(JAVA) && !defined(CSHARP) */
+#endif /* C */
 
 #define ASAP_MAIN_CLOCK         1773447
 
@@ -108,13 +95,13 @@ void trace_cpu(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz
 #define ASAP_TYPE_TMC           12
 #define ASAP_TYPE_TM2           13
 
-#define dGetByte(addr)          UBYTE(AST memory[addr])
-#define dPutByte(addr, data)    AST memory[addr] = (byte) (data)
+#define dGetByte(addr)          UBYTE(ast _ memory[addr])
+#define dPutByte(addr, data)    ast _ memory[addr] = (byte) (data)
 #define dGetWord(addr)          (dGetByte(addr) + (dGetByte((addr) + 1) << 8))
 #define GetByte(addr)           (((addr) & 0xf900) == 0xd000 ? ASAP_GetByte(ast, addr) : dGetByte(addr))
 #define PutByte(addr, data)     do { if (((addr) & 0xf900) == 0xd000) ASAP_PutByte(ast, addr, data); else dPutByte(addr, data); } while (FALSE)
-#define RMW_GetByte(dest, addr) do { if (((addr) >> 8) == 0xd2) { dest = ASAP_GetByte(ast, addr); AST cycle--; ASAP_PutByte(ast, addr, dest); AST cycle++; } else dest = dGetByte(addr); } while (FALSE)
+#define RMW_GetByte(dest, addr) do { if (((addr) >> 8) == 0xd2) { dest = ASAP_GetByte(ast, addr); ast _ cycle--; ASAP_PutByte(ast, addr, dest); ast _ cycle++; } else dest = dGetByte(addr); } while (FALSE)
 
-#define CYCLE_TO_SAMPLE(cycle)  (((cycle) * ASAP_SAMPLE_RATE + AST sample_offset) / ASAP_MAIN_CLOCK)
+#define CYCLE_TO_SAMPLE(cycle)  (((cycle) * ASAP_SAMPLE_RATE + ast _ sample_offset) / ASAP_MAIN_CLOCK)
 
 #endif /* _ASAP_INTERNAL_H_ */

@@ -39,10 +39,9 @@
 
    "Unofficial" opcodes are not documented as "legal" 6502 opcodes.
    Their operation has been reverse-engineered on Atari 800XL and Atari 65XE.
-   Almost all unofficial opcodes are identical to C64's 6510,
-   except for 0x8b and 0xab.
+   Unofficial opcodes are identical to C64's 6510, except for 0x8b and 0xab.
    The operation of "unstable" opcodes is partially uncertain.
-   Explanations are welcome.
+   Explanation is welcome.
 
    Emulation of POKEY timer interrupts is included.
  
@@ -52,7 +51,7 @@
 
 #include "asap_internal.h"
 
-CONST_LOOKUP(int, opcode_cycles) =
+CONST_ARRAY(int, opcode_cycles) =
 {
 /*	0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 	7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, /* 0x */
@@ -169,8 +168,8 @@ CONST_LOOKUP(int, opcode_cycles) =
 #define ZPAGE_Y      addr = (FETCH + y) & 0xff
 #define INDIRECT_X   addr = (FETCH + x) & 0xff; addr = dGetByte(addr) + (zGetByte(addr + 1) << 8)
 #define INDIRECT_Y   addr = FETCH; addr = (dGetByte(addr) + (zGetByte(addr + 1) << 8) + y) & 0xffff
-#define NCYCLES_X    if ((addr & 0xff) < x) AST cycle++
-#define NCYCLES_Y    if ((addr & 0xff) < y) AST cycle++
+#define NCYCLES_X    if ((addr & 0xff) < x) ast _ cycle++
+#define NCYCLES_Y    if ((addr & 0xff) < y) ast _ cycle++
 
 #define PL(dest)     s = (s + 1) & 0xff; dest = dGetByte(0x0100 + s)
 #define PLP          PL(vdi); nz = ((vdi & 0x80) << 1) + (~vdi & Z_FLAG); c = vdi & 1; vdi &= V_FLAG | D_FLAG | I_FLAG
@@ -245,8 +244,8 @@ CONST_LOOKUP(int, opcode_cycles) =
 		addr = SBYTE(FETCH); \
 		addr += pc; \
 		if ((addr ^ pc) >> 8 != 0) \
-			AST cycle++; \
-		AST cycle++; \
+			ast _ cycle++; \
+		ast _ cycle++; \
 		pc = addr; \
 		break; \
 	} \
@@ -254,12 +253,12 @@ CONST_LOOKUP(int, opcode_cycles) =
 	break
 
 #define CHECK_IRQ \
-	if ((vdi & I_FLAG) == 0 && AST irqst != 0xff) { \
+	if ((vdi & I_FLAG) == 0 && ast _ irqst != 0xff) { \
 		PHPC; \
 		PHPB0; \
 		vdi |= I_FLAG; \
 		pc = dGetWord(0xfffe); \
-		AST cycle += 7; \
+		ast _ cycle += 7; \
 	}
 
 /* Runs 6502 emulation for the specified number of Atari scanlines.
@@ -277,50 +276,50 @@ PUBLIC_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 	int vdi;
 	int next_event_cycle;
 	int cycle_limit;
-	pc = AST cpu_pc;
-	nz = AST cpu_nz;
-	a = AST cpu_a;
-	x = AST cpu_x;
-	y = AST cpu_y;
-	c = AST cpu_c;
-	s = AST cpu_s;
-	vdi = AST cpu_vdi;
-	AST next_scanline_cycle = 114;
+	pc = ast _ cpu_pc;
+	nz = ast _ cpu_nz;
+	a = ast _ cpu_a;
+	x = ast _ cpu_x;
+	y = ast _ cpu_y;
+	c = ast _ cpu_c;
+	s = ast _ cpu_s;
+	vdi = ast _ cpu_vdi;
+	ast _ next_scanline_cycle = 114;
 	next_event_cycle = 114;
 	cycle_limit = 114 * scanlines;
-	if (next_event_cycle > AST timer1_cycle)
-		next_event_cycle = AST timer1_cycle;
-	if (next_event_cycle > AST timer2_cycle)
-		next_event_cycle = AST timer2_cycle;
-	if (next_event_cycle > AST timer4_cycle)
-		next_event_cycle = AST timer4_cycle;
-	AST nearest_event_cycle = next_event_cycle;
+	if (next_event_cycle > ast _ timer1_cycle)
+		next_event_cycle = ast _ timer1_cycle;
+	if (next_event_cycle > ast _ timer2_cycle)
+		next_event_cycle = ast _ timer2_cycle;
+	if (next_event_cycle > ast _ timer4_cycle)
+		next_event_cycle = ast _ timer4_cycle;
+	ast _ nearest_event_cycle = next_event_cycle;
 	for (;;) {
 		int cycle;
 		int addr;
 		int data;
-		cycle = AST cycle;
-		if (cycle >= AST nearest_event_cycle) {
-			if (cycle >= AST next_scanline_cycle) {
-				if (++AST scanline_number == 312)
-					AST scanline_number = 0;
-				AST cycle = cycle += 9;
-				AST next_scanline_cycle += 114;
+		cycle = ast _ cycle;
+		if (cycle >= ast _ nearest_event_cycle) {
+			if (cycle >= ast _ next_scanline_cycle) {
+				if (++ast _ scanline_number == 312)
+					ast _ scanline_number = 0;
+				ast _ cycle = cycle += 9;
+				ast _ next_scanline_cycle += 114;
 				if (--scanlines <= 0)
 					break;
 			}
-			next_event_cycle = AST next_scanline_cycle;
+			next_event_cycle = ast _ next_scanline_cycle;
 #define CHECK_TIMER_IRQ(ch) \
-			if (cycle >= AST timer##ch##_cycle) { \
-				AST irqst &= ~ch; \
-				AST timer##ch##_cycle = NEVER; \
+			if (cycle >= ast _ timer##ch##_cycle) { \
+				ast _ irqst &= ~ch; \
+				ast _ timer##ch##_cycle = NEVER; \
 			} \
-			else if (next_event_cycle > AST timer##ch##_cycle) \
-				next_event_cycle = AST timer##ch##_cycle;
+			else if (next_event_cycle > ast _ timer##ch##_cycle) \
+				next_event_cycle = ast _ timer##ch##_cycle;
 			CHECK_TIMER_IRQ(1);
 			CHECK_TIMER_IRQ(2);
 			CHECK_TIMER_IRQ(4);
-			AST nearest_event_cycle = next_event_cycle;
+			ast _ nearest_event_cycle = next_event_cycle;
 			CHECK_IRQ;
 		}
 #ifdef ASAPSCAN
@@ -328,7 +327,7 @@ PUBLIC_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			trace_cpu(ast, pc, a, x, y, s, nz, vdi, c);
 #endif
 		data = FETCH;
-		AST cycle += opcode_cycles[data];
+		ast _ cycle += opcode_cycles[data];
 		switch (data) {
 		case 0x00: /* BRK */
 			pc++;
@@ -353,9 +352,9 @@ PUBLIC_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0xb2:
 		case 0xd2:
 		case 0xf2:
-			AST scanline_number = (AST scanline_number + scanlines - 1) % 312;
+			ast _ scanline_number = (ast _ scanline_number + scanlines - 1) % 312;
 			scanlines = 1;
-			AST cycle = cycle_limit;
+			ast _ cycle = cycle_limit;
 			break;
 #ifndef ACPU_NO_UNOFFICIAL
 		case 0x03: /* ASO (ab,x) [unofficial] */
@@ -413,7 +412,7 @@ PUBLIC_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 		case 0xdc:
 		case 0xfc:
 			if (FETCH + x >= 0x100)
-				AST cycle++;
+				ast _ cycle++;
 			pc++;
 			break;
 		case 0x1f: /* ASO abcd,x [unofficial] */
@@ -1289,19 +1288,19 @@ PUBLIC_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
 			break;
 		}
 	}
-	AST cpu_pc = pc;
-	AST cpu_nz = nz;
-	AST cpu_a = a;
-	AST cpu_x = x;
-	AST cpu_y = y;
-	AST cpu_c = c;
-	AST cpu_s = s;
-	AST cpu_vdi = vdi;
-	AST cycle -= cycle_limit;
-	if (AST timer1_cycle != NEVER)
-		AST timer1_cycle -= cycle_limit;
-	if (AST timer2_cycle != NEVER)
-		AST timer2_cycle -= cycle_limit;
-	if (AST timer4_cycle != NEVER)
-		AST timer4_cycle -= cycle_limit;
+	ast _ cpu_pc = pc;
+	ast _ cpu_nz = nz;
+	ast _ cpu_a = a;
+	ast _ cpu_x = x;
+	ast _ cpu_y = y;
+	ast _ cpu_c = c;
+	ast _ cpu_s = s;
+	ast _ cpu_vdi = vdi;
+	ast _ cycle -= cycle_limit;
+	if (ast _ timer1_cycle != NEVER)
+		ast _ timer1_cycle -= cycle_limit;
+	if (ast _ timer2_cycle != NEVER)
+		ast _ timer2_cycle -= cycle_limit;
+	if (ast _ timer4_cycle != NEVER)
+		ast _ timer4_cycle -= cycle_limit;
 }

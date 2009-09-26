@@ -31,7 +31,7 @@ CANDLE = candle -nologo -o $@
 LIGHT = light -nologo -o $@
 
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
-COMMON_H = ../asap.h ../asap_internal.h ../players.h
+COMMON_H = ../asap.h ../asap_internal.h ../anylang.h ../players.h
 
 all: mingw dsf foo asap.lib
 
@@ -131,7 +131,7 @@ xbmc_asap.dll: ../xbmc/xbmc_asap.c $(COMMON_C) ../xbmc/xbmc_asap.res $(COMMON_H)
 
 # APokeySound
 
-apokeysnd.dll: ../apokeysnd.c apokeysnd-res.o ../asap.h ../asap_internal.h
+apokeysnd.dll: ../apokeysnd.c apokeysnd-res.o ../asap.h ../asap_internal.h ../anylang.h
 	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DAPOKEYSND ../apokeysnd.c apokeysnd-res.o
 
 apokeysnd-res.o: gui.rc ../asap.h
@@ -226,7 +226,7 @@ setup/asap.wixobj: setup/asap.wxs
 srcdist: $(PLAYERS_OBX) ../README.html
 	$(RM) ../../asap-$(VERSION).tar.gz
 	$(PERL) -x.. ../maketar.pl -d asap-$(VERSION) \
-		-t asap.c asap.h asap_internal.h acpu.c apokeysnd.c \
+		-t asap.c asap.h asap_internal.h anylang.h acpu.c apokeysnd.c \
 		asap2wav.c asapscan.c \
 		players/cmc.asx players/cms.asx players/dlt.as8 players/mpt.asx \
 		players/rmt.asx players/tmc.asx players/tm2.asx \

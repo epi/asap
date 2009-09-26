@@ -21,46 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Java version of C/Java/C# abstraction macros */
-
 #define JAVA
-#define abool                   boolean
-#define FALSE                   false
-#define TRUE                    true
-#define NULL                    null
-#define const
-#define CONST_LOOKUP(type, name) \
-                                private static final type[] name
-#define PRIVATE_FUNC            private static
-#define PUBLIC_FUNC             private static
-#define PTR
-#define ADDRESSOF
-#define ARRAY                   []
-#define VOIDPTR                 byte[]
-#define UBYTE(data)             ((data) & 0xff)
-#define SBYTE(data)             (byte) (data)
-#define STRING                  String
-#define sizeof(array)           array.length
-#define ZERO_ARRAY(array)       for (int ii = 0; ii < array.length; ii++) array[ii] = 0
-#define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
-                                System.arraycopy(src, src_offset, dest, dest_offset, len)
-#define NEW_ARRAY(type, name, size) \
-                                type[] name = new type[size]
-#define INIT_ARRAY(array)
-#define READ_BYTE               read
-#define READ_ARRAY              read
-#define RUNTIME_EXCEPTION       RuntimeException
-
-#define AST                     ast.
-#define PST                     pst.
-#define MODULE_INFO             module_info.
-#define ASAP_SAMPLE_RATE        44100
-#define ASAP_FORMAT_U8          8
-#define ASAP_FORMAT_S16_LE      16
-#define ASAP_FORMAT_S16_BE      -16
-#define ASAP_SampleFormat       int
-#define ASAP_OBX                InputStream
-#define GET_OBX(name)           ASAP.class.getResourceAsStream(#name + ".obx")
 
 package net.sf.asap;
 
