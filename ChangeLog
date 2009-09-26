@@ -1,6 +1,13 @@
 2009-09-26  Piotr Fusik  <fox@scene.pl>
+* javascript/asap.ppjs, javascript/asap2wav.ppjs, javascript/Makefile,
+  acpu.c, apokeysnd.c, asap.c, asap_internal.h, anylang.h, win32/Makefile:
+  ASAP can converted to pure JavaScript!
+
+* asap.c, asap.h, asap2wav.c: ASAP_SONGS_MAX
+
 * asap.c, asap_internal.h, anylang.h, acpu.c, apokeysnd.c, csharp/ASAP.ppcs,
-  java/ASAP.ppjava: C/Java/C# macros moved to anylang.h and improved
+  java/ASAP.ppjava, Makefile, csharp/Makefile, gsplayer/Makefile, java/Makefile,
+  win32/Makefile: C/Java/C# macros moved to anylang.h and improved
 
 
 2009-09-25  Piotr Fusik  <fox@scene.pl>

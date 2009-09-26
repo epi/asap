@@ -51,8 +51,7 @@
 
 #include "asap_internal.h"
 
-CONST_ARRAY(int, opcode_cycles) =
-{
+CONST_ARRAY(int, opcode_cycles)
 /*	0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 	7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, /* 0x */
 	2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, /* 1x */
@@ -70,7 +69,7 @@ CONST_ARRAY(int, opcode_cycles) =
 	2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, /* Dx */
 	2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, /* Ex */
 	2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7  /* Fx */
-};
+END_CONST_ARRAY;
 
 #ifdef ACPU_NO_DECIMAL
 
@@ -241,7 +240,8 @@ CONST_ARRAY(int, opcode_cycles) =
 
 #define BRANCH(cond) \
 	if (cond) { \
-		addr = SBYTE(FETCH); \
+		addr = SBYTE(PEEK); \
+		pc++; \
 		addr += pc; \
 		if ((addr ^ pc) >> 8 != 0) \
 			ast _ cycle++; \
@@ -263,7 +263,7 @@ CONST_ARRAY(int, opcode_cycles) =
 
 /* Runs 6502 emulation for the specified number of Atari scanlines.
    Each scanline is 114 cycles of which 9 is taken by ANTIC for memory refresh. */
-PUBLIC_FUNC void Cpu_RunScanlines(ASAP_State PTR ast, int scanlines)
+PUBLIC_FUNC(void) Cpu_RunScanlines(P(ASAP_State PTR) ast, P(int) scanlines)
 {
 	/* copy registers from ASAP_State to local variables for improved performance */
 	int pc;

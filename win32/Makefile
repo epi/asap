@@ -1,4 +1,4 @@
-VERSION = 1.3.0
+VERSION = 2.0.0
 
 # gcc for most ports
 ASAP_GCC = mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
@@ -162,6 +162,11 @@ java:
 csharp:
 	$(MAKE) -C ../csharp
 
+# JavaScript
+
+javascript:
+	$(MAKE) -C ../javascript
+
 # delete generated files
 
 clean:
@@ -241,6 +246,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		java/ASAPMIDlet.java java/asap_midlet.MF \
 		java/mf2jad.pl java/Makefile \
 		java/USAGE \
+		javascript/asap.ppjs javascript/asap2wav.ppjs javascript/Makefile \
 		moc/libasap_decoder.c \
 		win32/Makefile win32/USAGE \
 		win32/gui.c win32/gui.h win32/gui.rc \
@@ -260,7 +266,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		-s chksap.pl maketar.pl raw2c.pl \
 		| $(SEVENZIP) -tgzip -si ../../asap-$(VERSION).tar.gz
 
-dist: srcdist win32 wince java csharp \
+dist: srcdist win32 wince java csharp javascript \
 	COPYING.txt README_Java.html README_Windows.html README_WindowsCE.html \
 	install_dsf.bat uninstall_dsf.bat
 	$(RM) ../../asap-$(VERSION)-java.zip
@@ -280,6 +286,7 @@ dist: srcdist win32 wince java csharp \
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) " Version =" ../csharp/ASAP.ppcs
 	$(GREP) " VERSION =" ../java/ASAP.ppjava
+	$(GREP) ASAP_VERSION ../javascript/asap.ppjs
 
 www: ../../www/index.html
 

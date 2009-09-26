@@ -28,18 +28,24 @@
 
 #ifdef JAVA
 
+#define ASAP_SONGS_MAX          32
 #define ASAP_SAMPLE_RATE        44100
 #define ASAP_FORMAT_U8          8
 #define ASAP_FORMAT_S16_LE      16
 #define ASAP_FORMAT_S16_BE      -16
 #define ASAP_SampleFormat       int
+#define ASAP_ParseDuration      parseDuration
 
-#elif defined(CSHARP)
+#elif defined(CSHARP) || defined(JAVASCRIPT)
 
+#define ASAP_SONGS_MAX          32
 #define ASAP_SAMPLE_RATE        44100
 #define ASAP_FORMAT_U8          ASAP_SampleFormat.U8
 #define ASAP_FORMAT_S16_LE      ASAP_SampleFormat.S16LE
 #define ASAP_FORMAT_S16_BE      ASAP_SampleFormat.S16BE
+#ifdef CSHARP
+#define ASAP_ParseDuration      ParseDuration
+#endif
 
 #else /* C */
 
@@ -96,12 +102,12 @@ void trace_cpu(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz
 #define ASAP_TYPE_TM2           13
 
 #define dGetByte(addr)          UBYTE(ast _ memory[addr])
-#define dPutByte(addr, data)    ast _ memory[addr] = (byte) (data)
+#define dPutByte(addr, data)    ast _ memory[addr] = CAST(byte) (data)
 #define dGetWord(addr)          (dGetByte(addr) + (dGetByte((addr) + 1) << 8))
 #define GetByte(addr)           (((addr) & 0xf900) == 0xd000 ? ASAP_GetByte(ast, addr) : dGetByte(addr))
 #define PutByte(addr, data)     do { if (((addr) & 0xf900) == 0xd000) ASAP_PutByte(ast, addr, data); else dPutByte(addr, data); } while (FALSE)
 #define RMW_GetByte(dest, addr) do { if (((addr) >> 8) == 0xd2) { dest = ASAP_GetByte(ast, addr); ast _ cycle--; ASAP_PutByte(ast, addr, dest); ast _ cycle++; } else dest = dGetByte(addr); } while (FALSE)
 
-#define CYCLE_TO_SAMPLE(cycle)  (((cycle) * ASAP_SAMPLE_RATE + ast _ sample_offset) / ASAP_MAIN_CLOCK)
+#define CYCLE_TO_SAMPLE(cycle)  FLOOR(((cycle) * ASAP_SAMPLE_RATE + ast _ sample_offset) / ASAP_MAIN_CLOCK)
 
 #endif /* _ASAP_INTERNAL_H_ */

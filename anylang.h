@@ -31,16 +31,21 @@
 #define TRUE                    true
 #define NULL                    null
 #define const
-#define PRIVATE_FUNC            private static
-#define PUBLIC_FUNC             private static
+#define PRIVATE_FUNC(type)      private static type
+#define PUBLIC_FUNC(type)       private static type
+#define P(type)                 type
+#define VAR(type)               type
 #define _                       .
 #define PTR
 #define ADDRESSOF
+#define CAST(type)              (type)
+#define FLOOR(x)                (int) (x)
 #define ARRAY                   []
 #define VOIDPTR                 byte[]
 #define UBYTE(data)             ((data) & 0xff)
 #define SBYTE(data)             (byte) (data)
-#define CONST_ARRAY(type, name) private static final type[] name
+#define CONST_ARRAY(type, name) private static final type[] name = {
+#define END_CONST_ARRAY         }
 #define sizeof(array)           array.length
 #define ZERO_ARRAY(array)       for (int ii = 0; ii < array.length; ii++) array[ii] = 0
 #define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
@@ -50,6 +55,7 @@
 #define INIT_ARRAY(array)
 #define STRING                  String
 #define CHARAT(s, i)            (s).charAt(i)
+#define CHARCODE(c)             (c)
 #define strlen(s)               (s).length()
 #define EQUAL_STRINGS(s1, s2)   (s1).equals(s2)
 #define CONTAINS_STRING(s1, s2) ((s1).indexOf(s2) >= 0)
@@ -70,16 +76,21 @@
 #define TRUE                    true
 #define NULL                    null
 #define const
-#define PRIVATE_FUNC            private static
-#define PUBLIC_FUNC             private static
+#define PRIVATE_FUNC(type)      private static type
+#define PUBLIC_FUNC(type)       private static type
+#define P(type)                 type
+#define VAR(type)               type
 #define _                       .
 #define PTR
 #define ADDRESSOF
+#define CAST(type)              (type)
+#define FLOOR(x)                (int) (x)
 #define ARRAY                   []
 #define VOIDPTR                 byte[]
 #define UBYTE(data)             (data)
 #define SBYTE(data)             (sbyte) (data)
-#define CONST_ARRAY(type, name) private static readonly type[] name
+#define CONST_ARRAY(type, name) private static readonly type[] name = {
+#define END_CONST_ARRAY         }
 #define sizeof(array)           array.Length
 #define ZERO_ARRAY(array)       Array.Clear(array, 0, array.Length)
 #define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
@@ -89,6 +100,7 @@
 #define INIT_ARRAY(array)
 #define STRING                  string
 #define CHARAT(s, i)            (s)[i]
+#define CHARCODE(c)             (c)
 #define strlen(s)               (s).Length
 #define EQUAL_STRINGS(s1, s2)   ((s1) == (s2))
 #define CONTAINS_STRING(s1, s2) ((s1).IndexOf(s2) >= 0)
@@ -102,20 +114,65 @@
 #define ASAP_OBX                Stream
 #define GET_OBX(name)           System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(#name)
 
+#elif defined(JAVASCRIPT)
+
+#define abool                   var
+#define FALSE                   false
+#define TRUE                    true
+#define NULL                    null
+#define const
+#define PRIVATE_FUNC(type)      function
+#define PUBLIC_FUNC(type)       function
+#define P(type)
+#define VAR(type)               var
+#define int                     var
+#define char                    var
+#define _                       .
+#define PTR
+#define ADDRESSOF
+#define CAST(type)
+#define FLOOR(x)                Math.floor(x)
+#define UBYTE(data)             (data)
+#define SBYTE(data)             ((data) < 0x80 ? (data) : (data) - 256)
+#define CONST_ARRAY(type, name) var name = [
+#define END_CONST_ARRAY         ]
+#define sizeof(array)           array.length
+#define ZERO_ARRAY(array)       for (var ii = 0; ii < array.length; ii++) array[ii] = 0
+#define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
+                                for (var ii = 0; ii < len; ii++) dest[dest_offset + ii] = src[src_offset + ii]
+#define NEW_ARRAY(type, name, size) \
+                                var name = new Array(size)
+#define INIT_ARRAY(array)       for (var ii = 0; ii < array.length; ii++) array[ii] = 0
+#define CHARAT(s, i)            (s).charAt(i)
+#define CHARCODE(c)             (c).charCodeAt(0)
+#define strlen(s)               (s).length
+#define EQUAL_STRINGS(s1, s2)   ((s1) == (s2))
+#define CONTAINS_STRING(s1, s2) ((s1).indexOf(s2) >= 0)
+#define EMPTY_STRING(s)         (s) = ""
+#define SUBSTRING(dest, src, src_offset, len) \
+                                (dest) = (src).substring(src_offset, src_offset + len)
+
+#define GET_OBX(name)           name##_obx
+
 #else /* C */
 
 #include <string.h>
 
-#define PRIVATE_FUNC            static
-#define PUBLIC_FUNC
+#define PRIVATE_FUNC(type)      static type
+#define PUBLIC_FUNC(type)       type
+#define P(type)                 type
+#define VAR(type)               type
 #define _                       ->
 #define PTR                     *
 #define ADDRESSOF               &
+#define CAST(type)              (type)
+#define FLOOR(x)                (int) (x)
 #define ARRAY                   *
 #define VOIDPTR                 void *
 #define UBYTE(data)             (data)
 #define SBYTE(data)             (signed char) (data)
-#define CONST_ARRAY(type, name) static const type name[]
+#define CONST_ARRAY(type, name) static const type name[] = {
+#define END_CONST_ARRAY         }
 #define ZERO_ARRAY(array)       memset(array, 0, sizeof(array))
 #define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
                                 memcpy(dest + dest_offset, src + src_offset, len)
@@ -124,6 +181,7 @@
 #define INIT_ARRAY(array)       memset(array, 0, sizeof(array))
 #define STRING                  const char *
 #define CHARAT(s, i)            (s)[i]
+#define CHARCODE(c)             (c)
 #define EQUAL_STRINGS(s1, s2)   (strcmp(s1, s2) == 0)
 #define CONTAINS_STRING(s1, s2) (strstr(s1, s2) != NULL)
 #define EMPTY_STRING(s)         (s)[0] = '\0'
