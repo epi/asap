@@ -29,10 +29,10 @@ extern "C" {
 #endif
 
 /* ASAP version. */
-#define ASAP_VERSION_MAJOR   1
-#define ASAP_VERSION_MINOR   3
+#define ASAP_VERSION_MAJOR   2
+#define ASAP_VERSION_MINOR   0
 #define ASAP_VERSION_MICRO   0
-#define ASAP_VERSION         "1.3.0"
+#define ASAP_VERSION         "2.0.0"
 
 /* Short credits of the ASAP engine. */
 #define ASAP_YEARS           "2005-2009"
@@ -50,6 +50,29 @@ extern "C" {
 	"it under the terms of the GNU General Public License as published\n" \
 	"by the Free Software Foundation; either version 2 of the License,\n" \
 	"or (at your option) any later version."
+
+/* Maximum length of a "mm:ss.xxx" string including the terminator. */
+#define ASAP_DURATION_CHARS     10
+
+/* Maximum length of a supported input file.
+   You can assume that files longer than this are not supported by ASAP. */
+#define ASAP_MODULE_MAX         65000
+
+/* Maximum number of songs in a file. */
+#define ASAP_SONGS_MAX          32
+
+/* Output sample rate. */
+#define ASAP_SAMPLE_RATE        44100
+
+/* WAV file header length. */
+#define ASAP_WAV_HEADER_BYTES   44
+
+/* Output formats. */
+typedef enum {
+	ASAP_FORMAT_U8 = 8,       /* unsigned char */
+	ASAP_FORMAT_S16_LE = 16,  /* signed short, little-endian */
+	ASAP_FORMAT_S16_BE = -16  /* signed short, big-endian */
+} ASAP_SampleFormat;
 
 /* Useful type definitions. */
 #ifndef FALSE
@@ -69,8 +92,8 @@ typedef struct {
 	int channels;        /* 1 for mono or 2 for stereo */
 	int songs;           /* number of subsongs */
 	int default_song;    /* 0-based index of the "main" subsong */
-	int durations[32];   /* lengths of songs, in milliseconds, -1 = unspecified */
-	abool loops[32];     /* whether songs repeat or not */
+	int durations[ASAP_SONGS_MAX]; /* lengths of songs, in milliseconds, -1 = unspecified */
+	abool loops[ASAP_SONGS_MAX];   /* whether songs repeat or not */
 	/* the following technical information should not be used outside ASAP. */
 	int type;
 	int fastplay;
@@ -164,26 +187,6 @@ typedef struct {
 	byte poly17_lookup[16385];
 	byte memory[65536];
 } ASAP_State;
-
-/* Maximum length of a "mm:ss.xxx" string including the terminator. */
-#define ASAP_DURATION_CHARS     10
-
-/* Maximum length of a supported input file.
-   You can assume that files longer than this are not supported by ASAP. */
-#define ASAP_MODULE_MAX         65000
-
-/* Output sample rate. */
-#define ASAP_SAMPLE_RATE        44100
-
-/* WAV file header length. */
-#define ASAP_WAV_HEADER_BYTES   44
-
-/* Output formats. */
-typedef enum {
-	ASAP_FORMAT_U8 = 8,       /* unsigned char */
-	ASAP_FORMAT_S16_LE = 16,  /* signed short, little-endian */
-	ASAP_FORMAT_S16_BE = -16  /* signed short, big-endian */
-} ASAP_SampleFormat;
 
 /* Parses the string in the "mm:ss.xxx" format
    and returns the number of milliseconds or -1 if an error occurs. */

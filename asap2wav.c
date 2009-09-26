@@ -73,8 +73,8 @@ static void set_song(const char *s)
 		if (*s < '0' || *s > '9')
 			fatal_error("subsong number must be an integer");
 		song = 10 * song + *s++ - '0';
-		if (song > 31)
-			fatal_error("maximum subsong number is 31");
+		if (song >= ASAP_SONGS_MAX)
+			fatal_error("maximum subsong number is %d", ASAP_SONGS_MAX - 1);
 	} while (*s != '\0');
 }
 
