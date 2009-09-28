@@ -220,9 +220,9 @@ install_dsf.bat:
 uninstall_dsf.bat:
 	echo regsvr32 /u asap_dsf.dll>$@
 
-setup: ../../asap-$(VERSION)-win32.msi
+setup: ../../asap-$(VERSION)-windows.msi
 
-../../asap-$(VERSION)-win32.msi: setup/asap.wixobj wasap/wasap.ico win32 README_WindowsSetup.html
+../../asap-$(VERSION)-windows.msi: setup/asap.wixobj wasap/wasap.ico win32 README_WindowsSetup.html
 	$(LIGHT) -ext WixUIExtension $<
 
 setup/asap.wixobj: setup/asap.wxs
@@ -270,12 +270,12 @@ dist: srcdist win32 wince java csharp javascript \
 	COPYING.txt README_Java.html README_Windows.html README_WindowsCE.html \
 	install_dsf.bat uninstall_dsf.bat
 	$(RM) ../../asap-$(VERSION)-java.zip
-	$(RM) ../../asap-$(VERSION)-win32.zip
+	$(RM) ../../asap-$(VERSION)-windows.zip
 	$(RM) ../../asap-$(VERSION)-wince-arm.zip
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-java.zip \
 		COPYING.txt README_Java.html \
 		../java/asap2wav.jar ../java/asap_applet.jar ../java/asap_midlet.jad ../java/asap_midlet.jar
-	$(SEVENZIP) -tzip ../../asap-$(VERSION)-win32.zip \
+	$(SEVENZIP) -tzip ../../asap-$(VERSION)-windows.zip \
 		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
 		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll

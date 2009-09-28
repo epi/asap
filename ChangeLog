@@ -1,3 +1,7 @@
+2009-09-28  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile: binary distributions renamed from *-win32.* to *-windows.*
+
+
 2009-09-26  Piotr Fusik  <fox@scene.pl>
 * javascript/asap.ppjs, javascript/asap2wav.ppjs, javascript/Makefile,
   acpu.c, apokeysnd.c, asap.c, asap_internal.h, anylang.h, win32/Makefile:
