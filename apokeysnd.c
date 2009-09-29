@@ -37,7 +37,7 @@ CONST_ARRAY(byte, poly5_lookup)
 	0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1
 END_CONST_ARRAY;
 
-PRIVATE_FUNC(void) init_state(P(PokeyState PTR) pst)
+PRIVATE_FUNC(void) PokeySound_InitializeChip(P(PokeyState PTR) pst)
 {
 	pst _ audctl = 0;
 	pst _ init = FALSE;
@@ -96,8 +96,8 @@ PUBLIC_FUNC(void) PokeySound_Initialize(P(ASAP_State PTR) ast)
 	ast _ samples = 0;
 	ast _ iir_acc_left = 0;
 	ast _ iir_acc_right = 0;
-	init_state(ADDRESSOF ast _ base_pokey);
-	init_state(ADDRESSOF ast _ extra_pokey);
+	PokeySound_InitializeChip(ADDRESSOF ast _ base_pokey);
+	PokeySound_InitializeChip(ADDRESSOF ast _ extra_pokey);
 }
 
 #define DO_TICK(ch) \
@@ -159,7 +159,7 @@ PUBLIC_FUNC(void) PokeySound_Initialize(P(ASAP_State PTR) ast)
 	}
 
 /* Fills delta_buffer up to current_cycle basing on current AUDF/AUDC/AUDCTL values. */
-PRIVATE_FUNC(void) generate(P(ASAP_State PTR) ast, P(PokeyState PTR) pst, P(int) current_cycle)
+PRIVATE_FUNC(void) PokeySound_GenerateUntilCycle(P(ASAP_State PTR) ast, P(PokeyState PTR) pst, P(int) current_cycle)
 {
 	for (;;) {
 		int cycle = current_cycle;
@@ -220,7 +220,7 @@ PRIVATE_FUNC(void) generate(P(ASAP_State PTR) ast, P(PokeyState PTR) pst, P(int)
 #define DO_STORE(reg) \
 	if (data == pst _ reg) \
 		break; \
-	generate(ast, pst, ast _ cycle); \
+	PokeySound_GenerateUntilCycle(ast, pst, ast _ cycle); \
 	pst _ reg = data;
 
 #endif /* APOKEYSND */
@@ -445,7 +445,7 @@ PUBLIC_FUNC(int) PokeySound_GetRandom(P(ASAP_State PTR) ast, P(int) addr, P(int)
 PRIVATE_FUNC(void) end_frame(P(ASAP_State PTR) ast, P(PokeyState PTR) pst, P(int) cycle_limit)
 {
 	int m;
-	generate(ast, pst, cycle_limit);
+	PokeySound_GenerateUntilCycle(ast, pst, cycle_limit);
 	pst _ poly_index += cycle_limit;
 	m = ((pst _ audctl & 0x80) != 0) ? 15 * 31 * 511 : 15 * 31 * 131071;
 	if (pst _ poly_index >= 2 * m)

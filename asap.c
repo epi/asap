@@ -1142,8 +1142,8 @@ PRIVATE_FUNC(abool) parse_sap_header(
 		var arg = null;
 #else
 		NEW_ARRAY(char, line, 256);
-		int len;
-		int arg_pos;
+		int len = 0;
+		int arg_pos = -1;
 #if !defined(JAVA) && !defined(CSHARP)
 #define tag line
 		char *arg;
@@ -1153,8 +1153,6 @@ PRIVATE_FUNC(abool) parse_sap_header(
 			return FALSE;
 		if (UBYTE(module[module_index]) == 0xff)
 			break;
-		len = 0;
-		arg_pos = -1;
 		while (module[module_index] != 0x0d) {
 			char c = CAST(char) module[module_index++];
 #ifdef JAVASCRIPT
@@ -1188,18 +1186,18 @@ PRIVATE_FUNC(abool) parse_sap_header(
 			tag = new STRING(line, 0, len);
 			arg = null;
 		}
-#define SET_TEXT(v)             do { if (!EQUAL_STRINGS(arg, "\"<?>\"")) SUBSTRING(v, arg, 1, strlen(arg) - 2); } while (FALSE)
+#define SET_TEXT(v)             if (!EQUAL_STRINGS(arg, "\"<?>\"")) SUBSTRING(v, arg, 1, strlen(arg) - 2)
 #endif
 		
 #ifdef JAVA
 #define SET_HEX(v)              v = Integer.parseInt(arg, 16)
-#define SET_DEC(v, min, max)    do { v = Integer.parseInt(arg); if (v < min || v > max) return FALSE; } while (FALSE)
+#define SET_DEC(v, min, max)    v = Integer.parseInt(arg); if (v < min || v > max) return FALSE
 #elif defined(CSHARP)
 #define SET_HEX(v)              v = int.Parse(arg, System.Globalization.NumberStyles.HexNumber)
-#define SET_DEC(v, min, max)    do { v = int.Parse(arg); if (v < min || v > max) return FALSE; } while (FALSE)
+#define SET_DEC(v, min, max)    v = int.Parse(arg); if (v < min || v > max) return FALSE
 #elif defined(JAVASCRIPT)
 #define SET_HEX(v)              v = parseInt(arg, 16)
-#define SET_DEC(v, min, max)    { v = parseInt(arg, 10); if (v < min || v > max) return FALSE; }
+#define SET_DEC(v, min, max)    v = parseInt(arg, 10); if (v < min || v > max) return FALSE
 #define SET_TEXT(v)             v = arg.substring(1, arg.length - 1)
 #else /* C */
 		line[len] = '\0';
@@ -1209,25 +1207,30 @@ PRIVATE_FUNC(abool) parse_sap_header(
 		}
 		else
 			arg = line + len;
-#define SET_HEX(v)              do { if (!parse_hex(&v, arg)) return FALSE; } while (FALSE)
-#define SET_DEC(v, min, max)    do { if (!parse_dec(&v, arg, min, max)) return FALSE; } while (FALSE)
-#define SET_TEXT(v)             do { if (!parse_text(v, arg)) return FALSE; } while (FALSE)
+#define SET_HEX(v)              if (!parse_hex(&v, arg)) return FALSE
+#define SET_DEC(v, min, max)    if (!parse_dec(&v, arg, min, max)) return FALSE
+#define SET_TEXT(v)             if (!parse_text(v, arg)) return FALSE
 #endif
 
 		if (EQUAL_STRINGS(tag, "SAP"))
 			sap_signature = TRUE;
 		if (!sap_signature)
 			return FALSE;
-		if (EQUAL_STRINGS(tag, "AUTHOR"))
+		if (EQUAL_STRINGS(tag, "AUTHOR")) {
 			SET_TEXT(module_info _ author);
-		else if (EQUAL_STRINGS(tag, "NAME"))
+		}
+		else if (EQUAL_STRINGS(tag, "NAME")) {
 			SET_TEXT(module_info _ name);
-		else if (EQUAL_STRINGS(tag, "DATE"))
+		}
+		else if (EQUAL_STRINGS(tag, "DATE")) {
 			SET_TEXT(module_info _ date);
-		else if (EQUAL_STRINGS(tag, "SONGS"))
+		}
+		else if (EQUAL_STRINGS(tag, "SONGS")) {
 			SET_DEC(module_info _ songs, 1, ASAP_SONGS_MAX);
-		else if (EQUAL_STRINGS(tag, "DEFSONG"))
+		}
+		else if (EQUAL_STRINGS(tag, "DEFSONG")) {
 			SET_DEC(module_info _ default_song, 0, ASAP_SONGS_MAX - 1);
+		}
 		else if (EQUAL_STRINGS(tag, "STEREO"))
 			module_info _ channels = 2;
 		else if (EQUAL_STRINGS(tag, "TIME")) {
@@ -1240,14 +1243,18 @@ PRIVATE_FUNC(abool) parse_sap_header(
 		}
 		else if (EQUAL_STRINGS(tag, "TYPE"))
 			type = CHARAT(arg, 0);
-		else if (EQUAL_STRINGS(tag, "FASTPLAY"))
+		else if (EQUAL_STRINGS(tag, "FASTPLAY")) {
 			SET_DEC(module_info _ fastplay, 1, 312);
-		else if (EQUAL_STRINGS(tag, "MUSIC"))
+		}
+		else if (EQUAL_STRINGS(tag, "MUSIC")) {
 			SET_HEX(module_info _ music);
-		else if (EQUAL_STRINGS(tag, "INIT"))
+		}
+		else if (EQUAL_STRINGS(tag, "INIT")) {
 			SET_HEX(module_info _ init);
-		else if (EQUAL_STRINGS(tag, "PLAYER"))
+		}
+		else if (EQUAL_STRINGS(tag, "PLAYER")) {
 			SET_HEX(module_info _ player);
+		}
 		else if (EQUAL_STRINGS(tag, "COVOX")) {
 			SET_HEX(module_info _ covox_addr);
 			if (module_info _ covox_addr != 0xd600)

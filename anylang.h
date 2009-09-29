@@ -148,9 +148,9 @@
 #define strlen(s)               (s).length
 #define EQUAL_STRINGS(s1, s2)   ((s1) == (s2))
 #define CONTAINS_STRING(s1, s2) ((s1).indexOf(s2) >= 0)
-#define EMPTY_STRING(s)         (s) = ""
+#define EMPTY_STRING(s)         s = ""
 #define SUBSTRING(dest, src, src_offset, len) \
-                                (dest) = (src).substring(src_offset, src_offset + len)
+                                dest = (src).substring(src_offset, src_offset + len)
 
 #define GET_OBX(name)           name##_obx
 

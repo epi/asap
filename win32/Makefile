@@ -167,6 +167,11 @@ csharp:
 javascript:
 	$(MAKE) -C ../javascript
 
+# Flash
+
+flash:
+	$(MAKE) -C ../flash
+
 # delete generated files
 
 clean:
@@ -238,6 +243,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		players/Makefile Makefile \
 		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
 		csharp/ASAP.ppcs csharp/asap2wav.cs csharp/Makefile \
+		flash/ASAP.ppas flash/ASAPPlayer.as flash/Makefile \
 		gsplayer/gspasap.c gsplayer/mapplugin.h \
 		gsplayer/Makefile gsplayer/USAGE \
 		java/ASAP.ppjava java/ASAP_ModuleInfo.java \
@@ -266,7 +272,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		-s chksap.pl maketar.pl raw2c.pl \
 		| $(SEVENZIP) -tgzip -si ../../asap-$(VERSION).tar.gz
 
-dist: srcdist win32 wince java csharp javascript \
+dist: srcdist win32 wince java csharp javascript flash \
 	COPYING.txt README_Java.html README_Windows.html README_WindowsCE.html \
 	install_dsf.bat uninstall_dsf.bat
 	$(RM) ../../asap-$(VERSION)-java.zip
@@ -287,6 +293,7 @@ dist: srcdist win32 wince java csharp javascript \
 	$(GREP) " Version =" ../csharp/ASAP.ppcs
 	$(GREP) " VERSION =" ../java/ASAP.ppjava
 	$(GREP) ASAP_VERSION ../javascript/asap.ppjs
+	$(GREP) VERSION ../flash/ASAP.ppas
 
 www: ../../www/index.html
 
