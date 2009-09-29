@@ -21,7 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-// except for the following #include, this file is plain JScript
 #include "asap.ppjs"
 
 var BinaryFile_cp437ToUnicode = [
@@ -90,8 +89,12 @@ function printHelp()
 {
 	WScript.Echo(
 		"Usage: cscript asap2wav.js [OPTIONS] INPUTFILE...\n" +
+#ifdef ASAP_ONLY_SAP
+		"INPUTFILEs must be in the SAP format.\n" +
+#else
 		"Each INPUTFILE must be in a supported format:\n" +
 		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2.\n" +
+#endif
 		"Options:\n" +
 		"-o FILE     --output=FILE      Set output file name\n" +
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n" +
@@ -132,7 +135,7 @@ function processFile(inputFilename)
 	asap.load(inputFilename, module);
 	var moduleInfo = asap.getModuleInfo();
 	if (song < 0)
-		song= moduleInfo.default_song;
+		song = moduleInfo.default_song;
 	if (duration < 0) {
 		duration = moduleInfo.durations[song];
 		if (duration < 0)
