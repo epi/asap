@@ -148,13 +148,10 @@ public class ASAPApplet extends Applet implements Runnable
 			if (song < 0)
 				song = module_info.default_song;
 			int duration = module_info.durations[song];
-			try {
-				if (duration < 0)
-					duration = defaultPlaybackTime;
-				else if (module_info.loops[song] && loopPlaybackTime != ONCE)
-					duration = loopPlaybackTime;
-			} catch (Exception e) {
-			}
+			if (duration < 0)
+				duration = defaultPlaybackTime;
+			else if (module_info.loops[song] && loopPlaybackTime != ONCE)
+				duration = loopPlaybackTime;
 			asap.playSong(song, duration);
 		}
 		AudioFormat format = new AudioFormat(ASAP.SAMPLE_RATE, BITS_PER_SAMPLE, module_info.channels, BITS_PER_SAMPLE != 8, false);
