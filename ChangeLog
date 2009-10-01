@@ -1,3 +1,9 @@
+2009-10-01  Piotr Fusik  <fox@scene.pl>
+* flash/ASAP.ppas, flash/ASAPPlayer.as, flash/ASAP_ModuleInfo.as,
+  flash/PokeyState.as, flash/Makefile, anylang.h, asap.c, apokeysnd.c,
+  asap_internal.h, win32/Makefile: work on Flash version continued
+
+
 2009-09-29  Piotr Fusik  <fox@scene.pl>
 * flash/ASAP.ppas, flash/ASAPPlayer.as, flash/Makefile, anylang.h, apokeysnd.c,
   asap.c, win32/Makefile: Flash version!

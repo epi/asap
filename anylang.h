@@ -24,18 +24,61 @@
 #ifndef _ANYLANG_H_
 #define _ANYLANG_H_
 
-#ifdef JAVA
+#if defined(JAVA) || defined(CSHARP) || defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
 
-#define abool                   boolean
 #define FALSE                   false
 #define TRUE                    true
 #define NULL                    null
+#define _                       .
+
+#else
+
+#define C
+#include <string.h>
+
+#define PRIVATE_FUNC(type)      static type
+#define PUBLIC_FUNC(type)       type
+#define P(type)                 type
+#define VAR(type)               type
+#define _                       ->
+#define PTR                     *
+#define ADDRESSOF               &
+#define CAST(type)              (type)
+#define FLOOR(x)                (int) (x)
+#define ARRAY                   *
+#define VOIDPTR                 void *
+#define UBYTE(data)             (data)
+#define SBYTE(data)             (signed char) (data)
+#define CONST_ARRAY(type, name) static const type name[] = {
+#define END_CONST_ARRAY         }
+#define ZERO_ARRAY(array)       memset(array, 0, sizeof(array))
+#define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
+                                memcpy(dest + dest_offset, src + src_offset, len)
+#define NEW_ARRAY(type, name, size) \
+                                type name[size]
+#define INIT_ARRAY(array)       memset(array, 0, sizeof(array))
+#define STRING                  const char *
+#define CHARAT(s, i)            (s)[i]
+#define CHARCODE(c)             (c)
+#define EQUAL_STRINGS(s1, s2)   (strcmp(s1, s2) == 0)
+#define CONTAINS_STRING(s1, s2) (strstr(s1, s2) != NULL)
+#define EMPTY_STRING(s)         (s)[0] = '\0'
+#define SUBSTRING(dest, src, src_offset, len) \
+                                do { memcpy(dest, src + src_offset, len); (dest)[len] = '\0'; } while (FALSE)
+
+#define ASAP_OBX                const byte *
+#define GET_OBX(name)           name##_obx
+
+#endif /* defined(JAVA) || defined(CSHARP) || defined(JAVASCRIPT) || defined(ACTIONSCRIPT) */
+
+#ifdef JAVA
+
+#define abool                   boolean
 #define const
 #define PRIVATE_FUNC(type)      private static type
 #define PUBLIC_FUNC(type)       private static type
 #define P(type)                 type
 #define VAR(type)               type
-#define _                       .
 #define PTR
 #define ADDRESSOF
 #define CAST(type)              (type)
@@ -72,15 +115,11 @@
 #elif defined(CSHARP)
 
 #define abool                   bool
-#define FALSE                   false
-#define TRUE                    true
-#define NULL                    null
 #define const
 #define PRIVATE_FUNC(type)      private static type
 #define PUBLIC_FUNC(type)       private static type
 #define P(type)                 type
 #define VAR(type)               type
-#define _                       .
 #define PTR
 #define ADDRESSOF
 #define CAST(type)              (type)
@@ -114,27 +153,31 @@
 #define ASAP_OBX                Stream
 #define GET_OBX(name)           System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(#name)
 
-#elif defined(JAVASCRIPT)
+#elif defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
 
 #define abool                   var
-#define FALSE                   false
-#define TRUE                    true
-#define NULL                    null
-#define const
+#ifdef ACTIONSCRIPT
+#define PRIVATE_FUNC(type)      private static function
+#define PUBLIC_FUNC(type)       private static function
+#else
 #define PRIVATE_FUNC(type)      function
 #define PUBLIC_FUNC(type)       function
+#endif
 #define P(type)
 #define VAR(type)               var
 #define int                     var
 #define char                    var
-#define _                       .
 #define PTR
 #define ADDRESSOF
 #define CAST(type)
 #define FLOOR(x)                Math.floor(x)
 #define UBYTE(data)             (data)
 #define SBYTE(data)             ((data) < 0x80 ? (data) : (data) - 256)
+#ifdef ACTIONSCRIPT
+#define CONST_ARRAY(type, name) private static const name = [
+#else
 #define CONST_ARRAY(type, name) var name = [
+#endif
 #define END_CONST_ARRAY         ]
 #define sizeof(array)           array.length
 #define ZERO_ARRAY(array)       for (var ii = 0; ii < array.length; ii++) array[ii] = 0
@@ -152,43 +195,6 @@
 #define SUBSTRING(dest, src, src_offset, len) \
                                 dest = (src).substring(src_offset, src_offset + len)
 
-#define GET_OBX(name)           name##_obx
-
-#else /* C */
-
-#include <string.h>
-
-#define PRIVATE_FUNC(type)      static type
-#define PUBLIC_FUNC(type)       type
-#define P(type)                 type
-#define VAR(type)               type
-#define _                       ->
-#define PTR                     *
-#define ADDRESSOF               &
-#define CAST(type)              (type)
-#define FLOOR(x)                (int) (x)
-#define ARRAY                   *
-#define VOIDPTR                 void *
-#define UBYTE(data)             (data)
-#define SBYTE(data)             (signed char) (data)
-#define CONST_ARRAY(type, name) static const type name[] = {
-#define END_CONST_ARRAY         }
-#define ZERO_ARRAY(array)       memset(array, 0, sizeof(array))
-#define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
-                                memcpy(dest + dest_offset, src + src_offset, len)
-#define NEW_ARRAY(type, name, size) \
-                                type name[size]
-#define INIT_ARRAY(array)       memset(array, 0, sizeof(array))
-#define STRING                  const char *
-#define CHARAT(s, i)            (s)[i]
-#define CHARCODE(c)             (c)
-#define EQUAL_STRINGS(s1, s2)   (strcmp(s1, s2) == 0)
-#define CONTAINS_STRING(s1, s2) (strstr(s1, s2) != NULL)
-#define EMPTY_STRING(s)         (s)[0] = '\0'
-#define SUBSTRING(dest, src, src_offset, len) \
-                                do { memcpy(dest, src + src_offset, len); (dest)[len] = '\0'; } while (FALSE)
-
-#define ASAP_OBX                const byte *
 #define GET_OBX(name)           name##_obx
 
 #endif

@@ -3,47 +3,85 @@ package
 	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.SampleDataEvent;
+	import flash.external.ExternalInterface;
 	import flash.media.Sound;
+	import flash.media.SoundChannel;
 	import flash.net.URLLoader;
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
+	import mx.core.Application;
 
 	public class ASAPPlayer extends Sprite
 	{
-		private var filename : String = "Killa_Cycle.sap";
+		private static const ONCE : int = -2;
+		private var defaultPlaybackTime = -1;
+		private var loopPlaybackTime = -1;
+
+		private var filename : String;
+		private var song : int;
+
+		private var soundChannel : SoundChannel = null;
+
+		public function setPlaybackTime(defaultPlaybackTime : String, loopPlaybackTime : String)
+		{
+			this.defaultPlaybackTime = ASAP.parseDuration(defaultPlaybackTime);
+			if (loopPlaybackTime == "ONCE")
+				this.loopPlaybackTime = ONCE;
+			else
+				this.loopPlaybackTime = ASAP.parseDuration(loopPlaybackTime);
+		}
 
 		private function completeHandler(event : Event) : void
 		{
 			var module : ByteArray = URLLoader(event.target).data;
-			var asap : ASAP = new ASAP();
 
+			var asap : ASAP = new ASAP();
 			asap.load(filename, module);
-			var song : int = asap.moduleInfo.default_song;
+			var song = this.song;
+			if (song < 0)
+				song = asap.moduleInfo.default_song;
 			var duration : int = asap.moduleInfo.durations[song];
+			if (duration < 0)
+				duration = this.defaultPlaybackTime;
+			else if (asap.moduleInfo.loops[song] && this.loopPlaybackTime != ONCE)
+				duration = this.loopPlaybackTime;
 			asap.playSong(song, duration);
 
-			var buffer : ByteArray = new ByteArray();
 			var sound : Sound = new Sound();
 			function generator(event : SampleDataEvent) : void
 			{
-				var len : int = asap.generate(buffer, 8192, ASAP.ASAP_SampleFormat.S16LE);
-				for (var i : int = 0; i < len; i += 2) {
-					var sample : Number = (buffer[i] + (buffer[i + 1] << 8)) / 32768;
-					event.data.writeFloat(sample);
-					event.data.writeFloat(sample);
-				}
+				asap.generate(event.data, 8192);
 			}
 			sound.addEventListener(SampleDataEvent.SAMPLE_DATA, generator);
-			sound.play();
+			this.soundChannel = sound.play();
 		}
 
-		public function ASAPPlayer()
+		public function play(filename : String, song : int = -1) : void
 		{
+			this.filename = filename;
+			this.song = song;
 			var loader : URLLoader = new URLLoader();
 			loader.dataFormat = URLLoaderDataFormat.BINARY;
 			loader.addEventListener(Event.COMPLETE, completeHandler);
 			loader.load(new URLRequest(filename));
+		}
+
+		public function stop() : void
+		{
+			if (this.soundChannel != null)
+			{
+				this.soundChannel.stop();
+				this.soundChannel = null;
+			}
+		}
+
+		public function ASAPPlayer()
+		{
+			ExternalInterface.addCallback("setPlaybackTime", setPlaybackTime);
+			ExternalInterface.addCallback("asapPlay", play);
+			ExternalInterface.addCallback("asapStop", stop);
+			//Application.application.parameters.file;
 		}
 	}
 }

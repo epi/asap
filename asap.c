@@ -1007,7 +1007,7 @@ PRIVATE_FUNC(abool) parse_tm2(
 
 #endif /* ASAP_ONLY_SAP */
 
-#if !defined(JAVA) && !defined(CSHARP) && !defined(JAVASCRIPT)
+#ifdef C
 
 static abool parse_hex(int *retval, const char *p)
 {
@@ -1127,7 +1127,7 @@ void ASAP_DurationToString(char *s, int duration)
 	*s = '\0';
 }
 
-#endif /* !defined(JAVA) && !defined(CSHARP) && !defined(JAVASCRIPT) */
+#endif /* C */
 
 PRIVATE_FUNC(abool) parse_sap_header(
 	P(ASAP_ModuleInfo PTR) module_info, P(const byte ARRAY) module, P(int) module_len)
@@ -1137,7 +1137,7 @@ PRIVATE_FUNC(abool) parse_sap_header(
 	char type = '?';
 	int duration_index = 0;
 	for (;;) {
-#ifdef JAVASCRIPT
+#if defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
 		var tag = "";
 		var arg = null;
 #else
@@ -1155,7 +1155,7 @@ PRIVATE_FUNC(abool) parse_sap_header(
 			break;
 		while (module[module_index] != 0x0d) {
 			char c = CAST(char) module[module_index++];
-#ifdef JAVASCRIPT
+#if defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
 			if (arg != null)
 				arg += String.fromCharCode(c);
 			else if (c == 32)
@@ -1195,7 +1195,7 @@ PRIVATE_FUNC(abool) parse_sap_header(
 #elif defined(CSHARP)
 #define SET_HEX(v)              v = int.Parse(arg, System.Globalization.NumberStyles.HexNumber)
 #define SET_DEC(v, min, max)    v = int.Parse(arg); if (v < min || v > max) return FALSE
-#elif defined(JAVASCRIPT)
+#elif defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
 #define SET_HEX(v)              v = parseInt(arg, 16)
 #define SET_DEC(v, min, max)    v = parseInt(arg, 10); if (v < min || v > max) return FALSE
 #define SET_TEXT(v)             v = arg.substring(1, arg.length - 1)
@@ -1654,6 +1654,8 @@ PRIVATE_FUNC(int) milliseconds_to_blocks(P(int) milliseconds)
 	return milliseconds * (ASAP_SAMPLE_RATE / 100) / 10;
 }
 
+#ifndef ACTIONSCRIPT
+
 PUBLIC_FUNC(void) ASAP_Seek(P(ASAP_State PTR) ast, P(int) position)
 {
 	int block = milliseconds_to_blocks(position);
@@ -1728,20 +1730,32 @@ PUBLIC_FUNC(void) ASAP_GetWavHeader(
 	ASAP_GetWavHeaderForPart(ast, buffer, format, remaining_blocks);
 }
 
+#endif /* ACTIONSCRIPT */
+
 PUBLIC_FUNC(int) ASAP_Generate(
 	P(ASAP_State PTR) ast, P(VOIDPTR) buffer,
 #ifdef JAVA
 	int buffer_offset,
 #endif
-	P(int) buffer_len, P(ASAP_SampleFormat) format)
+#ifdef ACTIONSCRIPT
+	buffer_blocks,
+#define block_shift  0
+#else
+	P(int) buffer_len,
+#endif
+	P(ASAP_SampleFormat) format)
 {
+#ifndef ACTIONSCRIPT
 	int block_shift;
 	int buffer_blocks;
+#endif
 	int block;
 	if (ast _ silence_cycles > 0 && ast _ silence_cycles_counter <= 0)
 		return 0;
+#ifndef ACTIONSCRIPT
 	block_shift = (ast _ module_info.channels - 1) + (format != ASAP_FORMAT_U8 ? 1 : 0);
 	buffer_blocks = buffer_len >> block_shift;
+#endif
 	if (ast _ current_duration > 0) {
 		int total_blocks = milliseconds_to_blocks(ast _ current_duration);
 		if (buffer_blocks > total_blocks - ast _ blocks_played)
@@ -1760,7 +1774,7 @@ PUBLIC_FUNC(int) ASAP_Generate(
 	return block << block_shift;
 }
 
-#if !defined(JAVA) && !defined(CSHARP) && !defined(JAVASCRIPT) && !defined(ASAP_ONLY_SAP)
+#if defined(C) && !defined(ASAP_ONLY_SAP)
 
 abool ASAP_ChangeExt(char *filename, const char *ext)
 {
@@ -2288,4 +2302,4 @@ int ASAP_Convert(
 	}
 }
 
-#endif /* !defined(JAVA) && !defined(CSHARP) && !defined(JAVASCRIPT) && !defined(ASAP_ONLY_SAP) */
+#endif /* defined(C) && !defined(ASAP_ONLY_SAP) */

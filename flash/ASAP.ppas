@@ -27,7 +27,7 @@ package
 
 	public class ASAP
 	{
-		#define JAVASCRIPT
+		#define ACTIONSCRIPT
 		#include "acpu.c"
 		#include "apokeysnd.c"
 		#include "asap.c"
@@ -53,14 +53,14 @@ package
 		private var extra_pokey_mask : int;
 		private var consol : int;
 		private var covox = new Array(4);
-		private var base_pokey = { delta_buffer : new Array(888) };
-		private var extra_pokey = { delta_buffer : new Array(888) };
+		private const base_pokey : PokeyState = new PokeyState();
+		private const extra_pokey : PokeyState = new PokeyState();
 		private var sample_offset : int;
 		private var sample_index : int;
 		private var samples : int;
 		private var iir_acc_left : int;
 		private var iir_acc_right : int;
-		private var module_info = { durations : new Array(ASAP_SONGS_MAX), loops : new Array(ASAP_SONGS_MAX) };
+		private const module_info : ASAP_ModuleInfo = new ASAP_ModuleInfo();
 		private var tmc_per_frame : int;
 		private var tmc_per_frame_counter : int;
 		private var current_song : int;
@@ -68,20 +68,13 @@ package
 		private var blocks_played : int;
 		private var silence_cycles : int;
 		private var silence_cycles_counter : int;
-		private var poly9_lookup = new ByteArray();
-		private var poly17_lookup = new ByteArray();
-		private var memory = new ByteArray();
+		private const poly9_lookup = new ByteArray();
+		private const poly17_lookup = new ByteArray();
+		private const memory = new ByteArray();
 
 		public static const VERSION : String = "2.0.0";
-		public static const WAV_HEADER_BYTES : int = 44;
 
-		public static const ASAP_SampleFormat = {
-			U8 : 8,
-			S16LE : 16,
-			S16BE : -16
-		};
-
-		public static function ASAP_ParseDuration(s : String) : int
+		public static function parseDuration(s : String) : int
 		{
 			var i = s.indexOf(":");
 			var r = 0;
@@ -117,14 +110,9 @@ package
 			ASAP_MutePokeyChannels(this, mask);
 		}
 
-		public function getWavHeader(buffer : ByteArray, format : int) : void
+		public function generate(buffer : ByteArray, buffer_len : int) : int
 		{
-			ASAP_GetWavHeader(this, buffer, format);
-		}
-
-		public function generate(buffer : ByteArray, buffer_len : int, format : int) : int
-		{
-			return ASAP_Generate(this, buffer, buffer_len, format);
+			return ASAP_Generate(this, buffer, buffer_len, 0);
 		}
 	}
 }

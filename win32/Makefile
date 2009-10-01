@@ -243,7 +243,8 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		players/Makefile Makefile \
 		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
 		csharp/ASAP.ppcs csharp/asap2wav.cs csharp/Makefile \
-		flash/ASAP.ppas flash/ASAPPlayer.as flash/Makefile \
+		flash/ASAP.ppas flash/ASAP_ModuleInfo.as flash/PokeyState.as \
+		flash/ASAPPlayer.as flash/Makefile \
 		gsplayer/gspasap.c gsplayer/mapplugin.h \
 		gsplayer/Makefile gsplayer/USAGE \
 		java/ASAP.ppjava java/ASAP_ModuleInfo.java \
