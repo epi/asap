@@ -76,6 +76,8 @@ package
 
 		public static function parseDuration(s : String) : int
 		{
+			if (s == null || s.length == 0)
+				return -1;
 			var i = s.indexOf(":");
 			var r = 0;
 			if (i >= 0) {
