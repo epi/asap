@@ -64,7 +64,7 @@ function BinaryFile(filename)
 	this.write = function(bytes, len)
 	{
 		for (var i = 0; i < len; i++) {
-			var c = bytes[i] & 0xff;
+			var c = bytes[i];
 			if (c >= 128)
 				c = BinaryFile_cp437ToUnicode[c - 128];
 			this.stream.WriteText(String.fromCharCode(c));
@@ -155,7 +155,7 @@ function processFile(inputFilename)
 	}
 	var nBytes;
 	do {
-		nBytes = asap.generate(buffer, 8192, format);
+		nBytes = asap.generate(buffer, 0, 8192, format);
 		of.write(buffer, nBytes);
 	} while (nBytes == 8192);
 	of.save();

@@ -44,7 +44,8 @@
 #define PTR                     *
 #define ADDRESSOF               &
 #define CAST(type)              (type)
-#define FLOOR(x)                (int) (x)
+#define TO_INT(x)               (int) (x)
+#define TO_BYTE(x)              (byte) (x)
 #define ARRAY                   *
 #define VOIDPTR                 void *
 #define UBYTE(data)             (data)
@@ -82,7 +83,8 @@
 #define PTR
 #define ADDRESSOF
 #define CAST(type)              (type)
-#define FLOOR(x)                (int) (x)
+#define TO_INT(x)               (int) (x)
+#define TO_BYTE(x)              (byte) (x)
 #define ARRAY                   []
 #define VOIDPTR                 byte[]
 #define UBYTE(data)             ((data) & 0xff)
@@ -123,7 +125,8 @@
 #define PTR
 #define ADDRESSOF
 #define CAST(type)              (type)
-#define FLOOR(x)                (int) (x)
+#define TO_INT(x)               (int) (x)
+#define TO_BYTE(x)              (byte) (x)
 #define ARRAY                   []
 #define VOIDPTR                 byte[]
 #define UBYTE(data)             (data)
@@ -170,7 +173,8 @@
 #define PTR
 #define ADDRESSOF
 #define CAST(type)
-#define FLOOR(x)                Math.floor(x)
+#define TO_INT(x)               Math.floor(x)
+#define TO_BYTE(x)              ((x) & 0xff)
 #define UBYTE(data)             (data)
 #define SBYTE(data)             ((data) < 0x80 ? (data) : (data) - 256)
 #ifdef ACTIONSCRIPT

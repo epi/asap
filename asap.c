@@ -83,7 +83,7 @@ PUBLIC_FUNC(void) ASAP_PutByte(P(ASAP_State PTR) ast, P(int) addr, P(int) data)
 		else
 			pst = ADDRESSOF ast _ extra_pokey;
 		pst _ delta_buffer[CYCLE_TO_SAMPLE(ast _ cycle)] += (data - UBYTE(ast _ covox[addr])) << DELTA_SHIFT_COVOX;
-		ast _ covox[addr] = CAST(byte) data;
+		ast _ covox[addr] = CAST(byte) (data);
 	}
 	else if ((addr & 0xff1f) == 0xd01f) {
 		int sample = CYCLE_TO_SAMPLE(ast _ cycle);
@@ -111,7 +111,7 @@ PUBLIC_FUNC(void) ASAP_PutByte(P(ASAP_State PTR) ast, P(int) addr, P(int) data)
 
 CONST_ARRAY(byte, cmr_bass_table)
 	0x5C, 0x56, 0x50, 0x4D, 0x47, 0x44, 0x41, 0x3E,
-	0x38, 0x35, CAST(byte) 0x88, 0x7F, 0x79, 0x73, 0x6C, 0x67,
+	0x38, 0x35, CAST(byte) (0x88), 0x7F, 0x79, 0x73, 0x6C, 0x67,
 	0x60, 0x5A, 0x55, 0x51, 0x4C, 0x48, 0x43, 0x3F,
 	0x3D, 0x39, 0x34, 0x33, 0x30, 0x2D, 0x2A, 0x28,
 	0x25, 0x24, 0x21, 0x1F, 0x1E
@@ -199,7 +199,7 @@ PRIVATE_FUNC(abool) load_native(
 
 PRIVATE_FUNC(void) set_song_duration(P(ASAP_ModuleInfo PTR) module_info, P(int) player_calls)
 {
-	module_info _ durations[module_info _ songs] = FLOOR(player_calls * module_info _ fastplay * 114000.0 / 1773447);
+	module_info _ durations[module_info _ songs] = TO_INT(player_calls * module_info _ fastplay * 114000.0 / 1773447);
 	module_info _ songs++;
 }
 
@@ -1671,10 +1671,10 @@ PUBLIC_FUNC(void) ASAP_Seek(P(ASAP_State PTR) ast, P(int) position)
 
 PRIVATE_FUNC(void) serialize_int(P(byte ARRAY) buffer, P(int) offset, P(int) value)
 {
-	buffer[offset] = CAST(byte) value;
-	buffer[offset + 1] = CAST(byte) (value >> 8);
-	buffer[offset + 2] = CAST(byte) (value >> 16);
-	buffer[offset + 3] = CAST(byte) (value >> 24);
+	buffer[offset] = TO_BYTE(value);
+	buffer[offset + 1] = TO_BYTE(value >> 8);
+	buffer[offset + 2] = TO_BYTE(value >> 16);
+	buffer[offset + 3] = TO_BYTE(value >> 24);
 }
 
 PUBLIC_FUNC(void) ASAP_GetWavHeaderForPart(
@@ -1734,8 +1734,8 @@ PUBLIC_FUNC(void) ASAP_GetWavHeader(
 
 PUBLIC_FUNC(int) ASAP_Generate(
 	P(ASAP_State PTR) ast, P(VOIDPTR) buffer,
-#ifdef JAVA
-	int buffer_offset,
+#if defined(JAVA) || defined(JAVASCRIPT)
+	P(int) buffer_offset,
 #endif
 #ifdef ACTIONSCRIPT
 	buffer_blocks,
@@ -1764,7 +1764,7 @@ PUBLIC_FUNC(int) ASAP_Generate(
 	block = 0;
 	do {
 		int blocks = PokeySound_Generate(ast, CAST(byte ARRAY) buffer,
-#ifdef JAVA
+#if defined(JAVA) || defined(JAVASCRIPT)
 			buffer_offset +
 #endif
 			(block << block_shift), buffer_blocks - block, format);
@@ -1842,7 +1842,7 @@ static byte *put_hex_tag(byte *dest, const char *tag, int value)
 	*dest++ = ' ';
 	for (i = 12; i >= 0; i -= 4) {
 		int digit = (value >> i) & 0xf;
-		*dest++ = CAST(byte) (digit + (digit < 10 ? '0' : 'A' - 10));
+		*dest++ = (byte) (digit + (digit < 10 ? '0' : 'A' - 10));
 	}
 	*dest++ = '\r';
 	*dest++ = '\n';
@@ -2065,8 +2065,8 @@ int ASAP_Convert(
 			dest[0x2c06] = 0;
 		}
 		dest += 0x2c07;
-		*dest++ = CAST(byte) addr;
-		*dest++ = CAST(byte) (addr >> 8);
+		*dest++ = (byte) addr;
+		*dest++ = (byte) (addr >> 8);
 		*dest++ = dlt_obx[4];
 		*dest++ = dlt_obx[5];
 		if (module_info->songs != 1) {
@@ -2074,16 +2074,16 @@ int ASAP_Convert(
 			dest += module_info->songs;
 			*dest++ = 0xaa; /* tax */
 			*dest++ = 0xbc; /* ldy song2pos,x */
-			*dest++ = CAST(byte) addr;
-			*dest++ = CAST(byte) (addr >> 8);
+			*dest++ = (byte) addr;
+			*dest++ = (byte) (addr >> 8);
 		}
 		else {
 			*dest++ = 0xa0; /* ldy #0 */
 			*dest++ = 0;
 		}
 		*dest++ = 0x4c; /* jmp init */
-		*dest++ = CAST(byte) module_info->player;
-		*dest++ = CAST(byte) ((module_info->player >> 8) + 1);
+		*dest++ = (byte) module_info->player;
+		*dest++ = (byte) ((module_info->player >> 8) + 1);
 		memcpy(dest, dlt_obx + 6, sizeof(dlt_obx) - 6);
 		dest += sizeof(dlt_obx) - 6;
 		return dest - out_module;
@@ -2100,8 +2100,8 @@ int ASAP_Convert(
 			return -1;
 		memcpy(dest, module, module_len);
 		dest += module_len;
-		*dest++ = CAST(byte) addr;
-		*dest++ = CAST(byte) (addr >> 8);
+		*dest++ = (byte) addr;
+		*dest++ = (byte) (addr >> 8);
 		*dest++ = mpt_obx[4];
 		*dest++ = mpt_obx[5];
 		if (module_info->songs != 1) {
@@ -2110,20 +2110,20 @@ int ASAP_Convert(
 			*dest++ = 0x48; /* pha */
 		}
 		*dest++ = 0xa0; /* ldy #<music */
-		*dest++ = CAST(byte) module_info->music;
+		*dest++ = (byte) module_info->music;
 		*dest++ = 0xa2; /* ldx #>music */
-		*dest++ = CAST(byte) (module_info->music >> 8);
+		*dest++ = (byte) (module_info->music >> 8);
 		*dest++ = 0xa9; /* lda #0 */
 		*dest++ = 0;
 		*dest++ = 0x20; /* jsr player */
-		*dest++ = CAST(byte) module_info->player;
-		*dest++ = CAST(byte) (module_info->player >> 8);
+		*dest++ = (byte) module_info->player;
+		*dest++ = (byte) (module_info->player >> 8);
 		if (module_info->songs != 1) {
 			*dest++ = 0x68; /* pla */
 			*dest++ = 0xa8; /* tay */
 			*dest++ = 0xbe; /* ldx song2pos,y */
-			*dest++ = CAST(byte) addr;
-			*dest++ = CAST(byte) (addr >> 8);
+			*dest++ = (byte) addr;
+			*dest++ = (byte) (addr >> 8);
 		}
 		else {
 			*dest++ = 0xa2; /* ldx #0 */
@@ -2140,30 +2140,30 @@ int ASAP_Convert(
 			return -1;
 		memcpy(dest, module, module_len);
 		dest += module_len;
-		*dest++ = CAST(byte) RMT_INIT;
-		*dest++ = CAST(byte) (RMT_INIT >> 8);
+		*dest++ = (byte) RMT_INIT;
+		*dest++ = (byte) (RMT_INIT >> 8);
 		if (module_info->songs != 1) {
 			addr = RMT_INIT + 10 + module_info->songs;
-			*dest++ = CAST(byte) addr;
-			*dest++ = CAST(byte) (addr >> 8);
+			*dest++ = (byte) addr;
+			*dest++ = (byte) (addr >> 8);
 			*dest++ = 0xa8; /* tay */
 			*dest++ = 0xb9; /* lda song2pos,y */
-			*dest++ = CAST(byte) (RMT_INIT + 11);
-			*dest++ = CAST(byte) ((RMT_INIT + 11) >> 8);
+			*dest++ = (byte) (RMT_INIT + 11);
+			*dest++ = (byte) ((RMT_INIT + 11) >> 8);
 		}
 		else {
-			*dest++ = CAST(byte) (RMT_INIT + 8);
-			*dest++ = CAST(byte) ((RMT_INIT + 8) >> 8);
+			*dest++ = (byte) (RMT_INIT + 8);
+			*dest++ = (byte) ((RMT_INIT + 8) >> 8);
 			*dest++ = 0xa9; /* lda #0 */
 			*dest++ = 0;
 		}
 		*dest++ = 0xa2; /* ldx #<music */
-		*dest++ = CAST(byte) module_info->music;
+		*dest++ = (byte) module_info->music;
 		*dest++ = 0xa0; /* ldy #>music */
-		*dest++ = CAST(byte) (module_info->music >> 8);
+		*dest++ = (byte) (module_info->music >> 8);
 		*dest++ = 0x4c; /* jmp player */
-		*dest++ = CAST(byte) module_info->player;
-		*dest++ = CAST(byte) (module_info->player >> 8);
+		*dest++ = (byte) module_info->player;
+		*dest++ = (byte) (module_info->player >> 8);
 		if (module_info->songs != 1) {
 			memcpy(dest, module_info->song_pos, module_info->songs);
 			dest += module_info->songs;
@@ -2187,21 +2187,21 @@ int ASAP_Convert(
 			return -1;
 		memcpy(dest, module, module_len);
 		dest += module_len;
-		*dest++ = CAST(byte) addr;
-		*dest++ = CAST(byte) (addr >> 8);
+		*dest++ = (byte) addr;
+		*dest++ = (byte) (addr >> 8);
 		*dest++ = tmc_obx[4];
 		*dest++ = tmc_obx[5];
 		if (module_info->songs != 1)
 			*dest++ = 0x48; /* pha */
 		*dest++ = 0xa0; /* ldy #<music */
-		*dest++ = CAST(byte) module_info->music;
+		*dest++ = (byte) module_info->music;
 		*dest++ = 0xa2; /* ldx #>music */
-		*dest++ = CAST(byte) (module_info->music >> 8);
+		*dest++ = (byte) (module_info->music >> 8);
 		*dest++ = 0xa9; /* lda #$70 */
 		*dest++ = 0x70;
 		*dest++ = 0x20; /* jsr player */
-		*dest++ = CAST(byte) module_info->player;
-		*dest++ = CAST(byte) (module_info->player >> 8);
+		*dest++ = (byte) module_info->player;
+		*dest++ = (byte) (module_info->player >> 8);
 		if (module_info->songs != 1) {
 			*dest++ = 0x68; /* pla */
 			*dest++ = 0xaa; /* tax */
@@ -2217,8 +2217,8 @@ int ASAP_Convert(
 			*dest++ = 0x06; /* asl 0 */
 			*dest++ = 0;
 			*dest++ = 0x4c; /* jmp player */
-			*dest++ = CAST(byte) module_info->player;
-			*dest++ = CAST(byte) (module_info->player >> 8);
+			*dest++ = (byte) module_info->player;
+			*dest++ = (byte) (module_info->player >> 8);
 			*dest++ = 0xa5; /* lda 0 */
 			*dest++ = 0;
 			*dest++ = 0xe6; /* inc 0 */
@@ -2260,26 +2260,26 @@ int ASAP_Convert(
 			return -1;
 		memcpy(dest, module, module_len);
 		dest += module_len;
-		*dest++ = CAST(byte) TM2_INIT;
-		*dest++ = CAST(byte) (TM2_INIT >> 8);
+		*dest++ = (byte) TM2_INIT;
+		*dest++ = (byte) (TM2_INIT >> 8);
 		if (module_info->songs != 1) {
-			*dest++ = CAST(byte) (TM2_INIT + 16);
-			*dest++ = CAST(byte) ((TM2_INIT + 16) >> 8);
+			*dest++ = (byte) (TM2_INIT + 16);
+			*dest++ = (byte) ((TM2_INIT + 16) >> 8);
 			*dest++ = 0x48; /* pha */
 		}
 		else {
-			*dest++ = CAST(byte) (TM2_INIT + 14);
-			*dest++ = CAST(byte) ((TM2_INIT + 14) >> 8);
+			*dest++ = (byte) (TM2_INIT + 14);
+			*dest++ = (byte) ((TM2_INIT + 14) >> 8);
 		}
 		*dest++ = 0xa0; /* ldy #<music */
-		*dest++ = CAST(byte) module_info->music;
+		*dest++ = (byte) module_info->music;
 		*dest++ = 0xa2; /* ldx #>music */
-		*dest++ = CAST(byte) (module_info->music >> 8);
+		*dest++ = (byte) (module_info->music >> 8);
 		*dest++ = 0xa9; /* lda #$70 */
 		*dest++ = 0x70;
 		*dest++ = 0x20; /* jsr player */
-		*dest++ = CAST(byte) module_info->player;
-		*dest++ = CAST(byte) (module_info->player >> 8);
+		*dest++ = (byte) module_info->player;
+		*dest++ = (byte) (module_info->player >> 8);
 		if (module_info->songs != 1) {
 			*dest++ = 0x68; /* pla */
 			*dest++ = 0xaa; /* tax */
@@ -2292,8 +2292,8 @@ int ASAP_Convert(
 			*dest++ = 0xaa; /* tax */
 		}
 		*dest++ = 0x4c; /* jmp player */
-		*dest++ = CAST(byte) module_info->player;
-		*dest++ = CAST(byte) (module_info->player >> 8);
+		*dest++ = (byte) module_info->player;
+		*dest++ = (byte) (module_info->player >> 8);
 		memcpy(dest, tm2_obx + 2, sizeof(tm2_obx) - 2);
 		dest += sizeof(tm2_obx) - 2;
 		return dest - out_module;

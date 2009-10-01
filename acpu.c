@@ -173,7 +173,7 @@ END_CONST_ARRAY;
 #define PL(dest)     s = (s + 1) & 0xff; dest = dGetByte(0x0100 + s)
 #define PLP          PL(vdi); nz = ((vdi & 0x80) << 1) + (~vdi & Z_FLAG); c = vdi & 1; vdi &= V_FLAG | D_FLAG | I_FLAG
 #define PH(data)     dPutByte(0x0100 + s, data); s = (s - 1) & 0xff
-#define PHW(data)    PH((data) >> 8); PH(data)
+#define PHW(data)    PH((data) >> 8); PH(TO_BYTE(data))
 #define PHP(bflag)   PH(((nz | (nz >> 1)) & 0x80) + vdi + ((nz & 0xff) == 0 ? Z_FLAG : 0) + c + bflag)
 #define PHPB0        PHP(0x20)  /* push flags with B flag clear (NMI, IRQ) */
 #define PHPB1        PHP(0x30)  /* push flags with B flag set (PHP, BRK) */

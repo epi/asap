@@ -186,8 +186,10 @@ clean:
 	$(RM) install_dsf.bat uninstall_dsf.bat
 	$(RM) ../players/*.obx ../players.h ../README.html
 	$(MAKE) -C ../csharp clean
+	$(MAKE) -C ../flash clean
 	$(MAKE) -C ../gsplayer clean
 	$(MAKE) -C ../java clean
+	$(MAKE) -C ../javascript clean
 
 # prepare files for release
 
@@ -253,7 +255,8 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		java/ASAPMIDlet.java java/asap_midlet.MF \
 		java/mf2jad.pl java/Makefile \
 		java/USAGE \
-		javascript/asap.ppjs javascript/asap2wav.ppjs javascript/Makefile \
+		javascript/asap.ppjs javascript/asap2wav.ppjs javascript/asapweb.ppjs \
+		javascript/Makefile \
 		moc/libasap_decoder.c \
 		win32/Makefile win32/USAGE \
 		win32/gui.c win32/gui.h win32/gui.rc \

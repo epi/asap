@@ -1,4 +1,10 @@
 2009-10-01  Piotr Fusik  <fox@scene.pl>
+* acpu.c, apokeysnd.c, asap.c, anylang.h, asap_internal.h, asap.ppjs,
+  asap2wav.ppjs: fixes and optimizations for JavaScript
+
+* javascript/asapweb.ppjs, javascript/Makefile, win32/Makefile:
+  JavaScript for web browsers (works in Firefox)
+
 * flash/ASAP.ppas, flash/ASAPPlayer.as, flash/ASAP_ModuleInfo.as,
   flash/PokeyState.as, flash/Makefile, anylang.h, asap.c, apokeysnd.c,
   asap_internal.h, win32/Makefile: work on Flash version continued

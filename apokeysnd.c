@@ -84,12 +84,12 @@ PUBLIC_FUNC(void) PokeySound_Initialize(P(ASAP_State PTR) ast)
 	reg = 0x1ff;
 	for (i = 0; i < 511; i++) {
 		reg = ((((reg >> 5) ^ reg) & 1) << 8) + (reg >> 1);
-		ast _ poly9_lookup[i] = CAST(byte) reg;
+		ast _ poly9_lookup[i] = TO_BYTE(reg);
 	}
 	reg = 0x1ffff;
 	for (i = 0; i < 16385; i++) {
 		reg = ((((reg >> 5) ^ reg) & 0xff) << 9) + (reg >> 8);
-		ast _ poly17_lookup[i] = CAST(byte) (reg >> 1);
+		ast _ poly17_lookup[i] = TO_BYTE(reg >> 1);
 	}
 	ast _ sample_offset = 0;
 	ast _ sample_index = 0;
@@ -474,7 +474,7 @@ PUBLIC_FUNC(void) PokeySound_EndFrame(P(ASAP_State PTR) ast, P(int) current_cycl
 		end_frame(ast, ADDRESSOF ast _ extra_pokey, current_cycle);
 	ast _ sample_offset += current_cycle * ASAP_SAMPLE_RATE;
 	ast _ sample_index = 0;
-	ast _ samples = FLOOR(ast _ sample_offset / ASAP_MAIN_CLOCK);
+	ast _ samples = TO_INT(ast _ sample_offset / ASAP_MAIN_CLOCK);
 	ast _ sample_offset %= ASAP_MAIN_CLOCK;
 }
 
@@ -513,12 +513,12 @@ PUBLIC_FUNC(int) PokeySound_Generate(P(ASAP_State PTR) ast, P(byte ARRAY) buffer
 			buffer[buffer_offset++] = CAST(byte) ((sample >> 8) + 128); \
 			break; \
 		case ASAP_FORMAT_S16_LE: \
-			buffer[buffer_offset++] = CAST(byte) sample; \
-			buffer[buffer_offset++] = CAST(byte) (sample >> 8); \
+			buffer[buffer_offset++] = TO_BYTE(sample); \
+			buffer[buffer_offset++] = TO_BYTE(sample >> 8); \
 			break; \
 		case ASAP_FORMAT_S16_BE: \
-			buffer[buffer_offset++] = CAST(byte) (sample >> 8); \
-			buffer[buffer_offset++] = CAST(byte) sample; \
+			buffer[buffer_offset++] = TO_BYTE(sample >> 8); \
+			buffer[buffer_offset++] = TO_BYTE(sample); \
 			break; \
 		}
 		STORE_SAMPLE;
