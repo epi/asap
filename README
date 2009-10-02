@@ -18,7 +18,7 @@ The project was initially based on the routines from the
 http://atari800.sourceforge.net/[Atari800 emulator],
 but the current version has a completely new original emulation core.
 
-The project includes the following programs:
+ASAP includes the following programs:
 
 - ASAP2WAV - portable command-line converter to WAV files {asapwin=}
 - WASAP - tiny player for Windows {asapwin=}
@@ -35,6 +35,15 @@ The project includes the following programs:
 - Java applet - for web pages {asapjava=}{asapwww?(see link:applet.html[online demo])}
 - Java midlet - for mobile devices {asapjava=}
 - C# version of ASAP2WAV
+- JScript version of ASAP2WAV running in Windows Script Host
+- JavaScript version of ASAP2WAV running in Firefox
+- Flash player - for web pages
+
+Other projects which use ASAP are:
+
+- http://mmsap.sourceforge.net/[mmSAP 2] - standalone player for GNU/Linux with GTK+ user interface
+- http://www.rockbox.org/[Rockbox] - open source firmware for MP3 players
+
 
 Input file formats
 ------------------
@@ -102,6 +111,7 @@ endif::asapwince[]
 include::NEWS[]
 
 include::CREDITS[]
+
 
 Feedback
 --------

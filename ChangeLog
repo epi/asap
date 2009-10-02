@@ -1,3 +1,9 @@
+2009-10-02  Piotr Fusik  <fox@scene.pl>
+* java/asap_midlet.MF, win32/Makefile: upgraded midlet version number
+
+* README: information about JavaScript, Flash, mmSAP and Rockbox
+
+
 2009-10-01  Piotr Fusik  <fox@scene.pl>
 * acpu.c, apokeysnd.c, asap.c, anylang.h, asap_internal.h, asap.ppjs,
   asap2wav.ppjs: fixes and optimizations for JavaScript
