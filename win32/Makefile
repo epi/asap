@@ -296,6 +296,7 @@ dist: srcdist win32 wince java csharp javascript flash \
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) " Version =" ../csharp/ASAP.ppcs
 	$(GREP) " VERSION =" ../java/ASAP.ppjava
+	$(GREP) MIDlet-Version ../java/asap_midlet.MF
 	$(GREP) ASAP_VERSION ../javascript/asap.ppjs
 	$(GREP) VERSION ../flash/ASAP.ppas
 
