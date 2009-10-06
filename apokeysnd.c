@@ -37,7 +37,7 @@ CONST_ARRAY(byte, poly5_lookup)
 	0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1
 END_CONST_ARRAY;
 
-PRIVATE_FUNC(void) PokeySound_InitializeChip(P(PokeyState PTR) pst)
+PRIVATE FUNC(void, PokeySound_InitializeChip, (P(PokeyState PTR, pst)))
 {
 	pst _ audctl = 0;
 	pst _ init = FALSE;
@@ -77,10 +77,10 @@ PRIVATE_FUNC(void) PokeySound_InitializeChip(P(PokeyState PTR) pst)
 	ZERO_ARRAY(pst _ delta_buffer);
 }
 
-PUBLIC_FUNC(void) PokeySound_Initialize(P(ASAP_State PTR) ast)
+FUNC(void, PokeySound_Initialize, (P(ASAP_State PTR, ast)))
 {
-	int i;
-	int reg;
+	V(int, i);
+	V(int, reg);
 	reg = 0x1ff;
 	for (i = 0; i < 511; i++) {
 		reg = ((((reg >> 5) ^ reg) & 1) << 8) + (reg >> 1);
@@ -113,8 +113,8 @@ PUBLIC_FUNC(void) PokeySound_Initialize(P(ASAP_State PTR) ast)
 		} \
 	} \
 	else { \
-		int poly = cycle + pst _ poly_index - (ch - 1); \
-		int newout = pst _ out##ch; \
+		V(int, poly) = cycle + pst _ poly_index - (ch - 1); \
+		V(int, newout) = pst _ out##ch; \
 		switch (pst _ audc##ch >> 4) { \
 		case 0: \
 			if (poly5_lookup[poly % 31] != 0) { \
@@ -159,10 +159,10 @@ PUBLIC_FUNC(void) PokeySound_Initialize(P(ASAP_State PTR) ast)
 	}
 
 /* Fills delta_buffer up to current_cycle basing on current AUDF/AUDC/AUDCTL values. */
-PRIVATE_FUNC(void) PokeySound_GenerateUntilCycle(P(ASAP_State PTR) ast, P(PokeyState PTR) pst, P(int) current_cycle)
+PRIVATE FUNC(void, PokeySound_GenerateUntilCycle, (P(ASAP_State PTR, ast), P(PokeyState PTR, pst), P(int, current_cycle)))
 {
 	for (;;) {
-		int cycle = current_cycle;
+		V(int, cycle) = current_cycle;
 		if (cycle > pst _ tick_cycle1)
 			cycle = pst _ tick_cycle1;
 		if (cycle > pst _ tick_cycle2)
@@ -265,9 +265,9 @@ PRIVATE_FUNC(void) PokeySound_GenerateUntilCycle(P(ASAP_State PTR) ast, P(PokeyS
 #define DO_INIT(ch, cond) \
 	MUTE_CHANNEL(ch, pst _ init && cond, MUTE_INIT)
 
-PUBLIC_FUNC(void) PokeySound_PutByte(P(ASAP_State PTR) ast, P(int) addr, P(int) data)
+FUNC(void, PokeySound_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, data)))
 {
-	VAR(PokeyState PTR) pst = (addr & ast _ extra_pokey_mask) != 0
+	V(PokeyState PTR, pst) = (addr & ast _ extra_pokey_mask) != 0
 		? ADDRESSOF ast _ extra_pokey : ADDRESSOF ast _ base_pokey;
 	switch (addr & 0xf) {
 	case 0x00:
@@ -423,18 +423,18 @@ PUBLIC_FUNC(void) PokeySound_PutByte(P(ASAP_State PTR) ast, P(int) addr, P(int) 
 	}
 }
 
-PUBLIC_FUNC(int) PokeySound_GetRandom(P(ASAP_State PTR) ast, P(int) addr, P(int) cycle)
+FUNC(int, PokeySound_GetRandom, (P(ASAP_State PTR, ast), P(int, addr), P(int, cycle)))
 {
-	VAR(PokeyState PTR) pst = (addr & ast _ extra_pokey_mask) != 0
+	V(PokeyState PTR, pst) = (addr & ast _ extra_pokey_mask) != 0
 		? ADDRESSOF ast _ extra_pokey : ADDRESSOF ast _ base_pokey;
-	int i;
+	V(int, i);
 	if (pst _ init)
 		return 0xff;
 	i = cycle + pst _ poly_index;
 	if ((pst _ audctl & 0x80) != 0)
 		return ast _ poly9_lookup[i % 511];
 	else {
-		int j;
+		V(int, j);
 		i %= 131071;
 		j = i >> 3;
 		i &= 7;
@@ -442,9 +442,9 @@ PUBLIC_FUNC(int) PokeySound_GetRandom(P(ASAP_State PTR) ast, P(int) addr, P(int)
 	}
 }
 
-PRIVATE_FUNC(void) end_frame(P(ASAP_State PTR) ast, P(PokeyState PTR) pst, P(int) cycle_limit)
+PRIVATE FUNC(void, end_frame, (P(ASAP_State PTR, ast), P(PokeyState PTR, pst), P(int, cycle_limit)))
 {
-	int m;
+	V(int, m);
 	PokeySound_GenerateUntilCycle(ast, pst, cycle_limit);
 	pst _ poly_index += cycle_limit;
 	m = ((pst _ audctl & 0x80) != 0) ? 15 * 31 * 511 : 15 * 31 * 131071;
@@ -460,14 +460,14 @@ PRIVATE_FUNC(void) end_frame(P(ASAP_State PTR) ast, P(PokeyState PTR) pst, P(int
 		pst _ tick_cycle4 -= cycle_limit;
 }
 
-PUBLIC_FUNC(void) PokeySound_StartFrame(P(ASAP_State PTR) ast)
+FUNC(void, PokeySound_StartFrame, (P(ASAP_State PTR, ast)))
 {
 	ZERO_ARRAY(ast _ base_pokey.delta_buffer);
 	if (ast _ extra_pokey_mask != 0)
 		ZERO_ARRAY(ast _ extra_pokey.delta_buffer);
 }
 
-PUBLIC_FUNC(void) PokeySound_EndFrame(P(ASAP_State PTR) ast, P(int) current_cycle)
+FUNC(void, PokeySound_EndFrame, (P(ASAP_State PTR, ast), P(int, current_cycle)))
 {
 	end_frame(ast, ADDRESSOF ast _ base_pokey, current_cycle);
 	if (ast _ extra_pokey_mask != 0)
@@ -479,12 +479,12 @@ PUBLIC_FUNC(void) PokeySound_EndFrame(P(ASAP_State PTR) ast, P(int) current_cycl
 }
 
 /* Fills buffer with samples from delta_buffer. */
-PUBLIC_FUNC(int) PokeySound_Generate(P(ASAP_State PTR) ast, P(byte ARRAY) buffer, P(int) buffer_offset, P(int) blocks, P(ASAP_SampleFormat) format)
+FUNC(int, PokeySound_Generate, (P(ASAP_State PTR, ast), P(BYTEARRAY, buffer), P(int, buffer_offset), P(int, blocks), P(ASAP_SampleFormat, format)))
 {
-	int i = ast _ sample_index;
-	int samples = ast _ samples;
-	int acc_left = ast _ iir_acc_left;
-	int acc_right = ast _ iir_acc_right;
+	V(int, i) = ast _ sample_index;
+	V(int, samples) = ast _ samples;
+	V(int, acc_left) = ast _ iir_acc_left;
+	V(int, acc_right) = ast _ iir_acc_right;
 	if (blocks < samples - i)
 		samples = i + blocks;
 	else
@@ -500,7 +500,7 @@ PUBLIC_FUNC(int) PokeySound_Generate(P(ASAP_State PTR) ast, P(byte ARRAY) buffer
 		}
 		buffer.writeFloat(sample);
 #else
-		int sample;
+		V(int, sample);
 		acc_left += ast _ base_pokey.delta_buffer[i] - (acc_left * 3 >> 10);
 		sample = acc_left >> 10;
 #define STORE_SAMPLE \
@@ -543,12 +543,12 @@ PUBLIC_FUNC(int) PokeySound_Generate(P(ASAP_State PTR) ast, P(byte ARRAY) buffer
 #endif
 }
 
-PUBLIC_FUNC(abool) PokeySound_IsSilent(P(const PokeyState PTR) pst)
+FUNC(abool, PokeySound_IsSilent, (P(CONST PokeyState PTR, pst)))
 {
 	return ((pst _ audc1 | pst _ audc2 | pst _ audc3 | pst _ audc4) & 0xf) == 0;
 }
 
-PUBLIC_FUNC(void) PokeySound_Mute(P(const ASAP_State PTR) ast, P(PokeyState PTR) pst, P(int) mask)
+FUNC(void, PokeySound_Mute, (P(CONST ASAP_State PTR, ast), P(PokeyState PTR, pst), P(int, mask)))
 {
 	MUTE_CHANNEL(1, (mask & 1) != 0, MUTE_USER);
 	MUTE_CHANNEL(2, (mask & 2) != 0, MUTE_USER);

@@ -60,6 +60,6 @@ package
 		internal var delta3 : int;
 		internal var delta4 : int;
 		internal var skctl : int;
-		internal const delta_buffer = new Array(888);
+		internal const delta_buffer : Array = new Array(888);
 	}
 }

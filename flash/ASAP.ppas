@@ -28,11 +28,11 @@ package
 	public class ASAP
 	{
 		#define ACTIONSCRIPT
+		#define ASAP_State  ASAP
+		#define ASAP_SampleFormat  int
 		#include "acpu.c"
 		#include "apokeysnd.c"
 		#include "asap.c"
-		#undef const
-		#undef int
 
 		private var cycle : int;
 		private var cpu_pc : int;
@@ -52,7 +52,7 @@ package
 		private var irqst : int;
 		private var extra_pokey_mask : int;
 		private var consol : int;
-		private var covox = new Array(4);
+		private var covox : Array = new Array(4);
 		private const base_pokey : PokeyState = new PokeyState();
 		private const extra_pokey : PokeyState = new PokeyState();
 		private var sample_offset : int;
@@ -68,9 +68,9 @@ package
 		private var blocks_played : int;
 		private var silence_cycles : int;
 		private var silence_cycles_counter : int;
-		private const poly9_lookup = new ByteArray();
-		private const poly17_lookup = new ByteArray();
-		private const memory = new ByteArray();
+		private const poly9_lookup : ByteArray = new ByteArray();
+		private const poly17_lookup : ByteArray = new ByteArray();
+		private const memory : ByteArray = new ByteArray();
 
 		public static const VERSION : String = "2.0.0";
 
@@ -78,8 +78,8 @@ package
 		{
 			if (s == null || s.length == 0)
 				return -1;
-			var i = s.indexOf(":");
-			var r = 0;
+			var i : int = s.indexOf(":");
+			var r : int = 0;
 			if (i >= 0) {
 				r = parseInt(s.substring(0, i)) * 60000;
 				s = s.substring(i + 1, s.length);
@@ -91,13 +91,13 @@ package
 			return r;
 		}
 
-		public function load(filename : String, module : ByteArray)
+		public function load(filename : String, module : ByteArray) : void
 		{
 			if (!ASAP_Load(this, filename, module, module.length))
 				throw "ASAP load error";
 		}
 
-		public function get moduleInfo()
+		public function get moduleInfo() : ASAP_ModuleInfo
 		{
 			return this.module_info;
 		}

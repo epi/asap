@@ -6,7 +6,7 @@ PLAYERS_OBX_DIR ?= ../players
 PLAYERS = cmc cm3 cms dlt mpt rmt4 rmt8 tmc tm2
 PLAYERS_OBX = $(PLAYERS:%=$(PLAYERS_OBX_DIR)/%.obx)
 
-../players.h: ../raw2c.pl $(PLAYERS_OBX)
+../players.h: ../files2anylang.pl $(PLAYERS_OBX)
 	$(PERL) $^ >$@
 
 $(PLAYERS_OBX_DIR)/cmc.obx: ../players/cmc.asx

@@ -33,20 +33,19 @@ package
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
-	import mx.core.Application;
 
 	public class ASAPPlayer extends Sprite
 	{
 		private static const ONCE : int = -2;
-		private var defaultPlaybackTime = -1;
-		private var loopPlaybackTime = -1;
+		private var defaultPlaybackTime : int = -1;
+		private var loopPlaybackTime : int = -1;
 
 		private var filename : String;
 		private var song : int;
 
 		private var soundChannel : SoundChannel = null;
 
-		public function setPlaybackTime(defaultPlaybackTime : String, loopPlaybackTime : String = null)
+		public function setPlaybackTime(defaultPlaybackTime : String, loopPlaybackTime : String = null) : void
 		{
 			this.defaultPlaybackTime = ASAP.parseDuration(defaultPlaybackTime);
 			if (loopPlaybackTime == "ONCE")
@@ -61,7 +60,7 @@ package
 
 			var asap : ASAP = new ASAP();
 			asap.load(filename, module);
-			var song = this.song;
+			var song : int = this.song;
 			if (song < 0)
 				song = asap.moduleInfo.default_song;
 			var duration : int = asap.moduleInfo.durations[song];
@@ -104,7 +103,10 @@ package
 			ExternalInterface.addCallback("setPlaybackTime", setPlaybackTime);
 			ExternalInterface.addCallback("asapPlay", play);
 			ExternalInterface.addCallback("asapStop", stop);
-			//Application.application.parameters.file;
+			var parameters : Object = this.loaderInfo.parameters;
+			setPlaybackTime(parameters.defaultPlaybackTime, parameters.loopPlaybackTime);
+			if (parameters.file != null)
+				play(parameters.file, parameters.song);
 		}
 	}
 }

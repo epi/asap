@@ -30,23 +30,27 @@
 #define TRUE                    true
 #define NULL                    null
 #define _                       .
+#define PRIVATE
+#define CONST
 
 #else
 
 #define C
 #include <string.h>
 
-#define PRIVATE_FUNC(type)      static type
-#define PUBLIC_FUNC(type)       type
-#define P(type)                 type
-#define VAR(type)               type
+#define PRIVATE                 static
+#define FUNC(type, name, pars)  type name pars
+#define P(type, name)           type name
+#define V(type, name)           type name
+#define CONST                   const
 #define _                       ->
 #define PTR                     *
 #define ADDRESSOF               &
 #define CAST(type)              (type)
 #define TO_INT(x)               (int) (x)
 #define TO_BYTE(x)              (byte) (x)
-#define ARRAY                   *
+#define BYTEARRAY               byte *
+#define BOOLARRAY               abool *
 #define VOIDPTR                 void *
 #define UBYTE(data)             (data)
 #define SBYTE(data)             (signed char) (data)
@@ -67,25 +71,24 @@
 #define SUBSTRING(dest, src, src_offset, len) \
                                 do { memcpy(dest, src + src_offset, len); (dest)[len] = '\0'; } while (FALSE)
 
-#define ASAP_OBX                const byte *
-#define GET_OBX(name)           name##_obx
+#define RESOURCE                const byte *
+#define GET_RESOURCE(name, ext) name##_##ext
 
 #endif /* defined(JAVA) || defined(CSHARP) || defined(JAVASCRIPT) || defined(ACTIONSCRIPT) */
 
 #ifdef JAVA
 
 #define abool                   boolean
-#define const
-#define PRIVATE_FUNC(type)      private static type
-#define PUBLIC_FUNC(type)       private static type
-#define P(type)                 type
-#define VAR(type)               type
+#define FUNC(type, name, pars)  private static type name pars
+#define P(type, name)           type name
+#define V(type, name)           type name
 #define PTR
 #define ADDRESSOF
 #define CAST(type)              (type)
 #define TO_INT(x)               (int) (x)
 #define TO_BYTE(x)              (byte) (x)
-#define ARRAY                   []
+#define BYTEARRAY               byte[]
+#define BOOLARRAY               boolean[]
 #define VOIDPTR                 byte[]
 #define UBYTE(data)             ((data) & 0xff)
 #define SBYTE(data)             (byte) (data)
@@ -107,27 +110,23 @@
 #define EMPTY_STRING(s)         (s) = ""
 #define SUBSTRING(dest, src, src_offset, len) \
                                 (dest) = (src).substring(src_offset, src_offset + len)
-#define READ_BYTE               read
-#define READ_ARRAY              read
-#define RUNTIME_EXCEPTION       RuntimeException
 
-#define ASAP_OBX                InputStream
-#define GET_OBX(name)           ASAP.class.getResourceAsStream(#name + ".obx")
+#define RESOURCE                String
+#define GET_RESOURCE(name, ext) (#name + "." + #ext)
 
 #elif defined(CSHARP)
 
 #define abool                   bool
-#define const
-#define PRIVATE_FUNC(type)      private static type
-#define PUBLIC_FUNC(type)       private static type
-#define P(type)                 type
-#define VAR(type)               type
+#define FUNC(type, name, pars)  private static type name pars
+#define P(type, name)           type name
+#define V(type, name)           type name
 #define PTR
 #define ADDRESSOF
 #define CAST(type)              (type)
 #define TO_INT(x)               (int) (x)
 #define TO_BYTE(x)              (byte) (x)
-#define ARRAY                   []
+#define BYTEARRAY               byte[]
+#define BOOLARRAY               bool[]
 #define VOIDPTR                 byte[]
 #define UBYTE(data)             (data)
 #define SBYTE(data)             (sbyte) (data)
@@ -149,47 +148,46 @@
 #define EMPTY_STRING(s)         (s) = string.Empty
 #define SUBSTRING(dest, src, src_offset, len) \
                                 (dest) = (src).Substring(src_offset, len)
-#define READ_BYTE               ReadByte
-#define READ_ARRAY              Read
-#define RUNTIME_EXCEPTION       Exception
 
-#define ASAP_OBX                Stream
-#define GET_OBX(name)           System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(#name)
+#define RESOURCE                string
+#define GET_RESOURCE(name, ext) (#name + "." + #ext)
 
 #elif defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
 
-#define abool                   var
 #ifdef ACTIONSCRIPT
-#define PRIVATE_FUNC(type)      private static function
-#define PUBLIC_FUNC(type)       private static function
+#define abool                   Boolean
+#define char                    String
+#define STRING                  String
+#define BYTEARRAY               ByteArray
+#define BOOLARRAY               Array
+#define VOIDPTR                 ByteArray
+#define RESOURCE                Array
+#define FUNC(type, name, pars)  private static function name pars : type
+#define P(type, name)           name : type
+#define V(type, name)           var name : type
+#define TO_INT(x)               int(x)
+#define CONST_ARRAY(type, name) private static const name : Array = [
 #else
-#define PRIVATE_FUNC(type)      function
-#define PUBLIC_FUNC(type)       function
+#define FUNC(type, name, pars)  function name pars
+#define P(type, name)           name
+#define V(type, name)           var name
+#define TO_INT(x)               Math.floor(x)
+#define CONST_ARRAY(type, name) var name = [
 #endif
-#define P(type)
-#define VAR(type)               var
-#define int                     var
-#define char                    var
 #define PTR
 #define ADDRESSOF
 #define CAST(type)
-#define TO_INT(x)               Math.floor(x)
 #define TO_BYTE(x)              ((x) & 0xff)
 #define UBYTE(data)             (data)
 #define SBYTE(data)             ((data) < 0x80 ? (data) : (data) - 256)
-#ifdef ACTIONSCRIPT
-#define CONST_ARRAY(type, name) private static const name = [
-#else
-#define CONST_ARRAY(type, name) var name = [
-#endif
 #define END_CONST_ARRAY         ]
 #define sizeof(array)           array.length
-#define ZERO_ARRAY(array)       for (var ii = 0; ii < array.length; ii++) array[ii] = 0
+#define ZERO_ARRAY(array)       for (V(int, ii) = 0; ii < array.length; ii++) array[ii] = 0
 #define COPY_ARRAY(dest, dest_offset, src, src_offset, len) \
-                                for (var ii = 0; ii < len; ii++) dest[dest_offset + ii] = src[src_offset + ii]
+                                for (V(int, ii) = 0; ii < len; ii++) dest[dest_offset + ii] = src[src_offset + ii]
 #define NEW_ARRAY(type, name, size) \
-                                var name = new Array(size)
-#define INIT_ARRAY(array)       for (var ii = 0; ii < array.length; ii++) array[ii] = 0
+                                V(Array, name) = new Array(size)
+#define INIT_ARRAY(array)       for (V(int, ii) = 0; ii < array.length; ii++) array[ii] = 0
 #define CHARAT(s, i)            (s).charAt(i)
 #define CHARCODE(c)             (c).charCodeAt(0)
 #define strlen(s)               (s).length
@@ -199,7 +197,7 @@
 #define SUBSTRING(dest, src, src_offset, len) \
                                 dest = (src).substring(src_offset, src_offset + len)
 
-#define GET_OBX(name)           name##_obx
+#define GET_RESOURCE(name, ext) name##_##ext
 
 #endif
 

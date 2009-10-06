@@ -51,8 +51,8 @@ asap-xbmc: xbmc_asap-i486-linux.so
 xbmc_asap-i486-linux.so: xbmc/xbmc_asap.c $(COMMON_C) $(COMMON_H)
 	$(CC) -shared -fPIC -o $@ -I. xbmc/xbmc_asap.c `cat $(XBMC_DLL_LOADER_EXPORTS)/wrapper.def` $(XBMC_DLL_LOADER_EXPORTS)/wrapper.o $(COMMON_C)
 
-players.h: raw2c.pl $(PLAYERS_OBX)
-	$(PERL) raw2c.pl $(PLAYERS_OBX) >$@
+players.h: files2anylang.pl $(PLAYERS_OBX)
+	$(PERL) files2anylang.pl $(PLAYERS_OBX) >$@
 
 players/cmc.obx: players/cmc.asx
 	$(XASM) -d CM3=0 -o $@ players/cmc.asx

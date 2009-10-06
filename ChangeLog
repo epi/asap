@@ -1,3 +1,15 @@
+2009-10-06  Piotr Fusik  <fox@scene.pl>
+* raw2c.pl, files2anylang.pl, anylang.h, asap.c, Makefile, players/Makefile,
+  win32/Makefile, flash/Makefile, javascript/Makefile, javascript/asap.ppjs,
+  csharp/Makefile: support native formats in JavaScript and Flash
+
+* anylang.h, asap.c, acpu.c, apokeysnd.c, flash/ASAP.ppas, flash/PokeyState.as,
+  flash/ASAP_ModuleInfo.as, flash/Makefile:
+  optimized Flash version by declaring static types
+
+* flash/ASAPPlayer.as: support FlashVars
+
+
 2009-10-02  Piotr Fusik  <fox@scene.pl>
 * java/asap_midlet.MF, win32/Makefile: upgraded midlet version number
 

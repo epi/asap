@@ -273,7 +273,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		-b players/cmc.obx players/cm3.obx players/cms.obx players/dlt.obx players/mpt.obx \
 		players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx \
 		win32/wasap/play.ico win32/wasap/stop.ico win32/wasap/wasap.ico \
-		-s chksap.pl maketar.pl raw2c.pl \
+		-s chksap.pl maketar.pl files2anylang.pl \
 		| $(SEVENZIP) -tgzip -si ../../asap-$(VERSION).tar.gz
 
 dist: srcdist win32 wince java csharp javascript flash \

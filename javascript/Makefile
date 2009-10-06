@@ -1,11 +1,16 @@
-PP = cpp -P -I.. -DASAP_ONLY_SAP
+PP = cpp -P -I..
+
+COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
+COMMON_H = ../asap.h ../asap_internal.h ../anylang.h ../players.h
 
 all: asap2wav.js asapweb.js
 
-asap2wav.js: asap2wav.ppjs asap.ppjs ../asap.c ../acpu.c ../apokeysnd.c ../asap.h ../asap_internal.h ../anylang.h
+include ../players/Makefile
+
+asap2wav.js: asap2wav.ppjs asap.ppjs $(COMMON_C) $(COMMON_H)
 	$(PP) $< > $@
 
-asapweb.js: asapweb.ppjs asap.ppjs ../asap.c ../acpu.c ../apokeysnd.c ../asap.h ../asap_internal.h ../anylang.h
+asapweb.js: asapweb.ppjs asap.ppjs $(COMMON_C) $(COMMON_H)
 	$(PP) $< > $@
 
 clean:

@@ -76,7 +76,7 @@ END_CONST_ARRAY;
 #define DO_ADC \
 	{ \
 		/* binary mode */ \
-		int tmp = a + data + c; \
+		V(int, tmp) = a + data + c; \
 		c = tmp >> 8; \
 		vdi &= D_FLAG | I_FLAG; \
 		if (((a ^ data) & 0x80) == 0 && ((data ^ tmp) & 0x80) != 0) \
@@ -87,7 +87,7 @@ END_CONST_ARRAY;
 #define DO_SBC \
 	{ \
 		/* binary mode */ \
-		int tmp = a - data - 1 + c; \
+		V(int, tmp) = a - data - 1 + c; \
 		c = (tmp >= 0) ? 1 : 0; \
 		vdi &= D_FLAG | I_FLAG; \
 		if (((a ^ tmp) & 0x80) != 0 && ((a ^ data) & 0x80) != 0) \
@@ -100,7 +100,7 @@ END_CONST_ARRAY;
 #define DO_ADC \
 	if ((vdi & D_FLAG) == 0) { \
 		/* binary mode */ \
-		int tmp = a + data + c; \
+		V(int, tmp) = a + data + c; \
 		c = tmp >> 8; \
 		vdi &= D_FLAG | I_FLAG; \
 		if (((a ^ data) & 0x80) == 0 && ((data ^ tmp) & 0x80) != 0) \
@@ -109,7 +109,7 @@ END_CONST_ARRAY;
 	} \
 	else { \
 		/* decimal mode */ \
-		int tmp = (a & 0x0f) + (data & 0x0f) + c; \
+		V(int, tmp) = (a & 0x0f) + (data & 0x0f) + c; \
 		if (tmp >= 10) \
 			tmp = (tmp - 10) | 0x10; \
 		tmp += (a & 0xf0) + (data & 0xf0); \
@@ -126,7 +126,7 @@ END_CONST_ARRAY;
 #define DO_SBC \
 	if ((vdi & D_FLAG) == 0) { \
 		/* binary mode */ \
-		int tmp = a - data - 1 + c; \
+		V(int, tmp) = a - data - 1 + c; \
 		c = (tmp >= 0) ? 1 : 0; \
 		vdi &= D_FLAG | I_FLAG; \
 		if (((a ^ tmp) & 0x80) != 0 && ((a ^ data) & 0x80) != 0) \
@@ -135,9 +135,9 @@ END_CONST_ARRAY;
 	} \
 	else { \
 		/* decimal mode */ \
-		int tmp = a - data - 1 + c; \
-		int al = (a & 0x0f) - (data & 0x0f) - 1 + c; \
-		int ah = (a >> 4) - (data >> 4); \
+		V(int, tmp) = a - data - 1 + c; \
+		V(int, al) = (a & 0x0f) - (data & 0x0f) - 1 + c; \
+		V(int, ah) = (a >> 4) - (data >> 4); \
 		if ((al & 0x10) != 0) { \
 			al -= 6; \
 			ah--; \
@@ -263,19 +263,19 @@ END_CONST_ARRAY;
 
 /* Runs 6502 emulation for the specified number of Atari scanlines.
    Each scanline is 114 cycles of which 9 is taken by ANTIC for memory refresh. */
-PUBLIC_FUNC(void) Cpu_RunScanlines(P(ASAP_State PTR) ast, P(int) scanlines)
+FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 {
 	/* copy registers from ASAP_State to local variables for improved performance */
-	int pc;
-	int nz;
-	int a;
-	int x;
-	int y;
-	int c;
-	int s;
-	int vdi;
-	int next_event_cycle;
-	int cycle_limit;
+	V(int, pc);
+	V(int, nz);
+	V(int, a);
+	V(int, x);
+	V(int, y);
+	V(int, c);
+	V(int, s);
+	V(int, vdi);
+	V(int, next_event_cycle);
+	V(int, cycle_limit);
 	pc = ast _ cpu_pc;
 	nz = ast _ cpu_nz;
 	a = ast _ cpu_a;
@@ -295,9 +295,9 @@ PUBLIC_FUNC(void) Cpu_RunScanlines(P(ASAP_State PTR) ast, P(int) scanlines)
 		next_event_cycle = ast _ timer4_cycle;
 	ast _ nearest_event_cycle = next_event_cycle;
 	for (;;) {
-		int cycle;
-		int addr;
-		int data;
+		V(int, cycle);
+		V(int, addr);
+		V(int, data);
 		cycle = ast _ cycle;
 		if (cycle >= ast _ nearest_event_cycle) {
 			if (cycle >= ast _ next_scanline_cycle) {

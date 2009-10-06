@@ -59,7 +59,7 @@ function ASAP()
 	this.covox = new Array(4);
 	this.base_pokey = { delta_buffer : new Array(888) };
 	this.extra_pokey = { delta_buffer : new Array(888) };
-	this.module_info = { durations : new Array(ASAP_SONGS_MAX), loops : new Array(ASAP_SONGS_MAX) };
+	this.module_info = { durations : new Array(ASAP_SONGS_MAX), loops : new Array(ASAP_SONGS_MAX), song_pos : new Array(128) };
 	this.poly9_lookup = new Array(511);
 	this.poly17_lookup = new Array(16385);
 	this.memory = new Array(65536);
