@@ -35,8 +35,8 @@ ASAP includes the following programs:
 - Java applet - for web pages {asapjava=}{asapwww?(see link:applet.html[online demo])}
 - Java midlet - for mobile devices {asapjava=}
 - C# version of ASAP2WAV
-- JScript version of ASAP2WAV running in Windows Script Host
-- JavaScript version of ASAP2WAV running in Firefox
+- JScript version of ASAP2WAV running in Windows Script Host {asapjavascript=}
+- JavaScript version of ASAP2WAV running in Firefox {asapjavascript=}
 - Flash player - for web pages
 
 Other projects which use ASAP are:
@@ -99,6 +99,10 @@ endif::asapsrc[]
 ifdef::asapjava[]
 include::java/USAGE[]
 endif::asapjava[]
+
+ifdef::asapjavascript[]
+include::javascript/USAGE[]
+endif::asapjavascript[]
 
 ifdef::asapwin[]
 include::win32/USAGE[]

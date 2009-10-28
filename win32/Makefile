@@ -206,6 +206,11 @@ README_Java.html: ../README ../NEWS ../CREDITS ../java/USAGE
 	$(ASCIIDOC_POSTPROCESS)
 	$(ASCIIDOC_VALIDATE)
 
+README_JavaScript.html: ../README ../NEWS ../CREDITS ../javascript/USAGE
+	$(ASCIIDOC) -a asapjavascript="(included in this package)" ../README
+	$(ASCIIDOC_POSTPROCESS)
+	$(ASCIIDOC_VALIDATE)
+
 README_Windows.html: ../README ../NEWS ../CREDITS USAGE
 	$(ASCIIDOC) -a asapwin="(included in this binary package)" ../README
 	$(ASCIIDOC_POSTPROCESS)

@@ -245,3 +245,30 @@ mingw32-make xbmc
 
 This should produce `xbmc_asap.dll`, which you can use with XBox
 or Windows version of XBMC. The XBMC must include support for ASAP.
+
+
+Building JScript ASAP2WAV and JavaScript ASAP2WAV for web browsers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Navigate to the `javascript` directory and run:
+--------------------------------------------------------------------------------
+make
+--------------------------------------------------------------------------------
+(or `mingw32-make`).
+
+The results are `asap2wav.js` and `asapweb.js`.
+
+
+Building Flash player version of ASAP
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You need http://www.adobe.com/products/flex/flexdownloads/[Flex SDK].
+Add its `bin` directory to your `PATH`.
+
+Navigate to the `flash` directory and run:
+--------------------------------------------------------------------------------
+make
+--------------------------------------------------------------------------------
+(or `mingw32-make`).
+
+You should get `asap.swf`.
