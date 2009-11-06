@@ -6,16 +6,20 @@
 
 		<Package Description="ASAP - Another Slight Atari Player"
 			Manufacturer="Piotr Fusik" InstallerVersion="200" Compressed="yes" />
+		<Upgrade Id="4250B3CB-D4A1-4486-828C-AC26A84D00D9">
+			<UpgradeVersion Property="NEWERVERSIONDETECTED" Minimum="$(var.VERSION)" OnlyDetect="yes" />
+			<UpgradeVersion Property="PREVIOUSVERSIONSINSTALLED" Maximum="$(var.VERSION)" IncludeMaximum="no" MigrateFeatures="yes" />
+		</Upgrade>
+		<Condition Message="Newer version of ASAP is already installed!">NOT NEWERVERSIONDETECTED</Condition>
 		<Media Id="1" Cabinet="asap.cab" EmbedCab="yes" CompressionLevel="high" />
 
 		<Icon Id="wasap.ico" SourceFile="wasap/wasap.ico" />
 		<Property Id="ARPHELPLINK" Value="http://asap.sourceforge.net/" />
 		<Property Id="ARPPRODUCTICON" Value="wasap.ico" />
-		<Property Id="ARPNOREPAIR" Value="1" />
-		<UIRef Id="WixUI_FeatureTree" />
 		<!-- <WixVariable Id="WixUILicenseRtf" Value="COPYING.rtf" /> -->
 		<!-- <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" /> -->
 		<!-- <WixVariable Id="WixUIBannerBmp" Value="banner.bmp" /> -->
+		<UIRef Id="WixUI_FeatureTree" />
 
 		<Directory Id="TARGETDIR" Name="SourceDir">
 			<Directory Id="ProgramFilesFolder">
@@ -135,5 +139,9 @@
 		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file." AllowAdvertise="no">
 			<ComponentRef Id="README_WindowsSetup.html" />
 		</Feature>
+
+		<InstallExecuteSequence>
+			<RemoveExistingProducts After="InstallFinalize" />
+		</InstallExecuteSequence>
 	</Product>
 </Wix>

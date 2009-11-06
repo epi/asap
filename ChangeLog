@@ -1,3 +1,7 @@
+2009-11-06  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs: support upgrades and prevent downgrades
+
+
 2009-10-28  Piotr Fusik  <fox@scene.pl>
 * INSTALL, README, javascript/USAGE, win32/Makefile:
   JavaScript and Flash build and usage instructions
