@@ -16,7 +16,7 @@
 		<Icon Id="wasap.ico" SourceFile="wasap/wasap.ico" />
 		<Property Id="ARPHELPLINK" Value="http://asap.sourceforge.net/" />
 		<Property Id="ARPPRODUCTICON" Value="wasap.ico" />
-		<!-- <WixVariable Id="WixUILicenseRtf" Value="COPYING.rtf" /> -->
+		<WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
 		<!-- <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" /> -->
 		<!-- <WixVariable Id="WixUIBannerBmp" Value="banner.bmp" /> -->
 		<UIRef Id="WixUI_FeatureTree" />

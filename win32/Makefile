@@ -234,7 +234,7 @@ uninstall_dsf.bat:
 
 setup: ../../asap-$(VERSION)-windows.msi
 
-../../asap-$(VERSION)-windows.msi: setup/asap.wixobj wasap/wasap.ico win32 README_WindowsSetup.html
+../../asap-$(VERSION)-windows.msi: setup/asap.wixobj wasap/wasap.ico setup/license.rtf win32 README_WindowsSetup.html
 	$(LIGHT) -ext WixUIExtension $<
 
 setup/asap.wixobj: setup/asap.wxs
@@ -261,14 +261,14 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		java/mf2jad.pl java/Makefile \
 		java/USAGE \
 		javascript/asap.ppjs javascript/asap2wav.ppjs javascript/asapweb.ppjs \
-		javascript/Makefile \
+		javascript/Makefile javascript/USAGE \
 		moc/libasap_decoder.c \
 		win32/Makefile win32/USAGE \
 		win32/gui.c win32/gui.h win32/gui.rc \
 		win32/apollo/ASAP_Apollo.cpp win32/apollo/InputPlugin.h \
 		win32/dshow/asap_dsf.cpp win32/dshow/asap_dsf.def \
 		win32/foobar2000/foo_asap.cpp \
-		win32/setup/asap.wxs \
+		win32/setup/asap.wxs win32/setup/license.rtf \
 		win32/wasap/wasap.c \
 		win32/winamp/in_asap.c \
 		win32/winamp/in2.h win32/winamp/out.h \

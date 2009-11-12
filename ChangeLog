@@ -1,3 +1,8 @@
+2009-11-12  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs, win32/setup/license.rtf, win32/Makefile:
+  added license to the setup
+
+
 2009-11-06  Piotr Fusik  <fox@scene.pl>
 * win32/setup/asap.wxs: support upgrades and prevent downgrades
 
