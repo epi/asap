@@ -21,6 +21,19 @@
 		<!-- <WixVariable Id="WixUIBannerBmp" Value="banner.bmp" /> -->
 		<UIRef Id="WixUI_FeatureTree" />
 
+		<Property Id="WINAMP.DIR">
+			<RegistrySearch Id="winamp.installdir" Root="HKCU" Key="SOFTWARE\Winamp" Type="directory" />
+		</Property>
+		<Property Id="FOO.DIR">
+			<RegistrySearch Id="foo.installdir" Root="HKLM" Key="SOFTWARE\foobar2000" Name="InstallDir" Type="directory" />
+		</Property>
+		<Property Id="XBMC.DIR">
+			<RegistrySearch Id="xbmc.installdir" Root="HKCU" Key="SOFTWARE\XBMC" Type="directory" />
+		</Property>
+		<Property Id="APOLLO.DIR">
+			<RegistrySearch Id="apollo.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Apollo_is1" Name="InstallLocation" Type="directory" />
+		</Property>
+
 		<Directory Id="TARGETDIR" Name="SourceDir">
 			<Directory Id="ProgramFilesFolder">
 				<Directory Id="ASAP.DIR" Name="ASAP">
@@ -81,26 +94,50 @@
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.tmc" Name="Permissions" Value="15" Type="integer" Action="write" />
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.tmc" Name="Runtime" Value="7" Type="integer" Action="write" />
 					</Component>
-					<Component Id="in_asap.dll" Guid="*">
-						<File Id="in_asap.dll" Name="in_asap.dll" Source="in_asap.dll" Checksum="yes" KeyPath="yes" />
+					<Component Id="README_WindowsSetup.html" Guid="*">
+						<File Id="README_WindowsSetup.html" Name="README_WindowsSetup.html" Source="README_WindowsSetup.html" KeyPath="yes" />
 					</Component>
-					<Component Id="foo_asap.dll" Guid="*">
-						<File Id="foo_asap.dll" Name="foo_asap.dll" Source="foo_asap.dll" Checksum="yes" KeyPath="yes" />
-					</Component>
-					<Component Id="xbmc_asap.dll" Guid="*">
-						<File Id="xbmc_asap.dll" Name="xbmc_asap.dll" Source="xbmc_asap.dll" Checksum="yes" KeyPath="yes" />
-					</Component>
-					<Component Id="ASAP_Apollo.dll" Guid="*">
-						<File Id="ASAP_Apollo.dll" Name="ASAP_Apollo.dll" Source="ASAP_Apollo.dll" Checksum="yes" KeyPath="yes" />
-					</Component>
+				</Directory>
+				<Directory Id="WINAMP.DIR" Name="Winamp">
+					<Directory Id="WINAMPPLUG.DIR" Name="Plugins">
+						<Component Id="in_asap.dll" Guid="*">
+							<File Id="in_asap.dll" Name="in_asap.dll" Source="in_asap.dll" Checksum="yes" KeyPath="yes" />
+						</Component>
+					</Directory>
+				</Directory>
+				<Directory Id="FOO.DIR" Name="foobar2000">
+					<Directory Id="FOOCOMP.DIR" Name="components">
+						<Component Id="foo_asap.dll" Guid="*">
+							<File Id="foo_asap.dll" Name="foo_asap.dll" Source="foo_asap.dll" Checksum="yes" KeyPath="yes" />
+						</Component>
+					</Directory>
+				</Directory>
+				<Directory Id="XBMC.DIR" Name="XBMC">
+					<Directory Id="XBMCSYS.DIR" Name="system">
+						<Directory Id="XBMCPLS.DIR" Name="players">
+							<Directory Id="XBMCPAPL.DIR" Name="paplayer">
+								<Component Id="xbmc_asap.dll" Guid="*">
+									<File Id="xbmc_asap.dll" Name="xbmc_asap.dll" Source="xbmc_asap.dll" Checksum="yes" KeyPath="yes" />
+								</Component>
+							</Directory>
+						</Directory>
+					</Directory>
+				</Directory>
+				<Directory Id="APOLLO.DIR" Name="Apollo">
+					<Directory Id="APOLLOPLUG.DIR" Name="Plug-ins">
+						<Component Id="ASAP_Apollo.dll" Guid="*">
+							<File Id="ASAP_Apollo.dll" Name="ASAP_Apollo.dll" Source="ASAP_Apollo.dll" Checksum="yes" KeyPath="yes" />
+						</Component>
+					</Directory>
+				</Directory>
+				<Directory Id="GSP.DIR" Name="GSPlayer">
 					<Component Id="gspasap.dll" Guid="*">
 						<File Id="gspasap.dll" Name="gspasap.dll" Source="gspasap.dll" Checksum="yes" KeyPath="yes" />
 					</Component>
+				</Directory>
+				<Directory Id="RMT.DIR" Name="RMT">
 					<Component Id="apokeysnd.dll" Guid="*">
 						<File Id="apokeysnd.dll" Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
-					</Component>
-					<Component Id="README_WindowsSetup.html" Guid="*">
-						<File Id="README_WindowsSetup.html" Name="README_WindowsSetup.html" Source="README_WindowsSetup.html" KeyPath="yes" />
 					</Component>
 				</Directory>
 			</Directory>
@@ -115,25 +152,29 @@
 				<ComponentRef Id="path" />
 			</Feature>
 		</Feature>
-		<Feature Id="asap_dsf" Title="Windows Media Player plugin" Level="1" Description="Plugin for Windows Media Player." AllowAdvertise="no">
+		<Feature Id="asap_dsf" Title="Windows Media Player plugin" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Plugin for Windows Media Player." AllowAdvertise="no">
 			<ComponentRef Id="asap_dsf.dll" />
 		</Feature>
-		<Feature Id="in_asap" Title="Winamp plugin" Level="1" Description="Plugin for Winamp." AllowAdvertise="no">
+		<Feature Id="in_asap" Title="Winamp plugin" Level="9" ConfigurableDirectory="WINAMPPLUG.DIR" Description="Plugin for Winamp." AllowAdvertise="no">
+			<Condition Level="1">WINAMP.DIR</Condition>
 			<ComponentRef Id="in_asap.dll" />
 		</Feature>
-		<Feature Id="foo_asap" Title="foobar2000 0.9 plugin" Level="1" Description="Plugin for foobar2000 (version 0.9.x only)." AllowAdvertise="no">
+		<Feature Id="foo_asap" Title="foobar2000 0.9 plugin" Level="9" ConfigurableDirectory="FOOCOMP.DIR" Description="Plugin for foobar2000 (version 0.9.x only)." AllowAdvertise="no">
+			<Condition Level="1">FOO.DIR</Condition>
 			<ComponentRef Id="foo_asap.dll" />
 		</Feature>
-		<Feature Id="xbmc_asap" Title="XBMC plugin" Level="1" Description="Plugin for XBMC (Windows and XBox)." AllowAdvertise="no">
+		<Feature Id="xbmc_asap" Title="XBMC plugin" Level="9" ConfigurableDirectory="XBMCPAPL.DIR" Description="Plugin for XBMC (Windows and XBox)." AllowAdvertise="no">
+			<Condition Level="1">XBMC.DIR</Condition>
 			<ComponentRef Id="xbmc_asap.dll" />
 		</Feature>
-		<Feature Id="ASAP_Apollo" Title="Apollo plugin" Level="1" Description="Plugin for Apollo." AllowAdvertise="no">
+		<Feature Id="ASAP_Apollo" Title="Apollo plugin" Level="9" ConfigurableDirectory="APOLLOPLUG.DIR" Description="Plugin for Apollo." AllowAdvertise="no">
+			<Condition Level="1">APOLLO.DIR</Condition>
 			<ComponentRef Id="ASAP_Apollo.dll" />
 		</Feature>
-		<Feature Id="gspasap" Title="GSPlayer plugin" Level="1" Description="Plugin for GSPlayer (desktop Windows only)." AllowAdvertise="no">
+		<Feature Id="gspasap" Title="GSPlayer plugin" Level="9" ConfigurableDirectory="GSP.DIR" Description="Plugin for GSPlayer (desktop Windows only)." AllowAdvertise="no">
 			<ComponentRef Id="gspasap.dll" />
 		</Feature>
-		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="1" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
+		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
 			<ComponentRef Id="apokeysnd.dll" />
 		</Feature>
 		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file." AllowAdvertise="no">
