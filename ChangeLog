@@ -1,3 +1,8 @@
+2009-11-18  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs, win32/setup/license.rtf, win32/setup/wix_mutex.pl,
+  win32/Makefile: started implementing file associations; GUI improvements
+
+
 2009-11-16  Piotr Fusik  <fox@scene.pl>
 * win32/setup/asap.wxs: default selection and directories for plugins
 

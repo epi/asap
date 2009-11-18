@@ -235,7 +235,7 @@ uninstall_dsf.bat:
 setup: ../../asap-$(VERSION)-windows.msi
 
 ../../asap-$(VERSION)-windows.msi: setup/asap.wixobj wasap/wasap.ico setup/license.rtf win32 README_WindowsSetup.html
-	$(LIGHT) -ext WixUIExtension $<
+	$(LIGHT) -ext WixUIExtension -sice:ICE69 $<
 
 setup/asap.wixobj: setup/asap.wxs
 	$(CANDLE) -dVERSION=$(VERSION) $<
@@ -281,7 +281,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		-s chksap.pl maketar.pl files2anylang.pl \
 		| $(SEVENZIP) -tgzip -si ../../asap-$(VERSION).tar.gz
 
-dist: srcdist win32 wince java csharp javascript flash \
+dist: srcdist win32 wince java csharp javascript flash setup \
 	COPYING.txt README_Java.html README_Windows.html README_WindowsCE.html \
 	install_dsf.bat uninstall_dsf.bat
 	$(RM) ../../asap-$(VERSION)-java.zip
