@@ -1,6 +1,18 @@
 History
 -------
 
+ASAP 2.0.0 (2009-12-??)::
+
+Windows setup has been created. ASAP has been ported to Flash Player
+and experimentally to JavaScript. New input formats: DLT, CMS and CM3
+are supported. GTIA sound and COVOX are emulated. WASAP now includes
+"Save as WAV". JavaScript interface of the Java applet has been changed.
+There were huge changes in the build process: on Unix/Linux it no longer uses
+the "configure" script and on Windows it uses MinGW for almost all binaries
+(they are smaller than Visual C++ 2008's, compatible with Windows 9x,
+wildcards work in ASAP2WAV).
+
+
 ASAP 1.2.1 (2009-05-08)::
 
 XBMC plugin and POKEY emulation DLL for RMT have been created.
