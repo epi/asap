@@ -39,7 +39,7 @@ ASAP includes the following programs:
 - JavaScript version of ASAP2WAV running in Firefox {asapjavascript=}
 - Flash player - for web pages
 
-Other projects which use ASAP are:
+There are other projects which use ASAP:
 
 - http://mmsap.sourceforge.net/[mmSAP 2] - standalone player for GNU/Linux with GTK+ user interface
 - http://www.rockbox.org/[Rockbox] - open source firmware for MP3 players
