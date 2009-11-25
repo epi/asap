@@ -125,12 +125,19 @@
 			</Dialog>
 
 			<!-- handle mutually exclusive file associations, conditions generated with wix_mutex.pl -->
+			<?foreach MUTEXCOND in (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3) OR $in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)));
+(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $xbmc_asap.ext=3 OR ($xbmc_asap.ext=-1 AND ?xbmc_asap.ext=3)));
+(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
+(($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3) OR $foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)));
+(($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($xbmc_asap.ext=3 OR ($xbmc_asap.ext=-1 AND ?xbmc_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
+(($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $xbmc_asap.ext=3 OR ($xbmc_asap.ext=-1 AND ?xbmc_asap.ext=3)));
+(($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
+(($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)) AND ($xbmc_asap.ext=3 OR ($xbmc_asap.ext=-1 AND ?xbmc_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
+(($xbmc_asap.ext=3 OR ($xbmc_asap.ext=-1 AND ?xbmc_asap.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)))?>
 			<Publish Dialog="MyCustomizeDlg" Control="Next" Event="SpawnDialog" Value="MyManyAssociationsDlg" Order="3">
-				($wasap.ext=3 AND ($asap_dsf.ext=3 OR $in_asap.ext=3 OR $foo_asap.ext=3 OR $xbmc_asap.ext=3 OR $ASAP_Apollo.ext=3)) OR ($asap_dsf.ext=3 AND ($in_asap.ext=3 OR $foo_asap.ext=3 OR $xbmc_asap.ext=3 OR $ASAP_Apollo.ext=3))
+				$(var.MUTEXCOND)
 			</Publish>
-			<Publish Dialog="MyCustomizeDlg" Control="Next" Event="SpawnDialog" Value="MyManyAssociationsDlg" Order="3">
-				($in_asap.ext=3 AND ($foo_asap.ext=3 OR $xbmc_asap.ext=3 OR $ASAP_Apollo.ext=3)) OR ($foo_asap.ext=3 AND ($xbmc_asap.ext=3 OR $ASAP_Apollo.ext=3)) OR ($xbmc_asap.ext=3 AND ($ASAP_Apollo.ext=3))
-			</Publish>
+			<?endforeach?>
 			<Dialog Id="MyManyAssociationsDlg" Width="270" Height="85" Title="!(loc.ErrorDlg_Title)">
 				<Control Id="ErrorText" Type="Text" X="48" Y="15" Width="205" Height="60" TabSkip="no" Text="You have selected &quot;Associate file types&quot; for many players. You may associate files with only one player." />
 				<Control Id="ErrorIcon" Type="Icon" X="15" Y="15" Width="24" Height="24" ToolTip="!(loc.ErrorDlgErrorIconTooltip)" FixedSize="yes" IconSize="32" Text="!(loc.ErrorDlgErrorIcon)" />
@@ -240,8 +247,8 @@
 							<File Id="in_asap.dll" Name="in_asap.dll" Source="in_asap.dll" Checksum="yes" KeyPath="yes" />
 						</Component>
 						<Component Id="in_asap.ext" Guid="*">
-							<RegistryValue Root="HKCR" Key="Winamp.file" Name="in_asap" Type="integer" Value="1" KeyPath="yes" />
-							<ProgId Id="Winamp.file">
+							<RegistryValue Root="HKCR" Key="Winamp.File" Name="in_asap" Type="integer" Value="1" KeyPath="yes" />
+							<ProgId Id="Winamp.File">
 								<Extension Id="sap">
 									<Verb Id="open" TargetProperty="WINAMP.EXE" Argument='"%1"' />
 								</Extension>
@@ -297,10 +304,10 @@
 							<File Id="ASAP_Apollo.dll" Name="ASAP_Apollo.dll" Source="ASAP_Apollo.dll" Checksum="yes" KeyPath="yes" />
 						</Component>
 						<Component Id="ASAP_Apollo.ext" Guid="*">
-							<RegistryValue Root="HKCR" Key="asap.file" Name="apollo" Type="integer" Value="1" KeyPath="yes" />
-							<ProgId Id="asap.file">
+							<RegistryValue Root="HKCR" Key="Apollo.Track" Name="ASAP_Apollo" Type="integer" Value="1" KeyPath="yes" />
+							<ProgId Id="Apollo.Track">
 								<Extension Id="sap">
-									<Verb Id="open" TargetProperty="APOLLO.EXE" Argument='"%1"' />
+									<Verb Id="Play" TargetProperty="APOLLO.EXE" Argument='"%1"' />
 								</Extension>
 								<?foreach EXT in $(var.NATIVEEXTS)?>
 									<Extension Id="$(var.EXT)" />
@@ -324,7 +331,7 @@
 
 		<Feature Id="wasap" Title="WASAP" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Tiny player controlled by a tray icon." AllowAdvertise="no">
 			<ComponentRef Id="wasap.exe" />
-			<Feature Id="wasap.ext" Title="Associate file types" Level="1" Description="$(var.DOUBLECLICK) WASAP." AllowAdvertise="no">
+			<Feature Id="wasap.ext" Title="Associate file types" Level="9" Description="$(var.DOUBLECLICK) WASAP." AllowAdvertise="no">
 				<ComponentRef Id="wasap.ext" />
 			</Feature>
 		</Feature>

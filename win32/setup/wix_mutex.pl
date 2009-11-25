@@ -1,10 +1,16 @@
-#!perl -l
 # Generate mutual exclusion conditions
-@a = qw($wasap.ext=3 $asap_dsf.ext=3 $in_asap.ext=3 $foo_asap.ext=3 $xbmc_asap.ext=3 $ASAP_Apollo.ext=3);
-$" = " OR ";
+@c = qw(wasap.ext asap_dsf.ext in_asap.ext foo_asap.ext xbmc_asap.ext ASAP_Apollo.ext);
+@a = map "\$$_=3 OR (\$$_=-1 AND ?$_=3)", @c; # action is install or (action is nothing and already installed)
 for $a (@a[0 .. $#a - 1]) {
-	$_ .= $" if $_;
-	$_ .= "($a AND (@a[++$i .. $#a]))";
-	print, $_ = '' if length > 200;
+	@b = @a[++$i .. $#a];
+	while (@b) {
+		$_ = "(($a) AND (" . shift @b;
+		while (@b) {
+			$t = "$_ OR $b[0]";
+			last if length($t) > 198;
+			$_ = $t;
+			shift @b;
+		}
+		print "$_));\n";
+	}
 }
-print;
