@@ -1,3 +1,7 @@
+2009-11-26  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs: shortcuts in the Programs menu
+
+
 2009-11-25  Piotr Fusik  <fox@scene.pl>
 * win32/setup/asap.wxs, win32/setup/wix_mutex.pl:
   setting multiple "Associate files" was possible with "Change"

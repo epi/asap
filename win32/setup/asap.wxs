@@ -327,10 +327,31 @@
 					</Component>
 				</Directory>
 			</Directory>
+			<Directory Id="ProgramMenuFolder" Name="Programs">
+				<Directory Id="menu.dir" Name="ASAP">
+					<Component Id="WASAP.lnk" Guid="*">
+						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuWASAP" Type="integer" Value="1" KeyPath="yes" />
+						<Shortcut Id="WASAP.lnk" Name="WASAP" Target="[#wasap.exe]" />
+					</Component>
+					<Component Id="Documentation.lnk" Guid="*">
+						<RemoveFolder Id="menu.dir" On="uninstall" />
+						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuDoc" Type="integer" Value="1" KeyPath="yes" />
+						<Shortcut Id="Documentation.lnk" Name="Documentation" Target="[#README_WindowsSetup.html]" />
+					</Component>
+					<Component Id="Website.url" Guid="*">
+						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuWebsite" Type="integer" Value="1" KeyPath="yes" />
+						<!-- <util:InternetShortcut Id="Website.url" Name="Website" Target="http://asap.sourceforge.net/" /> = 150 kB overhead on MSI -->
+						<IniFile Id="Website.url" Name="Website.url" Directory="menu.dir" Action="addLine" Section="InternetShortcut" Key="URL" Value="http://asap.sourceforge.net/" />
+					</Component>
+				</Directory>
+			</Directory>
 		</Directory>
 
 		<Feature Id="wasap" Title="WASAP" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Tiny player controlled by a tray icon." AllowAdvertise="no">
 			<ComponentRef Id="wasap.exe" />
+			<Feature Id="wasap.lnk" Title="Start menu shortcut" Level="1" Description="Adds WASAP to the Programs menu." AllowAdvertise="no">
+				<ComponentRef Id="WASAP.lnk" />
+			</Feature>
 			<Feature Id="wasap.ext" Title="Associate file types" Level="9" Description="$(var.DOUBLECLICK) WASAP." AllowAdvertise="no">
 				<ComponentRef Id="wasap.ext" />
 			</Feature>
@@ -388,6 +409,10 @@
 		</Feature>
 		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file." AllowAdvertise="no">
 			<ComponentRef Id="README_WindowsSetup.html" />
+			<Feature Id="docs.lnk" Title="Start menu shortcuts" Level="1" Description="Adds documentation and website links to the Programs menu." AllowAdvertise="no">
+				<ComponentRef Id="Documentation.lnk" />
+				<ComponentRef Id="Website.url" />
+			</Feature>
 		</Feature>
 
 		<InstallExecuteSequence>
