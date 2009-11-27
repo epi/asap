@@ -345,12 +345,21 @@
 					</Component>
 				</Directory>
 			</Directory>
+			<Directory Id="DesktopFolder" Name="Desktop">
+				<Component Id="WASAP.desktop" Guid="*">
+					<RegistryValue Root="HKCU" Key="Software\ASAP" Name="DesktopWASAP" Type="integer" Value="1" KeyPath="yes" />
+					<Shortcut Id="WASAP.desktop" Name="WASAP" Target="[#wasap.exe]" />
+				</Component>
+			</Directory>
 		</Directory>
 
 		<Feature Id="wasap" Title="WASAP" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Tiny player controlled by a tray icon." AllowAdvertise="no">
 			<ComponentRef Id="wasap.exe" />
 			<Feature Id="wasap.lnk" Title="Start menu shortcut" Level="1" Description="Adds WASAP to the Programs menu." AllowAdvertise="no">
 				<ComponentRef Id="WASAP.lnk" />
+			</Feature>
+			<Feature Id="wasap.desktop" Title="Desktop shortcut" Level="9" Description="Adds WASAP to the desktop." AllowAdvertise="no">
+				<ComponentRef Id="WASAP.desktop" />
 			</Feature>
 			<Feature Id="wasap.ext" Title="Associate file types" Level="9" Description="$(var.DOUBLECLICK) WASAP." AllowAdvertise="no">
 				<ComponentRef Id="wasap.ext" />

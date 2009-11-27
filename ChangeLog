@@ -1,3 +1,7 @@
+2009-11-27  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs: WASAP icon on desktop
+
+
 2009-11-26  Piotr Fusik  <fox@scene.pl>
 * win32/setup/asap.wxs: shortcuts in the Programs menu
 
