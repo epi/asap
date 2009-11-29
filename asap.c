@@ -139,6 +139,7 @@ PRIVATE FUNC(abool, load_native, (
 #endif
 	{
 		V(int, player_last_byte);
+		V(int, music_last_byte);
 		V(int, block_len);
 		if ((UBYTE(module[0]) != 0xff || UBYTE(module[1]) != 0xff)
 		 && (module[0] != 0 || module[1] != 0)) /* some CMC and clones start with zeros */
@@ -157,7 +158,10 @@ PRIVATE FUNC(abool, load_native, (
 		module_info _ music = UWORD(module, 2);
 		if (module_info _ music <= player_last_byte)
 			return FALSE;
-		block_len = UWORD(module, 4) + 1 - module_info _ music;
+		music_last_byte = UWORD(module, 4);
+		if (module_info _ music <= 0xd7ff && music_last_byte >= 0xd000)
+			return FALSE;
+		block_len = music_last_byte + 1 - module_info _ music;
 		if (6 + block_len != module_len) {
 			V(int, info_addr);
 			V(int, info_len);

@@ -1,3 +1,8 @@
+2009-11-29  Piotr Fusik  <fox@scene.pl>
+* asap.c: reject native modules which load in $d000-$d7ff
+  - e.g. simply_tune.tm8 from Grayscale site
+
+
 2009-11-27  Piotr Fusik  <fox@scene.pl>
 * win32/setup/asap.wxs: WASAP icon on desktop
 
