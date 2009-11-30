@@ -234,7 +234,7 @@ uninstall_dsf.bat:
 
 setup: ../../asap-$(VERSION)-windows.msi
 
-../../asap-$(VERSION)-windows.msi: setup/asap.wixobj wasap/wasap.ico setup/license.rtf win32 README_WindowsSetup.html
+../../asap-$(VERSION)-windows.msi: setup/asap.wixobj wasap/wasap.ico setup/license.rtf setup/asap-banner.jpg setup/asap-dialog.jpg win32 README_WindowsSetup.html
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 $<
 
 setup/asap.wixobj: setup/asap.wxs
@@ -278,6 +278,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		-b players/cmc.obx players/cm3.obx players/cms.obx players/dlt.obx players/mpt.obx \
 		players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx \
 		win32/wasap/play.ico win32/wasap/stop.ico win32/wasap/wasap.ico \
+		win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg \
 		-s chksap.pl maketar.pl files2anylang.pl \
 		| $(SEVENZIP) -tgzip -si ../../asap-$(VERSION).tar.gz
 

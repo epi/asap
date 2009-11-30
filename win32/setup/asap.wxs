@@ -21,8 +21,8 @@
 		<Property Id="ARPHELPLINK" Value="http://asap.sourceforge.net/" />
 		<Property Id="ARPPRODUCTICON" Value="wasap.ico" />
 		<WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
-		<!-- <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" /> -->
-		<!-- <WixVariable Id="WixUIBannerBmp" Value="banner.bmp" /> -->
+		<WixVariable Id="WixUIDialogBmp" Value="asap-dialog.jpg" />
+		<WixVariable Id="WixUIBannerBmp" Value="asap-banner.jpg" />
 
 		<UI Id="MyWixUI_FeatureTree">
 			<!-- customized WixUI_FeatureTree from Wix 3.0 - my changes commented -->

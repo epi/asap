@@ -1,3 +1,8 @@
+2009-11-30  Piotr Fusik  <fox@scene.pl>
+* CREDITS, win32/setup/asap.wxs, win32/setup/asap-dialog.jpg,
+  win32/setup/asap-banner.jpg, win32/Makefile: setup graphics by Pawel Szewczyk
+
+
 2009-11-29  Piotr Fusik  <fox@scene.pl>
 * asap.c: reject native modules which load in $d000-$d7ff
   - e.g. simply_tune.tm8 from Grayscale site
