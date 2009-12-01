@@ -1,3 +1,10 @@
+2009-12-01  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs: added "Uninstall shortcut"
+
+* win32/setup/asap-dialog.jpg, win32/setup/asap-banner.jpg:
+  optimized using "jhead -purejpg"
+
+
 2009-11-30  Piotr Fusik  <fox@scene.pl>
 * CREDITS, win32/setup/asap.wxs, win32/setup/asap-dialog.jpg,
   win32/setup/asap-banner.jpg, win32/Makefile: setup graphics by Pawel Szewczyk

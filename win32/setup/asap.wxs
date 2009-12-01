@@ -343,6 +343,10 @@
 						<!-- <util:InternetShortcut Id="Website.url" Name="Website" Target="http://asap.sourceforge.net/" /> = 150 kB overhead on MSI -->
 						<IniFile Id="Website.url" Name="Website.url" Directory="menu.dir" Action="addLine" Section="InternetShortcut" Key="URL" Value="http://asap.sourceforge.net/" />
 					</Component>
+					<Component Id="uninstall.lnk" Guid="*">
+						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuUninstall" Type="integer" Value="1" KeyPath="yes" />
+						<Shortcut Id="uninstall.lnk" Name="Uninstall" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" />
+					</Component>
 				</Directory>
 			</Directory>
 			<Directory Id="DesktopFolder" Name="Desktop">
@@ -422,6 +426,9 @@
 				<ComponentRef Id="Documentation.lnk" />
 				<ComponentRef Id="Website.url" />
 			</Feature>
+		</Feature>
+		<Feature Id="uninstall" Title="Uninstall shortcut" Level="1" Description="Adds uninstall link to the Programs menu (in addition to the Control Panel which is always available)." AllowAdvertise="no">
+			<ComponentRef Id="uninstall.lnk" />
 		</Feature>
 
 		<InstallExecuteSequence>
