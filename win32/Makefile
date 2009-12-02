@@ -234,7 +234,7 @@ uninstall_dsf.bat:
 
 setup: ../../asap-$(VERSION)-windows.msi
 
-../../asap-$(VERSION)-windows.msi: setup/asap.wixobj wasap/wasap.ico setup/license.rtf setup/asap-banner.jpg setup/asap-dialog.jpg win32 README_WindowsSetup.html
+../../asap-$(VERSION)-windows.msi: setup/asap.wixobj wasap/wasap.ico setup/license.rtf setup/asap-banner.jpg setup/asap-dialog.jpg setup/Website.url win32 README_WindowsSetup.html
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 $<
 
 setup/asap.wixobj: setup/asap.wxs
@@ -268,7 +268,8 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		win32/apollo/ASAP_Apollo.cpp win32/apollo/InputPlugin.h \
 		win32/dshow/asap_dsf.cpp win32/dshow/asap_dsf.def \
 		win32/foobar2000/foo_asap.cpp \
-		win32/setup/asap.wxs win32/setup/license.rtf win32/setup/wix_mutex.pl \
+		win32/setup/asap.wxs win32/setup/license.rtf \
+		win32/setup/Website.url win32/setup/wix_mutex.pl \
 		win32/wasap/wasap.c \
 		win32/winamp/in_asap.c \
 		win32/winamp/in2.h win32/winamp/out.h \

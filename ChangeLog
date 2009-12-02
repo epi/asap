@@ -1,3 +1,8 @@
+2009-12-02  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs, win32/setup/Website.url, win32/Makefile:
+  use <File> instead of <IniFile> for the website link (0.5 kB smaller MSI)
+
+
 2009-12-01  Piotr Fusik  <fox@scene.pl>
 * win32/setup/asap.wxs: added "Uninstall shortcut"
 

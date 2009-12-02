@@ -338,10 +338,11 @@
 						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuDoc" Type="integer" Value="1" KeyPath="yes" />
 						<Shortcut Id="Documentation.lnk" Name="Documentation" Target="[#README_WindowsSetup.html]" />
 					</Component>
-					<Component Id="Website.url" Guid="*">
+					<Component Id="Website.url" Guid="07CB02BE-17AE-49AA-87B1-D0315CF2D47A">
 						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuWebsite" Type="integer" Value="1" KeyPath="yes" />
 						<!-- <util:InternetShortcut Id="Website.url" Name="Website" Target="http://asap.sourceforge.net/" /> = 150 kB overhead on MSI -->
-						<IniFile Id="Website.url" Name="Website.url" Directory="menu.dir" Action="addLine" Section="InternetShortcut" Key="URL" Value="http://asap.sourceforge.net/" />
+						<!-- <IniFile Id="Website.url" Name="Website.url" Directory="menu.dir" Action="addLine" Section="InternetShortcut" Key="URL" Value="http://asap.sourceforge.net/" /> = 0.5 kB bigger MSI than with File -->
+						<File Id="Website.url" Name="Website.url" Source="Website.url" />
 					</Component>
 					<Component Id="uninstall.lnk" Guid="*">
 						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuUninstall" Type="integer" Value="1" KeyPath="yes" />
