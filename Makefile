@@ -124,7 +124,7 @@ clean:
 	$(RM) asap2wav libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so players.h
 
 README.html: README INSTALL NEWS CREDITS
-	$(ASCIIDOC) -o $@ -a asapsrc README
+	$(ASCIIDOC) -o $@ -a asapsrc -a asapports README
 	$(ASCIIDOC_POSTPROCESS) $@
 
 .DELETE_ON_ERROR:

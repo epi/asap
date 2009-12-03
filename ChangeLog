@@ -1,4 +1,7 @@
 2009-12-03  Piotr Fusik  <fox@scene.pl>
+* PORTS.xml, PORTS.xsl, README, Makefile, win32/Makefile:
+  added summary of differences between ports in a table
+
 * win32/setup/asap.wxs, win32/setup/wix_mutex.pl: XBMC doesn't support file
   associations (actually opening files from command line)
 

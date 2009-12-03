@@ -21,6 +21,7 @@ ASAP_CL71 = cl -nologo -O2 -GL -GR- -W3 -DNDEBUG -Fe$@ -I. -I..
 # common tools
 PERL = perl
 RM = rm -f
+CP = cp -f
 UNIX2DOS = unix2dos
 ASCIIDOC = asciidoc -o $@ -a localtime -a doctime
 ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/;END{unlink '$@.bak'}" $@
@@ -197,7 +198,7 @@ COPYING.txt: ../COPYING
 	$(UNIX2DOS) <$< >$@
 
 ../README.html: ../README ../NEWS ../CREDITS ../INSTALL
-	$(ASCIIDOC) -a asapsrc ../README
+	$(ASCIIDOC) -a asapsrc -a asapports ../README
 	$(ASCIIDOC_POSTPROCESS)
 	$(ASCIIDOC_VALIDATE)
 
@@ -248,7 +249,8 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		players/cmc.asx players/cms.asx players/dlt.as8 players/mpt.asx \
 		players/rmt.asx players/tmc.asx players/tm2.asx \
 		players/Makefile Makefile \
-		ChangeLog COPYING CREDITS INSTALL NEWS README README.html \
+		ChangeLog COPYING CREDITS INSTALL NEWS README \
+		README.html PORTS.xml PORTS.xsl \
 		csharp/ASAP.ppcs csharp/asap2wav.cs csharp/Makefile \
 		flash/ASAP.ppas flash/ASAP_ModuleInfo.as flash/PokeyState.as \
 		flash/ASAPPlayer.as flash/Makefile \
@@ -307,11 +309,17 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 	$(GREP) ASAP_VERSION ../javascript/asap.ppjs
 	$(GREP) VERSION ../flash/ASAP.ppas
 
-www: ../../www/index.html
+www: ../../www/index.html ../../www/PORTS.xml ../../www/PORTS.xsl 
 
 ../../www/index.html: ../README ../NEWS ../CREDITS
-	$(ASCIIDOC) -a asapwww ../README
+	$(ASCIIDOC) -a asapwww -a asapports ../README
 	$(ASCIIDOC_POSTPROCESS)
 	$(ASCIIDOC_VALIDATE)
+
+../../www/PORTS.xml: ../PORTS.xml
+	$(CP) $< $@
+
+../../www/PORTS.xsl: ../PORTS.xsl
+	$(CP) $< $@
 
 .DELETE_ON_ERROR:

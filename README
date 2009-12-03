@@ -7,6 +7,7 @@ ASAP - Another Slight Atari Player
 ifdef::asapwww[]
 http://sourceforge.net/projects/asap/files/asap/[Download] |
 http://asap.cvs.sourceforge.net/asap/asap/[Browse source code (CVS)] |
+http://sourceforge.net/scm/?type=cvs&group_id=154391[Get latest source code (CVS)] |
 http://sourceforge.net/projects/asap/[SourceForge project page]
 endif::asapwww[]
 
@@ -35,9 +36,11 @@ ASAP includes the following programs:
 - Java applet - for web pages {asapjava=}{asapwww?(see link:applet.html[online demo])}
 - Java midlet - for mobile devices {asapjava=}
 - C# version of ASAP2WAV
-- JScript version of ASAP2WAV running in Windows Script Host {asapjavascript=}
-- JavaScript version of ASAP2WAV running in Firefox {asapjavascript=}
+- experimental JScript version of ASAP2WAV running in Windows Script Host {asapjavascript=}
+- experimental JavaScript version of ASAP2WAV running in Firefox {asapjavascript=}
 - Flash player - for web pages
+
+{asapports}The summary of the differences between the above versions is in link:PORTS.xml[this table].
 
 There are other projects which use ASAP:
 
@@ -86,7 +89,7 @@ Modern Atari music editor running on Windows.
 TMC, TM8 (http://jaskier.atari8.info/[Theta Music Composer] 1.x)::
 Atari music editor from late 1990s.
 The two file extensions are treated identically and played in stereo.
-TM8 means it's a stereo (8-channel) music while TMC can be either mono or stereo.
+TM8 means it's stereo (8-channel) music while TMC can be either mono or stereo.
 
 TM2 (http://jaskier.atari8.info/[Theta Music Composer] 2.x)::
 Modern Atari music editor.
