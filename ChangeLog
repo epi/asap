@@ -1,3 +1,8 @@
+2009-12-03  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs, win32/setup/wix_mutex.pl: XBMC doesn't support file
+  associations (actually opening files from command line)
+
+
 2009-12-02  Piotr Fusik  <fox@scene.pl>
 * win32/setup/asap.wxs, win32/setup/Website.url, win32/Makefile:
   use <File> instead of <IniFile> for the website link (0.5 kB smaller MSI)
