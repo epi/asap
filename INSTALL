@@ -235,7 +235,7 @@ This should produce `asap2wav.exe`.
 Building the XBMC plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need Visual C\++ Toolkit (was free download from Microsoft,
+You need Visual C+\+ Toolkit (was free download from Microsoft,
 now search the internet for `VCToolkitSetup.exe`) or Microsoft Visual C++ 2003.
 
 Navigate to the `win32` directory and run:
