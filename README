@@ -38,7 +38,7 @@ ASAP includes the following programs:
 - C# version of ASAP2WAV
 - experimental JScript version of ASAP2WAV running in Windows Script Host {asapjavascript=}
 - experimental JavaScript version of ASAP2WAV running in Firefox {asapjavascript=}
-- Flash player - for web pages
+- Flash player - for web pages {asapflash=}{asapwww?(see link:flash.html[online demo])}
 
 {asapports}The summary of the differences between the above versions is in link:PORTS.xml[this table].
 
@@ -98,6 +98,10 @@ Modern Atari music editor.
 ifdef::asapsrc[]
 include::INSTALL[]
 endif::asapsrc[]
+
+ifdef::asapflash[]
+include::flash/USAGE[]
+endif::asapflash[]
 
 ifdef::asapjava[]
 include::java/USAGE[]

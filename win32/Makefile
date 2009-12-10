@@ -202,6 +202,11 @@ COPYING.txt: ../COPYING
 	$(ASCIIDOC_POSTPROCESS)
 	$(ASCIIDOC_VALIDATE)
 
+README_Flash.html: ../README ../NEWS ../CREDITS ../flash/USAGE
+	$(ASCIIDOC) -a asapflash="(included in this binary package)" ../README
+	$(ASCIIDOC_POSTPROCESS)
+	$(ASCIIDOC_VALIDATE)
+
 README_Java.html: ../README ../NEWS ../CREDITS ../java/USAGE
 	$(ASCIIDOC) -a asapjava="(included in this binary package)" ../README
 	$(ASCIIDOC_POSTPROCESS)
@@ -233,9 +238,9 @@ install_dsf.bat:
 uninstall_dsf.bat:
 	echo regsvr32 /u asap_dsf.dll>$@
 
-setup: ../../asap-$(VERSION)-windows.msi
+setup: ../../asap-$(VERSION)-win32.msi
 
-../../asap-$(VERSION)-windows.msi: setup/asap.wixobj wasap/wasap.ico setup/license.rtf setup/asap-banner.jpg setup/asap-dialog.jpg setup/Website.url win32 README_WindowsSetup.html
+../../asap-$(VERSION)-win32.msi: setup/asap.wixobj wasap/wasap.ico setup/license.rtf setup/asap-banner.jpg setup/asap-dialog.jpg setup/Website.url win32 README_WindowsSetup.html
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 $<
 
 setup/asap.wixobj: setup/asap.wxs
@@ -253,15 +258,14 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		README.html PORTS.xml PORTS.xsl \
 		csharp/ASAP.ppcs csharp/asap2wav.cs csharp/Makefile \
 		flash/ASAP.ppas flash/ASAP_ModuleInfo.as flash/PokeyState.as \
-		flash/ASAPPlayer.as flash/Makefile \
+		flash/ASAPPlayer.as flash/Makefile flash/USAGE \
 		gsplayer/gspasap.c gsplayer/mapplugin.h \
 		gsplayer/Makefile gsplayer/USAGE \
 		java/ASAP.ppjava java/ASAP_ModuleInfo.java \
 		java/ASAP2WAV.java java/asap2wav.MF \
 		java/ASAPApplet.java \
-		java/ASAPMIDlet.java java/asap_midlet.MF \
-		java/mf2jad.pl java/Makefile \
-		java/USAGE \
+		java/ASAPMIDlet.java java/asap_midlet.MF java/mf2jad.pl \
+		java/Makefile java/USAGE \
 		javascript/asap.ppjs javascript/asap2wav.ppjs javascript/asapweb.ppjs \
 		javascript/Makefile javascript/USAGE \
 		moc/libasap_decoder.c \
@@ -286,15 +290,18 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		| $(SEVENZIP) -tgzip -si ../../asap-$(VERSION).tar.gz
 
 dist: srcdist win32 wince java csharp javascript flash setup \
-	COPYING.txt README_Java.html README_Windows.html README_WindowsCE.html \
+	COPYING.txt README_Flash.html README_Java.html README_Windows.html README_WindowsCE.html \
 	install_dsf.bat uninstall_dsf.bat
+	$(RM) ../../asap-$(VERSION)-flash.zip
 	$(RM) ../../asap-$(VERSION)-java.zip
-	$(RM) ../../asap-$(VERSION)-windows.zip
+	$(RM) ../../asap-$(VERSION)-win32.zip
 	$(RM) ../../asap-$(VERSION)-wince-arm.zip
+	$(SEVENZIP) -tzip ../../asap-$(VERSION)-flash.zip \
+		COPYING.txt README_Flash.html ../flash/asap.swf
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-java.zip \
 		COPYING.txt README_Java.html \
 		../java/asap2wav.jar ../java/asap_applet.jar ../java/asap_midlet.jad ../java/asap_midlet.jar
-	$(SEVENZIP) -tzip ../../asap-$(VERSION)-windows.zip \
+	$(SEVENZIP) -tzip ../../asap-$(VERSION)-win32.zip \
 		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
 		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll
@@ -315,6 +322,18 @@ www: ../../www/index.html ../../www/PORTS.xml ../../www/PORTS.xsl
 	$(ASCIIDOC) -a asapwww -a asapports ../README
 	$(ASCIIDOC_POSTPROCESS)
 	$(ASCIIDOC_VALIDATE)
+
+../../www/apokeysnd.dll: apokeysnd.dll
+	$(CP) $< $@
+
+../../www/asap.swf: ../flash/asap.swf
+	$(CP) $< $@
+
+../../www/asap_applet.jar: ../java/asap_applet.jar
+	$(CP) $< $@
+
+../../www/favicon.ico: wasap/wasap.ico
+	$(CP) $< $@
 
 ../../www/PORTS.xml: ../PORTS.xml
 	$(CP) $< $@

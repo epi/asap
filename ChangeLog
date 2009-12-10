@@ -1,3 +1,17 @@
+** 2.0.0 released on 2009-12-10
+
+2009-12-10  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile: reverted binary distributions from *-windows.* to *-win32.*
+
+* flash/USAGE, README, win32/Makefile: Flash release
+
+* java/USAGE: XHTML syntax
+
+* INSTALL: fixed formatting
+
+* CREDITS: added Adrian Matoga
+
+
 2009-12-03  Piotr Fusik  <fox@scene.pl>
 * PORTS.xml, PORTS.xsl, README, Makefile, win32/Makefile:
   added summary of differences between ports in a table
