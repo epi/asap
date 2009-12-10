@@ -1,10 +1,7 @@
 *.class
-*.cmc
 *.jad
 *.jar
-*.sap
 ASAP.java
-applet.html
 doc
 net
 preverified
