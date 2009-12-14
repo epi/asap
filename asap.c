@@ -1208,8 +1208,8 @@ PRIVATE FUNC(abool, parse_sap_header, (
 #define SET_HEX(v)              v = Integer.parseInt(arg, 16)
 #define SET_DEC(v, min, max)    v = Integer.parseInt(arg); if (v < min || v > max) return FALSE
 #elif defined(CSHARP)
-#define SET_HEX(v)              v = int.Parse(arg, System.Globalization.NumberStyles.HexNumber)
-#define SET_DEC(v, min, max)    v = int.Parse(arg); if (v < min || v > max) return FALSE
+#define SET_HEX(v)              v = int.Parse(arg, NumberStyles.AllowHexSpecifier, NumberFormatInfo.InvariantInfo)
+#define SET_DEC(v, min, max)    v = int.Parse(arg, NumberStyles.None, NumberFormatInfo.InvariantInfo); if (v < min || v > max) return FALSE
 #elif defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
 #define SET_HEX(v)              v = parseInt(arg, 16)
 #define SET_DEC(v, min, max)    v = parseInt(arg, 10); if (v < min || v > max) return FALSE

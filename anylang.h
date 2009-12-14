@@ -144,7 +144,7 @@
 #define CHARCODE(c)             (c)
 #define strlen(s)               (s).Length
 #define EQUAL_STRINGS(s1, s2)   ((s1) == (s2))
-#define CONTAINS_STRING(s1, s2) ((s1).IndexOf(s2) >= 0)
+#define CONTAINS_STRING(s1, s2) (s1).Contains(s2)
 #define EMPTY_STRING(s)         (s) = string.Empty
 #define SUBSTRING(dest, src, src_offset, len) \
                                 (dest) = (src).Substring(src_offset, len)

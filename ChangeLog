@@ -1,3 +1,8 @@
+2009-12-14  Piotr Fusik  <fox@scene.pl>
+* asap.c, anylang.h, csharp/ASAP.ppcs:
+  C# version depended on localization settings
+
+
 ** 2.0.0 released on 2009-12-10
 
 2009-12-10  Piotr Fusik  <fox@scene.pl>

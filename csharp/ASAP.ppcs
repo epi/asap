@@ -24,6 +24,7 @@
 #define CSHARP
 
 using System;
+using System.Globalization;
 using System.IO;
 
 namespace ASAP
@@ -174,13 +175,13 @@ namespace ASAP
 			int i = s.IndexOf(':');
 			int r = 0;
 			if (i >= 0) {
-				r = int.Parse(s.Substring(0, i)) * 60000;
+				r = int.Parse(s.Substring(0, i), NumberStyles.None, NumberFormatInfo.InvariantInfo) * 60000;
 				s = s.Substring(i + 1);
 			}
 			i = s.IndexOf(' ');
 			if (i >= 0)
 				s = s.Substring(0, i);
-			r += (int) (double.Parse(s, System.Globalization.CultureInfo.InvariantCulture) * 1000);
+			r += (int) (double.Parse(s, NumberStyles.AllowDecimalPoint, NumberFormatInfo.InvariantInfo) * 1000);
 			return r;
 		}
 
