@@ -1,3 +1,9 @@
+2009-12-17  Piotr Fusik  <fox@scene.pl>
+* asap.c, anylang.h, asap_internal.h, csharp/ASAP.ppcs, flash/ASAP.ppas,
+  java/ASAP.ppjava, javascript/asap.ppjs, javascript/asapweb.ppjs:
+  unified duration parsing across programming languages
+
+
 2009-12-14  Piotr Fusik  <fox@scene.pl>
 * asap.c, anylang.h, csharp/ASAP.ppcs:
   C# version depended on localization settings

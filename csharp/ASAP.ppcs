@@ -172,16 +172,9 @@ namespace ASAP
 
 		public static int ParseDuration(string s)
 		{
-			int i = s.IndexOf(':');
-			int r = 0;
-			if (i >= 0) {
-				r = int.Parse(s.Substring(0, i), NumberStyles.None, NumberFormatInfo.InvariantInfo) * 60000;
-				s = s.Substring(i + 1);
-			}
-			i = s.IndexOf(' ');
-			if (i >= 0)
-				s = s.Substring(0, i);
-			r += (int) (double.Parse(s, NumberStyles.AllowDecimalPoint, NumberFormatInfo.InvariantInfo) * 1000);
+			int r = ASAP_ParseDuration(s);
+			if (r < 0)
+				throw new FormatException("Invalid duration");
 			return r;
 		}
 

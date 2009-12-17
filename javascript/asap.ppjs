@@ -33,23 +33,6 @@ var ASAP_SampleFormat = {
 	S16BE : -16
 };
 
-function ASAP_ParseDuration(s)
-{
-	if (s == null || s.length == 0)
-		return -1;
-	var i = s.indexOf(":");
-	var r = 0;
-	if (i >= 0) {
-		r = parseInt(s.substring(0, i)) * 60000;
-		s = s.substring(i + 1, s.length);
-	}
-	i = s.indexOf(" ");
-	if (i >= 0)
-		s = s.substring(0, i);
-	r += Math.floor(parseFloat(s) * 1000);
-	return r;
-}
-
 #include "acpu.c"
 #include "apokeysnd.c"
 #include "asap.c"

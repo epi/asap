@@ -1021,6 +1021,48 @@ PRIVATE FUNC(abool, parse_tm2, (
 
 #endif /* ASAP_ONLY_SAP */
 
+FUNC(int, ASAP_ParseDuration, (P(STRING, s)))
+{
+	V(int, i) = 0;
+	V(int, r);
+	V(int, d);
+#define PARSE_DIGIT(maxdig, retifnot) \
+	if (!HASCHARAT(s, i)) \
+		return retifnot; \
+	d = CHARCODEAT(s, i) - 48; \
+	if (d < 0 || d > maxdig) \
+		return retifnot; \
+	i++;
+
+	PARSE_DIGIT(9, -1);
+	r = d;
+	if (HASCHARAT(s, i)) {
+		d = CHARCODEAT(s, i) - 48;
+		if (d >= 0 && d <= 9) {
+			i++;
+			r = 10 * r + d;
+		}
+		if (HASCHARAT(s, i) && CHARAT(s, i) == ':') {
+			i++;
+			PARSE_DIGIT(5, -1);
+			r = (6 * r + d) * 10;
+			PARSE_DIGIT(9, -1);
+			r += d;
+		}
+	}
+	r *= 1000;
+	if (HASCHARAT(s, i) && CHARAT(s, i) == '.') {
+		i++;
+		PARSE_DIGIT(9, -1);
+		r += 100 * d;
+		PARSE_DIGIT(9, r);
+		r += 10 * d;
+		PARSE_DIGIT(9, r);
+		r += d;
+	}
+	return r;
+}
+
 #ifdef C
 
 static abool parse_hex(int *retval, const char *p)
@@ -1080,39 +1122,6 @@ static abool parse_text(char *retval, const char *p)
 	}
 	retval[i] = '\0';
 	return TRUE;
-}
-
-int ASAP_ParseDuration(const char *s)
-{
-	int r;
-	if (*s < '0' || *s > '9')
-		return -1;
-	r = *s++ - '0';
-	if (*s >= '0' && *s <= '9')
-		r = 10 * r + *s++ - '0';
-	if (*s == ':') {
-		s++;
-		if (*s < '0' || *s > '5')
-			return -1;
-		r = 60 * r + (*s++ - '0') * 10;
-		if (*s < '0' || *s > '9')
-			return -1;
-		r += *s++ - '0';
-	}
-	r *= 1000;
-	if (*s != '.')
-		return r;
-	s++;
-	if (*s < '0' || *s > '9')
-		return r;
-	r += 100 * (*s++ - '0');
-	if (*s < '0' || *s > '9')
-		return r;
-	r += 10 * (*s++ - '0');
-	if (*s < '0' || *s > '9')
-		return r;
-	r += *s - '0';
-	return r;
 }
 
 static char *two_digits(char *s, int x)

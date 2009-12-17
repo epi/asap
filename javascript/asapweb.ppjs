@@ -51,7 +51,10 @@ function ASAP2WAVURL(url, song, duration, format)
 	var moduleInfo = asap.getModuleInfo();
 	if (song < 0)
 		song = moduleInfo.default_song;
-	duration = ASAP_ParseDuration(duration);
+	if (duration == null)
+		duration = -1;
+	else
+		duration = ASAP_ParseDuration(duration);
 	if (duration < 0) {
 		duration = moduleInfo.durations[song];
 		if (duration < 0)

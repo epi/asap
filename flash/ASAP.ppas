@@ -78,16 +78,9 @@ package
 		{
 			if (s == null || s.length == 0)
 				return -1;
-			var i : int = s.indexOf(":");
-			var r : int = 0;
-			if (i >= 0) {
-				r = parseInt(s.substring(0, i)) * 60000;
-				s = s.substring(i + 1, s.length);
-			}
-			i = s.indexOf(" ");
-			if (i >= 0)
-				s = s.substring(0, i);
-			r += Math.floor(parseFloat(s) * 1000);
+			var r : int = ASAP_ParseDuration(s);
+			if (r < 0)
+				throw "Invalid duration";
 			return r;
 		}
 

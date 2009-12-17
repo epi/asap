@@ -180,16 +180,9 @@ public final class ASAP
 	{
 		if (s == null || s.length() == 0)
 			return -1;
-		int i = s.indexOf(':');
-		int r = 0;
-		if (i >= 0) {
-			r = Integer.parseInt(s.substring(0, i)) * 60000;
-			s = s.substring(i + 1);
-		}
-		i = s.indexOf(' ');
-		if (i >= 0)
-			s = s.substring(0, i);
-		r += (int) (Double.parseDouble(s) * 1000);
+		int r = ASAP_ParseDuration(s);
+		if (r < 0)
+			throw new NumberFormatException("Invalid duration");
 		return r;
 	}
 

@@ -39,20 +39,14 @@
 #define ASAP_FORMAT_S16_LE      16
 #define ASAP_FORMAT_S16_BE      -16
 #define ASAP_SampleFormat       int
-#define ASAP_ParseDuration      parseDuration
 
 #elif defined(CSHARP) || defined(JAVASCRIPT)
 
 #define ASAP_FORMAT_U8          ASAP_SampleFormat.U8
 #define ASAP_FORMAT_S16_LE      ASAP_SampleFormat.S16LE
 #define ASAP_FORMAT_S16_BE      ASAP_SampleFormat.S16BE
-#ifdef CSHARP
-#define ASAP_ParseDuration      ParseDuration
-#endif
 
 #elif defined(ACTIONSCRIPT)
-
-#define ASAP_ParseDuration      parseDuration
 
 #else /* C */
 

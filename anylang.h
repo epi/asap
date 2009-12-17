@@ -32,6 +32,7 @@
 #define _                       .
 #define PRIVATE
 #define CONST
+#define HASCHARAT(s, i)         (strlen(s) > i)
 
 #else
 
@@ -63,7 +64,9 @@
                                 type name[size]
 #define INIT_ARRAY(array)       memset(array, 0, sizeof(array))
 #define STRING                  const char *
+#define HASCHARAT(s, i)         TRUE /* assumes character-by-character parsing */
 #define CHARAT(s, i)            (s)[i]
+#define CHARCODEAT(s, i)        (s)[i]
 #define CHARCODE(c)             (c)
 #define EQUAL_STRINGS(s1, s2)   (strcmp(s1, s2) == 0)
 #define CONTAINS_STRING(s1, s2) (strstr(s1, s2) != NULL)
@@ -103,6 +106,7 @@
 #define INIT_ARRAY(array)
 #define STRING                  String
 #define CHARAT(s, i)            (s).charAt(i)
+#define CHARCODEAT(s, i)        (s).charAt(i)
 #define CHARCODE(c)             (c)
 #define strlen(s)               (s).length()
 #define EQUAL_STRINGS(s1, s2)   (s1).equals(s2)
@@ -141,6 +145,7 @@
 #define INIT_ARRAY(array)
 #define STRING                  string
 #define CHARAT(s, i)            (s)[i]
+#define CHARCODEAT(s, i)        (s)[i]
 #define CHARCODE(c)             (c)
 #define strlen(s)               (s).Length
 #define EQUAL_STRINGS(s1, s2)   ((s1) == (s2))
@@ -189,6 +194,7 @@
                                 V(Array, name) = new Array(size)
 #define INIT_ARRAY(array)       for (V(int, ii) = 0; ii < array.length; ii++) array[ii] = 0
 #define CHARAT(s, i)            (s).charAt(i)
+#define CHARCODEAT(s, i)        (s).charCodeAt(i)
 #define CHARCODE(c)             (c).charCodeAt(0)
 #define strlen(s)               (s).length
 #define EQUAL_STRINGS(s1, s2)   ((s1) == (s2))
