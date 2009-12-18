@@ -48,6 +48,8 @@
 
 #elif defined(ACTIONSCRIPT)
 
+#define ASAP_SampleFormat       int
+
 #else /* C */
 
 #include "asap.h"

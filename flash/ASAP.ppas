@@ -29,7 +29,6 @@ package
 	{
 		#define ACTIONSCRIPT
 		#define ASAP_State  ASAP
-		#define ASAP_SampleFormat  int
 		#include "acpu.c"
 		#include "apokeysnd.c"
 		#include "asap.c"
@@ -52,7 +51,7 @@ package
 		private var irqst : int;
 		private var extra_pokey_mask : int;
 		private var consol : int;
-		private var covox : Array = new Array(4);
+		private const covox : Array = new Array(4);
 		private const base_pokey : PokeyState = new PokeyState();
 		private const extra_pokey : PokeyState = new PokeyState();
 		private var sample_offset : int;

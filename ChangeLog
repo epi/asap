@@ -1,3 +1,14 @@
+2009-12-18  Piotr Fusik  <fox@scene.pl>
+* acpu.c: fixed typo in a comment
+
+* flash/ASAP.ppas: "covox" turned into "const"
+
+* flash/ASAP.ppas, asap_internal.h:
+  moved ASAP_SampleFormat definition to asap_internal.h
+
+* win32/Makefile: grep version from chksap.pl
+
+
 2009-12-17  Piotr Fusik  <fox@scene.pl>
 * asap.c, anylang.h, asap_internal.h, csharp/ASAP.ppcs, flash/ASAP.ppas,
   java/ASAP.ppjava, javascript/asap.ppjs, javascript/asapweb.ppjs:
