@@ -1032,7 +1032,7 @@ FUNC(int, ASAP_ParseDuration, (P(STRING, s)))
 		return retifnot; \
 	d = CHARCODEAT(s, i) - 48; \
 	if (d < 0 || d > maxdig) \
-		return retifnot; \
+		return -1; \
 	i++;
 
 	PARSE_DIGIT(9, -1);
@@ -1052,15 +1052,17 @@ FUNC(int, ASAP_ParseDuration, (P(STRING, s)))
 		}
 	}
 	r *= 1000;
-	if (i < n && CHARAT(s, i) == '.') {
-		i++;
-		PARSE_DIGIT(9, -1);
-		r += 100 * d;
-		PARSE_DIGIT(9, r);
-		r += 10 * d;
-		PARSE_DIGIT(9, r);
-		r += d;
-	}
+	if (i >= n)
+		return r;
+	if (CHARAT(s, i) != '.')
+		return -1;
+	i++;
+	PARSE_DIGIT(9, -1);
+	r += 100 * d;
+	PARSE_DIGIT(9, r);
+	r += 10 * d;
+	PARSE_DIGIT(9, r);
+	r += d;
 	return r;
 }
 
@@ -1259,12 +1261,15 @@ PRIVATE FUNC(abool, parse_sap_header, (
 		else if (EQUAL_STRINGS(tag, "STEREO"))
 			module_info _ channels = 2;
 		else if (EQUAL_STRINGS(tag, "TIME")) {
-			V(int, duration) = ASAP_ParseDuration(arg);
-			if (duration < 0 || duration_index >= ASAP_SONGS_MAX)
+			V(int, i) = strlen(arg) - 5;
+			if (i > 0 && EQUAL_STRINGS(SUBSTR(arg, i), " LOOP")) {
+				module_info _ loops[duration_index] = TRUE;
+				CUT_STRING(arg, i);
+			}
+			i = ASAP_ParseDuration(arg);
+			if (i < 0 || duration_index >= ASAP_SONGS_MAX)
 				return FALSE;
-			module_info _ durations[duration_index] = duration;
-			module_info _ loops[duration_index] = CONTAINS_STRING(arg, "LOOP");
-			duration_index++;
+			module_info _ durations[duration_index++] = i;
 		}
 		else if (EQUAL_STRINGS(tag, "TYPE"))
 			type = CHARAT(arg, 0);

@@ -1,5 +1,5 @@
 /*
- * anylang.h - C/Java/C# abstraction layer
+ * anylang.h - C/Java/C#/JavaScript/ActionScript abstraction layer
  *
  * Copyright (C) 2007-2009  Piotr Fusik
  *
@@ -67,8 +67,9 @@
 #define CHARCODEAT(s, i)        (s)[i]
 #define CHARCODE(c)             (c)
 #define EQUAL_STRINGS(s1, s2)   (strcmp(s1, s2) == 0)
-#define CONTAINS_STRING(s1, s2) (strstr(s1, s2) != NULL)
 #define EMPTY_STRING(s)         (s)[0] = '\0'
+#define SUBSTR(s, i)            (s + i)
+#define CUT_STRING(s, i)        (s)[i] = '\0'
 #define SUBSTRING(dest, src, src_offset, len) \
                                 do { memcpy(dest, src + src_offset, len); (dest)[len] = '\0'; } while (FALSE)
 
@@ -108,8 +109,9 @@
 #define CHARCODE(c)             (c)
 #define strlen(s)               (s).length()
 #define EQUAL_STRINGS(s1, s2)   (s1).equals(s2)
-#define CONTAINS_STRING(s1, s2) ((s1).indexOf(s2) >= 0)
 #define EMPTY_STRING(s)         (s) = ""
+#define SUBSTR(s, i)            (s).substring(i)
+#define CUT_STRING(s, i)        (s) = (s).substring(0, i)
 #define SUBSTRING(dest, src, src_offset, len) \
                                 (dest) = (src).substring(src_offset, src_offset + len)
 
@@ -147,8 +149,9 @@
 #define CHARCODE(c)             (c)
 #define strlen(s)               (s).Length
 #define EQUAL_STRINGS(s1, s2)   ((s1) == (s2))
-#define CONTAINS_STRING(s1, s2) (s1).Contains(s2)
 #define EMPTY_STRING(s)         (s) = string.Empty
+#define SUBSTR(s, i)            (s).Substring(i)
+#define CUT_STRING(s, i)        (s) = (s).Substring(0, i)
 #define SUBSTRING(dest, src, src_offset, len) \
                                 (dest) = (src).Substring(src_offset, len)
 
@@ -196,8 +199,9 @@
 #define CHARCODE(c)             (c).charCodeAt(0)
 #define strlen(s)               (s).length
 #define EQUAL_STRINGS(s1, s2)   ((s1) == (s2))
-#define CONTAINS_STRING(s1, s2) ((s1).indexOf(s2) >= 0)
 #define EMPTY_STRING(s)         s = ""
+#define SUBSTR(s, i)            (s).substr(i)
+#define CUT_STRING(s, i)        (s) = (s).substr(0, i)
 #define SUBSTRING(dest, src, src_offset, len) \
                                 dest = (src).substring(src_offset, src_offset + len)
 
