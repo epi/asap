@@ -211,6 +211,7 @@ static int edited_song;
 static BOOL can_save;
 static char convert_filename[MAX_PATH];
 static const char *convert_ext;
+static int invalid_fields;
 
 char *appendString(char *dest, const char *src)
 {
@@ -253,6 +254,24 @@ static void showSongTime(void)
 	CheckDlgButton(infoDialog, IDC_LOOP, edited_module_info.loops[edited_song] ? BST_CHECKED : BST_UNCHECKED);
 }
 
+static void showEditTip(HWND hDlg, int nID, LPCWSTR title, LPCWSTR message)
+{
+#ifndef EM_SHOWBALLOONTIP
+/* missing in MinGW */
+typedef struct _tagEDITBALLOONTIP
+{
+    DWORD   cbStruct;
+    LPCWSTR pszTitle;
+    LPCWSTR pszText;
+    INT     ttiIcon;
+} EDITBALLOONTIP, *PEDITBALLOONTIP;
+#define TTI_ERROR  3
+#define EM_SHOWBALLOONTIP  0x1503
+#endif
+	EDITBALLOONTIP ebt = { sizeof(EDITBALLOONTIP), title, message, TTI_ERROR };
+	SendDlgItemMessage(hDlg, nID, EM_SHOWBALLOONTIP, 0, (LPARAM) &ebt);
+}
+
 static BOOL infoChanged(void)
 {
 	int i;
@@ -272,10 +291,34 @@ static BOOL infoChanged(void)
 	return FALSE;
 }
 
-static void updateSaveButton(void)
+static void updateSaveAndConvertButtons(int fieldId, BOOL ok)
 {
+	if (ok) {
+		invalid_fields &= ~(1 << fieldId);
+		ok = invalid_fields == 0;
+	}
+	else
+		invalid_fields |= 1 << fieldId;
 	if (can_save)
-		EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), infoChanged());
+		EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), ok && infoChanged());
+	if (convert_ext != NULL)
+		EnableWindow(GetDlgItem(infoDialog, IDC_CONVERT), ok);
+}
+
+static void updateInfoString(HWND hDlg, int nID, int fieldId, char (*s)[128])
+{
+	int i;
+	BOOL ok = TRUE;
+	SendDlgItemMessage(hDlg, nID, WM_GETTEXT, sizeof(*s), (LPARAM) s);
+	for (i = 0; (*s)[i] != '\0'; i++) {
+		char c = (*s)[i];
+		if (c < ' ' || c > 'z' || c == '"' || c == '`') {
+			showEditTip(hDlg, nID, L"Invalid characters", L"Avoid national characters and quotation marks");
+			ok = FALSE;
+			break;
+		}
+	}
+	updateSaveAndConvertButtons(fieldId, ok);
 }
 
 static BOOL saveFile(const char *filename, const byte *data, int len)
@@ -372,7 +415,6 @@ static BOOL convert(void)
 
 static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	char str[ASAP_DURATION_CHARS];
 	switch (uMsg) {
 	case WM_INITDIALOG:
 #ifdef WINAMP
@@ -393,29 +435,42 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			return TRUE;
 #endif
 		case MAKEWPARAM(IDC_AUTHOR, EN_CHANGE):
-			SendDlgItemMessage(hDlg, IDC_AUTHOR, WM_GETTEXT, sizeof(edited_module_info.author), (LPARAM) edited_module_info.author);
-			updateSaveButton();
+			updateInfoString(hDlg, IDC_AUTHOR, 0, &edited_module_info.author);
 			return TRUE;
 		case MAKEWPARAM(IDC_NAME, EN_CHANGE):
-			SendDlgItemMessage(hDlg, IDC_NAME, WM_GETTEXT, sizeof(edited_module_info.name), (LPARAM) edited_module_info.name);
-			updateSaveButton();
+			updateInfoString(hDlg, IDC_NAME, 1, &edited_module_info.name);
 			return TRUE;
 		case MAKEWPARAM(IDC_DATE, EN_CHANGE):
-			SendDlgItemMessage(hDlg, IDC_DATE, WM_GETTEXT, sizeof(edited_module_info.date), (LPARAM) edited_module_info.date);
-			updateSaveButton();
+			updateInfoString(hDlg, IDC_DATE, 2, &edited_module_info.date);
 			return TRUE;
 		case MAKEWPARAM(IDC_TIME, EN_CHANGE):
-			SendDlgItemMessage(hDlg, IDC_TIME, WM_GETTEXT, sizeof(str), (LPARAM) str);
-			edited_module_info.durations[edited_song] = ASAP_ParseDuration(str);
-			updateSaveButton();
+			{
+				char str[ASAP_DURATION_CHARS];
+				int duration;
+				SendDlgItemMessage(hDlg, IDC_TIME, WM_GETTEXT, sizeof(str), (LPARAM) str);
+				duration = ASAP_ParseDuration(str);
+				if (duration < 0 && str[0] != '\0') {
+					showEditTip(hDlg, IDC_TIME, L"Invalid format", L"Please type MM:SS.mmm");
+					updateSaveAndConvertButtons(3, FALSE);
+				}
+				else {
+					edited_module_info.durations[edited_song] = duration;
+					updateSaveAndConvertButtons(3, TRUE);
+				}
+			}
 			return TRUE;
 		case MAKEWPARAM(IDC_LOOP, BN_CLICKED):
-			edited_module_info.loops[edited_song] = (IsDlgButtonChecked(hDlg, IDC_LOOP) == BST_CHECKED);
-			updateSaveButton();
+			{
+				BOOL loop = (IsDlgButtonChecked(hDlg, IDC_LOOP) == BST_CHECKED);
+				edited_module_info.loops[edited_song] = loop;
+				updateSaveAndConvertButtons(4, !loop || edited_module_info.durations[edited_song] > 0);
+			}
 			return TRUE;
 		case MAKEWPARAM(IDC_SONGNO, CBN_SELCHANGE):
 			edited_song = SendDlgItemMessage(hDlg, IDC_SONGNO, CB_GETCURSEL, 0, 0);
 			showSongTime();
+			invalid_fields &= ~(1 << 4);
+			updateSaveAndConvertButtons(3, TRUE);
 			return TRUE;
 		case MAKEWPARAM(IDC_SAVE, BN_CLICKED):
 			saveInfo();
@@ -473,6 +528,7 @@ void updateInfoDialog(const char *filename, int song)
 	edited_module_info = saved_module_info;
 	can_save = ASAP_CanSetModuleInfo(filename);
 	convert_ext = ASAP_CanConvert(filename, &edited_module_info, saved_module, saved_module_len);
+	invalid_fields = 0;
 	can_edit = can_save || convert_ext != NULL;
 	SendDlgItemMessage(infoDialog, IDC_AUTHOR, EM_SETREADONLY, !can_edit, 0);
 	SendDlgItemMessage(infoDialog, IDC_NAME, EM_SETREADONLY, !can_edit, 0);

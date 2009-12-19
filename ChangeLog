@@ -1,5 +1,8 @@
 2009-12-19  Piotr Fusik  <fox@scene.pl>
-* asap.c, anylang.h: refactored ASAP_ParseDuration
+* asap.c, anylang.h: refactored ASAP_ParseDuration;
+  strict validation of TIME tags
+
+* win32/gui.c: validate fields in File Information window
 
 
 2009-12-18  Piotr Fusik  <fox@scene.pl>
