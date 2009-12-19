@@ -32,7 +32,6 @@
 #define _                       .
 #define PRIVATE
 #define CONST
-#define HASCHARAT(s, i)         (strlen(s) > i)
 
 #else
 
@@ -64,7 +63,6 @@
                                 type name[size]
 #define INIT_ARRAY(array)       memset(array, 0, sizeof(array))
 #define STRING                  const char *
-#define HASCHARAT(s, i)         TRUE /* assumes character-by-character parsing */
 #define CHARAT(s, i)            (s)[i]
 #define CHARCODEAT(s, i)        (s)[i]
 #define CHARCODE(c)             (c)

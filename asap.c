@@ -1026,8 +1026,9 @@ FUNC(int, ASAP_ParseDuration, (P(STRING, s)))
 	V(int, i) = 0;
 	V(int, r);
 	V(int, d);
+	V(int, n) = strlen(s);
 #define PARSE_DIGIT(maxdig, retifnot) \
-	if (!HASCHARAT(s, i)) \
+	if (i >= n) \
 		return retifnot; \
 	d = CHARCODEAT(s, i) - 48; \
 	if (d < 0 || d > maxdig) \
@@ -1036,13 +1037,13 @@ FUNC(int, ASAP_ParseDuration, (P(STRING, s)))
 
 	PARSE_DIGIT(9, -1);
 	r = d;
-	if (HASCHARAT(s, i)) {
+	if (i < n) {
 		d = CHARCODEAT(s, i) - 48;
 		if (d >= 0 && d <= 9) {
 			i++;
 			r = 10 * r + d;
 		}
-		if (HASCHARAT(s, i) && CHARAT(s, i) == ':') {
+		if (i < n && CHARAT(s, i) == ':') {
 			i++;
 			PARSE_DIGIT(5, -1);
 			r = (6 * r + d) * 10;
@@ -1051,7 +1052,7 @@ FUNC(int, ASAP_ParseDuration, (P(STRING, s)))
 		}
 	}
 	r *= 1000;
-	if (HASCHARAT(s, i) && CHARAT(s, i) == '.') {
+	if (i < n && CHARAT(s, i) == '.') {
 		i++;
 		PARSE_DIGIT(9, -1);
 		r += 100 * d;
