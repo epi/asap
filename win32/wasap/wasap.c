@@ -22,6 +22,7 @@
  */
 
 #include <windows.h>
+#include <stdio.h>
 #include <shellapi.h>
 
 #include "asap.h"
@@ -140,8 +141,10 @@ static void Tray_Modify(HICON hIcon)
 	if (songs > 0) {
 		const char *pb;
 		const char *pe;
-		for (pe = current_filename; *pe != '\0'; pe++);
-		for (pb = pe; pb > current_filename && pb[-1] != '\\' && pb[-1] != '/'; pb--);
+		for (pb = pe = current_filename; *pe != '\0'; pe++) {
+			if (*pe == '\\' || *pe == '/')
+				pb = pe + 1;
+		}
 		/* 2 */
 		*p++ = ':';
 		*p++ = ' ';
@@ -153,20 +156,10 @@ static void Tray_Modify(HICON hIcon)
 			p = appendString(p + 30, "...");
 		}
 		if (songs > 1) {
-			/* 7 */
-			p = appendString(p, " (song ");
-			/* max 3 */
-			p = appendInt(p, current_song + 1);
-			/* 4 */
-			p = appendString(p, " of ");
-			/* max 3 */
-			p = appendInt(p, songs);
-			/* 1 */
-			*p++ = ')';
+			/* 7 + max 3 + 4 + max 3 + 1*/
+			sprintf(p, " (song %d of %d)", current_song + 1, songs);
 		}
 	}
-	/* 1 */
-	*p = '\0';
 	Shell_NotifyIcon(NIM_MODIFY, &nid);
 }
 
@@ -218,7 +211,7 @@ static void SetSongsMenu(int n)
 	int i;
 	for (i = 1; i <= n; i++) {
 		char str[16];
-		*appendInt(str, i) = '\0';
+		sprintf(str, "%d", i);
 		AppendMenu(hSongMenu, MF_ENABLED | MF_STRING, IDM_SONG1 + i - 1, str);
 	}
 }

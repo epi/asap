@@ -23,6 +23,7 @@
 
 #include <windows.h>
 #include <commctrl.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "in2.h"
@@ -61,7 +62,7 @@ static int seek_needed;
 static void writeIniInt(const char *name, int value)
 {
 	char str[16];
-	*appendInt(str, value) = '\0';
+	sprintf(str, "%d", value);
 	WritePrivateProfileString(INI_SECTION, name, str, ini_file);
 }
 
@@ -120,8 +121,7 @@ static void expandFileSongs(HWND playlistWnd, int index)
 	p = fi.file + strlen(fi.file);
 	for (j = 0; j < module_info.songs; j++) {
 		COPYDATASTRUCT cds;
-		*p = '#';
-		*appendInt(p + 1, j + 1) = '\0';
+		sprintf(p, "#%d", j + 1);
 		fi.index = index + j;
 		cds.dwData = IPC_PE_INSERTFILENAME;
 		cds.lpData = &fi;
@@ -180,12 +180,8 @@ static ASAP_ModuleInfo title_module_info;
 static void getTitle(char *title)
 {
 	char *p = appendString(title, title_module_info.name);
-	if (title_module_info.songs > 1) {
-		p = appendString(p, " (song ");
-		p = appendInt(p, title_song + 1);
-		*p++ = ')';
-	}
-	*p = '\0';
+	if (title_module_info.songs > 1)
+		sprintf(p, " (song %d)", title_song + 1);
 }
 
 static char *tagFunc(char *tag, void *p)

@@ -1,4 +1,7 @@
 2009-12-19  Piotr Fusik  <fox@scene.pl>
+* win32/gui.c, win32/wasap/wasap.c, win32/winamp/in_asap.c:
+  replaced appendInt() with sprintf()
+
 * asap.c, anylang.h: refactored ASAP_ParseDuration;
   strict validation of TIME tags
 

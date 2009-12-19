@@ -22,6 +22,7 @@
  */
 
 #include <windows.h>
+#include <stdio.h>
 #include <string.h>
 #include <tchar.h>
 
@@ -217,20 +218,7 @@ char *appendString(char *dest, const char *src)
 {
 	while (*src != '\0')
 		*dest++ = *src++;
-	return dest;
-}
-
-char *appendInt(char *dest, int x)
-{
-	if (x < 0) {
-		*dest++ = '-';
-		x = -x;
-	}
-	if (x >= 10) {
-		dest = appendInt(dest, x / 10);
-		x %= 10;
-	}
-	*dest++ = '0' + x;
+	*dest = '\0';
 	return dest;
 }
 
@@ -258,13 +246,13 @@ static void showEditTip(HWND hDlg, int nID, LPCWSTR title, LPCWSTR message)
 {
 #ifndef EM_SHOWBALLOONTIP
 /* missing in MinGW */
-typedef struct _tagEDITBALLOONTIP
+typedef struct
 {
-    DWORD   cbStruct;
-    LPCWSTR pszTitle;
-    LPCWSTR pszText;
-    INT     ttiIcon;
-} EDITBALLOONTIP, *PEDITBALLOONTIP;
+	DWORD cbStruct;
+	LPCWSTR pszTitle;
+	LPCWSTR pszText;
+	INT ttiIcon;
+} EDITBALLOONTIP;
 #define TTI_ERROR  3
 #define EM_SHOWBALLOONTIP  0x1503
 #endif
@@ -541,7 +529,7 @@ void updateInfoDialog(const char *filename, int song)
 	EnableWindow(GetDlgItem(infoDialog, IDC_SONGNO), saved_module_info.songs > 1);
 	for (i = 1; i <= saved_module_info.songs; i++) {
 		char str[16];
-		*appendInt(str, i) = '\0';
+		sprintf(str, "%d", i);
 		SendDlgItemMessage(infoDialog, IDC_SONGNO, CB_ADDSTRING, 0, (LPARAM) str);
 	}
 	if (song < 0)
