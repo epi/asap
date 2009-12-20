@@ -360,11 +360,12 @@ static BOOL convert(void)
 	char filename[MAX_PATH];
 	byte out_module[ASAP_MODULE_MAX];
 	int out_len;
+	static char filter[32] = "*.sap\0*.sap\0All files\0*.*\0";
 	static OPENFILENAME ofn = {
 		sizeof(OPENFILENAME),
 		NULL,
 		0,
-		NULL,
+		filter,
 		NULL,
 		0,
 		0,
@@ -389,6 +390,8 @@ static BOOL convert(void)
 		return FALSE;
 	}
 	ofn.hwndOwner = infoDialog;
+	memcpy(filter + 2, convert_ext, 3);
+	memcpy(filter + 8, convert_ext, 3);
 	ofn.lpstrDefExt = convert_ext;
 	if (!GetSaveFileName(&ofn))
 		return FALSE;

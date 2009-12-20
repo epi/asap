@@ -1,3 +1,7 @@
+2009-12-20  Piotr Fusik  <fox@scene.pl>
+* win32/gui.c: "Convert" file selector had no file type filter
+
+
 2009-12-19  Piotr Fusik  <fox@scene.pl>
 * win32/gui.c, win32/wasap/wasap.c, win32/winamp/in_asap.c:
   replaced appendInt() with sprintf()
