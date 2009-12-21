@@ -1,3 +1,11 @@
+2009-12-21  Piotr Fusik  <fox@scene.pl>
+* win32/gui.c: improved File Information validation:
+  validate Time when leaving this field rather than while typing;
+  disable Loop when Time is empty;
+  don't ask to save when information is invalid;
+  message boxes on Windows which don't do balloon tips (pre-XP)
+
+
 2009-12-20  Piotr Fusik  <fox@scene.pl>
 * win32/gui.c: "Convert" file selector had no file type filter
 

@@ -213,6 +213,11 @@ static BOOL can_save;
 static char convert_filename[MAX_PATH];
 static const char *convert_ext;
 static int invalid_fields;
+#define INVALID_FIELD_AUTHOR      1
+#define INVALID_FIELD_NAME        2
+#define INVALID_FIELD_DATE        4
+#define INVALID_FIELD_TIME        8
+#define INVALID_FIELD_TIME_SHOW  16
 
 char *appendString(char *dest, const char *src)
 {
@@ -240,9 +245,10 @@ static void showSongTime(void)
 	ASAP_DurationToString(str, edited_module_info.durations[edited_song]);
 	SendDlgItemMessage(infoDialog, IDC_TIME, WM_SETTEXT, 0, (LPARAM) str);
 	CheckDlgButton(infoDialog, IDC_LOOP, edited_module_info.loops[edited_song] ? BST_CHECKED : BST_UNCHECKED);
+	EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), str[0] != '\0');
 }
 
-static void showEditTip(HWND hDlg, int nID, LPCWSTR title, LPCWSTR message)
+static void showEditTip(int nID, LPCSTR title, LPCSTR message)
 {
 #ifndef EM_SHOWBALLOONTIP
 /* missing in MinGW */
@@ -256,8 +262,15 @@ typedef struct
 #define TTI_ERROR  3
 #define EM_SHOWBALLOONTIP  0x1503
 #endif
-	EDITBALLOONTIP ebt = { sizeof(EDITBALLOONTIP), title, message, TTI_ERROR };
-	SendDlgItemMessage(hDlg, nID, EM_SHOWBALLOONTIP, 0, (LPARAM) &ebt);
+	WCHAR wTitle[64];
+	WCHAR wMessage[64];
+	EDITBALLOONTIP ebt = { sizeof(EDITBALLOONTIP), wTitle, wMessage, TTI_ERROR };
+	if (MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, title, -1, wTitle, 64) <= 0
+	 || MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, message, -1, wMessage, 64) <= 0
+	 || !SendDlgItemMessage(infoDialog, nID, EM_SHOWBALLOONTIP, 0, (LPARAM) &ebt)) {
+		/* Windows before XP don't support balloon tips */
+		MessageBox(infoDialog, message, title, MB_OK | MB_ICONERROR);
+	}
 }
 
 static BOOL infoChanged(void)
@@ -279,21 +292,21 @@ static BOOL infoChanged(void)
 	return FALSE;
 }
 
-static void updateSaveAndConvertButtons(int fieldId, BOOL ok)
+static void updateSaveAndConvertButtons(int mask, BOOL ok)
 {
 	if (ok) {
-		invalid_fields &= ~(1 << fieldId);
+		invalid_fields &= ~mask;
 		ok = invalid_fields == 0;
 	}
 	else
-		invalid_fields |= 1 << fieldId;
+		invalid_fields |= mask;
 	if (can_save)
 		EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), ok && infoChanged());
 	if (convert_ext != NULL)
 		EnableWindow(GetDlgItem(infoDialog, IDC_CONVERT), ok);
 }
 
-static void updateInfoString(HWND hDlg, int nID, int fieldId, char (*s)[128])
+static void updateInfoString(HWND hDlg, int nID, int mask, char (*s)[128])
 {
 	int i;
 	BOOL ok = TRUE;
@@ -301,12 +314,12 @@ static void updateInfoString(HWND hDlg, int nID, int fieldId, char (*s)[128])
 	for (i = 0; (*s)[i] != '\0'; i++) {
 		char c = (*s)[i];
 		if (c < ' ' || c > 'z' || c == '"' || c == '`') {
-			showEditTip(hDlg, nID, L"Invalid characters", L"Avoid national characters and quotation marks");
+			showEditTip(nID, "Invalid characters", "Avoid national characters and quotation marks");
 			ok = FALSE;
 			break;
 		}
 	}
-	updateSaveAndConvertButtons(fieldId, ok);
+	updateSaveAndConvertButtons(mask, ok);
 }
 
 static BOOL saveFile(const char *filename, const byte *data, int len)
@@ -426,13 +439,13 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			return TRUE;
 #endif
 		case MAKEWPARAM(IDC_AUTHOR, EN_CHANGE):
-			updateInfoString(hDlg, IDC_AUTHOR, 0, &edited_module_info.author);
+			updateInfoString(hDlg, IDC_AUTHOR, INVALID_FIELD_AUTHOR, &edited_module_info.author);
 			return TRUE;
 		case MAKEWPARAM(IDC_NAME, EN_CHANGE):
-			updateInfoString(hDlg, IDC_NAME, 1, &edited_module_info.name);
+			updateInfoString(hDlg, IDC_NAME, INVALID_FIELD_NAME, &edited_module_info.name);
 			return TRUE;
 		case MAKEWPARAM(IDC_DATE, EN_CHANGE):
-			updateInfoString(hDlg, IDC_DATE, 2, &edited_module_info.date);
+			updateInfoString(hDlg, IDC_DATE, INVALID_FIELD_DATE, &edited_module_info.date);
 			return TRUE;
 		case MAKEWPARAM(IDC_TIME, EN_CHANGE):
 			{
@@ -440,28 +453,24 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 				int duration;
 				SendDlgItemMessage(hDlg, IDC_TIME, WM_GETTEXT, sizeof(str), (LPARAM) str);
 				duration = ASAP_ParseDuration(str);
-				if (duration < 0 && str[0] != '\0') {
-					showEditTip(hDlg, IDC_TIME, L"Invalid format", L"Please type MM:SS.mmm");
-					updateSaveAndConvertButtons(3, FALSE);
-				}
-				else {
-					edited_module_info.durations[edited_song] = duration;
-					updateSaveAndConvertButtons(3, TRUE);
-				}
+				edited_module_info.durations[edited_song] = duration;
+				EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), str[0] != '\0');
+				updateSaveAndConvertButtons(INVALID_FIELD_TIME | INVALID_FIELD_TIME_SHOW, duration >=0 || str[0] == '\0');
+			}
+			return TRUE;
+		case MAKEWPARAM(IDC_TIME, EN_KILLFOCUS):
+			if ((invalid_fields & INVALID_FIELD_TIME_SHOW) != 0) {
+				invalid_fields &= ~INVALID_FIELD_TIME_SHOW;
+				showEditTip(IDC_TIME, "Invalid format", "Please type MM:SS.mmm");
 			}
 			return TRUE;
 		case MAKEWPARAM(IDC_LOOP, BN_CLICKED):
-			{
-				BOOL loop = (IsDlgButtonChecked(hDlg, IDC_LOOP) == BST_CHECKED);
-				edited_module_info.loops[edited_song] = loop;
-				updateSaveAndConvertButtons(4, !loop || edited_module_info.durations[edited_song] > 0);
-			}
+			edited_module_info.loops[edited_song] = (IsDlgButtonChecked(hDlg, IDC_LOOP) == BST_CHECKED);
 			return TRUE;
 		case MAKEWPARAM(IDC_SONGNO, CBN_SELCHANGE):
 			edited_song = SendDlgItemMessage(hDlg, IDC_SONGNO, CB_GETCURSEL, 0, 0);
 			showSongTime();
-			invalid_fields &= ~(1 << 4);
-			updateSaveAndConvertButtons(3, TRUE);
+			updateSaveAndConvertButtons(INVALID_FIELD_TIME | INVALID_FIELD_TIME_SHOW, TRUE);
 			return TRUE;
 		case MAKEWPARAM(IDC_SAVE, BN_CLICKED):
 			saveInfo();
@@ -470,7 +479,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			convert();
 			return TRUE;
 		case MAKEWPARAM(IDCANCEL, BN_CLICKED):
-			if (infoChanged()) {
+			if (invalid_fields == 0 && infoChanged()) {
 				BOOL ok;
 				switch (MessageBox(hDlg, can_save ? "Save changes?" : "Convert to SAP?", "ASAP", MB_YESNOCANCEL | MB_ICONQUESTION)) {
 				case IDYES:
