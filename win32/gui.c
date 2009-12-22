@@ -245,7 +245,7 @@ static void showSongTime(void)
 	ASAP_DurationToString(str, edited_module_info.durations[edited_song]);
 	SendDlgItemMessage(infoDialog, IDC_TIME, WM_SETTEXT, 0, (LPARAM) str);
 	CheckDlgButton(infoDialog, IDC_LOOP, edited_module_info.loops[edited_song] ? BST_CHECKED : BST_UNCHECKED);
-	EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), str[0] != '\0');
+	EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), str[0] != '\0' && (can_save || convert_ext != NULL));
 }
 
 static void showEditTip(int nID, LPCSTR title, LPCSTR message)
@@ -550,7 +550,6 @@ void updateInfoDialog(const char *filename, int song)
 	edited_song = song;
 	showSongTime();
 	SendDlgItemMessage(infoDialog, IDC_TIME, EM_SETREADONLY, !can_edit, 0);
-	EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), can_edit);
 	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
 	if (convert_ext != NULL) {
 		char convert_command[24] = "&Convert to ";
