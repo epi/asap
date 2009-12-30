@@ -13,8 +13,9 @@
 		<Condition Message="Newer version of ASAP is already installed!">NOT NEWERVERSIONDETECTED</Condition>
 		<Media Id="1" Cabinet="asap.cab" EmbedCab="yes" CompressionLevel="high" />
 
-		<?define NATIVEEXTS=cmc;cm3;cmr;cms;dmc;dlt;mpt;mpd;rmt;tmc;tm8;tm2?>
-		<?define ASAPEXTS=sap;$(var.NATIVEEXTS)?>
+		<?define EXT_FILTER=*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2?>
+		<?define NATIVE_EXTS=cmc;cm3;cmr;cms;dmc;dlt;mpt;mpd;rmt;tmc;tm8;tm2?>
+		<?define ASAP_EXTS=sap;$(var.NATIVE_EXTS)?>
 		<?define DOUBLECLICK=Double-click SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2 file in Windows Explorer to play it in ?>
 
 		<Icon Id="wasap.ico" SourceFile="wasap/wasap.ico" />
@@ -191,7 +192,7 @@
 								<!-- nothing special about "sap", just Verb needs to be defined only once per ProgId -->
 								<Verb Id="open" TargetFile="wasap.exe" Argument='"%1"' />
 							</Extension>
-							<?foreach EXT in $(var.NATIVEEXTS)?>
+							<?foreach EXT in $(var.NATIVE_EXTS)?>
 								<Extension Id="$(var.EXT)" />
 							<?endforeach?>
 						</ProgId>
@@ -210,13 +211,15 @@
 						<RegistryValue Root="HKCR" Key="CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance\{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Name="FriendlyName" Value="ASAP source filter" Type="string" Action="write" />
 						<RegistryValue Root="HKCR" Key="CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance\{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Name="CLSID" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
 						<RegistryValue Root="HKCR" Key="CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance\{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Name="FilterData" Value="02000000000060000100000000000000307069330800000000000000010000000000000000000000307479330000000038000000480000006175647300001000800000AA00389B710100000000001000800000AA00389B71" Type="binary" Action="write" />
-						<?foreach EXT in $(var.ASAPEXTS)?>
+						<?foreach EXT in $(var.ASAP_EXTS)?>
 							<RegistryValue Root="HKCR" Key="Media Type\Extensions\.$(var.EXT)" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
 						<?endforeach?>
-						<?foreach EXT in $(var.ASAPEXTS)?>
+						<?foreach EXT in $(var.ASAP_EXTS)?>
 							<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.$(var.EXT)" Name="Permissions" Value="15" Type="integer" Action="write" />
 							<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.$(var.EXT)" Name="Runtime" Value="7" Type="integer" Action="write" />
 						<?endforeach?>
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\MediaPlayer\Player\Extensions\MUIDescriptions" Name="ASAP" Value="ASAP files ($(var.EXT_FILTER))" Type="string" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\MediaPlayer\Player\Extensions\Types" Name="ASAP" Value="$(var.EXT_FILTER)" Type="string" Action="write" />
 					</Component>
 					<Component Id="asap_dsf.ext" Guid="*">
 						<RegistryValue Root="HKCR" Key="asap.file" Name="asap_dsf" Type="integer" Value="1" KeyPath="yes" />
@@ -224,7 +227,7 @@
 							<Extension Id="sap">
 								<Verb Id="open" TargetProperty="WMP.EXE" Argument='"%1"' />
 							</Extension>
-							<?foreach EXT in $(var.NATIVEEXTS)?>
+							<?foreach EXT in $(var.NATIVE_EXTS)?>
 								<Extension Id="$(var.EXT)" />
 							<?endforeach?>
 						</ProgId>
@@ -244,7 +247,7 @@
 								<Extension Id="sap">
 									<Verb Id="open" TargetProperty="WINAMP.EXE" Argument='"%1"' />
 								</Extension>
-								<?foreach EXT in $(var.NATIVEEXTS)?>
+								<?foreach EXT in $(var.NATIVE_EXTS)?>
 									<Extension Id="$(var.EXT)" />
 								<?endforeach?>
 							</ProgId>
@@ -258,7 +261,7 @@
 						</Component>
 						<Component Id="foo_asap.ext" Guid="*">
 							<RegistryValue Root="HKCR" Key="asap.file" Name="foo_asap" Type="integer" Value="1" KeyPath="yes" />
-							<?foreach EXT in $(var.NATIVEEXTS)?>
+							<?foreach EXT in $(var.NATIVE_EXTS)?>
 								<ProgId Id="foobar2000.$(var.EXT)">
 									<Extension Id="$(var.EXT)">
 										<Verb Id="open" TargetProperty="FOO.EXE" Argument='"%1"' />
@@ -290,7 +293,7 @@
 								<Extension Id="sap">
 									<Verb Id="Play" TargetProperty="APOLLO.EXE" Argument='"%1"' />
 								</Extension>
-								<?foreach EXT in $(var.NATIVEEXTS)?>
+								<?foreach EXT in $(var.NATIVE_EXTS)?>
 									<Extension Id="$(var.EXT)" />
 								<?endforeach?>
 							</ProgId>

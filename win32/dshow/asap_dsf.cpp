@@ -28,6 +28,7 @@
 static const char extensions[][5] =
 	{ ".sap", ".cmc", ".cm3", ".cmr", ".cms", ".dmc", ".dlt", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2" };
 #define N_EXTS (sizeof(extensions) / sizeof(extensions[0]))
+#define EXT_FILTER "*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2"
 
 #define BITS_PER_SAMPLE      16
 #define MIN_BUFFERED_BLOCKS  4096
@@ -397,6 +398,18 @@ CFactoryTemplate g_Templates[1] =
 
 int g_cTemplates = 1;
 
+static void WriteASAPValue(LPCSTR lpSubKey, LPCSTR value)
+{
+	HKEY hKey;
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, lpSubKey, 0, KEY_SET_VALUE, &hKey) != ERROR_SUCCESS)
+		return;
+	if (value != NULL)
+		RegSetValueEx(hKey, "ASAP", 0, REG_SZ, (const BYTE *) value, strlen(value) + 1);
+	else
+		RegDeleteValue(hKey, "ASAP");
+	RegCloseKey(hKey);
+}
+
 STDAPI DllRegisterServer()
 {
 	HRESULT hr = AMovieDllRegisterServer2(TRUE);
@@ -425,6 +438,8 @@ STDAPI DllRegisterServer()
 	}
 	if (RegCloseKey(hWMPKey) != ERROR_SUCCESS || RegCloseKey(hMTKey) != ERROR_SUCCESS)
 		return E_FAIL;
+	WriteASAPValue("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\MUIDescriptions", "ASAP files (" EXT_FILTER ")");
+	WriteASAPValue("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\Types", EXT_FILTER);
 	return S_OK;
 }
 
@@ -432,6 +447,8 @@ STDAPI DllUnregisterServer()
 {
 	HKEY hWMPKey;
 	HKEY hMTKey;
+	WriteASAPValue("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\MUIDescriptions", NULL);
+	WriteASAPValue("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\Types", NULL);
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Multimedia\\WMPlayer\\Extensions", 0, DELETE, &hWMPKey) != ERROR_SUCCESS)
 		return E_FAIL;
 	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, "Media Type\\Extensions", 0, DELETE, &hMTKey) != ERROR_SUCCESS)
