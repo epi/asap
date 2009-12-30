@@ -1,5 +1,5 @@
 /*
- * ASAPPlayer.java - ASAP Flash player
+ * ASAPPlayer.as - ASAP Flash player
  *
  * Copyright (C) 2009  Piotr Fusik
  *
@@ -106,7 +106,7 @@ package
 			var parameters : Object = this.loaderInfo.parameters;
 			setPlaybackTime(parameters.defaultPlaybackTime, parameters.loopPlaybackTime);
 			if (parameters.file != null)
-				play(parameters.file, parameters.song);
+				play(parameters.file, parameters.song != null ? parameters.song : -1);
 		}
 	}
 }

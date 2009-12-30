@@ -1,4 +1,7 @@
 2009-12-30  Piotr Fusik  <fox@scene.pl>
+* flash/ASAPPlayer.as: FlashVars with file and no song should play default
+  and not first song
+
 * win32/dshow/asap_dsf.cpp, win32/setup/asap.wxs:
   add file types to Windows Media Player "Open" dialog
 
