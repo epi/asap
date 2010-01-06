@@ -1,3 +1,8 @@
+2010-01-06  Piotr Fusik  <fox@scene.pl>
+* asap.c, anylang.h, csharp/ASAP.ppcs:
+  unified SAP header parsing across programming languages
+
+
 2009-12-30  Piotr Fusik  <fox@scene.pl>
 * flash/ASAPPlayer.as: FlashVars with file and no song should play default
   and not first song

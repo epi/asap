@@ -1,7 +1,7 @@
 /*
  * anylang.h - C/Java/C#/JavaScript/ActionScript abstraction layer
  *
- * Copyright (C) 2007-2009  Piotr Fusik
+ * Copyright (C) 2007-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -32,6 +32,7 @@
 #define _                       .
 #define PRIVATE
 #define CONST
+#define OUT_STRING              STRING
 
 #else
 
@@ -63,13 +64,15 @@
                                 type name[size]
 #define INIT_ARRAY(array)       memset(array, 0, sizeof(array))
 #define STRING                  const char *
+#define OUT_STRING              char *
 #define CHARAT(s, i)            (s)[i]
 #define CHARCODEAT(s, i)        (s)[i]
 #define CHARCODE(c)             (c)
 #define EQUAL_STRINGS(s1, s2)   (strcmp(s1, s2) == 0)
 #define EMPTY_STRING(s)         (s)[0] = '\0'
 #define SUBSTR(s, i)            (s + i)
-#define CUT_STRING(s, i)        (s)[i] = '\0'
+#define BYTES_TO_STRING(dest, src, src_offset, len) \
+                                do { memcpy(dest, src + src_offset, len); (dest)[len] = '\0'; } while (FALSE)
 #define SUBSTRING(dest, src, src_offset, len) \
                                 do { memcpy(dest, src + src_offset, len); (dest)[len] = '\0'; } while (FALSE)
 
@@ -111,7 +114,8 @@
 #define EQUAL_STRINGS(s1, s2)   (s1).equals(s2)
 #define EMPTY_STRING(s)         (s) = ""
 #define SUBSTR(s, i)            (s).substring(i)
-#define CUT_STRING(s, i)        (s) = (s).substring(0, i)
+#define BYTES_TO_STRING(dest, src, src_offset, len) \
+                                (dest) = new String(src, src_offset, len)
 #define SUBSTRING(dest, src, src_offset, len) \
                                 (dest) = (src).substring(src_offset, src_offset + len)
 
@@ -151,7 +155,8 @@
 #define EQUAL_STRINGS(s1, s2)   ((s1) == (s2))
 #define EMPTY_STRING(s)         (s) = string.Empty
 #define SUBSTR(s, i)            (s).Substring(i)
-#define CUT_STRING(s, i)        (s) = (s).Substring(0, i)
+#define BYTES_TO_STRING(dest, src, src_offset, len) \
+                                (dest) = System.Text.Encoding.ASCII.GetString(src, src_offset, len)
 #define SUBSTRING(dest, src, src_offset, len) \
                                 (dest) = (src).Substring(src_offset, len)
 
@@ -201,7 +206,8 @@
 #define EQUAL_STRINGS(s1, s2)   ((s1) == (s2))
 #define EMPTY_STRING(s)         s = ""
 #define SUBSTR(s, i)            (s).substr(i)
-#define CUT_STRING(s, i)        (s) = (s).substr(0, i)
+#define BYTES_TO_STRING(dest, src, src_offset, len) \
+                                { dest = ""; for (V(int, ii) = 0; ii < len; ii++) dest += String.fromCharCode(src[src_offset + ii]); }
 #define SUBSTRING(dest, src, src_offset, len) \
                                 dest = (src).substring(src_offset, src_offset + len)
 

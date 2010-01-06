@@ -1,7 +1,7 @@
 /*
  * asap.c - ASAP engine
  *
- * Copyright (C) 2005-2009  Piotr Fusik
+ * Copyright (C) 2005-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -1021,6 +1021,76 @@ PRIVATE FUNC(abool, parse_tm2, (
 
 #endif /* ASAP_ONLY_SAP */
 
+PRIVATE FUNC(abool, has_string_at, (P(CONST BYTEARRAY, module), P(int, module_index), P(STRING, s)))
+{
+	V(int, i);
+	V(int, n) = strlen(s);
+	for (i = 0; i < n; i++)
+		if (module[module_index + i] != CHARCODEAT(s, i))
+			return FALSE;
+	return TRUE;
+}
+
+PRIVATE FUNC(STRING, parse_text, (P(OUT_STRING, dest), P(CONST BYTEARRAY, module), P(int, module_index)))
+{
+	V(int, i);
+	if (module[module_index] != CHARCODE('"'))
+		return NULL;
+	if (has_string_at(module, module_index + 1, "<?>\""))
+		return dest;
+	for (i = 0; ; i++) {
+		V(int, c) = module[module_index + 1 + i];
+		if (c == CHARCODE('"'))
+			break;
+		if (c < 32 || c >= 127)
+			return NULL;
+	}
+	BYTES_TO_STRING(dest, module, module_index + 1, i);
+	return dest;
+}
+
+PRIVATE FUNC(int, parse_dec, (P(CONST BYTEARRAY, module), P(int, module_index), P(int, maxval)))
+{
+	V(int, r);
+	if (module[module_index] == 0xd)
+		return -1;
+	for (r = 0;;) {
+		V(int, c) = module[module_index++];
+		if (c == 0xd)
+			break;
+		if (c < CHARCODE('0') || c > CHARCODE('9'))
+			return -1;
+		r = 10 * r + c - 48;
+		if (r > maxval)
+			return -1;
+	}
+	return r;
+}
+
+PRIVATE FUNC(int, parse_hex, (P(CONST BYTEARRAY, module), P(int, module_index)))
+{
+	V(int, r);
+	if (module[module_index] == 0xd)
+		return -1;
+	for (r = 0;;) {
+		V(int, c) = module[module_index++];
+		if (c == 0xd)
+			break;
+		if (r > 0xfff)
+			return -1;
+		r <<= 4;
+		if (c >= CHARCODE('0') && c <= CHARCODE('9'))
+			r += c - CHARCODE('0');
+		else if (c >= CHARCODE('A') && c <= CHARCODE('F'))
+			r += c - CHARCODE('A') + 10;
+		else if (c >= CHARCODE('a') && c <= CHARCODE('f'))
+			r += c - CHARCODE('a') + 10;
+		else
+			return -1;
+	}
+	return r;
+}
+
 FUNC(int, ASAP_ParseDuration, (P(STRING, s)))
 {
 	V(int, i) = 0;
@@ -1066,251 +1136,113 @@ FUNC(int, ASAP_ParseDuration, (P(STRING, s)))
 	return r;
 }
 
-#ifdef C
-
-static abool parse_hex(int *retval, const char *p)
-{
-	int r = 0;
-	do {
-		char c = *p;
-		if (r > 0xfff)
-			return FALSE;
-		r <<= 4;
-		if (c >= '0' && c <= '9')
-			r += c - '0';
-		else if (c >= 'A' && c <= 'F')
-			r += c - 'A' + 10;
-		else if (c >= 'a' && c <= 'f')
-			r += c - 'a' + 10;
-		else
-			return FALSE;
-	} while (*++p != '\0');
-	*retval = r;
-	return TRUE;
-}
-
-static abool parse_dec(int *retval, const char *p, int minval, int maxval)
-{
-	int r = 0;
-	do {
-		char c = *p;
-		if (c >= '0' && c <= '9')
-			r = 10 * r + c - '0';
-		else
-			return FALSE;
-		if (r > maxval)
-			return FALSE;
-	} while (*++p != '\0');
-	if (r < minval)
-		return FALSE;
-	*retval = r;
-	return TRUE;
-}
-
-static abool parse_text(char *retval, const char *p)
-{
-	int i;
-	if (*p != '"')
-		return FALSE;
-	p++;
-	if (p[0] == '<' && p[1] == '?' && p[2] == '>' && p[3] == '"')
-		return TRUE;
-	i = 0;
-	while (*p != '"') {
-		if (i >= 127)
-			return FALSE;
-		if (*p == '\0')
-			return FALSE;
-		retval[i++] = *p++;
-	}
-	retval[i] = '\0';
-	return TRUE;
-}
-
-static char *two_digits(char *s, int x)
-{
-	s[0] = '0' + x / 10;
-	s[1] = '0' + x % 10;
-	return s + 2;
-}
-
-void ASAP_DurationToString(char *s, int duration)
-{
-	if (duration >= 0 && duration < 100 * 60 * 1000) {
-		int seconds = duration / 1000;
-		s = two_digits(s, seconds / 60);
-		*s++ = ':';
-		s = two_digits(s, seconds % 60);
-		duration %= 1000;
-		if (duration != 0) {
-			*s++ = '.';
-			s = two_digits(s, duration / 10);
-			duration %= 10;
-			if (duration != 0)
-				*s++ = '0' + duration;
-		}
-	}
-	*s = '\0';
-}
-
-#endif /* C */
-
 PRIVATE FUNC(abool, parse_sap_header, (
 	P(ASAP_ModuleInfo PTR, module_info), P(CONST BYTEARRAY, module), P(int, module_len)))
 {
-	V(int, module_index) = 0;
-	V(abool, sap_signature) = FALSE;
-	V(char, type) = '?';
+	V(int, module_index);
+	V(int, type) = 0;
 	V(int, duration_index) = 0;
-	for (;;) {
-#if defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
-		V(STRING, tag) = "";
-		V(STRING, arg) = null;
-#else
-		NEW_ARRAY(char, line, 256);
-		int len = 0;
-		int arg_pos = -1;
-#if !defined(JAVA) && !defined(CSHARP)
-#define tag line
-		char *arg;
-#endif
-#endif
+	if (!has_string_at(module, 0, "SAP\r\n"))
+		return FALSE;
+	module_index = 5;
+	while (UBYTE(module[module_index]) != 0xff) {
 		if (module_index + 8 >= module_len)
 			return FALSE;
-		if (UBYTE(module[module_index]) == 0xff)
-			break;
-		while (module[module_index] != 0x0d) {
-#if defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
-			V(int, c) = module[module_index++];
-			if (arg != null)
-				arg += String.fromCharCode(c);
-			else if (c == 32)
-				arg = "";
-			else
-				tag += String.fromCharCode(c);
-			if (module_index >= module_len)
-				return FALSE;
+#define TAG_IS(s)               has_string_at(module, module_index, s)
+#ifdef C
+#define SET_TEXT(v, i)          if (parse_text(v, module, module_index + i) == NULL) return FALSE
 #else
-			V(char, c) = CAST(char) module[module_index++];
-			if (c == ' ' && arg_pos < 0)
-				arg_pos = len;
-			line[len++] = c;
-			if (module_index >= module_len || len >= CAST(int) sizeof(line) - 1)
+#define SET_TEXT(v, i)          v = parse_text(v, module, module_index + i); if (v == NULL) return FALSE
+#endif
+#define SET_DEC(v, i, min, max) v = parse_dec(module, module_index + i, max); if (v < min) return FALSE
+#define SET_HEX(v, i)           v = parse_hex(module, module_index + i)
+		if (TAG_IS("AUTHOR ")) {
+			SET_TEXT(module_info _ author, 7);
+		}
+		else if (TAG_IS("NAME ")) {
+			SET_TEXT(module_info _ name, 5);
+		}
+		else if (TAG_IS("DATE ")) {
+			SET_TEXT(module_info _ date, 5);
+		}
+		else if (TAG_IS("SONGS ")) {
+			SET_DEC(module_info _ songs, 6, 1, ASAP_SONGS_MAX);
+		}
+		else if (TAG_IS("DEFSONG ")) {
+			SET_DEC(module_info _ default_song, 8, 0, ASAP_SONGS_MAX - 1);
+		}
+		else if (TAG_IS("STEREO\r"))
+			module_info _ channels = 2;
+		else if (TAG_IS("TIME ")) {
+			V(int, i);
+#ifdef C
+			char s[ASAP_DURATION_CHARS];
+#else
+			V(STRING, s);
+#endif
+			module_index += 5;
+			for (i = 0; module[module_index + i] != 0xd; i++);
+			if (i > 5 && has_string_at(module, module_index + i - 5, " LOOP")) {
+				module_info _ loops[duration_index] = TRUE;
+				i -= 5;
+			}
+#ifdef C
+			if (i >= ASAP_DURATION_CHARS)
 				return FALSE;
 #endif
-		}
-		if (++module_index >= module_len || module[module_index++] != 0x0a)
-			return FALSE;
-
-#if defined(JAVA) || defined(CSHARP)
-		STRING tag;
-		STRING arg;
-		if (arg_pos >= 0) {
-			tag = new STRING(line, 0, arg_pos);
-			arg = new STRING(line, arg_pos + 1, len - arg_pos - 1);
-		}
-		else {
-			tag = new STRING(line, 0, len);
-			arg = null;
-		}
-#define SET_TEXT(v)             if (!EQUAL_STRINGS(arg, "\"<?>\"")) SUBSTRING(v, arg, 1, strlen(arg) - 2)
-#endif
-		
-#ifdef JAVA
-#define SET_HEX(v)              v = Integer.parseInt(arg, 16)
-#define SET_DEC(v, min, max)    v = Integer.parseInt(arg); if (v < min || v > max) return FALSE
-#elif defined(CSHARP)
-#define SET_HEX(v)              v = int.Parse(arg, NumberStyles.AllowHexSpecifier, NumberFormatInfo.InvariantInfo)
-#define SET_DEC(v, min, max)    v = int.Parse(arg, NumberStyles.None, NumberFormatInfo.InvariantInfo); if (v < min || v > max) return FALSE
-#elif defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
-#define SET_HEX(v)              v = parseInt(arg, 16)
-#define SET_DEC(v, min, max)    v = parseInt(arg, 10); if (v < min || v > max) return FALSE
-#define SET_TEXT(v)             v = arg.substring(1, arg.length - 1)
-#else /* C */
-		line[len] = '\0';
-		if (arg_pos >= 0) {
-			arg = line + arg_pos;
-			*arg++ = '\0';
-		}
-		else
-			arg = line + len;
-#define SET_HEX(v)              if (!parse_hex(&v, arg)) return FALSE
-#define SET_DEC(v, min, max)    if (!parse_dec(&v, arg, min, max)) return FALSE
-#define SET_TEXT(v)             if (!parse_text(v, arg)) return FALSE
-#endif
-
-		if (EQUAL_STRINGS(tag, "SAP"))
-			sap_signature = TRUE;
-		if (!sap_signature)
-			return FALSE;
-		if (EQUAL_STRINGS(tag, "AUTHOR")) {
-			SET_TEXT(module_info _ author);
-		}
-		else if (EQUAL_STRINGS(tag, "NAME")) {
-			SET_TEXT(module_info _ name);
-		}
-		else if (EQUAL_STRINGS(tag, "DATE")) {
-			SET_TEXT(module_info _ date);
-		}
-		else if (EQUAL_STRINGS(tag, "SONGS")) {
-			SET_DEC(module_info _ songs, 1, ASAP_SONGS_MAX);
-		}
-		else if (EQUAL_STRINGS(tag, "DEFSONG")) {
-			SET_DEC(module_info _ default_song, 0, ASAP_SONGS_MAX - 1);
-		}
-		else if (EQUAL_STRINGS(tag, "STEREO"))
-			module_info _ channels = 2;
-		else if (EQUAL_STRINGS(tag, "TIME")) {
-			V(int, i) = strlen(arg) - 5;
-			if (i > 0 && EQUAL_STRINGS(SUBSTR(arg, i), " LOOP")) {
-				module_info _ loops[duration_index] = TRUE;
-				CUT_STRING(arg, i);
-			}
-			i = ASAP_ParseDuration(arg);
+			BYTES_TO_STRING(s, module, module_index, i);
+			i = ASAP_ParseDuration(s);
 			if (i < 0 || duration_index >= ASAP_SONGS_MAX)
 				return FALSE;
 			module_info _ durations[duration_index++] = i;
 		}
-		else if (EQUAL_STRINGS(tag, "TYPE"))
-			type = CHARAT(arg, 0);
-		else if (EQUAL_STRINGS(tag, "FASTPLAY")) {
-			SET_DEC(module_info _ fastplay, 1, 312);
+		else if (TAG_IS("TYPE "))
+			type = module[module_index + 5];
+		else if (TAG_IS("FASTPLAY ")) {
+			SET_DEC(module_info _ fastplay, 9, 1, 312);
 		}
-		else if (EQUAL_STRINGS(tag, "MUSIC")) {
-			SET_HEX(module_info _ music);
+		else if (TAG_IS("MUSIC ")) {
+			SET_HEX(module_info _ music, 6);
 		}
-		else if (EQUAL_STRINGS(tag, "INIT")) {
-			SET_HEX(module_info _ init);
+		else if (TAG_IS("INIT ")) {
+			SET_HEX(module_info _ init, 5);
 		}
-		else if (EQUAL_STRINGS(tag, "PLAYER")) {
-			SET_HEX(module_info _ player);
+		else if (TAG_IS("PLAYER ")) {
+			SET_HEX(module_info _ player, 7);
 		}
-		else if (EQUAL_STRINGS(tag, "COVOX")) {
-			SET_HEX(module_info _ covox_addr);
+		else if (TAG_IS("COVOX ")) {
+			SET_HEX(module_info _ covox_addr, 6);
 			if (module_info _ covox_addr != 0xd600)
 				return FALSE;
 			module_info _ channels = 2;
 		}
+
+		while (module[module_index++] != 0x0d) {
+			if (module_index >= module_len)
+				return FALSE;
+		}
+		if (module[module_index++] != 0x0a)
+			return FALSE;
 	}
 	if (module_info _ default_song >= module_info _ songs)
 		return FALSE;
 	switch (type) {
-	case 'B':
+	case CHARCODE('B'):
 		if (module_info _ player < 0 || module_info _ init < 0)
 			return FALSE;
 		module_info _ type = ASAP_TYPE_SAP_B;
 		break;
-	case 'C':
+	case CHARCODE('C'):
 		if (module_info _ player < 0 || module_info _ music < 0)
 			return FALSE;
 		module_info _ type = ASAP_TYPE_SAP_C;
 		break;
-	case 'D':
+	case CHARCODE('D'):
 		if (module_info _ player < 0 || module_info _ init < 0)
 			return FALSE;
 		module_info _ type = ASAP_TYPE_SAP_D;
 		break;
-	case 'S':
+	case CHARCODE('S'):
 		if (module_info _ init < 0)
 			return FALSE;
 		module_info _ type = ASAP_TYPE_SAP_S;
@@ -1907,6 +1839,32 @@ static byte *start_sap_header(byte *dest, const ASAP_ModuleInfo *module_info)
 	if (module_info->channels > 1)
 		dest = put_string(dest, "STEREO\r\n");
 	return dest;
+}
+
+static char *two_digits(char *s, int x)
+{
+	s[0] = '0' + x / 10;
+	s[1] = '0' + x % 10;
+	return s + 2;
+}
+
+void ASAP_DurationToString(char *s, int duration)
+{
+	if (duration >= 0 && duration < 100 * 60 * 1000) {
+		int seconds = duration / 1000;
+		s = two_digits(s, seconds / 60);
+		*s++ = ':';
+		s = two_digits(s, seconds % 60);
+		duration %= 1000;
+		if (duration != 0) {
+			*s++ = '.';
+			s = two_digits(s, duration / 10);
+			duration %= 10;
+			if (duration != 0)
+				*s++ = '0' + duration;
+		}
+	}
+	*s = '\0';
 }
 
 static byte *put_durations(byte *dest, const ASAP_ModuleInfo *module_info)
