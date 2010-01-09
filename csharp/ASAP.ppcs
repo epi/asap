@@ -96,7 +96,7 @@ namespace ASAP
 		internal readonly int[] delta_buffer = new int[888];
 	}
 
-	public class ASAP_State
+	internal class ASAP_State
 	{
 		internal int cycle;
 		internal int cpu_pc;
