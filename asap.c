@@ -1646,28 +1646,19 @@ FUNC(void, ASAP_GetWavHeader, (
 
 #endif /* ACTIONSCRIPT */
 
-#if defined(JAVA) || defined(JAVASCRIPT)
-#define ASAP_GENERATE_PARS  (P(ASAP_State PTR, ast), P(VOIDPTR, buffer), P(int, buffer_offset), P(int, buffer_len), P(ASAP_SampleFormat, format))
-#elif defined(ACTIONSCRIPT)
-#define ASAP_GENERATE_PARS  (P(ASAP_State PTR, ast), P(VOIDPTR, buffer), P(int, buffer_blocks), P(ASAP_SampleFormat, format))
-#define block_shift  0
-#else
-#define ASAP_GENERATE_PARS  (P(ASAP_State PTR, ast), P(VOIDPTR, buffer), P(int, buffer_len), P(ASAP_SampleFormat, format))
-#endif
-
-FUNC(int, ASAP_Generate, ASAP_GENERATE_PARS)
+PRIVATE FUNC(int, ASAP_GenerateAt, (P(ASAP_State PTR, ast), P(VOIDPTR, buffer), P(int, buffer_offset), P(int, buffer_len), P(ASAP_SampleFormat, format)))
 {
-#ifndef ACTIONSCRIPT
 	V(int, block_shift);
 	V(int, buffer_blocks);
-#endif
 	V(int, block);
 	if (ast _ silence_cycles > 0 && ast _ silence_cycles_counter <= 0)
 		return 0;
-#ifndef ACTIONSCRIPT
+#ifdef ACTIONSCRIPT
+	block_shift = 0;
+#else
 	block_shift = (ast _ module_info.channels - 1) + (format != ASAP_FORMAT_U8 ? 1 : 0);
-	buffer_blocks = buffer_len >> block_shift;
 #endif
+	buffer_blocks = buffer_len >> block_shift;
 	if (ast _ current_duration > 0) {
 		V(int, total_blocks) = milliseconds_to_blocks(ast _ current_duration);
 		if (buffer_blocks > total_blocks - ast _ blocks_played)
@@ -1676,14 +1667,16 @@ FUNC(int, ASAP_Generate, ASAP_GENERATE_PARS)
 	block = 0;
 	do {
 		V(int, blocks) = PokeySound_Generate(ast, CAST(BYTEARRAY) buffer,
-#if defined(JAVA) || defined(JAVASCRIPT)
-			buffer_offset +
-#endif
-			(block << block_shift), buffer_blocks - block, format);
+			buffer_offset + (block << block_shift), buffer_blocks - block, format);
 		ast _ blocks_played += blocks;
 		block += blocks;
 	} while (block < buffer_blocks && call_6502_player(ast));
 	return block << block_shift;
+}
+
+FUNC(int, ASAP_Generate, (P(ASAP_State PTR, ast), P(VOIDPTR, buffer), P(int, buffer_len), P(ASAP_SampleFormat, format)))
+{
+	return ASAP_GenerateAt(ast, buffer, 0, buffer_len, format);
 }
 
 #if defined(C) && !defined(ASAP_ONLY_SAP)

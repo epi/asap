@@ -331,7 +331,7 @@ public final class ASAP
 	    (less than <code>buffer.length</code> if reached the end of the song) */
 	public int generate(byte[] buffer, int format)
 	{
-		return ASAP_Generate(ast, buffer, 0, buffer.length, format);
+		return ASAP_GenerateAt(ast, buffer, 0, buffer.length, format);
 	}
 
 	/** Fills a part of the specified buffer with generated samples.
@@ -343,7 +343,7 @@ public final class ASAP
 	    (less than <code>length</code> if reached the end of the song) */
 	public int generate(byte[] buffer, int offset, int length, int format)
 	{
-		return ASAP_Generate(ast, buffer, offset, length, format);
+		return ASAP_GenerateAt(ast, buffer, offset, length, format);
 	}
 
 	/** Returns POKEY channel volume.

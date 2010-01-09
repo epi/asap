@@ -1,7 +1,7 @@
 /*
  * asap.ppjs - JavaScript version of ASAP
  *
- * Copyright (C) 2009  Piotr Fusik
+ * Copyright (C) 2009-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -75,6 +75,6 @@ function ASAP()
 
 	this.generate = function(buffer, buffer_offset, buffer_len, format)
 	{
-		return ASAP_Generate(this, buffer, buffer_offset, buffer_len, format);
+		return ASAP_GenerateAt(this, buffer, buffer_offset, buffer_len, format);
 	}
 }

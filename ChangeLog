@@ -1,9 +1,14 @@
 2010-01-09  Piotr Fusik  <fox@scene.pl>
+* csharp/ASAP.ppcs: changed ASAP_State from public to internal
+
+* asap.c, java/ASAP.ppjava, javascript/asap.ppjs:
+  reduced number of #ifdefs in ASAP_Generate
+
 * asap.c: fixed RMT time detection
   (java.lang.ArrayIndexOutOfBoundsException: 15 on aurora_m.rmt)
 
-* asap.c, anylang.h, ASAP.ppjava: Java now reads resources to byte arrays
-  so they are handled like in other languages
+* asap.c, anylang.h, ASAP.ppjava: Java now reads resources to byte arrays,
+  which are then handled like in other languages
 
 * asap.c, anylang.h, csharp/Makefile:
   use initialized byte arrays and not resources in C#
@@ -37,7 +42,7 @@
 
 2009-12-21  Piotr Fusik  <fox@scene.pl>
 * win32/gui.c: improved File Information validation:
-  validate Time when leaving this field rather than while typing;
+  validate Time when leaving this field not while typing;
   disable Loop when Time is empty;
   don't ask to save when information is invalid;
   message boxes on Windows which don't do balloon tips (pre-XP)
