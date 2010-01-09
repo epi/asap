@@ -1,3 +1,8 @@
+2010-01-09  Piotr Fusik  <fox@scene.pl>
+* java/ASAP.ppjava, java/ASAP2WAV.java, java/ASAPApplet.java,
+  java/ASAPMIDlet.java: moved common code to readAndClose()
+
+
 2010-01-06  Piotr Fusik  <fox@scene.pl>
 * asap.c, anylang.h, csharp/ASAP.ppcs:
   unified SAP header parsing across programming languages

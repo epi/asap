@@ -1,7 +1,7 @@
 /*
  * ASAP2WAV.java - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2007-2009  Piotr Fusik
+ * Copyright (C) 2007-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -79,8 +79,7 @@ public class ASAP2WAV
 	{
 		InputStream is = new FileInputStream(inputFilename);
 		byte[] module = new byte[ASAP.MODULE_MAX];
-		int module_len = is.read(module);
-		is.close();
+		int module_len = ASAP.readAndClose(is, module);
 		ASAP asap = new ASAP();
 		asap.load(inputFilename, module, module_len);
 		ASAP_ModuleInfo module_info = asap.getModuleInfo();

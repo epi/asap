@@ -1,7 +1,7 @@
 /*
  * ASAPApplet.java - ASAP applet
  *
- * Copyright (C) 2007-2009  Piotr Fusik
+ * Copyright (C) 2007-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -126,17 +126,11 @@ public class ASAPApplet extends Applet implements Runnable
 	public void play(String filename, int song)
 	{
 		byte[] module;
-		int module_len = 0;
+		int module_len;
 		try {
 			InputStream is = new URL(getDocumentBase(), filename).openStream();
 			module = new byte[ASAP.MODULE_MAX];
-			for (;;) {
-				int i = is.read(module, module_len, ASAP.MODULE_MAX - module_len);
-				if (i <= 0)
-					break;
-				module_len += i;
-			}
-			is.close();
+			module_len = ASAP.readAndClose(is, module);
 		} catch (IOException e) {
 			showStatus("ERROR LOADING " + filename);
 			return;

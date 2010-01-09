@@ -1,7 +1,7 @@
 /*
  * ASAPMIDlet.java - ASAP midlet
  *
- * Copyright (C) 2007-2009  Piotr Fusik
+ * Copyright (C) 2007-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -306,14 +306,7 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 					return;
 				}
 				InputStream is = fc.openInputStream();
-				int module_len = 0;
-				for (;;) {
-					int i = is.read(module, module_len, ASAP.MODULE_MAX - module_len);
-					if (i <= 0)
-						break;
-					module_len += i;
-				}
-				is.close();
+				int module_len = ASAP.readAndClose(is, module);
 				asap.load(filename, module, module_len);
 				int songs = asap.getModuleInfo().songs;
 				if (songs > 1) {
