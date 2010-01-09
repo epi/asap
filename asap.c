@@ -507,7 +507,7 @@ PRIVATE FUNC(abool, parse_mpt, (
 }
 
 CONST_ARRAY(byte, rmt_volume_silent)
-	16, 8, 4, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1
+	16, 8, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1
 END_CONST_ARRAY;
 
 PRIVATE FUNC(int, rmt_instrument_frames, (

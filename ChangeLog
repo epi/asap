@@ -1,4 +1,7 @@
 2010-01-09  Piotr Fusik  <fox@scene.pl>
+* asap.c: fixed RMT time detection
+  (java.lang.ArrayIndexOutOfBoundsException: 15 on aurora_m.rmt)
+
 * asap.c, anylang.h, ASAP.ppjava: Java now reads resources to byte arrays
   so they are handled like in other languages
 
