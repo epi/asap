@@ -178,6 +178,20 @@ public final class ASAP
 		return got;
 	}
 
+	private static byte[] getResourceBytes(String id)
+	{
+		InputStream is = ASAP.class.getResourceAsStream(id);
+		try
+		{
+			byte[] r = new byte[4096]; // *.obx must be smaller than this!
+			readAndClose(is, r);
+			return r;
+		}
+		catch (IOException e) {
+			throw new RuntimeException();
+		}
+	}
+
 	/** Checks whether the extension of the passed filename is known to ASAP.
 	    @param filename filename to check
 	    @return <code>true</code> if filename is supported by ASAP */

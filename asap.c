@@ -126,76 +126,39 @@ PRIVATE FUNC(abool, load_native, (
 	P(ASAP_State PTR, ast), P(ASAP_ModuleInfo PTR, module_info),
 	P(CONST BYTEARRAY, module), P(int, module_len), P(RESOURCE, player)))
 {
-#ifdef JAVA
-	InputStream playerStream = ASAP.class.getResourceAsStream(player);
-	try
-#endif
-	{
-		V(int, player_last_byte);
-		V(int, music_last_byte);
-		V(int, block_len);
-		if ((UBYTE(module[0]) != 0xff || UBYTE(module[1]) != 0xff)
-		 && (module[0] != 0 || module[1] != 0)) /* some CMC and clones start with zeros */
+	V(int, player_last_byte);
+	V(int, music_last_byte);
+	V(int, block_len);
+	if ((UBYTE(module[0]) != 0xff || UBYTE(module[1]) != 0xff)
+	 && (module[0] != 0 || module[1] != 0)) /* some CMC and clones start with zeros */
+		return FALSE;
+	module_info _ player = UWORD(player, 2);
+	player_last_byte = UWORD(player, 4);
+	module_info _ music = UWORD(module, 2);
+	if (module_info _ music <= player_last_byte)
+		return FALSE;
+	music_last_byte = UWORD(module, 4);
+	if (module_info _ music <= 0xd7ff && music_last_byte >= 0xd000)
+		return FALSE;
+	block_len = music_last_byte + 1 - module_info _ music;
+	if (6 + block_len != module_len) {
+		V(int, info_addr);
+		V(int, info_len);
+		if (module_info _ type != ASAP_TYPE_RMT || 11 + block_len > module_len)
 			return FALSE;
-#ifdef JAVA
-		playerStream.read();
-		playerStream.read();
-		module_info _ player = playerStream.read();
-		module_info _ player += playerStream.read() << 8;
-		player_last_byte = playerStream.read();
-		player_last_byte += playerStream.read() << 8;
-#else
-		module_info _ player = UWORD(player, 2);
-		player_last_byte = UWORD(player, 4);
-#endif
-		module_info _ music = UWORD(module, 2);
-		if (module_info _ music <= player_last_byte)
+		/* allow optional info for Raster Music Tracker */
+		info_addr = UWORD(module, 6 + block_len);
+		if (info_addr != module_info _ music + block_len)
 			return FALSE;
-		music_last_byte = UWORD(module, 4);
-		if (module_info _ music <= 0xd7ff && music_last_byte >= 0xd000)
+		info_len = UWORD(module, 8 + block_len) + 1 - info_addr;
+		if (10 + block_len + info_len != module_len)
 			return FALSE;
-		block_len = music_last_byte + 1 - module_info _ music;
-		if (6 + block_len != module_len) {
-			V(int, info_addr);
-			V(int, info_len);
-			if (module_info _ type != ASAP_TYPE_RMT || 11 + block_len > module_len)
-				return FALSE;
-			/* allow optional info for Raster Music Tracker */
-			info_addr = UWORD(module, 6 + block_len);
-			if (info_addr != module_info _ music + block_len)
-				return FALSE;
-			info_len = UWORD(module, 8 + block_len) + 1 - info_addr;
-			if (10 + block_len + info_len != module_len)
-				return FALSE;
-		}
-		if (ast != NULL) {
-			COPY_ARRAY(ast _ memory, module_info _ music, module, 6, block_len);
-#ifdef JAVA
-			int addr = module_info _ player;
-			do {
-				int i = playerStream.read(ast _ memory, addr, player_last_byte + 1 - addr);
-				if (i <= 0)
-					throw new IOException();
-				addr += i;
-			} while (addr <= player_last_byte);
-#else
-			COPY_ARRAY(ast _ memory, module_info _ player, player, 6, player_last_byte + 1 - module_info _ player);
-#endif
-		}
-		return TRUE;
 	}
-#ifdef JAVA
-	catch (IOException e) {
-		throw new RuntimeException();
+	if (ast != NULL) {
+		COPY_ARRAY(ast _ memory, module_info _ music, module, 6, block_len);
+		COPY_ARRAY(ast _ memory, module_info _ player, player, 6, player_last_byte + 1 - module_info _ player);
 	}
-	finally {
-		try {
-			playerStream.close();
-		} catch (IOException e) {
-			throw new RuntimeException();
-		}
-	}
-#endif
+	return TRUE;
 }
 
 PRIVATE FUNC(void, set_song_duration, (P(ASAP_ModuleInfo PTR, module_info), P(int, player_calls)))

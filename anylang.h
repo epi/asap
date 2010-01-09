@@ -119,8 +119,8 @@
 #define SUBSTRING(dest, src, src_offset, len) \
                                 (dest) = (src).substring(src_offset, src_offset + len)
 
-#define RESOURCE                String
-#define GET_RESOURCE(name, ext) (#name + "." + #ext)
+#define RESOURCE                byte[]
+#define GET_RESOURCE(name, ext) getResourceBytes(#name + "." + #ext)
 
 #elif defined(CSHARP)
 

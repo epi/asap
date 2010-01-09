@@ -1,4 +1,7 @@
 2010-01-09  Piotr Fusik  <fox@scene.pl>
+* asap.c, anylang.h, ASAP.ppjava: Java now reads resources to byte arrays
+  so they are handled like in other languages
+
 * asap.c, anylang.h, csharp/Makefile:
   use initialized byte arrays and not resources in C#
 
