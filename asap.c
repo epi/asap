@@ -103,7 +103,7 @@ FUNC(void, ASAP_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, data)))
 
 #ifndef ASAP_ONLY_SAP
 
-#if !defined(JAVA) && !defined(CSHARP)
+#ifndef JAVA
 #include "players.h"
 #endif
 
@@ -128,13 +128,6 @@ PRIVATE FUNC(abool, load_native, (
 {
 #ifdef JAVA
 	InputStream playerStream = ASAP.class.getResourceAsStream(player);
-#define READ_BYTE   read
-#define READ_ARRAY  read
-	try
-#elif defined(CSHARP)
-	Stream playerStream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream(player);
-#define READ_BYTE   ReadByte
-#define READ_ARRAY  Read
 	try
 #endif
 	{
@@ -144,13 +137,13 @@ PRIVATE FUNC(abool, load_native, (
 		if ((UBYTE(module[0]) != 0xff || UBYTE(module[1]) != 0xff)
 		 && (module[0] != 0 || module[1] != 0)) /* some CMC and clones start with zeros */
 			return FALSE;
-#if defined(JAVA) || defined(CSHARP)
-		playerStream.READ_BYTE();
-		playerStream.READ_BYTE();
-		module_info _ player = playerStream.READ_BYTE();
-		module_info _ player += playerStream.READ_BYTE() << 8;
-		player_last_byte = playerStream.READ_BYTE();
-		player_last_byte += playerStream.READ_BYTE() << 8;
+#ifdef JAVA
+		playerStream.read();
+		playerStream.read();
+		module_info _ player = playerStream.read();
+		module_info _ player += playerStream.read() << 8;
+		player_last_byte = playerStream.read();
+		player_last_byte += playerStream.read() << 8;
 #else
 		module_info _ player = UWORD(player, 2);
 		player_last_byte = UWORD(player, 4);
@@ -177,10 +170,10 @@ PRIVATE FUNC(abool, load_native, (
 		}
 		if (ast != NULL) {
 			COPY_ARRAY(ast _ memory, module_info _ music, module, 6, block_len);
-#if defined(JAVA) || defined(CSHARP)
+#ifdef JAVA
 			int addr = module_info _ player;
 			do {
-				int i = playerStream.READ_ARRAY(ast _ memory, addr, player_last_byte + 1 - addr);
+				int i = playerStream.read(ast _ memory, addr, player_last_byte + 1 - addr);
 				if (i <= 0)
 					throw new IOException();
 				addr += i;
@@ -201,10 +194,6 @@ PRIVATE FUNC(abool, load_native, (
 		} catch (IOException e) {
 			throw new RuntimeException();
 		}
-	}
-#elif defined(CSHARP)
-	finally {
-		playerStream.Close();
 	}
 #endif
 }

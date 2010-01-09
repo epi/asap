@@ -160,8 +160,8 @@
 #define SUBSTRING(dest, src, src_offset, len) \
                                 (dest) = (src).Substring(src_offset, len)
 
-#define RESOURCE                string
-#define GET_RESOURCE(name, ext) (#name + "." + #ext)
+#define RESOURCE                byte[]
+#define GET_RESOURCE(name, ext) name##_##ext
 
 #elif defined(JAVASCRIPT) || defined(ACTIONSCRIPT)
 
