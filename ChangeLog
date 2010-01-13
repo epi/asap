@@ -1,3 +1,8 @@
+2010-01-13  Piotr Fusik  <fox@scene.pl>
+* win32/wasap/wasap.c, win32/gui.rc, win32/gui.rc:
+  added progress bar for writing WAV file
+
+
 2010-01-09  Piotr Fusik  <fox@scene.pl>
 * csharp/ASAP.ppcs: changed ASAP_State from public to internal
 
@@ -5,7 +10,7 @@
   reduced number of #ifdefs in ASAP_Generate
 
 * asap.c: fixed RMT time detection
-  (java.lang.ArrayIndexOutOfBoundsException: 15 on aurora_m.rmt)
+  ("java.lang.ArrayIndexOutOfBoundsException: 15" on aurora_m.rmt)
 
 * asap.c, anylang.h, ASAP.ppjava: Java now reads resources to byte arrays,
   which are then handled like in other languages

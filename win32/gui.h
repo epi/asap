@@ -1,7 +1,7 @@
 /*
  * gui.h - settings and file information dialog boxes
  *
- * Copyright (C) 2007-2008  Piotr Fusik
+ * Copyright (C) 2007-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -39,6 +39,8 @@ extern "C" {
 #define IDC_LOOP       308
 #define IDC_SAVE       309
 #define IDC_CONVERT    310
+#define IDD_PROGRESS   500
+#define IDC_PROGRESS   501
 
 char *appendString(char *dest, const char *src);
 char *appendInt(char *dest, int x);
@@ -94,8 +96,6 @@ extern BOOL playing_info;
 #define IDC_LOOPS      407
 #define IDC_NOLOOPS    408
 #define IDC_MUTE1      411
-#define IDD_PROGRESS   500
-#define IDC_PROGRESS   501
 
 /* functions */
 BOOL settingsDialog(HINSTANCE hInstance, HWND hwndParent);

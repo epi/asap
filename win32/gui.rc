@@ -1,8 +1,31 @@
+/*
+ * gui.rc - Windows resources
+ *
+ * Copyright (C) 2005-2010  Piotr Fusik
+ *
+ * This file is part of ASAP (Another Slight Atari Player),
+ * see http://asap.sourceforge.net
+ *
+ * ASAP is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ *
+ * ASAP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ASAP; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 #if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO)
 #include <windows.h>
 #include "gui.h"
 #endif
-#ifdef WINAMP
+#if defined(WASAP) || defined(WINAMP)
 #include <commctrl.h>
 #endif
 
@@ -144,18 +167,22 @@ FONT 8, "MS Sans Serif"
 
 #endif /* defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) */
 
-#ifdef WINAMP
+#endif /* WASAP */
+
+#if defined(WASAP) || defined(WINAMP)
 IDD_PROGRESS DIALOG 0, 0, 160, 48
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | WS_POPUP | WS_VISIBLE
 CAPTION "Please wait"
 FONT 8, "MS Sans Serif"
 {
+#ifdef WASAP
+	CTEXT "Writing WAV file", IDC_STATIC, 8, 8, 144, 12
+#else
 	CTEXT "Adding subsongs to the playlist", IDC_STATIC, 8, 8, 144, 12
+#endif
 	CONTROL "", IDC_PROGRESS, PROGRESS_CLASS, 0, 8, 24, 144, 12
 }
-#endif
-
-#endif /* WASAP */
+#endif /* defined(WASAP) || defined(WINAMP) */
 
 #if defined(WASAP) || defined(WINAMP) || defined(APOLLO)
 #ifdef WINAMP

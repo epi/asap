@@ -1,7 +1,7 @@
 /*
  * wasap.c - Another Slight Atari Player for Win32 systems
  *
- * Copyright (C) 2005-2009  Piotr Fusik
+ * Copyright (C) 2005-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -22,6 +22,7 @@
  */
 
 #include <windows.h>
+#include <commctrl.h>
 #include <stdio.h>
 #include <shellapi.h>
 
@@ -316,26 +317,49 @@ static void SelectAndLoadFile(void)
 	opening = FALSE;
 }
 
+/* Defined so that the progress bar is responsive, but isn't updated too often and doesn't overflow (65535 limit) */
+#define WAV_PROGRESS_DURATION_SHIFT 10
+
+static int wav_progressLimit;
 static char wav_filename[MAX_PATH];
+
+static INT_PTR CALLBACK WavProgressDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_INITDIALOG)
+		SendDlgItemMessage(hDlg, IDC_PROGRESS, PBM_SETRANGE, 0, MAKELPARAM(0, wav_progressLimit));
+	return FALSE;
+}
 
 static BOOL DoSaveWav(ASAP_State *asap)
 {
 	HANDLE fh;
 	byte buffer[8192];
 	DWORD len;
+	HWND progressWnd;
+	int progressPos;
+	int newProgressPos;
 	fh = CreateFile(wav_filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
 		return FALSE;
+	progressWnd = CreateDialog(hInst, MAKEINTRESOURCE(IDD_PROGRESS), hWnd, WavProgressDialogProc);
+	progressPos = 0;
 	ASAP_GetWavHeader(asap, buffer, BITS_PER_SAMPLE);
 	len = ASAP_WAV_HEADER_BYTES;
 	while (len > 0) {
 		if (!WriteFile(fh, buffer, len, &len, NULL)) {
 			CloseHandle(fh);
+			DestroyWindow(progressWnd);
 			return FALSE;
+		}
+		newProgressPos = ASAP_GetPosition(asap) >> WAV_PROGRESS_DURATION_SHIFT;
+		if (progressPos != newProgressPos) {
+			progressPos = newProgressPos;
+			SendDlgItemMessage(progressWnd, IDC_PROGRESS, PBM_SETPOS, progressPos, 0);
 		}
 		len = ASAP_Generate(asap, buffer, sizeof(buffer), BITS_PER_SAMPLE);
 	}
 	CloseHandle(fh);
+	DestroyWindow(progressWnd);
 	return TRUE;
 }
 
@@ -387,6 +411,7 @@ static void SaveWav(void)
 	ofn.hwndOwner = hWnd;
 	if (!GetSaveFileName(&ofn))
 		return;
+	wav_progressLimit = duration >> WAV_PROGRESS_DURATION_SHIFT;
 	if (!DoSaveWav(&asap))
 		ShowError("Cannot save file");
 }
