@@ -227,9 +227,9 @@ The argument of SONGS must be an integer within the range 2-255.
 The argument of DEFSONG must be an integer greater than zero
 and less than the argument of SONGS.
 
-=item B<missing TYPE or PLAYER tag>
+=item B<missing TYPE tag>
 
-These tags are mandatory.
+This tag is mandatory.
 
 =item B<invalid argument of TYPE>
 
@@ -246,6 +246,10 @@ C<TYPE C> uses PLAYER and MUSIC tags, but not INIT.
 =item B<MUSIC is meaningful only with TYPE C>
 
 The MUSIC tag should be used only with C<TYPE C>.
+
+=item B<missing PLAYER tag>
+
+The PLAYER tag is mandatory for C<TYPE B> and C<TYPE C>.
 
 =item B<invalid argument of INIT, PLAYER, MUSIC or COVOX>
 
@@ -288,7 +292,7 @@ use Getopt::Long;
 use Pod::Usage;
 use strict;
 
-my $VERSION = '1.2.1';
+my $VERSION = '2.0.1';
 my $asapscan = File::Spec->rel2abs('asapscan');
 my ($check, $fix, $stat) = (0, 0, 0);
 my ($progress, $time, $overwrite_time, $features, $help, $version) = (0, 0, 0, 0, 0, 0);
@@ -468,12 +472,14 @@ sub process($$) {
 		}
 		$fatal{'invalid argument of DEFSONG'} = 1
 			if exists($tags{'SONGS'}) && $tags{'DEFSONG'} >= $tags{'SONGS'};
-		$fatal{'missing PLAYER tag'} = 1 unless exists($tags{'PLAYER'});
 		if (exists($tags{'TYPE'})) {
+			my $type = $tags{'TYPE'};
 			$fatal{'INIT is meaningless with TYPE C'} = 1
-				if $tags{'TYPE'} eq 'C' && exists($tags{'INIT'});
+				if $type eq 'C' && exists($tags{'INIT'});
 			$fatal{'MUSIC is meaningful only with TYPE C'} = 1
-				if $tags{'TYPE'} ne 'C' && exists($tags{'MUSIC'});
+				if $type ne 'C' && exists($tags{'MUSIC'});
+			$fatal{'missing PLAYER tag'} = 1
+				if ($type eq 'B' || $type eq 'C') && !exists($tags{'PLAYER'});
 		}
 		else {
 			$fatal{'missing TYPE tag'} = 1;

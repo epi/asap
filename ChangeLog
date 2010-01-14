@@ -1,3 +1,7 @@
+2010-01-14  Piotr Fusik  <fox@scene.pl>
+* asap.c, chksap.pl: allow TYPE D SAPs with no PLAYER
+
+
 2010-01-13  Piotr Fusik  <fox@scene.pl>
 * win32/wasap/wasap.c, win32/gui.rc, win32/gui.rc:
   added progress bar for writing WAV file
