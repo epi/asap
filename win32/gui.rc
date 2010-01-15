@@ -23,15 +23,14 @@
 
 #if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO)
 #include <windows.h>
-#include "gui.h"
-#endif
-#if defined(WASAP) || defined(WINAMP)
-#include <commctrl.h>
+#define IDC_STATIC     -1
 #endif
 
-#include "..\asap.h"
+#include "../asap.h"
 
 #ifdef WASAP
+
+#include "wasap/wasap.h"
 
 #define FILE_DESCRIPTION "WASAP - Windows Another Slight Atari Player"
 #define INTERNAL_NAME "wasap"
@@ -71,7 +70,7 @@ IDR_TRAYMENU MENU
 	"</assembly>"
 }
 
-#else /* WASAP */
+#endif /* WASAP */
 
 #if defined(WINAMP)
 #  define APP_NAME "Winamp"
@@ -95,12 +94,17 @@ IDR_TRAYMENU MENU
 #  define INTERNAL_NAME "apokeysnd"
 #  define FILE_DESCRIPTION "Another POKEY sound emulator"
 #endif
+
 #ifndef FILE_DESCRIPTION
 #  define FILE_DESCRIPTION "ASAP " APP_NAME " plugin"
 #endif
-#define ORIGINAL_FILENAME INTERNAL_NAME ".dll"
+#ifndef ORIGINAL_FILENAME
+#  define ORIGINAL_FILENAME INTERNAL_NAME ".dll"
+#endif
 
 #if defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO)
+
+#include "settings_dlg.h"
 
 #ifndef _WIN32_WCE
 IDD_SETTINGS DIALOG 0, 0, 184, 216
@@ -167,24 +171,10 @@ FONT 8, "MS Sans Serif"
 
 #endif /* defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) */
 
-#endif /* WASAP */
-
-#if defined(WASAP) || defined(WINAMP)
-IDD_PROGRESS DIALOG 0, 0, 160, 48
-STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | WS_POPUP | WS_VISIBLE
-CAPTION "Please wait"
-FONT 8, "MS Sans Serif"
-{
-#ifdef WASAP
-	CTEXT "Writing WAV file", IDC_STATIC, 8, 8, 144, 12
-#else
-	CTEXT "Adding subsongs to the playlist", IDC_STATIC, 8, 8, 144, 12
-#endif
-	CONTROL "", IDC_PROGRESS, PROGRESS_CLASS, 0, 8, 24, 144, 12
-}
-#endif /* defined(WASAP) || defined(WINAMP) */
-
 #if defined(WASAP) || defined(WINAMP) || defined(APOLLO)
+
+#include "info_dlg.h"
+
 #ifdef WINAMP
 #define INFO_Y  18
 #else
@@ -215,7 +205,27 @@ FONT 8, "MS Sans Serif"
 	PUSHBUTTON "&Convert", IDC_CONVERT, 164, 82+INFO_Y, 70, 14
 	PUSHBUTTON "Close", IDCANCEL, 242, 82+INFO_Y, 50, 14
 }
+
 #endif /* defined(WASAP) || defined(WINAMP) || defined(APOLLO) */
+
+#if defined(WASAP) || defined(WINAMP)
+
+#include <commctrl.h>
+
+IDD_PROGRESS DIALOG 0, 0, 160, 48
+STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | WS_POPUP | WS_VISIBLE
+CAPTION "Please wait"
+FONT 8, "MS Sans Serif"
+{
+#ifdef WASAP
+	CTEXT "Writing WAV file", IDC_STATIC, 8, 8, 144, 12
+#else
+	CTEXT "Adding subsongs to the playlist", IDC_STATIC, 8, 8, 144, 12
+#endif
+	CONTROL "", IDC_PROGRESS, PROGRESS_CLASS, 0, 8, 24, 144, 12
+}
+
+#endif /* defined(WASAP) || defined(WINAMP) */
 
 1 VERSIONINFO
 	FILEVERSION ASAP_VERSION_MAJOR, ASAP_VERSION_MINOR, ASAP_VERSION_MICRO, 0

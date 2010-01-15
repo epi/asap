@@ -25,7 +25,7 @@
 #include <tchar.h>
 
 #include "asap.h"
-#include "gui.h"
+#include "settings_dlg.h"
 
 int song_length = -1;
 int silence_seconds = -1;

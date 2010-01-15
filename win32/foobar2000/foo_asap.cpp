@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000 0.9.x
  *
- * Copyright (C) 2006-2009  Piotr Fusik
+ * Copyright (C) 2006-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -27,8 +27,10 @@
 #include "foobar2000/SDK/foobar2000.h"
 
 #include "asap.h"
-#include "gui.h"
+#include "settings_dlg.h"
 
+#define BITS_PER_SAMPLE    16
+#define BUFFERED_BLOCKS    1024
 
 /* Configuration --------------------------------------------------------- */
 

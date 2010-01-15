@@ -1,7 +1,7 @@
 /*
  * gspasap.c - ASAP plugin for GSPlayer
  *
- * Copyright (C) 2007-2009  Piotr Fusik
+ * Copyright (C) 2007-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -27,7 +27,9 @@
 #include "mapplugin.h"
 
 #include "asap.h"
-#include "gui.h"
+#include "settings_dlg.h"
+
+#define BITS_PER_SAMPLE  16
 
 #define REG_KEY _T("Software\\GreenSoftware\\GSPlayer\\Plug-ins\\gspasap")
 

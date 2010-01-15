@@ -1,4 +1,11 @@
 2010-01-15  Piotr Fusik  <fox@scene.pl>
+* win32/gui.h, gsplayer/Makefile, gsplayer/gspasap.c, win32/Makefile,
+  win32/gui.rc, win32/info_dlg.c, win32/info_dlg.h, win32/settings_dlg.c,
+  win32/settings_dlg.h, win32/apollo/ASAP_Apollo.cpp,
+  win32/foobar2000/foo_asap.cpp, win32/wasap/wasap.c, win32/wasap/wasap.h,
+  win32/winamp/in_asap.c:
+  split gui.h into info_dlg.h, settings_dlg.h and wasap.h
+
 * win32/gui.c, win32/info_dlg.c, win32/settings_dlg.c, win32/Makefile,
   gsplayer/Makefile: split gui.c into info_dlg.c and settings_dlg.c
 

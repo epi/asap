@@ -27,10 +27,12 @@
 #include <shellapi.h>
 
 #include "asap.h"
-#include "gui.h"
+#include "info_dlg.h"
+#include "wasap.h"
 
 #define APP_TITLE        "WASAP"
 #define WND_CLASS_NAME   "WASAP"
+#define BITS_PER_SAMPLE  16
 #define BUFFERED_BLOCKS  4096
 
 static ASAP_State asap;

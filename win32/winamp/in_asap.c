@@ -1,7 +1,7 @@
 /*
  * in_asap.c - ASAP plugin for Winamp
  *
- * Copyright (C) 2005-2009  Piotr Fusik
+ * Copyright (C) 2005-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -31,10 +31,15 @@
 #include "wa_ipc.h"
 
 #include "asap.h"
-#include "gui.h"
+#include "info_dlg.h"
+#include "settings_dlg.h"
 
 // Winamp's equalizer works only with 16-bit samples
 #define SUPPORT_EQUALIZER  1
+
+#define BITS_PER_SAMPLE    16
+// 576 is a magic number for Winamp, better do not modify it
+#define BUFFERED_BLOCKS    576
 
 static In_Module mod;
 

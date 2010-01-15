@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "asap.h"
-#include "gui.h"
+#include "info_dlg.h"
 
 HWND infoDialog = NULL;
 static byte saved_module[ASAP_MODULE_MAX];

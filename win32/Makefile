@@ -49,18 +49,18 @@ asap2wav.exe: ../asap2wav.c $(COMMON_C) $(COMMON_H)
 
 # WASAP
 
-wasap.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o $(COMMON_H) gui.h
+wasap.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o $(COMMON_H) info_dlg.h wasap/wasap.h
 	$(ASAP_GCC) -Wl,-subsystem,windows -DWASAP wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o -lcomdlg32 -lwinmm
 
-wasap/wasap-res.o: gui.rc ../asap.h gui.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
+wasap/wasap-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
 	$(WINDRES) -DWASAP gui.rc
 
 # Winamp
 
-in_asap.dll: winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o $(COMMON_H) gui.h winamp/in2.h winamp/ipc_pe.h winamp/wa_ipc.h
+in_asap.dll: winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o $(COMMON_H) info_dlg.h settings_dlg.h winamp/in2.h winamp/ipc_pe.h winamp/wa_ipc.h
 	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DWINAMP winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o -lcomdlg32
 
-winamp/in_asap-res.o: gui.rc ../asap.h gui.h
+winamp/in_asap-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
 	$(WINDRES) -DWINAMP gui.rc
 
 # foobar2000
@@ -69,7 +69,7 @@ foo: foo_asap.dll
 
 FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp foobar2000/foobar2000_SDK.lib foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
 
-foo_asap.dll: foobar2000/foo_asap.cpp $(COMMON_C) foobar2000/foo_asap.res $(COMMON_H) gui.h $(FOOBAR2000_RUNTIME)
+foo_asap.dll: foobar2000/foo_asap.cpp $(COMMON_C) foobar2000/foo_asap.res $(COMMON_H) settings_dlg.h $(FOOBAR2000_RUNTIME)
 	$(ASAP_CL) -Fofoobar2000/ -DFOOBAR2000 -LD -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) foobar2000/foo_asap.cpp $(COMMON_C) foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
 
 foobar2000/foobar2000_SDK.lib: foobar2000/abort_callback.obj foobar2000/audio_chunk.obj foobar2000/audio_chunk_channel_config.obj foobar2000/console.obj foobar2000/file_info.obj foobar2000/filesystem.obj foobar2000/guids.obj foobar2000/mem_block_container.obj foobar2000/playable_location.obj foobar2000/preferences_page.obj foobar2000/replaygain_info.obj foobar2000/service.obj
@@ -84,15 +84,15 @@ foobar2000/pfc.lib: foobar2000/cfg_var.obj foobar2000/guid.obj foobar2000/other.
 foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/pfc/%.cpp
 	$(CL) -c -Fo$@ -DWIN32 -DUNICODE -EHsc $<
 
-foobar2000/foo_asap.res: gui.rc ../asap.h gui.h
+foobar2000/foo_asap.res: gui.rc ../asap.h settings_dlg.h
 	$(WINDRES) -DFOOBAR2000 gui.rc
 
 # GSPlayer
 
-gspasap.dll: ../gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o $(COMMON_H) gui.h
+gspasap.dll: ../gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o $(COMMON_H) settings_dlg.h
 	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DGSPLAYER ../gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o
 
-gspasap-res.o: gui.rc ../asap.h gui.h
+gspasap-res.o: gui.rc ../asap.h settings_dlg.h
 	$(WINDRES) -DGSPLAYER gui.rc
 
 # GSPlayer - Windows CE
@@ -114,10 +114,10 @@ dshow/asap_dsf.res: gui.rc ../asap.h
 
 # Apollo
 
-ASAP_Apollo.dll: apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o $(COMMON_H) gui.h
+ASAP_Apollo.dll: apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o $(COMMON_H) info_dlg.h settings_dlg.h
 	$(ASAP_GPP) -shared -Wl,-subsystem,windows -DAPOLLO apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o -lcomdlg32
 
-ASAP_Apollo-res.o: gui.rc ../asap.h gui.h
+ASAP_Apollo-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
 	$(WINDRES) -DAPOLLO gui.rc
 
 # XBMC
@@ -270,13 +270,15 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		javascript/Makefile javascript/USAGE \
 		moc/libasap_decoder.c \
 		win32/Makefile win32/USAGE \
-		win32/info_dlg.c win32/settings_dlg.c win32/gui.h win32/gui.rc \
+		win32/info_dlg.c win32/info_dlg.h \
+		win32/settings_dlg.c win32/settings_dlg.h \
+		win32/gui.rc \
 		win32/apollo/ASAP_Apollo.cpp win32/apollo/InputPlugin.h \
 		win32/dshow/asap_dsf.cpp win32/dshow/asap_dsf.def \
 		win32/foobar2000/foo_asap.cpp \
 		win32/setup/asap.wxs win32/setup/license.rtf \
 		win32/setup/Website.url win32/setup/wix_mutex.pl \
-		win32/wasap/wasap.c \
+		win32/wasap/wasap.c win32/wasap/wasap.h \
 		win32/winamp/in_asap.c \
 		win32/winamp/in2.h win32/winamp/out.h \
 		win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h \

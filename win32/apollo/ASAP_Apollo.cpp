@@ -1,7 +1,7 @@
 /*
  * ASAP_Apollo.cpp - ASAP plugin for Apollo
  *
- * Copyright (C) 2008-2009  Piotr Fusik
+ * Copyright (C) 2008-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,7 +26,10 @@
 #include "InputPlugin.h"
 
 #include "asap.h"
-#include "gui.h"
+#include "info_dlg.h"
+#include "settings_dlg.h"
+
+#define BITS_PER_SAMPLE    16
 
 ASAP_State asap;
 
