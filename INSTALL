@@ -177,7 +177,7 @@ Building the foobar2000 plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In addition to the common prerequisites and Windows SDK you need
-foobar2000 0.9 SDK - extract it to a new directory called
+foobar2000 1.0 SDK - extract it to a new directory called
 `foobar2000_SDK` next to (not inside!) the ASAP directory.
 
 From the command prompt navigate to the `win32` directory and run:

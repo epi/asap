@@ -1,3 +1,7 @@
+2010-01-15  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile, INSTALL: updated foobar2000 SDK to 1.0
+
+
 2010-01-14  Piotr Fusik  <fox@scene.pl>
 * asap.c, chksap.pl: allow TYPE D SAPs with no PLAYER
 
