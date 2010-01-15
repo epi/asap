@@ -8,8 +8,8 @@ all: gspasap.dll
 
 include ../players/Makefile
 
-gspasap.dll: gspasap.c $(COMMON_C) ../win32/gui.c gspasap-res.o $(COMMON_H) ../win32/gui.h
-	$(CC) -shared -DGSPLAYER gspasap.c $(COMMON_C) ../win32/gui.c gspasap-res.o
+gspasap.dll: gspasap.c $(COMMON_C) ../win32/settings_dlg.c gspasap-res.o $(COMMON_H) ../win32/gui.h
+	$(CC) -shared -DGSPLAYER gspasap.c $(COMMON_C) ../win32/settings_dlg.c gspasap-res.o
 
 gspasap-res.o: ../win32/gui.rc ../asap.h ../win32/gui.h
 	$(WINDRES) -D_WIN32_WCE -DGSPLAYER ../win32/gui.rc

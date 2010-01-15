@@ -1,6 +1,6 @@
 2010-01-15  Piotr Fusik  <fox@scene.pl>
-* win32/gui.c, win32/info_dlg.c, win32/settings_dlg.c, win32/Makefile:
-  split gui.c into info_dlg.c and settings_dlg.c
+* win32/gui.c, win32/info_dlg.c, win32/settings_dlg.c, win32/Makefile,
+  gsplayer/Makefile: split gui.c into info_dlg.c and settings_dlg.c
 
 * win32/Makefile, INSTALL: updated foobar2000 SDK to 1.0
 

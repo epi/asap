@@ -1,4 +1,4 @@
-VERSION = 2.0.0
+VERSION = 2.0.1
 
 # gcc for most ports
 ASAP_GCC = mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
@@ -49,16 +49,16 @@ asap2wav.exe: ../asap2wav.c $(COMMON_C) $(COMMON_H)
 
 # WASAP
 
-wasap.exe: wasap/wasap.c $(COMMON_C) gui.c wasap/wasap-res.o $(COMMON_H) gui.h
-	$(ASAP_GCC) -Wl,-subsystem,windows -DWASAP wasap/wasap.c $(COMMON_C) gui.c wasap/wasap-res.o -lcomdlg32 -lwinmm
+wasap.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o $(COMMON_H) gui.h
+	$(ASAP_GCC) -Wl,-subsystem,windows -DWASAP wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o -lcomdlg32 -lwinmm
 
 wasap/wasap-res.o: gui.rc ../asap.h gui.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
 	$(WINDRES) -DWASAP gui.rc
 
 # Winamp
 
-in_asap.dll: winamp/in_asap.c $(COMMON_C) gui.c winamp/in_asap-res.o $(COMMON_H) gui.h winamp/in2.h winamp/ipc_pe.h winamp/wa_ipc.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DWINAMP winamp/in_asap.c $(COMMON_C) gui.c winamp/in_asap-res.o -lcomdlg32
+in_asap.dll: winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o $(COMMON_H) gui.h winamp/in2.h winamp/ipc_pe.h winamp/wa_ipc.h
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DWINAMP winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o -lcomdlg32
 
 winamp/in_asap-res.o: gui.rc ../asap.h gui.h
 	$(WINDRES) -DWINAMP gui.rc
@@ -89,8 +89,8 @@ foobar2000/foo_asap.res: gui.rc ../asap.h gui.h
 
 # GSPlayer
 
-gspasap.dll: ../gsplayer/gspasap.c $(COMMON_C) gui.c gspasap-res.o $(COMMON_H) gui.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DGSPLAYER ../gsplayer/gspasap.c $(COMMON_C) gui.c gspasap-res.o
+gspasap.dll: ../gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o $(COMMON_H) gui.h
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DGSPLAYER ../gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o
 
 gspasap-res.o: gui.rc ../asap.h gui.h
 	$(WINDRES) -DGSPLAYER gui.rc
@@ -114,8 +114,8 @@ dshow/asap_dsf.res: gui.rc ../asap.h
 
 # Apollo
 
-ASAP_Apollo.dll: apollo/ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo-res.o $(COMMON_H) gui.h
-	$(ASAP_GPP) -shared -Wl,-subsystem,windows -DAPOLLO apollo/ASAP_Apollo.cpp $(COMMON_C) gui.c ASAP_Apollo-res.o -lcomdlg32
+ASAP_Apollo.dll: apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o $(COMMON_H) gui.h
+	$(ASAP_GPP) -shared -Wl,-subsystem,windows -DAPOLLO apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o -lcomdlg32
 
 ASAP_Apollo-res.o: gui.rc ../asap.h gui.h
 	$(WINDRES) -DAPOLLO gui.rc
@@ -270,7 +270,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		javascript/Makefile javascript/USAGE \
 		moc/libasap_decoder.c \
 		win32/Makefile win32/USAGE \
-		win32/gui.c win32/gui.h win32/gui.rc \
+		win32/info_dlg.c win32/settings_dlg.c win32/gui.h win32/gui.rc \
 		win32/apollo/ASAP_Apollo.cpp win32/apollo/InputPlugin.h \
 		win32/dshow/asap_dsf.cpp win32/dshow/asap_dsf.def \
 		win32/foobar2000/foo_asap.cpp \
