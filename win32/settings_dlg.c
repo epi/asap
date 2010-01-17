@@ -179,11 +179,14 @@ BOOL settingsDialog(HINSTANCE hInstance, HWND hwndParent)
 	return DialogBox(hInstance, MAKEINTRESOURCE(IDD_SETTINGS), hwndParent, settingsDialogProc) == IDOK;
 }
 
-int getSongDuration(const ASAP_ModuleInfo *module_info, int song)
+int getSongDurationInternal(const ASAP_ModuleInfo *module_info, int song, ASAP_State *ast)
 {
 	int duration = module_info->durations[song];
-	if (duration < 0)
+	if (duration < 0) {
+		if (ast != NULL && silence_seconds > 0)
+			ASAP_DetectSilence(ast, silence_seconds);
 		return 1000 * song_length;
+	}
 	if (play_loops && module_info->loops[song])
 		return 1000 * song_length;
 	return duration;
@@ -191,14 +194,7 @@ int getSongDuration(const ASAP_ModuleInfo *module_info, int song)
 
 int playSong(int song)
 {
-	int duration = asap.module_info.durations[song];
-	if (duration < 0) {
-		if (silence_seconds > 0)
-			ASAP_DetectSilence(&asap, silence_seconds);
-		duration = 1000 * song_length;
-	}
-	if (play_loops && asap.module_info.loops[song])
-		duration = 1000 * song_length;
+	int duration = getSongDurationInternal(&asap.module_info, song, &asap);
 	ASAP_PlaySong(&asap, song, duration);
 	ASAP_MutePokeyChannels(&asap, mute_mask);
 	return duration;

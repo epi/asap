@@ -76,6 +76,19 @@ class input_asap
 	ASAP_State asap;
 	ASAP_ModuleInfo module_info;
 
+	int get_song_duration(int song, ASAP_State *ast)
+	{
+		int duration = module_info.durations[song];
+		if (duration < 0) {
+			if (silence_seconds > 0)
+				ASAP_DetectSilence(ast, silence_seconds);
+			return 1000 * song_length;
+		}
+		if (play_loops && module_info.loops[song])
+			return 1000 * song_length;
+		return duration;
+	}
+
 public:
 
 	static void g_set_mute_mask(int mask)
@@ -145,11 +158,7 @@ public:
 
 	void get_info(t_uint32 p_subsong, file_info &p_info, abort_callback &p_abort)
 	{
-		int duration = module_info.durations[p_subsong];
-		if (duration < 0)
-			duration = 1000 * song_length;
-		if (play_loops && module_info.loops[p_subsong])
-			duration = 1000 * song_length;
+		int duration = get_song_duration(p_subsong, NULL);
 		if (duration >= 0)
 			p_info.set_length(duration / 1000.0);
 		p_info.info_set_int("channels", module_info.channels);
@@ -168,14 +177,7 @@ public:
 
 	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort)
 	{
-		int duration = module_info.durations[p_subsong];
-		if (duration < 0) {
-			if (silence_seconds > 0)
-				ASAP_DetectSilence(&asap, silence_seconds);
-			duration = 1000 * song_length;
-		}
-		if (play_loops && module_info.loops[p_subsong])
-			duration = 1000 * song_length;
+		int duration = get_song_duration(p_subsong, &asap);
 		ASAP_PlaySong(&asap, p_subsong, duration);
 		ASAP_MutePokeyChannels(&asap, mute_mask);
 	}

@@ -52,7 +52,8 @@ extern int silence_seconds;
 extern BOOL play_loops;
 extern int mute_mask;
 BOOL settingsDialog(HINSTANCE hInstance, HWND hwndParent);
-int getSongDuration(const ASAP_ModuleInfo *module_info, int song);
+int getSongDurationInternal(const ASAP_ModuleInfo *module_info, int song, ASAP_State *ast);
+#define getSongDuration(module_info, song)  getSongDurationInternal(module_info, song, NULL)
 int playSong(int song);
 #endif
 
