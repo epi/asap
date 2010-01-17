@@ -1,5 +1,5 @@
 /*
- * foo_asap.cpp - ASAP plugin for foobar2000 0.9.x
+ * foo_asap.cpp - ASAP plugin for foobar2000 1.0
  *
  * Copyright (C) 2006-2010  Piotr Fusik
  *
@@ -252,137 +252,143 @@ static input_factory_t<input_asap> g_input_asap_factory;
 
 /* Configuration --------------------------------------------------------- */
 
-static void enable_time_input(HWND hDlg, BOOL enable)
-{
-	EnableWindow(GetDlgItem(hDlg, IDC_MINUTES), enable);
-	EnableWindow(GetDlgItem(hDlg, IDC_SECONDS), enable);
-}
-
-static void set_focus_and_select(HWND hDlg, int nID)
-{
-	HWND hWnd = GetDlgItem(hDlg, nID);
-	SetFocus(hWnd);
-	SendMessage(hWnd, EM_SETSEL, 0, -1);
-}
-
-static void get_time_input(HWND hDlg)
-{
-	BOOL minutesTranslated;
-	BOOL secondsTranslated;
-	UINT minutes = GetDlgItemInt(hDlg, IDC_MINUTES, &minutesTranslated, FALSE);
-	UINT seconds = GetDlgItemInt(hDlg, IDC_SECONDS, &secondsTranslated, FALSE);
-	if (minutesTranslated && secondsTranslated)
-		song_length = (int) (60 * minutes + seconds);
-}
-
-static void get_silence_input(HWND hDlg)
-{
-	BOOL translated;
-	UINT seconds = GetDlgItemInt(hDlg, IDC_SILSECONDS, &translated, FALSE);
-	if (translated)
-		silence_seconds = (int) seconds;
-}
+static preferences_page_callback::ptr g_callback;
 
 static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int i;
-	WORD wCtrl;
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		if (song_length <= 0) {
-			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_UNLIMITED);
-			SetDlgItemInt(hDlg, IDC_MINUTES, DEFAULT_SONG_LENGTH / 60, FALSE);
-			SetDlgItemInt(hDlg, IDC_SECONDS, DEFAULT_SONG_LENGTH % 60, FALSE);
-			enable_time_input(hDlg, FALSE);
-		}
-		else {
-			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_LIMITED);
-			SetDlgItemInt(hDlg, IDC_MINUTES, (UINT) song_length / 60, FALSE);
-			SetDlgItemInt(hDlg, IDC_SECONDS, (UINT) song_length % 60, FALSE);
-			enable_time_input(hDlg, TRUE);
-		}
-		if (silence_seconds <= 0) {
-			CheckDlgButton(hDlg, IDC_SILENCE, BST_UNCHECKED);
-			SetDlgItemInt(hDlg, IDC_SILSECONDS, DEFAULT_SILENCE_SECONDS, FALSE);
-			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), FALSE);
-		}
-		else {
-			CheckDlgButton(hDlg, IDC_SILENCE, BST_CHECKED);
-			SetDlgItemInt(hDlg, IDC_SILSECONDS, (UINT) silence_seconds, FALSE);
-			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), TRUE);
-		}
-		CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, play_loops ? IDC_LOOPS : IDC_NOLOOPS);
-		for (i = 0; i < 8; i++)
-			CheckDlgButton(hDlg, IDC_MUTE1 + i, ((mute_mask >> i) & 1) != 0 ? BST_CHECKED : BST_UNCHECKED);
+		settingsDialogSet(hDlg, song_length, silence_seconds, play_loops, mute_mask);
 		return TRUE;
 	case WM_COMMAND:
-		wCtrl = LOWORD(wParam);
-		BOOL enabled;
-		switch (wCtrl) {
-		case IDC_UNLIMITED:
-		case IDC_LIMITED:
-			enabled = (wCtrl == IDC_LIMITED);
-			enable_time_input(hDlg, enabled);
-			if (!enabled)
-				song_length = -1;
-			else {
-				set_focus_and_select(hDlg, IDC_MINUTES);
-				get_time_input(hDlg);
-			}
+		switch (wParam) {
+		case MAKEWPARAM(IDC_UNLIMITED, BN_CLICKED):
+			enableTimeInput(hDlg, FALSE);
+			g_callback->on_state_changed();
 			return TRUE;
-		case IDC_SILENCE:
-			enabled = (IsDlgButtonChecked(hDlg, IDC_SILENCE) == BST_CHECKED);
+		case MAKEWPARAM(IDC_LIMITED, BN_CLICKED):
+			enableTimeInput(hDlg, TRUE);
+			setFocusAndSelect(hDlg, IDC_MINUTES);
+			g_callback->on_state_changed();
+			return TRUE;
+		case MAKEWPARAM(IDC_SILENCE, BN_CLICKED):
+		{
+			BOOL enabled = (IsDlgButtonChecked(hDlg, IDC_SILENCE) == BST_CHECKED);
 			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), enabled);
-			if (!enabled)
-				silence_seconds = -1;
-			else {
-				set_focus_and_select(hDlg, IDC_SILSECONDS);
-				get_silence_input(hDlg);
-			}
+			if (enabled)
+				setFocusAndSelect(hDlg, IDC_SILSECONDS);
+			g_callback->on_state_changed();
 			return TRUE;
-		case IDC_MINUTES:
-		case IDC_SECONDS:
-			if (HIWORD(wParam) == EN_CHANGE && IsDlgButtonChecked(hDlg, IDC_LIMITED) == BST_CHECKED)
-				get_time_input(hDlg);
-			return TRUE;
-		case IDC_SILSECONDS:
-			if (HIWORD(wParam) == EN_CHANGE && IsDlgButtonChecked(hDlg, IDC_SILENCE) == BST_CHECKED)
-				get_silence_input(hDlg);
-			return TRUE;
-		case IDC_LOOPS:
-		case IDC_NOLOOPS:
-			play_loops = (IsDlgButtonChecked(hDlg, IDC_LOOPS) == BST_CHECKED);
-			return TRUE;
-		case IDC_MUTE1:
-		case IDC_MUTE1 + 1:
-		case IDC_MUTE1 + 2:
-		case IDC_MUTE1 + 3:
-		case IDC_MUTE1 + 4:
-		case IDC_MUTE1 + 5:
-		case IDC_MUTE1 + 6:
-		case IDC_MUTE1 + 7:
-			i = 1 << (wCtrl - IDC_MUTE1);
-			if (IsDlgButtonChecked(hDlg, wCtrl) == BST_CHECKED)
-				mute_mask = mute_mask | i;
-			else
-				mute_mask = mute_mask & ~i;
-			input_asap::g_set_mute_mask(mute_mask);
+		}
+		case MAKEWPARAM(IDC_MINUTES, EN_CHANGE):
+		case MAKEWPARAM(IDC_SECONDS, EN_CHANGE):
+		case MAKEWPARAM(IDC_SILSECONDS, EN_CHANGE):
+		case MAKEWPARAM(IDC_LOOPS, BN_CLICKED):
+		case MAKEWPARAM(IDC_NOLOOPS, BN_CLICKED):
+		case MAKEWPARAM(IDC_MUTE1, BN_CLICKED):
+		case MAKEWPARAM(IDC_MUTE1 + 1, BN_CLICKED):
+		case MAKEWPARAM(IDC_MUTE1 + 2, BN_CLICKED):
+		case MAKEWPARAM(IDC_MUTE1 + 3, BN_CLICKED):
+		case MAKEWPARAM(IDC_MUTE1 + 4, BN_CLICKED):
+		case MAKEWPARAM(IDC_MUTE1 + 5, BN_CLICKED):
+		case MAKEWPARAM(IDC_MUTE1 + 6, BN_CLICKED):
+		case MAKEWPARAM(IDC_MUTE1 + 7, BN_CLICKED):
+			g_callback->on_state_changed();
 			return TRUE;
 		default:
 			break;
 		}
+		break;
 	default:
 		break;
 	}
 	return FALSE;
 }
 
-class preferences_page_asap : public preferences_page
+class preferences_page_instance_asap : public preferences_page_instance
+{
+	HWND m_parent;
+	HWND m_hWnd;
+
+	int get_time_input()
+	{
+		HWND hDlg = m_hWnd;
+		if (IsDlgButtonChecked(hDlg, IDC_UNLIMITED) == BST_CHECKED)
+			return -1;
+		UINT minutes = GetDlgItemInt(hDlg, IDC_MINUTES, NULL, FALSE);
+		UINT seconds = GetDlgItemInt(hDlg, IDC_SECONDS, NULL, FALSE);
+		return (int) (60 * minutes + seconds);
+	}
+
+	int get_silence_input()
+	{
+		HWND hDlg = m_hWnd;
+		if (IsDlgButtonChecked(hDlg, IDC_SILENCE) != BST_CHECKED)
+			return -1;
+		return GetDlgItemInt(hDlg, IDC_SILSECONDS, NULL, FALSE);
+	}
+
+	bool get_loops_input()
+	{
+		return IsDlgButtonChecked(m_hWnd, IDC_LOOPS) == BST_CHECKED;
+	}
+
+	int get_mute_input()
+	{
+		HWND hDlg = m_hWnd;
+		int mask = 0;
+		for (int i = 0; i < 8; i++)
+			if (IsDlgButtonChecked(hDlg, IDC_MUTE1 + i) == BST_CHECKED)
+				mask |= 1 << i;
+		return mask;
+	}
+
+public:
+	preferences_page_instance_asap(HWND parent) : m_parent(parent)
+	{
+		m_hWnd = CreateDialog(core_api::get_my_instance(), MAKEINTRESOURCE(IDD_SETTINGS), parent, ::settings_dialog_proc);
+	}
+
+	virtual t_uint32 get_state()
+	{
+		if (song_length != get_time_input()
+		 || silence_seconds != get_silence_input()
+		 || play_loops != get_loops_input())
+			return preferences_state::changed /* | preferences_state::needs_restart_playback */ | preferences_state::resettable;
+		if (mute_mask != get_mute_input())
+			return preferences_state::changed | preferences_state::resettable;
+		return preferences_state::resettable;
+	}
+
+	virtual HWND get_wnd()
+	{
+		return m_hWnd;
+	}
+
+	virtual void apply()
+	{
+		song_length = get_time_input();
+		silence_seconds = get_silence_input();
+		play_loops = get_loops_input();
+		mute_mask = get_mute_input();
+		input_asap::g_set_mute_mask(mute_mask);
+		g_callback->on_state_changed();
+	}
+
+	virtual void reset()
+	{
+		settingsDialogSet(m_hWnd, -1, -1, FALSE, 0);
+		g_callback->on_state_changed();
+	}
+};
+
+class preferences_page_asap : public preferences_page_v3
 {
 public:
-	virtual HWND create(HWND parent)
+	virtual preferences_page_instance::ptr instantiate(HWND parent, preferences_page_callback::ptr callback)
 	{
-		return CreateDialog(core_api::get_my_instance(), MAKEINTRESOURCE(IDD_SETTINGS), parent, ::settings_dialog_proc);
+		g_callback = callback;
+		return new service_impl_t<preferences_page_instance_asap>(parent);
 	}
 
 	virtual const char *get_name()
@@ -402,18 +408,10 @@ public:
 		return guid_input;
 	}
 
-	virtual bool reset_query()
+	virtual bool get_help_url(pfc::string_base &p_out)
 	{
+		p_out = "http://asap.sourceforge.net/";
 		return true;
-	}
-
-	virtual void reset()
-	{
-		song_length = -1;
-		silence_seconds = -1;
-		play_loops = false;
-		mute_mask = 0;
-		input_asap::g_set_mute_mask(0);
 	}
 };
 

@@ -69,8 +69,8 @@ foo: foo_asap.dll
 
 FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp foobar2000/foobar2000_SDK.lib foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
 
-foo_asap.dll: foobar2000/foo_asap.cpp $(COMMON_C) foobar2000/foo_asap.res $(COMMON_H) settings_dlg.h $(FOOBAR2000_RUNTIME)
-	$(ASAP_CL) -Fofoobar2000/ -DFOOBAR2000 -LD -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) foobar2000/foo_asap.cpp $(COMMON_C) foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
+foo_asap.dll: foobar2000/foo_asap.cpp $(COMMON_C) settings_dlg.c foobar2000/foo_asap.res $(COMMON_H) settings_dlg.h $(FOOBAR2000_RUNTIME)
+	$(ASAP_CL) -Fofoobar2000/ -DFOOBAR2000 -LD -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) foobar2000/foo_asap.cpp $(COMMON_C) settings_dlg.c foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
 
 foobar2000/foobar2000_SDK.lib: foobar2000/abort_callback.obj foobar2000/audio_chunk.obj foobar2000/audio_chunk_channel_config.obj foobar2000/console.obj foobar2000/file_info.obj foobar2000/filesystem.obj foobar2000/guids.obj foobar2000/mem_block_container.obj foobar2000/playable_location.obj foobar2000/preferences_page.obj foobar2000/replaygain_info.obj foobar2000/service.obj
 	$(MKLIB) $^

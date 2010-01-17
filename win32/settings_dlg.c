@@ -27,6 +27,51 @@
 #include "asap.h"
 #include "settings_dlg.h"
 
+void enableTimeInput(HWND hDlg, BOOL enable)
+{
+	EnableWindow(GetDlgItem(hDlg, IDC_MINUTES), enable);
+	EnableWindow(GetDlgItem(hDlg, IDC_SECONDS), enable);
+}
+
+void setFocusAndSelect(HWND hDlg, int nID)
+{
+	HWND hWnd = GetDlgItem(hDlg, nID);
+	SetFocus(hWnd);
+	SendMessage(hWnd, EM_SETSEL, 0, -1);
+}
+
+void settingsDialogSet(HWND hDlg, int song_length, int silence_seconds, BOOL play_loops, int mute_mask)
+{
+	int i;
+	if (song_length <= 0) {
+		CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_UNLIMITED);
+		SetDlgItemInt(hDlg, IDC_MINUTES, DEFAULT_SONG_LENGTH / 60, FALSE);
+		SetDlgItemInt(hDlg, IDC_SECONDS, DEFAULT_SONG_LENGTH % 60, FALSE);
+		enableTimeInput(hDlg, FALSE);
+	}
+	else {
+		CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_LIMITED);
+		SetDlgItemInt(hDlg, IDC_MINUTES, (UINT) song_length / 60, FALSE);
+		SetDlgItemInt(hDlg, IDC_SECONDS, (UINT) song_length % 60, FALSE);
+		enableTimeInput(hDlg, TRUE);
+	}
+	if (silence_seconds <= 0) {
+		CheckDlgButton(hDlg, IDC_SILENCE, BST_UNCHECKED);
+		SetDlgItemInt(hDlg, IDC_SILSECONDS, DEFAULT_SILENCE_SECONDS, FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), FALSE);
+	}
+	else {
+		CheckDlgButton(hDlg, IDC_SILENCE, BST_CHECKED);
+		SetDlgItemInt(hDlg, IDC_SILSECONDS, (UINT) silence_seconds, FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), TRUE);
+	}
+	CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, play_loops ? IDC_LOOPS : IDC_NOLOOPS);
+	for (i = 0; i < 8; i++)
+		CheckDlgButton(hDlg, IDC_MUTE1 + i, ((mute_mask >> i) & 1) != 0 ? BST_CHECKED : BST_UNCHECKED);
+}
+
+#ifndef FOOBAR2000
+
 int song_length = -1;
 int silence_seconds = -1;
 BOOL play_loops = FALSE;
@@ -35,19 +80,6 @@ static int saved_mute_mask;
 #ifdef WINAMP
 BOOL playing_info = FALSE;
 #endif
-
-static void enableTimeInput(HWND hDlg, BOOL enable)
-{
-	EnableWindow(GetDlgItem(hDlg, IDC_MINUTES), enable);
-	EnableWindow(GetDlgItem(hDlg, IDC_SECONDS), enable);
-}
-
-static void setFocusAndSelect(HWND hDlg, int nID)
-{
-	HWND hWnd = GetDlgItem(hDlg, nID);
-	SetFocus(hWnd);
-	SendMessage(hWnd, EM_SETSEL, 0, -1);
-}
 
 static BOOL getDlgInt(HWND hDlg, int nID, int *result)
 {
@@ -63,35 +95,10 @@ static BOOL getDlgInt(HWND hDlg, int nID, int *result)
 
 static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int i;
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		if (song_length <= 0) {
-			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_UNLIMITED);
-			SetDlgItemInt(hDlg, IDC_MINUTES, DEFAULT_SONG_LENGTH / 60, FALSE);
-			SetDlgItemInt(hDlg, IDC_SECONDS, DEFAULT_SONG_LENGTH % 60, FALSE);
-			enableTimeInput(hDlg, FALSE);
-		}
-		else {
-			CheckRadioButton(hDlg, IDC_UNLIMITED, IDC_LIMITED, IDC_LIMITED);
-			SetDlgItemInt(hDlg, IDC_MINUTES, (UINT) song_length / 60, FALSE);
-			SetDlgItemInt(hDlg, IDC_SECONDS, (UINT) song_length % 60, FALSE);
-			enableTimeInput(hDlg, TRUE);
-		}
-		if (silence_seconds <= 0) {
-			CheckDlgButton(hDlg, IDC_SILENCE, BST_UNCHECKED);
-			SetDlgItemInt(hDlg, IDC_SILSECONDS, DEFAULT_SILENCE_SECONDS, FALSE);
-			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), FALSE);
-		}
-		else {
-			CheckDlgButton(hDlg, IDC_SILENCE, BST_CHECKED);
-			SetDlgItemInt(hDlg, IDC_SILSECONDS, (UINT) silence_seconds, FALSE);
-			EnableWindow(GetDlgItem(hDlg, IDC_SILSECONDS), TRUE);
-		}
-		CheckRadioButton(hDlg, IDC_LOOPS, IDC_NOLOOPS, play_loops ? IDC_LOOPS : IDC_NOLOOPS);
 		saved_mute_mask = mute_mask;
-		for (i = 0; i < 8; i++)
-			CheckDlgButton(hDlg, IDC_MUTE1 + i, ((mute_mask >> i) & 1) != 0 ? BST_CHECKED : BST_UNCHECKED);
+		settingsDialogSet(hDlg, song_length, silence_seconds, play_loops, mute_mask);
 		return TRUE;
 	case WM_COMMAND:
 		if (HIWORD(wParam) == BN_CLICKED) {
@@ -99,11 +106,11 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 			BOOL enabled;
 			switch (wCtrl) {
 			case IDC_UNLIMITED:
+				enableTimeInput(hDlg, FALSE);
+				return TRUE;
 			case IDC_LIMITED:
-				enabled = (wCtrl == IDC_LIMITED);
-				enableTimeInput(hDlg, enabled);
-				if (enabled)
-					setFocusAndSelect(hDlg, IDC_MINUTES);
+				enableTimeInput(hDlg, TRUE);
+				setFocusAndSelect(hDlg, IDC_MINUTES);
 				return TRUE;
 			case IDC_SILENCE:
 				enabled = (IsDlgButtonChecked(hDlg, IDC_SILENCE) == BST_CHECKED);
@@ -122,13 +129,15 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 			case IDC_MUTE1 + 5:
 			case IDC_MUTE1 + 6:
 			case IDC_MUTE1 + 7:
-				i = 1 << (wCtrl - IDC_MUTE1);
+			{
+				int mask = 1 << (wCtrl - IDC_MUTE1);
 				if (IsDlgButtonChecked(hDlg, wCtrl) == BST_CHECKED)
-					mute_mask |= i;
+					mute_mask |= mask;
 				else
-					mute_mask &= ~i;
+					mute_mask &= ~mask;
 				ASAP_MutePokeyChannels(&asap, mute_mask);
 				return TRUE;
+			}
 			case IDOK:
 			{
 				int new_song_length;
@@ -148,9 +157,9 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 					return TRUE;
 				song_length = new_song_length;
 				play_loops = (IsDlgButtonChecked(hDlg, IDC_LOOPS) == BST_CHECKED);
-			}
 				EndDialog(hDlg, IDOK);
 				return TRUE;
+			}
 			case IDCANCEL:
 				mute_mask = saved_mute_mask;
 				ASAP_MutePokeyChannels(&asap, mute_mask);
@@ -194,3 +203,5 @@ int playSong(int song)
 	ASAP_MutePokeyChannels(&asap, mute_mask);
 	return duration;
 }
+
+#endif /* FOOBAR2000 */

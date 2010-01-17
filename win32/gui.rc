@@ -23,7 +23,7 @@
 
 #if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO)
 #include <windows.h>
-#define IDC_STATIC     -1
+#define IDC_STATIC  -1
 #endif
 
 #include "../asap.h"
@@ -55,17 +55,13 @@ IDR_TRAYMENU MENU
 
 1 24
 {
-	"<?xml version=\0421.0\042?>"
-	"<assembly xmlns=\042urn:schemas-microsoft-com:asm.v1\042 "
-		"manifestVersion=\0421.0\042>"
-	"<assemblyIdentity version=\0421.0.0.0\042 "
-		"processorArchitecture=\042X86\042 "
-		"name=\042WASAP\042 type=\042win32\042 />"
+	"<?xml version=""1.0""?>"
+	"<assembly xmlns=""urn:schemas-microsoft-com:asm.v1"" manifestVersion=""1.0"">"
+	"<assemblyIdentity version=""" ASAP_VERSION ".0"" "
+		"processorArchitecture=""X86"" name=""WASAP"" type=""win32"" />"
 	"<dependency><dependentAssembly>"
-	"<assemblyIdentity type=\042win32\042 "
-		"name=\042Microsoft.Windows.Common-Controls\042 "
-		"version=\0426.0.0.0\042 processorArchitecture=\042X86\042 "
-		"publicKeyToken=\0426595b64144ccf1df\042 language=\042*\042 />"
+	"<assemblyIdentity type=""win32"" name=""Microsoft.Windows.Common-Controls"" "
+		"version=""6.0.0.0"" processorArchitecture=""X86"" publicKeyToken=""6595b64144ccf1df"" language=""*"" />"
 	"</dependentAssembly></dependency>"
 	"</assembly>"
 }
@@ -76,7 +72,7 @@ IDR_TRAYMENU MENU
 #  define APP_NAME "Winamp"
 #  define INTERNAL_NAME "in_asap"
 #elif defined(FOOBAR2000)
-#  define APP_NAME "foobar2000 0.9"
+#  define APP_NAME "foobar2000 1.0"
 #  define INTERNAL_NAME "foo_asap"
 #elif defined(GSPLAYER)
 #  define APP_NAME "GSPlayer"

@@ -24,7 +24,7 @@ ASAP includes the following programs:
 - ASAP2WAV - portable command-line converter to WAV files {asapwin=}
 - WASAP - tiny player for Windows {asapwin=}
 - plugin for http://koti.welho.com/hylinen/apollo/[Apollo] {asapwin=}
-- plugin for http://foobar2000.org/[foobar2000 0.9] {asapwin=}
+- plugin for http://foobar2000.org/[foobar2000] {asapwin=}
 - plugin for http://hp.vector.co.jp/authors/VA032810/[GSPlayer] {asapwin=}{asapwince=}
 - plugin for http://moc.daper.net/[MOC]
 - plugin for http://www.winamp.com/[Winamp] {asapwin=}

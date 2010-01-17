@@ -375,7 +375,7 @@
 				<ComponentRef Id="in_asap.ext" />
 			</Feature>
 		</Feature>
-		<Feature Id="foo_asap" Title="foobar2000 0.9 plugin" Level="9" ConfigurableDirectory="FOOCOMP.DIR" Description="Plugin for foobar2000 (version 0.9.x only)." AllowAdvertise="no">
+		<Feature Id="foo_asap" Title="foobar2000 plugin" Level="9" ConfigurableDirectory="FOOCOMP.DIR" Description="Plugin for foobar2000." AllowAdvertise="no">
 			<Condition Level="1">FOO.DIR</Condition>
 			<ComponentRef Id="foo_asap.dll" />
 			<Feature Id="foo_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) foobar2000." AllowAdvertise="no">

@@ -1,3 +1,12 @@
+2010-01-17  Piotr Fusik  <fox@scene.pl>
+* win32/foobar2000/foo_asap.cpp, win32/gui.rc, win32/settings_dlg.c,
+  win32/settings_dlg.h, win32/Makefile, README, PORTS.xml,
+  win32/setup/asap.wxs: upgraded to foobar2000 1.0
+
+* win32/gui.rc: included ASAP version and changed quote escaping
+  in WASAP XML manifest
+
+
 2010-01-15  Piotr Fusik  <fox@scene.pl>
 * win32/gui.h, gsplayer/Makefile, gsplayer/gspasap.c, win32/Makefile,
   win32/gui.rc, win32/info_dlg.c, win32/info_dlg.h, win32/settings_dlg.c,

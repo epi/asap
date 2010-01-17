@@ -62,7 +62,7 @@
 		<lang>C</lang>
 		<a href="http://xmms.org/">XMMS</a>
 	</port>
-	<port name="foobar2000 0.9 plugin">
+	<port name="foobar2000 plugin">
 		<bin>Windows</bin>
 		<platform>Windows</platform>
 		<interface>player plugin</interface>

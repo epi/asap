@@ -41,17 +41,20 @@ extern "C" {
 #define IDC_NOLOOPS    408
 #define IDC_MUTE1      411
 
-#ifndef FOOBAR2000
+#ifdef FOOBAR2000
+void enableTimeInput(HWND hDlg, BOOL enable);
+void setFocusAndSelect(HWND hDlg, int nID);
+void settingsDialogSet(HWND hDlg, int song_length, int silence_seconds, BOOL play_loops, int mute_mask);
+#else
 extern ASAP_State asap;
 extern int song_length;
 extern int silence_seconds;
 extern BOOL play_loops;
 extern int mute_mask;
-#endif
-
 BOOL settingsDialog(HINSTANCE hInstance, HWND hwndParent);
 int getSongDuration(const ASAP_ModuleInfo *module_info, int song);
 int playSong(int song);
+#endif
 
 #ifdef __cplusplus
 }
