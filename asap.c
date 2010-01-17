@@ -1694,7 +1694,6 @@ static byte *put_dec(byte *dest, int value)
 static byte *put_text_tag(byte *dest, const char *tag, const char *value)
 {
 	dest = put_string(dest, tag);
-	*dest++ = ' ';
 	*dest++ = '"';
 	if (*value == '\0')
 		value = "<?>";
@@ -1709,13 +1708,21 @@ static byte *put_text_tag(byte *dest, const char *tag, const char *value)
 	return dest;
 }
 
+static byte *put_dec_tag(byte *dest, const char *tag, int value)
+{
+	dest = put_string(dest, tag);
+	dest = put_dec(dest, value);
+	*dest++ = '\r';
+	*dest++ = '\n';
+	return dest;
+}
+
 static byte *put_hex_tag(byte *dest, const char *tag, int value)
 {
 	int i;
 	if (value < 0)
 		return dest;
 	dest = put_string(dest, tag);
-	*dest++ = ' ';
 	for (i = 12; i >= 0; i -= 4) {
 		int digit = (value >> i) & 0xf;
 		*dest++ = (byte) (digit + (digit < 10 ? '0' : 'A' - 10));
@@ -1725,32 +1732,22 @@ static byte *put_hex_tag(byte *dest, const char *tag, int value)
 	return dest;
 }
 
-static byte *put_dec_tag(byte *dest, const char *tag, int value)
-{
-	dest = put_string(dest, tag);
-	*dest++ = ' ';
-	dest = put_dec(dest, value);
-	*dest++ = '\r';
-	*dest++ = '\n';
-	return dest;
-}
-
 static byte *start_sap_header(byte *dest, const ASAP_ModuleInfo *module_info)
 {
 	dest = put_string(dest, "SAP\r\n");
-	dest = put_text_tag(dest, "AUTHOR", module_info->author);
+	dest = put_text_tag(dest, "AUTHOR ", module_info->author);
 	if (dest == NULL)
 		return NULL;
-	dest = put_text_tag(dest, "NAME", module_info->name);
+	dest = put_text_tag(dest, "NAME ", module_info->name);
 	if (dest == NULL)
 		return NULL;
-	dest = put_text_tag(dest, "DATE", module_info->date);
+	dest = put_text_tag(dest, "DATE ", module_info->date);
 	if (dest == NULL)
 		return NULL;
 	if (module_info->songs > 1) {
-		dest = put_dec_tag(dest, "SONGS", module_info->songs);
+		dest = put_dec_tag(dest, "SONGS ", module_info->songs);
 		if (module_info->default_song > 0)
-			dest = put_dec_tag(dest, "DEFSONG", module_info->default_song);
+			dest = put_dec_tag(dest, "DEFSONG ", module_info->default_song);
 	}
 	if (module_info->channels > 1)
 		dest = put_string(dest, "STEREO\r\n");
@@ -1811,10 +1808,10 @@ static byte *put_sap_header(byte *dest, const ASAP_ModuleInfo *module_info, char
 	*dest++ = '\r';
 	*dest++ = '\n';
 	if (module_info->fastplay != 312)
-		dest = put_dec_tag(dest, "FASTPLAY", module_info->fastplay);
-	dest = put_hex_tag(dest, "MUSIC", music);
-	dest = put_hex_tag(dest, "INIT", init);
-	dest = put_hex_tag(dest, "PLAYER", player);
+		dest = put_dec_tag(dest, "FASTPLAY ", module_info->fastplay);
+	dest = put_hex_tag(dest, "MUSIC ", music);
+	dest = put_hex_tag(dest, "INIT ", init);
+	dest = put_hex_tag(dest, "PLAYER ", player);
 	dest = put_durations(dest, module_info);
 	return dest;
 }
@@ -1835,7 +1832,7 @@ int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const BYTEARRAY modul
 		 || memcmp(module + i, "DATE ", 5) == 0
 		 || memcmp(module + i, "SONGS ", 6) == 0
 		 || memcmp(module + i, "DEFSONG ", 8) == 0
-		 || memcmp(module + i, "STEREO", 6) == 0
+		 || memcmp(module + i, "STEREO\r", 7) == 0
 		 || memcmp(module + i, "TIME ", 5) == 0) {
 			while (i < module_len && module[i++] != 0x0a);
 		}
