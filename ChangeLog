@@ -1,4 +1,6 @@
 2010-01-17  Piotr Fusik  <fox@scene.pl>
+* asap.c: use parse_cmc() for all CMC clones
+
 * win32/settings_dlg.c, win32/settings_dlg.h, win32/foobar2000/foo_asap.cpp:
   same code for returning song duration and setting duration for song playback
 

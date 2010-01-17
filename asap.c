@@ -245,10 +245,19 @@ PRIVATE FUNC(void, parse_cmc_song, (P(ASAP_ModuleInfo PTR, module_info), P(CONST
 	set_song_duration(module_info, player_calls);
 }
 
-PRIVATE FUNC(void, parse_cmc_songs, (P(ASAP_ModuleInfo PTR, module_info), P(CONST BYTEARRAY, module)))
+PRIVATE FUNC(abool, parse_cmc, (
+	P(ASAP_State PTR, ast), P(ASAP_ModuleInfo PTR, module_info),
+	P(CONST BYTEARRAY, module), P(int, module_len), P(int, type), P(RESOURCE, player)))
 {
 	V(int, last_pos);
 	V(int, pos);
+	if (module_len < 0x306)
+		return FALSE;
+	module_info _ type = type;
+	if (!load_native(ast, module_info, module, module_len, player))
+		return FALSE;
+	if (ast != NULL && type == ASAP_TYPE_CMR)
+		COPY_ARRAY(ast _ memory, 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, 0, sizeof(cmr_bass_table));
 	last_pos = 0x54;
 	while (--last_pos >= 0) {
 		if (UBYTE(module[0x206 + last_pos]) < 0xb0
@@ -267,47 +276,6 @@ PRIVATE FUNC(void, parse_cmc_songs, (P(ASAP_ModuleInfo PTR, module_info), P(CONS
 	for (pos = 0; pos < last_pos && module_info _ songs < ASAP_SONGS_MAX; pos++)
 		if (UBYTE(module[0x206 + pos]) == 0x8f || UBYTE(module[0x206 + pos]) == 0xef)
 			parse_cmc_song(module_info, module, pos + 1);
-}
-
-PRIVATE FUNC(abool, parse_cmc, (
-	P(ASAP_State PTR, ast), P(ASAP_ModuleInfo PTR, module_info),
-	P(CONST BYTEARRAY, module), P(int, module_len), P(int, type)))
-{
-	if (module_len < 0x306)
-		return FALSE;
-	module_info _ type = type;
-	if (!load_native(ast, module_info, module, module_len, GET_RESOURCE(cmc, obx)))
-		return FALSE;
-	if (ast != NULL && type == ASAP_TYPE_CMR)
-		COPY_ARRAY(ast _ memory, 0x500 + CMR_BASS_TABLE_OFFSET, cmr_bass_table, 0, sizeof(cmr_bass_table));
-	parse_cmc_songs(module_info, module);
-	return TRUE;
-}
-
-PRIVATE FUNC(abool, parse_cm3, (
-	P(ASAP_State PTR, ast), P(ASAP_ModuleInfo PTR, module_info),
-	P(CONST BYTEARRAY, module), P(int, module_len)))
-{
-	if (module_len < 0x306)
-		return FALSE;
-	module_info _ type = ASAP_TYPE_CM3;
-	if (!load_native(ast, module_info, module, module_len, GET_RESOURCE(cm3, obx)))
-		return FALSE;
-	parse_cmc_songs(module_info, module);
-	return TRUE;
-}
-
-PRIVATE FUNC(abool, parse_cms, (
-	P(ASAP_State PTR, ast), P(ASAP_ModuleInfo PTR, module_info),
-	P(CONST BYTEARRAY, module), P(int, module_len)))
-{
-	if (module_len < 0x406)
-		return FALSE;
-	module_info _ type = ASAP_TYPE_CMS;
-	module_info _ channels = 2;
-	if (!load_native(ast, module_info, module, module_len, GET_RESOURCE(cms, obx)))
-		return FALSE;
-	parse_cmc_songs(module_info, module);
 	return TRUE;
 }
 
@@ -1329,16 +1297,17 @@ PRIVATE FUNC(abool, parse_file, (
 		return parse_sap(ast, module_info, module, module_len);
 #ifndef ASAP_ONLY_SAP
 	case ASAP_EXT('C', 'M', 'C'):
-		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMC);
+		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMC, GET_RESOURCE(cmc, obx));
 	case ASAP_EXT('C', 'M', '3'):
-		return parse_cm3(ast, module_info, module, module_len);
+		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CM3, GET_RESOURCE(cm3, obx));
 	case ASAP_EXT('C', 'M', 'R'):
-		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMR);
+		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMR, GET_RESOURCE(cmc, obx));
 	case ASAP_EXT('C', 'M', 'S'):
-		return parse_cms(ast, module_info, module, module_len);
+		module_info _ channels = 2;
+		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMS, GET_RESOURCE(cms, obx));
 	case ASAP_EXT('D', 'M', 'C'):
 		module_info _ fastplay = 156;
-		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMC);
+		return parse_cmc(ast, module_info, module, module_len, ASAP_TYPE_CMC, GET_RESOURCE(cmc, obx));
 	case ASAP_EXT('D', 'L', 'T'):
 		return parse_dlt(ast, module_info, module, module_len);
 	case ASAP_EXT('M', 'P', 'T'):
