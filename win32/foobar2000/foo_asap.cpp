@@ -423,13 +423,13 @@ static service_factory_single_t<preferences_page_asap> g_preferences_page_asap_f
 /* File types ------------------------------------------------------------ */
 
 static const char * const names_and_masks[][2] = {
-	{ "Slight Atari Player (*.sap)", "*.SAP" },
-	{ "Chaos Music Composer (*.cmc;*.cm3;*.cmr;*.cms;*.dmc)", "*.CMC;*.CM3;*.CMR;*.CMS;*.DMC" },
-	{ "Delta Music Composer (*.dlt)", "*.DLT" },
-	{ "Music ProTracker (*.mpt;*.mpd)", "*.MPT;*.MPD" },
-	{ "Raster Music Tracker (*.rmt)", "*.RMT" },
-	{ "Theta Music Composer 1.x (*.tmc;*.tm8)", "*.TMC;*.TM8" },
-	{ "Theta Music Composer 2.x (*.tm2)", "*.TM2" }
+	{ "Slight Atari Player", "*.SAP" },
+	{ "Chaos Music Composer", "*.CMC;*.CM3;*.CMR;*.CMS;*.DMC" },
+	{ "Delta Music Composer", "*.DLT" },
+	{ "Music ProTracker", "*.MPT;*.MPD" },
+	{ "Raster Music Tracker", "*.RMT" },
+	{ "Theta Music Composer 1.x", "*.TMC;*.TM8" },
+	{ "Theta Music Composer 2.x", "*.TM2" }
 };
 
 #define N_FILE_TYPES (sizeof(names_and_masks) / sizeof(names_and_masks[0]))

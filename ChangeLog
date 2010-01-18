@@ -1,3 +1,7 @@
+2010-01-18  Piotr Fusik  <fox@scene.pl>
+* win32/foobar2000/foo_asap.cpp: removed masks from file type descriptions
+
+
 2010-01-17  Piotr Fusik  <fox@scene.pl>
 * asap.c: reuse string constants
 
