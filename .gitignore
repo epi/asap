@@ -1,0 +1,8 @@
+*.a
+*.dll
+*.exe
+*.o
+*.obj
+*.res
+players.h
+README.html
