@@ -6,8 +6,8 @@ ASAP - Another Slight Atari Player
 
 ifdef::asapwww[]
 http://sourceforge.net/projects/asap/files/asap/[Download] |
-http://asap.cvs.sourceforge.net/asap/asap/[Browse source code (CVS)] |
-http://sourceforge.net/scm/?type=cvs&group_id=154391[Get latest source code (CVS)] |
+http://asap.git.sourceforge.net/git/gitweb.cgi?p=asap/asap;a=summary[Browse source code (Git)] |
+http://sourceforge.net/scm/?type=git&group_id=154391[Get latest source code (Git)] |
 http://sourceforge.net/projects/asap/[SourceForge project page]
 endif::asapwww[]
 

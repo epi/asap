@@ -1,3 +1,7 @@
+2010-01-19  Piotr Fusik  <fox@scene.pl>
+* README, INSTALL: switched from CVS to Git
+
+
 2010-01-18  Piotr Fusik  <fox@scene.pl>
 * win32/foobar2000/foo_asap.cpp: removed masks from file type descriptions
 

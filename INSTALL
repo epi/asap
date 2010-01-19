@@ -18,7 +18,7 @@ On Windows install either http://www.activestate.com/activeperl/[ActivePerl]
 or http://cygwin.com/[Cygwin]'s Perl.
 
 xasm and MADS::
-If you are compiling latest source code from CVS, install
+If you are compiling latest source code from Git, install
 http://xasm.atari.org/[xasm] and http://mads.atari8.info/[MADS].
 
 Make sure these tools are on your `PATH`.
@@ -41,10 +41,10 @@ On Windows you may use http://7-zip.org/[7-Zip].
 Getting latest source code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Alternatively you may get the latest version from the CVS repository.
-To do this using a command-line CVS client:
+Alternatively you may get the latest version from the Git repository.
+To do this using a command-line Git client:
 --------------------------------------------------------------------------------
-cvs -z9 -d:pserver:anonymous@asap.cvs.sourceforge.net:/cvsroot/asap co -P asap
+git clone git://asap.git.sourceforge.net/gitroot/asap/asap
 --------------------------------------------------------------------------------
 
 This will fetch the latest code to a new directory called `asap`.
