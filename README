@@ -21,7 +21,7 @@ but the current version has a completely new original emulation core.
 
 ASAP includes the following programs:
 
-- ASAP2WAV - portable command-line converter to WAV files {asapwin=}
+- asapconv - portable command-line converter {asapwin=}
 - WASAP - tiny player for Windows {asapwin=}
 - plugin for http://koti.welho.com/hylinen/apollo/[Apollo] {asapwin=}
 - plugin for http://foobar2000.org/[foobar2000] {asapwin=}
@@ -32,7 +32,7 @@ ASAP includes the following programs:
 - plugin for http://xbmc.org/[XBMC] {asapwin=}
 - plugin for http://xmms.org/[XMMS]
 - POKEY sound emulation DLL for http://raster.infos.cz/atari/rmt/rmt.htm[Raster Music Tracker] {asapwin=}
-- Java version of ASAP2WAV {asapjava=}
+- Java version of ASAP2WAV - command-line converter to WAV files {asapjava=}
 - Java applet - for web pages {asapjava=}{asapwww?(see link:applet.html[online demo])}
 - Java midlet - for mobile devices {asapjava=}
 - C# version of ASAP2WAV

@@ -25,10 +25,10 @@ COMMON_C = asap.c acpu.c apokeysnd.c
 COMMON_H = asap.h asap_internal.h anylang.h players.h
 PLAYERS_OBX = players/cmc.obx players/cm3.obx players/cms.obx players/dlt.obx players/mpt.obx players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx
 
-all: asap2wav libasap.a
+all: asapconv libasap.a
 
-asap2wav: asap2wav.c $(COMMON_C) $(COMMON_H)
-	$(CC) -o $@ -I. asap2wav.c $(COMMON_C)
+asapconv: asapconv.c $(COMMON_C) $(COMMON_H)
+	$(CC) -o $@ -I. asapconv.c $(COMMON_C)
 
 lib: libasap.a
 
@@ -81,14 +81,14 @@ players/tmc.obx: players/tmc.asx
 players/tm2.obx: players/tm2.asx
 	$(XASM) -o $@ players/tm2.asx
 
-install: install-asap2wav install-lib
+install: install-asapconv install-lib
 
-install-asap2wav: asap2wav
+install-asapconv: asapconv
 	$(MKDIRS) $(PREFIX)/bin
-	$(INSTALL_PROGRAM) asap2wav $(PREFIX)/bin/asap2wav
+	$(INSTALL_PROGRAM) asapconv $(PREFIX)/bin/asapconv
 
-uninstall-asap2wav:
-	$(RM) $(PREFIX)/bin/asap2wav
+uninstall-asapconv:
+	$(RM) $(PREFIX)/bin/asapconv
 
 install-lib: libasap.a
 	$(MKDIRS) $(PREFIX)/include
@@ -121,7 +121,7 @@ uninstall-moc:
 	$(RM) $(MOC_PLUGIN_DIR)/libasap_decoder.so
 
 clean:
-	$(RM) asap2wav libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so players.h
+	$(RM) asapconv libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so players.h
 
 README.html: README INSTALL NEWS CREDITS
 	$(ASCIIDOC) -o $@ -a asapsrc -a asapports README

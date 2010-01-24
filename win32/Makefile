@@ -38,14 +38,14 @@ all: mingw dsf foo asap.lib
 
 win32: mingw dsf foo xbmc COPYING.txt
 
-mingw: asap2wav.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll apokeysnd.dll asapscan.exe libasap.a
+mingw: asapconv.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll apokeysnd.dll asapscan.exe libasap.a
 
 include ../players/Makefile
 
-# ASAP2WAV
+# asapconv
 
-asap2wav.exe: ../asap2wav.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_GCC) ../asap2wav.c $(COMMON_C)
+asapconv.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
+	$(ASAP_GCC) ../asapconv.c $(COMMON_C)
 
 # WASAP
 
@@ -250,7 +250,7 @@ srcdist: $(PLAYERS_OBX) ../README.html
 	$(RM) ../../asap-$(VERSION).tar.gz
 	$(PERL) -x.. ../maketar.pl -d asap-$(VERSION) \
 		-t asap.c asap.h asap_internal.h anylang.h acpu.c apokeysnd.c \
-		asap2wav.c asapscan.c \
+		asapconv.c asapscan.c \
 		players/cmc.asx players/cms.asx players/dlt.as8 players/mpt.asx \
 		players/rmt.asx players/tmc.asx players/tm2.asx \
 		players/Makefile Makefile \
@@ -306,7 +306,7 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-win32.zip \
 		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
-		asap2wav.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll
+		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ../gsplayer/gspasap.dll
 	$(GREP) -m 1 " released on " ../ChangeLog

@@ -1,13 +1,12 @@
 How to install and use
 ----------------------
 
-ASAP2WAV::
-{asapsetup%}Extract `asap2wav.exe` to a directory of your choice
+asapconv::
+{asapsetup%}Extract `asapconv.exe` to a directory of your choice
 {asapsetup%}(for convenience, this directory should be included in your `Path` environment variable).
 {asapsetup%}+
 Run the program from command line to see the syntax.
-Unless you specify the `-o`/`--output` option, the output filename will be
-constructed from the input filename with the extension changed to `wav`.
+The `-o`/`--output` option selects the output format and is mandatory.
 
 WASAP::
 {asapsetup%}Extract `wasap.exe` to a directory of your choice.

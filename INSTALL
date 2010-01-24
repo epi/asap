@@ -50,7 +50,7 @@ git clone git://asap.git.sourceforge.net/gitroot/asap/asap
 This will fetch the latest code to a new directory called `asap`.
 
 
-Building ASAP2WAV and libasap on Unix-like systems
+Building asapconv and libasap on Unix-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 From your shell prompt navigate to the directory which contains `asap.c`.
@@ -67,12 +67,11 @@ specified as `PREFIX` in the `Makefile`
 (`/usr/local`, feel free to edit `Makefile`).
 
 
-Using ASAP2WAV
+Using asapconv
 ~~~~~~~~~~~~~~
 
 Run the program from command line to see the syntax.
-Unless you specify the `-o`/`--output` option, the output filename will be
-constructed from the input filename with the extension changed to `wav`.
+The `-o`/`--output` option selects the output format and is mandatory.
 
 
 Using libasap
@@ -143,7 +142,7 @@ make asap-xbmc
 You will get `xbmc_asap-i486-linux.so`.
 
 
-Building ASAP2WAV, WASAP, Winamp/GSPlayer/Apollo plugins, RMT DLL, asapscan and libasap on Windows
+Building asapconv, WASAP, Winamp/GSPlayer/Apollo plugins, RMT DLL, asapscan and libasap on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 From the command prompt navigate to the `win32` directory and run:
@@ -151,7 +150,7 @@ From the command prompt navigate to the `win32` directory and run:
 mingw32-make mingw
 --------------------------------------------------------------------------------
 
-You should get `asap2wav.exe`, `wasap.exe`, `in_asap.dll`, `gspasap.dll`,
+You should get `asapconv.exe`, `wasap.exe`, `in_asap.dll`, `gspasap.dll`,
 `ASAP_Apollo.dll`, `apokeysnd.dll`, `asapscan.exe` and `libasap.a`.
 
 
@@ -235,7 +234,7 @@ This should produce `asap2wav.exe`.
 Building the XBMC plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need Visual C+\+ Toolkit (was free download from Microsoft,
+You need Visual C+\+ Toolkit (it used to be a free download from Microsoft,
 now search the internet for `VCToolkitSetup.exe`) or Microsoft Visual C++ 2003.
 
 Navigate to the `win32` directory and run:

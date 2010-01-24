@@ -1,7 +1,7 @@
 /*
- * asap2wav.c - converter of ASAP-supported formats to WAV files
+ * asapconv.c - converter of ASAP-supported formats
  *
- * Copyright (C) 2005-2009  Piotr Fusik
+ * Copyright (C) 2005-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -25,33 +25,38 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#ifdef __WIN32
+#include <fcntl.h>
+#endif
 
 #include "asap.h"
 
-static const char *output_file = NULL;
-static abool output_header = TRUE;
+static const char *output_arg = NULL;
 static int song = -1;
-static ASAP_SampleFormat format = ASAP_FORMAT_S16_LE;
+static ASAP_SampleFormat sample_format = ASAP_FORMAT_S16_LE;
 static int duration = -1;
 static int mute_mask = 0;
 
 static void print_help(void)
 {
 	printf(
-		"Usage: asap2wav [OPTIONS] INPUTFILE...\n"
+		"Usage: asapconv [OPTIONS] INPUTFILE...\n"
 		"Each INPUTFILE must be in a supported format:\n"
 		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2.\n"
+		"Output EXT must be one of the above or WAV or RAW.\n"
 		"Options:\n"
-		"-o FILE     --output=FILE      Set output file name\n"
-		"-o -        --output=-         Write to standard output\n"
+		"-o FILE.EXT --output=FILE.EXT  Write to the specified file\n"
+		"-o .EXT     --output=.EXT      Use input file path and name\n"
+		"-o DIR/.EXT --output=DIR/.EXT  Write to the specified directory\n"
+		"-o -.EXT    --output=-.EXT     Write to standard output\n"
+		"-h          --help             Display this information\n"
+		"-v          --version          Display version information\n"
+		"Options for WAV and RAW output:\n"
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
 		"-t TIME     --time=TIME        Set output length (MM:SS format)\n"
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
-		"            --raw              Output raw audio (no WAV header)\n"
 		"-m CHANNELS --mute=CHANNELS    Mute POKEY channels (1-8)\n"
-		"-h          --help             Display this information\n"
-		"-v          --version          Display version information\n"
 	);
 }
 
@@ -59,7 +64,7 @@ static void fatal_error(const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
-	fprintf(stderr, "asap2wav: ");
+	fprintf(stderr, "asapconv: ");
 	vfprintf(stderr, format, args);
 	fputc('\n', stderr);
 	va_end(args);
@@ -96,23 +101,15 @@ static void set_mute_mask(const char *s)
 	mute_mask = mask;
 }
 
-static void process_file(const char *input_file)
+static void convert_to_wav(const char *input_file, const byte *module, int module_len, const char *output_file, FILE *fp, abool output_header)
 {
-	FILE *fp;
-	static byte module[ASAP_MODULE_MAX];
-	int module_len;
 	static ASAP_State asap;
 	int n_bytes;
 	static byte buffer[8192];
-	if (strlen(input_file) >= FILENAME_MAX)
-		fatal_error("filename too long");
-	fp = fopen(input_file, "rb");
-	if (fp == NULL)
-		fatal_error("cannot open %s", input_file);
-	module_len = fread(module, 1, sizeof(module), fp);
-	fclose(fp);
+	abool opened = FALSE;
+
 	if (!ASAP_Load(&asap, input_file, module, module_len))
-		fatal_error("%s: format not supported", input_file);
+		fatal_error("%s: unsupported file", input_file);
 	if (song < 0)
 		song = asap.module_info.default_song;
 	if (song >= asap.module_info.songs) {
@@ -127,33 +124,119 @@ static void process_file(const char *input_file)
 	}
 	ASAP_PlaySong(&asap, song, duration);
 	ASAP_MutePokeyChannels(&asap, mute_mask);
-	if (output_file == NULL) {
-		static char output_default[FILENAME_MAX];
-		strcpy(output_default, input_file);
-		ASAP_ChangeExt(output_default, output_header ? "wav" : "raw");
-		output_file = output_default;
-	}
-	if (output_file[0] == '-' && output_file[1] == '\0')
-		fp = stdout;
-	else {
+
+	if (fp == NULL) {
 		fp = fopen(output_file, "wb");
 		if (fp == NULL)
 			fatal_error("cannot write %s", output_file);
+		opened = TRUE;
 	}
 	if (output_header) {
-		ASAP_GetWavHeader(&asap, buffer, format);
+		ASAP_GetWavHeader(&asap, buffer, sample_format);
 		fwrite(buffer, 1, ASAP_WAV_HEADER_BYTES, fp);
 	}
 	do {
-		n_bytes = ASAP_Generate(&asap, buffer, sizeof(buffer), format);
+		n_bytes = ASAP_Generate(&asap, buffer, sizeof(buffer), sample_format);
 		if (fwrite(buffer, 1, n_bytes, fp) != n_bytes) {
 			fclose(fp);
 			fatal_error("error writing to %s", output_file);
 		}
 	} while (n_bytes == sizeof(buffer));
-	if (!(output_file[0] == '-' && output_file[1] == '\0'))
+	if (opened)
 		fclose(fp);
-	output_file = NULL;
+}
+
+static void convert_module(const char *input_file, const byte *module, int module_len, const char *output_file, FILE *fp, const char *output_ext)
+{
+	ASAP_ModuleInfo module_info;
+	const char *possible_ext;
+	static byte out_module[ASAP_MODULE_MAX];
+	int out_module_len;
+	abool opened = FALSE;
+
+	if (!ASAP_GetModuleInfo(&module_info, input_file, module, module_len))
+		fatal_error("%s: unsupported file", input_file);
+	possible_ext = ASAP_CanConvert(input_file, &module_info, module, module_len);
+	if (possible_ext == NULL)
+		fatal_error("%s: cannot convert", input_file);
+	if (strcasecmp(output_ext, possible_ext) != 0)
+		fatal_error("%s: can convert to .%s but not .%s", input_file, possible_ext, output_ext);
+	out_module_len = ASAP_Convert(input_file, &module_info, module, module_len, out_module);
+	if (out_module_len < 0)
+		fatal_error("%s: conversion error", input_file);
+
+	if (fp == NULL) {
+		fp = fopen(output_file, "wb");
+		if (fp == NULL)
+			fatal_error("cannot write %s", output_file);
+		opened = TRUE;
+	}
+	fwrite(out_module, 1, out_module_len, fp);
+	if (opened)
+		fclose(fp);
+}
+
+static void process_file(const char *input_file)
+{
+	FILE *fp;
+	static byte module[ASAP_MODULE_MAX];
+	int module_len;
+	const char *output_ext;
+	static char output_file_buffer[FILENAME_MAX];
+	const char *output_file;
+
+	if (output_arg == NULL)
+		fatal_error("the -o/--output option is mandatory");
+	fp = fopen(input_file, "rb");
+	if (fp == NULL)
+		fatal_error("cannot open %s", input_file);
+	module_len = fread(module, 1, sizeof(module), fp);
+	fclose(fp);
+
+	fp = NULL;
+	output_ext = strrchr(output_arg, '.');
+	if (output_ext == NULL)
+		fatal_error("missing .EXT in -o/--output");
+	if (output_ext == output_arg) {
+		if (strlen(input_file) >= FILENAME_MAX)
+			fatal_error("filename too long");
+		strcpy(output_file_buffer, input_file);
+		ASAP_ChangeExt(output_file_buffer, output_ext + 1);
+		output_file = output_file_buffer;
+	}
+	else if (output_ext == output_arg + 1 && output_arg[0] == '-') {
+		output_file = "stdout";
+#ifdef __WIN32
+		_setmode(_fileno(stdout), _O_BINARY);
+#endif
+		fp = stdout;
+	}
+	else if (output_ext[-1] == '/' || output_ext[-1] == '\\') {
+		const char *base_name = input_file;
+		const char *p;
+		for (p = input_file; *p != '\0'; p++)
+			if (*p == '/' || *p == '\\')
+				base_name = p + 1;
+		if (output_ext - output_arg + strlen(base_name) >= FILENAME_MAX)
+			fatal_error("filename too long");
+		memcpy(output_file_buffer, output_arg, output_ext - output_arg);
+		strcpy(output_file_buffer + (output_ext - output_arg), base_name);
+		ASAP_ChangeExt(output_file_buffer, output_ext + 1);
+		output_file = output_file_buffer;
+	}
+	else
+		output_file = output_arg;
+
+	output_ext++; /* skip the dot */
+	if (strcasecmp(output_ext, "wav") == 0)
+		convert_to_wav(input_file, module, module_len, output_file, fp, TRUE);
+	else if (strcasecmp(output_ext, "raw") == 0)
+		convert_to_wav(input_file, module, module_len, output_file, fp, FALSE);
+	else
+		convert_module(input_file, module, module_len, output_file, fp, output_ext);
+
+	if (output_arg == output_file)
+		output_arg = NULL;
 	song = -1;
 	duration = -1;
 }
@@ -171,9 +254,9 @@ int main(int argc, char *argv[])
 		}
 		options_error = "options must be specified before the input file";
 		if (arg[1] == 'o' && arg[2] == '\0')
-			output_file = argv[++i];
+			output_arg = argv[++i];
 		else if (strncmp(arg, "--output=", 9) == 0)
-			output_file = arg + 9;
+			output_arg = arg + 9;
 		else if (arg[1] == 's' && arg[2] == '\0')
 			set_song(argv[++i]);
 		else if (strncmp(arg, "--song=", 7) == 0)
@@ -184,12 +267,10 @@ int main(int argc, char *argv[])
 			set_time(arg + 7);
 		else if ((arg[1] == 'b' && arg[2] == '\0')
 			|| strcmp(arg, "--byte-samples") == 0)
-			format = ASAP_FORMAT_U8;
+			sample_format = ASAP_FORMAT_U8;
 		else if ((arg[1] == 'w' && arg[2] == '\0')
 			|| strcmp(arg, "--word-samples") == 0)
-			format = ASAP_FORMAT_S16_LE;
-		else if (strcmp(arg, "--raw") == 0)
-			output_header = FALSE;
+			sample_format = ASAP_FORMAT_S16_LE;
 		else if (arg[1] == 'm' && arg[2] == '\0')
 			set_mute_mask(argv[++i]);
 		else if (strncmp(arg, "--mute=", 7) == 0)
@@ -201,14 +282,14 @@ int main(int argc, char *argv[])
 		}
 		else if ((arg[1] == 'v' && arg[2] == '\0')
 			|| strcmp(arg, "--version") == 0) {
-			printf("ASAP2WAV " ASAP_VERSION "\n");
+			printf("asapconv " ASAP_VERSION "\n");
 			options_error = NULL;
 		}
 		else
 			fatal_error("unknown option: %s", arg);
 	}
 	if (options_error != NULL) {
-		fprintf(stderr, "asap2wav: %s\n", options_error);
+		fprintf(stderr, "asapconv: %s\n", options_error);
 		print_help();
 		return 1;
 	}

@@ -1,3 +1,9 @@
+2010-01-24  Piotr Fusik  <fox@scene.pl>
+* asap2wav.c, asapconv.c, Makefile, INSTALL, README, PORTS.xml, win32/Makefile,
+  win32/USAGE, win32/setup/asap.wxs: replaced asap2wav with asapconv,
+  which can also convert native modules to and from the SAP format
+
+
 2010-01-19  Piotr Fusik  <fox@scene.pl>
 * README, INSTALL: switched from CVS to Git
 

@@ -197,8 +197,8 @@
 							<?endforeach?>
 						</ProgId>
 					</Component>
-					<Component Id="asap2wav.exe" Guid="*">
-						<File Id="asap2wav.exe" Name="asap2wav.exe" Source="asap2wav.exe" Checksum="yes" KeyPath="yes" />
+					<Component Id="asapconv.exe" Guid="*">
+						<File Id="asapconv.exe" Name="asapconv.exe" Source="asapconv.exe" Checksum="yes" KeyPath="yes" />
 					</Component>
 					<Component Id="path" Guid="D7247D41-0B9A-42D3-9847-06C37F88E2ED">
 						<Environment Id="path" Action="set" Name="Path" Part="last" Permanent="no" System="yes" Value="[ASAP.DIR]" />
@@ -354,9 +354,9 @@
 				<ComponentRef Id="wasap.ext" />
 			</Feature>
 		</Feature>
-		<Feature Id="asap2wav" Title="ASAP2WAV" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Command-line converter to WAV files." AllowAdvertise="no">
-			<ComponentRef Id="asap2wav.exe" />
-			<Feature Id="path" Title="Add to Path" Level="1" Description="Add the directory to the Path environment variable so that you don't have to type the location of asap2wav at the command prompt." AllowAdvertise="no">
+		<Feature Id="asapconv" Title="asapconv" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Command-line converter." AllowAdvertise="no">
+			<ComponentRef Id="asapconv.exe" />
+			<Feature Id="path" Title="Add to Path" Level="1" Description="Add the directory to the Path environment variable so that you don't have to type the location of asapconv at the command prompt." AllowAdvertise="no">
 				<ComponentRef Id="path" />
 			</Feature>
 		</Feature>

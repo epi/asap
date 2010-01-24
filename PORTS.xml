@@ -1,20 +1,5 @@
 <?xml-stylesheet type="text/xsl" href="PORTS.xsl" ?>
 <ports>
-	<port name="ASAP2WAV">
-		<bin>Windows</bin>
-		<platform>desktop operating systems</platform>
-		<interface>command line</interface>
-		<since>0.1.0</since>
-		<status>stable</status>
-		<output>8 or 16-bit, WAV or raw, file or stdout</output>
-		<subsongs>yes</subsongs>
-		<file-info>no</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>yes</config-time>
-		<mute-pokey>yes</mute-pokey>
-		<lang>C</lang>
-	</port>
 	<port name="WASAP">
 		<bin>Windows</bin>
 		<platform>Windows</platform>
@@ -279,5 +264,21 @@
 		<config-time>yes</config-time>
 		<mute-pokey>no</mute-pokey>
 		<lang>ActionScript 3</lang>
+		<a href="http://asap.sourceforge.net/flash.html">online demo</a>
+	</port>
+	<port name="asapconv">
+		<bin>Windows</bin>
+		<platform>desktop operating systems</platform>
+		<interface>command line</interface>
+		<since>2.1.0</since>
+		<status>stable</status>
+		<output>8 or 16-bit, WAV or raw, file or stdout</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>yes</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>yes</mute-pokey>
+		<lang>C</lang>
 	</port>
 </ports>
