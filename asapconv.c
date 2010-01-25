@@ -64,6 +64,8 @@ static void print_help(void)
 		"-a \"TEXT\"   --author=\"TEXT\"    Set author name\n"
 		"-n \"TEXT\"   --name=\"TEXT\"      Set music name\n"
 		"-d \"TEXT\"   --date=\"TEXT\"      Set music creation date (DD/MM/YYYY format)\n"
+		"-s SONG     --song=SONG        Select subsong to set length of\n"
+		"-t TIME     --time=TIME        Set subsong length (MM:SS format)\n"
 	);
 }
 
@@ -115,6 +117,17 @@ static const char *set_tag(const char *tag, const char *s)
 	return s;
 }
 
+static void get_song(const char *input_file, const ASAP_ModuleInfo *module_info)
+{
+	if (song < 0)
+		song = module_info->default_song;
+	if (song >= module_info->songs) {
+		fatal_error("you have requested subsong %d ...\n"
+			"... but %s contains only %d subsongs",
+			song, input_file, module_info->songs);
+	}
+}
+
 static void convert_to_wav(const char *input_file, const byte *module, int module_len, const char *output_file, FILE *fp, abool output_header)
 {
 	static ASAP_State asap;
@@ -124,13 +137,7 @@ static void convert_to_wav(const char *input_file, const byte *module, int modul
 
 	if (!ASAP_Load(&asap, input_file, module, module_len))
 		fatal_error("%s: unsupported file", input_file);
-	if (song < 0)
-		song = asap.module_info.default_song;
-	if (song >= asap.module_info.songs) {
-		fatal_error("you have requested subsong %d ...\n"
-			"... but %s contains only %d subsongs",
-			song, input_file, asap.module_info.songs);
-	}
+	get_song(input_file, &asap.module_info);
 	if (duration < 0) {
 		duration = asap.module_info.durations[song];
 		if (duration < 0)
@@ -183,6 +190,10 @@ static void convert_module(const char *input_file, const byte *module, int modul
 	}
 	if (tag_date != NULL)
 		strcpy(module_info.date, tag_date);
+	if (duration >= 0) {
+		get_song(input_file, &module_info);
+		module_info.durations[song] = duration;
+	}
 
 	if (strcasecmp(input_ext, output_ext) == 0 && ASAP_CanSetModuleInfo(input_file))
 		out_module_len = ASAP_SetModuleInfo(&module_info, module, module_len, out_module);

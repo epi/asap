@@ -275,7 +275,7 @@
 		<output>8 or 16-bit, WAV or raw, file or stdout</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info>
-		<edit-info>AUTHOR, NAME, DATE, but not TIME</edit-info>
+		<edit-info>yes</edit-info>
 		<convert-sap>yes</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>

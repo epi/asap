@@ -1,7 +1,11 @@
+2010-01-26  Piotr Fusik  <fox@scene.pl>
+* asapconv.c, PORTS.xml: options to set TIME in SAP
+
+
 2010-01-25  Piotr Fusik  <fox@scene.pl>
 * win32/xmplay/xmp-asap.c, win32/xmplay/xmpfunc.h, win32/xmplay/xmpin.h,
-  win32/gui.rc, win32/Makefile, win32/setup/asap.wxs: README, win32/USAGE:
-  XMPlay plugin
+  win32/gui.rc, win32/Makefile, win32/setup/asap.wxs, README, win32/USAGE,
+  PORTS.xml: XMPlay plugin
 
 * csharp/ASAP.ppcs, csharp/Makefile: documented the API
 
