@@ -131,7 +131,7 @@ static void updateSaveAndConvertButtons(int mask, BOOL ok)
 		EnableWindow(GetDlgItem(infoDialog, IDC_CONVERT), ok);
 }
 
-static void updateInfoString(HWND hDlg, int nID, int mask, char (*s)[128])
+static void updateInfoString(HWND hDlg, int nID, int mask, char (*s)[ASAP_INFO_CHARS])
 {
 	int i;
 	BOOL ok = TRUE;
@@ -249,10 +249,10 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 #ifdef WINAMP
 		CheckDlgButton(hDlg, IDC_PLAYING, playing_info ? BST_CHECKED : BST_UNCHECKED);
 #endif
-		SendDlgItemMessage(hDlg, IDC_AUTHOR, EM_LIMITTEXT, sizeof(edited_module_info.author) - 1, 0);
-		SendDlgItemMessage(hDlg, IDC_NAME, EM_LIMITTEXT, sizeof(edited_module_info.name) - 1, 0);
-		SendDlgItemMessage(hDlg, IDC_DATE, EM_LIMITTEXT, sizeof(edited_module_info.date) - 1, 0);
-		SendDlgItemMessage(hDlg, IDC_TIME, EM_LIMITTEXT, 9, 0);
+		SendDlgItemMessage(hDlg, IDC_AUTHOR, EM_LIMITTEXT, ASAP_INFO_CHARS - 1, 0);
+		SendDlgItemMessage(hDlg, IDC_NAME, EM_LIMITTEXT, ASAP_INFO_CHARS - 1, 0);
+		SendDlgItemMessage(hDlg, IDC_DATE, EM_LIMITTEXT, ASAP_INFO_CHARS - 1, 0);
+		SendDlgItemMessage(hDlg, IDC_TIME, EM_LIMITTEXT, ASAP_DURATION_CHARS - 1, 0);
 		return TRUE;
 	case WM_COMMAND:
 		switch (wParam) {

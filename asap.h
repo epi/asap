@@ -1,7 +1,7 @@
 /*
- * asap.h - public interface of the ASAP engine
+ * asap.h - public interface of ASAP
  *
- * Copyright (C) 2005-2009  Piotr Fusik
+ * Copyright (C) 2005-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -30,14 +30,14 @@ extern "C" {
 
 /* ASAP version. */
 #define ASAP_VERSION_MAJOR   2
-#define ASAP_VERSION_MINOR   0
+#define ASAP_VERSION_MINOR   1
 #define ASAP_VERSION_MICRO   0
-#define ASAP_VERSION         "2.0.0"
+#define ASAP_VERSION         "2.1.0"
 
 /* Short credits of the ASAP engine. */
-#define ASAP_YEARS           "2005-2009"
+#define ASAP_YEARS           "2005-2010"
 #define ASAP_CREDITS \
-	"Another Slight Atari Player (C) 2005-2009 Piotr Fusik\n" \
+	"Another Slight Atari Player (C) 2005-2010 Piotr Fusik\n" \
 	"CMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\n" \
 	"RMT player (C) 2002-2005 Radek Sterba\n" \
 	"DLT player (C) 2009 Marek Konopka\n" \
@@ -50,6 +50,9 @@ extern "C" {
 	"it under the terms of the GNU General Public License as published\n" \
 	"by the Free Software Foundation; either version 2 of the License,\n" \
 	"or (at your option) any later version."
+
+/* Maximum length of AUTHOR, NAME and DATE tags including the terminator. */
+#define ASAP_INFO_CHARS         128
 
 /* Maximum length of a "mm:ss.xxx" string including the terminator. */
 #define ASAP_DURATION_CHARS     10
@@ -86,12 +89,12 @@ typedef unsigned char byte;
 
 /* Information about a file. */
 typedef struct {
-	char author[128];    /* author's name */
-	char name[128];      /* title */
-	char date[128];      /* creation date */
-	int channels;        /* 1 for mono or 2 for stereo */
-	int songs;           /* number of subsongs */
-	int default_song;    /* 0-based index of the "main" subsong */
+	char author[ASAP_INFO_CHARS];  /* author's name */
+	char name[ASAP_INFO_CHARS];    /* title */
+	char date[ASAP_INFO_CHARS];    /* creation date */
+	int channels;                  /* 1 for mono or 2 for stereo */
+	int songs;                     /* number of subsongs */
+	int default_song;              /* 0-based index of the "main" subsong */
 	int durations[ASAP_SONGS_MAX]; /* lengths of songs, in milliseconds, -1 = unspecified */
 	abool loops[ASAP_SONGS_MAX];   /* whether songs repeat or not */
 	/* the following technical information should not be used outside ASAP. */

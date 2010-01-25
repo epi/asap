@@ -1,7 +1,7 @@
 /*
  * xbmc_asap.c - ASAP plugin for XBMC
  *
- * Copyright (C) 2008  Piotr Fusik
+ * Copyright (C) 2008-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -31,8 +31,8 @@
 #include "asap.h"
 
 typedef struct {
-	char author[128];
-	char name[128];
+	char author[ASAP_INFO_CHARS];
+	char name[ASAP_INFO_CHARS];
 	int year;
 	int month;
 	int day;

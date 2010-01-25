@@ -53,17 +53,6 @@ static cfg_int mute_mask(mute_mask_guid, 0);
 
 /* Decoding -------------------------------------------------------------- */
 
-static void copy_info(char *dest, const file_info &p_info, const char *p_name)
-{
-	const char *src;
-	int i = 0;
-	src = p_info.meta_get(p_name, 0);
-	if (src != NULL)
-		for (; i < 127 && src[i] != '\0'; i++)
-			dest[i] = src[i];
-	dest[i] = '\0';
-}
-
 class input_asap
 {
 	static input_asap *head;
@@ -87,6 +76,17 @@ class input_asap
 		if (play_loops && module_info.loops[song])
 			return 1000 * song_length;
 		return duration;
+	}
+
+	static void copy_info(char *dest, const file_info &p_info, const char *p_name)
+	{
+		const char *src;
+		int i = 0;
+		src = p_info.meta_get(p_name, 0);
+		if (src != NULL)
+			for (; i < ASAP_INFO_CHARS - 1 && src[i] != '\0'; i++)
+				dest[i] = src[i];
+		dest[i] = '\0';
 	}
 
 public:
