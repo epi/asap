@@ -32,6 +32,7 @@
 
 static HINSTANCE hInst;
 static const XMPFUNC_MISC *xmpfmisc;
+static const XMPFUNC_REGISTRY *xmpfreg;
 static const XMPFUNC_FILE *xmpffile;
 
 ASAP_State asap;
@@ -45,7 +46,10 @@ static void WINAPI ASAP_About(HWND win)
 static void WINAPI ASAP_Config(HWND win)
 {
 	if (settingsDialog(hInst, win)) {
-		// TODO
+		xmpfreg->SetInt("ASAP", "SongLength", &song_length);
+		xmpfreg->SetInt("ASAP", "SilenceSeconds", &silence_seconds);
+		xmpfreg->SetInt("ASAP", "PlayLoops", &play_loops);
+		xmpfreg->SetInt("ASAP", "MuteMask", &mute_mask);
 	}
 }
 
@@ -209,10 +213,18 @@ __declspec(dllexport) XMPIN *WINAPI XMPIN_GetInterface(DWORD face, InterfaceProc
 		NULL,
 		NULL, NULL, NULL, NULL, NULL, NULL, NULL
 	};
+
 	if (face != XMPIN_FACE)
 		return NULL;
-	xmpfmisc = (const XMPFUNC_MISC*) faceproc(XMPFUNC_MISC_FACE);
+
+	xmpfmisc = (const XMPFUNC_MISC *) faceproc(XMPFUNC_MISC_FACE);
+	xmpfreg = (const XMPFUNC_REGISTRY *) faceproc(XMPFUNC_REGISTRY_FACE);
 	xmpffile = (const XMPFUNC_FILE *) faceproc(XMPFUNC_FILE_FACE);
+
+	xmpfreg->GetInt("ASAP", "SongLength", &song_length);
+	xmpfreg->GetInt("ASAP", "SilenceSeconds", &silence_seconds);
+	xmpfreg->GetInt("ASAP", "PlayLoops", &play_loops);
+	xmpfreg->GetInt("ASAP", "MuteMask", &mute_mask);
 	return &xmpin;
 }
 
