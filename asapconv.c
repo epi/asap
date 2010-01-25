@@ -36,6 +36,9 @@ static int song = -1;
 static ASAP_SampleFormat sample_format = ASAP_FORMAT_S16_LE;
 static int duration = -1;
 static int mute_mask = 0;
+static const char *tag_author = NULL;
+static const char *tag_name = NULL;
+static const char *tag_date = NULL;
 
 static void print_help(void)
 {
@@ -57,6 +60,10 @@ static void print_help(void)
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
 		"-m CHANNELS --mute=CHANNELS    Mute POKEY channels (1-8)\n"
+		"Options for SAP output:\n"
+		"-a \"TEXT\"   --author=\"TEXT\"    Set author name\n"
+		"-n \"TEXT\"   --name=\"TEXT\"      Set music name\n"
+		"-d \"TEXT\"   --date=\"TEXT\"      Set music creation date (DD/MM/YYYY format)\n"
 	);
 }
 
@@ -99,6 +106,13 @@ static void set_mute_mask(const char *s)
 		s++;
 	}
 	mute_mask = mask;
+}
+
+static const char *set_tag(const char *tag, const char *s)
+{
+	if (strlen(s) >= ASAP_INFO_CHARS - 1)
+		fatal_error("%s too long", tag);
+	return s;
 }
 
 static void convert_to_wav(const char *input_file, const byte *module, int module_len, const char *output_file, FILE *fp, abool output_header)
@@ -148,20 +162,38 @@ static void convert_to_wav(const char *input_file, const byte *module, int modul
 
 static void convert_module(const char *input_file, const byte *module, int module_len, const char *output_file, FILE *fp, const char *output_ext)
 {
+	const char *input_ext;
 	ASAP_ModuleInfo module_info;
 	const char *possible_ext;
 	static byte out_module[ASAP_MODULE_MAX];
 	int out_module_len;
 	abool opened = FALSE;
 
+	input_ext = strrchr(input_file, '.');
+	if (input_ext == NULL)
+		fatal_error("%s: missing extension", input_file);
+	input_ext++;
 	if (!ASAP_GetModuleInfo(&module_info, input_file, module, module_len))
 		fatal_error("%s: unsupported file", input_file);
-	possible_ext = ASAP_CanConvert(input_file, &module_info, module, module_len);
-	if (possible_ext == NULL)
-		fatal_error("%s: cannot convert", input_file);
-	if (strcasecmp(output_ext, possible_ext) != 0)
-		fatal_error("%s: can convert to .%s but not .%s", input_file, possible_ext, output_ext);
-	out_module_len = ASAP_Convert(input_file, &module_info, module, module_len, out_module);
+	if (tag_author != NULL)
+		strcpy(module_info.author, tag_author);
+	if (tag_name != NULL) {
+		strcpy(module_info.name, tag_name);
+		tag_name = NULL;
+	}
+	if (tag_date != NULL)
+		strcpy(module_info.date, tag_date);
+
+	if (strcasecmp(input_ext, output_ext) == 0 && ASAP_CanSetModuleInfo(input_file))
+		out_module_len = ASAP_SetModuleInfo(&module_info, module, module_len, out_module);
+	else {
+		possible_ext = ASAP_CanConvert(input_file, &module_info, module, module_len);
+		if (possible_ext == NULL)
+			fatal_error("%s: cannot convert", input_file);
+		if (strcasecmp(output_ext, possible_ext) != 0)
+			fatal_error("%s: can convert to .%s but not .%s", input_file, possible_ext, output_ext);
+		out_module_len = ASAP_Convert(input_file, &module_info, module, module_len, out_module);
+	}
 	if (out_module_len < 0)
 		fatal_error("%s: conversion error", input_file);
 
@@ -253,35 +285,44 @@ int main(int argc, char *argv[])
 			continue;
 		}
 		options_error = "options must be specified before the input file";
-		if (arg[1] == 'o' && arg[2] == '\0')
+#define is_opt(c)  (arg[1] == c && arg[2] == '\0')
+		if (is_opt('o'))
 			output_arg = argv[++i];
 		else if (strncmp(arg, "--output=", 9) == 0)
 			output_arg = arg + 9;
-		else if (arg[1] == 's' && arg[2] == '\0')
+		else if (is_opt('s'))
 			set_song(argv[++i]);
 		else if (strncmp(arg, "--song=", 7) == 0)
 			set_song(arg + 7);
-		else if (arg[1] == 't' && arg[2] == '\0')
+		else if (is_opt('t'))
 			set_time(argv[++i]);
 		else if (strncmp(arg, "--time=", 7) == 0)
 			set_time(arg + 7);
-		else if ((arg[1] == 'b' && arg[2] == '\0')
-			|| strcmp(arg, "--byte-samples") == 0)
+		else if (is_opt('b') || strcmp(arg, "--byte-samples") == 0)
 			sample_format = ASAP_FORMAT_U8;
-		else if ((arg[1] == 'w' && arg[2] == '\0')
-			|| strcmp(arg, "--word-samples") == 0)
+		else if (is_opt('w') || strcmp(arg, "--word-samples") == 0)
 			sample_format = ASAP_FORMAT_S16_LE;
-		else if (arg[1] == 'm' && arg[2] == '\0')
+		else if (is_opt('m'))
 			set_mute_mask(argv[++i]);
 		else if (strncmp(arg, "--mute=", 7) == 0)
 			set_mute_mask(arg + 7);
-		else if ((arg[1] == 'h' && arg[2] == '\0')
-			|| strcmp(arg, "--help") == 0) {
+		else if (is_opt('a'))
+			tag_author = set_tag("author", argv[++i]);
+		else if (strncmp(arg, "--author=", 9) == 0)
+			tag_author = set_tag("author", arg + 9);
+		else if (is_opt('n'))
+			tag_name = set_tag("name", argv[++i]);
+		else if (strncmp(arg, "--name=", 7) == 0)
+			tag_name = set_tag("name", arg + 7);
+		else if (is_opt('d'))
+			tag_date = set_tag("date", argv[++i]);
+		else if (strncmp(arg, "--date=", 7) == 0)
+			tag_date = set_tag("date", arg + 7);
+		else if (is_opt('h') || strcmp(arg, "--help") == 0) {
 			print_help();
 			options_error = NULL;
 		}
-		else if ((arg[1] == 'v' && arg[2] == '\0')
-			|| strcmp(arg, "--version") == 0) {
+		else if (is_opt('v') || strcmp(arg, "--version") == 0) {
 			printf("asapconv " ASAP_VERSION "\n");
 			options_error = NULL;
 		}

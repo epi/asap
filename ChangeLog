@@ -1,4 +1,7 @@
 2010-01-25  Piotr Fusik  <fox@scene.pl>
+* asapconv.c: options to set AUTHOR, NAME and DATE when converting to SAP
+  or editing SAP
+
 * asap.h, xbmc/xbmc_asap.c, win32/info_dlg.c, win32/foobar2000/foo_asap.cpp:
   created ASAP_INFO_CHARS
 
