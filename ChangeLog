@@ -1,4 +1,6 @@
 2010-01-25  Piotr Fusik  <fox@scene.pl>
+* csharp/ASAP.ppcs, csharp/Makefile: documented the API
+
 * asapconv.c: options to set AUTHOR, NAME and DATE when converting to SAP
   or editing SAP
 

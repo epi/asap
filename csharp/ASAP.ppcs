@@ -28,22 +28,62 @@ using System.IO;
 
 namespace ASAP
 {
+	/// <summary>Format of output samples.</summary>
 	public enum ASAP_SampleFormat
 	{
+		/// Unsigned 8-bit.
 		U8,
+		/// Signed 16-bit little-endian.
 		S16LE,
+		/// Signed 16-bit big-endian.
 		S16BE
 	}
 
+	/// <summary>Information about a music file.</summary>
 	public class ASAP_ModuleInfo
 	{
+		/// <summary>Author's name.</summary>
+		/// <remarks>A nickname may be included in parentheses after the real name.
+		/// Multiple authors are separated with <c>" &amp; "</c>.
+		/// Empty string means the author is unknown.</remarks>
 		public string author;
+
+		/// <summary>Music title.</summary>
+		/// <remarks>Empty string means the title is unknown.</remarks>
 		public string name;
+
+		/// <summary>Music creation date.</summary>
+		/// <remarks>Some of the possible formats are:
+		/// <list type="bullet">
+		/// <item>YYYY</item>
+		/// <item>MM/YYYY</item>
+		/// <item>DD/MM/YYYY</item>
+		/// <item>YYYY-YYYY</item>
+		/// </list>
+		/// Empty string means the date is unknown.</remarks>
 		public string date;
+
+		/// <summary>1 for mono or 2 for stereo.</summary>
 		public int channels;
+
+		/// <summary>Number of songs in the file.</summary>
 		public int songs;
+
+		/// <summary>0-based index of the "main" song.</summary>
+		/// <remarks>The specified song should be played by default.</remarks>
 		public int default_song;
+
+		/// <summary>Lengths of songs.</summary>
+		/// <remarks>Each element of the array represents length of one song,
+		/// in milliseconds. -1 means the length is indeterminate.</remarks>
 		public readonly int[] durations = new int[32];
+
+		/// <summary>Information about finite vs infinite songs.</summary>
+		/// <remarks>Each element of the array represents one song, and is:
+		/// <list type="bullet">
+		/// <item><see langword="true" /> if the song loops</item>
+		/// <item><see langword="false" /> if the song stops</item>
+		/// </list></remarks>
 		public readonly bool[] loops = new bool[32];
 
 		internal int type;
@@ -137,6 +177,9 @@ namespace ASAP
 		internal readonly byte[] memory = new byte[65536];
 	}
 
+	/// <summary>8-bit Atari chip music emulator.</summary>
+	/// <remarks>This class performs no I/O operations - all music data
+	/// must be passed in byte arrays.</remarks>
 	public class ASAP_Player
 	{
 
@@ -148,19 +191,31 @@ namespace ASAP
 
 		readonly ASAP_State ast = new ASAP_State();
 
-		public const string Version = "2.0.0";
+		/// <summary>ASAP version.</summary>
+		public const string Version = "2.1.0";
 
+		/// <summary>Maximum length of a supported input file.</summary>
+		/// <remarks>You can assume that files longer than this are not supported by ASAP.</remarks>
 		public const int ModuleMax = 65000;
 
+		/// <summary>Output sample rate.</summary>
 		public const int SampleRate = ASAP_SAMPLE_RATE;
 
+		/// <summary>WAV file header length.</summary>
+		/// <seealso cref="GetWavHeader" />
 		public const int WavHeaderBytes = 44;
 
+		/// <summary>Checks whether the extension of the passed filename is known to ASAP.</summary>
+		/// <param name="filename">File name. The extension is used to determine the file format.</param>
 		public static bool IsOurFile(string filename)
 		{
 			return ASAP_IsOurFile(filename);
 		}
 
+		/// <summary>Returns information about a module.</summary>
+		/// <param name="filename">File name. The extension is used to determine the file format.</param>
+		/// <param name="module">Contents of the file.</param>
+		/// <param name="module_len">Length of the file.</param>
 		public static ASAP_ModuleInfo GetModuleInfo(string filename, byte[] module, int module_len)
 		{
 			ASAP_ModuleInfo module_info = new ASAP_ModuleInfo();
@@ -169,6 +224,9 @@ namespace ASAP
 			return module_info;
 		}
 
+		/// <summary>Parses a string and returns the number of milliseconds it represents.</summary>
+		/// <param name="s">String representation of time in the <c>"mm:ss.xxx"</c> format.</param>
+		/// <returns>Number of milliseconds represented by the string.</returns>
 		public static int ParseDuration(string s)
 		{
 			int r = ASAP_ParseDuration(s);
@@ -177,42 +235,62 @@ namespace ASAP
 			return r;
 		}
 
+		/// <summary>Loads music data ("module").</summary>
+		/// <param name="filename">File name. The extension is used to determine the file format.</param>
+		/// <param name="module">Contents of the file.</param>
+		/// <param name="module_len">Length of the file.</param>
 		public void Load(string filename, byte[] module, int module_len)
 		{
 			if (!ASAP_Load(ast, filename, module, module_len))
 				throw new Exception();
 		}
 
+		/// <summary>Returns information about the loaded module.</summary>
 		public ASAP_ModuleInfo GetModuleInfo()
 		{
 			return ast.module_info;
 		}
 
+		/// <summary>Prepares to play the specified song of the loaded module.</summary>
+	    /// <param name="song">Zero-based song index.</param>
+		/// <param name="duration">Playback time in milliseconds, -1 means indefinitely.</param>
 		public void PlaySong(int song, int duration)
 		{
 			ASAP_PlaySong(ast, song, duration);
 		}
 
+		/// <summary>Mutes the selected POKEY channels.</summary>
+		/// <param name="mask">An 8-bit mask which selects POKEY channels to be muted.</param>
 		public void MutePokeyChannels(int mask)
 		{
 			ASAP_MutePokeyChannels(ast, mask);
 		}
 
+		/// <summary>Returns current playback position in milliseconds.</summary>
 		public int GetPosition()
 		{
 			return ASAP_GetPosition(ast);
 		}
 
+		/// <summary>Changes the playback position.</summary>
+		/// <param name="position">The requested absolute position in milliseconds.</param>
 		public void Seek(int position)
 		{
 			ASAP_Seek(ast, position);
 		}
 
+		/// <summary>Fills leading bytes of the specified buffer with WAV file header.</summary>
+		/// <remarks>The number of changed bytes is <see cref="WavHeaderBytes" />.</remarks>
+		/// <param name="buffer">The destination buffer.</param>
+		/// <param name="format">Format of samples.</param>
 		public void GetWavHeader(byte[] buffer, ASAP_SampleFormat format)
 		{
 			ASAP_GetWavHeader(ast, buffer, format);
 		}
 
+		/// <summary>Fills the specified buffer with generated samples.</summary>
+		/// <param name="buffer">The destination buffer.</param>
+		/// <param name="format">Format of samples.</param>
 		public int Generate(byte[] buffer, ASAP_SampleFormat format)
 		{
 			return ASAP_Generate(ast, buffer, buffer.Length, format);
