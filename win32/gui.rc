@@ -21,7 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO)
+#if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) || defined(XMPLAY)
 #include <windows.h>
 #define IDC_STATIC  -1
 #endif
@@ -86,6 +86,9 @@ IDR_TRAYMENU MENU
 #elif defined(XBMC)
 #  define APP_NAME "XBMC"
 #  define INTERNAL_NAME "xbmc_asap"
+#elif defined(XMPLAY)
+#  define APP_NAME "XMPlay"
+#  define INTERNAL_NAME "xmp-asap"
 #elif defined(APOKEYSND)
 #  define INTERNAL_NAME "apokeysnd"
 #  define FILE_DESCRIPTION "Another POKEY sound emulator"
@@ -98,7 +101,7 @@ IDR_TRAYMENU MENU
 #  define ORIGINAL_FILENAME INTERNAL_NAME ".dll"
 #endif
 
-#if defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO)
+#if defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) || defined(XMPLAY)
 
 #include "settings_dlg.h"
 

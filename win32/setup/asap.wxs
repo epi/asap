@@ -305,6 +305,11 @@
 						<File Id="gspasap.dll" Name="gspasap.dll" Source="gspasap.dll" Checksum="yes" KeyPath="yes" />
 					</Component>
 				</Directory>
+				<Directory Id="XMPLAY.DIR" Name="XMPlay">
+					<Component Id="xmp_asap.dll" Guid="*">
+						<File Id="xmp_asap.dll" Name="xmp-asap.dll" Source="xmp-asap.dll" Checksum="yes" KeyPath="yes" />
+					</Component>
+				</Directory>
 				<Directory Id="RMT.DIR" Name="RMT">
 					<Component Id="apokeysnd.dll" Guid="*">
 						<File Id="apokeysnd.dll" Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
@@ -397,6 +402,9 @@
 		</Feature>
 		<Feature Id="gspasap" Title="GSPlayer plugin" Level="9" ConfigurableDirectory="GSP.DIR" Description="Plugin for GSPlayer (desktop Windows only)." AllowAdvertise="no">
 			<ComponentRef Id="gspasap.dll" />
+		</Feature>
+		<Feature Id="xmp_asap" Title="XMPlay plugin" Level="9" ConfigurableDirectory="XMPLAY.DIR" Description="Plugin for XMPlay." AllowAdvertise="no">
+			<ComponentRef Id="xmp_asap.dll" />
 		</Feature>
 		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
 			<ComponentRef Id="apokeysnd.dll" />

@@ -1,4 +1,8 @@
 2010-01-25  Piotr Fusik  <fox@scene.pl>
+* win32/xmplay/xmp-asap.c, win32/xmplay/xmpfunc.h, win32/xmplay/xmpin.h,
+  win32/gui.rc, win32/Makefile, win32/setup/asap.wxs: README, win32/USAGE:
+  XMPlay plugin
+
 * csharp/ASAP.ppcs, csharp/Makefile: documented the API
 
 * asapconv.c: options to set AUTHOR, NAME and DATE when converting to SAP

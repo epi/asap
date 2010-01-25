@@ -1,4 +1,4 @@
-VERSION = 2.0.1
+VERSION = 2.1.0
 
 # gcc for most ports
 ASAP_GCC = mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
@@ -38,7 +38,7 @@ all: mingw dsf foo asap.lib
 
 win32: mingw dsf foo xbmc COPYING.txt
 
-mingw: asapconv.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll apokeysnd.dll asapscan.exe libasap.a
+mingw: asapconv.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll apokeysnd.dll asapscan.exe libasap.a
 
 include ../players/Makefile
 
@@ -129,6 +129,14 @@ xbmc_asap.dll: ../xbmc/xbmc_asap.c $(COMMON_C) ../xbmc/xbmc_asap.res $(COMMON_H)
 
 ../xbmc/xbmc_asap.res: gui.rc ../asap.h
 	$(WINDRES) -DXBMC gui.rc
+
+# XMPlay
+
+xmp-asap.dll: xmplay/xmp-asap.c $(COMMON_C) settings_dlg.c xmp-asap-res.o $(COMMON_H) settings_dlg.h
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DXMPLAY xmplay/xmp-asap.c $(COMMON_C) settings_dlg.c xmp-asap-res.o
+
+xmp-asap-res.o: gui.rc ../asap.h settings_dlg.h
+	$(WINDRES) -DXMPLAY gui.rc
 
 # APokeySound
 
@@ -282,6 +290,8 @@ srcdist: $(PLAYERS_OBX) ../README.html
 		win32/winamp/in_asap.c \
 		win32/winamp/in2.h win32/winamp/out.h \
 		win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h \
+		win32/xmplay/xmp-asap.c \
+		win32/xmplay/xmpfunc.h win32/xmplay/xmpin.h \
 		xbmc/xbmc_asap.c \
 		xmms/libasap-xmms.c xmms/libasap-xmms.map \
 		-b players/cmc.obx players/cm3.obx players/cms.obx players/dlt.obx players/mpt.obx \
@@ -306,7 +316,7 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-win32.zip \
 		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
-		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll
+		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ../gsplayer/gspasap.dll
 	$(GREP) -m 1 " released on " ../ChangeLog

@@ -31,6 +31,7 @@ ASAP includes the following programs:
 - plugin for http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player] {asapwin=}
 - plugin for http://xbmc.org/[XBMC] {asapwin=}
 - plugin for http://xmms.org/[XMMS]
+- plugin for http://www.un4seen.com/[XMPlay] {asapwin=}
 - POKEY sound emulation DLL for http://raster.infos.cz/atari/rmt/rmt.htm[Raster Music Tracker] {asapwin=}
 - Java version of ASAP2WAV - command-line converter to WAV files {asapjava=}
 - Java applet - for web pages {asapjava=}{asapwww?(see link:applet.html[online demo])}
