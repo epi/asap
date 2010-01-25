@@ -168,9 +168,9 @@ FONT 8, "MS Sans Serif"
 #endif
 }
 
-#endif /* defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) */
+#endif /* defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) || defined(XMPLAY) */
 
-#if defined(WASAP) || defined(WINAMP) || defined(APOLLO)
+#if defined(WASAP) || defined(WINAMP) || defined(APOLLO) || defined(XMPLAY)
 
 #include "info_dlg.h"
 
@@ -205,7 +205,7 @@ FONT 8, "MS Sans Serif"
 	PUSHBUTTON "Close", IDCANCEL, 242, 82+INFO_Y, 50, 14
 }
 
-#endif /* defined(WASAP) || defined(WINAMP) || defined(APOLLO) */
+#endif /* defined(WASAP) || defined(WINAMP) || defined(APOLLO) || defined(XMPLAY) */
 
 #if defined(WASAP) || defined(WINAMP)
 

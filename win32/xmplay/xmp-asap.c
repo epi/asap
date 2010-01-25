@@ -26,6 +26,7 @@
 #include "xmpin.h"
 
 #include "asap.h"
+#include "info_dlg.h"
 #include "settings_dlg.h"
 
 #define BITS_PER_SAMPLE  16
@@ -35,7 +36,15 @@ static const XMPFUNC_MISC *xmpfmisc;
 static const XMPFUNC_REGISTRY *xmpfreg;
 static const XMPFUNC_FILE *xmpffile;
 
+static char current_filename[MAX_PATH];
+static int current_song;
 ASAP_State asap;
+
+static void WINAPI ASAP_ShowInfo()
+{
+	if (current_filename[0] != '\0')
+		showInfoDialog(hInst, xmpfmisc->GetWindow(), current_filename, current_song);
+}
 
 static void WINAPI ASAP_About(HWND win)
 {
@@ -101,6 +110,10 @@ static DWORD WINAPI ASAP_Open(const char *filename, XMPFILE file)
 	int module_len = xmpffile->Read(file, module, sizeof(module));
 	if (!ASAP_Load(&asap, filename, module, module_len))
 		return FALSE;
+	if (strlen(filename) < MAX_PATH - 1) {
+		strcpy(current_filename, filename);
+		current_song = asap.module_info.default_song;
+	}
 	playSong(asap.module_info.default_song);
 	return TRUE;
 }
@@ -143,6 +156,7 @@ static double WINAPI ASAP_SetPosition(DWORD pos)
 {
 	int song = pos - XMPIN_POS_SUBSONG;
 	if (song >= 0 && song < asap.module_info.songs) {
+		current_song = song;
 		playSong(song);
 		return 0;
 	}
@@ -213,6 +227,9 @@ __declspec(dllexport) XMPIN *WINAPI XMPIN_GetInterface(DWORD face, InterfaceProc
 		NULL,
 		NULL, NULL, NULL, NULL, NULL, NULL, NULL
 	};
+	static const XMPSHORTCUT info_shortcut = {
+		0x10000, "ASAP - File information", ASAP_ShowInfo
+	};
 
 	if (face != XMPIN_FACE)
 		return NULL;
@@ -221,6 +238,7 @@ __declspec(dllexport) XMPIN *WINAPI XMPIN_GetInterface(DWORD face, InterfaceProc
 	xmpfreg = (const XMPFUNC_REGISTRY *) faceproc(XMPFUNC_REGISTRY_FACE);
 	xmpffile = (const XMPFUNC_FILE *) faceproc(XMPFUNC_FILE_FACE);
 
+	xmpfmisc->RegisterShortcut(&info_shortcut);
 	xmpfreg->GetInt("ASAP", "SongLength", &song_length);
 	xmpfreg->GetInt("ASAP", "SilenceSeconds", &silence_seconds);
 	xmpfreg->GetInt("ASAP", "PlayLoops", &play_loops);

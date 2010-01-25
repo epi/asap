@@ -132,10 +132,10 @@ xbmc_asap.dll: ../xbmc/xbmc_asap.c $(COMMON_C) ../xbmc/xbmc_asap.res $(COMMON_H)
 
 # XMPlay
 
-xmp-asap.dll: xmplay/xmp-asap.c $(COMMON_C) settings_dlg.c xmp-asap-res.o $(COMMON_H) settings_dlg.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DXMPLAY xmplay/xmp-asap.c $(COMMON_C) settings_dlg.c xmp-asap-res.o
+xmp-asap.dll: xmplay/xmp-asap.c $(COMMON_C) info_dlg.c settings_dlg.c xmp-asap-res.o $(COMMON_H) settings_dlg.h
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DXMPLAY xmplay/xmp-asap.c $(COMMON_C) info_dlg.c settings_dlg.c xmp-asap-res.o -lcomdlg32
 
-xmp-asap-res.o: gui.rc ../asap.h settings_dlg.h
+xmp-asap-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
 	$(WINDRES) -DXMPLAY gui.rc
 
 # APokeySound
