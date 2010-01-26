@@ -1,4 +1,6 @@
 2010-01-26  Piotr Fusik  <fox@scene.pl>
+* win32/xmplay/xmp-asap.c: close files so that "File information" works
+
 * asapconv.c, PORTS.xml: options to set TIME in SAP
 
 

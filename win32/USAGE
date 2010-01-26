@@ -41,8 +41,11 @@ XBMC plugin::
 This DLL can be used with XBox and Windows versions of XBMC.
 Your XBMC must include support for ASAP.
 
-{asapsetup%}XMPlay plugin::
+XMPlay plugin::
 {asapsetup%}Extract `xmp-asap.dll` to your XMPlay directory.
+{asapsetup%}+
+If you want to use the "File information" window (to edit tags or convert between SAP and other formats),
+assign a shortcut to it from XMPlay options.
 
 {asapsetup%}DLL for Raster Music Tracker::
 {asapsetup%}Extract `apokeysnd.dll` to the directory which contains `Rmt.exe`.
