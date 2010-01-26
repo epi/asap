@@ -10,8 +10,8 @@ MKDIRS = mkdir -p
 INSTALL = install
 INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA = $(INSTALL) -m 644
-ASCIIDOC = asciidoc -a localtime -a doctime
-ASCIIDOC_POSTPROCESS = $(PERL) -pi -e 's/527bbd;/c02020;/'
+ASCIIDOC_START = asciidoc -o - -a localtime -a doctime
+ASCIIDOC_END = | sed -e "s/527bbd;/c02020;/" >$@
 
 XMMS_CFLAGS = `xmms-config --cflags`
 XMMS_LIBS = `xmms-config --libs`
@@ -124,7 +124,6 @@ clean:
 	$(RM) asapconv libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so players.h
 
 README.html: README INSTALL NEWS CREDITS
-	$(ASCIIDOC) -o $@ -a asapsrc -a asapports README
-	$(ASCIIDOC_POSTPROCESS) $@
+	$(ASCIIDOC_START) -a asapsrc -a asapports README $(ASCIIDOC_END)
 
 .DELETE_ON_ERROR:

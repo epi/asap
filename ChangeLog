@@ -1,4 +1,6 @@
 2010-01-26  Piotr Fusik  <fox@scene.pl>
+* Makefile, win32/Makefile: simplified asciidoc calls using pipes
+
 * asap.h, csharp/ASAP.ppcs, flash/ASAP_ModuleInfo.as,
   java/ASAP_ModuleInfo.java, javascript/asap.ppjs:
   song_pos size changed from 128 to ASAP_SONGS_MAX

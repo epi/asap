@@ -23,9 +23,8 @@ PERL = perl
 RM = rm -f
 CP = cp -f
 UNIX2DOS = unix2dos
-ASCIIDOC = asciidoc -o $@ -a localtime -a doctime
-ASCIIDOC_POSTPROCESS = $(PERL) -pi.bak -e "s/527bbd;/c02020;/;END{unlink '$@.bak'}" $@
-ASCIIDOC_VALIDATE = xmllint --valid --noout --nonet $@
+ASCIIDOC_START = asciidoc -o - -a localtime -a doctime
+ASCIIDOC_END = | sed -e "s/527bbd;/c02020;/" | xmllint --valid --nonet -o $@ -
 SEVENZIP = 7z a -mx=9
 GREP = grep
 CANDLE = candle -nologo -o $@
@@ -206,39 +205,25 @@ COPYING.txt: ../COPYING
 	$(UNIX2DOS) <$< >$@
 
 ../README.html: ../README ../NEWS ../CREDITS ../INSTALL
-	$(ASCIIDOC) -a asapsrc -a asapports ../README
-	$(ASCIIDOC_POSTPROCESS)
-	$(ASCIIDOC_VALIDATE)
+	$(ASCIIDOC_START) -a asapsrc -a asapports ../README $(ASCIIDOC_END)
 
 README_Flash.html: ../README ../NEWS ../CREDITS ../flash/USAGE
-	$(ASCIIDOC) -a asapflash="(included in this binary package)" ../README
-	$(ASCIIDOC_POSTPROCESS)
-	$(ASCIIDOC_VALIDATE)
+	$(ASCIIDOC_START) -a asapflash="(included in this binary package)" ../README $(ASCIIDOC_END)
 
 README_Java.html: ../README ../NEWS ../CREDITS ../java/USAGE
-	$(ASCIIDOC) -a asapjava="(included in this binary package)" ../README
-	$(ASCIIDOC_POSTPROCESS)
-	$(ASCIIDOC_VALIDATE)
+	$(ASCIIDOC_START) -a asapjava="(included in this binary package)" ../README $(ASCIIDOC_END)
 
 README_JavaScript.html: ../README ../NEWS ../CREDITS ../javascript/USAGE
-	$(ASCIIDOC) -a asapjavascript="(included in this package)" ../README
-	$(ASCIIDOC_POSTPROCESS)
-	$(ASCIIDOC_VALIDATE)
+	$(ASCIIDOC_START) -a asapjavascript="(included in this package)" ../README $(ASCIIDOC_END)
 
 README_Windows.html: ../README ../NEWS ../CREDITS USAGE
-	$(ASCIIDOC) -a asapwin="(included in this binary package)" ../README
-	$(ASCIIDOC_POSTPROCESS)
-	$(ASCIIDOC_VALIDATE)
+	$(ASCIIDOC_START) -a asapwin="(included in this binary package)" ../README $(ASCIIDOC_END)
 
 README_WindowsSetup.html: ../README ../NEWS ../CREDITS USAGE
-	$(ASCIIDOC) -a asapwin="(included in this setup)" -a asapsetup ../README
-	$(ASCIIDOC_POSTPROCESS)
-	$(ASCIIDOC_VALIDATE)
+	$(ASCIIDOC_START) -a asapwin="(included in this setup)" -a asapsetup ../README $(ASCIIDOC_END)
 
 README_WindowsCE.html: ../README ../NEWS ../CREDITS ../gsplayer/USAGE
-	$(ASCIIDOC) -a asapwince="(included in this binary package)" ../README
-	$(ASCIIDOC_POSTPROCESS)
-	$(ASCIIDOC_VALIDATE)
+	$(ASCIIDOC_START) -a asapwince="(included in this binary package)" ../README $(ASCIIDOC_END)
 
 install_dsf.bat:
 	echo regsvr32 asap_dsf.dll>$@
@@ -332,9 +317,7 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 www: ../../www/index.html ../../www/PORTS.xml ../../www/PORTS.xsl 
 
 ../../www/index.html: ../README ../NEWS ../CREDITS
-	$(ASCIIDOC) -a asapwww -a asapports ../README
-	$(ASCIIDOC_POSTPROCESS)
-	$(ASCIIDOC_VALIDATE)
+	$(ASCIIDOC_START) -a asapwww -a asapports ../README $(ASCIIDOC_END)
 
 ../../www/apokeysnd.dll: apokeysnd.dll
 	$(CP) $< $@
