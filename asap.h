@@ -87,7 +87,7 @@ typedef enum {
 typedef int abool;
 typedef unsigned char byte;
 
-/* Information about a file. */
+/* Information about a music file. */
 typedef struct {
 	char author[ASAP_INFO_CHARS];  /* author's name */
 	char name[ASAP_INFO_CHARS];    /* title */
@@ -95,7 +95,7 @@ typedef struct {
 	int channels;                  /* 1 for mono or 2 for stereo */
 	int songs;                     /* number of subsongs */
 	int default_song;              /* 0-based index of the "main" subsong */
-	int durations[ASAP_SONGS_MAX]; /* lengths of songs, in milliseconds, -1 = unspecified */
+	int durations[ASAP_SONGS_MAX]; /* lengths of songs, in milliseconds, -1 = indeterminate */
 	abool loops[ASAP_SONGS_MAX];   /* whether songs repeat or not */
 	/* the following technical information should not be used outside ASAP. */
 	int type;
@@ -105,7 +105,7 @@ typedef struct {
 	int player;
 	int covox_addr;
 	int header_len;
-	byte song_pos[128];
+	byte song_pos[ASAP_SONGS_MAX];
 } ASAP_ModuleInfo;
 
 /* POKEY state.

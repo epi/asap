@@ -1,4 +1,8 @@
 2010-01-26  Piotr Fusik  <fox@scene.pl>
+* asap.h, csharp/ASAP.ppcs, flash/ASAP_ModuleInfo.as,
+  java/ASAP_ModuleInfo.java, javascript/asap.ppjs:
+  song_pos size changed from 128 to ASAP_SONGS_MAX
+
 * win32/xmplay/xmp-asap.c: close files so that "File information" works
 
 * asapconv.c, PORTS.xml: options to set TIME in SAP

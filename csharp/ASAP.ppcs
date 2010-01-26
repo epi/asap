@@ -93,7 +93,7 @@ namespace ASAP
 		internal int player;
 		internal int covox_addr;
 		internal int header_len;
-		internal readonly byte[] song_pos = new byte[128];
+		internal readonly byte[] song_pos = new byte[32];
 	}
 
 	internal class PokeyState

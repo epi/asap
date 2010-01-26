@@ -40,6 +40,6 @@ package
 		internal var player : int;
 		internal var covox_addr : int;
 		internal var header_len : int;
-		internal const song_pos : Array = new Array(128);
+		internal const song_pos : Array = new Array(32);
 	}
 }
