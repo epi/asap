@@ -242,8 +242,10 @@ setup/asap.wixobj: setup/asap.wxs
 	$(CANDLE) -dVERSION=$(VERSION) $<
 
 ../MANIFEST:
-	($(GIT) ls-tree -r --name-only --full-tree master | grep -vF .gitignore \
-		&& echo MANIFEST && echo README.html && for plr in $(PLAYERS); do echo players/$$plr.obx; done) | sort >$@
+	if test -e ../.git; then \
+		($(GIT) ls-tree -r --name-only --full-tree master | grep -vF .gitignore \
+			&& echo MANIFEST && echo README.html && for plr in $(PLAYERS); do echo players/$$plr.obx; done) | sort >$@; \
+	fi
 
 srcdist: ../MANIFEST ../README.html $(PLAYERS_OBX)
 	chmod 644 $(PLAYERS_OBX)
