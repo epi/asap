@@ -25,6 +25,8 @@ CP = cp -f
 UNIX2DOS = unix2dos
 ASCIIDOC_START = asciidoc -o - -a localtime -a doctime
 ASCIIDOC_END = | sed -e "s/527bbd;/c02020;/" | xmllint --valid --nonet -o $@ -
+GIT = git
+TAR = tar
 SEVENZIP = 7z a -mx=9
 GREP = grep
 CANDLE = candle -nologo -o $@
@@ -239,52 +241,14 @@ setup: ../../asap-$(VERSION)-win32.msi
 setup/asap.wixobj: setup/asap.wxs
 	$(CANDLE) -dVERSION=$(VERSION) $<
 
-srcdist: $(PLAYERS_OBX) ../README.html
+../MANIFEST:
+	($(GIT) ls-tree -r --name-only --full-tree master | grep -vF .gitignore \
+		&& echo MANIFEST && echo README.html && for plr in $(PLAYERS); do echo players/$$plr.obx; done) | sort >$@
+
+srcdist: ../MANIFEST ../README.html $(PLAYERS_OBX)
+	chmod 644 $(PLAYERS_OBX)
 	$(RM) ../../asap-$(VERSION).tar.gz
-	$(PERL) -x.. ../maketar.pl -d asap-$(VERSION) \
-		-t asap.c asap.h asap_internal.h anylang.h acpu.c apokeysnd.c \
-		asapconv.c asapscan.c \
-		players/cmc.asx players/cms.asx players/dlt.as8 players/mpt.asx \
-		players/rmt.asx players/tmc.asx players/tm2.asx \
-		players/Makefile Makefile \
-		ChangeLog COPYING CREDITS INSTALL NEWS README \
-		README.html PORTS.xml PORTS.xsl \
-		csharp/ASAP.ppcs csharp/asap2wav.cs csharp/Makefile \
-		flash/ASAP.ppas flash/ASAP_ModuleInfo.as flash/PokeyState.as \
-		flash/ASAPPlayer.as flash/Makefile flash/USAGE \
-		gsplayer/gspasap.c gsplayer/mapplugin.h \
-		gsplayer/Makefile gsplayer/USAGE \
-		java/ASAP.ppjava java/ASAP_ModuleInfo.java \
-		java/ASAP2WAV.java java/asap2wav.MF \
-		java/ASAPApplet.java \
-		java/ASAPMIDlet.java java/asap_midlet.MF java/mf2jad.pl \
-		java/Makefile java/USAGE \
-		javascript/asap.ppjs javascript/asap2wav.ppjs javascript/asapweb.ppjs \
-		javascript/Makefile javascript/USAGE \
-		moc/libasap_decoder.c \
-		win32/Makefile win32/USAGE \
-		win32/info_dlg.c win32/info_dlg.h \
-		win32/settings_dlg.c win32/settings_dlg.h \
-		win32/gui.rc \
-		win32/apollo/ASAP_Apollo.cpp win32/apollo/InputPlugin.h \
-		win32/dshow/asap_dsf.cpp win32/dshow/asap_dsf.def \
-		win32/foobar2000/foo_asap.cpp \
-		win32/setup/asap.wxs win32/setup/license.rtf \
-		win32/setup/Website.url win32/setup/wix_mutex.pl \
-		win32/wasap/wasap.c win32/wasap/wasap.h \
-		win32/winamp/in_asap.c \
-		win32/winamp/in2.h win32/winamp/out.h \
-		win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h \
-		win32/xmplay/xmp-asap.c \
-		win32/xmplay/xmpfunc.h win32/xmplay/xmpin.h \
-		xbmc/xbmc_asap.c \
-		xmms/libasap-xmms.c xmms/libasap-xmms.map \
-		-b players/cmc.obx players/cm3.obx players/cms.obx players/dlt.obx players/mpt.obx \
-		players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx \
-		win32/wasap/play.ico win32/wasap/stop.ico win32/wasap/wasap.ico \
-		win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg \
-		-s chksap.pl maketar.pl files2anylang.pl \
-		| $(SEVENZIP) -tgzip -si ../../asap-$(VERSION).tar.gz
+	cd .. && $(TAR) -c --numeric-owner --owner=0 --group=0 -T MANIFEST --transform=s,,asap-$(VERSION)/, | $(SEVENZIP) -tgzip -si ../asap-$(VERSION).tar.gz
 
 dist: srcdist win32 wince java csharp javascript flash setup \
 	COPYING.txt README_Flash.html README_Java.html README_Windows.html README_WindowsCE.html \
@@ -304,6 +268,7 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ../gsplayer/gspasap.dll
+	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz
 	$(GREP) -m 1 " released on " ../ChangeLog
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
@@ -336,5 +301,7 @@ www: ../../www/index.html ../../www/PORTS.xml ../../www/PORTS.xsl
 
 ../../www/PORTS.xsl: ../PORTS.xsl
 	$(CP) $< $@
+
+.PHONY: all win32 mingw foo wince dsf xbmc java csharp javascript flash clean setup ../MANIFEST srcdist dist www
 
 .DELETE_ON_ERROR:

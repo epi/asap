@@ -1,4 +1,7 @@
 2010-01-26  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile, maketar.pl: replaced maketar.pl with tar,
+  get versioned files from git
+
 * Makefile, win32/Makefile: simplified asciidoc calls using pipes
 
 * asap.h, csharp/ASAP.ppcs, flash/ASAP_ModuleInfo.as,
