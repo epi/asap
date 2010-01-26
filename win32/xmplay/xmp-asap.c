@@ -35,6 +35,7 @@ static HINSTANCE hInst;
 static const XMPFUNC_MISC *xmpfmisc;
 static const XMPFUNC_REGISTRY *xmpfreg;
 static const XMPFUNC_FILE *xmpffile;
+static const XMPFUNC_IN *xmpfin;
 
 static char current_filename[MAX_PATH];
 static int current_song;
@@ -85,6 +86,29 @@ static void GetTags(const ASAP_ModuleInfo *module_info, char *tags[8])
 	GetTag("ASAP", tags + 7);
 }
 
+static void GetTotalLength(const ASAP_ModuleInfo *module_info, float *length)
+{
+	int total_duration = 0;
+	int song;
+	for (song = 0; song < module_info->songs; song++) {
+		int duration = getSongDuration(module_info, song);
+		if (duration < 0) {
+			*length = 0;
+			return;
+		}
+		total_duration += duration;
+	}
+	*length = total_duration / 1000.0;
+}
+
+static void PlaySong(int song)
+{
+	int duration = playSong(song);
+	if (duration >= 0)
+		xmpfin->SetLength(duration / 1000.0, TRUE);
+	current_song = song;
+}
+
 static BOOL WINAPI ASAP_GetFileInfo(const char *filename, XMPFILE file, float *length, char *tags[8])
 {
 	byte module[ASAP_MODULE_MAX];
@@ -94,13 +118,8 @@ static BOOL WINAPI ASAP_GetFileInfo(const char *filename, XMPFILE file, float *l
 	xmpffile->Close(file);
 	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
 		return FALSE;
-	if (length != NULL) {
-		int duration = module_info.durations[module_info.default_song];
-		if (duration >= 0)
-			*length = duration / 1000.0;
-		else
-			*length = 0;
-	}
+	if (length != NULL)
+		GetTotalLength(&module_info, length);
 	GetTags(&module_info, tags);
 	return TRUE;
 }
@@ -112,11 +131,9 @@ static DWORD WINAPI ASAP_Open(const char *filename, XMPFILE file)
 	xmpffile->Close(file);
 	if (!ASAP_Load(&asap, filename, module, module_len))
 		return FALSE;
-	if (strlen(filename) < MAX_PATH - 1) {
+	if (strlen(filename) < MAX_PATH - 1)
 		strcpy(current_filename, filename);
-		current_song = asap.module_info.default_song;
-	}
-	playSong(asap.module_info.default_song);
+	PlaySong(0);
 	return TRUE;
 }
 
@@ -158,8 +175,7 @@ static double WINAPI ASAP_SetPosition(DWORD pos)
 {
 	int song = pos - XMPIN_POS_SUBSONG;
 	if (song >= 0 && song < asap.module_info.songs) {
-		current_song = song;
-		playSong(song);
+		PlaySong(song);
 		return 0;
 	}
 	// TODO: XMPIN_POS
@@ -185,19 +201,8 @@ static DWORD WINAPI ASAP_Process(float *buf, DWORD count)
 
 static DWORD WINAPI ASAP_GetSubSongs(float *length)
 {
-	int songs = asap.module_info.songs;
-	int total_duration = 0;
-	int song;
-	for (song = 0; song < songs; song++) {
-		int duration = asap.module_info.durations[song];
-		if (duration < 0) {
-			*length = 0;
-			return songs;
-		}
-		total_duration += duration;
-	}
-	*length = total_duration / 1000.0;
-	return songs;
+	GetTotalLength(&asap.module_info, length);
+	return asap.module_info.songs;
 }
 
 __declspec(dllexport) XMPIN *WINAPI XMPIN_GetInterface(DWORD face, InterfaceProc faceproc)
@@ -239,6 +244,7 @@ __declspec(dllexport) XMPIN *WINAPI XMPIN_GetInterface(DWORD face, InterfaceProc
 	xmpfmisc = (const XMPFUNC_MISC *) faceproc(XMPFUNC_MISC_FACE);
 	xmpfreg = (const XMPFUNC_REGISTRY *) faceproc(XMPFUNC_REGISTRY_FACE);
 	xmpffile = (const XMPFUNC_FILE *) faceproc(XMPFUNC_FILE_FACE);
+	xmpfin = (const XMPFUNC_IN *) faceproc(XMPFUNC_IN_FACE);
 
 	xmpfmisc->RegisterShortcut(&info_shortcut);
 	xmpfreg->GetInt("ASAP", "SongLength", &song_length);
