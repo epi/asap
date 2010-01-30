@@ -39,6 +39,7 @@ static int mute_mask = 0;
 static const char *tag_author = NULL;
 static const char *tag_name = NULL;
 static const char *tag_date = NULL;
+static char output_file[FILENAME_MAX];
 
 static void print_help(void)
 {
@@ -117,6 +118,54 @@ static const char *set_tag(const char *tag, const char *s)
 	return s;
 }
 
+static FILE *open_output_file(const char *input_file)
+{
+	const char *output_ext = strrchr(output_arg, '.');
+	FILE *fp;
+	if (output_ext == output_arg) {
+		if (strlen(input_file) >= FILENAME_MAX)
+			fatal_error("filename too long");
+		strcpy(output_file, input_file);
+		ASAP_ChangeExt(output_file, output_ext + 1);
+	}
+	else if (output_ext == output_arg + 1 && output_arg[0] == '-') {
+		strcpy(output_file, "stdout");
+#ifdef __WIN32
+		_setmode(_fileno(stdout), _O_BINARY);
+#endif
+		return stdout;
+	}
+	else if (output_ext[-1] == '/' || output_ext[-1] == '\\') {
+		const char *base_name = input_file;
+		const char *p;
+		for (p = input_file; *p != '\0'; p++)
+			if (*p == '/' || *p == '\\')
+				base_name = p + 1;
+		if (output_ext - output_arg + strlen(base_name) >= FILENAME_MAX)
+			fatal_error("filename too long");
+		memcpy(output_file, output_arg, output_ext - output_arg);
+		strcpy(output_file + (output_ext - output_arg), base_name);
+		ASAP_ChangeExt(output_file, output_ext + 1);
+	}
+	else {
+		if (strlen(output_arg) >= FILENAME_MAX)
+			fatal_error("filename too long");
+		strcpy(output_file, output_arg);
+	}
+	fp = fopen(output_file, "wb");
+	if (fp == NULL)
+		fatal_error("cannot write %s", output_file);
+	return fp;
+}
+
+static void write_output_file(FILE *fp, byte *buffer, int n_bytes)
+{
+	if (fwrite(buffer, 1, n_bytes, fp) != n_bytes) {
+		fclose(fp);
+		fatal_error("error writing to %s", output_file);
+	}
+}
+
 static void get_song(const char *input_file, const ASAP_ModuleInfo *module_info)
 {
 	if (song < 0)
@@ -128,12 +177,12 @@ static void get_song(const char *input_file, const ASAP_ModuleInfo *module_info)
 	}
 }
 
-static void convert_to_wav(const char *input_file, const byte *module, int module_len, const char *output_file, FILE *fp, abool output_header)
+static void convert_to_wav(const char *input_file, const byte *module, int module_len, abool output_header)
 {
 	static ASAP_State asap;
+	FILE *fp;
 	int n_bytes;
 	static byte buffer[8192];
-	abool opened = FALSE;
 
 	if (!ASAP_Load(&asap, input_file, module, module_len))
 		fatal_error("%s: unsupported file", input_file);
@@ -146,35 +195,27 @@ static void convert_to_wav(const char *input_file, const byte *module, int modul
 	ASAP_PlaySong(&asap, song, duration);
 	ASAP_MutePokeyChannels(&asap, mute_mask);
 
-	if (fp == NULL) {
-		fp = fopen(output_file, "wb");
-		if (fp == NULL)
-			fatal_error("cannot write %s", output_file);
-		opened = TRUE;
-	}
+	fp = open_output_file(input_file);
 	if (output_header) {
 		ASAP_GetWavHeader(&asap, buffer, sample_format);
 		fwrite(buffer, 1, ASAP_WAV_HEADER_BYTES, fp);
 	}
 	do {
 		n_bytes = ASAP_Generate(&asap, buffer, sizeof(buffer), sample_format);
-		if (fwrite(buffer, 1, n_bytes, fp) != n_bytes) {
-			fclose(fp);
-			fatal_error("error writing to %s", output_file);
-		}
+		write_output_file(fp, buffer, n_bytes);
 	} while (n_bytes == sizeof(buffer));
-	if (opened)
+	if (fp != stdout)
 		fclose(fp);
 }
 
-static void convert_module(const char *input_file, const byte *module, int module_len, const char *output_file, FILE *fp, const char *output_ext)
+static void convert_module(const char *input_file, const byte *module, int module_len, const char *output_ext)
 {
 	const char *input_ext;
 	ASAP_ModuleInfo module_info;
 	const char *possible_ext;
 	static byte out_module[ASAP_MODULE_MAX];
 	int out_module_len;
-	abool opened = FALSE;
+	FILE *fp;
 
 	input_ext = strrchr(input_file, '.');
 	if (input_ext == NULL)
@@ -208,14 +249,9 @@ static void convert_module(const char *input_file, const byte *module, int modul
 	if (out_module_len < 0)
 		fatal_error("%s: conversion error", input_file);
 
-	if (fp == NULL) {
-		fp = fopen(output_file, "wb");
-		if (fp == NULL)
-			fatal_error("cannot write %s", output_file);
-		opened = TRUE;
-	}
-	fwrite(out_module, 1, out_module_len, fp);
-	if (opened)
+	fp = open_output_file(input_file);
+	write_output_file(fp, out_module, out_module_len);
+	if (fp != stdout)
 		fclose(fp);
 }
 
@@ -225,8 +261,6 @@ static void process_file(const char *input_file)
 	static byte module[ASAP_MODULE_MAX];
 	int module_len;
 	const char *output_ext;
-	static char output_file_buffer[FILENAME_MAX];
-	const char *output_file;
 
 	if (output_arg == NULL)
 		fatal_error("the -o/--output option is mandatory");
@@ -236,50 +270,17 @@ static void process_file(const char *input_file)
 	module_len = fread(module, 1, sizeof(module), fp);
 	fclose(fp);
 
-	fp = NULL;
 	output_ext = strrchr(output_arg, '.');
 	if (output_ext == NULL)
 		fatal_error("missing .EXT in -o/--output");
-	if (output_ext == output_arg) {
-		if (strlen(input_file) >= FILENAME_MAX)
-			fatal_error("filename too long");
-		strcpy(output_file_buffer, input_file);
-		ASAP_ChangeExt(output_file_buffer, output_ext + 1);
-		output_file = output_file_buffer;
-	}
-	else if (output_ext == output_arg + 1 && output_arg[0] == '-') {
-		output_file = "stdout";
-#ifdef __WIN32
-		_setmode(_fileno(stdout), _O_BINARY);
-#endif
-		fp = stdout;
-	}
-	else if (output_ext[-1] == '/' || output_ext[-1] == '\\') {
-		const char *base_name = input_file;
-		const char *p;
-		for (p = input_file; *p != '\0'; p++)
-			if (*p == '/' || *p == '\\')
-				base_name = p + 1;
-		if (output_ext - output_arg + strlen(base_name) >= FILENAME_MAX)
-			fatal_error("filename too long");
-		memcpy(output_file_buffer, output_arg, output_ext - output_arg);
-		strcpy(output_file_buffer + (output_ext - output_arg), base_name);
-		ASAP_ChangeExt(output_file_buffer, output_ext + 1);
-		output_file = output_file_buffer;
-	}
-	else
-		output_file = output_arg;
-
-	output_ext++; /* skip the dot */
+	output_ext++;
 	if (strcasecmp(output_ext, "wav") == 0)
-		convert_to_wav(input_file, module, module_len, output_file, fp, TRUE);
+		convert_to_wav(input_file, module, module_len, TRUE);
 	else if (strcasecmp(output_ext, "raw") == 0)
-		convert_to_wav(input_file, module, module_len, output_file, fp, FALSE);
+		convert_to_wav(input_file, module, module_len, FALSE);
 	else
-		convert_module(input_file, module, module_len, output_file, fp, output_ext);
+		convert_module(input_file, module, module_len, output_ext);
 
-	if (output_arg == output_file)
-		output_arg = NULL;
 	song = -1;
 	duration = -1;
 }
