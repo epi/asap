@@ -1,3 +1,7 @@
+2010-01-30  Piotr Fusik  <fox@scene.pl>
+* asapconv.c: support %a, %n and %d output filename placeholders
+
+
 2010-01-26  Piotr Fusik  <fox@scene.pl>
 * win32/setup/asap.wxs, win32/setup/wix_mutex.pl: XMPlay file associations
 

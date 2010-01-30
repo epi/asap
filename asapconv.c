@@ -53,8 +53,13 @@ static void print_help(void)
 		"-o .EXT     --output=.EXT      Use input file path and name\n"
 		"-o DIR/.EXT --output=DIR/.EXT  Write to the specified directory\n"
 		"-o -.EXT    --output=-.EXT     Write to standard output\n"
+		"-a \"TEXT\"   --author=\"TEXT\"    Set author name\n"
+		"-n \"TEXT\"   --name=\"TEXT\"      Set music name\n"
+		"-d \"TEXT\"   --date=\"TEXT\"      Set music creation date (DD/MM/YYYY format)\n"
 		"-h          --help             Display this information\n"
 		"-v          --version          Display version information\n"
+		"In FILE and DIR you can use the following placeholders:\n"
+		"%%a (author), %%n (music name) and %%d (music creation date).\n"
 		"Options for WAV and RAW output:\n"
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
 		"-t TIME     --time=TIME        Set output length (MM:SS format)\n"
@@ -62,9 +67,6 @@ static void print_help(void)
 		"-w          --word-samples     Output 16-bit samples (default)\n"
 		"-m CHANNELS --mute=CHANNELS    Mute POKEY channels (1-8)\n"
 		"Options for SAP output:\n"
-		"-a \"TEXT\"   --author=\"TEXT\"    Set author name\n"
-		"-n \"TEXT\"   --name=\"TEXT\"      Set music name\n"
-		"-d \"TEXT\"   --date=\"TEXT\"      Set music creation date (DD/MM/YYYY format)\n"
 		"-s SONG     --song=SONG        Select subsong to set length of\n"
 		"-t TIME     --time=TIME        Set subsong length (MM:SS format)\n"
 	);
@@ -118,12 +120,89 @@ static const char *set_tag(const char *tag, const char *s)
 	return s;
 }
 
-static FILE *open_output_file(const char *input_file)
+static void apply_tags(const char *input_file, ASAP_ModuleInfo *module_info)
+{
+	if (tag_author != NULL)
+		strcpy(module_info->author, tag_author);
+	if (tag_name != NULL) {
+		strcpy(module_info->name, tag_name);
+		tag_name = NULL;
+	}
+	if (tag_date != NULL)
+		strcpy(module_info->date, tag_date);
+
+	if (song < 0)
+		song = module_info->default_song;
+	if (song >= module_info->songs) {
+		fatal_error("you have requested subsong %d ...\n"
+			"... but %s contains only %d subsongs",
+			song, input_file, module_info->songs);
+	}
+}
+
+static int set_output_file(const char *pattern, int pattern_len, const ASAP_ModuleInfo *module_info)
+{
+	int pattern_index;
+	int output_file_len = 0;
+	for (pattern_index = 0; pattern_index < pattern_len; pattern_index++) {
+		char c = pattern[pattern_index];
+		if (c == '%') {
+			const char *tag;
+			c = pattern[++pattern_index];
+			switch (c) {
+			case 'a':
+				tag = module_info->author;
+				break;
+			case 'n':
+				tag = module_info->name;
+				break;
+			case 'd':
+				tag = module_info->date;
+				break;
+			case '%':
+				tag = "%";
+				break;
+			default:
+				fatal_error("unrecognized %%%c", c);
+				return 0;
+			}
+			while (*tag != '\0') {
+				if (output_file_len >= sizeof(output_file) - 1)
+					fatal_error("filename too long");
+				c = *tag++;
+				switch (c) {
+				case '<':
+				case '>':
+				case ':':
+				case '/':
+				case '\\':
+				case '|':
+				case '?':
+				case '*':
+					c = '_';
+					break;
+				default:
+					break;
+				}
+				output_file[output_file_len++] = c;
+			}
+		}
+		else {
+			if (output_file_len >= sizeof(output_file) - 1)
+				fatal_error("filename too long");
+			output_file[output_file_len++] = c;
+		}
+	}
+	output_file[output_file_len] = '\0';
+	return output_file_len;
+}
+
+static FILE *open_output_file(const char *input_file, const ASAP_ModuleInfo *module_info)
 {
 	const char *output_ext = strrchr(output_arg, '.');
 	FILE *fp;
 	if (output_ext == output_arg) {
-		if (strlen(input_file) >= FILENAME_MAX)
+		if (strlen(input_file) >= sizeof(output_file))
 			fatal_error("filename too long");
 		strcpy(output_file, input_file);
 		ASAP_ChangeExt(output_file, output_ext + 1);
@@ -136,22 +215,19 @@ static FILE *open_output_file(const char *input_file)
 		return stdout;
 	}
 	else if (output_ext[-1] == '/' || output_ext[-1] == '\\') {
+		int output_file_len = set_output_file(output_arg, output_ext - output_arg, module_info);
 		const char *base_name = input_file;
 		const char *p;
 		for (p = input_file; *p != '\0'; p++)
 			if (*p == '/' || *p == '\\')
 				base_name = p + 1;
-		if (output_ext - output_arg + strlen(base_name) >= FILENAME_MAX)
+		if (output_file_len + (p - base_name) >= sizeof(output_file))
 			fatal_error("filename too long");
-		memcpy(output_file, output_arg, output_ext - output_arg);
-		strcpy(output_file + (output_ext - output_arg), base_name);
+		strcpy(output_file + output_file_len, base_name);
 		ASAP_ChangeExt(output_file, output_ext + 1);
 	}
-	else {
-		if (strlen(output_arg) >= FILENAME_MAX)
-			fatal_error("filename too long");
-		strcpy(output_file, output_arg);
-	}
+	else
+		set_output_file(output_arg, strlen(output_arg), module_info);
 	fp = fopen(output_file, "wb");
 	if (fp == NULL)
 		fatal_error("cannot write %s", output_file);
@@ -166,17 +242,6 @@ static void write_output_file(FILE *fp, byte *buffer, int n_bytes)
 	}
 }
 
-static void get_song(const char *input_file, const ASAP_ModuleInfo *module_info)
-{
-	if (song < 0)
-		song = module_info->default_song;
-	if (song >= module_info->songs) {
-		fatal_error("you have requested subsong %d ...\n"
-			"... but %s contains only %d subsongs",
-			song, input_file, module_info->songs);
-	}
-}
-
 static void convert_to_wav(const char *input_file, const byte *module, int module_len, abool output_header)
 {
 	static ASAP_State asap;
@@ -186,7 +251,7 @@ static void convert_to_wav(const char *input_file, const byte *module, int modul
 
 	if (!ASAP_Load(&asap, input_file, module, module_len))
 		fatal_error("%s: unsupported file", input_file);
-	get_song(input_file, &asap.module_info);
+	apply_tags(input_file, &asap.module_info);
 	if (duration < 0) {
 		duration = asap.module_info.durations[song];
 		if (duration < 0)
@@ -195,7 +260,7 @@ static void convert_to_wav(const char *input_file, const byte *module, int modul
 	ASAP_PlaySong(&asap, song, duration);
 	ASAP_MutePokeyChannels(&asap, mute_mask);
 
-	fp = open_output_file(input_file);
+	fp = open_output_file(input_file, &asap.module_info);
 	if (output_header) {
 		ASAP_GetWavHeader(&asap, buffer, sample_format);
 		fwrite(buffer, 1, ASAP_WAV_HEADER_BYTES, fp);
@@ -223,18 +288,9 @@ static void convert_module(const char *input_file, const byte *module, int modul
 	input_ext++;
 	if (!ASAP_GetModuleInfo(&module_info, input_file, module, module_len))
 		fatal_error("%s: unsupported file", input_file);
-	if (tag_author != NULL)
-		strcpy(module_info.author, tag_author);
-	if (tag_name != NULL) {
-		strcpy(module_info.name, tag_name);
-		tag_name = NULL;
-	}
-	if (tag_date != NULL)
-		strcpy(module_info.date, tag_date);
-	if (duration >= 0) {
-		get_song(input_file, &module_info);
+	apply_tags(input_file, &module_info);
+	if (duration >= 0)
 		module_info.durations[song] = duration;
-	}
 
 	if (strcasecmp(input_ext, output_ext) == 0 && ASAP_CanSetModuleInfo(input_file))
 		out_module_len = ASAP_SetModuleInfo(&module_info, module, module_len, out_module);
@@ -249,7 +305,7 @@ static void convert_module(const char *input_file, const byte *module, int modul
 	if (out_module_len < 0)
 		fatal_error("%s: conversion error", input_file);
 
-	fp = open_output_file(input_file);
+	fp = open_output_file(input_file, &module_info);
 	write_output_file(fp, out_module, out_module_len);
 	if (fp != stdout)
 		fclose(fp);
