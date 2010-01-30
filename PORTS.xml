@@ -286,7 +286,7 @@
 		<platform>Windows</platform>
 		<interface>player plugin</interface>
 		<since>2.1.0</since>
-		<status>in development</status>
+		<status>stable</status>
 		<output>16-bit sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>yes</file-info>
