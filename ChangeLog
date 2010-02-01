@@ -1,3 +1,7 @@
+2010-02-01  Piotr Fusik  <fox@scene.pl>
+* asapconv.c, win32/Makefile: MP3 output using LAME
+
+
 2010-01-30  Piotr Fusik  <fox@scene.pl>
 * asapconv.c: support %a, %n and %d output filename placeholders
 

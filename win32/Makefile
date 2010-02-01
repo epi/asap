@@ -35,17 +35,23 @@ LIGHT = light -nologo -o $@
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h ../anylang.h ../players.h
 
-all: mingw dsf foo asap.lib
+all: mingw dsf foo asap.lib asapconv-static-lame.exe
 
 win32: mingw dsf foo xbmc COPYING.txt
 
-mingw: asapconv.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll apokeysnd.dll asapscan.exe libasap.a
+mingw: asapconv.exe asapconv-no-lame.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll apokeysnd.dll asapscan.exe libasap.a
 
 include ../players/Makefile
 
 # asapconv
 
 asapconv.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
+	$(ASAP_GCC) -DHAVE_LIBMP3LAME -DHAVE_LIBMP3LAME_DLL ../asapconv.c $(COMMON_C)
+
+asapconv-static-lame.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
+	$(ASAP_GCC) -DHAVE_LIBMP3LAME ../asapconv.c $(COMMON_C) -lmp3lame
+
+asapconv-no-lame.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_GCC) ../asapconv.c $(COMMON_C)
 
 # WASAP

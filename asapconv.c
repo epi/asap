@@ -29,6 +29,15 @@
 #include <fcntl.h>
 #endif
 
+#ifdef HAVE_LIBMP3LAME
+#define SAMPLE_FORMATS "WAV, RAW or MP3"
+#ifndef HAVE_LIBMP3LAME_DLL
+#include <lame.h>
+#endif
+#else
+#define SAMPLE_FORMATS "WAV or RAW"
+#endif
+
 #include "asap.h"
 
 static const char *output_arg = NULL;
@@ -39,6 +48,9 @@ static int mute_mask = 0;
 static const char *tag_author = NULL;
 static const char *tag_name = NULL;
 static const char *tag_date = NULL;
+#ifdef HAVE_LIBMP3LAME
+static abool tag = FALSE;
+#endif
 static char output_file[FILENAME_MAX];
 
 static void print_help(void)
@@ -47,7 +59,9 @@ static void print_help(void)
 		"Usage: asapconv [OPTIONS] INPUTFILE...\n"
 		"Each INPUTFILE must be in a supported format:\n"
 		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2.\n"
-		"Output EXT must be one of the above or WAV or RAW.\n"
+		"Output EXT must be one of the above or " SAMPLE_FORMATS ".\n"
+		"In FILE and DIR you can use the following placeholders:\n"
+		"%%a (author), %%n (music name) and %%d (music creation date).\n"
 		"Options:\n"
 		"-o FILE.EXT --output=FILE.EXT  Write to the specified file\n"
 		"-o .EXT     --output=.EXT      Use input file path and name\n"
@@ -58,14 +72,19 @@ static void print_help(void)
 		"-d \"TEXT\"   --date=\"TEXT\"      Set music creation date (DD/MM/YYYY format)\n"
 		"-h          --help             Display this information\n"
 		"-v          --version          Display version information\n"
-		"In FILE and DIR you can use the following placeholders:\n"
-		"%%a (author), %%n (music name) and %%d (music creation date).\n"
-		"Options for WAV and RAW output:\n"
+		"Options for " SAMPLE_FORMATS " output:\n"
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
 		"-t TIME     --time=TIME        Set output length (MM:SS format)\n"
+		"-m CHANNELS --mute=CHANNELS    Mute POKEY channels (1-8)\n"
+#ifdef HAVE_LIBMP3LAME
+		"Options for WAV or RAW output:\n"
+#endif
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
-		"-m CHANNELS --mute=CHANNELS    Mute POKEY channels (1-8)\n"
+#ifdef HAVE_LIBMP3LAME
+		"Options for MP3 output:\n"
+		"            --tag              Output ID3 tag\n"
+#endif
 		"Options for SAP output:\n"
 		"-s SONG     --song=SONG        Select subsong to set length of\n"
 		"-t TIME     --time=TIME        Set subsong length (MM:SS format)\n"
@@ -138,6 +157,20 @@ static void apply_tags(const char *input_file, ASAP_ModuleInfo *module_info)
 			"... but %s contains only %d subsongs",
 			song, input_file, module_info->songs);
 	}
+}
+
+static void load_module(ASAP_State *asap, const char *input_file, const byte *module, int module_len)
+{
+	if (!ASAP_Load(asap, input_file, module, module_len))
+		fatal_error("%s: unsupported file", input_file);
+	apply_tags(input_file, &asap->module_info);
+	if (duration < 0) {
+		duration = asap->module_info.durations[song];
+		if (duration < 0)
+			duration = 180 * 1000;
+	}
+	ASAP_PlaySong(asap, song, duration);
+	ASAP_MutePokeyChannels(asap, mute_mask);
 }
 
 static int set_output_file(const char *pattern, int pattern_len, const ASAP_ModuleInfo *module_info)
@@ -249,17 +282,7 @@ static void convert_to_wav(const char *input_file, const byte *module, int modul
 	int n_bytes;
 	static byte buffer[8192];
 
-	if (!ASAP_Load(&asap, input_file, module, module_len))
-		fatal_error("%s: unsupported file", input_file);
-	apply_tags(input_file, &asap.module_info);
-	if (duration < 0) {
-		duration = asap.module_info.durations[song];
-		if (duration < 0)
-			duration = 180 * 1000;
-	}
-	ASAP_PlaySong(&asap, song, duration);
-	ASAP_MutePokeyChannels(&asap, mute_mask);
-
+	load_module(&asap, input_file, module, module_len);
 	fp = open_output_file(input_file, &asap.module_info);
 	if (output_header) {
 		ASAP_GetWavHeader(&asap, buffer, sample_format);
@@ -273,7 +296,152 @@ static void convert_to_wav(const char *input_file, const byte *module, int modul
 		fclose(fp);
 }
 
-static void convert_module(const char *input_file, const byte *module, int module_len, const char *output_ext)
+#ifdef HAVE_LIBMP3LAME
+
+#ifdef HAVE_LIBMP3LAME_DLL
+
+#include <windows.h>
+
+typedef struct lame_global_struct *lame_global_flags;
+typedef lame_global_flags *(*plame_init)(void);
+typedef int (*plame_set_num_samples)(lame_global_flags *, unsigned long);
+typedef int (*plame_set_in_samplerate)(lame_global_flags *, int);
+typedef int (*plame_set_num_channels)(lame_global_flags *, int);
+typedef int (*plame_init_params)(lame_global_flags *);
+typedef int (*plame_encode_buffer_interleaved)(lame_global_flags *, short int[], int, unsigned char *, int);
+typedef int (*plame_encode_flush)(lame_global_flags *, unsigned char *, int);
+typedef int (*plame_close)(lame_global_flags *);
+typedef int (*pid3tag_init)(lame_global_flags *);
+typedef int (*pid3tag_set_title)(lame_global_flags *, const char *);
+typedef int (*pid3tag_set_artist)(lame_global_flags *, const char *);
+typedef int (*pid3tag_set_year)(lame_global_flags *, const char *);
+typedef int (*pid3tag_set_genre)(lame_global_flags *, const char *);
+#define LAME_OKAY 0
+
+static FARPROC lame_proc(HMODULE lame_dll, const char *name)
+{
+	FARPROC proc = GetProcAddress(lame_dll, name);
+	if (proc == NULL) {
+		char dll_name[FILENAME_MAX];
+		GetModuleFileName(lame_dll, dll_name, FILENAME_MAX);
+		fatal_error("%s not found in %s", name, dll_name);
+	}
+	return proc;
+}
+
+#define LAME_FUNC(name) p##name name = (p##name) lame_proc(lame_dll, #name)
+
+#endif
+
+static abool two_digits(const char *s)
+{
+	return s[0] >= '0' && s[0] <= '9' && s[1] >= '0' && s[1] <= '9';
+}
+
+/* "DD/MM/YYYY", "MM/YYYY", "YYYY" -> "YYYY" */
+static abool date_to_year(const char *date, char *year)
+{
+	if (!two_digits(date))
+		return FALSE;
+	if (date[2] == '/') {
+		date += 3;
+		if (!two_digits(date))
+			return FALSE;
+		if (date[2] == '/') {
+			date += 3;
+			if (!two_digits(date))
+				return FALSE;
+		}
+	}
+	if (!two_digits(date + 2) || date[4] != '\0')
+		return FALSE;
+	memcpy(year, date, 5);
+	return TRUE;
+}
+
+static void convert_to_mp3(const char *input_file, const byte *module, int module_len)
+{
+	static ASAP_State asap;
+	FILE *fp;
+	int n_bytes;
+	static byte buffer[8192];
+	lame_global_flags *lame = NULL;
+	static byte mp3buf[4096 * 5 / 4 + 7200];
+	int mp3_bytes;
+
+	load_module(&asap, input_file, module, module_len);
+#ifdef HAVE_LIBMP3LAME_DLL
+	HMODULE lame_dll;
+	lame_dll = LoadLibrary("libmp3lame.dll");
+	if (lame_dll == NULL) {
+		lame_dll = LoadLibrary("lame_enc.dll");
+		if (lame_dll == NULL)
+			fatal_error("libmp3lame.dll and lame_enc.dll not found");
+	}
+	LAME_FUNC(lame_init);
+	LAME_FUNC(lame_set_num_samples);
+	LAME_FUNC(lame_set_in_samplerate);
+	LAME_FUNC(lame_set_num_channels);
+	LAME_FUNC(lame_init_params);
+	LAME_FUNC(lame_encode_buffer_interleaved);
+	LAME_FUNC(lame_encode_flush);
+	LAME_FUNC(lame_close);
+#endif
+	lame = lame_init();
+	if (lame == NULL)
+		fatal_error("lame_init failed");
+	if (lame_set_num_samples(lame, duration * (ASAP_SAMPLE_RATE / 100) / 10) != LAME_OKAY
+	 || lame_set_in_samplerate(lame, ASAP_SAMPLE_RATE) != LAME_OKAY
+	 || lame_set_num_channels(lame, asap.module_info.channels) != LAME_OKAY)
+		fatal_error("lame_set_* failed");
+	if (lame_init_params(lame) != LAME_OKAY)
+		fatal_error("lame_init_params failed");
+	if (tag) {
+#ifdef HAVE_LIBMP3LAME_DLL
+		LAME_FUNC(id3tag_init);
+		LAME_FUNC(id3tag_set_title);
+		LAME_FUNC(id3tag_set_artist);
+		LAME_FUNC(id3tag_set_year);
+		LAME_FUNC(id3tag_set_genre);
+#endif
+		char year[5];
+		id3tag_init(lame);
+		if (asap.module_info.name[0] != '\0')
+			id3tag_set_title(lame, asap.module_info.name);
+		if (asap.module_info.author[0] != '\0')
+			id3tag_set_artist(lame, asap.module_info.author);
+		if (date_to_year(asap.module_info.date, year))
+			id3tag_set_year(lame, year);
+		id3tag_set_genre(lame, "Electronic");
+	}
+	fp = open_output_file(input_file, &asap.module_info);
+	do {
+		static short pcm[8192];
+		int i;
+		short *p = pcm;
+		n_bytes = ASAP_Generate(&asap, buffer, sizeof(buffer), ASAP_FORMAT_S16_LE);
+		for (i = 0; i < n_bytes; i += 2) {
+			*p++ = buffer[i] + (buffer[i + 1] << 8);
+			if (asap.module_info.channels == 1)
+				p++;
+		}
+		mp3_bytes = lame_encode_buffer_interleaved(lame, pcm, n_bytes >> asap.module_info.channels, mp3buf, sizeof(mp3buf));
+		if (mp3_bytes < 0)
+			fatal_error("lame_encode_buffer_interleaved failed");
+		write_output_file(fp, mp3buf, mp3_bytes);
+	} while (n_bytes == sizeof(buffer));
+	mp3_bytes = lame_encode_flush(lame, mp3buf, sizeof(mp3buf));
+	if (mp3_bytes < 0)
+		fatal_error("lame_encode_flush failed");
+	write_output_file(fp, mp3buf, mp3_bytes);
+	lame_close(lame);
+	if (fp != stdout)
+		fclose(fp);
+}
+
+#endif /* HAVE_LIBMP3LAME */
+
+static void convert_to_module(const char *input_file, const byte *module, int module_len, const char *output_ext)
 {
 	const char *input_ext;
 	ASAP_ModuleInfo module_info;
@@ -334,8 +502,15 @@ static void process_file(const char *input_file)
 		convert_to_wav(input_file, module, module_len, TRUE);
 	else if (strcasecmp(output_ext, "raw") == 0)
 		convert_to_wav(input_file, module, module_len, FALSE);
+	else if (strcasecmp(output_ext, "mp3") == 0) {
+#ifdef HAVE_LIBMP3LAME
+		convert_to_mp3(input_file, module, module_len);
+#else
+		fatal_error("this build of asapconv doesn't support MP3");
+#endif
+	}
 	else
-		convert_module(input_file, module, module_len, output_ext);
+		convert_to_module(input_file, module, module_len, output_ext);
 
 	song = -1;
 	duration = -1;
@@ -386,6 +561,10 @@ int main(int argc, char *argv[])
 			tag_date = set_tag("date", argv[++i]);
 		else if (strncmp(arg, "--date=", 7) == 0)
 			tag_date = set_tag("date", arg + 7);
+#ifdef HAVE_LIBMP3LAME
+		else if (strcmp(arg, "--tag") == 0)
+			tag = TRUE;
+#endif
 		else if (is_opt('h') || strcmp(arg, "--help") == 0) {
 			print_help();
 			options_error = NULL;
