@@ -1,17 +1,17 @@
 Authors
 -------
 
-Atari800 Development Team {asapwww!(http://atari800.sourceforge.net)}::
+Piotr Fusik {asapwww!<fox@scene.pl>}::
+Creator and main developer.
+
+Atari800 Emulator Developers {asapwww!(http://atari800.sourceforge.net)}::
 6502 and POKEY emulation used in 0.x.y versions of ASAP.
 
 Zdenek Eisenhammer {asapwww!<pg@pinknet.cz>}::
 Testing.
 
-Piotr Fusik {asapwww!<fox@scene.pl>}::
-Development.
-
 Henryk Karpowicz {asapwww!<henkar@poczta.tygrys.net>}::
-CMC player modified for CM3 format.
+CMC routine modified for the CM3 format.
 
 Maciek Konecki {asapwww!<maciusk1@wp.pl>}::
 Porting to C#.
@@ -29,7 +29,7 @@ Perry McFarlane {asapwww!<perry_m@fastmail.fm>}::
 POKEY reverse-engineering.
 
 Kostas Nakos {asapwww!<knakos@gmail.com>}::
-Compilation for Windows CE.
+Windows CE testing.
 
 Mariusz Rozwadowski {asapwww!<ramosc64@o2.pl>}::
 Suggested CMS, CM3 and DLT format support.
@@ -55,4 +55,4 @@ Michal Szpilowski {asapwww!<miker@atari.pl>}::
 Testing.
 
 Grzegorz Zyla {asapwww!<gsunr@poczta.onet.pl>}::
-XBMC plugin compilation and testing.
+XBMC plugin testing.

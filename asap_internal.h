@@ -1,7 +1,7 @@
 /*
- * asap_internal.h - private interface of the ASAP engine
+ * asap_internal.h - private interface of ASAP
  *
- * Copyright (C) 2005-2009  Piotr Fusik
+ * Copyright (C) 2005-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net

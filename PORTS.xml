@@ -272,7 +272,7 @@
 		<interface>command line</interface>
 		<since>2.1.0</since>
 		<status>stable</status>
-		<output>8 or 16-bit, WAV or raw, file or stdout</output>
+		<output>8 or 16-bit, WAV, raw or MP3, file or stdout</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info>
 		<edit-info>yes</edit-info>

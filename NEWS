@@ -1,6 +1,21 @@
 History
 -------
 
+ASAP 2.1.0 (2010-02-02)::
+
+ASAP2WAV has been replaced with asapconv which can additionally
+convert native modules to and from the SAP format, edit SAP tags
+and write MP3 files using http://lame.sourceforge.net/[LAME].
+A plugin for XMPlay has been created.
+The foobar2000 plugin has been updated to foobar2000 1.0.
+Time detection of RMT files has been fixed.
+PLAYER tag is now optional for TYPE D SAP files.
+"File Information" window now includes a better validation.
+Windows Media Player's "Open" now includes ASAP file types.
+WASAP has a progress bar for writing WAV files. Flash player uses DEFSONG.
+Source code has been improved and moved from CVS to Git repository.
+
+
 ASAP 2.0.0 (2009-12-10)::
 
 Windows setup has been created. ASAP has been ported to Flash Player

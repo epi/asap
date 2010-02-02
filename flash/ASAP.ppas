@@ -1,7 +1,7 @@
 /*
  * ASAP.ppas - ActionScript version of ASAP
  *
- * Copyright (C) 2009  Piotr Fusik
+ * Copyright (C) 2009-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -71,7 +71,7 @@ package
 		private const poly17_lookup : ByteArray = new ByteArray();
 		private const memory : ByteArray = new ByteArray();
 
-		public static const VERSION : String = "2.0.0";
+		public static const VERSION : String = "2.1.0";
 
 		public static function parseDuration(s : String) : int
 		{
