@@ -35,6 +35,7 @@
 #define FILE_DESCRIPTION "WASAP - Windows Another Slight Atari Player"
 #define INTERNAL_NAME "wasap"
 #define ORIGINAL_FILENAME "wasap.exe"
+#define FILE_TYPE 1
 
 IDI_APP ICON "wasap/wasap.ico"
 IDI_STOP ICON "wasap/stop.ico"
@@ -99,6 +100,7 @@ IDR_TRAYMENU MENU
 #endif
 #ifndef ORIGINAL_FILENAME
 #  define ORIGINAL_FILENAME INTERNAL_NAME ".dll"
+#  define FILE_TYPE 2
 #endif
 
 #if defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) || defined(XMPLAY)
@@ -232,7 +234,7 @@ FONT 8, "MS Sans Serif"
 	FILEFLAGSMASK 0x3fL
 	FILEFLAGS 0x0L
 	FILEOS 0x40004L
-	FILETYPE 0x1L
+	FILETYPE FILE_TYPE
 	FILESUBTYPE 0x0L
 {
 	BLOCK "StringFileInfo"
