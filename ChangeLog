@@ -1,3 +1,7 @@
+2010-02-10  Piotr Fusik  <fox@scene.pl>
+* win32/xmplay/xmp-asap.c: fixed crash when adding many files
+
+
 2010-02-03  Piotr Fusik  <fox@scene.pl>
 * win32/gui.rc: corrected FILETYPE for DLLs
 

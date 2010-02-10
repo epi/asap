@@ -115,7 +115,6 @@ static BOOL WINAPI ASAP_GetFileInfo(const char *filename, XMPFILE file, float *l
 	int module_len;
 	ASAP_ModuleInfo module_info;
 	module_len = xmpffile->Read(file, module, sizeof(module));
-	xmpffile->Close(file);
 	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
 		return FALSE;
 	if (length != NULL)
@@ -128,13 +127,12 @@ static DWORD WINAPI ASAP_Open(const char *filename, XMPFILE file)
 {
 	byte module[ASAP_MODULE_MAX];
 	int module_len = xmpffile->Read(file, module, sizeof(module));
-	xmpffile->Close(file);
 	if (!ASAP_Load(&asap, filename, module, module_len))
-		return FALSE;
+		return 0;
 	if (strlen(filename) < MAX_PATH - 1)
 		strcpy(current_filename, filename);
 	PlaySong(0);
-	return TRUE;
+	return 2; /* close file */
 }
 
 static void WINAPI ASAP_Close()
