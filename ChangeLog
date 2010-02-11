@@ -1,3 +1,9 @@
+2010-02-11  Piotr Fusik  <fox@scene.pl>
+* win32/bass/bass_asap.c, win32/bass/bass.h, win32/bass/bass.lib,
+  win32/bass/bass-addon.h, win32/Makefile, README, INSTALL, PORTS.xml:
+  BASS add-on
+
+
 2010-02-10  Piotr Fusik  <fox@scene.pl>
 * win32/xmplay/xmp-asap.c: fixed crash when adding many files
 

@@ -295,6 +295,22 @@
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
 		<lang>C</lang>
-		<a href="http://www.un4seen.com/">XMPlay</a>
+		<a href="http://www.un4seen.com/xmplay.html">XMPlay</a>
+	</port>
+	<port name="BASS add-on">
+		<bin>Windows</bin>
+		<platform>Windows</platform>
+		<interface>library add-on</interface>
+		<since>2.1.1</since>
+		<status>stable</status>
+		<output>16-bit sound</output>
+		<subsongs>no</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<lang>C</lang>
+		<a href="http://www.un4seen.com/bass.html">BASS</a>
 	</port>
 </ports>

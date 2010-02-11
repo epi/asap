@@ -39,7 +39,7 @@ all: mingw dsf foo asap.lib asapconv-static-lame.exe
 
 win32: mingw dsf foo xbmc COPYING.txt
 
-mingw: asapconv.exe asapconv-no-lame.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll apokeysnd.dll asapscan.exe libasap.a
+mingw: asapconv.exe asapconv-no-lame.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll asapscan.exe libasap.a
 
 include ../players/Makefile
 
@@ -64,7 +64,7 @@ wasap/wasap-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico was
 
 # Winamp
 
-in_asap.dll: winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o $(COMMON_H) info_dlg.h settings_dlg.h winamp/in2.h winamp/ipc_pe.h winamp/wa_ipc.h
+in_asap.dll: winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o $(COMMON_H) info_dlg.h settings_dlg.h winamp/in2.h winamp/out.h winamp/ipc_pe.h winamp/wa_ipc.h
 	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DWINAMP winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o -lcomdlg32
 
 winamp/in_asap-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
@@ -121,7 +121,7 @@ dshow/asap_dsf.res: gui.rc ../asap.h
 
 # Apollo
 
-ASAP_Apollo.dll: apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o $(COMMON_H) info_dlg.h settings_dlg.h
+ASAP_Apollo.dll: apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o $(COMMON_H) info_dlg.h settings_dlg.h apollo/InputPlugin.h
 	$(ASAP_GPP) -shared -Wl,-subsystem,windows -DAPOLLO apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o -lcomdlg32
 
 ASAP_Apollo-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
@@ -139,11 +139,16 @@ xbmc_asap.dll: ../xbmc/xbmc_asap.c $(COMMON_C) ../xbmc/xbmc_asap.res $(COMMON_H)
 
 # XMPlay
 
-xmp-asap.dll: xmplay/xmp-asap.c $(COMMON_C) info_dlg.c settings_dlg.c xmp-asap-res.o $(COMMON_H) settings_dlg.h
+xmp-asap.dll: xmplay/xmp-asap.c $(COMMON_C) info_dlg.c settings_dlg.c xmp-asap-res.o $(COMMON_H) settings_dlg.h xmplay/xmpin.h xmplay/xmpfunc.h
 	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DXMPLAY xmplay/xmp-asap.c $(COMMON_C) info_dlg.c settings_dlg.c xmp-asap-res.o -lcomdlg32
 
 xmp-asap-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
 	$(WINDRES) -DXMPLAY gui.rc
+
+# BASS
+
+bass_asap.dll: bass/bass_asap.c $(COMMON_C) $(COMMON_H) bass/bass-addon.h bass/bass.h bass/bass.lib
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DBASS bass/bass_asap.c $(COMMON_C) bass/bass.lib
 
 # APokeySound
 
@@ -273,7 +278,7 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-win32.zip \
 		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
-		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll
+		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ../gsplayer/gspasap.dll
 	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz
