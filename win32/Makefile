@@ -147,8 +147,11 @@ xmp-asap-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
 
 # BASS
 
-bass_asap.dll: bass/bass_asap.c $(COMMON_C) $(COMMON_H) bass/bass-addon.h bass/bass.h bass/bass.lib
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DBASS bass/bass_asap.c $(COMMON_C) bass/bass.lib
+bass_asap.dll: bass/bass_asap.c $(COMMON_C) bass_asap-res.o $(COMMON_H) bass/bass-addon.h bass/bass.h bass/bass.lib
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DBASS bass/bass_asap.c $(COMMON_C) bass_asap-res.o bass/bass.lib
+
+bass_asap-res.o: gui.rc ../asap.h
+	$(WINDRES) -DBASS gui.rc
 
 # APokeySound
 

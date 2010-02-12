@@ -90,6 +90,9 @@ IDR_TRAYMENU MENU
 #elif defined(XMPLAY)
 #  define APP_NAME "XMPlay"
 #  define INTERNAL_NAME "xmp-asap"
+#elif defined(BASS)
+#  define INTERNAL_NAME "bass_asap"
+#  define FILE_DESCRIPTION "ASAP add-on for BASS"
 #elif defined(APOKEYSND)
 #  define INTERNAL_NAME "apokeysnd"
 #  define FILE_DESCRIPTION "Another POKEY sound emulator"

@@ -1,3 +1,7 @@
+2010-02-12  Piotr Fusik  <fox@scene.pl>
+* win32/gui.rc, win32/Makefile: VERSIONINFO resource for BASS add-on
+
+
 2010-02-11  Piotr Fusik  <fox@scene.pl>
 * win32/bass/bass_asap.c, win32/bass/bass.h, win32/bass/bass.lib,
   win32/bass/bass-addon.h, win32/Makefile, README, INSTALL, PORTS.xml:
