@@ -21,11 +21,15 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <string.h>
 #include <windows.h>
 
 #include "bass-addon.h"
 
-#define BASS_CTYPE_MUSIC_ASAP  0x1f100 // TODO
+/* ID3 tag doesn't work in AIMP2 because it doesn't call GetTags */
+/* #define SUPPORT_ID3 */
+
+#define BASS_CTYPE_MUSIC_ASAP  0x1f100
 
 #include "asap.h"
 
@@ -39,6 +43,9 @@ typedef struct
 {
 	ASAP_State asap;
 	int duration;
+#ifdef SUPPORT_ID3
+	TAG_ID3 tag;
+#endif
 } ASAPSTREAM;
 
 static void WINAPI ASAP_Free(void *inst)
@@ -53,6 +60,55 @@ static QWORD WINAPI ASAP_GetLength(void *inst, DWORD mode)
 		errorn(BASS_ERROR_NOTAVAIL);
 	noerrorn((stream->duration * (ASAP_SAMPLE_RATE / 100) / 10) << stream->asap.module_info.channels); // assumes 16-bit
 }
+
+#ifdef SUPPORT_ID3
+
+/* two_digits and date_to_year taken from asapconv.c, TODO: put in asap.h */
+static abool two_digits(const char *s)
+{
+	return s[0] >= '0' && s[0] <= '9' && s[1] >= '0' && s[1] <= '9';
+}
+
+/* "DD/MM/YYYY", "MM/YYYY", "YYYY" -> "YYYY" */
+static abool date_to_year(const char *date, char *year)
+{
+	if (!two_digits(date))
+		return FALSE;
+	if (date[2] == '/') {
+		date += 3;
+		if (!two_digits(date))
+			return FALSE;
+		if (date[2] == '/') {
+			date += 3;
+			if (!two_digits(date))
+				return FALSE;
+		}
+	}
+	if (!two_digits(date + 2) || date[4] != '\0')
+		return FALSE;
+	memcpy(year, date, 4);
+	return TRUE;
+}
+
+static const char * WINAPI ASAP_GetTags(void *inst, DWORD tags)
+{
+	ASAPSTREAM *stream = (ASAPSTREAM *) inst;
+	TAG_ID3 *tag;
+	if (tags != BASS_TAG_ID3)
+		return NULL;
+	tag = &stream->tag;
+	memset(tag, 0, sizeof(TAG_ID3));
+	tag->id[0] = 'T';
+	tag->id[1] = 'A';
+	tag->id[2] = 'G';
+	strncpy(tag->title, stream->asap.module_info.name, sizeof(tag->title));
+	strncpy(tag->artist, stream->asap.module_info.author, sizeof(tag->title));
+	date_to_year(stream->asap.module_info.date, tag->year);
+	tag->genre = 52; /* Electronic */
+	return (const char *) tag;
+}
+
+#endif
 
 static void WINAPI ASAP_GetInfo(void *inst, BASS_CHANNELINFO *info)
 {
@@ -87,7 +143,11 @@ static ADDON_FUNCTIONS ASAPfuncs={
 	0,
 	ASAP_Free,
 	ASAP_GetLength,
-	NULL, //ASAP_GetTags,
+#ifdef SUPPORT_ID3
+	ASAP_GetTags,
+#else
+	NULL,
+#endif
 	NULL,
 	ASAP_GetInfo,
 	ASAP_CanSetPosition,
