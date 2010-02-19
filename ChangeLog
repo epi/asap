@@ -1,3 +1,7 @@
+2010-02-19  Piotr Fusik  <fox@scene.pl>
+* win32/setup/license.rtf: updated years
+
+
 2010-02-12  Piotr Fusik  <fox@scene.pl>
 * win32/gui.rc, win32/Makefile: VERSIONINFO resource for BASS add-on
 
