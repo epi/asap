@@ -1,4 +1,6 @@
 2010-02-19  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs, win32/setup/wix_mutex.pl: BASS add-on for AIMP
+
 * win32/setup/license.rtf: updated years
 
 

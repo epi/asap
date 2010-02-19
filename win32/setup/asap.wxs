@@ -128,13 +128,16 @@
 			<!-- handle mutually exclusive file associations, conditions generated with wix_mutex.pl -->
 			<?foreach MUTEXCOND in (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3) OR $in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)));
 (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
-(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
+(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
 (($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3) OR $foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)));
 (($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3) OR $xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
+(($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
 (($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
-(($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
+(($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
 (($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3) OR $xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
-(($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)))?>
+(($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
+(($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
+(($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)))?>
 			<Publish Dialog="MyCustomizeDlg" Control="Next" Event="SpawnDialog" Value="MyManyAssociationsDlg" Order="3">
 				$(var.MUTEXCOND)
 			</Publish>
@@ -187,6 +190,14 @@
 		<Property Id="XMPLAY.EXE">
 			<RegistrySearch Id="xmplay.exe" Root="HKCR" Key="XMPlay\shell\Open\command" Type="file">
 				<FileSearch Name="xmplay.exe" />
+			</RegistrySearch>
+		</Property>
+		<Property Id="AIMP.DIR">
+			<RegistrySearch Id="aimp.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AIMP2" Name="InstallPath" Type="directory" />
+		</Property>
+		<Property Id="AIMP.EXE">
+			<RegistrySearch Id="aimp.exe" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AIMP2" Name="InstallPath" Type="directory">
+				<FileSearch Name="AIMP2.exe" />
 			</RegistrySearch>
 		</Property>
 
@@ -327,6 +338,24 @@
 						</ProgId>
 					</Component>
 				</Directory>
+				<Directory Id="AIMP.DIR" Name="AIMP2">
+					<Directory Id="AIMPPLUG.DIR" Name="PlugIns">
+						<Component Id="bass_asap.dll" Guid="*">
+							<File Id="bass_asap.dll" Name="bass_asap.dll" Source="bass_asap.dll" Checksum="yes" KeyPath="yes" />
+						</Component>
+						<Component Id="aimp_asap.ext" Guid="*">
+							<RegistryValue Root="HKCR" Key="asap.file" Name="aimp2" Type="integer" Value="1" KeyPath="yes" />
+							<ProgId Id="AIMP.ASAP">
+								<Extension Id="sap">
+									<Verb Id="open" Command="Open with AIMP2" TargetProperty="AIMP.EXE" Argument='"%1"' />
+								</Extension>
+								<?foreach EXT in $(var.NATIVE_EXTS)?>
+									<Extension Id="$(var.EXT)" />
+								<?endforeach?>
+							</ProgId>
+						</Component>
+					</Directory>
+				</Directory>
 				<Directory Id="GSP.DIR" Name="GSPlayer">
 					<Component Id="gspasap.dll" Guid="*">
 						<File Id="gspasap.dll" Name="gspasap.dll" Source="gspasap.dll" Checksum="yes" KeyPath="yes" />
@@ -428,6 +457,14 @@
 			<Feature Id="xmp_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) XMPlay." AllowAdvertise="no">
 				<Condition Level="9">XMPLAY.EXE</Condition>
 				<ComponentRef Id="xmp_asap.ext" />
+			</Feature>
+		</Feature>
+		<Feature Id="aimp_asap" Title="AIMP2 plugin" Level="9" ConfigurableDirectory="AIMPPLUG.DIR" Description="Plugin for AIMP2." AllowAdvertise="no">
+			<Condition Level="1">AIMP.DIR</Condition>
+			<ComponentRef Id="bass_asap.dll" />
+			<Feature Id="aimp_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) AIMP2." AllowAdvertise="no">
+				<Condition Level="9">AIMP.EXE</Condition>
+				<ComponentRef Id="aimp_asap.ext" />
 			</Feature>
 		</Feature>
 		<Feature Id="gspasap" Title="GSPlayer plugin" Level="9" ConfigurableDirectory="GSP.DIR" Description="Plugin for GSPlayer (desktop Windows only)." AllowAdvertise="no">
