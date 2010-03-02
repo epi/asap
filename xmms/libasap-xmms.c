@@ -1,7 +1,7 @@
 /*
  * libasap-xmms.c - ASAP plugin for XMMS
  *
- * Copyright (C) 2006-2008  Piotr Fusik
+ * Copyright (C) 2006-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -163,7 +163,7 @@ static void *asap_play_thread(void *arg)
 			continue;
 		}
 		mod.add_vis_pcm(mod.output->written_time(),
-			BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
+			BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_LE,
 			channels, buffered_bytes, buffer);
 		while (thread_run && mod.output->buffer_free() < buffered_bytes)
 			xmms_usleep(20000);
@@ -186,7 +186,7 @@ static void asap_play_file(char *filename)
 	duration = asap.module_info.durations[song];
 	ASAP_PlaySong(&asap, song, duration);
 	channels = asap.module_info.channels;
-	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_NE,
+	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_LE,
 		ASAP_SAMPLE_RATE, channels))
 		return;
 	title = asap_get_title(filename, &asap.module_info);

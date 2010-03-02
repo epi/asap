@@ -1,3 +1,7 @@
+2010-03-02  Piotr Fusik  <fox@scene.pl>
+* xmms/libasap-xmms.c: fix for big endian machines
+
+
 2010-02-19  Piotr Fusik  <fox@scene.pl>
 * win32/bass/bass_asap.c: implemented ID3 tag, unfortunately AIMP2
   doesn't ask for it
