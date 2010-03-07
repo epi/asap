@@ -168,8 +168,8 @@ asapscan.exe: ../asapscan.c $(COMMON_C) $(COMMON_H)
 
 # ASAPShellEx
 
-ASAPShellEx.dll: shellex/ASAPShellEx.cpp $(COMMON_C) ASAPShellEx-res.o $(COMMON_H)
-	$(ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at shellex/ASAPShellEx.cpp $(COMMON_C) ASAPShellEx-res.o -loleaut32 -luuid
+ASAPShellEx.dll: shellex/ASAPShellEx.cpp ../asap.c ASAPShellEx-res.o $(COMMON_H)
+	$(ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at -DASAP_ONLY_INFO shellex/ASAPShellEx.cpp ../asap.c ASAPShellEx-res.o -loleaut32 -luuid
 
 ASAPShellEx-res.o: gui.rc ../asap.h
 	$(WINDRES) -DSHELLEX gui.rc

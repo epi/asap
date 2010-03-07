@@ -1,4 +1,6 @@
 2010-03-07  Piotr Fusik  <fox@scene.pl>
+* asap.c, win32/Makefile: ASAP_ONLY_INFO trims ASAPShellEx.dll from 120k to 40k
+
 * win32/shellex/ASAPShellEx.cpp, win32/Makefile, win32/gui.rc,
   win32/setup/asap.wxs, README, INSTALL: Windows Explorer extension
   to display metadata
