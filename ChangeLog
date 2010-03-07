@@ -1,4 +1,6 @@
 2010-03-07  Piotr Fusik  <fox@scene.pl>
+* win32/dshow/asap_dsf.cpp: fixed memory leak on non-ANSI filename error
+
 * asap.c, asap.h, asapconv.c, win32/bass/bass_asap.c: ASAP_DateToYear()
 
 

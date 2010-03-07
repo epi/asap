@@ -1,7 +1,7 @@
 /*
  * asap_dsf.cpp - ASAP DirectShow source filter
  *
- * Copyright (C) 2008-2009  Piotr Fusik
+ * Copyright (C) 2008-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -314,8 +314,11 @@ public:
 		int cch = lstrlenW(pszFileName) + 1;
 		char *filename = new char[cch * 2];
 		CheckPointer(filename, E_OUTOFMEMORY);
-		if (WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, filename, cch, NULL, NULL) <= 0)
-			return HRESULT_FROM_WIN32(GetLastError());
+		if (WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, filename, cch, NULL, NULL) <= 0) {
+			HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+			delete[] filename;
+			return hr;
+		}
 		BOOL ok = m_pin->Load(filename);
 		delete[] filename;
 		if (!ok)
