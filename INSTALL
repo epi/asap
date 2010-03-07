@@ -142,8 +142,8 @@ make asap-xbmc
 You will get `xbmc_asap-i486-linux.so`.
 
 
-Building asapconv, WASAP, Winamp/GSPlayer/Apollo/XMPlay/BASS plugins, RMT DLL, asapscan and libasap on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building asapconv, WASAP, Winamp/GSPlayer/Apollo/XMPlay/BASS plugins, RMT DLL, asapscan, shell extension and libasap on Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 From the command prompt navigate to the `win32` directory and run:
 --------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ mingw32-make mingw
 
 You should get `asapconv.exe`, `wasap.exe`, `in_asap.dll`, `gspasap.dll`,
 `ASAP_Apollo.dll`, `xmp-asap.dll`, `bass_asap.dll`, `apokeysnd.dll`,
-`asapscan.exe` and `libasap.a`.
+`asapscan.exe`, `ASAPShellEx.dll` and `libasap.a`.
 
 
 Building Windows Media Player plugin and asap.lib on Windows

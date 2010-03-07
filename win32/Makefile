@@ -1,4 +1,4 @@
-VERSION = 2.1.0
+VERSION = 2.1.1
 
 # gcc for most ports
 ASAP_GCC = mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
@@ -39,7 +39,7 @@ all: mingw dsf foo asap.lib asapconv-static-lame.exe
 
 win32: mingw dsf foo xbmc COPYING.txt
 
-mingw: asapconv.exe asapconv-no-lame.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll asapscan.exe libasap.a
+mingw: asapconv.exe asapconv-no-lame.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll asapscan.exe ASAPShellEx.dll libasap.a
 
 include ../players/Makefile
 
@@ -166,6 +166,14 @@ apokeysnd-res.o: gui.rc ../asap.h
 asapscan.exe: ../asapscan.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_GCC) -DASAPSCAN ../asapscan.c $(COMMON_C)
 
+# ASAPShellEx
+
+ASAPShellEx.dll: shellex/ASAPShellEx.cpp $(COMMON_C) ASAPShellEx-res.o $(COMMON_H)
+	$(ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at shellex/ASAPShellEx.cpp $(COMMON_C) ASAPShellEx-res.o -loleaut32 -luuid
+
+ASAPShellEx-res.o: gui.rc ../asap.h
+	$(WINDRES) -DSHELLEX gui.rc
+
 # library
 
 asap.lib: $(COMMON_C) $(COMMON_H)
@@ -281,7 +289,7 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-win32.zip \
 		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
-		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll
+		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ../gsplayer/gspasap.dll
 	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz

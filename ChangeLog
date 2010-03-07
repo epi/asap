@@ -1,4 +1,8 @@
 2010-03-07  Piotr Fusik  <fox@scene.pl>
+* win32/shellex/ASAPShellEx.cpp, win32/Makefile, win32/gui.rc,
+  win32/setup/asap.wxs, README, INSTALL: Windows Explorer extension
+  to display metadata
+
 * win32/dshow/asap_dsf.cpp: fixed memory leak on non-ANSI filename error
 
 * asap.c, asap.h, asapconv.c, win32/bass/bass_asap.c: ASAP_DateToYear()

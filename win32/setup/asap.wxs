@@ -254,6 +254,13 @@
 							<?endforeach?>
 						</ProgId>
 					</Component>
+					<Component Id="ASAPShellEx.dll" Guid="*">
+						<File Id="ASAPShellEx.dll" Name="ASAPShellEx.dll" Source="ASAPShellEx.dll" Checksum="yes" KeyPath="yes">
+							<Class Id="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Context="InprocServer32" Description="ASAP Column Handler" ThreadingModel="both" />
+						</File>
+						<RegistryKey Root="HKCR" Key="Folder\shellex\ColumnHandlers\{5AE26367-B5CF-444D-B163-2CBC99B41287}" Action="createAndRemoveOnUninstall" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" Name="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Column Handler" Type="string" Action="write" />
+					</Component>
 					<Component Id="README_WindowsSetup.html" Guid="*">
 						<File Id="README_WindowsSetup.html" Name="README_WindowsSetup.html" Source="README_WindowsSetup.html" KeyPath="yes" />
 					</Component>
@@ -472,6 +479,9 @@
 		</Feature>
 		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
 			<ComponentRef Id="apokeysnd.dll" />
+		</Feature>
+		<Feature Id="ASAPShellEx" Title="Explorer extension" Level="9" ConfigurableDirectory="ASAP.DIR" Description="Shows metadata (title, author, year, duration, subsongs) in Windows Explorer." AllowAdvertise="no">
+			<ComponentRef Id="ASAPShellEx.dll" />
 		</Feature>
 		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file." AllowAdvertise="no">
 			<ComponentRef Id="README_WindowsSetup.html" />

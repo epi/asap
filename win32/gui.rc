@@ -96,6 +96,9 @@ IDR_TRAYMENU MENU
 #elif defined(APOKEYSND)
 #  define INTERNAL_NAME "apokeysnd"
 #  define FILE_DESCRIPTION "Another POKEY sound emulator"
+#elif defined(SHELLEX)
+#  define INTERNAL_NAME "ASAPShellEx"
+#  define FILE_DESCRIPTION "ASAP Windows Explorer extension"
 #endif
 
 #ifndef FILE_DESCRIPTION
