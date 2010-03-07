@@ -31,8 +31,8 @@ extern "C" {
 /* ASAP version. */
 #define ASAP_VERSION_MAJOR   2
 #define ASAP_VERSION_MINOR   1
-#define ASAP_VERSION_MICRO   0
-#define ASAP_VERSION         "2.1.0"
+#define ASAP_VERSION_MICRO   1
+#define ASAP_VERSION         "2.1.1"
 
 /* Short credits of the ASAP engine. */
 #define ASAP_YEARS           "2005-2010"
@@ -215,6 +215,9 @@ abool ASAP_ChangeExt(char *filename, const char *ext);
    ASAP_GetModuleInfo() returns true on success. */
 abool ASAP_GetModuleInfo(ASAP_ModuleInfo *module_info, const char *filename,
                          const byte module[], int module_len);
+
+/* Extracts year from date. */
+abool ASAP_DateToYear(const char *date, char *year);
 
 /* Loads music data.
    "ast" is the destination structure.

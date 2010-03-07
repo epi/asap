@@ -333,32 +333,6 @@ static FARPROC lame_proc(HMODULE lame_dll, const char *name)
 
 #endif
 
-static abool two_digits(const char *s)
-{
-	return s[0] >= '0' && s[0] <= '9' && s[1] >= '0' && s[1] <= '9';
-}
-
-/* "DD/MM/YYYY", "MM/YYYY", "YYYY" -> "YYYY" */
-static abool date_to_year(const char *date, char *year)
-{
-	if (!two_digits(date))
-		return FALSE;
-	if (date[2] == '/') {
-		date += 3;
-		if (!two_digits(date))
-			return FALSE;
-		if (date[2] == '/') {
-			date += 3;
-			if (!two_digits(date))
-				return FALSE;
-		}
-	}
-	if (!two_digits(date + 2) || date[4] != '\0')
-		return FALSE;
-	memcpy(year, date, 5);
-	return TRUE;
-}
-
 static void convert_to_mp3(const char *input_file, const byte *module, int module_len)
 {
 	static ASAP_State asap;
@@ -410,7 +384,7 @@ static void convert_to_mp3(const char *input_file, const byte *module, int modul
 			id3tag_set_title(lame, asap.module_info.name);
 		if (asap.module_info.author[0] != '\0')
 			id3tag_set_artist(lame, asap.module_info.author);
-		if (date_to_year(asap.module_info.date, year))
+		if (ASAP_DateToYear(asap.module_info.date, year))
 			id3tag_set_year(lame, year);
 		id3tag_set_genre(lame, "Electronic");
 	}

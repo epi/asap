@@ -1,3 +1,7 @@
+2010-03-07  Piotr Fusik  <fox@scene.pl>
+* asap.c, asap.h, asapconv.c, win32/bass/bass_asap.c: ASAP_DateToYear()
+
+
 2010-03-02  Piotr Fusik  <fox@scene.pl>
 * xmms/libasap-xmms.c: fix for big endian machines
 

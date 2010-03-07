@@ -1650,7 +1650,35 @@ FUNC(int, ASAP_Generate, (P(ASAP_State PTR, ast), P(VOIDPTR, buffer), P(int, buf
 	return ASAP_GenerateAt(ast, buffer, 0, buffer_len, format);
 }
 
-#if defined(C) && !defined(ASAP_ONLY_SAP)
+#ifdef C
+
+static abool has_two_digits(const char *s)
+{
+	return s[0] >= '0' && s[0] <= '9' && s[1] >= '0' && s[1] <= '9';
+}
+
+/* "DD/MM/YYYY", "MM/YYYY", "YYYY" -> "YYYY" */
+abool ASAP_DateToYear(const char *date, char *year)
+{
+	if (!has_two_digits(date))
+		return FALSE;
+	if (date[2] == '/') {
+		date += 3;
+		if (!has_two_digits(date))
+			return FALSE;
+		if (date[2] == '/') {
+			date += 3;
+			if (!has_two_digits(date))
+				return FALSE;
+		}
+	}
+	if (!has_two_digits(date + 2) || date[4] != '\0')
+		return FALSE;
+	memcpy(year, date, 5);
+	return TRUE;
+}
+
+#ifndef ASAP_ONLY_SAP
 
 abool ASAP_ChangeExt(char *filename, const char *ext)
 {
@@ -2201,4 +2229,6 @@ int ASAP_Convert(
 	}
 }
 
-#endif /* defined(C) && !defined(ASAP_ONLY_SAP) */
+#endif /* ASAP_ONLY_SAP */
+
+#endif /* C */

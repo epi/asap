@@ -63,33 +63,6 @@ static QWORD WINAPI ASAP_GetLength(void *inst, DWORD mode)
 
 #ifdef SUPPORT_ID3
 
-/* two_digits and date_to_year taken from asapconv.c, TODO: put in asap.h */
-static abool two_digits(const char *s)
-{
-	return s[0] >= '0' && s[0] <= '9' && s[1] >= '0' && s[1] <= '9';
-}
-
-/* "DD/MM/YYYY", "MM/YYYY", "YYYY" -> "YYYY" */
-static abool date_to_year(const char *date, char *year)
-{
-	if (!two_digits(date))
-		return FALSE;
-	if (date[2] == '/') {
-		date += 3;
-		if (!two_digits(date))
-			return FALSE;
-		if (date[2] == '/') {
-			date += 3;
-			if (!two_digits(date))
-				return FALSE;
-		}
-	}
-	if (!two_digits(date + 2) || date[4] != '\0')
-		return FALSE;
-	memcpy(year, date, 4);
-	return TRUE;
-}
-
 static const char * WINAPI ASAP_GetTags(void *inst, DWORD tags)
 {
 	ASAPSTREAM *stream = (ASAPSTREAM *) inst;
@@ -103,7 +76,7 @@ static const char * WINAPI ASAP_GetTags(void *inst, DWORD tags)
 	tag->id[2] = 'G';
 	strncpy(tag->title, stream->asap.module_info.name, sizeof(tag->title));
 	strncpy(tag->artist, stream->asap.module_info.author, sizeof(tag->title));
-	date_to_year(stream->asap.module_info.date, tag->year);
+	ASAP_DateToYear(stream->asap.module_info.date, tag->year);
 	tag->genre = 52; /* Electronic */
 	return (const char *) tag;
 }
