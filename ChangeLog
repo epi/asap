@@ -1,3 +1,7 @@
+2010-03-08  Piotr Fusik  <fox@scene.pl>
+* win32/shellex/ASAPShellEx.cpp: parse once per file not once per property
+
+
 2010-03-07  Piotr Fusik  <fox@scene.pl>
 * asap.c, win32/Makefile: ASAP_ONLY_INFO trims ASAPShellEx.dll from 120k to 40k
 

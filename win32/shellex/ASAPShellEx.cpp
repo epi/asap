@@ -37,6 +37,7 @@ extern "C" const FMTID FMTID_AudioSummaryInformation =
 	{ 0x64440490, 0x4C8B, 0x11D1, { 0x8B, 0x70, 0x08, 0x00, 0x36, 0xB1, 0x1A, 0x03 } };
 #define PIDASI_TIMELENGTH     3
 #define PIDASI_CHANNEL_COUNT  7
+#define SHCDF_UPDATEITEM      1
 /* end missing in MinGW */
 
 #include "asap.h"
@@ -48,9 +49,28 @@ static BOOL g_isXPorLater;
 static const GUID CLSID_ASAPColumnHandler =
 	{ 0x5ae26367, 0xb5cf, 0x444d, { 0xb1, 0x63, 0x2c, 0xbc, 0x99, 0xb4, 0x12, 0x87 } };
 
+class CMyLock
+{
+	PCRITICAL_SECTION m_pLock;
+public:
+	CMyLock(PCRITICAL_SECTION pLock)
+	{
+		m_pLock = pLock;
+		EnterCriticalSection(pLock);
+	}
+	~CMyLock()
+	{
+		LeaveCriticalSection(m_pLock);
+	}
+};
+
 class CASAPColumnHandler : public IColumnProvider
 {
 	LONG m_cRef;
+	CRITICAL_SECTION m_lock;
+	WCHAR m_filename[MAX_PATH];
+	BOOL m_hasInfo;
+	ASAP_ModuleInfo m_info;
 
 	static void SetColumnTitle(SHCOLUMNINFO *psci, LPCWSTR title)
 	{
@@ -73,8 +93,15 @@ class CASAPColumnHandler : public IColumnProvider
 	}
 
 public:
-	CASAPColumnHandler() : m_cRef(1)
+	CASAPColumnHandler() : m_cRef(1), m_hasInfo(FALSE)
 	{
+		InitializeCriticalSection(&m_lock);
+		m_filename[0] = '\0';
+	}
+
+	virtual ~CASAPColumnHandler()
+	{
+		DeleteCriticalSection(&m_lock);
 	}
 
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
@@ -176,43 +203,51 @@ public:
 		if (!ASAP_IsOurExt(ext))
 			return S_FALSE;
 
-		// TODO: cache
-		int cch = lstrlenW(pscd->wszFile) + 1;
-		char *filename = (char *) alloca(cch * 2);
-		if (filename == NULL)
-			return E_OUTOFMEMORY;
-		if (WideCharToMultiByte(CP_ACP, 0, pscd->wszFile, -1, filename, cch, NULL, NULL) <= 0)
-			return HRESULT_FROM_WIN32(GetLastError());
-		HANDLE fh = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-		if (fh == INVALID_HANDLE_VALUE)
-			return S_FALSE;
-		byte module[ASAP_MODULE_MAX];
-		int module_len;
-		BOOL ok = ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) &module_len, NULL);
-		CloseHandle(fh);
-		if (!ok)
-			return S_FALSE;
-		ASAP_ModuleInfo module_info;
-		if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
+		CMyLock lck(&m_lock);
+		if ((pscd->dwFlags & SHCDF_UPDATEITEM) != 0 || lstrcmpW(m_filename, pscd->wszFile) != 0) {
+			lstrcpyW(m_filename, pscd->wszFile);
+			m_hasInfo = FALSE;
+
+			int cch = lstrlenW(pscd->wszFile) + 1;
+			char *filename = (char *) alloca(cch * 2);
+			if (filename == NULL)
+				return E_OUTOFMEMORY;
+			if (WideCharToMultiByte(CP_ACP, 0, pscd->wszFile, -1, filename, cch, NULL, NULL) <= 0)
+				return HRESULT_FROM_WIN32(GetLastError());
+
+			HANDLE fh = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+			if (fh == INVALID_HANDLE_VALUE)
+				return HRESULT_FROM_WIN32(GetLastError());
+			byte module[ASAP_MODULE_MAX];
+			int module_len;
+			if (!ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) &module_len, NULL)) {
+				HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+				CloseHandle(fh);
+				return hr;
+			}
+			CloseHandle(fh);
+			m_hasInfo = ASAP_GetModuleInfo(&m_info, filename, module, module_len);
+		}
+		if (!m_hasInfo)
 			return S_FALSE;
 
 		if (pscid->fmtid == FMTID_SummaryInformation) {
 			if (pscid->pid == PIDSI_TITLE)
-				return SetString(pvarData, module_info.name);
+				return SetString(pvarData, m_info.name);
 			if (pscid->pid == PIDSI_AUTHOR)
-				return SetString(pvarData, module_info.author);
+				return SetString(pvarData, m_info.author);
 		}
 		else if (pscid->fmtid == FMTID_MUSIC) {
 			if (pscid->pid == PIDSI_ARTIST)
-				return SetString(pvarData, module_info.author);
+				return SetString(pvarData, m_info.author);
 			if (pscid->pid == PIDSI_YEAR) {
 				char year[5];
-				return SetString(pvarData, ASAP_DateToYear(module_info.date, year) ? year : "");
+				return SetString(pvarData, ASAP_DateToYear(m_info.date, year) ? year : "");
 			}
 		}
 		else if (pscid->fmtid == FMTID_AudioSummaryInformation) {
 			if (pscid->pid == PIDASI_TIMELENGTH) {
-				int duration = module_info.durations[module_info.default_song];
+				int duration = m_info.durations[m_info.default_song];
 				if (g_isXPorLater) {
 					pvarData->vt = VT_UI8;
 					pvarData->ullVal = 10000ULL * duration;
@@ -229,14 +264,14 @@ public:
 			}
 			if (pscid->pid == PIDASI_CHANNEL_COUNT) {
 				pvarData->vt = VT_INT;
-				pvarData->intVal = module_info.channels;
+				pvarData->intVal = m_info.channels;
 				return S_OK;
 			}
 		}
 		else if (pscid->fmtid == CLSID_ASAPColumnHandler) {
 			if (pscid->pid == 1) {
 				pvarData->vt = VT_INT;
-				pvarData->intVal = module_info.songs;
+				pvarData->intVal = m_info.songs;
 				return S_OK;
 			}
 		}
