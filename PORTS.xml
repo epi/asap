@@ -313,4 +313,19 @@
 		<lang>C</lang>
 		<a href="http://www.un4seen.com/bass.html">BASS</a>
 	</port>
+	<port name="Windows Explorer extension">
+		<bin>Windows</bin>
+		<platform>Windows</platform>
+		<interface>Windows Explorer</interface>
+		<since>2.1.1</since>
+		<status>stable</status>
+		<output>N/A</output>
+		<subsongs>N/A</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>N/A</config-time>
+		<mute-pokey>N/A</mute-pokey>
+		<lang>C, C++</lang>
+	</port>
 </ports>

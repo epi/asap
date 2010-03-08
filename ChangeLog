@@ -1,4 +1,6 @@
 2010-03-08  Piotr Fusik  <fox@scene.pl>
+* PORTS.xml: added Windows Explorer extension
+
 * win32/shellex/ASAPShellEx.cpp: parse once per file not once per property
 
 
