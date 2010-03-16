@@ -98,6 +98,7 @@ typedef struct {
 	int durations[ASAP_SONGS_MAX]; /* lengths of songs, in milliseconds, -1 = indeterminate */
 	abool loops[ASAP_SONGS_MAX];   /* whether songs repeat or not */
 	/* the following technical information should not be used outside ASAP. */
+	abool ntsc;
 	int type;
 	int fastplay;
 	int music;

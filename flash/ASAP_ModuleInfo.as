@@ -1,7 +1,7 @@
 /*
  * ASAP_ModuleInfo.as - file information
  *
- * Copyright (C) 2009  Piotr Fusik
+ * Copyright (C) 2009-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -33,6 +33,7 @@ package
 		public var default_song : int;
 		public const durations : Array = new Array(32);
 		public const loops : Array = new Array(32);
+		internal var ntsc : Boolean;
 		internal var type : int;
 		internal var fastplay : int;
 		internal var music : int;

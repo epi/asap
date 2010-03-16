@@ -1,3 +1,9 @@
+2010-03-16  Piotr Fusik  <fox@scene.pl>
+* acpu.c, apokeysnd.c, asap.c, asap.h, asap_internal.h, asapscan.c, chksap.pl,
+  csharp/ASAP.ppcs, flash/ASAP_ModuleInfo.as, java/ASAP_ModuleInfo.java:
+  support NTSC tag in SAP files
+
+
 2010-03-08  Piotr Fusik  <fox@scene.pl>
 * PORTS.xml: added Windows Explorer extension
 

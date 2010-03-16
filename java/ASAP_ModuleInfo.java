@@ -1,7 +1,7 @@
 /*
  * ASAP_ModuleInfo.java - file information
  *
- * Copyright (C) 2007-2009  Piotr Fusik
+ * Copyright (C) 2007-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -43,6 +43,7 @@ public class ASAP_ModuleInfo
 	/** Whether songs repeat or not. */
 	public final boolean[] loops = new boolean[32];
 
+	boolean ntsc;
 	int type;
 	int fastplay;
 	int music;

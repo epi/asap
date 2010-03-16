@@ -86,6 +86,7 @@ namespace ASAP
 		/// </list></remarks>
 		public readonly bool[] loops = new bool[32];
 
+		internal bool ntsc;
 		internal int type;
 		internal int fastplay;
 		internal int music;

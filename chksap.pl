@@ -154,7 +154,7 @@ The order of tags is of little importance, but making some assumptions
 about it makes it easier to create new tools that process SAP files.
 The canonical order is: first SAP, then AUTHOR, then NAME, then DATE.
 After DATE, the following tags should be used in any order: SONGS, TYPE,
-FASTPLAY and STEREO.  DEFSONG must appear after SONGS.
+FASTPLAY, STEREO and NTSC.  DEFSONG must appear after SONGS.
 The tags that should appear last are: INIT, PLAYER, MUSIC and COVOX,
 in any order.
 
@@ -206,9 +206,9 @@ Two C<0xFF> bytes were not found in the file.
 
 A line of the header does not start with an uppercase tag name.
 
-=item B<unexpected argument of SAP or STEREO>
+=item B<unexpected argument of SAP, STEREO or NTSC>
 
-SAP and STEREO tags should have no argument.
+SAP, STEREO and NTSC tags should have no argument.
 
 =item B<invalid argument of AUTHOR, NAME or DATE>
 
@@ -262,7 +262,7 @@ The same tag appears several times within the header.
 =item B<unknown tag: ...>
 
 Known tags are: SAP, AUTHOR, NAME, DATE, SONGS, DEFSONG, TYPE, FASTPLAY,
-STEREO, INIT, PLAYER, MUSIC, COVOX.
+STEREO, NTSC, INIT, PLAYER, MUSIC, COVOX.
 
 =item B<duplicate FFFF in the binary part>
 
@@ -292,11 +292,11 @@ use Getopt::Long;
 use Pod::Usage;
 use strict;
 
-my $VERSION = '2.0.1';
+my $VERSION = '2.1.1';
 my $asapscan = File::Spec->rel2abs('asapscan');
 my ($check, $fix, $stat) = (0, 0, 0);
 my ($progress, $time, $overwrite_time, $features, $help, $version) = (0, 0, 0, 0, 0, 0);
-my ($total_files, $sap_files, $stereo_files) = (0, 0, 0);
+my ($total_files, $sap_files, $stereo_files, $ntsc_files) = (0, 0, 0, 0);
 my ($total_length, $min_length, $max_length) = (0, 100_000, 0);
 my ($min_filename, $max_filename);
 my ($time_files, $total_millis) = (0, 0);
@@ -443,6 +443,12 @@ sub process($$) {
 					or $fixed{'non-standard order of tags'} = 1;
 				$fatal{'unexpected argument of STEREO'} = 1 if $arg ne '';
 			}
+			elsif ($tag eq 'NTSC') {
+				++$ntsc_files;
+				exists($tags{'DATE'})
+					or $fixed{'non-standard order of tags'} = 1;
+				$fatal{'unexpected argument of NTSC'} = 1 if $arg ne '';
+			}
 			elsif ($tag eq 'INIT' || $tag eq 'PLAYER' || $tag eq 'MUSIC' || $tag eq 'COVOX') {
 				exists($tags{'TYPE'})
 					or $fixed{'non-standard order of tags'} = 1;
@@ -562,6 +568,7 @@ sub process($$) {
 						print F "DEFSONG $tags{'DEFSONG'}\x0D\x0A"
 							if exists($tags{'DEFSONG'});
 						print F "STEREO\x0D\x0A" if exists($tags{'STEREO'});
+						print F "NTSC\x0D\x0A" if exists($tags{'NTSC'});
 						for ('TYPE', 'FASTPLAY', 'INIT', 'MUSIC', 'PLAYER', 'COVOX') {
 							print F "$_ $tags{$_}\x0D\x0A" if exists($tags{$_});
 						}
@@ -678,6 +685,7 @@ elsif ($stat) {
 	printf "\nFiles tagged with TIME:       $time_files (%d hours %d minutes %d seconds)\n",
 		int($total_millis / 3600_000), int($total_millis / 60_000 % 60), $total_millis / 1000 % 60;
 	print "\nStereo SAP files:             $stereo_files\n";
+	print "NTSC SAP files:               $ntsc_files\n";
 	for (sort keys %types) {
 		printf "Type %s:   mono:%4d   stereo:%4d   total:%4d\n", $_,
 			$types{$_}{'mono'}, $types{$_}{'stereo'}, $types{$_}{'mono'} + $types{$_}{'stereo'};

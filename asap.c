@@ -34,6 +34,8 @@
 FUNC(int, ASAP_GetByte, (P(ASAP_State PTR, ast), P(int, addr)))
 {
 	switch (addr & 0xff0f) {
+	case 0xd014:
+		return ast _ module_info.ntsc ? 0xf : 1;
 	case 0xd20a:
 		return PokeySound_GetRandom(ast, addr, ast _ cycle);
 	case 0xd20e:
@@ -1086,6 +1088,7 @@ PRIVATE FUNC(abool, parse_sap_header, (
 	V(int, duration_index) = 0;
 	if (!has_string_at(module, 0, "SAP\r\n"))
 		return FALSE;
+	module_info _ fastplay = -1;
 	module_index = 5;
 	while (UBYTE(module[module_index]) != 0xff) {
 		if (module_index + 8 >= module_len)
@@ -1115,6 +1118,8 @@ PRIVATE FUNC(abool, parse_sap_header, (
 		}
 		else if (TAG_IS("STEREO\r"))
 			module_info _ channels = 2;
+		else if (TAG_IS("NTSC\r"))
+			module_info _ ntsc = TRUE;
 		else if (TAG_IS("TIME ")) {
 			V(int, i);
 #ifdef C
@@ -1193,6 +1198,10 @@ PRIVATE FUNC(abool, parse_sap_header, (
 	default:
 		return FALSE;
 	}
+	if (module_info _ fastplay < 0)
+		module_info _ fastplay = module_info _ ntsc ? 262 : 312;
+	else if (module_info _ ntsc && module_info _ fastplay > 262)
+		return FALSE;
 	if (UBYTE(module[module_index + 1]) != 0xff)
 		return FALSE;
 	module_info _ header_len = module_index;
@@ -1309,6 +1318,7 @@ PRIVATE FUNC(abool, parse_file, (
 		module_info _ durations[i] = -1;
 		module_info _ loops[i] = FALSE;
 	}
+	module_info _ ntsc = FALSE;
 	module_info _ fastplay = 312;
 	module_info _ music = -1;
 	module_info _ init = -1;
@@ -1369,7 +1379,7 @@ FUNC(abool, ASAP_Load, (
 
 FUNC(void, ASAP_DetectSilence, (P(ASAP_State PTR, ast), P(int, seconds)))
 {
-	ast _ silence_cycles = seconds * ASAP_MAIN_CLOCK;
+	ast _ silence_cycles = seconds * ASAP_MAIN_CLOCK(ast);
 }
 
 PRIVATE FUNC(void, call_6502, (P(ASAP_State PTR, ast), P(int, addr), P(int, max_scanlines)))

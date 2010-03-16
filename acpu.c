@@ -1,7 +1,7 @@
 /*
  * acpu.c - another 6502 CPU emulator
  *
- * Copyright (C) 2007-2009  Piotr Fusik
+ * Copyright (C) 2007-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -301,7 +301,7 @@ FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 		cycle = ast _ cycle;
 		if (cycle >= ast _ nearest_event_cycle) {
 			if (cycle >= ast _ next_scanline_cycle) {
-				if (++ast _ scanline_number == 312)
+				if (++ast _ scanline_number == (ast _ module_info.ntsc ? 262 : 312))
 					ast _ scanline_number = 0;
 				ast _ cycle = cycle += 9;
 				ast _ next_scanline_cycle += 114;
@@ -352,7 +352,7 @@ FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 		case 0xb2:
 		case 0xd2:
 		case 0xf2:
-			ast _ scanline_number = (ast _ scanline_number + scanlines - 1) % 312;
+			ast _ scanline_number = (ast _ scanline_number + scanlines - 1) % (ast _ module_info.ntsc ? 262 : 312);
 			scanlines = 1;
 			ast _ cycle = cycle_limit;
 			break;
