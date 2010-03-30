@@ -42,6 +42,7 @@ ASAP includes the following programs:
 - experimental JScript version of ASAP2WAV running in Windows Script Host {asapjavascript=}
 - experimental JavaScript version of ASAP2WAV running in Firefox {asapjavascript=}
 - Flash player - for web pages {asapflash=}{asapwww?(see link:flash.html[online demo])}
+- asapplay - simple command-line player in C#
 
 {asapports}The summary of the differences between the above versions is in link:PORTS.xml[this table].
 

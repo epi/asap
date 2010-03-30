@@ -2,12 +2,15 @@ CSC = csc -nologo -o+ -out:$@
 PP = cpp -C -P -I..
 NDOC = "C:/Program Files/NDoc3/bin/NDoc3Console.exe"
 
-all: asap2wav.exe
+all: asap2wav.exe asapplay.exe
 
 include ../players/Makefile
 
 asap2wav.exe: asap2wav.cs ASAP.cs
 	$(CSC) asap2wav.cs ASAP.cs
+
+asapplay.exe: asapplay.cs ASAP.cs
+	$(CSC) asapplay.cs ASAP.cs
 
 ASAP.cs: ASAP.ppcs ../asap.c ../acpu.c ../apokeysnd.c ../asap.h ../asap_internal.h ../anylang.h ../players.h
 	$(PP) ASAP.ppcs > $@
@@ -23,6 +26,6 @@ doc/ASAP.dll: ASAP.cs
 	$(CSC) -t:library -doc:doc/ASAP.xml ASAP.cs
 
 clean:
-	rm -rf asap2wav.exe ASAP.cs doc
+	rm -rf asap2wav.exe asapplay.exe ASAP.cs doc
 
 .DELETE_ON_ERROR:

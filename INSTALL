@@ -219,8 +219,8 @@ This should produce `asap2wav.jar`, `asap_applet.jar`, `asap_midlet.jar`
 and `asap_midlet.jad`.
 
 
-Building C# ASAP2WAV on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building C# ASAP2WAV and asapplay on Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You need .NET Framework, of course.
 
@@ -229,7 +229,7 @@ From the command prompt navigate to the `csharp` directory and run:
 mingw32-make
 --------------------------------------------------------------------------------
 
-This should produce `asap2wav.exe`.
+This should produce `asap2wav.exe` and `asapplay.exe`.
 
 
 Building the XBMC plugin on Windows
