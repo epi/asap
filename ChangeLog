@@ -1,3 +1,8 @@
+2010-04-22  Piotr Fusik  <fox@scene.pl>
+* win32/shellex/ASAPShellEx.cpp, win32/Makefile:
+  initial implementation for Windows Vista and 7
+
+
 2010-03-30  Piotr Fusik  <fox@scene.pl>
 * csharp/asapplay.cs, csharp/Makefile, INSTALL, README, PORTS.xml:
   simple command-line player in C#
