@@ -112,7 +112,8 @@ static const CMyPropertyDef g_propertyDefs[] = {
 	{ { FMTID_MUSIC, PIDSI_YEAR }, 4, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, L"Year" },
 	{ { FMTID_AudioSummaryInformation, PIDASI_TIMELENGTH }, 8, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, L"Duration" },
 	{ { FMTID_AudioSummaryInformation, PIDASI_CHANNEL_COUNT }, 9, SHCOLSTATE_TYPE_INT | SHCOLSTATE_SLOW, L"Channels" },
-	{ { CLSID_ASAPMetadataHandler, 1 }, 8, SHCOLSTATE_TYPE_INT | SHCOLSTATE_SLOW, L"Subsongs" }
+	{ { CLSID_ASAPMetadataHandler, 1 }, 8, SHCOLSTATE_TYPE_INT | SHCOLSTATE_SLOW, L"Subsongs" },
+	{ { CLSID_ASAPMetadataHandler, 2 }, 8, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, L"PAL/NTSC" }
 };
 #define N_PROPERTYDEFS (sizeof(g_propertyDefs) / sizeof(g_propertyDefs[0]))
 
@@ -235,6 +236,8 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 				pvarData->intVal = m_info.songs;
 				return S_OK;
 			}
+			if (pscid->pid == 2)
+				return SetString(pvarData, m_info.ntsc ? "NTSC" : "PAL");
 		}
 		return S_FALSE;
 	}

@@ -1,4 +1,6 @@
 2010-04-22  Piotr Fusik  <fox@scene.pl>
+* win32/shellex/ASAPShellEx.cpp: added "PAL/NTSC"
+
 * win32/shellex/ASAPShellEx.cpp, win32/Makefile:
   initial implementation for Windows Vista and 7
 
