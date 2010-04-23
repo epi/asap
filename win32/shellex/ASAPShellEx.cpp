@@ -79,6 +79,10 @@ DECLARE_INTERFACE_(IPropertyStore,IUnknown)
 
 #include "asap.h"
 
+static const char extensions[][5] =
+	{ ".sap", ".cmc", ".cm3", ".cmr", ".cms", ".dmc", ".dlt", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2" };
+#define N_EXTS (int) (sizeof(extensions) / sizeof(extensions[0]))
+
 static HINSTANCE g_hDll;
 static enum { WINDOWS_OLD, WINDOWS_XP, WINDOWS_VISTA } g_windowsVer;
 	
@@ -469,16 +473,20 @@ STDAPI DllRegisterServer(void)
 	if (g_windowsVer == WINDOWS_VISTA) {
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", 0, KEY_WRITE, &hk1) != ERROR_SUCCESS)
 			return E_FAIL;
-		if (RegCreateKeyEx(hk1, ".sap", 0, NULL, 0, KEY_WRITE, NULL, &hk2, NULL) != ERROR_SUCCESS) {
-			RegCloseKey(hk1);
-			return E_FAIL;
+		for (int i = 0; i < N_EXTS; i++) {
+			if (RegCreateKeyEx(hk1, extensions[i], 0, NULL, 0, KEY_WRITE, NULL, &hk2, NULL) != ERROR_SUCCESS) {
+				RegCloseKey(hk1);
+				return E_FAIL;
+			}
+			static const char CLSID_ASAPMetadataHandler_str2[] = CLSID_ASAPMetadataHandler_str;
+			if (RegSetValueEx(hk2, NULL, 0, REG_SZ, (CONST BYTE *) CLSID_ASAPMetadataHandler_str2, sizeof(CLSID_ASAPMetadataHandler_str2)) != ERROR_SUCCESS) {
+				RegCloseKey(hk2);
+				RegCloseKey(hk1);
+				return E_FAIL;
+			}
+			RegCloseKey(hk2);
 		}
-		static const char CLSID_ASAPMetadataHandler_str2[] = CLSID_ASAPMetadataHandler_str;
-		LONG r = RegSetValueEx(hk2, NULL, 0, REG_SZ, (CONST BYTE *) CLSID_ASAPMetadataHandler_str2, sizeof(CLSID_ASAPMetadataHandler_str2));
-		RegCloseKey(hk2);
 		RegCloseKey(hk1);
-		if (r != ERROR_SUCCESS)
-			return E_FAIL;
 	}
 	else {
 		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, "Folder\\shellex\\ColumnHandlers\\" CLSID_ASAPMetadataHandler_str, 0, NULL, 0, KEY_WRITE, NULL, &hk1, NULL) != ERROR_SUCCESS)
@@ -504,7 +512,11 @@ STDAPI DllUnregisterServer(void)
 		RegCloseKey(hk1);
 	}
 	if (g_windowsVer == WINDOWS_VISTA) {
-		RegDeleteKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers\\.sap");
+		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", 0, DELETE, &hk1) == ERROR_SUCCESS) {
+			for (int i = 0; i < N_EXTS; i++)
+				RegDeleteKey(hk1, extensions[i]);
+			RegCloseKey(hk1);
+		}
 	}
 	else
 		RegDeleteKey(HKEY_CLASSES_ROOT, "Folder\\shellex\\ColumnHandlers\\" CLSID_ASAPMetadataHandler_str);
