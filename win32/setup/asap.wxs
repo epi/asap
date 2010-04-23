@@ -256,10 +256,19 @@
 					</Component>
 					<Component Id="ASAPShellEx.dll" Guid="*">
 						<File Id="ASAPShellEx.dll" Name="ASAPShellEx.dll" Source="ASAPShellEx.dll" Checksum="yes" KeyPath="yes">
-							<Class Id="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Context="InprocServer32" Description="ASAP Column Handler" ThreadingModel="both" />
+							<Class Id="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Context="InprocServer32" Description="ASAP Metadata Handler" ThreadingModel="both" />
 						</File>
-						<RegistryKey Root="HKCR" Key="Folder\shellex\ColumnHandlers\{5AE26367-B5CF-444D-B163-2CBC99B41287}" Action="createAndRemoveOnUninstall" />
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" Name="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Column Handler" Type="string" Action="write" />
+					</Component>
+					<Component Id="ASAPShellExXP.reg" Guid="323D0FD9-B7D9-419F-B78D-AA646659DC01">
+						<Condition>Installed OR VersionNT &lt; 600</Condition>
+						<RegistryValue Root="HKCR" Key="Folder\shellex\ColumnHandlers\{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Column Handler" Type="string" Action="write" KeyPath="yes" />
+					</Component>
+					<Component Id="ASAPShellExVista.reg" Guid="93C86662-AA18-493C-9384-C0671B675BC4">
+						<Condition>Installed OR VersionNT &gt;= 600</Condition>
+						<?foreach EXT in $(var.ASAP_EXTS)?>
+							<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\PropertySystem\PropertyHandlers\.$(var.EXT)" Value="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Type="string" Action="write" />
+						<?endforeach?>
 					</Component>
 					<Component Id="README_WindowsSetup.html" Guid="*">
 						<File Id="README_WindowsSetup.html" Name="README_WindowsSetup.html" Source="README_WindowsSetup.html" KeyPath="yes" />
@@ -480,8 +489,10 @@
 		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
 			<ComponentRef Id="apokeysnd.dll" />
 		</Feature>
-		<Feature Id="ASAPShellEx" Title="Explorer extension" Level="9" ConfigurableDirectory="ASAP.DIR" Description="Shows metadata (title, author, year, duration, subsongs) in Windows Explorer." AllowAdvertise="no">
+		<Feature Id="ASAPShellEx" Title="Windows Explorer extension" Level="9" ConfigurableDirectory="ASAP.DIR" Description="Shows metadata (title, author, year, duration, subsongs) in Windows Explorer." AllowAdvertise="no">
 			<ComponentRef Id="ASAPShellEx.dll" />
+			<ComponentRef Id="ASAPShellExXP.reg" />
+			<ComponentRef Id="ASAPShellExVista.reg" />
 		</Feature>
 		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file." AllowAdvertise="no">
 			<ComponentRef Id="README_WindowsSetup.html" />

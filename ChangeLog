@@ -1,4 +1,6 @@
 2010-04-23  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs: install the shell extension on Vista and 7
+
 * win32/shellex/ASAPShellEx.cpp: register for all supported file types
 
 
