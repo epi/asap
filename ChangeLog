@@ -1,3 +1,7 @@
+2010-04-26  Piotr Fusik  <fox@scene.pl>
+* win32/shellex/ASAPShellEx.cpp: implemented DllCanUnloadNow
+
+
 2010-04-23  Piotr Fusik  <fox@scene.pl>
 * win32/setup/asap.wxs: install the shell extension on Vista and 7
 

@@ -84,8 +84,19 @@ static const char extensions[][5] =
 #define N_EXTS (int) (sizeof(extensions) / sizeof(extensions[0]))
 
 static HINSTANCE g_hDll;
+static LONG g_cRef = 0;
 static enum { WINDOWS_OLD, WINDOWS_XP, WINDOWS_VISTA } g_windowsVer;
-	
+
+static void DllAddRef(void)
+{
+	InterlockedIncrement(&g_cRef);
+}
+
+static void DllRelease(void)
+{
+	InterlockedDecrement(&g_cRef);
+}
+
 #define CLSID_ASAPMetadataHandler_str "{5AE26367-B5CF-444D-B163-2CBC99B41287}"
 static const GUID CLSID_ASAPMetadataHandler =
 	{ 0x5ae26367, 0xb5cf, 0x444d, { 0xb1, 0x63, 0x2c, 0xbc, 0x99, 0xb4, 0x12, 0x87 } };
@@ -249,6 +260,7 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 public:
 	CASAPMetadataHandler() : m_cRef(1), m_hasInfo(FALSE)
 	{
+		DllAddRef();
 		InitializeCriticalSection(&m_lock);
 		m_filename[0] = '\0';
 	}
@@ -256,6 +268,7 @@ public:
 	virtual ~CASAPMetadataHandler()
 	{
 		DeleteCriticalSection(&m_lock);
+		DllRelease();
 	}
 
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
@@ -396,6 +409,7 @@ public:
 	{
 		if (riid == IID_IUnknown || riid == IID_IClassFactory) {
 			*ppv = (IClassFactory *) this;
+			DllAddRef();
 			return S_OK;
 		}
 		*ppv = NULL;
@@ -404,11 +418,13 @@ public:
 
 	STDMETHODIMP_(ULONG) AddRef()
 	{
-		return 1;
+		DllAddRef();
+		return 2;
 	}
 
 	STDMETHODIMP_(ULONG) Release()
 	{
+		DllRelease();
 		return 1;
 	}
 
@@ -427,7 +443,11 @@ public:
 
 	STDMETHODIMP LockServer(BOOL fLock)
 	{
-		return E_FAIL;
+		if (fLock)
+			DllAddRef();
+		else
+			DllRelease();
+		return S_OK;
 	};
 };
 
@@ -529,11 +549,15 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 {
 	if (ppv == NULL)
 		return E_INVALIDARG;
-	if (rclsid == CLSID_ASAPMetadataHandler && riid == IID_IClassFactory) {
+	if (rclsid == CLSID_ASAPMetadataHandler) {
 		static CASAPMetadataHandlerFactory g_ClassFactory;
-		*ppv = &g_ClassFactory;
-		return S_OK;
+		return g_ClassFactory.QueryInterface(riid, ppv);
 	}
 	*ppv = NULL;
 	return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+STDAPI DllCanUnloadNow(void)
+{
+    return g_cRef == 0 ? S_OK : S_FALSE;
 }
