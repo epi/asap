@@ -23,7 +23,7 @@
 
 /* There are two separate implementations for different Windows versions:
    Column Handler (IColumnProvider) works in Windows XP and 2003 (probably 2000 too and maybe 98).
-   Property Handler (IInitializeWithStream+IPropertyStore) works in Windows Vista and 7. */
+   Property Handler (IInitializeWithStream+IPropertyStore+IPropertyStoreCapabilities) works in Windows Vista and 7. */
 
 #include <malloc.h>
 #include <stdio.h>
@@ -73,6 +73,18 @@ DECLARE_INTERFACE_(IPropertyStore,IUnknown)
 	STDMETHOD(GetValue)(THIS_ REFPROPERTYKEY key, PROPVARIANT *pv) PURE;
 	STDMETHOD(SetValue)(THIS_ REFPROPERTYKEY key, REFPROPVARIANT propvar) PURE;
 	STDMETHOD(Commit)(THIS) PURE;
+};
+#undef INTERFACE
+
+static const IID IID_IPropertyStoreCapabilities =
+    { 0xc8e2d566, 0x186e, 0x4d49, { 0xbf, 0x41, 0x69, 0x09, 0xea, 0xd5, 0x6a, 0xcc } };
+#define INTERFACE IPropertyStoreCapabilities
+DECLARE_INTERFACE_(IPropertyStoreCapabilities,IUnknown)
+{
+	STDMETHOD(QueryInterface)(THIS_ REFIID,PVOID*) PURE;
+	STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+	STDMETHOD_(ULONG,Release)(THIS) PURE;
+	STDMETHOD(IsPropertyWritable)(THIS_ REFPROPERTYKEY key) PURE;
 };
 #undef INTERFACE
 
@@ -148,17 +160,19 @@ public:
 	}
 };
 
-class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPropertyStore
+class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPropertyStore, IPropertyStoreCapabilities
 {
 	LONG m_cRef;
 	CRITICAL_SECTION m_lock;
 	WCHAR m_filename[MAX_PATH];
 	BOOL m_hasInfo;
+	BOOL m_editable;
 	ASAP_ModuleInfo m_info;
 
 	HRESULT LoadFile(LPCWSTR wszFile, IStream *pstream)
 	{
 		m_hasInfo = FALSE;
+		m_editable = FALSE;
 
 		int cch = lstrlenW(wszFile) + 1;
 		char *filename = (char *) alloca(cch * 2);
@@ -187,6 +201,8 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 		}
 
 		m_hasInfo = ASAP_GetModuleInfo(&m_info, filename, module, module_len);
+		if (m_hasInfo && ASAP_CanSetModuleInfo(filename))
+			m_editable = TRUE;
 		return S_OK;
 	}
 
@@ -259,7 +275,7 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 	}
 
 public:
-	CASAPMetadataHandler() : m_cRef(1), m_hasInfo(FALSE)
+	CASAPMetadataHandler() : m_cRef(1), m_hasInfo(FALSE), m_editable(FALSE)
 	{
 		DllAddRef();
 		InitializeCriticalSection(&m_lock);
@@ -291,6 +307,12 @@ public:
 			AddRef();
 			return S_OK;
 		}
+		if (riid == IID_IPropertyStoreCapabilities)
+		{
+			*ppv = (IPropertyStoreCapabilities *) this;
+			AddRef();
+			return S_OK;
+		}
 		*ppv = NULL;
 		return E_NOINTERFACE;
 	}
@@ -308,7 +330,7 @@ public:
 		return r;
 	}
 
-	/* IColumnProvider */
+	// IColumnProvider
 
 	STDMETHODIMP Initialize(LPCSHCOLUMNINIT psci)
 	{
@@ -349,7 +371,7 @@ public:
 		return GetData(pscid, pvarData);
 	}
 
-	/* IInitializeWithStream */
+	// IInitializeWithStream
 
 	STDMETHODIMP Initialize(IStream *pstream, DWORD grfMode)
 	{
@@ -363,7 +385,7 @@ public:
 		return hr;
 	}
 
-	/* IPropertyStore */
+	// IPropertyStore
 
 	STDMETHODIMP GetCount(DWORD *cProps)
 	{
@@ -400,6 +422,27 @@ public:
 	STDMETHODIMP Commit(void)
 	{
 		return E_NOTIMPL;
+	}
+
+	// IPropertyStoreCapabilities
+
+	STDMETHODIMP IsPropertyWritable(REFPROPERTYKEY key)
+	{
+		if (!m_editable)
+			return S_FALSE;
+		if (key->fmtid == FMTID_SummaryInformation) {
+			if (key->pid == PIDSI_TITLE)
+				return S_OK;
+			if (key->pid == PIDSI_AUTHOR)
+				return S_OK;
+		}
+		else if (key->fmtid == FMTID_MUSIC) {
+			if (key->pid == PIDSI_ARTIST)
+				return S_OK;
+			if (key->pid == PIDSI_YEAR)
+				return S_OK;
+		}
+		return S_FALSE;
 	}
 };
 

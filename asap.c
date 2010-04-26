@@ -1702,12 +1702,6 @@ abool ASAP_ChangeExt(char *filename, const char *ext)
 	return TRUE;
 }
 
-abool ASAP_CanSetModuleInfo(const char *filename)
-{
-	int ext = get_packed_ext(filename);
-	return ext == ASAP_EXT('S', 'A', 'P');
-}
-
 static byte *put_string(byte *dest, const char *str)
 {
 	while (*str != '\0')
@@ -2240,6 +2234,12 @@ int ASAP_Convert(
 #endif /* ASAP_ONLY_INFO */
 
 #ifdef C
+
+abool ASAP_CanSetModuleInfo(const char *filename)
+{
+	int ext = get_packed_ext(filename);
+	return ext == ASAP_EXT('S', 'A', 'P');
+}
 
 static abool has_two_digits(const char *s)
 {
