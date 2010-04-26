@@ -29,6 +29,7 @@
 #include <stdio.h>
 #define _WIN32_IE 0x500
 #include <shlobj.h>
+#include <shlwapi.h>
 
 /* missing in MinGW */
 
@@ -560,4 +561,37 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 STDAPI DllCanUnloadNow(void)
 {
     return g_cRef == 0 ? S_OK : S_FALSE;
+}
+
+static HRESULT DoPropertySchema(LPCSTR funcName)
+{
+	HRESULT hr = CoInitialize(NULL);
+	if (SUCCEEDED(hr)) {
+		WCHAR szSchemaPath[MAX_PATH];
+		hr = E_FAIL;
+		if (GetModuleFileNameW(g_hDll, szSchemaPath, MAX_PATH)
+		 && PathRemoveFileSpecW(szSchemaPath)
+		 && PathAppendW(szSchemaPath, L"ASAPShellEx.propdesc")) {
+			HMODULE propsysDll = LoadLibrary("propsys.dll");
+			if (propsysDll != NULL) {
+				typedef HRESULT STDAPICALLTYPE (*FuncType)(PCWSTR);
+				FuncType func = (FuncType) GetProcAddress(propsysDll, funcName);
+				if (func != NULL)
+					hr = func(szSchemaPath);
+				FreeLibrary(propsysDll);
+			}
+		}
+		CoUninitialize();
+	}
+	return hr;
+}
+
+STDAPI InstallPropertySchema(void)
+{
+	return DoPropertySchema("PSRegisterPropertySchema");
+}
+
+STDAPI UninstallPropertySchema(void)
+{
+	return DoPropertySchema("PSUnregisterPropertySchema");
 }

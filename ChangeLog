@@ -1,4 +1,8 @@
 2010-04-26  Piotr Fusik  <fox@scene.pl>
+* win32/shellex/ASAPShellEx.cpp, win32/shellex/ASAPShellEx.propdesc,
+  win32/setup/asap.wxs, win32/Makefile:
+  support Subsongs and PAL/NTSC on Windows Vista and 7
+
 * win32/shellex/ASAPShellEx.cpp: implemented DllCanUnloadNow
 
 

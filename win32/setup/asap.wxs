@@ -260,12 +260,16 @@
 						</File>
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" Name="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Column Handler" Type="string" Action="write" />
 					</Component>
+					<Component Id="ASAPShellEx.propdesc" Guid="*">
+						<Condition>VersionNT &gt;= 600</Condition>
+						<File Id="ASAPShellEx.propdesc" Name="ASAPShellEx.propdesc" Source="shellex\ASAPShellEx.propdesc" KeyPath="yes" />
+					</Component>
 					<Component Id="ASAPShellExXP.reg" Guid="323D0FD9-B7D9-419F-B78D-AA646659DC01">
-						<Condition>Installed OR VersionNT &lt; 600</Condition>
+						<Condition>VersionNT &lt; 600</Condition>
 						<RegistryValue Root="HKCR" Key="Folder\shellex\ColumnHandlers\{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Column Handler" Type="string" Action="write" KeyPath="yes" />
 					</Component>
 					<Component Id="ASAPShellExVista.reg" Guid="93C86662-AA18-493C-9384-C0671B675BC4">
-						<Condition>Installed OR VersionNT &gt;= 600</Condition>
+						<Condition>VersionNT &gt;= 600</Condition>
 						<?foreach EXT in $(var.ASAP_EXTS)?>
 							<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\PropertySystem\PropertyHandlers\.$(var.EXT)" Value="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Type="string" Action="write" />
 						<?endforeach?>
@@ -491,6 +495,7 @@
 		</Feature>
 		<Feature Id="ASAPShellEx" Title="Windows Explorer extension" Level="9" ConfigurableDirectory="ASAP.DIR" Description="Shows metadata (title, author, year, duration, subsongs) in Windows Explorer." AllowAdvertise="no">
 			<ComponentRef Id="ASAPShellEx.dll" />
+			<ComponentRef Id="ASAPShellEx.propdesc" />
 			<ComponentRef Id="ASAPShellExXP.reg" />
 			<ComponentRef Id="ASAPShellExVista.reg" />
 		</Feature>
@@ -505,7 +510,12 @@
 			<ComponentRef Id="uninstall.lnk" />
 		</Feature>
 
+		<CustomAction Id="InstallPropertySchema" DllEntry="InstallPropertySchema" FileKey="ASAPShellEx.dll" Execute="deferred" Impersonate="no" Return="check" />
+		<CustomAction Id="UninstallPropertySchema" DllEntry="UninstallPropertySchema" FileKey="ASAPShellEx.dll" Execute="deferred" Impersonate="no" Return="check" />
+
 		<InstallExecuteSequence>
+			<Custom Action="UninstallPropertySchema" After="SelfUnregModules">$ASAPShellEx.propdesc = 2</Custom>
+			<Custom Action="InstallPropertySchema" After="SelfRegModules">$ASAPShellEx.propdesc = 3</Custom>
 			<RemoveExistingProducts After="InstallFinalize" />
 		</InstallExecuteSequence>
 
