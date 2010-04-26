@@ -272,6 +272,7 @@
 						<Condition>VersionNT &gt;= 600</Condition>
 						<?foreach EXT in $(var.ASAP_EXTS)?>
 							<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\PropertySystem\PropertyHandlers\.$(var.EXT)" Value="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Type="string" Action="write" />
+							<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Explorer\KindMap" Name=".$(var.EXT)" Value="music" Type="string" Action="write" />
 							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="InfoTip" Value="prop:System.ItemType;System.Size;System.Media.Duration" Type="string" Action="write" />
 							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="ExtendedTileInfo" Value="prop:System.ItemType;System.Size;System.Media.Duration" Type="string" Action="write" />
 							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="PreviewDetails" Value="prop:*System.Title;*System.Media.Duration;*System.Size;*System.Author;*System.Media.Year" Type="string" Action="write" />
