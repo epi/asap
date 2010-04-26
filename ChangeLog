@@ -1,4 +1,6 @@
 2010-04-26  Piotr Fusik  <fox@scene.pl>
+* win32/setup/asap.wxs: display properties provided by Vista/7 shell extension
+  
 * win32/shellex/ASAPShellEx.cpp, asap.c:
   specify that only Author/Artist, Title and Year are editable
 
