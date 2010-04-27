@@ -1684,7 +1684,15 @@ FUNC(int, ASAP_Generate, (P(ASAP_State PTR, ast), P(VOIDPTR, buffer), P(int, buf
 	return ASAP_GenerateAt(ast, buffer, 0, buffer_len, format);
 }
 
-#if defined(C) && !defined(ASAP_ONLY_SAP)
+#endif /* ASAP_ONLY_INFO */
+
+#ifdef C
+
+abool ASAP_CanSetModuleInfo(const char *filename)
+{
+	int ext = get_packed_ext(filename);
+	return ext == ASAP_EXT('S', 'A', 'P');
+}
 
 abool ASAP_ChangeExt(char *filename, const char *ext)
 {
@@ -1740,21 +1748,6 @@ static byte *put_dec_tag(byte *dest, const char *tag, int value)
 {
 	dest = put_string(dest, tag);
 	dest = put_dec(dest, value);
-	*dest++ = '\r';
-	*dest++ = '\n';
-	return dest;
-}
-
-static byte *put_hex_tag(byte *dest, const char *tag, int value)
-{
-	int i;
-	if (value < 0)
-		return dest;
-	dest = put_string(dest, tag);
-	for (i = 12; i >= 0; i -= 4) {
-		int digit = (value >> i) & 0xf;
-		*dest++ = (byte) (digit + (digit < 10 ? '0' : 'A' - 10));
-	}
 	*dest++ = '\r';
 	*dest++ = '\n';
 	return dest;
@@ -1826,24 +1819,6 @@ static byte *put_durations(byte *dest, const ASAP_ModuleInfo *module_info)
 	return dest;
 }
 
-static byte *put_sap_header(byte *dest, const ASAP_ModuleInfo *module_info, char type, int music, int init, int player)
-{
-	dest = start_sap_header(dest, module_info);
-	if (dest == NULL)
-		return NULL;
-	dest = put_string(dest, "TYPE ");
-	*dest++ = type;
-	*dest++ = '\r';
-	*dest++ = '\n';
-	if (module_info->fastplay != 312)
-		dest = put_dec_tag(dest, "FASTPLAY ", module_info->fastplay);
-	dest = put_hex_tag(dest, "MUSIC ", music);
-	dest = put_hex_tag(dest, "INIT ", init);
-	dest = put_hex_tag(dest, "PLAYER ", player);
-	dest = put_durations(dest, module_info);
-	return dest;
-}
-
 int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const BYTEARRAY module, int module_len, BYTEARRAY out_module)
 {
 	byte *dest;
@@ -1878,6 +1853,8 @@ int ASAP_SetModuleInfo(const ASAP_ModuleInfo *module_info, const BYTEARRAY modul
 	dest += module_len;
 	return dest - out_module;
 }
+
+#if !defined(ASAP_ONLY_SAP) && !defined(ASAP_ONLY_INFO)
 
 #define RMT_INIT  0x0c80
 #define TM2_INIT  0x1080
@@ -1928,6 +1905,39 @@ const char *ASAP_CanConvert(
 		break;
 	}
 	return NULL;
+}
+
+static byte *put_hex_tag(byte *dest, const char *tag, int value)
+{
+	int i;
+	if (value < 0)
+		return dest;
+	dest = put_string(dest, tag);
+	for (i = 12; i >= 0; i -= 4) {
+		int digit = (value >> i) & 0xf;
+		*dest++ = (byte) (digit + (digit < 10 ? '0' : 'A' - 10));
+	}
+	*dest++ = '\r';
+	*dest++ = '\n';
+	return dest;
+}
+
+static byte *put_sap_header(byte *dest, const ASAP_ModuleInfo *module_info, char type, int music, int init, int player)
+{
+	dest = start_sap_header(dest, module_info);
+	if (dest == NULL)
+		return NULL;
+	dest = put_string(dest, "TYPE ");
+	*dest++ = type;
+	*dest++ = '\r';
+	*dest++ = '\n';
+	if (module_info->fastplay != 312)
+		dest = put_dec_tag(dest, "FASTPLAY ", module_info->fastplay);
+	dest = put_hex_tag(dest, "MUSIC ", music);
+	dest = put_hex_tag(dest, "INIT ", init);
+	dest = put_hex_tag(dest, "PLAYER ", player);
+	dest = put_durations(dest, module_info);
+	return dest;
 }
 
 int ASAP_Convert(
@@ -2229,17 +2239,7 @@ int ASAP_Convert(
 	}
 }
 
-#endif /* defined(C) && !defined(ASAP_ONLY_SAP) */
-
-#endif /* ASAP_ONLY_INFO */
-
-#ifdef C
-
-abool ASAP_CanSetModuleInfo(const char *filename)
-{
-	int ext = get_packed_ext(filename);
-	return ext == ASAP_EXT('S', 'A', 'P');
-}
+#endif /* !defined(ASAP_ONLY_SAP) && !defined(ASAP_ONLY_INFO) */
 
 static abool has_two_digits(const char *s)
 {
@@ -2267,4 +2267,4 @@ abool ASAP_DateToYear(const char *date, char *year)
 	return TRUE;
 }
 
-#endif
+#endif /* C */

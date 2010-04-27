@@ -322,7 +322,7 @@
 		<output>N/A</output>
 		<subsongs>N/A</subsongs>
 		<file-info>yes</file-info>
-		<edit-info>no</edit-info>
+		<edit-info>only on Windows Vista and newer: AUTHOR, NAME, DATE (year)</edit-info>
 		<convert-sap>no</convert-sap>
 		<config-time>N/A</config-time>
 		<mute-pokey>N/A</mute-pokey>

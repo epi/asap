@@ -1,3 +1,8 @@
+2010-04-27  Piotr Fusik  <fox@scene.pl>
+* win32/shellex/ASAPShellEx.cpp, asap.c, PORTS.xml:
+  edit AUTHOR, NAME, DATE with Windows Vista and 7
+
+
 2010-04-26  Piotr Fusik  <fox@scene.pl>
 * win32/setup/asap.wxs: set KindMap to "music" for Windows 7 Content View
 

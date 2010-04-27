@@ -148,7 +148,9 @@ static const CMyPropertyDef g_propertyDefs[] = {
 class CMyLock
 {
 	PCRITICAL_SECTION m_pLock;
+
 public:
+
 	CMyLock(PCRITICAL_SECTION pLock)
 	{
 		m_pLock = pLock;
@@ -166,13 +168,16 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 	CRITICAL_SECTION m_lock;
 	WCHAR m_filename[MAX_PATH];
 	BOOL m_hasInfo;
-	BOOL m_editable;
+	IStream *m_pstream;
 	ASAP_ModuleInfo m_info;
 
-	HRESULT LoadFile(LPCWSTR wszFile, IStream *pstream)
+	HRESULT LoadFile(LPCWSTR wszFile, IStream *pstream, DWORD grfMode)
 	{
 		m_hasInfo = FALSE;
-		m_editable = FALSE;
+		if (m_pstream != NULL) {
+			m_pstream->Release();
+			m_pstream = NULL;
+		}
 
 		int cch = lstrlenW(wszFile) + 1;
 		char *filename = (char *) alloca(cch * 2);
@@ -201,12 +206,14 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 		}
 
 		m_hasInfo = ASAP_GetModuleInfo(&m_info, filename, module, module_len);
-		if (m_hasInfo && ASAP_CanSetModuleInfo(filename))
-			m_editable = TRUE;
+		if (m_hasInfo && (grfMode & STGM_READWRITE) != 0 && ASAP_CanSetModuleInfo(filename)) {
+			m_pstream = pstream;
+			pstream->AddRef();
+		}
 		return S_OK;
 	}
 
-	static HRESULT SetString(VARIANT *pvarData, const char *s)
+	static HRESULT GetString(VARIANT *pvarData, const char *s)
 	{
 		OLECHAR str[ASAP_INFO_CHARS];
 		int i = 0;
@@ -227,16 +234,16 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 
 		if (pscid->fmtid == FMTID_SummaryInformation) {
 			if (pscid->pid == PIDSI_TITLE)
-				return SetString(pvarData, m_info.name);
+				return GetString(pvarData, m_info.name);
 			if (pscid->pid == PIDSI_AUTHOR)
-				return SetString(pvarData, m_info.author);
+				return GetString(pvarData, m_info.author);
 		}
 		else if (pscid->fmtid == FMTID_MUSIC) {
 			if (pscid->pid == PIDSI_ARTIST)
-				return SetString(pvarData, m_info.author);
+				return GetString(pvarData, m_info.author);
 			if (pscid->pid == PIDSI_YEAR) {
 				char year[5];
-				return SetString(pvarData, ASAP_DateToYear(m_info.date, year) ? year : "");
+				return GetString(pvarData, ASAP_DateToYear(m_info.date, year) ? year : "");
 			}
 		}
 		else if (pscid->fmtid == FMTID_AudioSummaryInformation) {
@@ -248,7 +255,7 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 					duration /= 1000;
 					char timeStr[16];
 					sprintf(timeStr, "%.2d:%.2d:%.2d", duration / 3600, duration / 60 % 60, duration % 60);
-					return SetString(pvarData, timeStr);
+					return GetString(pvarData, timeStr);
 				}
 				else {
 					pvarData->vt = VT_UI8;
@@ -269,13 +276,63 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 				return S_OK;
 			}
 			if (pscid->pid == 2)
-				return SetString(pvarData, m_info.ntsc ? "NTSC" : "PAL");
+				return GetString(pvarData, m_info.ntsc ? "NTSC" : "PAL");
 		}
 		return S_FALSE;
 	}
 
+	static HRESULT AppendString(char *dest, int *offset, LPCWSTR wszVal)
+	{
+		int i = *offset;
+		while (*wszVal != 0) {
+			if (i >= ASAP_INFO_CHARS - 1) {
+				dest[i] = '\0';
+				return INPLACE_S_TRUNCATED;
+			}
+			WCHAR c = *wszVal++;
+			if (c < ' ' || c > 'z' || c == '`')
+				return E_FAIL;
+			dest[i++] = (char) c;
+		}
+		dest[i] = '\0';
+		*offset = i;
+		return S_OK;
+	}
+
+	static HRESULT SetString(char *dest, REFPROPVARIANT propvar)
+	{
+		int offset = 0;
+		switch (propvar->vt) {
+		case VT_EMPTY:
+			dest[0] = '\0';
+			return S_OK;
+		case VT_UI4:
+			return sprintf(dest, "%lu", propvar->ulVal) == 4 ? S_OK : E_FAIL;
+		case VT_LPWSTR:
+			return AppendString(dest, &offset, propvar->pwszVal);
+		case VT_VECTOR | VT_LPWSTR:
+			ULONG i;
+			dest[0] = '\0';
+			for (i = 0; i < propvar->calpwstr.cElems; i++) {
+				HRESULT hr;
+				if (i > 0) {
+					hr = AppendString(dest, &offset, L" & ");
+					if (FAILED(hr))
+						return hr;
+				}
+				hr = AppendString(dest, &offset, propvar->calpwstr.pElems[i]);
+				if (FAILED(hr))
+					return hr;
+			}
+			return S_OK;
+		default:
+			return E_NOTIMPL;
+		}
+	}
+
 public:
-	CASAPMetadataHandler() : m_cRef(1), m_hasInfo(FALSE), m_editable(FALSE)
+
+	CASAPMetadataHandler() : m_cRef(1), m_hasInfo(FALSE), m_pstream(NULL)
 	{
 		DllAddRef();
 		InitializeCriticalSection(&m_lock);
@@ -284,6 +341,8 @@ public:
 
 	virtual ~CASAPMetadataHandler()
 	{
+		if (m_pstream != NULL)
+			m_pstream->Release();
 		DeleteCriticalSection(&m_lock);
 		DllRelease();
 	}
@@ -364,7 +423,7 @@ public:
 		CMyLock lck(&m_lock);
 		if ((pscd->dwFlags & SHCDF_UPDATEITEM) != 0 || lstrcmpW(m_filename, pscd->wszFile) != 0) {
 			lstrcpyW(m_filename, pscd->wszFile);
-			HRESULT hr = LoadFile(pscd->wszFile, NULL);
+			HRESULT hr = LoadFile(pscd->wszFile, NULL, STGM_READ);
 			if (FAILED(hr))
 				return hr;
 		}
@@ -380,7 +439,7 @@ public:
 		if (FAILED(hr))
 			return hr;
 		CMyLock lck(&m_lock);
-		hr = LoadFile(statstg.pwcsName, pstream);
+		hr = LoadFile(statstg.pwcsName, pstream, grfMode);
 		CoTaskMemFree(statstg.pwcsName);
 		return hr;
 	}
@@ -416,20 +475,65 @@ public:
 
 	STDMETHODIMP SetValue(REFPROPERTYKEY key, REFPROPVARIANT propvar)
 	{
-		return E_NOTIMPL;
+		CMyLock lck(&m_lock);
+		if (m_pstream == NULL)
+			return STG_E_ACCESSDENIED;
+		if (key->fmtid == FMTID_SummaryInformation) {
+			if (key->pid == PIDSI_TITLE)
+				return SetString(m_info.name, propvar);
+			if (key->pid == PIDSI_AUTHOR)
+				return SetString(m_info.author, propvar);
+		}
+		else if (key->fmtid == FMTID_MUSIC) {
+			if (key->pid == PIDSI_ARTIST)
+				return SetString(m_info.author, propvar);
+			if (key->pid == PIDSI_YEAR)
+				return SetString(m_info.date, propvar);
+		}
+		return E_FAIL;
 	}
 
 	STDMETHODIMP Commit(void)
 	{
-		return E_NOTIMPL;
+		CMyLock lck(&m_lock);
+		if (m_pstream == NULL)
+			return STG_E_ACCESSDENIED;
+		LARGE_INTEGER liZero = { 0 };
+		HRESULT hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, NULL);
+		if (SUCCEEDED(hr)) {
+			byte module[ASAP_MODULE_MAX];
+			int module_len;
+			hr = m_pstream->Read(module, ASAP_MODULE_MAX, (ULONG *) &module_len);
+			if (SUCCEEDED(hr)) {
+				hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, NULL);
+				if (SUCCEEDED(hr)) {
+					byte out_module[ASAP_MODULE_MAX];
+					module_len = ASAP_SetModuleInfo(&m_info, module, module_len, out_module);
+					if (module_len < 0)
+						hr = E_FAIL;
+					else {
+						ULARGE_INTEGER liSize;
+						liSize.LowPart = module_len;
+						liSize.HighPart = 0;
+						hr = m_pstream->SetSize(liSize);
+						if (SUCCEEDED(hr)) {
+							hr = m_pstream->Write(out_module, module_len, NULL);
+							if (SUCCEEDED(hr))
+								hr = m_pstream->Commit(STGC_DEFAULT);
+						}
+					}
+				}
+			}
+		}
+		m_pstream->Release();
+		m_pstream = NULL;
+		return hr;
 	}
 
 	// IPropertyStoreCapabilities
 
 	STDMETHODIMP IsPropertyWritable(REFPROPERTYKEY key)
 	{
-		if (!m_editable)
-			return S_FALSE;
 		if (key->fmtid == FMTID_SummaryInformation) {
 			if (key->pid == PIDSI_TITLE)
 				return S_OK;
@@ -449,6 +553,7 @@ public:
 class CASAPMetadataHandlerFactory : public IClassFactory
 {
 public:
+
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
 	{
 		if (riid == IID_IUnknown || riid == IID_IClassFactory) {
