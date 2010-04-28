@@ -1,4 +1,7 @@
 2010-04-28  Piotr Fusik  <fox@scene.pl>
+* win32/shellex/ASAPShellEx.cpp: if the extension had been added via setup's "Change"
+  it didn't work until Explorer's restart (Windows 7)
+
 * win32/shellex/ASAPShellEx.cpp: split authors
 
 

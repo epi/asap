@@ -777,7 +777,10 @@ static HRESULT DoPropertySchema(LPCSTR funcName)
 
 STDAPI InstallPropertySchema(void)
 {
-	return DoPropertySchema("PSRegisterPropertySchema");
+	HRESULT hr = DoPropertySchema("PSRegisterPropertySchema");
+	if (SUCCEEDED(hr))
+		SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
+	return hr;
 }
 
 STDAPI UninstallPropertySchema(void)
