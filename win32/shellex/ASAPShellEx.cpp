@@ -213,7 +213,7 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 		return S_OK;
 	}
 
-	static HRESULT GetString(VARIANT *pvarData, const char *s)
+	static HRESULT GetString(PROPVARIANT *pvarData, const char *s)
 	{
 		OLECHAR str[ASAP_INFO_CHARS];
 		int i = 0;
@@ -227,7 +227,46 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 		return pvarData->bstrVal != NULL ? S_OK : E_OUTOFMEMORY;
 	}
 
-	HRESULT GetData(LPCSHCOLUMNID pscid, VARIANT *pvarData)
+	HRESULT GetAuthors(PROPVARIANT *pvarData, BOOL vista)
+	{
+		if (!vista)
+			return GetString(pvarData, m_info.author);
+		if (m_info.author[0] == '\0') {
+			pvarData->vt = VT_EMPTY;
+			return S_OK;
+		}
+		// split on " & "
+		int i;
+		const char *s = m_info.author;
+		for (i = 1; ; i++) {
+			s = strstr(s, " & ");
+			if (s == NULL)
+				break;
+			s += 3;
+		}
+		pvarData->vt = VT_VECTOR | VT_LPSTR;
+		pvarData->calpstr.cElems = i;
+		LPSTR *pElems = (LPSTR *) CoTaskMemAlloc(i * sizeof(LPSTR));
+		pvarData->calpstr.pElems = pElems;
+		if (pElems == NULL)
+			return E_OUTOFMEMORY;
+		s = m_info.author;
+		for (i = 0; ; i++) {
+			const char *e = strstr(s, " & ");
+			size_t len = e != NULL ? e - s : strlen(s);
+			pElems[i] = (LPSTR) CoTaskMemAlloc(len + 1);
+			if (pElems[i] == NULL)
+				return E_OUTOFMEMORY;
+			memcpy(pElems[i], s, len);
+			pElems[i][len] = '\0';
+			if (e == NULL)
+				break;
+			s = e + 3;
+		}
+		return S_OK;
+	}
+
+	HRESULT GetData(LPCSHCOLUMNID pscid, PROPVARIANT *pvarData, BOOL vista)
 	{
 		if (!m_hasInfo)
 			return S_FALSE;
@@ -236,11 +275,11 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 			if (pscid->pid == PIDSI_TITLE)
 				return GetString(pvarData, m_info.name);
 			if (pscid->pid == PIDSI_AUTHOR)
-				return GetString(pvarData, m_info.author);
+				return GetAuthors(pvarData, vista);
 		}
 		else if (pscid->fmtid == FMTID_MUSIC) {
 			if (pscid->pid == PIDSI_ARTIST)
-				return GetString(pvarData, m_info.author);
+				return GetAuthors(pvarData, vista);
 			if (pscid->pid == PIDSI_YEAR) {
 				char year[5];
 				return GetString(pvarData, ASAP_DateToYear(m_info.date, year) ? year : "");
@@ -249,8 +288,10 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 		else if (pscid->fmtid == FMTID_AudioSummaryInformation) {
 			if (pscid->pid == PIDASI_TIMELENGTH) {
 				int duration = m_info.durations[m_info.default_song];
-				if (duration < 0)
-					return S_FALSE;
+				if (duration < 0) {
+					pvarData->vt = VT_EMPTY;
+					return S_OK;
+				}
 				if (g_windowsVer == WINDOWS_OLD) {
 					duration /= 1000;
 					char timeStr[16];
@@ -259,20 +300,20 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 				}
 				else {
 					pvarData->vt = VT_UI8;
-					pvarData->ullVal = 10000ULL * duration;
+					pvarData->uhVal.QuadPart = 10000ULL * duration;
 					return S_OK;
 				}
 			}
 			if (pscid->pid == PIDASI_CHANNEL_COUNT) {
-				pvarData->vt = VT_INT;
-				pvarData->intVal = m_info.channels;
+				pvarData->vt = VT_UI4;
+				pvarData->ulVal = (ULONG) m_info.channels;
 				return S_OK;
 			}
 		}
 		else if (pscid->fmtid == CLSID_ASAPMetadataHandler) {
 			if (pscid->pid == 1) {
-				pvarData->vt = VT_INT;
-				pvarData->intVal = m_info.songs;
+				pvarData->vt = VT_UI4;
+				pvarData->ulVal = (ULONG) m_info.songs;
 				return S_OK;
 			}
 			if (pscid->pid == 2)
@@ -290,7 +331,7 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 				return INPLACE_S_TRUNCATED;
 			}
 			WCHAR c = *wszVal++;
-			if (c < ' ' || c > 'z' || c == '`')
+			if (c < ' ' || c > 'z' || c == '"' || c == '`')
 				return E_FAIL;
 			dest[i++] = (char) c;
 		}
@@ -427,7 +468,7 @@ public:
 			if (FAILED(hr))
 				return hr;
 		}
-		return GetData(pscid, pvarData);
+		return GetData(pscid, (PROPVARIANT *) pvarData, FALSE);
 	}
 
 	// IInitializeWithStream
@@ -465,7 +506,7 @@ public:
 	STDMETHODIMP GetValue(REFPROPERTYKEY key, PROPVARIANT *pv)
 	{
 		CMyLock lck(&m_lock);
-		HRESULT hr = GetData(key, (VARIANT *) pv);
+		HRESULT hr = GetData(key, pv, TRUE);
 		if (hr == S_FALSE) {
 			pv->vt = VT_EMPTY;
 			return S_OK;

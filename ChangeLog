@@ -1,3 +1,7 @@
+2010-04-28  Piotr Fusik  <fox@scene.pl>
+* win32/shellex/ASAPShellEx.cpp: split authors
+
+
 2010-04-27  Piotr Fusik  <fox@scene.pl>
 * win32/shellex/ASAPShellEx.cpp, asap.c, PORTS.xml:
   edit AUTHOR, NAME, DATE with Windows Vista and 7
