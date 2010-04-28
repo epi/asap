@@ -72,9 +72,8 @@
 		<td>
 			<xsl:attribute name="class">
 				<xsl:choose>
-					<xsl:when test=". = 'yes' or . = 'no'">
-						<xsl:value-of select="." />
-					</xsl:when>
+					<xsl:when test="starts-with(., 'yes')">yes</xsl:when>
+					<xsl:when test=". = 'no'">no</xsl:when>
 					<xsl:otherwise>partial</xsl:otherwise>
 				</xsl:choose>
 			</xsl:attribute>

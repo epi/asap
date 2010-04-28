@@ -1,4 +1,6 @@
 2010-04-28  Piotr Fusik  <fox@scene.pl>
+* PORTS.xml, PORTS.xsl: multi-file operations
+
 * win32/shellex/ASAPShellEx.cpp: if the extension had been added via setup's "Change"
   it didn't work until Explorer's restart (Windows 7)
 
