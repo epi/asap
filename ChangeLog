@@ -1,3 +1,7 @@
+2010-05-03  Piotr Fusik  <fox@scene.pl>
+* asap.c: PAL/NTSC flag in GTIA didn't work
+
+
 2010-04-28  Piotr Fusik  <fox@scene.pl>
 * PORTS.xml, PORTS.xsl: multi-file operations
 

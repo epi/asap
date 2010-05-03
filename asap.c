@@ -33,21 +33,26 @@
 
 FUNC(int, ASAP_GetByte, (P(ASAP_State PTR, ast), P(int, addr)))
 {
-	switch (addr & 0xff0f) {
+	switch (addr & 0xff1f) {
 	case 0xd014:
 		return ast _ module_info.ntsc ? 0xf : 1;
 	case 0xd20a:
+	case 0xd21a:
 		return PokeySound_GetRandom(ast, addr, ast _ cycle);
 	case 0xd20e:
-		if ((addr & ast _ extra_pokey_mask) != 0) {
+		return ast _ irqst;
+	case 0xd21e:
+		if (ast _ extra_pokey_mask != 0) {
 			/* interrupts in the extra POKEY not emulated at the moment */
 			return 0xff;
 		}
 		return ast _ irqst;
 	case 0xd20f:
+	case 0xd21f:
 		/* just because some SAP files rely on this */
 		return 0xff;
 	case 0xd40b:
+	case 0xd41b:
 		return ast _ scanline_number >> 1;
 	default:
 		return dGetByte(addr);
