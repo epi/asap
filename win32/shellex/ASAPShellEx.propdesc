@@ -2,7 +2,7 @@
 	<propertyDescriptionList publisher="Piotr Fusik" product="ASAP">
 		<propertyDescription name="ASAP.Subsongs" formatID="{5AE26367-B5CF-444D-B163-2CBC99B41287}" propID="1">
 			<description>Number of songs in the file.</description>
-			<typeInfo type="Int32" isViewable="true" />
+			<typeInfo type="UInt32" isViewable="true" />
 			<labelInfo label="Subsongs" />
 		</propertyDescription>
 		<propertyDescription name="ASAP.PALNTSC" formatID="{5AE26367-B5CF-444D-B163-2CBC99B41287}" propID="2">

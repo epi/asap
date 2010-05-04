@@ -1,3 +1,6 @@
+* win32/shellex/ASAPShellEx.propdesc: made Subsongs unsigned
+
+
 2010-05-03  Piotr Fusik  <fox@scene.pl>
 * asap.c: PAL/NTSC flag in GTIA didn't work
 
