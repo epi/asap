@@ -31,6 +31,7 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 
+#ifdef __MINGW32__
 /* missing in MinGW */
 
 extern "C" const FMTID FMTID_SummaryInformation =
@@ -45,8 +46,9 @@ extern "C" const FMTID FMTID_AudioSummaryInformation =
 #define PIDASI_CHANNEL_COUNT  7
 #define SHCDF_UPDATEITEM      1
 
-typedef SHCOLUMNID PROPERTYKEY, *REFPROPERTYKEY;
-typedef PROPVARIANT *REFPROPVARIANT;
+typedef SHCOLUMNID PROPERTYKEY;
+#define REFPROPERTYKEY const PROPERTYKEY &
+#define REFPROPVARIANT const PROPVARIANT &
 
 static const IID IID_IInitializeWithStream =
 	{ 0xb824b49d, 0x22ac, 0x4161, { 0xac, 0x8a, 0x99, 0x16, 0xe8, 0xfa, 0x3f, 0x7f } };
@@ -89,6 +91,7 @@ DECLARE_INTERFACE_(IPropertyStoreCapabilities,IUnknown)
 #undef INTERFACE
 
 /* end missing in MinGW */
+#endif
 
 #include "asap.h"
 
@@ -343,25 +346,25 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 	static HRESULT SetString(char *dest, REFPROPVARIANT propvar)
 	{
 		int offset = 0;
-		switch (propvar->vt) {
+		switch (propvar.vt) {
 		case VT_EMPTY:
 			dest[0] = '\0';
 			return S_OK;
 		case VT_UI4:
-			return sprintf(dest, "%lu", propvar->ulVal) == 4 ? S_OK : E_FAIL;
+			return sprintf(dest, "%lu", propvar.ulVal) == 4 ? S_OK : E_FAIL;
 		case VT_LPWSTR:
-			return AppendString(dest, &offset, propvar->pwszVal);
+			return AppendString(dest, &offset, propvar.pwszVal);
 		case VT_VECTOR | VT_LPWSTR:
 			ULONG i;
 			dest[0] = '\0';
-			for (i = 0; i < propvar->calpwstr.cElems; i++) {
+			for (i = 0; i < propvar.calpwstr.cElems; i++) {
 				HRESULT hr;
 				if (i > 0) {
 					hr = AppendString(dest, &offset, L" & ");
 					if (FAILED(hr))
 						return hr;
 				}
-				hr = AppendString(dest, &offset, propvar->calpwstr.pElems[i]);
+				hr = AppendString(dest, &offset, propvar.calpwstr.pElems[i]);
 				if (FAILED(hr))
 					return hr;
 			}
@@ -506,7 +509,7 @@ public:
 	STDMETHODIMP GetValue(REFPROPERTYKEY key, PROPVARIANT *pv)
 	{
 		CMyLock lck(&m_lock);
-		HRESULT hr = GetData(key, pv, TRUE);
+		HRESULT hr = GetData(&key, pv, TRUE);
 		if (hr == S_FALSE) {
 			pv->vt = VT_EMPTY;
 			return S_OK;
@@ -519,16 +522,16 @@ public:
 		CMyLock lck(&m_lock);
 		if (m_pstream == NULL)
 			return STG_E_ACCESSDENIED;
-		if (key->fmtid == FMTID_SummaryInformation) {
-			if (key->pid == PIDSI_TITLE)
+		if (key.fmtid == FMTID_SummaryInformation) {
+			if (key.pid == PIDSI_TITLE)
 				return SetString(m_info.name, propvar);
-			if (key->pid == PIDSI_AUTHOR)
+			if (key.pid == PIDSI_AUTHOR)
 				return SetString(m_info.author, propvar);
 		}
-		else if (key->fmtid == FMTID_MUSIC) {
-			if (key->pid == PIDSI_ARTIST)
+		else if (key.fmtid == FMTID_MUSIC) {
+			if (key.pid == PIDSI_ARTIST)
 				return SetString(m_info.author, propvar);
-			if (key->pid == PIDSI_YEAR)
+			if (key.pid == PIDSI_YEAR)
 				return SetString(m_info.date, propvar);
 		}
 		return E_FAIL;
@@ -575,16 +578,16 @@ public:
 
 	STDMETHODIMP IsPropertyWritable(REFPROPERTYKEY key)
 	{
-		if (key->fmtid == FMTID_SummaryInformation) {
-			if (key->pid == PIDSI_TITLE)
+		if (key.fmtid == FMTID_SummaryInformation) {
+			if (key.pid == PIDSI_TITLE)
 				return S_OK;
-			if (key->pid == PIDSI_AUTHOR)
+			if (key.pid == PIDSI_AUTHOR)
 				return S_OK;
 		}
-		else if (key->fmtid == FMTID_MUSIC) {
-			if (key->pid == PIDSI_ARTIST)
+		else if (key.fmtid == FMTID_MUSIC) {
+			if (key.pid == PIDSI_ARTIST)
 				return S_OK;
-			if (key->pid == PIDSI_YEAR)
+			if (key.pid == PIDSI_YEAR)
 				return S_OK;
 		}
 		return S_FALSE;
@@ -763,7 +766,7 @@ static HRESULT DoPropertySchema(LPCSTR funcName)
 		 && PathAppendW(szSchemaPath, L"ASAPShellEx.propdesc")) {
 			HMODULE propsysDll = LoadLibrary("propsys.dll");
 			if (propsysDll != NULL) {
-				typedef HRESULT STDAPICALLTYPE (*FuncType)(PCWSTR);
+				typedef HRESULT (__stdcall *FuncType)(PCWSTR);
 				FuncType func = (FuncType) GetProcAddress(propsysDll, funcName);
 				if (func != NULL)
 					hr = func(szSchemaPath);

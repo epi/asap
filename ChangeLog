@@ -1,3 +1,6 @@
+2010-05-05  Piotr Fusik  <fox@scene.pl>
+* win32/shellex/ASAPShellEx.cpp: made compilable with MSVC
+
 * win32/shellex/ASAPShellEx.propdesc: made Subsongs unsigned
 
 
