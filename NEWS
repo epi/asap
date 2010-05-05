@@ -1,6 +1,16 @@
 History
 -------
 
+ASAP 2.1.1 (2010-05-05)::
+
+The SAP file format has been extended with the "NTSC" tag.
+A BASS add-on (works in AIMP) has been created. A crash in XMPlay
+has been fixed. The XMMS plugin now works correctly on big endian machines.
+There's a new Windows Explorer extension which displays metadata
+(title, author, year, duration, mono/stereo, number of subsongs, PAL/NTSC)
+and on Windows Vista/7 can edit them. A simple player in C# has been created.
+
+
 ASAP 2.1.0 (2010-02-02)::
 
 ASAP2WAV has been replaced with asapconv which can additionally

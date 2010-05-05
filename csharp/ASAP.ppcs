@@ -193,7 +193,7 @@ namespace ASAP
 		readonly ASAP_State ast = new ASAP_State();
 
 		/// <summary>ASAP version.</summary>
-		public const string Version = "2.1.0";
+		public const string Version = "2.1.1";
 
 		/// <summary>Maximum length of a supported input file.</summary>
 		/// <remarks>You can assume that files longer than this are not supported by ASAP.</remarks>

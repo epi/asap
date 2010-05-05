@@ -71,7 +71,7 @@ package
 		private const poly17_lookup : ByteArray = new ByteArray();
 		private const memory : ByteArray = new ByteArray();
 
-		public static const VERSION : String = "2.1.0";
+		public static const VERSION : String = "2.1.1";
 
 		public static function parseDuration(s : String) : int
 		{
