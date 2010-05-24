@@ -336,7 +336,12 @@ void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, 
 		edited_module_info = saved_module_info;
 		infoDialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_INFO), hwndParent, infoDialogProc);
 	}
-	updateInfoDialog(filename, song);
+#ifdef WINAMP
+	if (playing_info)
+		updateInfoDialog(current_filename, current_song);
+	else
+#endif
+		updateInfoDialog(filename, song);
 }
 
 void updateInfoDialog(const char *filename, int song)

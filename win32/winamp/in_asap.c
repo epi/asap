@@ -304,18 +304,17 @@ static DWORD WINAPI playThread(LPVOID dummy)
 
 static int play(char *fn)
 {
-	int song;
 	int maxlatency;
 	DWORD threadId;
 	strcpy(current_filename_with_song, fn);
-	song = extractSongNumber(fn, current_filename);
+	current_song = extractSongNumber(fn, current_filename);
 	if (!loadModule(current_filename, module, &module_len))
 		return -1;
 	if (!ASAP_Load(&asap, current_filename, module, module_len))
 		return 1;
-	if (song < 0)
-		song = asap.module_info.default_song;
-	duration = playSong(song);
+	if (current_song < 0)
+		current_song = asap.module_info.default_song;
+	duration = playSong(current_song);
 	maxlatency = mod.outMod->Open(ASAP_SAMPLE_RATE, channels, BITS_PER_SAMPLE, -1, -1);
 	if (maxlatency < 0)
 		return 1;
@@ -329,7 +328,7 @@ static int play(char *fn)
 	thread_run = TRUE;
 	thread_handle = CreateThread(NULL, 0, playThread, NULL, 0, &threadId);
 	if (playing_info)
-		updateInfoDialog(current_filename, song);
+		updateInfoDialog(current_filename, current_song);
 	return thread_handle != NULL ? 0 : 1;
 }
 

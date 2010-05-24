@@ -1,3 +1,9 @@
+2010-05-24  Piotr Fusik  <fox@scene.pl>
+* win32/info_dlg.c, win32/winamp/in_asap.c: 
+  "Show information about the currently playing file" is now honored
+  when opening the information box
+
+
 ** 2.1.1 released on 2010-05-05
 
 2010-05-05  Piotr Fusik  <fox@scene.pl>
