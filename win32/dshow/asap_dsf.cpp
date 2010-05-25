@@ -65,7 +65,7 @@ public:
 
 	BOOL Load(const char *filename)
 	{
-		HANDLE fh = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+		HANDLE fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
 			FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 		if (fh == INVALID_HANDLE_VALUE)
 			return FALSE;
