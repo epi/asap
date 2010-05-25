@@ -77,9 +77,6 @@ int silence_seconds = -1;
 BOOL play_loops = FALSE;
 int mute_mask = 0;
 static int saved_mute_mask;
-#ifdef WINAMP
-BOOL playing_info = FALSE;
-#endif
 
 static BOOL getDlgInt(HWND hDlg, int nID, int *result)
 {

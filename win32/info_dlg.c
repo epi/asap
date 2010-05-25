@@ -29,6 +29,9 @@
 #include "info_dlg.h"
 
 HWND infoDialog = NULL;
+static char playing_filename[MAX_PATH];
+static int playing_song = 0;
+static BOOL playing_info = FALSE;
 static byte saved_module[ASAP_MODULE_MAX];
 static int saved_module_len;
 static ASAP_ModuleInfo saved_module_info;
@@ -56,7 +59,7 @@ BOOL loadModule(const char *filename, byte *module, int *module_len)
 {
 	HANDLE fh;
 	BOOL ok;
-	fh = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+	fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
 		return FALSE;
 	ok = ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) module_len, NULL);
@@ -246,9 +249,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 {
 	switch (uMsg) {
 	case WM_INITDIALOG:
-#ifdef WINAMP
 		CheckDlgButton(hDlg, IDC_PLAYING, playing_info ? BST_CHECKED : BST_UNCHECKED);
-#endif
 		SendDlgItemMessage(hDlg, IDC_AUTHOR, EM_LIMITTEXT, ASAP_INFO_CHARS - 1, 0);
 		SendDlgItemMessage(hDlg, IDC_NAME, EM_LIMITTEXT, ASAP_INFO_CHARS - 1, 0);
 		SendDlgItemMessage(hDlg, IDC_DATE, EM_LIMITTEXT, ASAP_INFO_CHARS - 1, 0);
@@ -256,13 +257,11 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 		return TRUE;
 	case WM_COMMAND:
 		switch (wParam) {
-#ifdef WINAMP
 		case MAKEWPARAM(IDC_PLAYING, BN_CLICKED):
 			playing_info = (IsDlgButtonChecked(hDlg, IDC_PLAYING) == BST_CHECKED);
-			if (playing_info)
-				updateInfoDialog(current_filename, current_song);
+			if (playing_info && playing_filename[0] != '\0')
+				updateInfoDialog(playing_filename, playing_song);
 			return TRUE;
-#endif
 		case MAKEWPARAM(IDC_AUTHOR, EN_CHANGE):
 			updateInfoString(hDlg, IDC_AUTHOR, INVALID_FIELD_AUTHOR, &edited_module_info.author);
 			return TRUE;
@@ -336,11 +335,9 @@ void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, 
 		edited_module_info = saved_module_info;
 		infoDialog = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_INFO), hwndParent, infoDialogProc);
 	}
-#ifdef WINAMP
-	if (playing_info)
-		updateInfoDialog(current_filename, current_song);
+	if (playing_info || filename == NULL)
+		updateInfoDialog(playing_filename, playing_song);
 	else
-#endif
 		updateInfoDialog(filename, song);
 }
 
@@ -397,4 +394,13 @@ void updateInfoDialog(const char *filename, int song)
 		SendDlgItemMessage(infoDialog, IDC_CONVERT, WM_SETTEXT, 0, (LPARAM) "&Convert");
 		EnableWindow(GetDlgItem(infoDialog, IDC_CONVERT), FALSE);
 	}
+}
+
+void setPlayingSong(const char *filename, int song)
+{
+	if (filename != NULL && strlen(filename) < MAX_PATH - 1)
+		strcpy(playing_filename, filename);
+	playing_song = song;
+	if (playing_info)
+		updateInfoDialog(playing_filename, song);
 }

@@ -182,7 +182,7 @@ FONT 8, "MS Sans Serif"
 
 #include "info_dlg.h"
 
-#ifdef WINAMP
+#if defined(WINAMP) || defined(XMPLAY)
 #define INFO_Y  18
 #else
 #define INFO_Y  0
@@ -192,7 +192,7 @@ STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | WS_POPUPWINDOW | WS_VISIBLE
 CAPTION "File information"
 FONT 8, "MS Sans Serif"
 {
-#ifdef WINAMP
+#if defined(WINAMP) || defined(XMPLAY)
 	AUTOCHECKBOX "Show information about the currently &playing file", IDC_PLAYING, 46, 8, 284, 12
 #endif
 	RTEXT "&Filename:", IDC_STATIC, 8, 10+INFO_Y, 30, 12

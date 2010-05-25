@@ -37,14 +37,11 @@ static const XMPFUNC_REGISTRY *xmpfreg;
 static const XMPFUNC_FILE *xmpffile;
 static const XMPFUNC_IN *xmpfin;
 
-static char current_filename[MAX_PATH];
-static int current_song;
 ASAP_State asap;
 
 static void WINAPI ASAP_ShowInfo()
 {
-	if (current_filename[0] != '\0')
-		showInfoDialog(hInst, xmpfmisc->GetWindow(), current_filename, current_song);
+	showInfoDialog(hInst, xmpfmisc->GetWindow(), NULL, -1);
 }
 
 static void WINAPI ASAP_About(HWND win)
@@ -106,7 +103,7 @@ static void PlaySong(int song)
 	int duration = playSong(song);
 	if (duration >= 0)
 		xmpfin->SetLength(duration / 1000.0, TRUE);
-	current_song = song;
+	setPlayingSong(NULL, song);
 }
 
 static BOOL WINAPI ASAP_GetFileInfo(const char *filename, XMPFILE file, float *length, char *tags[8])
@@ -129,8 +126,7 @@ static DWORD WINAPI ASAP_Open(const char *filename, XMPFILE file)
 	int module_len = xmpffile->Read(file, module, sizeof(module));
 	if (!ASAP_Load(&asap, filename, module, module_len))
 		return 0;
-	if (strlen(filename) < MAX_PATH - 1)
-		strcpy(current_filename, filename);
+	setPlayingSong(filename, 0);
 	PlaySong(0);
 	return 2; /* close file */
 }

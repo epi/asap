@@ -49,9 +49,7 @@ static const char *ini_file;
 
 // current file
 ASAP_State asap;
-char current_filename[MAX_PATH] = "";
-static char current_filename_with_song[MAX_PATH + 3] = "";
-int current_song;
+static char playing_filename_with_song[MAX_PATH + 3] = "";
 static byte module[ASAP_MODULE_MAX];
 static int module_len;
 static int duration;
@@ -211,7 +209,7 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 {
 	char filename[MAX_PATH];
 	if (file == NULL || file[0] == '\0')
-		file = current_filename_with_song;
+		file = playing_filename_with_song;
 	title_song = extractSongNumber(file, filename);
 	if (title_song < 0)
 		expandPlaylistSongs();
@@ -304,17 +302,19 @@ static DWORD WINAPI playThread(LPVOID dummy)
 
 static int play(char *fn)
 {
+	char filename[MAX_PATH];
+	int song;
 	int maxlatency;
 	DWORD threadId;
-	strcpy(current_filename_with_song, fn);
-	current_song = extractSongNumber(fn, current_filename);
-	if (!loadModule(current_filename, module, &module_len))
+	strcpy(playing_filename_with_song, fn);
+	song = extractSongNumber(fn, filename);
+	if (!loadModule(filename, module, &module_len))
 		return -1;
-	if (!ASAP_Load(&asap, current_filename, module, module_len))
+	if (!ASAP_Load(&asap, filename, module, module_len))
 		return 1;
-	if (current_song < 0)
-		current_song = asap.module_info.default_song;
-	duration = playSong(current_song);
+	if (song < 0)
+		song = asap.module_info.default_song;
+	duration = playSong(song);
 	maxlatency = mod.outMod->Open(ASAP_SAMPLE_RATE, channels, BITS_PER_SAMPLE, -1, -1);
 	if (maxlatency < 0)
 		return 1;
@@ -327,8 +327,7 @@ static int play(char *fn)
 	seek_needed = -1;
 	thread_run = TRUE;
 	thread_handle = CreateThread(NULL, 0, playThread, NULL, 0, &threadId);
-	if (playing_info)
-		updateInfoDialog(current_filename, current_song);
+	setPlayingSong(filename, song);
 	return thread_handle != NULL ? 0 : 1;
 }
 

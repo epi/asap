@@ -41,12 +41,7 @@
 char *appendString(char *dest, const char *src);
 BOOL loadModule(const char *filename, byte *module, int *module_len);
 
-#ifdef WINAMP
-extern char current_filename[MAX_PATH];
-extern int current_song;
-extern BOOL playing_info;
-#endif
-
 extern HWND infoDialog;
 void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, int song);
 void updateInfoDialog(const char *filename, int song);
+void setPlayingSong(const char *filename, int song);
