@@ -23,24 +23,47 @@
 
 package
 {
+	/** Information about a file recognized by ASAP. */
 	public class ASAP_ModuleInfo
 	{
+		/** Music author's name. */
 		public var author : String;
+		/** Music title. */
 		public var name : String;
+		/** Music creation date. */
 		public var date : String;
+		/** 1 for mono or 2 for stereo. */
 		public var channels : int;
+		/** Number of subsongs. */
 		public var songs : int;
+		/** 0-based index of the "main" subsong. */
 		public var default_song : int;
+		/** Lengths of songs, in milliseconds, -1 = unspecified. */
 		public const durations : Array = new Array(32);
+		/** Information about finite vs infinite songs.
+		    Each element of the array represents one song, and is:
+		    <ul>
+		    <li> <code>true</code> if the song loops</li>
+		    <li> <code>false</code> if the song stops</li>
+		    </ul> */
 		public const loops : Array = new Array(32);
+		/** @private */
 		internal var ntsc : Boolean;
+		/** @private */
 		internal var type : int;
+		/** @private */
 		internal var fastplay : int;
+		/** @private */
 		internal var music : int;
+		/** @private */
 		internal var init : int;
+		/** @private */
 		internal var player : int;
+		/** @private */
 		internal var covox_addr : int;
+		/** @private */
 		internal var header_len : int;
+		/** @private */
 		internal const song_pos : Array = new Array(32);
 	}
 }

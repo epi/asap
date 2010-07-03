@@ -1,3 +1,8 @@
+2010-07-03  Piotr Fusik  <fox@scene.pl>
+* flash/Makefile, flash/ASAP.ppas, flash/ASAP_ModuleInfo.as:
+  documentation comments
+
+
 2010-05-25  Piotr Fusik  <fox@scene.pl>
 * win32/gui.rc, win32/info_dlg.c, win32/info_dlg.h, win32/settings_dlg.c,
   win32/winamp/in_asap.c, win32/xmplay/xmp-asap.c: 
