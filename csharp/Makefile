@@ -18,7 +18,7 @@ SilverASAP.xap: SilverASAP.dll AppManifest.xaml
 	$(SEVENZIP) -tzip $@ SilverASAP.dll AppManifest.xaml
 
 SilverASAP.dll: SilverASAP.cs ASAP.cs
-	$(CSC) -t:library SilverASAP.cs ASAP.cs -nostdlib -noconfig -r:$(SL)/mscorlib.dll -r:$(SL)/system.dll -r:$(SL)/System.Net.dll -r:$(SL)/System.Windows.dll
+	$(CSC) -t:library SilverASAP.cs ASAP.cs -nostdlib -noconfig -r:$(SL)/mscorlib.dll -r:$(SL)/system.dll -r:$(SL)/System.Net.dll -r:$(SL)/System.Windows.dll -r:$(SL)/System.Windows.Browser.dll
 
 ASAP.cs: ASAP.ppcs ../asap.c ../acpu.c ../apokeysnd.c ../asap.h ../asap_internal.h ../anylang.h ../players.h
 	$(PP) ASAP.ppcs > $@
@@ -34,6 +34,6 @@ doc/ASAP.dll: ASAP.cs
 	$(CSC) -t:library -doc:doc/ASAP.xml ASAP.cs
 
 clean:
-	rm -rf asap2wav.exe asapplay.exe ASAP.cs doc
+	rm -rf asap2wav.exe asapplay.exe SilverASAP.xap SilverASAP.dll ASAP.cs doc
 
 .DELETE_ON_ERROR:

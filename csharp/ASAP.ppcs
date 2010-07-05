@@ -230,6 +230,8 @@ namespace ASAP
 		/// <returns>Number of milliseconds represented by the string.</returns>
 		public static int ParseDuration(string s)
 		{
+			if (s == null || s.Length == 0)
+				return -1;
 			int r = ASAP_ParseDuration(s);
 			if (r < 0)
 				throw new FormatException("Invalid duration");
