@@ -273,6 +273,12 @@ namespace ASAP
 			return ASAP_GetPosition(ast);
 		}
 
+		/// <summary>Returns current playback position in blocks.</summary>
+		public int GetBlocksPlayed()
+		{
+			return ast.blocks_played;
+		}
+
 		/// <summary>Changes the playback position.</summary>
 		/// <param name="position">The requested absolute position in milliseconds.</param>
 		public void Seek(int position)

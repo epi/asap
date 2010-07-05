@@ -343,4 +343,20 @@
 		<mute-pokey>no</mute-pokey>
 		<lang>C#</lang>
 	</port>
+	<port name="SilverASAP">
+		<bin></bin>
+		<platform>Silverlight</platform>
+		<interface>via HTML</interface><!-- TODO: or JavaScript -->
+		<since>2.1.2</since>
+		<status>in development</status>
+		<output>16-bit sound</output>
+		<subsongs>no</subsongs><!-- TODO: yes -->
+		<file-info>no</file-info><!-- TODO: yes -->
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time><!-- TODO: yes -->
+		<mute-pokey>no</mute-pokey>
+		<lang>C#</lang>
+		<a href="http://asap.sourceforge.net/silverlight.html">online demo</a>
+	</port>
 </ports>

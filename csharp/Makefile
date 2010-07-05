@@ -1,8 +1,10 @@
 CSC = csc -nologo -o+ -out:$@
 PP = cpp -C -P -I..
 NDOC = "C:/Program Files/NDoc3/bin/NDoc3Console.exe"
+SEVENZIP = 7z a -mx=9
+SL = "C:/Program Files/Reference Assemblies/Microsoft/Framework/Silverlight/v4.0"
 
-all: asap2wav.exe asapplay.exe
+all: asap2wav.exe asapplay.exe SilverASAP.xap
 
 include ../players/Makefile
 
@@ -11,6 +13,12 @@ asap2wav.exe: asap2wav.cs ASAP.cs
 
 asapplay.exe: asapplay.cs ASAP.cs
 	$(CSC) asapplay.cs ASAP.cs
+
+SilverASAP.xap: SilverASAP.dll AppManifest.xaml
+	$(SEVENZIP) -tzip $@ SilverASAP.dll AppManifest.xaml
+
+SilverASAP.dll: SilverASAP.cs ASAP.cs
+	$(CSC) -t:library SilverASAP.cs ASAP.cs -nostdlib -noconfig -r:$(SL)/mscorlib.dll -r:$(SL)/system.dll -r:$(SL)/System.Net.dll -r:$(SL)/System.Windows.dll
 
 ASAP.cs: ASAP.ppcs ../asap.c ../acpu.c ../apokeysnd.c ../asap.h ../asap_internal.h ../anylang.h ../players.h
 	$(PP) ASAP.ppcs > $@
