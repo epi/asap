@@ -1,3 +1,8 @@
+2010-07-11  Piotr Fusik  <fox@scene.pl>
+* csharp/SilverASAP.cs: double-clicking "Play" in Opera could start two songs
+  playing simultaneously (reported by Slaves)
+
+
 2010-07-05  Piotr Fusik  <fox@scene.pl>
 * csharp/SilverASAP.cs, csharp/AppManifest.xaml, csharp/ASAP.ppcs,
   csharp/Makefile, anylang.h, README, PORTS.xml: Silverlight player

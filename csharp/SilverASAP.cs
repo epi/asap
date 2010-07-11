@@ -116,6 +116,7 @@ public class SilverASAP : Application
 	const int Once = -2; // for loopPlaybackTime
 	string filename;
 	int song = -1;
+	WebClient webClient = null;
 	MediaElement mediaElement = null;
 
 	public SilverASAP()
@@ -146,6 +147,9 @@ public class SilverASAP : Application
 
 	void WebClient_OpenReadCompleted(object sender, OpenReadCompletedEventArgs e)
 	{
+		this.webClient = null;
+		if (e.Cancelled || e.Error != null)
+			return;
 		byte[] module = new byte[e.Result.Length];
 		int module_len = e.Result.Read(module, 0, module.Length);
 
@@ -170,12 +174,14 @@ public class SilverASAP : Application
 	[ScriptableMember]
 	public void Play(string filename, int song)
 	{
+		if (this.webClient != null)
+			this.webClient.CancelAsync();
 		Stop();
 		this.filename = filename;
 		this.song = song;
-		WebClient wc = new WebClient();
-		wc.OpenReadCompleted += WebClient_OpenReadCompleted;
-		wc.OpenReadAsync(new Uri(filename, UriKind.Relative));
+		this.webClient = new WebClient();
+		this.webClient.OpenReadCompleted += WebClient_OpenReadCompleted;
+		this.webClient.OpenReadAsync(new Uri(filename, UriKind.Relative));
 	}
 
 	[ScriptableMember]
