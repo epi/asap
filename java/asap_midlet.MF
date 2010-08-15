@@ -1,3 +1,4 @@
+Manifest-Version: 1.0
 MIDlet-1: ASAP, , ASAPMIDlet
 MIDlet-Name: ASAP
 MIDlet-Vendor: Piotr Fusik
