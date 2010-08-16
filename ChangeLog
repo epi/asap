@@ -1,4 +1,7 @@
 2010-08-16  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile, win32/apollo/ASAP_Apollo.cpp, win32/shellex/ASAPShellEx.cpp,
+  win32/wasap/wasap.c: prevented gcc 4.5.0 warnings
+
 * win32/Makefile: added SilverASAP to www
 
 * csharp/SilverASAP.cs: lots of fast "Play" clicks could start multiple songs

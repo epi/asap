@@ -77,7 +77,7 @@ public:
 
 	char * __cdecl GetDescription()
 	{
-		return "Apollo ASAP Decoder version " ASAP_VERSION;
+		return const_cast<char *> ("Apollo ASAP Decoder version " ASAP_VERSION);
 	}
 
 	CInputDecoder * __cdecl Open(char *filename, int audioDataOffset)
@@ -127,7 +127,7 @@ public:
 
 	char * __cdecl GetExtensions()
 	{
-		return
+		return const_cast<char *>(
 			"Slight Atari Player\0*.SAP\0"
 			"Chaos Music Composer\0*.CMC;*.CM3;*.CMR;*.CMS;*.DMC\0"
 			"Delta Music Composer\0*.DLT\0"
@@ -135,7 +135,7 @@ public:
 			"Raster Music Tracker\0*.RMT\0"
 			"Theta Music Composer 1.x\0*.TMC;*.TM8\0"
 			"Theta Music Composer 2.x\0*.TM2\0"
-			"\0";
+			"\0");
 	}
 
 	void __cdecl Config()

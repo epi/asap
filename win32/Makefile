@@ -2,7 +2,7 @@ VERSION = 2.1.1
 
 # gcc for most ports
 ASAP_GCC = mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
-ASAP_GPP = mingw32-g++ -s -O2 -Wall -o $@ -I. -I..
+ASAP_GPP = mingw32-g++ -static -s -O2 -Wall -o $@ -I. -I..
 WINDRES = windres -o $@
 LIB_GCC = mingw32-gcc -O2 -Wall -I..
 AR = ar rc

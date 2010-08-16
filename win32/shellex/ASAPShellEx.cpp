@@ -542,7 +542,9 @@ public:
 		CMyLock lck(&m_lock);
 		if (m_pstream == NULL)
 			return STG_E_ACCESSDENIED;
-		LARGE_INTEGER liZero = { 0 };
+		LARGE_INTEGER liZero;
+		liZero.LowPart = 0;
+		liZero.HighPart = 0;
 		HRESULT hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, NULL);
 		if (SUCCEEDED(hr)) {
 			byte module[ASAP_MODULE_MAX];

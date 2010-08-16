@@ -46,7 +46,7 @@ static HWND hWnd;
 /* WaveOut ---------------------------------------------------------------- */
 
 /* double-buffering, *2 for 16-bit, *2 for stereo */
-static byte buffer[2][BUFFERED_BLOCKS * 2 * 2];
+static char buffer[2][BUFFERED_BLOCKS * 2 * 2];
 static HWAVEOUT hwo = INVALID_HANDLE_VALUE;
 static WAVEHDR wh[2] = {
 	{ buffer[0], 0, 0, 0, 0, 0, NULL, 0 },
