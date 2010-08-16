@@ -303,7 +303,7 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 	$(GREP) VERSION ../flash/ASAP.ppas
 	$(GREP) "VERSION =" ../chksap.pl
 
-www: ../../www/index.html ../../www/PORTS.xml ../../www/PORTS.xsl 
+www: ../../www/index.html ../../www/apokeysnd.dll ../../www/asap.swf ../../www/asap_applet.jar ../../www/SilverASAP.xap ../../www/favicon.ico ../../www/PORTS.xml ../../www/PORTS.xsl 
 
 ../../www/index.html: ../README ../NEWS ../CREDITS
 	$(ASCIIDOC_START) -a asapwww -a asapports ../README $(ASCIIDOC_END)
@@ -315,6 +315,9 @@ www: ../../www/index.html ../../www/PORTS.xml ../../www/PORTS.xsl
 	$(CP) $< $@
 
 ../../www/asap_applet.jar: ../java/asap_applet.jar
+	$(CP) $< $@
+
+../../www/SilverASAP.xap: ../csharp/SilverASAP.xap
 	$(CP) $< $@
 
 ../../www/favicon.ico: wasap/wasap.ico

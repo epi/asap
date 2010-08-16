@@ -1,4 +1,6 @@
 2010-08-16  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile: added SilverASAP to www
+
 * csharp/SilverASAP.cs: lots of fast "Play" clicks could start multiple songs
   (reported by Slaves)
 
