@@ -165,6 +165,7 @@ public class SilverASAP : Application
 			duration = this.loopPlaybackTime;
 		asap.PlaySong(this.song, duration);
 
+		Stop();
 		this.mediaElement = new MediaElement();
 		this.mediaElement.Volume = 1;
 		this.mediaElement.AutoPlay = true;
@@ -174,9 +175,6 @@ public class SilverASAP : Application
 	[ScriptableMember]
 	public void Play(string filename, int song)
 	{
-		if (this.webClient != null)
-			this.webClient.CancelAsync();
-		Stop();
 		this.filename = filename;
 		this.song = song;
 		this.webClient = new WebClient();
@@ -204,6 +202,8 @@ public class SilverASAP : Application
 	[ScriptableMember]
 	public void Stop()
 	{
+		if (this.webClient != null)
+			this.webClient.CancelAsync();
 		if (this.mediaElement != null) {
 			this.mediaElement.Stop();
 			this.mediaElement = null;
