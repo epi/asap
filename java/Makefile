@@ -4,6 +4,7 @@ WTK = C:/Program Files/Java/SE_SDK/WTK2
 JAVAC = javac -source 1.2 -d .
 #JAVAC = gcj -C -d .
 JAR = jar
+JAR_OPTIMIZE = 7z a -mx=9 -tzip
 JAVADOC = javadoc
 PP = cpp -C -P -I..
 PERL = perl
@@ -21,12 +22,14 @@ include ../players/Makefile
 
 asap2wav.jar: asap2wav.MF ASAP2WAV.class net/sf/asap/ASAP.class $(PLAYERS_OBX)
 	$(JAR) cfm $@ asap2wav.MF ASAP2WAV.class net/sf/asap
+	$(JAR_OPTIMIZE) $@ ASAP2WAV.class net/sf/asap
 
 ASAP2WAV.class: ASAP2WAV.java net/sf/asap/ASAP.class $(PLAYERS_OBX)
 	$(JAVAC) -classpath . ASAP2WAV.java
 
 asap_applet.jar: ASAPApplet.class net/sf/asap/ASAP.class $(PLAYERS_OBX)
 	$(JAR) cf $@ ASAPApplet.class net/sf/asap
+	$(JAR_OPTIMIZE) $@ ASAPApplet.class net/sf/asap
 
 ASAPApplet.class: ASAPApplet.java net/sf/asap/ASAP.class
 	$(JAVAC) -classpath "$(JRE)/lib/plugin.jar;." ASAPApplet.java
@@ -39,6 +42,8 @@ asap_midlet.jad: asap_midlet.jar asap_midlet.MF
 
 asap_midlet.jar: asap_midlet.MF preverified/ASAPMIDlet.class $(PLAYERS_OBX)
 	$(JAR) cfm $@ asap_midlet.MF -C preverified . $(PLAYERS_OBX)
+	cd preverified && $(JAR_OPTIMIZE) ../$@ .
+	$(JAR_OPTIMIZE) $@ $(PLAYERS_OBX)
 
 preverified/ASAPMIDlet.class: ASAPMIDlet.class net/sf/asap/ASAP.class net/sf/asap/ASAP_ModuleInfo.class
 	$(PREVERIFY) -classpath "$(ME_CLASSES);." -d preverified ASAPMIDlet FileList ASAPInputStream net.sf.asap.ASAP net.sf.asap.ASAP_ModuleInfo net.sf.asap.ASAP_State net.sf.asap.PokeyState

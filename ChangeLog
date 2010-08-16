@@ -1,3 +1,7 @@
+2010-08-16  Piotr Fusik  <fox@scene.pl>
+* java/Makefile: re-compress *.jar with 7-Zip
+
+
 2010-08-15  Piotr Fusik  <fox@scene.pl>
 * java/asap2wav.MF, java/asap_midlet.MF: added "Manifest-Version"
 
