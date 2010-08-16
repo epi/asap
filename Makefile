@@ -84,41 +84,41 @@ players/tm2.obx: players/tm2.asx
 install: install-asapconv install-lib
 
 install-asapconv: asapconv
-	$(MKDIRS) $(PREFIX)/bin
-	$(INSTALL_PROGRAM) asapconv $(PREFIX)/bin/asapconv
+	$(MKDIRS) $(DESTDIR)$(PREFIX)/bin
+	$(INSTALL_PROGRAM) asapconv $(DESTDIR)$(PREFIX)/bin/asapconv
 
 uninstall-asapconv:
-	$(RM) $(PREFIX)/bin/asapconv
+	$(RM) $(DESTDIR)$(PREFIX)/bin/asapconv
 
 install-lib: libasap.a
-	$(MKDIRS) $(PREFIX)/include
-	$(INSTALL_DATA) asap.h $(PREFIX)/include/asap.h
-	$(MKDIRS) $(PREFIX)/lib
-	$(INSTALL_DATA) libasap.a $(PREFIX)/lib/libasap.a
+	$(MKDIRS) $(DESTDIR)$(PREFIX)/include
+	$(INSTALL_DATA) asap.h $(DESTDIR)$(PREFIX)/include/asap.h
+	$(MKDIRS) $(DESTDIR)$(PREFIX)/lib
+	$(INSTALL_DATA) libasap.a $(DESTDIR)$(PREFIX)/lib/libasap.a
 
 uninstall-lib:
-	$(RM) $(PREFIX)/include/asap.h $(PREFIX)/lib/libasap.a
+	$(RM) $(DESTDIR)$(PREFIX)/include/asap.h $(DESTDIR)$(PREFIX)/lib/libasap.a
 
 install-xmms: libasap-xmms.so
-	$(MKDIRS) $(XMMS_INPUT_PLUGIN_DIR)
-	$(INSTALL_PROGRAM) libasap-xmms.so $(XMMS_INPUT_PLUGIN_DIR)/libasap-xmms.so
+	$(MKDIRS) $(DESTDIR)$(XMMS_INPUT_PLUGIN_DIR)
+	$(INSTALL_PROGRAM) libasap-xmms.so $(DESTDIR)$(XMMS_INPUT_PLUGIN_DIR)/libasap-xmms.so
 
 uninstall-xmms:
-	$(RM) $(XMMS_INPUT_PLUGIN_DIR)/libasap-xmms.so
+	$(RM) $(DESTDIR)$(XMMS_INPUT_PLUGIN_DIR)/libasap-xmms.so
 
 install-xmms-user: libasap-xmms.so
-	$(MKDIRS) $(XMMS_USER_PLUGIN_DIR)
-	$(INSTALL_PROGRAM) libasap-xmms.so $(XMMS_USER_PLUGIN_DIR)/libasap-xmms.so
+	$(MKDIRS) $(DESTDIR)$(XMMS_USER_PLUGIN_DIR)
+	$(INSTALL_PROGRAM) libasap-xmms.so $(DESTDIR)$(XMMS_USER_PLUGIN_DIR)/libasap-xmms.so
 
 uninstall-xmms-user:
-	$(RM) $(XMMS_USER_PLUGIN_DIR)/libasap-xmms.so
+	$(RM) $(DESTDIR)$(XMMS_USER_PLUGIN_DIR)/libasap-xmms.so
 
 install-moc: libasap_decoder.so
-	$(MKDIRS) $(MOC_PLUGIN_DIR)
-	$(INSTALL_PROGRAM) libasap_decoder.so $(MOC_PLUGIN_DIR)/libasap_decoder.so
+	$(MKDIRS) $(DESTDIR)$(MOC_PLUGIN_DIR)
+	$(INSTALL_PROGRAM) libasap_decoder.so $(DESTDIR)$(MOC_PLUGIN_DIR)/libasap_decoder.so
 
 uninstall-moc:
-	$(RM) $(MOC_PLUGIN_DIR)/libasap_decoder.so
+	$(RM) $(DESTDIR)$(MOC_PLUGIN_DIR)/libasap_decoder.so
 
 clean:
 	$(RM) asapconv libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so players.h

@@ -302,6 +302,7 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 	$(GREP) ASAP_VERSION ../javascript/asap.ppjs
 	$(GREP) VERSION ../flash/ASAP.ppas
 	$(GREP) "VERSION =" ../chksap.pl
+	$(GREP) Version: ../asap.spec
 
 www: ../../www/index.html ../../www/apokeysnd.dll ../../www/asap.swf ../../www/asap_applet.jar ../../www/SilverASAP.xap ../../www/favicon.ico ../../www/PORTS.xml ../../www/PORTS.xsl 
 
