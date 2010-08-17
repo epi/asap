@@ -1,7 +1,7 @@
 /*
  * asap2wav.ppjs - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2009  Piotr Fusik
+ * Copyright (C) 2009-2010 Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,36 +23,55 @@
 
 #include "asap.ppjs"
 
-var BinaryFile_cp437ToUnicode = [
-	199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236, 196, 197, 
-	201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 162, 163, 165, 8359, 402, 
-	225, 237, 243, 250, 241, 209, 170, 186, 191, 8976, 172, 189, 188, 161, 171, 187, 
-	9617, 9618, 9619, 9474, 9508, 9569, 9570, 9558, 9557, 9571, 9553, 9559, 9565, 9564, 9563, 9488, 
-	9492, 9524, 9516, 9500, 9472, 9532, 9566, 9567, 9562, 9556, 9577, 9574, 9568, 9552, 9580, 9575, 
-	9576, 9572, 9573, 9561, 9560, 9554, 9555, 9579, 9578, 9496, 9484, 9608, 9604, 9612, 9616, 9600, 
-	945, 223, 915, 960, 931, 963, 181, 964, 934, 920, 937, 948, 8734, 966, 949, 8745, 
-	8801, 177, 8805, 8804, 8992, 8993, 247, 8776, 176, 8729, 183, 8730, 8319, 178, 9632, 160
-];
+if (typeof(WScript) == "object") {
+	// WScript
 
-var BinaryFile_unicodeToCp437 = new Array(9633);
-for (var c = 0; c < 128; c++) {
-	BinaryFile_unicodeToCp437[c] = c;
-	BinaryFile_unicodeToCp437[BinaryFile_cp437ToUnicode[c]] = 128 + c;
-}
+	var arguments = new Array();
+	for (var i = 0; i < WScript.Arguments.length; i++)
+		arguments[i] = WScript.Arguments(i);
 
-function BinaryFile(filename)
-{
-	this.filename = filename;
-	this.stream = WScript.CreateObject("ADODB.Stream");
-	this.stream.Type = 2;
-	this.stream.CharSet = '437';
-	this.stream.Open();
-
-	this.readAll = function()
+	var print = function(s)
 	{
-		this.stream.LoadFromFile(this.filename);
-		var unicode = this.stream.ReadText();
-		this.stream.Close();
+		WScript.Echo(s);
+	}
+
+	var quit = function(code)
+	{
+		WScript.Quit(code);
+	}
+
+	var BinaryFile_cp437ToUnicode = [
+		199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236, 196, 197, 
+		201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 162, 163, 165, 8359, 402, 
+		225, 237, 243, 250, 241, 209, 170, 186, 191, 8976, 172, 189, 188, 161, 171, 187, 
+		9617, 9618, 9619, 9474, 9508, 9569, 9570, 9558, 9557, 9571, 9553, 9559, 9565, 9564, 9563, 9488, 
+		9492, 9524, 9516, 9500, 9472, 9532, 9566, 9567, 9562, 9556, 9577, 9574, 9568, 9552, 9580, 9575, 
+		9576, 9572, 9573, 9561, 9560, 9554, 9555, 9579, 9578, 9496, 9484, 9608, 9604, 9612, 9616, 9600, 
+		945, 223, 915, 960, 931, 963, 181, 964, 934, 920, 937, 948, 8734, 966, 949, 8745, 
+		8801, 177, 8805, 8804, 8992, 8993, 247, 8776, 176, 8729, 183, 8730, 8319, 178, 9632, 160
+	];
+
+	var BinaryFile_unicodeToCp437 = new Array(9633);
+	for (var c = 0; c < 128; c++) {
+		BinaryFile_unicodeToCp437[c] = c;
+		BinaryFile_unicodeToCp437[BinaryFile_cp437ToUnicode[c]] = 128 + c;
+	}
+
+	function createStream()
+	{
+		var stream = WScript.CreateObject("ADODB.Stream");
+		stream.Type = 2;
+		stream.CharSet = '437';
+		stream.Open();
+		return stream;
+	}
+
+	var readBinaryFile = function(filename)
+	{
+		var stream = createStream();
+		stream.LoadFromFile(filename);
+		var unicode = stream.ReadText();
+		stream.Close();
 		var bytes = new Array(unicode.length);
 		for (var i = 0; i < unicode.length; i++) {
 			var c = unicode.charCodeAt(i);
@@ -61,20 +80,58 @@ function BinaryFile(filename)
 		return bytes;
 	}
 
-	this.write = function(bytes, len)
+	var BinaryFileOutput = function(filename)
 	{
-		for (var i = 0; i < len; i++) {
-			var c = bytes[i];
-			if (c >= 128)
-				c = BinaryFile_cp437ToUnicode[c - 128];
-			this.stream.WriteText(String.fromCharCode(c));
+		this.filename = filename;
+		this.stream = createStream();
+
+		this.write = function(bytes, len)
+		{
+			for (var i = 0; i < len; i++) {
+				var c = bytes[i];
+				if (c >= 128)
+					c = BinaryFile_cp437ToUnicode[c - 128];
+				this.stream.WriteText(String.fromCharCode(c));
+			}
+		}
+
+		this.close = function()
+		{
+			this.stream.SaveToFile(filename, 2);
+			this.stream.Close();
 		}
 	}
+}
+else {
+	// Rhino
 
-	this.save = function()
+	var readBinaryFile = function(filename)
 	{
-		this.stream.SaveToFile(filename, 2);
-		this.stream.Close();
+		var stream = new java.io.FileInputStream(filename);
+		var bytes = new Array();
+		for (;;) {
+			var c = stream.read();
+			if (c < 0)
+				break;
+			bytes.push(c);
+		}
+		return bytes;
+	}
+
+	var BinaryFileOutput = function(filename)
+	{
+		this.stream = new java.io.BufferedOutputStream(new java.io.FileOutputStream(filename));
+
+		this.write = function(bytes, len)
+		{
+			for (var i = 0; i < len; i++)
+				this.stream.write(bytes[i]);
+		}
+
+		this.close = function()
+		{
+			this.stream.close();
+		}
 	}
 }
 
@@ -87,7 +144,7 @@ var muteMask = 0;
 
 function printHelp()
 {
-	WScript.Echo(
+	print(
 		"Usage: cscript asap2wav.js [OPTIONS] INPUTFILE...\n" +
 #ifdef ASAP_ONLY_SAP
 		"INPUTFILEs must be in the SAP format.\n" +
@@ -130,7 +187,7 @@ function setMuteMask(s)
 
 function processFile(inputFilename)
 {
-	var module = new BinaryFile(inputFilename).readAll();
+	var module = readBinaryFile(inputFilename);
 	var asap = new ASAP();
 	asap.load(inputFilename, module);
 	var moduleInfo = asap.getModuleInfo();
@@ -147,7 +204,7 @@ function processFile(inputFilename)
 		var i = inputFilename.lastIndexOf(".");
 		outputFilename = inputFilename.substring(0, i + 1) + (outputHeader ? "wav" : "raw");
 	}
-	var of = new BinaryFile(outputFilename);
+	var of = new BinaryFileOutput(outputFilename);
 	var buffer = new Array(8192);
 	if (outputHeader) {
 		asap.getWavHeader(buffer, format);
@@ -158,30 +215,29 @@ function processFile(inputFilename)
 		nBytes = asap.generate(buffer, 0, 8192, format);
 		of.write(buffer, nBytes);
 	} while (nBytes == 8192);
-	of.save();
+	of.close();
 	outputFilename = null;
 	song = -1;
 	duration = -1;
 }
 
 var noInputFiles = true;
-var args = WScript.Arguments;
-for (var i = 0; i < args.length; i++) {
-	var arg = args(i);
+for (var i = 0; i < arguments.length; i++) {
+	var arg = arguments[i];
 	if (arg.charAt(0) != "-") {
 		processFile(arg);
 		noInputFiles = false;
 	}
 	else if (arg == "-o")
-		outputFilename = args(++i);
+		outputFilename = arguments(++i);
 	else if (arg.substring(0, 9) == "--output=")
 		outputFilename = arg.substring(9, arg.length);
 	else if (arg == "-s")
-		setSong(args(++i));
+		setSong(arguments(++i));
 	else if (arg.substring(0, 7) == "--song=")
 		setSong(arg.substring(7, arg.length));
 	else if (arg == "-t")
-		setTime(args(++i));
+		setTime(arguments(++i));
 	else if (arg.substring(0, 7) ==  "--time=")
 		setTime(arg.substring(7, arg.length));
 	else if (arg == "-b" || arg == "--byte-samples")
@@ -191,7 +247,7 @@ for (var i = 0; i < args.length; i++) {
 	else if (arg == "--raw")
 		outputHeader = false;
 	else if (arg == "-m")
-		setMuteMask(args(++i));
+		setMuteMask(arguments(++i));
 	else if (arg.substring(0, 7) == "--mute=")
 		setMuteMask(arg.substring(7, arg.length));
 	else if (arg == "-h" || arg == "--help") {
@@ -199,7 +255,7 @@ for (var i = 0; i < args.length; i++) {
 		noInputFiles = false;
 	}
 	else if (arg == "-v" || arg == "--version") {
-		WScript.Echo("ASAP2WAV (JScript) " + ASAP_VERSION);
+		print("ASAP2WAV (JScript) " + ASAP_VERSION);
 		noInputFiles = false;
 	}
 	else
@@ -207,5 +263,5 @@ for (var i = 0; i < args.length; i++) {
 }
 if (noInputFiles) {
 	printHelp();
-	WScript.Quit(1);
+	quit(1);
 }

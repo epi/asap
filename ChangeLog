@@ -1,3 +1,7 @@
+2010-08-17  Piotr Fusik  <fox@scene.pl>
+* javascript/asap2wav.ppjs, README, PORTS.xml: added support for Rhino Shell
+
+
 2010-08-16  Piotr Fusik  <fox@scene.pl>
 * asap.spec, Makefile, win32/Makefile: build RPM for Linux
 
