@@ -225,7 +225,7 @@
 		<platform>desktop operating systems</platform>
 		<interface>command line</interface>
 		<since>2.0.0</since>
-		<status>experimental</status>
+		<status>in development</status>
 		<output>8 or 16-bit, WAV or raw file</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info>

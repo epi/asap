@@ -1,3 +1,7 @@
+2010-08-19  Piotr Fusik  <fox@scene.pl>
+* javascript/asap2wav.ppjs, README, PORTS.xml: added support for Google V8 shell
+
+
 2010-08-17  Piotr Fusik  <fox@scene.pl>
 * javascript/asap2wav.ppjs, README, PORTS.xml: added support for Rhino Shell
 
