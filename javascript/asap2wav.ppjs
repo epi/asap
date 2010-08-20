@@ -25,14 +25,53 @@
 
 var usage;
 
+/*@cc_on
+@if (@_jscript_version >= 7)
+	// JScript .NET
+
+	import System;
+	import System.IO;
+
+	var arguments = new Array(Environment.GetCommandLineArgs());
+	usage = arguments.shift() + " [OPTIONS] INPUTFILE...";
+
+	function quit(code)
+	{
+		Environment.Exit(code);
+	}
+
+	function readBinaryFile(filename)
+	{
+		return File.ReadAllBytes(filename);
+	}
+
+	class BinaryFileOutput
+	{
+		var stream;
+
+		function BinaryFileOutput(filename)
+		{
+			this.stream = File.Create(filename);
+		}
+
+		function write(bytes, len)
+		{
+			this.stream.Write(bytes, 0, len);
+		}
+
+		function close()
+		{
+			this.stream.Close();
+		}
+	}
+@else @*/
 if (typeof(WScript) == "object") {
 	// WScript
-
-	usage = "cscript asap2wav.js [OPTIONS] INPUTFILE...";
 
 	var arguments = new Array();
 	for (var i = 0; i < WScript.Arguments.length; i++)
 		arguments[i] = WScript.Arguments(i);
+	usage = "cscript asap2wav.js [OPTIONS] INPUTFILE...";
 
 	var print = function(s)
 	{
@@ -199,6 +238,7 @@ else {
 		}
 	}
 }
+/*@end @*/
 
 var outputFilename = null;
 var outputHeader = true;

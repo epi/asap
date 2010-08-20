@@ -1,4 +1,4 @@
-PP = cpp -P -I..
+PP = cpp -C -P -I..
 
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h ../anylang.h ../players.h
