@@ -39,7 +39,7 @@ ASAP includes the following programs:
 - Java applet - for web pages {asapjava=}{asapwww?(see link:applet.html[online demo])}
 - Java midlet - for mobile devices {asapjava=}
 - C# version of ASAP2WAV
-- JavaScript version of ASAP2WAV running in http://en.wikipedia.org/wiki/Windows_Script_Host[Windows Script Host], https://developer.mozilla.org/en/Rhino_Shell[Rhino Shell], http://code.google.com/p/v8/[V8 Shell] and http://en.wikipedia.org/wiki/JScript_.NET[JScript .NET] {asapjavascript=}
+- JavaScript version of ASAP2WAV running in http://en.wikipedia.org/wiki/Windows_Script_Host[Windows Script Host], https://developer.mozilla.org/en/Rhino_Shell[Rhino Shell], http://code.google.com/p/v8/[V8 Shell], http://en.wikipedia.org/wiki/JScript_.NET[JScript .NET] and http://en.wikipedia.org/wiki/JaegerMonkey[JaegerMonkey] {asapjavascript=}
 - experimental JavaScript version of ASAP2WAV running in Firefox {asapjavascript=}
 - Flash player - for web pages {asapflash=}{asapwww?(see link:flash.html[online demo])}
 - asapplay - simple command-line player in C#

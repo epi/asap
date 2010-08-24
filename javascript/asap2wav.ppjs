@@ -180,9 +180,14 @@ else if (typeof(java) == "object") {
 	}
 }
 else {
-	// d8
+	// d8 or JaegerMonkey
 
-	usage = "base64 INPUTFILE | d8 asap2wav.js -- [OPTIONS] INPUTFILE | base64 -d > OUTFILE";
+	if (typeof(write) == "undefined") {
+		var write = putstr;
+		usage = "base64 INPUTFILE | js asap2wav.js [OPTIONS] INPUTFILE | base64 -d > OUTFILE";
+	}
+	else
+		usage = "base64 INPUTFILE | d8 asap2wav.js -- [OPTIONS] INPUTFILE | base64 -d > OUTFILE";
 
 	var base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

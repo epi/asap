@@ -1,3 +1,7 @@
+2010-08-24  Piotr Fusik  <fox@scene.pl>
+* javascript/asap2wav.ppjs, README, INSTALL: added support for JaegerMonkey
+
+
 2010-08-20  Piotr Fusik  <fox@scene.pl>
 * javascript/asap2wav.ppjs, javascript/Makefile, README:
   added support for JScript .NET

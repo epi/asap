@@ -219,8 +219,8 @@ This should produce `asap2wav.jar`, `asap_applet.jar`, `asap_midlet.jar`
 and `asap_midlet.jad`.
 
 
-Building C# ASAP2WAV and asapplay on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building C# ASAP2WAV, asapplay and SilverASAP on Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You need .NET Framework, of course.
 
@@ -229,7 +229,7 @@ From the command prompt navigate to the `csharp` directory and run:
 mingw32-make
 --------------------------------------------------------------------------------
 
-This should produce `asap2wav.exe` and `asapplay.exe`.
+This should produce `asap2wav.exe`, `asapplay.exe` and `SilverASAP.xap`.
 
 
 Building the XBMC plugin on Windows
@@ -247,8 +247,8 @@ This should produce `xbmc_asap.dll`, which you can use with XBox
 or Windows version of XBMC. The XBMC must include support for ASAP.
 
 
-Building JScript ASAP2WAV and JavaScript ASAP2WAV for web browsers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building JavaScript ASAP2WAVs (command-line and for web browsers)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Navigate to the `javascript` directory and run:
 --------------------------------------------------------------------------------
