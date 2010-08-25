@@ -1,3 +1,7 @@
+2010-08-25  Piotr Fusik  <fox@scene.pl>
+* asap_sdl.c, win32/Makefile: simple command-line player using SDL
+
+
 2010-08-24  Piotr Fusik  <fox@scene.pl>
 * javascript/asap2wav.ppjs, README, INSTALL: added support for JaegerMonkey
 

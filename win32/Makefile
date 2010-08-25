@@ -204,6 +204,11 @@ javascript:
 flash:
 	$(MAKE) -C ../flash
 
+# SDL
+
+asap_sdl.exe: ../asap_sdl.c $(COMMON_C) $(COMMON_H)
+	$(ASAP_GCC) ../asap_sdl.c $(COMMON_C) -lmingw32 -lSDLmain -lSDL
+
 # delete generated files
 
 clean:
