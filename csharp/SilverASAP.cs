@@ -206,6 +206,8 @@ public class SilverASAP : Application
 			this.webClient.CancelAsync();
 		if (this.mediaElement != null) {
 			this.mediaElement.Stop();
+			// in Opera Stop() doesn't work when mediaElement is in the Opening state:
+			this.mediaElement.Source = null;
 			this.mediaElement = null;
 		}
 	}

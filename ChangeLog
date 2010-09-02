@@ -1,4 +1,6 @@
 2010-09-02  Piotr Fusik  <fox@scene.pl>
+* csharp/SilverASAP.cs: the problem with fast clicks in Opera hopefully fixed
+
 * audacious/asapplug.c, Makefile, README, INSTALL, PORTS.xml:
   created Audacious plugin
 
