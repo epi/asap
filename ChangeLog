@@ -1,3 +1,8 @@
+2010-09-02  Piotr Fusik  <fox@scene.pl>
+* audacious/asapplug.c, Makefile, README, INSTALL, PORTS.xml:
+  created Audacious plugin
+
+
 2010-08-25  Piotr Fusik  <fox@scene.pl>
 * asap_sdl.c, win32/Makefile: simple command-line player using SDL
 

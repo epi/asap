@@ -142,6 +142,21 @@ make asap-xbmc
 You will get `xbmc_asap-i486-linux.so`.
 
 
+Building the Audacious plugin on Unix-like systems
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install `audacious-devel`.
+To compile, run the following command:
+--------------------------------------------------------------------------------
+make audacious
+--------------------------------------------------------------------------------
+
+To install in `/usr/lib/audacious/Input`:
+--------------------------------------------------------------------------------
+make install-audacious
+--------------------------------------------------------------------------------
+
+
 Building asapconv, WASAP, Winamp/GSPlayer/Apollo/XMPlay/BASS plugins, RMT DLL, asapscan, shell extension and libasap on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -235,7 +250,7 @@ This should produce `asap2wav.exe`, `asapplay.exe` and `SilverASAP.xap`.
 Building the XBMC plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need Visual C+\+ Toolkit (it used to be a free download from Microsoft,
+You need Visual C\++ Toolkit (it used to be a free download from Microsoft,
 now search the internet for `VCToolkitSetup.exe`) or Microsoft Visual C++ 2003.
 
 Navigate to the `win32` directory and run:

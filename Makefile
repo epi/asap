@@ -20,6 +20,8 @@ XMMS_USER_PLUGIN_DIR = $(HOME)/.xmms/Plugins
 MOC_INCLUDE = ../moc-2.4.4
 MOC_PLUGIN_DIR = /usr/local/lib/moc/decoder_plugins
 XBMC_DLL_LOADER_EXPORTS = ../XBMC/xbmc/cores/DllLoader/exports
+AUDACIOUS_CFLAGS = `pkg-config --cflags gtk+-2.0` `pkg-config --cflags libmowgli`
+AUDACIOUS_INPUT_PLUGIN_DIR = /usr/lib/audacious/Input
 
 COMMON_C = asap.c acpu.c apokeysnd.c
 COMMON_H = asap.h asap_internal.h anylang.h players.h
@@ -50,6 +52,11 @@ asap-xbmc: xbmc_asap-i486-linux.so
 
 xbmc_asap-i486-linux.so: xbmc/xbmc_asap.c $(COMMON_C) $(COMMON_H)
 	$(CC) -shared -fPIC -o $@ -I. xbmc/xbmc_asap.c `cat $(XBMC_DLL_LOADER_EXPORTS)/wrapper.def` $(XBMC_DLL_LOADER_EXPORTS)/wrapper.o $(COMMON_C)
+
+audacious: asapplug.so
+
+asapplug.so: audacious/asapplug.c $(COMMON_C) $(COMMON_H)
+	$(CC) $(AUDACIOUS_CFLAGS) -shared -fPIC -o $@ -I. audacious/asapplug.c $(COMMON_C)
 
 players.h: files2anylang.pl $(PLAYERS_OBX)
 	$(PERL) files2anylang.pl $(PLAYERS_OBX) >$@
@@ -120,8 +127,12 @@ install-moc: libasap_decoder.so
 uninstall-moc:
 	$(RM) $(DESTDIR)$(MOC_PLUGIN_DIR)/libasap_decoder.so
 
+install-audacious: asapplug.so
+	$(MKDIRS) $(DESTDIR)$(AUDACIOUS_INPUT_PLUGIN_DIR)
+	$(INSTALL_PROGRAM) asapplug.so $(DESTDIR)$(AUDACIOUS_INPUT_PLUGIN_DIR)/asapplug.so
+
 clean:
-	$(RM) asapconv libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so players.h
+	$(RM) asapconv libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so asapplug.so players.h
 
 README.html: README INSTALL NEWS CREDITS
 	$(ASCIIDOC_START) -a asapsrc -a asapports README $(ASCIIDOC_END)

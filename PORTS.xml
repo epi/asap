@@ -225,7 +225,7 @@
 		<platform>desktop operating systems</platform>
 		<interface>command line</interface>
 		<since>2.0.0</since>
-		<status>in development</status>
+		<status>stable</status>
 		<output>8 or 16-bit, WAV or raw file</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info>
@@ -358,5 +358,37 @@
 		<mute-pokey>no</mute-pokey>
 		<lang>C#</lang>
 		<a href="http://asap.sourceforge.net/silverlight.html">online demo</a>
+	</port>
+	<port name="asap_sdl">
+		<bin></bin>
+		<platform>desktop operating systems</platform>
+		<interface>command line</interface>
+		<since>2.1.2</since>
+		<status>stable</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<lang>C</lang>
+		<a href="http://www.libsdl.org/">SDL</a>
+	</port>
+	<port name="Audacious plugin">
+		<bin></bin>
+		<platform>Linux, Unix</platform>
+		<interface>player plugin</interface>
+		<since>2.1.2</since>
+		<status>in development</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<lang>C</lang>
+		<a href="http://audacious-media-player.org/">Audacious</a>
 	</port>
 </ports>
