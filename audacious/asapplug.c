@@ -69,7 +69,11 @@ static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 	byte module[ASAP_MODULE_MAX];
 	int module_len;
 	int song = -1;
+#if __AUDACIOUS_PLUGIN_API__ >= 10
 	gchar *filename2;
+#else
+#define filename2 filename
+#endif
 	ASAP_ModuleInfo module_info;
 	Tuple *tuple;
 	int duration;
@@ -78,16 +82,23 @@ static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 	if (file == NULL)
 		return NULL;
 	module_len = vfs_fread(module, 1, sizeof(module), file);
+	vfs_fclose(file);
+#if __AUDACIOUS_PLUGIN_API__ >= 10
 	filename2 = filename_split_subtune(filename, &song);
 	if (filename2 == NULL)
 		return NULL;
-	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len)) {
+#endif
+	if (!ASAP_GetModuleInfo(&module_info, filename2, module, module_len)) {
+#if __AUDACIOUS_PLUGIN_API__ >= 10
 		g_free(filename2);
+#endif
 		return NULL;
 	}
 
 	tuple = tuple_new_from_filename(filename2);
+#if __AUDACIOUS_PLUGIN_API__ >= 10
 	g_free(filename2);
+#endif
 	if (tuple == NULL)
 		return NULL;
 	tuple_set(tuple, FIELD_ARTIST, module_info.author);
@@ -120,21 +131,29 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 	byte module[ASAP_MODULE_MAX];
 	int module_len;
 	int song = -1;
+#if __AUDACIOUS_PLUGIN_API__ >= 10
 	gchar *filename2;
+#endif
 	int channels;
 
 	if (file == NULL)
 		return FALSE;
 	module_len = vfs_fread(module, 1, sizeof(module), file);
 	vfs_fclose(file);
+#if __AUDACIOUS_PLUGIN_API__ >= 10
 	filename2 = filename_split_subtune(filename, &song);
 	if (filename2 == NULL)
 		return FALSE;
-	if (!ASAP_Load(&asap, filename, module, module_len)) {
+#endif
+	if (!ASAP_Load(&asap, filename2, module, module_len)) {
+#if __AUDACIOUS_PLUGIN_API__ >= 10
 		g_free(filename2);
+#endif
 		return FALSE;
 	}
+#if __AUDACIOUS_PLUGIN_API__ >= 10
 	g_free(filename2);
+#endif
 	channels = asap.module_info.channels;
 	if (song > 0)
 		song--;
