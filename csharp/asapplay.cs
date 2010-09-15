@@ -25,11 +25,11 @@ using System;
 using System.IO;
 using System.Media;
 
-using ASAP;
+using Sf.Asap;
 
 public class ASAPWavStream : Stream
 {
-	readonly ASAP_Player asap = new ASAP_Player();
+	readonly ASAP asap = new ASAP();
 	readonly byte[] buffer = new byte[8192];
 	int buffer_pos = 0;
 	int buffer_len;
@@ -37,7 +37,7 @@ public class ASAPWavStream : Stream
 	public ASAPWavStream(string inputFilename, int song, int duration)
 	{
 		Stream s = File.OpenRead(inputFilename);
-		byte[] module = new byte[ASAP_Player.ModuleMax];
+		byte[] module = new byte[ASAP.ModuleMax];
 		int module_len = s.Read(module, 0, module.Length);
 		s.Close();
 		asap.Load(inputFilename, module, module_len);
@@ -51,7 +51,7 @@ public class ASAPWavStream : Stream
 		}
 		asap.PlaySong(song, duration);
 		asap.GetWavHeader(buffer, ASAP_SampleFormat.S16LE);
-		buffer_len = ASAP_Player.WavHeaderBytes;
+		buffer_len = ASAP.WavHeaderBytes;
 	}
 
 	public override int Read(byte[] outputBuffer, int offset, int count)
@@ -161,7 +161,7 @@ public class asapplay
 
 	static void SetTime(string s)
 	{
-		duration = ASAP_Player.ParseDuration(s);
+		duration = ASAP.ParseDuration(s);
 	}
 
 	static void ProcessFile(string inputFilename)
@@ -194,7 +194,7 @@ public class asapplay
 				noInputFiles = false;
 			}
 			else if (arg == "-v" || arg == "--version") {
-				Console.WriteLine("asapplay (.NET) " + ASAP_Player.Version);
+				Console.WriteLine("asapplay (.NET) " + ASAP.Version);
 				noInputFiles = false;
 			}
 			else

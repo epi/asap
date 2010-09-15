@@ -1,4 +1,7 @@
 2010-09-15  Piotr Fusik  <fox@scene.pl>
+* csharp/ASAP.ppcs, csharp/asap2wav.cs, csharp/asapplay.cs,
+  csharp/SilverASAP.cs: changed namespace and player class
+
 * gsplayer, win32/gsplayer, win32/Makefile, win32/wince/USAGE, INSTALL:
   gsplayer moved to win32
 

@@ -26,7 +26,7 @@
 using System;
 using System.IO;
 
-namespace ASAP
+namespace Sf.Asap
 {
 	/// <summary>Format of output samples.</summary>
 	public enum ASAP_SampleFormat
@@ -181,7 +181,7 @@ namespace ASAP
 	/// <summary>8-bit Atari chip music emulator.</summary>
 	/// <remarks>This class performs no I/O operations - all music data
 	/// must be passed in byte arrays.</remarks>
-	public class ASAP_Player
+	public class ASAP
 	{
 
 #include "acpu.c"

@@ -24,7 +24,7 @@
 using System;
 using System.IO;
 
-using ASAP;
+using Sf.Asap;
 
 public class asap2wav
 {
@@ -61,7 +61,7 @@ public class asap2wav
 
 	static void SetTime(string s)
 	{
-		duration = ASAP_Player.ParseDuration(s);
+		duration = ASAP.ParseDuration(s);
 	}
 
 	static void SetMuteMask(string s)
@@ -77,10 +77,10 @@ public class asap2wav
 	static void ProcessFile(string inputFilename)
 	{
 		Stream s = File.OpenRead(inputFilename);
-		byte[] module = new byte[ASAP_Player.ModuleMax];
+		byte[] module = new byte[ASAP.ModuleMax];
 		int module_len = s.Read(module, 0, module.Length);
 		s.Close();
-		ASAP_Player asap = new ASAP_Player();
+		ASAP asap = new ASAP();
 		asap.Load(inputFilename, module, module_len);
 		ASAP_ModuleInfo module_info = asap.GetModuleInfo();
 		if (song < 0)
@@ -100,7 +100,7 @@ public class asap2wav
 		byte[] buffer = new byte[8192];
 		if (outputHeader) {
 			asap.GetWavHeader(buffer, format);
-			s.Write(buffer, 0, ASAP_Player.WavHeaderBytes);
+			s.Write(buffer, 0, ASAP.WavHeaderBytes);
 		}
 		int n_bytes;
 		do {
@@ -149,7 +149,7 @@ public class asap2wav
 				noInputFiles = false;
 			}
 			else if (arg == "-v" || arg == "--version") {
-				Console.WriteLine("ASAP2WAV (.NET) " + ASAP_Player.Version);
+				Console.WriteLine("ASAP2WAV (.NET) " + ASAP.Version);
 				noInputFiles = false;
 			}
 			else
