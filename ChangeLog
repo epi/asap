@@ -1,3 +1,8 @@
+2010-09-15  Piotr Fusik  <fox@scene.pl>
+* java/ASAPMIDlet.java, java/ASAP.ppjava, asap.c: removed "small streams" code
+  because I can't make it play smoothly
+
+
 2010-09-02  Piotr Fusik  <fox@scene.pl>
 * csharp/SilverASAP.cs: the problem with fast clicks in Opera hopefully fixed
 

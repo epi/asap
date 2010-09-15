@@ -1601,18 +1601,14 @@ PRIVATE FUNC(void, serialize_int, (P(BYTEARRAY, buffer), P(int, offset), P(int, 
 	buffer[offset + 3] = TO_BYTE(value >> 24);
 }
 
-FUNC(void, ASAP_GetWavHeaderForPart, (
-	P(CONST ASAP_State PTR, ast), P(BYTEARRAY, buffer),
-	P(ASAP_SampleFormat, format), P(int, blocks)))
+FUNC(void, ASAP_GetWavHeader, (
+	P(CONST ASAP_State PTR, ast), P(BYTEARRAY, buffer), P(ASAP_SampleFormat, format)))
 {
 	V(int, use_16bit) = format != ASAP_FORMAT_U8 ? 1 : 0;
 	V(int, block_size) = ast _ module_info.channels << use_16bit;
 	V(int, bytes_per_second) = ASAP_SAMPLE_RATE * block_size;
-	V(int, remaining_blocks) = milliseconds_to_blocks(ast _ current_duration) - ast _ blocks_played;
-	V(int, n_bytes);
-	if (blocks > remaining_blocks)
-		blocks = remaining_blocks;
-	n_bytes = blocks * block_size;
+	V(int, total_blocks) = milliseconds_to_blocks(ast _ current_duration);
+	V(int, n_bytes) = (total_blocks - ast _ blocks_played) * block_size;
 	buffer[0] = CAST(byte) CHARCODE('R');
 	buffer[1] = CAST(byte) CHARCODE('I');
 	buffer[2] = CAST(byte) CHARCODE('F');
@@ -1645,13 +1641,6 @@ FUNC(void, ASAP_GetWavHeaderForPart, (
 	buffer[38] = CAST(byte) CHARCODE('t');
 	buffer[39] = CAST(byte) CHARCODE('a');
 	serialize_int(buffer, 40, n_bytes);
-}
-
-FUNC(void, ASAP_GetWavHeader, (
-	P(CONST ASAP_State PTR, ast), P(BYTEARRAY, buffer), P(ASAP_SampleFormat, format)))
-{
-	V(int, remaining_blocks) = milliseconds_to_blocks(ast _ current_duration) - ast _ blocks_played;
-	ASAP_GetWavHeaderForPart(ast, buffer, format, remaining_blocks);
 }
 
 #endif /* ACTIONSCRIPT */

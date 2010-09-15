@@ -313,17 +313,6 @@ public final class ASAP
 		ASAP_GetWavHeader(ast, buffer, format);
 	}
 
-	/** Fills <code>WAV_HEADER_BYTES</code> leading bytes
-	    of the specified buffer with WAV file header
-	    for at most <code>blocks</code> samples.
-	    @param buffer the destination buffer
-	    @param format format of samples
-	    @param blocks number of samples */
-	public void getWavHeaderForPart(byte[] buffer, int format, int blocks)
-	{
-		ASAP_GetWavHeaderForPart(ast, buffer, format, blocks);
-	}
-
 	/** Fills the specified buffer with generated samples.
 	    @param buffer the destination buffer
 	    @param format format of samples
@@ -331,19 +320,7 @@ public final class ASAP
 	    (less than <code>buffer.length</code> if reached the end of the song) */
 	public int generate(byte[] buffer, int format)
 	{
-		return ASAP_GenerateAt(ast, buffer, 0, buffer.length, format);
-	}
-
-	/** Fills a part of the specified buffer with generated samples.
-	    @param buffer the destination buffer
-	    @param offset starting offset in the buffer
-	    @param length number of bytes beginning from offset
-	    @param format format of samples
-	    @return number of bytes written in the buffer
-	    (less than <code>length</code> if reached the end of the song) */
-	public int generate(byte[] buffer, int offset, int length, int format)
-	{
-		return ASAP_GenerateAt(ast, buffer, offset, length, format);
+		return ASAP_Generate(ast, buffer, buffer.length, format);
 	}
 
 	/** Returns POKEY channel volume.
