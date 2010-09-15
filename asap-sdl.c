@@ -1,5 +1,5 @@
 /*
- * asap_sdl.cs - simple SDL ASAP player
+ * asap-sdl.c - simple SDL ASAP player
  *
  * Copyright (C) 2010  Piotr Fusik
  *

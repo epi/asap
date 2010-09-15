@@ -1,4 +1,4 @@
-VERSION = 2.1.1
+VERSION = 2.1.2
 
 # gcc for most ports
 ASAP_GCC = mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
@@ -35,7 +35,7 @@ LIGHT = light -nologo -o $@
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h ../anylang.h ../players.h
 
-all: mingw dsf foo asap.lib asapconv-static-lame.exe
+all: mingw dsf foo asap.lib asapconv-static-lame.exe asap-sdl.exe
 
 win32: mingw dsf foo xbmc COPYING.txt
 
@@ -206,8 +206,8 @@ flash:
 
 # SDL
 
-asap_sdl.exe: ../asap_sdl.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_GCC) ../asap_sdl.c $(COMMON_C) -lmingw32 -lSDLmain -lSDL
+asap-sdl.exe: ../asap-sdl.c $(COMMON_C) $(COMMON_H)
+	$(ASAP_GCC) ../asap-sdl.c $(COMMON_C) -lmingw32 -lSDLmain -lSDL
 
 # delete generated files
 

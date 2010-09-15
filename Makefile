@@ -22,6 +22,8 @@ MOC_PLUGIN_DIR = /usr/local/lib/moc/decoder_plugins
 XBMC_DLL_LOADER_EXPORTS = ../XBMC/xbmc/cores/DllLoader/exports
 AUDACIOUS_CFLAGS = `pkg-config --cflags gtk+-2.0` `pkg-config --cflags libmowgli`
 AUDACIOUS_INPUT_PLUGIN_DIR = /usr/lib/audacious/Input
+SDL_CFLAGS = `sdl-config --cflags`
+SDL_LIBS = `sdl-config --libs`
 
 COMMON_C = asap.c acpu.c apokeysnd.c
 COMMON_H = asap.h asap_internal.h anylang.h players.h
@@ -57,6 +59,9 @@ audacious: asapplug.so
 
 asapplug.so: audacious/asapplug.c $(COMMON_C) $(COMMON_H)
 	$(CC) $(AUDACIOUS_CFLAGS) -shared -fPIC -o $@ -I. audacious/asapplug.c $(COMMON_C)
+
+asap-sdl: asap-sdl.c $(COMMON_C) $(COMMON_H)
+	$(CC) $(SDL_CFLAGS) -o $@ -I. asap-sdl.c $(COMMON_C) $(SDL_LIBS)
 
 players.h: files2anylang.pl $(PLAYERS_OBX)
 	$(PERL) files2anylang.pl $(PLAYERS_OBX) >$@
@@ -130,6 +135,16 @@ uninstall-moc:
 install-audacious: asapplug.so
 	$(MKDIRS) $(DESTDIR)$(AUDACIOUS_INPUT_PLUGIN_DIR)
 	$(INSTALL_PROGRAM) asapplug.so $(DESTDIR)$(AUDACIOUS_INPUT_PLUGIN_DIR)/asapplug.so
+
+uninstall-audacious:
+	$(RM) $(DESTDIR)$(AUDACIOUS_INPUT_PLUGIN_DIR)/asapplug.so
+
+install-sdl: asap-sdl
+	$(MKDIRS) $(DESTDIR)$(PREFIX)/bin
+	$(INSTALL_PROGRAM) asap-sdl $(DESTDIR)$(PREFIX)/bin/asap-sdl
+
+uninstall-sdl:
+	$(RM) $(DESTDIR)$(PREFIX)/bin/asap-sdl
 
 clean:
 	$(RM) asapconv libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so asapplug.so players.h

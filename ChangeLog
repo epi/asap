@@ -1,4 +1,7 @@
 2010-09-15  Piotr Fusik  <fox@scene.pl>
+* asap-sdl.c, asap_sdl.c, Makefile, win32/Makefile: renamed asap_sdl
+  to asap-sdl, added Makefile target
+
 * java/ASAPMIDlet.java, java/ASAP.ppjava, asap.c: removed "small streams" code
   because I can't make it play smoothly
 
