@@ -1,3 +1,6 @@
+This file is obsolete now. Use Git log instead.
+***********************************************
+
 2010-09-15  Piotr Fusik  <fox@scene.pl>
 * asap.ci, csharp/asapci.cs, csharp/ASAP.ppcs, csharp/Makefile:
   started a rewrite to the Ci programming language

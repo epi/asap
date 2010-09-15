@@ -311,7 +311,6 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html wince/wasap.exe wince/gspasap.dll
 	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz
-	$(GREP) -m 1 " released on " ../ChangeLog
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) " Version =" ../csharp/ASAP.ppcs
