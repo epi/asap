@@ -1,4 +1,7 @@
 2010-09-15  Piotr Fusik  <fox@scene.pl>
+* asap.ci, csharp/asapci.cs, csharp/ASAP.ppcs, csharp/Makefile:
+  started a rewrite to the Ci programming language
+
 * csharp/ASAP.ppcs, csharp/asap2wav.cs, csharp/asapplay.cs,
   csharp/SilverASAP.cs: changed namespace and player class
 
