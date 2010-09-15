@@ -22,6 +22,7 @@
  */
 
 #include <windows.h>
+#include <tchar.h>
 
 #define IDD_INFO       300
 #define IDC_PLAYING    301
@@ -38,10 +39,10 @@
 #define IDD_PROGRESS   500
 #define IDC_PROGRESS   501
 
-char *appendString(char *dest, const char *src);
-BOOL loadModule(const char *filename, byte *module, int *module_len);
+LPTSTR appendString(LPTSTR dest, LPCTSTR src);
+BOOL loadModule(LPCTSTR filename, byte *module, int *module_len);
 
 extern HWND infoDialog;
-void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, int song);
-void updateInfoDialog(const char *filename, int song);
-void setPlayingSong(const char *filename, int song);
+void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, LPCTSTR filename, int song);
+void updateInfoDialog(LPCTSTR filename, int song);
+void setPlayingSong(LPCTSTR filename, int song);

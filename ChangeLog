@@ -1,4 +1,7 @@
 2010-09-15  Piotr Fusik  <fox@scene.pl>
+* win32/Makefile, win32/wasap/wasap.c, win32/info_dlg.c, win32/info_dlg.h,
+  win32/gui.rc, PORTS.xml: WASAP ported to Windows Mobile
+
 * asap-sdl.c, asap_sdl.c, Makefile, win32/Makefile: renamed asap_sdl
   to asap-sdl, added Makefile target
 

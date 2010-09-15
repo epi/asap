@@ -115,7 +115,7 @@
 		<platform>mobile devices</platform>
 		<interface>GUI</interface>
 		<since>1.0.0</since>
-		<status>in development</status>
+		<status>stable</status>
 		<output>8-bit sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>yes</file-info>
@@ -380,7 +380,7 @@
 		<platform>Linux, Unix</platform>
 		<interface>player plugin</interface>
 		<since>2.1.2</since>
-		<status>in development</status>
+		<status>stable</status>
 		<output>16-bit sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>yes</file-info>
@@ -390,5 +390,20 @@
 		<mute-pokey>no</mute-pokey>
 		<lang>C</lang>
 		<a href="http://audacious-media-player.org/">Audacious</a>
+	</port>
+	<port name="WASAP (Windows CE)">
+		<bin></bin>
+		<platform>Windows CE</platform>
+		<interface>GUI</interface>
+		<since>2.1.2</since>
+		<status>experimental</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<lang>C</lang>
 	</port>
 </ports>

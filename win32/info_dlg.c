@@ -24,30 +24,12 @@
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
+#include <tchar.h>
 
 #include "asap.h"
 #include "info_dlg.h"
 
-HWND infoDialog = NULL;
-static char playing_filename[MAX_PATH];
-static int playing_song = 0;
-static BOOL playing_info = FALSE;
-static byte saved_module[ASAP_MODULE_MAX];
-static int saved_module_len;
-static ASAP_ModuleInfo saved_module_info;
-static ASAP_ModuleInfo edited_module_info;
-static int edited_song;
-static BOOL can_save;
-static char convert_filename[MAX_PATH];
-static const char *convert_ext;
-static int invalid_fields;
-#define INVALID_FIELD_AUTHOR      1
-#define INVALID_FIELD_NAME        2
-#define INVALID_FIELD_DATE        4
-#define INVALID_FIELD_TIME        8
-#define INVALID_FIELD_TIME_SHOW  16
-
-char *appendString(char *dest, const char *src)
+LPTSTR appendString(LPTSTR dest, LPCTSTR src)
 {
 	while (*src != '\0')
 		*dest++ = *src++;
@@ -55,7 +37,7 @@ char *appendString(char *dest, const char *src)
 	return dest;
 }
 
-BOOL loadModule(const char *filename, byte *module, int *module_len)
+BOOL loadModule(LPCTSTR filename, byte *module, int *module_len)
 {
 	HANDLE fh;
 	BOOL ok;
@@ -67,6 +49,28 @@ BOOL loadModule(const char *filename, byte *module, int *module_len)
 	return ok;
 }
 
+HWND infoDialog = NULL;
+
+#ifndef _UNICODE /* TODO */
+
+static _TCHAR playing_filename[MAX_PATH];
+static int playing_song = 0;
+static BOOL playing_info = FALSE;
+static byte saved_module[ASAP_MODULE_MAX];
+static int saved_module_len;
+static ASAP_ModuleInfo saved_module_info;
+static ASAP_ModuleInfo edited_module_info;
+static int edited_song;
+static BOOL can_save;
+static _TCHAR convert_filename[MAX_PATH];
+static LPCTSTR convert_ext;
+static int invalid_fields;
+#define INVALID_FIELD_AUTHOR      1
+#define INVALID_FIELD_NAME        2
+#define INVALID_FIELD_DATE        4
+#define INVALID_FIELD_TIME        8
+#define INVALID_FIELD_TIME_SHOW  16
+
 static void showSongTime(void)
 {
 	char str[ASAP_DURATION_CHARS];
@@ -76,8 +80,10 @@ static void showSongTime(void)
 	EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), str[0] != '\0' && (can_save || convert_ext != NULL));
 }
 
-static void showEditTip(int nID, LPCSTR title, LPCSTR message)
+static void showEditTip(int nID, LPCTSTR title, LPCTSTR message)
 {
+#ifndef _UNICODE
+
 #ifndef EM_SHOWBALLOONTIP
 /* missing in MinGW */
 typedef struct
@@ -95,10 +101,12 @@ typedef struct
 	EDITBALLOONTIP ebt = { sizeof(EDITBALLOONTIP), wTitle, wMessage, TTI_ERROR };
 	if (MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, title, -1, wTitle, 64) <= 0
 	 || MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, message, -1, wMessage, 64) <= 0
-	 || !SendDlgItemMessage(infoDialog, nID, EM_SHOWBALLOONTIP, 0, (LPARAM) &ebt)) {
+	 || !SendDlgItemMessage(infoDialog, nID, EM_SHOWBALLOONTIP, 0, (LPARAM) &ebt))
+
+#endif /* _UNICODE */
+
 		/* Windows before XP don't support balloon tips */
 		MessageBox(infoDialog, message, title, MB_OK | MB_ICONERROR);
-	}
 }
 
 static BOOL infoChanged(void)
@@ -142,7 +150,7 @@ static void updateInfoString(HWND hDlg, int nID, int mask, char (*s)[ASAP_INFO_C
 	for (i = 0; (*s)[i] != '\0'; i++) {
 		char c = (*s)[i];
 		if (c < ' ' || c > 'z' || c == '"' || c == '`') {
-			showEditTip(nID, "Invalid characters", "Avoid national characters and quotation marks");
+			showEditTip(nID, _T("Invalid characters"), _T("Avoid national characters and quotation marks"));
 			ok = FALSE;
 			break;
 		}
@@ -150,7 +158,7 @@ static void updateInfoString(HWND hDlg, int nID, int mask, char (*s)[ASAP_INFO_C
 	updateSaveAndConvertButtons(mask, ok);
 }
 
-static BOOL saveFile(const char *filename, const byte *data, int len)
+static BOOL saveFile(LPCTSTR filename, const byte *data, int len)
 {
 	HANDLE fh;
 	DWORD written;
@@ -165,7 +173,7 @@ static BOOL saveFile(const char *filename, const byte *data, int len)
 
 static BOOL doSaveInfo(void)
 {
-	char filename[MAX_PATH];
+	_TCHAR filename[MAX_PATH];
 	byte out_module[ASAP_MODULE_MAX];
 	int out_len;
 	out_len = ASAP_SetModuleInfo(&edited_module_info, saved_module, saved_module_len, out_module);
@@ -186,11 +194,11 @@ static BOOL saveInfo(void)
 	while (--song >= 0 && edited_module_info.durations[song] < 0);
 	while (--song >= 0)
 		if (edited_module_info.durations[song] < 0) {
-			MessageBox(infoDialog, "Cannot save file because time not set for all songs", "Error", MB_OK | MB_ICONERROR);
+			MessageBox(infoDialog, _T("Cannot save file because time not set for all songs"), _T("Error"), MB_OK | MB_ICONERROR);
 			return FALSE;
 		}
 	if (!doSaveInfo()) {
-		MessageBox(infoDialog, "Cannot save information to file", "Error", MB_OK | MB_ICONERROR);
+		MessageBox(infoDialog, _T("Cannot save information to file"), _T("Error"), MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
 	return TRUE;
@@ -198,10 +206,10 @@ static BOOL saveInfo(void)
 
 static BOOL convert(void)
 {
-	char filename[MAX_PATH];
+	_TCHAR filename[MAX_PATH];
 	byte out_module[ASAP_MODULE_MAX];
 	int out_len;
-	static char filter[32] = "*.sap\0*.sap\0All files\0*.*\0";
+	static _TCHAR filter[32] = _T("*.sap\0*.sap\0All files\0*.*\0");
 	static OPENFILENAME ofn = {
 		sizeof(OPENFILENAME),
 		NULL,
@@ -215,7 +223,7 @@ static BOOL convert(void)
 		NULL,
 		0,
 		NULL,
-		"Select output file",
+		_T("Select output file"),
 		OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT,
 		0,
 		0,
@@ -227,20 +235,20 @@ static BOOL convert(void)
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
 	out_len = ASAP_Convert(filename, &edited_module_info, saved_module, saved_module_len, out_module);
 	if (out_len <= 0) {
-		MessageBox(infoDialog, "Cannot convert file", "Error", MB_OK | MB_ICONERROR);
+		MessageBox(infoDialog, _T("Cannot convert file"), _T("Error"), MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
 	ofn.hwndOwner = infoDialog;
-	memcpy(filter + 2, convert_ext, 3);
-	memcpy(filter + 8, convert_ext, 3);
+	memcpy(filter + 2, convert_ext, 3 * sizeof(_TCHAR));
+	memcpy(filter + 8, convert_ext, 3 * sizeof(_TCHAR));
 	ofn.lpstrDefExt = convert_ext;
 	if (!GetSaveFileName(&ofn))
 		return FALSE;
 	if (!saveFile(convert_filename, out_module, out_len)) {
-		MessageBox(infoDialog, "Cannot save file", "Error", MB_OK | MB_ICONERROR);
+		MessageBox(infoDialog, _T("Cannot save file"), _T("Error"), MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
-	if (strcmp(convert_ext, "sap") == 0)
+	if (_tcscmp(convert_ext, _T("sap")) == 0)
 		saved_module_info = edited_module_info;
 	return TRUE;
 }
@@ -285,7 +293,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 		case MAKEWPARAM(IDC_TIME, EN_KILLFOCUS):
 			if ((invalid_fields & INVALID_FIELD_TIME_SHOW) != 0) {
 				invalid_fields &= ~INVALID_FIELD_TIME_SHOW;
-				showEditTip(IDC_TIME, "Invalid format", "Please type MM:SS.mmm");
+				showEditTip(IDC_TIME, _T("Invalid format"), _T("Please type MM:SS.mmm"));
 			}
 			return TRUE;
 		case MAKEWPARAM(IDC_LOOP, BN_CLICKED):
@@ -306,7 +314,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 		case MAKEWPARAM(IDCANCEL, BN_CLICKED):
 			if (invalid_fields == 0 && infoChanged()) {
 				BOOL ok;
-				switch (MessageBox(hDlg, can_save ? "Save changes?" : "Convert to SAP?", "ASAP", MB_YESNOCANCEL | MB_ICONQUESTION)) {
+				switch (MessageBox(hDlg, can_save ? _T("Save changes?") : _T("Convert to SAP?"), _T("ASAP"), MB_YESNOCANCEL | MB_ICONQUESTION)) {
 				case IDYES:
 					ok = can_save ? saveInfo() : convert();
 					if (!ok)
@@ -329,7 +337,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 	return FALSE;
 }
 
-void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, int song)
+void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, LPCTSTR filename, int song)
 {
 	if (infoDialog == NULL) {
 		edited_module_info = saved_module_info;
@@ -341,7 +349,7 @@ void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, const char *filename, 
 		updateInfoDialog(filename, song);
 }
 
-void updateInfoDialog(const char *filename, int song)
+void updateInfoDialog(LPCTSTR filename, int song)
 {
 	BOOL can_edit;
 	int i;
@@ -380,13 +388,13 @@ void updateInfoDialog(const char *filename, int song)
 	SendDlgItemMessage(infoDialog, IDC_TIME, EM_SETREADONLY, !can_edit, 0);
 	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
 	if (convert_ext != NULL) {
-		char convert_command[24] = "&Convert to ";
+		_TCHAR convert_command[24] = _T("&Convert to ");
 		i = 0;
 		do
 			convert_command[12 + i] = convert_ext[i] >= 'a' ? convert_ext[i] - 'a' + 'A' : convert_ext[i];
 		while (convert_ext[i++] != '\0');
 		SendDlgItemMessage(infoDialog, IDC_CONVERT, WM_SETTEXT, 0, (LPARAM) convert_command);
-		strcpy(convert_filename, filename);
+		_tcscpy(convert_filename, filename);
 		ASAP_ChangeExt(convert_filename, convert_ext);
 		EnableWindow(GetDlgItem(infoDialog, IDC_CONVERT), TRUE);
 	}
@@ -396,11 +404,13 @@ void updateInfoDialog(const char *filename, int song)
 	}
 }
 
-void setPlayingSong(const char *filename, int song)
+void setPlayingSong(LPCTSTR filename, int song)
 {
-	if (filename != NULL && strlen(filename) < MAX_PATH - 1)
-		strcpy(playing_filename, filename);
+	if (filename != NULL && _tcslen(filename) < MAX_PATH - 1)
+		_tcscpy(playing_filename, filename);
 	playing_song = song;
 	if (playing_info)
 		updateInfoDialog(playing_filename, song);
 }
+
+#endif /* _UNICODE */

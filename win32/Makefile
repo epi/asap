@@ -18,6 +18,10 @@ ASAP_CL = $(CL) -Fe$@ -I. -I..
 # old Microsoft compiler for XBMC plugin
 ASAP_CL71 = cl -nologo -O2 -GL -GR- -W3 -DNDEBUG -Fe$@ -I. -I..
 
+# gcc for Windows Mobile
+WINCE_GCC = arm-mingw32ce-gcc -s -O2 -Wall -o $@ -I. -I..
+WINCE_WINDRES = arm-mingw32ce-windres -o $@
+
 # common tools
 PERL = perl
 RM = rm -f
@@ -61,6 +65,12 @@ wasap.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o $(COMMON_H) in
 
 wasap/wasap-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
 	$(WINDRES) -DWASAP gui.rc
+
+wasap-wince.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-wince-res.o $(COMMON_H) info_dlg.h wasap/wasap.h
+	$(WINCE_GCC) -DWASAP wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-wince-res.o
+
+wasap/wasap-wince-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
+	$(WINCE_WINDRES) -D_WIN32_WCE -DWASAP gui.rc
 
 # Winamp
 
