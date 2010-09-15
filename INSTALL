@@ -203,16 +203,17 @@ mingw32-make foo
 This should produce `foo_asap.dll`.
 
 
-Building the GSPlayer plugin for Windows CE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building WASAP and the GSPlayer plugin for Windows CE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You need http://cegcc.sourceforge.net/[CeGCC].
-From the command prompt navigate to the `gsplayer` directory and run:
+From the command prompt navigate to the `win32` directory and run:
 --------------------------------------------------------------------------------
 mingw32-make wince
 --------------------------------------------------------------------------------
 
-This should produce `gspasap.dll` for ARM processors.
+This should produce `wasap.exe` and `gspasap.dll` for ARM processors,
+in the `win32/wince` directory.
 
 
 Building Java ASAP2WAV, applet and midlet

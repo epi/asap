@@ -1,4 +1,7 @@
 2010-09-15  Piotr Fusik  <fox@scene.pl>
+* gsplayer, win32/gsplayer, win32/Makefile, win32/wince/USAGE, INSTALL:
+  gsplayer moved to win32
+
 * win32/Makefile, win32/wasap/wasap.c, win32/info_dlg.c, win32/info_dlg.h,
   win32/gui.rc, PORTS.xml: WASAP ported to Windows Mobile
 

@@ -359,7 +359,7 @@
 		<lang>C#</lang>
 		<a href="http://asap.sourceforge.net/silverlight.html">online demo</a>
 	</port>
-	<port name="asap_sdl">
+	<port name="asap-sdl">
 		<bin></bin>
 		<platform>desktop operating systems</platform>
 		<interface>command line</interface>
@@ -392,7 +392,7 @@
 		<a href="http://audacious-media-player.org/">Audacious</a>
 	</port>
 	<port name="WASAP (Windows CE)">
-		<bin></bin>
+		<bin>Windows CE</bin>
 		<platform>Windows CE</platform>
 		<interface>GUI</interface>
 		<since>2.1.2</since>

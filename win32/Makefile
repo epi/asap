@@ -20,7 +20,7 @@ ASAP_CL71 = cl -nologo -O2 -GL -GR- -W3 -DNDEBUG -Fe$@ -I. -I..
 
 # gcc for Windows Mobile
 WINCE_GCC = arm-mingw32ce-gcc -s -O2 -Wall -o $@ -I. -I..
-WINCE_WINDRES = arm-mingw32ce-windres -o $@
+WINCE_WINDRES = arm-mingw32ce-windres -o $@ -D_WIN32_WCE
 
 # common tools
 PERL = perl
@@ -45,6 +45,8 @@ win32: mingw dsf foo xbmc COPYING.txt
 
 mingw: asapconv.exe asapconv-no-lame.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll asapscan.exe ASAPShellEx.dll libasap.a
 
+wince: wince/wasap.exe wince/gspasap.dll
+
 include ../players/Makefile
 
 # asapconv
@@ -66,11 +68,11 @@ wasap.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o $(COMMON_H) in
 wasap/wasap-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
 	$(WINDRES) -DWASAP gui.rc
 
-wasap-wince.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-wince-res.o $(COMMON_H) info_dlg.h wasap/wasap.h
-	$(WINCE_GCC) -DWASAP wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-wince-res.o
+wince/wasap.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wince/wasap-res.o $(COMMON_H) info_dlg.h wasap/wasap.h
+	$(WINCE_GCC) -DWASAP wasap/wasap.c $(COMMON_C) info_dlg.c wince/wasap-res.o
 
-wasap/wasap-wince-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
-	$(WINCE_WINDRES) -D_WIN32_WCE -DWASAP gui.rc
+wince/wasap-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
+	$(WINCE_WINDRES) -DWASAP gui.rc
 
 # Winamp
 
@@ -106,16 +108,17 @@ foobar2000/foo_asap.res: gui.rc ../asap.h settings_dlg.h
 
 # GSPlayer
 
-gspasap.dll: ../gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o $(COMMON_H) settings_dlg.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DGSPLAYER ../gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o
+gspasap.dll: gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o $(COMMON_H) settings_dlg.h
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DGSPLAYER gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o
 
 gspasap-res.o: gui.rc ../asap.h settings_dlg.h
 	$(WINDRES) -DGSPLAYER gui.rc
 
-# GSPlayer - Windows CE
+wince/gspasap.dll: gsplayer/gspasap.c $(COMMON_C) settings_dlg.c wince/gspasap-res.o $(COMMON_H) settings_dlg.h
+	$(WINCE_GCC) -shared -DGSPLAYER gsplayer/gspasap.c $(COMMON_C) settings_dlg.c wince/gspasap-res.o
 
-wince:
-	$(MAKE) -C ../gsplayer
+wince/gspasap-res.o: gui.rc ../asap.h settings_dlg.h
+	$(WINCE_WINDRES) -DGSPLAYER gui.rc
 
 # DirectShow
 
@@ -230,11 +233,11 @@ clean:
 	$(RM) foobar2000/*.obj foobar2000/*.lib foobar2000/foo_asap.res
 	$(RM) dshow/*.obj dshow/asap_dsf.res
 	$(RM) ../xbmc/*.obj ../xbmc/xbmc_asap.res
+	$(RM) wince/wasap-res.o wince/wasap.exe wince/gspasap-res.o wince/gspasap.dll
 	$(RM) install_dsf.bat uninstall_dsf.bat
 	$(RM) ../players/*.obx ../players.h ../README.html
 	$(MAKE) -C ../csharp clean
 	$(MAKE) -C ../flash clean
-	$(MAKE) -C ../gsplayer clean
 	$(MAKE) -C ../java clean
 	$(MAKE) -C ../javascript clean
 
@@ -261,7 +264,7 @@ README_Windows.html: ../README ../NEWS ../CREDITS USAGE
 README_WindowsSetup.html: ../README ../NEWS ../CREDITS USAGE
 	$(ASCIIDOC_START) -a asapwin="(included in this setup)" -a asapsetup ../README $(ASCIIDOC_END)
 
-README_WindowsCE.html: ../README ../NEWS ../CREDITS ../gsplayer/USAGE
+README_WindowsCE.html: ../README ../NEWS ../CREDITS wince/USAGE
 	$(ASCIIDOC_START) -a asapwince="(included in this binary package)" ../README $(ASCIIDOC_END)
 
 install_dsf.bat:
@@ -306,7 +309,7 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 		install_dsf.bat uninstall_dsf.bat \
 		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
-		COPYING.txt README_WindowsCE.html ../gsplayer/gspasap.dll
+		COPYING.txt README_WindowsCE.html wince/wasap.exe wince/gspasap.dll
 	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz
 	$(GREP) -m 1 " released on " ../ChangeLog
 	$(GREP) -m 1 ^ASAP ../NEWS

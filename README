@@ -22,7 +22,7 @@ but the current version has a completely new original emulation core.
 ASAP includes the following programs:
 
 - asapconv - portable command-line converter {asapwin=}
-- WASAP - tiny player for Windows {asapwin=}
+- WASAP - tiny player for Windows {asapwin=}{asapwince=}
 - plugin for http://koti.welho.com/hylinen/apollo/[Apollo] {asapwin=}
 - plugin for http://audacious-media-player.org/[Audacious]
 - plugin for http://foobar2000.org/[foobar2000] {asapwin=}
@@ -122,7 +122,7 @@ include::win32/USAGE[]
 endif::asapwin[]
 
 ifdef::asapwince[]
-include::gsplayer/USAGE[]
+include::win32/wince/USAGE[]
 endif::asapwince[]
 
 include::NEWS[]
