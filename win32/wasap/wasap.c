@@ -490,12 +490,14 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		}
 		switch (lParam) {
 		case WM_LBUTTONDOWN:
+#ifndef _WIN32_WCE
 			SelectAndLoadFile();
 			break;
 		case WM_MBUTTONDOWN:
 			if (songs <= 1)
 				break;
 			/* FALLTHROUGH */
+#endif
 		case WM_RBUTTONUP:
 			GetCursorPos(&pt);
 			SetForegroundWindow(hWnd);
