@@ -198,10 +198,9 @@ static void ShowAbout(void)
 #ifdef _WIN32_WCE
 	MessageBox(hWnd,
 		_T(ASAP_CREDITS
-		"WASAP icons (C) 2005 Lukasz Sychowicz\n\n"
-		ASAP_COPYRIGHT),
+		"WASAP icons (C) 2005 Lukasz Sychowicz"),
 		APP_TITLE " " ASAP_VERSION,
-		MB_OK | MB_ICONINFORMATION);
+		MB_OK);
 #else
 	MSGBOXPARAMS mbp = {
 		sizeof(MSGBOXPARAMS),
