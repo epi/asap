@@ -309,7 +309,7 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 		install_dsf.bat uninstall_dsf.bat \
 		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
-		COPYING.txt README_WindowsCE.html wince/wasap.exe wince/gspasap.dll
+		COPYING.txt README_WindowsCE.html ../win32/wince/wasap.exe ../win32/wince/gspasap.dll
 	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
