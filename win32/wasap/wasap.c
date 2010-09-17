@@ -224,8 +224,10 @@ static void SetSongsMenu(int n)
 {
 	int i;
 	for (i = 1; i <= n; i++) {
-		_TCHAR str[16];
-		_stprintf(str, _T("%d"), i);
+		_TCHAR str[3];
+		str[0] = i <= 9 ? '&' : '0' + i / 10;
+		str[1] = '0' + i % 10;
+		str[2] = '\0';
 		AppendMenu(hSongMenu, MF_ENABLED | MF_STRING, IDM_SONG1 + i - 1, str);
 	}
 }
