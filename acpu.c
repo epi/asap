@@ -77,10 +77,8 @@ END_CONST_ARRAY;
 	{ \
 		/* binary mode */ \
 		V(int, tmp) = a + data + c; \
+		vdi = (vdi & (D_FLAG | I_FLAG)) + (((~(data ^ a) & (a ^ tmp)) >> 1) & V_FLAG); \
 		c = tmp >> 8; \
-		vdi &= D_FLAG | I_FLAG; \
-		if (((a ^ data) & 0x80) == 0 && ((data ^ tmp) & 0x80) != 0) \
-			vdi += V_FLAG; \
 		nz = a = tmp & 0xff; \
 	}
 
@@ -88,68 +86,55 @@ END_CONST_ARRAY;
 	{ \
 		/* binary mode */ \
 		V(int, tmp) = a - data - 1 + c; \
+		vdi = (vdi & (D_FLAG | I_FLAG)) + ((((data ^ a) & (a ^ tmp)) >> 1) & V_FLAG); \
 		c = (tmp >= 0) ? 1 : 0; \
-		vdi &= D_FLAG | I_FLAG; \
-		if (((a ^ tmp) & 0x80) != 0 && ((a ^ data) & 0x80) != 0) \
-			vdi += V_FLAG; \
 		nz = a = tmp & 0xff; \
 	}
 
 #else /* ACPU_NO_DECIMAL */
 
 #define DO_ADC \
-	if ((vdi & D_FLAG) == 0) { \
-		/* binary mode */ \
+	{ \
 		V(int, tmp) = a + data + c; \
-		c = tmp >> 8; \
-		vdi &= D_FLAG | I_FLAG; \
-		if (((a ^ data) & 0x80) == 0 && ((data ^ tmp) & 0x80) != 0) \
-			vdi += V_FLAG; \
-		nz = a = tmp & 0xff; \
-	} \
-	else { \
-		/* decimal mode */ \
-		V(int, tmp) = (a & 0x0f) + (data & 0x0f) + c; \
-		if (tmp >= 10) \
-			tmp = (tmp - 10) | 0x10; \
-		tmp += (a & 0xf0) + (data & 0xf0); \
-		nz = ((tmp & 0x80) << 1) + (((a + data + c) & 0xff) != 0 ? 1 : 0); \
-		vdi &= D_FLAG | I_FLAG; \
-		if (((a ^ data) & 0x80) == 0 && ((data ^ tmp) & 0x80) != 0) \
-			vdi += V_FLAG; \
-		if (tmp > 0x9f) \
-			tmp += 0x60; \
-		c = (tmp > 0xff) ? 1 : 0; \
-		a = tmp & 0xff; \
+		nz = tmp & 0xff; \
+		if ((vdi & D_FLAG) == 0) { \
+			/* binary mode */ \
+			vdi = (vdi & (D_FLAG | I_FLAG)) + (((~(data ^ a) & (a ^ tmp)) >> 1) & V_FLAG); \
+			c = tmp >> 8; \
+			a = nz; \
+		} \
+		else { \
+			/* decimal mode */ \
+			V(int, al) = (a & 0x0f) + (data & 0x0f) + c; \
+			if (al >= 10) \
+				tmp += (al < 26) ? 6 : -10; \
+			nz = ((tmp & 0x80) << 1) + (nz != 0 ? 1 : 0); \
+			vdi = (vdi & (D_FLAG | I_FLAG)) + (((~(data ^ a) & (a ^ tmp)) >> 1) & V_FLAG); \
+			if (tmp >= 0xa0) { \
+				c = 1; \
+				a = (tmp + 0x60) & 0xff; \
+			} \
+			else { \
+				c = 0; \
+				a = tmp; \
+			} \
+		} \
 	}
 
 #define DO_SBC \
-	if ((vdi & D_FLAG) == 0) { \
-		/* binary mode */ \
-		V(int, tmp) = a - data - 1 + c; \
-		c = (tmp >= 0) ? 1 : 0; \
-		vdi &= D_FLAG | I_FLAG; \
-		if (((a ^ tmp) & 0x80) != 0 && ((a ^ data) & 0x80) != 0) \
-			vdi += V_FLAG; \
-		nz = a = tmp & 0xff; \
-	} \
-	else { \
-		/* decimal mode */ \
+	{\
 		V(int, tmp) = a - data - 1 + c; \
 		V(int, al) = (a & 0x0f) - (data & 0x0f) - 1 + c; \
-		V(int, ah) = (a >> 4) - (data >> 4); \
-		if ((al & 0x10) != 0) { \
-			al -= 6; \
-			ah--; \
+		vdi = (vdi & (D_FLAG | I_FLAG)) + ((((data ^ a) & (a ^ tmp)) >> 1) & V_FLAG); \
+		c = (tmp >= 0) ? 1 : 0; \
+		nz = a = tmp & 0xff; \
+		if ((vdi & D_FLAG) != 0) { \
+			/* decimal mode */ \
+			if (al < 0) \
+				a += (al < -10) ? 10 : -6; \
+			if (c == 0) \
+				a = (a - 0x60) & 0xff; \
 		} \
-		if ((ah & 0x10) != 0) \
-			ah -= 6; \
-		c = tmp >= 0 ? 1 : 0; \
-		vdi &= D_FLAG | I_FLAG; \
-		if (((a ^ tmp) & 0x80) != 0 && ((a ^ data) & 0x80) != 0) \
-			vdi += V_FLAG; \
-		nz = tmp & 0xff; \
-		a = ((ah & 0xf) << 4) + (al & 0x0f); \
 	}
 
 #endif /* ACPU_NO_DECIMAL */
