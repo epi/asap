@@ -1,5 +1,4 @@
 JRE = C:/Program Files/Java/jdk1.6.0_10/jre
-WTK = C:/Program Files/Java/SE_SDK/WTK2
 
 JAVAC = javac -source 1.2 -d .
 #JAVAC = gcj -C -d .
@@ -7,16 +6,12 @@ JAR = jar
 JAR_OPTIMIZE = 7z a -mx=9 -tzip
 JAVADOC = javadoc
 PP = cpp -C -P -I..
-PERL = perl
-ME_CLASSES = $(WTK)/lib/cldcapi11.jar;$(WTK)/lib/midpapi20.jar;$(WTK)/lib/jsr75.jar
-PREVERIFY = "$(WTK)/bin/preverify1.1"
-ME_EMU = "$(WTK)/bin/emulatorw" -gui
 
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h ../anylang.h
 PLAYERS_OBX_DIR = net/sf/asap
 
-all: asap2wav.jar asap_applet.jar asap_midlet.jad
+all: asap2wav.jar asap_applet.jar j2me/asap_midlet.jad
 
 include ../players/Makefile
 
@@ -34,22 +29,8 @@ asap_applet.jar: ASAPApplet.class net/sf/asap/ASAP.class $(PLAYERS_OBX)
 ASAPApplet.class: ASAPApplet.java net/sf/asap/ASAP.class
 	$(JAVAC) -classpath "$(JRE)/lib/plugin.jar;." ASAPApplet.java
 
-emu: asap_midlet.jad
-	$(ME_EMU) -Xdescriptor:asap_midlet.jad
-
-asap_midlet.jad: asap_midlet.jar asap_midlet.MF
-	$(PERL) mf2jad.pl asap_midlet
-
-asap_midlet.jar: asap_midlet.MF preverified/ASAPMIDlet.class $(PLAYERS_OBX)
-	$(JAR) cfm $@ asap_midlet.MF -C preverified . $(PLAYERS_OBX)
-	cd preverified && $(JAR_OPTIMIZE) ../$@ .
-	$(JAR_OPTIMIZE) $@ $(PLAYERS_OBX)
-
-preverified/ASAPMIDlet.class: ASAPMIDlet.class net/sf/asap/ASAP.class net/sf/asap/ASAP_ModuleInfo.class
-	$(PREVERIFY) -classpath "$(ME_CLASSES);." -d preverified ASAPMIDlet FileList ASAPInputStream net.sf.asap.ASAP net.sf.asap.ASAP_ModuleInfo net.sf.asap.ASAP_State net.sf.asap.PokeyState
-
-ASAPMIDlet.class: ASAPMIDlet.java net/sf/asap/ASAP.class
-	$(JAVAC) -classpath . -bootclasspath "$(ME_CLASSES)" ASAPMIDlet.java
+j2me/asap_midlet.jad:
+	$(MAKE) -C j2me asap_midlet.jad
 
 net/sf/asap/ASAP.class: ASAP.java net/sf/asap/ASAP_ModuleInfo.class
 	$(JAVAC) -classpath . ASAP.java
@@ -64,7 +45,10 @@ doc: ASAP.java ASAP_ModuleInfo.java
 	$(JAVADOC) -d doc ASAP.java ASAP_ModuleInfo.java
 
 clean:
-	rm -f asap2wav.jar asap_applet.jar asap_midlet.jar asap_midlet.jad *.class ASAP.java
-	rm -rf net preverified doc
+	rm -f asap2wav.jar asap_applet.jar *.class ASAP.java
+	rm -rf net doc
+	$(MAKE) -C j2me clean
+
+.PHONY: all j2me/asap_midlet.jad clean
 
 .DELETE_ON_ERROR:

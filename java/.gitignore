@@ -1,7 +1,5 @@
 *.class
-*.jad
 *.jar
 ASAP.java
 doc
 net
-preverified
