@@ -113,7 +113,7 @@ END_CONST_ARRAY;
 		if (tmp >= 10) \
 			tmp = (tmp - 10) | 0x10; \
 		tmp += (a & 0xf0) + (data & 0xf0); \
-		nz = ((tmp & 0x80) << 1) + ((a + data + c) & 0xff); \
+		nz = ((tmp & 0x80) << 1) + (((a + data + c) & 0xff) != 0 ? 1 : 0); \
 		vdi &= D_FLAG | I_FLAG; \
 		if (((a ^ data) & 0x80) == 0 && ((data ^ tmp) & 0x80) != 0) \
 			vdi += V_FLAG; \
