@@ -21,11 +21,13 @@ ASAP_CL71 = cl -nologo -O2 -GL -GR- -W3 -DNDEBUG -Fe$@ -I. -I..
 # gcc for Windows Mobile
 WINCE_GCC = arm-mingw32ce-gcc -s -O2 -Wall -o $@ -I. -I..
 WINCE_WINDRES = arm-mingw32ce-windres -o $@ -D_WIN32_WCE
+CABWIZ = "C:/Program Files/Microsoft Visual Studio 9.0/SmartDevices/SDK/SDKTools/cabwiz.exe"
 
 # common tools
 PERL = perl
 RM = rm -f
 CP = cp -f
+MV = mv
 UNIX2DOS = unix2dos
 ASCIIDOC_START = asciidoc -o - -a localtime -a doctime
 ASCIIDOC_END = | sed -e "s/527bbd;/c02020;/" | xmllint --valid --nonet -o $@ -
@@ -281,6 +283,12 @@ setup: ../../asap-$(VERSION)-win32.msi
 setup/asap.wixobj: setup/asap.wxs
 	$(CANDLE) -dVERSION=$(VERSION) $<
 
+wince-setup: ../../asap-$(VERSION)-wince-arm.cab
+
+../../asap-$(VERSION)-wince-arm.cab: wince/asap.inf wince/wasap.exe wince/gspasap.dll
+	cd wince && $(CABWIZ) asap.inf /cpu ARM
+	$(MV) wince/asap.ARM.CAB $@
+
 ../MANIFEST:
 	if test -e ../.git; then \
 		($(GIT) ls-tree -r --name-only --full-tree master | grep -vF .gitignore \
@@ -292,7 +300,7 @@ srcdist: ../MANIFEST ../README.html $(PLAYERS_OBX)
 	$(RM) ../../asap-$(VERSION).tar.gz
 	cd .. && $(TAR) -c --numeric-owner --owner=0 --group=0 -T MANIFEST --transform=s,,asap-$(VERSION)/, | $(SEVENZIP) -tgzip -si ../asap-$(VERSION).tar.gz
 
-dist: srcdist win32 wince java csharp javascript flash setup \
+dist: srcdist win32 wince java csharp javascript flash setup wince-setup \
 	COPYING.txt README_Flash.html README_Java.html README_Windows.html README_WindowsCE.html \
 	install_dsf.bat uninstall_dsf.bat
 	$(RM) ../../asap-$(VERSION)-flash.zip
