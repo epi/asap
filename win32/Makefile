@@ -277,7 +277,8 @@ uninstall_dsf.bat:
 
 setup: ../../asap-$(VERSION)-win32.msi
 
-../../asap-$(VERSION)-win32.msi: setup/asap.wixobj wasap/wasap.ico setup/license.rtf setup/asap-banner.jpg setup/asap-dialog.jpg setup/Website.url win32 README_WindowsSetup.html shellex/ASAPShellEx.propdesc
+../../asap-$(VERSION)-win32.msi: setup/asap.wixobj wasap/wasap.ico setup/license.rtf setup/asap-banner.jpg setup/asap-dialog.jpg setup/Website.url README_WindowsSetup.html shellex/ASAPShellEx.propdesc \
+	asapconv.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll asap_dsf.dll foo_asap.dll xbmc_asap.dll
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 $<
 
 setup/asap.wixobj: setup/asap.wxs
