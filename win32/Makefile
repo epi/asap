@@ -303,14 +303,14 @@ dist: srcdist win32 wince java csharp javascript flash setup \
 		COPYING.txt README_Flash.html ../flash/asap.swf
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-java.zip \
 		COPYING.txt README_Java.html \
-		../java/asap2wav.jar ../java/asap_applet.jar ../java/j2me/asap_midlet.jad ../java/asap_midlet.jar
+		../java/asap2wav.jar ../java/asap_applet.jar ../java/j2me/asap_midlet.jad ../java/j2me/asap_midlet.jar
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-win32.zip \
 		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
 		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ./wince/wasap.exe ./wince/gspasap.dll
-	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz
+	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz | $(PERL) -ne 'm{^-rwxr-xr-x .+?/(chksap|files2anylang)\.pl$$|^-rw-r--r-- } or die $$_'
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) " Version =" ../csharp/ASAP.ppcs
