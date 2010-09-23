@@ -13,6 +13,11 @@ EMULATOR = $(ANDROID_SDK)/tools/emulator
 install: AndroidASAP-debug.apk
 	$(ADB) -e install -r AndroidASAP-debug.apk
 
+PLAYERS_SRC_DIR = ../../players
+PLAYERS_OBX_DIR = players/net/sf/asap
+
+include ../../players/Makefile
+
 log:
 	$(ADB) -e logcat
 
@@ -43,8 +48,8 @@ net/sf/asap/AndroidASAP.class: AndroidASAP.java net/sf/asap/R.class ../net/sf/as
 net/sf/asap/R.class: net/sf/asap/R.java
 	$(JAVAC) net/sf/asap/R.java
 
-AndroidASAP-resources.apk net/sf/asap/R.java: AndroidManifest.xml res/layout/filelist.xml res/layout/listitem.xml
-	$(AAPT) p -f -m -M AndroidManifest.xml -I "$(ANDROID_PLATFORM)/android.jar" -S res -F AndroidASAP-resources.apk -J .
+AndroidASAP-resources.apk net/sf/asap/R.java: AndroidManifest.xml res/layout/filelist.xml res/layout/listitem.xml $(PLAYERS_OBX)
+	$(AAPT) p -f -m -M AndroidManifest.xml -I "$(ANDROID_PLATFORM)/android.jar" -S res -F AndroidASAP-resources.apk -J . players
 
 ../net/sf/asap/ASAP.class:
 	$(MAKE) -C .. net/sf/asap/ASAP.class
