@@ -406,4 +406,19 @@
 		<mute-pokey>no</mute-pokey>
 		<lang>C</lang>
 	</port>
+	<port name="AndroidASAP">
+		<bin>Java</bin>
+		<platform>Android</platform>
+		<interface>GUI</interface>
+		<since>2.1.2</since>
+		<status>experimental</status>
+		<output>8-bit sound</output>
+		<subsongs>no</subsongs><!-- TODO -->
+		<file-info>no</file-info><!-- TODO -->
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<lang>Java</lang>
+	</port>
 </ports>
