@@ -156,8 +156,7 @@ static BOOL loadFile(LPCTSTR pszFile)
 	CONVERT_FILENAME;
 	if (!ASAP_IsOurFile(ANSI_FILENAME))
 		return FALSE;
-	fh = CreateFile(pszFile, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-	                FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+	fh = CreateFile(pszFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
 		return FALSE;
 	if (!ReadFile(fh, module, sizeof(module), &module_len, NULL)) {

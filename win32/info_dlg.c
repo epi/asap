@@ -41,7 +41,7 @@ BOOL loadModule(LPCTSTR filename, byte *module, int *module_len)
 {
 	HANDLE fh;
 	BOOL ok;
-	fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+	fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
 		return FALSE;
 	ok = ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) module_len, NULL);
