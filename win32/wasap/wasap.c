@@ -327,8 +327,10 @@ static void SelectAndLoadFile(void)
 		0,
 		NULL,
 		_T("Select 8-bit Atari music"),
-		OFN_ENABLESIZING | OFN_EXPLORER | OFN_HIDEREADONLY
-			| OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
+#ifndef _WIN32_WCE
+		OFN_ENABLESIZING | OFN_EXPLORER |
+#endif
+		OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
 		0,
 		0,
 		NULL,
@@ -411,7 +413,10 @@ static void SaveWav(void)
 		0,
 		NULL,
 		_T("Select output file"),
-		OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT,
+#ifndef _WIN32_WCE
+		OFN_ENABLESIZING | OFN_EXPLORER |
+#endif
+		OFN_OVERWRITEPROMPT,
 		0,
 		0,
 		_T("wav"),
