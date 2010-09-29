@@ -32,6 +32,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -66,7 +67,7 @@ public class AndroidASAP extends ListActivity
 		super.onCreate(savedInstanceState);
 		listAdapter = new ArrayAdapter<String>(this, R.layout.listitem);
 		setListAdapter(listAdapter);
-		enterDirectory(new File("/"));
+		enterDirectory(Environment.getExternalStorageDirectory());
 		setContentView(R.layout.filelist);
 	}
 
