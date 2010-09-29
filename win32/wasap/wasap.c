@@ -339,7 +339,9 @@ static void SelectAndLoadFile(void)
 		NULL
 	};
 	opening = TRUE;
+#ifndef _WIN32_WCE
 	ofn.hwndOwner = hWnd;
+#endif
 	if (GetOpenFileName(&ofn))
 		LoadAndPlay(-1);
 	opening = FALSE;
