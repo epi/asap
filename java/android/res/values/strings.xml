@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="app_name">ASAP</string>
+	<string name="playing">ASAP - playing</string>
+	<string name="error_reading_file">Error reading file</string>
+	<string name="invalid_file">Invalid file</string>
+	<string name="name_prefix"><b>Title: </b></string>
+	<string name="author_prefix"><b>Author: </b></string>
+	<string name="date_prefix"><b>Date: </b></string>
+	<string name="stop_button">Stop</string>
+</resources>

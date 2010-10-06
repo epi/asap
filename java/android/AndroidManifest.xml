@@ -1,10 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="net.sf.asap" android:versionCode="1" android:versionName="1.0">
-	<application android:label="ASAP">
-		<activity android:name=".AndroidASAP" android:label="ASAP">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="net.sf.asap" android:versionCode="1" android:versionName="2.1.2">
+	<application android:label="@string/app_name">
+		<activity android:name=".FileSelector" android:label="@string/app_name">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+		</activity>
+		<activity android:name=".Player" android:label="@string/playing">
+			<intent-filter>
+				<action android:name="android.intent.action.VIEW" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<data android:pathPattern=".*\\.sap" />
+				<data android:pathPattern=".*\\.cmc" />
+				<data android:pathPattern=".*\\.cm3" />
+				<data android:pathPattern=".*\\.cmr" />
+				<data android:pathPattern=".*\\.cms" />
+				<data android:pathPattern=".*\\.dmc" />
+				<data android:pathPattern=".*\\.dlt" />
+				<data android:pathPattern=".*\\.mpt" />
+				<data android:pathPattern=".*\\.mpd" />
+				<data android:pathPattern=".*\\.rmt" />
+				<data android:pathPattern=".*\\.tmc" />
+				<data android:pathPattern=".*\\.tm8" />
+				<data android:pathPattern=".*\\.tm2" />
 			</intent-filter>
 		</activity>
 	</application>

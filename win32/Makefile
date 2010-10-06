@@ -312,7 +312,7 @@ dist: srcdist win32 wince java csharp javascript flash setup wince-setup \
 		COPYING.txt README_Flash.html ../flash/asap.swf
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-java.zip \
 		COPYING.txt README_Java.html \
-		../java/asap2wav.jar ../java/asap_applet.jar ../java/j2me/asap_midlet.jad ../java/j2me/asap_midlet.jar
+		../java/asap2wav.jar ../java/asap_applet.jar ../java/j2me/asap_midlet.jad ../java/j2me/asap_midlet.jar ../java/android/AndroidASAP.apk
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-win32.zip \
 		COPYING.txt README_Windows.html \
 		install_dsf.bat uninstall_dsf.bat \
@@ -324,7 +324,8 @@ dist: srcdist win32 wince java csharp javascript flash setup wince-setup \
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) " Version =" ../csharp/ASAP.ppcs
 	$(GREP) " VERSION =" ../java/ASAP.ppjava
-	$(GREP) MIDlet-Version ../java/asap_midlet.MF
+	$(GREP) android:versionName ../java/android/AndroidManifest.xml
+	$(GREP) MIDlet-Version ../java/j2me/MANIFEST.MF
 	$(GREP) ASAP_VERSION ../javascript/asap.ppjs
 	$(GREP) VERSION ../flash/ASAP.ppas
 	$(GREP) "VERSION =" ../chksap.pl

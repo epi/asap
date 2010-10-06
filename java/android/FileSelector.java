@@ -1,5 +1,5 @@
 /*
- * AndroidASAP.java - ASAP for Android
+ * FileSelector.java - ASAP for Android
  *
  * Copyright (C) 2010  Piotr Fusik
  *
@@ -24,34 +24,29 @@
 package net.sf.asap;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 import android.app.ListActivity;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-public class AndroidASAP extends ListActivity
+public class FileSelector extends ListActivity
 {
 	private ArrayAdapter<String> listAdapter;
 	private File currentDir;
-	private final byte[] module = new byte[ASAP.MODULE_MAX];
-	private final ASAP asap = new ASAP();
-	private final byte[] buffer = new byte[8192];
 
-	private void enterDirectory(File newDir)
+	private void enterDirectory(File dir)
 	{
-		currentDir = newDir;
+		currentDir = dir;
 		listAdapter.clear();
-		if (newDir.getParentFile() != null)
+		if (dir.getParentFile() != null)
 			listAdapter.add("..");
-		for (File file : newDir.listFiles())
+		for (File file : dir.listFiles())
 		{
 			String name = file.getName();
 			if (file.isDirectory())
@@ -65,10 +60,10 @@ public class AndroidASAP extends ListActivity
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		listAdapter = new ArrayAdapter<String>(this, R.layout.listitem);
+		listAdapter = new ArrayAdapter<String>(this, R.layout.list_item);
 		setListAdapter(listAdapter);
 		enterDirectory(Environment.getExternalStorageDirectory());
-		setContentView(R.layout.filelist);
+		setContentView(R.layout.file_list);
 	}
 
 	@Override
@@ -80,29 +75,9 @@ public class AndroidASAP extends ListActivity
 		else if (name.endsWith("/"))
 			enterDirectory(new File(currentDir, name));
 		else {
-			try {
-				FileInputStream fis = new FileInputStream(new File(currentDir, name));
-				int module_len = ASAP.readAndClose(fis, module);
-				asap.load(name, module, module_len);
-				ASAP_ModuleInfo module_info = asap.getModuleInfo();
-				int song = module_info.default_song;
-				int duration = module_info.loops[song] ? -1 : module_info.durations[song];
-				asap.playSong(song, duration);
-				AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE,
-					module_info.channels == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO,
-					AudioFormat.ENCODING_PCM_8BIT, buffer.length, AudioTrack.MODE_STREAM);
-				audioTrack.play();
-				int len;
-				do {
-					len = asap.generate(buffer, ASAP.FORMAT_U8);
-					audioTrack.write(buffer, 0, len);
-				} while (len == buffer.length);
-				audioTrack.flush();
-				audioTrack.stop();
-			}
-			catch (IOException ex) {
-				// TODO
-			}
+			Uri uri = Uri.fromFile(new File(currentDir, name));
+			Intent intent = new Intent(Intent.ACTION_VIEW, uri, this, Player.class);
+			startActivity(intent);
 		}
 	}
 }

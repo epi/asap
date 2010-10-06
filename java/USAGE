@@ -71,6 +71,13 @@ Java midlet
 
 Midlet is an application for mobile phones.
 The ASAP midlet requires CLDC 1.1 and MIDP 2.0
-and thus will not work on old Java implementations.
+and thus will not work on very old Java implementations.
 The midlet has a file browser for selecting music files,
 which should be stored in phone memory or on a memory card.
+
+
+AndroidASAP
+~~~~~~~~~~~
+
+Install AndroidASAP.apk.
+This program is highly experimental at the moment.

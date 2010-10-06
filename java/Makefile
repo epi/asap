@@ -11,7 +11,7 @@ COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h ../anylang.h
 PLAYERS_OBX_DIR = net/sf/asap
 
-all: asap2wav.jar asap_applet.jar j2me/asap_midlet.jad
+all: asap2wav.jar asap_applet.jar j2me android
 
 include ../players/Makefile
 
@@ -29,8 +29,11 @@ asap_applet.jar: ASAPApplet.class net/sf/asap/ASAP.class $(PLAYERS_OBX)
 ASAPApplet.class: ASAPApplet.java net/sf/asap/ASAP.class
 	$(JAVAC) -classpath "$(JRE)/lib/plugin.jar;." ASAPApplet.java
 
-j2me/asap_midlet.jad:
+j2me:
 	$(MAKE) -C j2me asap_midlet.jad
+
+android:
+	$(MAKE) -C android AndroidASAP.apk
 
 net/sf/asap/ASAP.class: ASAP.java net/sf/asap/ASAP_ModuleInfo.class
 	$(JAVAC) -classpath . ASAP.java
@@ -48,7 +51,8 @@ clean:
 	rm -f asap2wav.jar asap_applet.jar *.class ASAP.java
 	rm -rf net doc
 	$(MAKE) -C j2me clean
+	$(MAKE) -C android clean
 
-.PHONY: all j2me/asap_midlet.jad clean
+.PHONY: all j2me android clean
 
 .DELETE_ON_ERROR:

@@ -11,25 +11,31 @@ ADB = $(ANDROID_SDK)/tools/adb
 ANDROID = $(ANDROID_SDK)/tools/android.bat
 EMULATOR = $(ANDROID_SDK)/tools/emulator
 
-install: AndroidASAP-debug.apk
+install-emu: AndroidASAP-debug.apk
 	$(ADB) -e install -r AndroidASAP-debug.apk
 
-PLAYERS_SRC_DIR = ../../players
-PLAYERS_OBX_DIR = players/net/sf/asap
-
-include ../../players/Makefile
+install-dev: AndroidASAP.apk
+	$(ADB) -d install -r AndroidASAP.apk
 
 log:
 	$(ADB) -e logcat
+
+shell:
+	$(ADB) -d shell
 
 emu:
 	$(EMULATOR) -avd myavd &
 
 put-sap:
-	$(ADB) push ../../../Drunk_Chessboard.sap /sdcard/
+	$(ADB) -e push ../../../Drunk_Chessboard.sap /sdcard/
 
 create-avd:
 	$(ANDROID) create avd -n myavd -t android-3 -c 16M
+
+PLAYERS_SRC_DIR = ../../players
+PLAYERS_OBX_DIR = players/net/sf/asap
+
+include ../../players/Makefile
 
 AndroidASAP.apk: AndroidASAP-unaligned.apk
 	$(ZIPALIGN) -f 4 AndroidASAP-unaligned.apk $@
@@ -43,16 +49,16 @@ AndroidASAP-unsigned.apk: AndroidASAP-resources.apk classes.dex
 AndroidASAP-debug.apk: AndroidASAP-resources.apk classes.dex
 	$(APKBUILDER) $@ -z AndroidASAP-resources.apk -f classes.dex
 
-classes.dex: net/sf/asap/AndroidASAP.class net/sf/asap/R.class
+classes.dex: net/sf/asap/FileSelector.class net/sf/asap/R.class
 	$(DX) --dex --output=$@ net ../net
 
-net/sf/asap/AndroidASAP.class: AndroidASAP.java net/sf/asap/R.class ../net/sf/asap/ASAP.class
-	$(JAVAC) -classpath ".;.." -bootclasspath "$(ANDROID_PLATFORM)/android.jar" AndroidASAP.java
+net/sf/asap/FileSelector.class net/sf/asap/Player.class: FileSelector.java Player.java net/sf/asap/R.class ../net/sf/asap/ASAP.class
+	$(JAVAC) -classpath ".;.." -bootclasspath "$(ANDROID_PLATFORM)/android.jar" FileSelector.java Player.java
 
 net/sf/asap/R.class: net/sf/asap/R.java
 	$(JAVAC) net/sf/asap/R.java
 
-AndroidASAP-resources.apk net/sf/asap/R.java: AndroidManifest.xml res/layout/filelist.xml res/layout/listitem.xml $(PLAYERS_OBX)
+AndroidASAP-resources.apk net/sf/asap/R.java: AndroidManifest.xml res/layout/file_list.xml res/layout/list_item.xml res/layout/playing.xml res/values/strings.xml $(PLAYERS_OBX)
 	$(AAPT) p -f -m -M AndroidManifest.xml -I "$(ANDROID_PLATFORM)/android.jar" -S res -F AndroidASAP-resources.apk -J . players
 
 ../net/sf/asap/ASAP.class:
