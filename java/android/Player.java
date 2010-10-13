@@ -33,7 +33,6 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.TextView;
@@ -49,15 +48,13 @@ public class Player extends Activity implements Runnable, OnClickListener
 		//FIXME finish();
 	}
 
-	private void setTag(int controlId, int prefixId, String value)
+	private void setTag(int controlId, String value)
 	{
 		TextView control = (TextView) findViewById(controlId);
 		if (value.length() == 0)
 			control.setVisibility(View.GONE);
 		else {
-			SpannableStringBuilder sb = new SpannableStringBuilder(getText(prefixId));
-			sb.append(value);
-			control.setText(sb);
+			control.setText(value);
 			control.setVisibility(View.VISIBLE);
 		}
 	}
@@ -123,9 +120,9 @@ public class Player extends Activity implements Runnable, OnClickListener
 		ASAP_ModuleInfo module_info = asap.getModuleInfo();
 
 		setContentView(R.layout.playing);
-		setTag(R.id.name, R.string.name_prefix, module_info.name);
-		setTag(R.id.author, R.string.author_prefix, module_info.author);
-		setTag(R.id.date, R.string.date_prefix, module_info.date);
+		setTag(R.id.name, module_info.name);
+		setTag(R.id.author, module_info.author);
+		setTag(R.id.date, module_info.date);
 
 		findViewById(R.id.stop_button).setOnClickListener(this);
 		this.stop = false;
