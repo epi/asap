@@ -23,9 +23,6 @@
 
 package net.sf.asap;
 
-import java.io.InputStream;
-import java.io.IOException;
-
 import android.app.AlertDialog;
 import android.app.Activity;
 import android.media.AudioFormat;
@@ -36,6 +33,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.TextView;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.IOException;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 public class Player extends Activity implements Runnable, OnClickListener
 {
@@ -93,6 +97,18 @@ public class Player extends Activity implements Runnable, OnClickListener
 		finish();
 	}
 
+	private static InputStream httpGet(Uri uri)
+		throws IOException
+	{
+		DefaultHttpClient client = new DefaultHttpClient();
+		HttpGet request = new HttpGet(uri.toString());
+		HttpResponse response = client.execute(request);
+		StatusLine status = response.getStatusLine();
+		if (status.getStatusCode() != 200)
+			throw new IOException("HTTP error " + status);
+		return response.getEntity().getContent();
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
@@ -102,7 +118,16 @@ public class Player extends Activity implements Runnable, OnClickListener
 		final byte[] module = new byte[ASAP.MODULE_MAX];
 		int module_len;
 		try {
-			InputStream is = getContentResolver().openInputStream(uri);
+			InputStream is;
+			try {
+				is = getContentResolver().openInputStream(uri);
+			}
+			catch (FileNotFoundException ex) {
+				if (uri.getScheme().equals("http"))
+					is = httpGet(uri);
+				else
+					throw ex;
+			}
 			module_len = ASAP.readAndClose(is, module);
 		}
 		catch (IOException ex) {

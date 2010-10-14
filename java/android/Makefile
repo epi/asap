@@ -17,8 +17,11 @@ install-emu: AndroidASAP-debug.apk
 install-dev: AndroidASAP.apk
 	$(ADB) -d install -r AndroidASAP.apk
 
-log:
+log-emu:
 	$(ADB) -e logcat
+
+log-dev:
+	$(ADB) -d logcat
 
 shell:
 	$(ADB) -d shell
