@@ -319,7 +319,7 @@ dist: srcdist win32 wince java csharp javascript flash setup wince-setup \
 		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ./wince/wasap.exe ./wince/gspasap.dll
-	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz | $(PERL) -ne 'm{^-rwxr-xr-x .+?/(chksap|files2anylang)\.pl$$|^-rw-r--r-- } or die $$_'
+	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz | $(PERL) -ne "m'^-rwxr-xr-x .+?/(chksap|files2anylang)\.pl$$|^-rw-r--r-- ' or die \$$_"
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) " Version =" ../csharp/ASAP.ppcs
