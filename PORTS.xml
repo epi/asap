@@ -411,7 +411,7 @@
 		<platform>Android</platform>
 		<interface>GUI</interface>
 		<since>2.1.2</since>
-		<status>experimental</status>
+		<status>in development</status>
 		<output>8-bit sound</output>
 		<subsongs>no</subsongs><!-- TODO -->
 		<file-info>yes</file-info>

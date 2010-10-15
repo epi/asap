@@ -80,4 +80,5 @@ AndroidASAP
 ~~~~~~~~~~~
 
 Install AndroidASAP.apk.
-This program is highly experimental at the moment.
+It integrates with file managers and the web browser.
+It uses the internet connection only for files clicked in the web browser.

@@ -1,6 +1,18 @@
 History
 -------
 
+ASAP 2.1.2 (2010-??-??)::
+
+There are new ports: Android, Audacious plugin, Silverlight and a simple
+command-line player using SDL.
+WASAP has been ported to Windows CE. There's a new CAB package for Windows CE.
+JavaScript ASAP2WAV now works in Rhino Shell, Google V8 shell,
+JScript.NET and JaegerMonkey.
+A slight fix and an optimization have been applied to 6502 emulation.
+"Show information about the currently playing file" is now available in XMPlay
+and has been fixed in Winamp.
+
+
 ASAP 2.1.1 (2010-05-05)::
 
 The SAP file format has been extended with the "NTSC" tag.
