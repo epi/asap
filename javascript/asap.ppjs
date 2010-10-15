@@ -23,7 +23,7 @@
 
 #define JAVASCRIPT
 
-var ASAP_VERSION = "2.1.1";
+var ASAP_VERSION = "2.1.2";
 
 var ASAP_WAV_HEADER_BYTES = 44;
 

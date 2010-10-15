@@ -31,8 +31,8 @@ extern "C" {
 /* ASAP version. */
 #define ASAP_VERSION_MAJOR   2
 #define ASAP_VERSION_MINOR   1
-#define ASAP_VERSION_MICRO   1
-#define ASAP_VERSION         "2.1.1"
+#define ASAP_VERSION_MICRO   2
+#define ASAP_VERSION         "2.1.2"
 
 /* Short credits of the ASAP engine. */
 #define ASAP_YEARS           "2005-2010"

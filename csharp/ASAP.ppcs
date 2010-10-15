@@ -54,7 +54,7 @@ namespace Sf.Asap
 		readonly ASAP_State ast = new ASAP_State();
 
 		/// <summary>ASAP version.</summary>
-		public const string Version = "2.1.1";
+		public const string Version = "2.1.2";
 
 		/// <summary>Maximum length of a supported input file.</summary>
 		/// <remarks>You can assume that files longer than this are not supported by ASAP.</remarks>
