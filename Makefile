@@ -42,7 +42,7 @@ libasap.a: $(COMMON_C) $(COMMON_H)
 
 asap-xmms: libasap-xmms.so
 
-libasap.xmms.so: xmms/libasap-xmms.c $(COMMON_C) $(COMMON_H)
+libasap-xmms.so: xmms/libasap-xmms.c $(COMMON_C) $(COMMON_H)
 	$(CC) $(XMMS_CFLAGS) -shared -fPIC -Wl,--version-script=xmms/libasap-xmms.map -o $@ -I. xmms/libasap-xmms.c $(COMMON_C) $(XMMS_LIBS)
 
 asap-moc: libasap_decoder.so
