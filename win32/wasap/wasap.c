@@ -232,6 +232,15 @@ static void SetSongsMenu(int n)
 	}
 }
 
+static void OpenMenu(HWND hWnd, HMENU hMenu)
+{
+	POINT pt;
+	GetCursorPos(&pt);
+	SetForegroundWindow(hWnd);
+	TrackPopupMenu(hMenu, TPM_RIGHTALIGN | TPM_BOTTOMALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hWnd, NULL);
+	PostMessage(hWnd, WM_NULL, 0, 0);
+}
+
 static void StopPlayback(void)
 {
 	WaveOut_Stop();
@@ -456,7 +465,6 @@ static void SaveWav(void)
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	int idc;
-	POINT pt;
 	PCOPYDATASTRUCT pcds;
 	switch (msg) {
 	case WM_COMMAND:
@@ -502,17 +510,12 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 			SelectAndLoadFile();
 			break;
 		case WM_MBUTTONDOWN:
-			if (songs <= 1)
-				break;
-			/* FALLTHROUGH */
+			if (songs > 1)
+				OpenMenu(hWnd, hSongMenu);
+			break;
 #endif
 		case WM_RBUTTONUP:
-			GetCursorPos(&pt);
-			SetForegroundWindow(hWnd);
-			TrackPopupMenu(lParam == WM_MBUTTONDOWN ? hSongMenu : hTrayMenu,
-				TPM_RIGHTALIGN | TPM_BOTTOMALIGN | TPM_RIGHTBUTTON,
-				pt.x, pt.y, 0, hWnd, NULL);
-			PostMessage(hWnd, WM_NULL, 0, 0);
+			OpenMenu(hWnd, hTrayMenu);
 			break;
 		default:
 			break;
