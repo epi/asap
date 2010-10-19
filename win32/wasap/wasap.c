@@ -570,10 +570,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLin
 			SendMessage(hWnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
 		}
 		else {
+#ifdef _WIN32_WCE
+			/* open menu */
+			PostMessage(hWnd, MYWM_NOTIFYICON, 15, WM_RBUTTONUP);
+#else
 			/* bring the open dialog to top */
 			HWND hChild = GetLastActivePopup(hWnd);
 			if (hChild != hWnd)
 				SetForegroundWindow(hChild);
+#endif
 		}
 		return 0;
 	}
