@@ -47,9 +47,10 @@ FUNC(int, ASAP_GetByte, (P(ASAP_State PTR, ast), P(int, addr)))
 			return 0xff;
 		}
 		return ast _ irqst;
-	case 0xd20f:
+	case 0xd20c:
+	case 0xd21c:
+	case 0xd20f: /* just because some SAP files rely on this */
 	case 0xd21f:
-		/* just because some SAP files rely on this */
 		return 0xff;
 	case 0xd40b:
 	case 0xd41b:
