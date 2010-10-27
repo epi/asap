@@ -1134,7 +1134,7 @@ PRIVATE FUNC(abool, parse_sap_header, (
 			V(STRING, s);
 #endif
 			module_index += 5;
-			for (i = 0; module[module_index + i] != 0xd; i++);
+			for (i = 0; module[module_index + i] != 0xd; i++) { }
 			if (i > 5 && has_string_at(module, module_index + i - 5, " LOOP")) {
 				module_info _ loops[duration_index] = TRUE;
 				i -= 5;
