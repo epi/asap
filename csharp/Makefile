@@ -1,4 +1,4 @@
-CSC = csc -nologo -o+ -out:$@
+CSC = "C:/Windows/Microsoft.NET/Framework/v2.0.50727/csc.exe" -nologo -o+ -out:$@
 PP = cpp -C -P -I..
 NDOC = "C:/Program Files/NDoc3/bin/NDoc3Console.exe"
 SEVENZIP = 7z a -mx=9
