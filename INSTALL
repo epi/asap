@@ -10,12 +10,13 @@ Required tools
 For all builds you will need:
 
 C/C++ compiler and Make utility::
-On Windows download http://www.mingw.org/[MinGW]
-and install binutils, core compiler, g++ compiler, w32api and MinGW Make.
+On Windows download http://www.mingw.org/[MinGW].
+Using the Automated MinGW Installer select just the C and C++ compilers.
 
 Perl::
-On Windows install either http://www.activestate.com/activeperl/[ActivePerl]
-or http://cygwin.com/[Cygwin]'s Perl.
+On Windows install either http://cygwin.com/[Cygwin]'s Perl,
+http://strawberryperl.com/[Strawberry Perl] or
+http://www.activestate.com/activeperl/[ActivePerl].
 
 xasm and MADS::
 If you are compiling latest source code from Git, install
@@ -216,23 +217,26 @@ This should produce `wasap.exe` and `gspasap.dll` for ARM processors,
 in the `win32/wince` directory.
 
 
-Building Java ASAP2WAV, applet and midlet
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building Java ASAP2WAV, applet, midlet and AndroidASAP
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You need Java Development Kit (JDK), a C preprocessor (a component
-of a C compiler) and a Make utility. To compile the midlet, you additionally
-need Perl and a Wireless Toolkit (WTK) - I use Sony Ericsson SDK
-for the Java ME Platform, although Sun's WTK should work too after adjusting
-paths.
+of a C compiler) and a Make utility.
+To compile the midlet, you additionally need Perl and a Java ME SDK - I use
+Sony Ericsson SDK for the Java ME Platform, but Sun Java ME platform SDK
+will work after adjusting paths.
+For Android, install http://developer.android.com/sdk/[Android SDK]
+with an Android platform (I use 1.5 for maximum compatibility).
 
-Edit the paths at the top of `java/Makefile` so they point to your installed
-tools. From the command prompt navigate to the `java` directory and run:
+Edit the paths at the top of `java/Makefile` and `java/android/Makefile`
+so they point to your installed tools.
+From the command prompt navigate to the `java` directory and run:
 --------------------------------------------------------------------------------
 make
 --------------------------------------------------------------------------------
 
-This should produce `asap2wav.jar`, `asap_applet.jar`, `asap_midlet.jar`
-and `asap_midlet.jad`.
+This should produce `asap2wav.jar`, `asap_applet.jar`, `asap_midlet.jar`,
+`asap_midlet.jad` and `android/AndroidASAP.apk`.
 
 
 Building C# ASAP2WAV, asapplay and SilverASAP on Windows
@@ -278,7 +282,7 @@ The results are `asap2wav.js` and `asapweb.js`.
 Building Flash player version of ASAP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need http://www.adobe.com/products/flex/flexdownloads/[Flex SDK].
+You need http://opensource.adobe.com/wiki/display/flexsdk/Flex+SDK[Flex SDK].
 Add its `bin` directory to your `PATH`.
 
 Navigate to the `flash` directory and run:
