@@ -62,7 +62,7 @@ net/sf/asap/R.class: net/sf/asap/R.java
 	$(JAVAC) net/sf/asap/R.java
 
 AndroidASAP-resources.apk net/sf/asap/R.java: AndroidManifest.xml res/drawable/icon.png res/layout/file_list.xml res/layout/list_item.xml res/layout/playing.xml res/values/strings.xml $(PLAYERS_OBX)
-	$(AAPT) p -f -m -M AndroidManifest.xml -I "$(ANDROID_PLATFORM)/android.jar" -S res -F AndroidASAP-resources.apk -J . players
+	$(AAPT) p -f -m -M AndroidManifest.xml -I $(ANDROID_PLATFORM)/android.jar -S res -F AndroidASAP-resources.apk -J . players
 
 ../net/sf/asap/ASAP.class:
 	$(MAKE) -C .. net/sf/asap/ASAP.class
