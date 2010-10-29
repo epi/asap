@@ -29,7 +29,6 @@
 
 #ifdef _WIN32_WCE
 /* missing in wince: */
-#define GetLastActivePopup(hwnd) (hwnd)
 #define SetMenuDefaultItem(hMenu, uItem, fByPos)
 /* workaround for a bug in mingw32ce: */
 #undef Shell_NotifyIcon
@@ -42,6 +41,7 @@ BOOL WINAPI Shell_NotifyIcon(DWORD,PNOTIFYICONDATAW);
 
 #define APP_TITLE        _T("WASAP")
 #define WND_CLASS_NAME   _T("WASAP")
+#define OPEN_TITLE       _T("Select 8-bit Atari music")
 #define BITS_PER_SAMPLE  16
 #define BUFFERED_BLOCKS  4096
 
@@ -335,7 +335,7 @@ static void SelectAndLoadFile(void)
 		NULL,
 		0,
 		NULL,
-		_T("Select 8-bit Atari music"),
+		OPEN_TITLE,
 #ifndef _WIN32_WCE
 		OFN_ENABLESIZING | OFN_EXPLORER |
 #endif
@@ -501,7 +501,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		break;
 	case MYWM_NOTIFYICON:
 		if (opening) {
-			SetForegroundWindow(GetLastActivePopup(hWnd));
+			SetForegroundWindow(hWnd);
 			break;
 		}
 		switch (lParam) {
@@ -524,11 +524,13 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 	case WM_COPYDATA:
 		pcds = (PCOPYDATASTRUCT) lParam;
 		if (pcds->dwData == 'O' && pcds->cbData <= sizeof(current_filename)) {
+#ifndef _WIN32_WCE
 			if (errorShown) {
 				HWND hChild = GetLastActivePopup(hWnd);
 				if (hChild != hWnd)
 					SendMessage(hChild, WM_CLOSE, 0, 0);
 			}
+#endif
 			memcpy(current_filename, pcds->lpData, pcds->cbData);
 			LoadAndPlay(-1);
 		}
@@ -570,15 +572,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLin
 			SendMessage(hWnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
 		}
 		else {
+			/* wince: open menu; desktop: open file */
 #ifdef _WIN32_WCE
-			/* open menu */
-			PostMessage(hWnd, MYWM_NOTIFYICON, 15, WM_RBUTTONUP);
-#else
-			/* bring the open dialog to top */
-			HWND hChild = GetLastActivePopup(hWnd);
-			if (hChild != hWnd)
+			HWND hChild = FindWindow(NULL, OPEN_TITLE);
+			if (hChild != NULL)
 				SetForegroundWindow(hChild);
+#else
+			SetForegroundWindow(hWnd);
 #endif
+			PostMessage(hWnd, MYWM_NOTIFYICON, 15, WM_LBUTTONDOWN);
 		}
 		return 0;
 	}
