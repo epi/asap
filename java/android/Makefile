@@ -11,11 +11,17 @@ ADB = $(ANDROID_SDK)/tools/adb
 ANDROID = $(ANDROID_SDK)/tools/android.bat
 EMULATOR = $(ANDROID_SDK)/tools/emulator
 
+ANDROID_RELEASE ?= AndroidASAP.apk
+
+debug: AndroidASAP-debug.apk
+
+release: $(ANDROID_RELEASE)
+
 install-emu: AndroidASAP-debug.apk
 	$(ADB) -e install -r AndroidASAP-debug.apk
 
-install-dev: AndroidASAP.apk
-	$(ADB) -d install -r AndroidASAP.apk
+install-dev: $(ANDROID_RELEASE)
+	$(ADB) -d install -r $(ANDROID_RELEASE)
 
 log-emu:
 	$(ADB) -e logcat
@@ -40,7 +46,7 @@ PLAYERS_OBX_DIR = players/net/sf/asap
 
 include ../../players/Makefile
 
-AndroidASAP.apk: AndroidASAP-unaligned.apk
+$(ANDROID_RELEASE): AndroidASAP-unaligned.apk
 	$(ZIPALIGN) -f 4 AndroidASAP-unaligned.apk $@
 
 AndroidASAP-unaligned.apk: AndroidASAP-unsigned.apk

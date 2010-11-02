@@ -74,11 +74,3 @@ The ASAP midlet requires CLDC 1.1 and MIDP 2.0
 and thus will not work on very old Java implementations.
 The midlet has a file browser for selecting music files,
 which should be stored in phone memory or on a memory card.
-
-
-AndroidASAP
-~~~~~~~~~~~
-
-Install AndroidASAP.apk.
-It integrates with file managers and the web browser.
-It uses the internet connection only for files clicked in the web browser.

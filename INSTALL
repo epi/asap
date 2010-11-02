@@ -217,26 +217,40 @@ This should produce `wasap.exe` and `gspasap.dll` for ARM processors,
 in the `win32/wince` directory.
 
 
-Building Java ASAP2WAV, applet, midlet and AndroidASAP
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building Java ASAP2WAV, applet and midlet
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need Java Development Kit (JDK), a C preprocessor (a component
-of a C compiler) and a Make utility.
+You need Java Development Kit (JDK).
 To compile the midlet, you additionally need Perl and a Java ME SDK - I use
 Sony Ericsson SDK for the Java ME Platform, but Sun Java ME platform SDK
 will work after adjusting paths.
-For Android, install http://developer.android.com/sdk/[Android SDK]
-with an Android platform (I use 1.5 for maximum compatibility).
 
-Edit the paths at the top of `java/Makefile` and `java/android/Makefile`
-so they point to your installed tools.
+Edit the paths at the top of `java/Makefile` so they point to your installed tools.
 From the command prompt navigate to the `java` directory and run:
 --------------------------------------------------------------------------------
 make
 --------------------------------------------------------------------------------
 
-This should produce `asap2wav.jar`, `asap_applet.jar`, `asap_midlet.jar`,
-`asap_midlet.jad` and `android/AndroidASAP.apk`.
+This should produce `asap2wav.jar`, `asap_applet.jar`, `asap_midlet.jar`
+and `asap_midlet.jad`.
+
+
+Building AndroidASAP
+~~~~~~~~~~~~~~~~~~~~
+
+Install http://developer.android.com/sdk/[Android SDK]
+with an Android platform (I use 1.5 for maximum compatibility).
+
+Edit the paths at the top of `java/android/Makefile`
+so they point to your installed SDK.
+From the command prompt navigate to the `java/android` directory and run:
+--------------------------------------------------------------------------------
+make
+--------------------------------------------------------------------------------
+
+This should produce `android/AndroidASAP-debug.apk`.
+AndroidASAP integrates with file managers and the web browser.
+It uses the internet connection only for files clicked in the web browser.
 
 
 Building C# ASAP2WAV, asapplay and SilverASAP on Windows

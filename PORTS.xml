@@ -348,7 +348,7 @@
 		<platform>Silverlight</platform>
 		<interface>via HTML or JavaScript</interface>
 		<since>2.1.2</since>
-		<status>stable</status>
+		<status>in development</status>
 		<output>16-bit sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info><!-- TODO: yes -->
@@ -407,7 +407,7 @@
 		<lang>C</lang>
 	</port>
 	<port name="AndroidASAP">
-		<bin>Java</bin>
+		<bin>Android</bin>
 		<platform>Android</platform>
 		<interface>GUI</interface>
 		<since>2.1.2</since>
