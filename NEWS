@@ -1,11 +1,12 @@
 History
 -------
 
-ASAP 2.1.2 (2010-??-??)::
+ASAP 2.1.2 (2010-11-03)::
 
 There are new ports: Android, Audacious plugin, Silverlight and a simple
-command-line player using SDL.
-WASAP has been ported to Windows CE. There's a new CAB package for Windows CE.
+command-line player using SDL. WASAP has been ported to Windows CE.
+There's a new CAB package for Windows CE.
+Re-running WASAP opens the file selector.
 JavaScript ASAP2WAV now works in Rhino Shell, Google V8 shell,
 JScript.NET and JaegerMonkey.
 A slight fix and an optimization have been applied to 6502 emulation.
