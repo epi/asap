@@ -142,8 +142,8 @@
 		<a href="http://moc.daper.net/">MOC</a>
 	</port>
 	<port name="Windows Media Player plugin">
-		<bin>Windows</bin>
-		<platform>Windows</platform>
+		<bin>Windows, Windows CE</bin>
+		<platform>Windows, Windows CE</platform>
 		<interface>player plugin</interface>
 		<since>1.2.0</since>
 		<status>stable</status>

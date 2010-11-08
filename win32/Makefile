@@ -21,7 +21,12 @@ ASAP_CL71 = cl -nologo -O2 -GL -GR- -W3 -DNDEBUG -Fe$@ -I. -I..
 # gcc for Windows Mobile
 WINCE_GCC = arm-mingw32ce-gcc -s -O2 -Wall -o $@ -I. -I..
 WINCE_WINDRES = arm-mingw32ce-windres -o $@ -D_WIN32_WCE
-CABWIZ = "C:/Program Files/Microsoft Visual Studio 9.0/SmartDevices/SDK/SDKTools/cabwiz.exe"
+CABWIZ = "C:/Program Files/Windows Mobile 6 SDK/Tools/CabWiz/cabwiz.exe"
+
+# Microsoft compiler for Windows Mobile
+WINCE_VC = "C:/Program Files/Microsoft Visual Studio 9.0/VC/ce"
+WINCE_CL = $(WINCE_VC)/bin/x86_arm/cl -nologo -O2 -GL -W3 -DUNICODE -DUNDER_CE -D_ARM_ -Fe$@
+WINCE_SDK = "C:/Program Files/Windows Mobile 5.0 SDK R2/PocketPC"
 
 # common tools
 PERL = perl
@@ -47,7 +52,7 @@ win32: mingw dsf foo xbmc COPYING.txt
 
 mingw: asapconv.exe asapconv-no-lame.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll asapscan.exe ASAPShellEx.dll libasap.a
 
-wince: wince/wasap.exe wince/gspasap.dll
+wince: wince/wasap.exe wince/gspasap.dll wince/asap_dsf.dll
 
 include ../players/Makefile
 
@@ -133,6 +138,12 @@ asap_dsf.dll: dshow/asap_dsf.cpp $(COMMON_C) dshow/asap_dsf.res dshow/asap_dsf.d
 
 dshow/asap_dsf.res: gui.rc ../asap.h
 	$(WINDRES) -DDSHOW gui.rc
+
+wince/asap_dsf.dll: dshow/asap_dsf.cpp $(COMMON_C) wince/asap_dsf.res dshow/asap_dsf.def $(COMMON_H)
+	$(WINCE_CL) -LD -Zc:wchar_t- -I. -I.. -I$(WINCE_SDK)/Include/Armv4i dshow/asap_dsf.cpp $(COMMON_C) wince/asap_dsf.res dshow/asap_dsf.def ole32.lib strmbase.lib strmiids.lib uuid.lib -link -subsystem:windowsce -release -libpath:$(WINCE_VC)/lib/armv4i -libpath:$(WINCE_SDK)/Lib/ARMV4I
+
+wince/asap_dsf.res: gui.rc ../asap.h
+	$(WINCE_WINDRES) -DDSHOW gui.rc
 
 # Apollo
 
@@ -235,7 +246,7 @@ clean:
 	$(RM) foobar2000/*.obj foobar2000/*.lib foobar2000/foo_asap.res
 	$(RM) dshow/*.obj dshow/asap_dsf.res
 	$(RM) ../xbmc/*.obj ../xbmc/xbmc_asap.res
-	$(RM) wince/wasap-res.o wince/wasap.exe wince/gspasap-res.o wince/gspasap.dll
+	$(RM) wince/wasap-res.o wince/wasap.exe wince/gspasap-res.o wince/gspasap.dll wince/asap_dsf.res win32/asap_dsf.dll
 	$(RM) install_dsf.bat uninstall_dsf.bat
 	$(RM) ../players/*.obx ../players.h ../README.html
 	$(MAKE) -C ../csharp clean
@@ -286,7 +297,7 @@ setup/asap.wixobj: setup/asap.wxs
 
 wince-setup: ../../asap-$(VERSION)-wince-arm.cab
 
-../../asap-$(VERSION)-wince-arm.cab: wince/asap.inf wince/wasap.exe wince/gspasap.dll
+../../asap-$(VERSION)-wince-arm.cab: wince/asap.inf wince/wasap.exe wince/gspasap.dll wince/asap_dsf.dll
 	cd wince && $(CABWIZ) asap.inf /cpu ARM
 	$(MV) wince/asap.ARM.CAB $@
 

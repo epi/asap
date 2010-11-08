@@ -22,22 +22,23 @@
  */
 
 #include <streams.h>
+#include <tchar.h>
 
 #include "asap.h"
 
-static const char extensions[][5] =
-	{ ".sap", ".cmc", ".cm3", ".cmr", ".cms", ".dmc", ".dlt", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2" };
+static const TCHAR extensions[][5] =
+	{ _T(".sap"), _T(".cmc"), _T(".cm3"), _T(".cmr"), _T(".cms"), _T(".dmc"), _T(".dlt"),
+	  _T(".mpt"), _T(".mpd"), _T(".rmt"), _T(".tmc"), _T(".tm8"), _T(".tm2") };
 #define N_EXTS (sizeof(extensions) / sizeof(extensions[0]))
-#define EXT_FILTER "*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2"
+#define EXT_FILTER _T("*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2")
 
 #define BITS_PER_SAMPLE      16
 #define MIN_BUFFERED_BLOCKS  4096
 
 #define SZ_ASAP_SOURCE       L"ASAP source filter"
 
-static const char CLSID_ASAPSource_str[] = "{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}";
-static const GUID CLSID_ASAPSource = 
-	{ 0x8e6205a0, 0x19e2, 0x4037, { 0xaf, 0x32, 0xb2, 0x9a, 0x9b, 0x9d, 0xc, 0x93 } };
+static const TCHAR CLSID_ASAPSource_str[] = _T("{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}");
+static const GUID CLSID_ASAPSource = { 0x8e6205a0, 0x19e2, 0x4037, { 0xaf, 0x32, 0xb2, 0x9a, 0x9b, 0x9d, 0xc, 0x93 } };
 
 class CASAPSourceStream : public CSourceStream, IMediaSeeking
 {
@@ -63,27 +64,50 @@ public:
 		return CSourceStream::NonDelegatingQueryInterface(riid, ppv);
 	}
 
-	BOOL Load(const char *filename)
+	HRESULT LoadWin32Error(char *filename)
 	{
-		HANDLE fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-			FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+		HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+		delete[] filename;
+		return hr;
+	}
+
+	HRESULT Load(LPCOLESTR pszFileName, int cch)
+	{
+		char *filename = new char[cch * 2];
+		CheckPointer(filename, E_OUTOFMEMORY);
+		if (WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, filename, cch, NULL, NULL) <= 0)
+			return LoadWin32Error(filename);
+
+		HANDLE fh = CreateFile(
+#ifdef UNICODE
+			pszFileName,
+#else
+			filename,
+#endif
+			GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (fh == INVALID_HANDLE_VALUE)
-			return FALSE;
-		byte module[ASAP_MODULE_MAX];
+			return LoadWin32Error(filename);
+		byte *module = new byte[ASAP_MODULE_MAX];
 		int module_len;
 		BOOL ok = ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) &module_len, NULL);
 		CloseHandle(fh);
-		if (!ok)
-			return FALSE;
+		if (!ok) {
+			delete[] module;
+			return LoadWin32Error(filename);
+		}
+
 		CAutoLock lck(&cs);
 		loaded = ASAP_Load(&asap, filename, module, module_len);
+		delete[] module;
+		delete[] filename;
+		
 		if (!loaded)
-			return FALSE;
+			return E_FAIL;
 		int song = asap.module_info.default_song;
 		duration = asap.module_info.durations[song];
 		ASAP_PlaySong(&asap, song, duration);
 		blocks = 0;
-		return TRUE;
+		return S_OK;
 	}
 
 	HRESULT GetMediaType(CMediaType *pMediaType)
@@ -312,17 +336,9 @@ public:
 	{
 		CheckPointer(pszFileName, E_POINTER);
 		int cch = lstrlenW(pszFileName) + 1;
-		char *filename = new char[cch * 2];
-		CheckPointer(filename, E_OUTOFMEMORY);
-		if (WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, filename, cch, NULL, NULL) <= 0) {
-			HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-			delete[] filename;
+		HRESULT hr = m_pin->Load(pszFileName, cch);
+		if (FAILED(hr))
 			return hr;
-		}
-		BOOL ok = m_pin->Load(filename);
-		delete[] filename;
-		if (!ok)
-			return E_FAIL;
 		if (m_filename != NULL)
 			delete[] m_filename;
 		m_filename = new WCHAR[cch];
@@ -401,15 +417,15 @@ CFactoryTemplate g_Templates[1] =
 
 int g_cTemplates = 1;
 
-static void WriteASAPValue(LPCSTR lpSubKey, LPCSTR value)
+static void WriteASAPValue(LPCTSTR lpSubKey, LPCTSTR value)
 {
 	HKEY hKey;
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, lpSubKey, 0, KEY_SET_VALUE, &hKey) != ERROR_SUCCESS)
 		return;
 	if (value != NULL)
-		RegSetValueEx(hKey, "ASAP", 0, REG_SZ, (const BYTE *) value, strlen(value) + 1);
+		RegSetValueEx(hKey, _T("ASAP"), 0, REG_SZ, (const BYTE *) value, (_tcslen(value) + 1) * sizeof(TCHAR));
 	else
-		RegDeleteValue(hKey, "ASAP");
+		RegDeleteValue(hKey, _T("ASAP"));
 	RegCloseKey(hKey);
 }
 
@@ -421,28 +437,28 @@ STDAPI DllRegisterServer()
 
 	HKEY hMTKey;
 	HKEY hWMPKey;
-	if (RegCreateKeyEx(HKEY_CLASSES_ROOT, "Media Type\\Extensions", 0, NULL, 0, KEY_WRITE, NULL, &hMTKey, NULL) != ERROR_SUCCESS)
+	if (RegCreateKeyEx(HKEY_CLASSES_ROOT, _T("Media Type\\Extensions"), 0, NULL, 0, KEY_WRITE, NULL, &hMTKey, NULL) != ERROR_SUCCESS)
 		return E_FAIL;
-	if (RegCreateKeyEx(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Multimedia\\WMPlayer\\Extensions", 0, NULL, 0, KEY_WRITE, NULL, &hWMPKey, NULL) != ERROR_SUCCESS)
+	if (RegCreateKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\Microsoft\\Multimedia\\WMPlayer\\Extensions"), 0, NULL, 0, KEY_WRITE, NULL, &hWMPKey, NULL) != ERROR_SUCCESS)
 		return E_FAIL;
 	for (int i = 0; i < N_EXTS; i++) {
 		HKEY hKey;
 		if (RegCreateKeyEx(hMTKey, extensions[i], 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS
-		 || RegSetValueEx(hKey, "Source Filter", 0, REG_SZ, (const BYTE *) &CLSID_ASAPSource_str, sizeof(CLSID_ASAPSource_str)) != ERROR_SUCCESS
+		 || RegSetValueEx(hKey, _T("Source Filter"), 0, REG_SZ, (const BYTE *) &CLSID_ASAPSource_str, sizeof(CLSID_ASAPSource_str)) != ERROR_SUCCESS
 		 || RegCloseKey(hKey) != ERROR_SUCCESS)
 			 return E_FAIL;
 		static const DWORD perms = 15;
 		static const DWORD runtime = 7;
 		if (RegCreateKeyEx(hWMPKey, extensions[i], 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS
-		 || RegSetValueEx(hKey, "Permissions", 0, REG_DWORD, (const BYTE *) &perms, sizeof(perms)) != ERROR_SUCCESS
-		 || RegSetValueEx(hKey, "Runtime", 0, REG_DWORD, (const BYTE *) &runtime, sizeof(runtime)) != ERROR_SUCCESS
+		 || RegSetValueEx(hKey, _T("Permissions"), 0, REG_DWORD, (const BYTE *) &perms, sizeof(perms)) != ERROR_SUCCESS
+		 || RegSetValueEx(hKey, _T("Runtime"), 0, REG_DWORD, (const BYTE *) &runtime, sizeof(runtime)) != ERROR_SUCCESS
 		 || RegCloseKey(hKey) != ERROR_SUCCESS)
 			 return E_FAIL;
 	}
 	if (RegCloseKey(hWMPKey) != ERROR_SUCCESS || RegCloseKey(hMTKey) != ERROR_SUCCESS)
 		return E_FAIL;
-	WriteASAPValue("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\MUIDescriptions", "ASAP files (" EXT_FILTER ")");
-	WriteASAPValue("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\Types", EXT_FILTER);
+	WriteASAPValue(_T("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\MUIDescriptions"), _T("ASAP files (") EXT_FILTER _T(")"));
+	WriteASAPValue(_T("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\Types"), EXT_FILTER);
 	return S_OK;
 }
 
@@ -450,11 +466,11 @@ STDAPI DllUnregisterServer()
 {
 	HKEY hWMPKey;
 	HKEY hMTKey;
-	WriteASAPValue("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\MUIDescriptions", NULL);
-	WriteASAPValue("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\Types", NULL);
-	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Multimedia\\WMPlayer\\Extensions", 0, DELETE, &hWMPKey) != ERROR_SUCCESS)
+	WriteASAPValue(_T("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\MUIDescriptions"), NULL);
+	WriteASAPValue(_T("Software\\Microsoft\\MediaPlayer\\Player\\Extensions\\Types"), NULL);
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\Microsoft\\Multimedia\\WMPlayer\\Extensions"), 0, DELETE, &hWMPKey) != ERROR_SUCCESS)
 		return E_FAIL;
-	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, "Media Type\\Extensions", 0, DELETE, &hMTKey) != ERROR_SUCCESS)
+	if (RegOpenKeyEx(HKEY_CLASSES_ROOT, _T("Media Type\\Extensions"), 0, DELETE, &hMTKey) != ERROR_SUCCESS)
 		return E_FAIL;
 	for (int i = 0; i < N_EXTS; i++) {
 		RegDeleteKey(hWMPKey, extensions[i]);
@@ -468,7 +484,7 @@ STDAPI DllUnregisterServer()
 
 extern "C" BOOL WINAPI DllEntryPoint(HINSTANCE, ULONG, LPVOID);
 
-BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HANDLE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
-	return DllEntryPoint(hInstance, dwReason, lpReserved);
+	return DllEntryPoint((HINSTANCE) hInstance, dwReason, lpReserved);
 }
