@@ -1,12 +1,27 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" Name="ASAP - Another Slight Atari Player $(var.VERSION)" Language="1033"
-		Version="$(var.VERSION)" Manufacturer="Piotr Fusik"
-		UpgradeCode="4250B3CB-D4A1-4486-828C-AC26A84D00D9">
+	<?if $(sys.BUILDARCH) = x86 ?>
+		<?define WIN64=no ?>
+		<?define PLATFORM_SUFFIX= ?>
+		<?define UPGRADE_GUID=4250B3CB-D4A1-4486-828C-AC26A84D00D9 ?>
+		<?define PROGRAM_FILES_FOLDER=ProgramFilesFolder ?>
+		<?define SRC_DIR= ?>
+		<?define SHELL_EX_LEVEL=9 ?>
+	<?elseif $(sys.BUILDARCH) = x64 ?>
+		<?define WIN64=yes ?>
+		<?define PLATFORM_SUFFIX=" (64-bit)" ?>
+		<?define UPGRADE_GUID=205ADAB1-56A1-42B9-9789-FD20FCD1DF9B ?>
+		<?define PROGRAM_FILES_FOLDER=ProgramFiles64Folder ?>
+		<?define SRC_DIR=x64\ ?>
+		<?define SHELL_EX_LEVEL=1 ?>
+	<?endif?>
 
-		<Package Description="ASAP - Another Slight Atari Player"
-			Manufacturer="Piotr Fusik" InstallerVersion="200" Compressed="yes" />
-		<Upgrade Id="4250B3CB-D4A1-4486-828C-AC26A84D00D9">
+	<Product Id="*" Name="ASAP - Another Slight Atari Player $(var.VERSION)$(var.PLATFORM_SUFFIX)" Language="1033"
+		Version="$(var.VERSION)" Manufacturer="Piotr Fusik" UpgradeCode="$(var.UPGRADE_GUID)">
+
+		<Package Description="ASAP - Another Slight Atari Player" Manufacturer="Piotr Fusik"
+			InstallerVersion="200" Platform="$(sys.BUILDARCH)" Compressed="yes" />
+		<Upgrade Id="$(var.UPGRADE_GUID)">
 			<UpgradeVersion Property="NEWERVERSIONDETECTED" Minimum="$(var.VERSION)" OnlyDetect="yes" />
 			<UpgradeVersion Property="PREVIOUSVERSIONSINSTALLED" Maximum="$(var.VERSION)" IncludeMaximum="no" MigrateFeatures="yes" />
 		</Upgrade>
@@ -86,7 +101,7 @@
 			</Dialog>
 
 			<Dialog Id="MyCustomizeDlg" Width="370" Height="270" Title="!(loc.CustomizeDlg_Title)" TrackDiskSpace="yes">
-				<!-- wider and higher selection tree so it doesn't need scrollbars -->
+				<!-- wider and higher selection tree -->
 				<Control Id="Tree" Type="SelectionTree" X="10" Y="75" Width="190" Height="125" Property="_BrowseProperty" Sunken="yes" TabSkip="no" Text="!(loc.CustomizeDlgTree)" />
 				<Control Id="Browse" Type="PushButton" X="294" Y="210" Width="66" Height="17" Text="!(loc.CustomizeDlgBrowse)">
 					<Publish Event="SelectionBrowse" Value="BrowseDlg">1</Publish>
@@ -125,6 +140,7 @@
 				</Control>
 			</Dialog>
 
+			<?if $(sys.BUILDARCH) = x86 ?>
 			<!-- handle mutually exclusive file associations, conditions generated with wix_mutex.pl -->
 			<?foreach MUTEXCOND in (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3) OR $in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)));
 (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
@@ -149,9 +165,11 @@
 					<Publish Event="EndDialog" Value="Return">1</Publish>
 				</Control>
 			</Dialog>
+			<?endif?>
 		</UI>
 		<UIRef Id="WixUI_Common" />
 
+		<?if $(sys.BUILDARCH) = x86 ?>
 		<Property Id="WMP.EXE">
 			<RegistrySearch Id="wmp.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\MediaPlayer" Name="Installation Directory" Type="directory">
 				<FileSearch Id="wmp.exe" Name="wmplayer.exe" />
@@ -200,10 +218,12 @@
 				<FileSearch Name="AIMP2.exe" />
 			</RegistrySearch>
 		</Property>
+		<?endif?>
 
 		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="ProgramFilesFolder">
+			<Directory Id="$(var.PROGRAM_FILES_FOLDER)">
 				<Directory Id="ASAP.DIR" Name="ASAP">
+					<?if $(sys.BUILDARCH) = x86 ?>
 					<Component Id="wasap.exe" Guid="*">
 						<File Id="wasap.exe" Name="wasap.exe" Source="wasap.exe" Checksum="yes" KeyPath="yes" />
 					</Component>
@@ -219,6 +239,7 @@
 							<?endforeach?>
 						</ProgId>
 					</Component>
+
 					<Component Id="asapconv.exe" Guid="*">
 						<File Id="asapconv.exe" Name="asapconv.exe" Source="asapconv.exe" Checksum="yes" KeyPath="yes" />
 					</Component>
@@ -226,6 +247,7 @@
 						<Environment Id="path" Action="set" Name="Path" Part="last" Permanent="no" System="yes" Value="[ASAP.DIR]" />
 						<CreateFolder />
 					</Component>
+
 					<Component Id="asap_dsf.dll" Guid="*">
 						<File Id="asap_dsf.dll" Name="asap_dsf.dll" Source="asap_dsf.dll" Checksum="yes" KeyPath="yes">
 							<Class Id="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Context="InprocServer32" Description="ASAP source filter" ThreadingModel="both" />
@@ -254,21 +276,23 @@
 							<?endforeach?>
 						</ProgId>
 					</Component>
-					<Component Id="ASAPShellEx.dll" Guid="*">
-						<File Id="ASAPShellEx.dll" Name="ASAPShellEx.dll" Source="ASAPShellEx.dll" Checksum="yes" KeyPath="yes">
+					<?endif?>
+
+					<Component Id="ASAPShellEx.dll" Guid="*" Win64="$(var.WIN64)">
+						<File Id="ASAPShellEx.dll" Name="ASAPShellEx.dll" Source="$(var.SRC_DIR)ASAPShellEx.dll" Checksum="yes" KeyPath="yes">
 							<Class Id="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Context="InprocServer32" Description="ASAP Metadata Handler" ThreadingModel="both" />
 						</File>
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" Name="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Column Handler" Type="string" Action="write" />
 					</Component>
-					<Component Id="ASAPShellEx.propdesc" Guid="*">
+					<Component Id="ASAPShellEx.propdesc" Guid="*" Win64="$(var.WIN64)">
 						<Condition>VersionNT &gt;= 600</Condition>
 						<File Id="ASAPShellEx.propdesc" Name="ASAPShellEx.propdesc" Source="shellex\ASAPShellEx.propdesc" KeyPath="yes" />
 					</Component>
-					<Component Id="ASAPShellExXP.reg" Guid="323D0FD9-B7D9-419F-B78D-AA646659DC01">
+					<Component Id="ASAPShellExXP.reg" Guid="323D0FD9-B7D9-419F-B78D-AA646659DC01" Win64="$(var.WIN64)">
 						<Condition>VersionNT &lt; 600</Condition>
 						<RegistryValue Root="HKCR" Key="Folder\shellex\ColumnHandlers\{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Column Handler" Type="string" Action="write" KeyPath="yes" />
 					</Component>
-					<Component Id="ASAPShellExVista.reg" Guid="93C86662-AA18-493C-9384-C0671B675BC4">
+					<Component Id="ASAPShellExVista.reg" Guid="93C86662-AA18-493C-9384-C0671B675BC4" Win64="$(var.WIN64)">
 						<Condition>VersionNT &gt;= 600</Condition>
 						<?foreach EXT in $(var.ASAP_EXTS)?>
 							<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\PropertySystem\PropertyHandlers\.$(var.EXT)" Value="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Type="string" Action="write" />
@@ -282,10 +306,15 @@
 							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="FullDetails" Value="prop:System.PropGroup.Audio;System.Media.Duration;System.Audio.ChannelCount;ASAP.Subsongs;ASAP.PALNTSC;System.PropGroup.FileSystem;System.ItemNameDisplay;System.ItemType;System.ItemFolderPathDisplay;System.Size;System.DateCreated;System.DateModified;System.FileAttributes" Type="string" Action="write" />
 						<?endforeach?>
 					</Component>
+
+					<?if $(sys.BUILDARCH) = x86 ?>
 					<Component Id="README_WindowsSetup.html" Guid="*">
 						<File Id="README_WindowsSetup.html" Name="README_WindowsSetup.html" Source="README_WindowsSetup.html" KeyPath="yes" />
 					</Component>
+					<?endif?>
 				</Directory>
+
+				<?if $(sys.BUILDARCH) = x86 ?>
 				<Directory Id="WINAMP.DIR" Name="Winamp">
 					<Directory Id="WINAMPPLUG.DIR" Name="Plugins">
 						<Component Id="in_asap.dll" Guid="*">
@@ -394,7 +423,10 @@
 						<File Id="apokeysnd.dll" Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
 					</Component>
 				</Directory>
+				<?endif?>
 			</Directory>
+
+			<?if $(sys.BUILDARCH) = x86 ?>
 			<Directory Id="ProgramMenuFolder" Name="Programs">
 				<Directory Id="menu.dir" Name="ASAP">
 					<Component Id="WASAP.lnk" Guid="*">
@@ -424,8 +456,10 @@
 					<Shortcut Id="WASAP.desktop" Name="WASAP" Target="[#wasap.exe]" />
 				</Component>
 			</Directory>
+			<?endif?>
 		</Directory>
 
+		<?if $(sys.BUILDARCH) = x86 ?>
 		<Feature Id="wasap" Title="WASAP" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Tiny player controlled by a tray icon." AllowAdvertise="no">
 			<ComponentRef Id="wasap.exe" />
 			<Feature Id="wasap.lnk" Title="Start menu shortcut" Level="1" Description="Adds WASAP to the Programs menu." AllowAdvertise="no">
@@ -501,12 +535,16 @@
 		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
 			<ComponentRef Id="apokeysnd.dll" />
 		</Feature>
-		<Feature Id="ASAPShellEx" Title="Windows Explorer extension" Level="9" ConfigurableDirectory="ASAP.DIR" Description="Shows metadata (title, author, year, duration, subsongs) in Windows Explorer." AllowAdvertise="no">
+		<?endif?>
+
+		<Feature Id="ASAPShellEx" Title="Windows Explorer extension" Level="$(var.SHELL_EX_LEVEL)" ConfigurableDirectory="ASAP.DIR" Description="Shows metadata (title, author, year, duration, subsongs) in Windows Explorer." AllowAdvertise="no">
 			<ComponentRef Id="ASAPShellEx.dll" />
 			<ComponentRef Id="ASAPShellEx.propdesc" />
 			<ComponentRef Id="ASAPShellExXP.reg" />
 			<ComponentRef Id="ASAPShellExVista.reg" />
 		</Feature>
+
+		<?if $(sys.BUILDARCH) = x86 ?>
 		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file." AllowAdvertise="no">
 			<ComponentRef Id="README_WindowsSetup.html" />
 			<Feature Id="docs.lnk" Title="Start menu shortcuts" Level="1" Description="Adds documentation and website links to the Programs menu." AllowAdvertise="no">
@@ -517,6 +555,7 @@
 		<Feature Id="uninstall" Title="Uninstall shortcut" Level="1" Description="Adds uninstall link to the Programs menu (in addition to the Control Panel which is always available)." AllowAdvertise="no">
 			<ComponentRef Id="uninstall.lnk" />
 		</Feature>
+		<?endif?>
 
 		<CustomAction Id="InstallPropertySchema" DllEntry="InstallPropertySchema" FileKey="ASAPShellEx.dll" Execute="deferred" Impersonate="no" Return="check" />
 		<CustomAction Id="UninstallPropertySchema" DllEntry="UninstallPropertySchema" FileKey="ASAPShellEx.dll" Execute="deferred" Impersonate="no" Return="check" />

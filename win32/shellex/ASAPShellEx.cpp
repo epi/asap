@@ -42,13 +42,17 @@ extern "C" const FMTID FMTID_MUSIC =
 #define PIDSI_YEAR            5
 extern "C" const FMTID FMTID_AudioSummaryInformation =
 	{ 0x64440490, 0x4c8b, 0x11d1, { 0x8b, 0x70, 0x08, 0x00, 0x36, 0xb1, 0x1a, 0x03 } };
+#ifndef __MINGW64__
 #define PIDASI_TIMELENGTH     3
 #define PIDASI_CHANNEL_COUNT  7
 #define SHCDF_UPDATEITEM      1
+#endif
 
 typedef SHCOLUMNID PROPERTYKEY;
 #define REFPROPERTYKEY const PROPERTYKEY &
 #define REFPROPVARIANT const PROPVARIANT &
+
+#undef INTERFACE
 
 static const IID IID_IInitializeWithStream =
 	{ 0xb824b49d, 0x22ac, 0x4161, { 0xac, 0x8a, 0x99, 0x16, 0xe8, 0xfa, 0x3f, 0x7f } };

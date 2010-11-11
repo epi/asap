@@ -28,6 +28,10 @@ WINCE_VC = "C:/Program Files/Microsoft Visual Studio 9.0/VC/ce"
 WINCE_CL = $(WINCE_VC)/bin/x86_arm/cl -nologo -O2 -GL -W3 -DUNICODE -DUNDER_CE -D_ARM_ -Fe$@
 WINCE_SDK = "C:/Program Files/Windows Mobile 5.0 SDK R2/PocketPC"
 
+# x64 gcc
+X64_ASAP_GPP = x86_64-w64-mingw32-g++ -static -s -O2 -Wall -o $@ -I. -I..
+X64_WINDRES = x86_64-w64-mingw32-windres -o $@
+
 # common tools
 PERL = perl
 RM = rm -f
@@ -200,6 +204,15 @@ ASAPShellEx.dll: shellex/ASAPShellEx.cpp ../asap.c ASAPShellEx-res.o $(COMMON_H)
 ASAPShellEx-res.o: gui.rc ../asap.h
 	$(WINDRES) -DSHELLEX gui.rc
 
+x64/ASAPShellEx.dll: shellex/ASAPShellEx.cpp ../asap.c x64/ASAPShellEx-res.o $(COMMON_H)
+	$(X64_ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at -DASAP_ONLY_INFO shellex/ASAPShellEx.cpp ../asap.c x64/ASAPShellEx-res.o -lole32 -loleaut32 -lshlwapi -luuid
+
+x64/ASAPShellEx-res.o: gui.rc ../asap.h x64
+	$(X64_WINDRES) -DSHELLEX gui.rc
+
+x64:
+	mkdir x64
+
 # library
 
 asap.lib: $(COMMON_C) $(COMMON_H)
@@ -249,6 +262,7 @@ clean:
 	$(RM) wince/wasap-res.o wince/wasap.exe wince/gspasap-res.o wince/gspasap.dll wince/asap_dsf.res win32/asap_dsf.dll
 	$(RM) install_dsf.bat uninstall_dsf.bat
 	$(RM) ../players/*.obx ../players.h ../README.html
+	$(RM) -rf x64
 	$(MAKE) -C ../csharp clean
 	$(MAKE) -C ../flash clean
 	$(MAKE) -C ../java clean
@@ -294,6 +308,14 @@ setup: ../../asap-$(VERSION)-win32.msi
 
 setup/asap.wixobj: setup/asap.wxs
 	$(CANDLE) -dVERSION=$(VERSION) $<
+
+x64-setup: ../../asap-$(VERSION)-win64.msi
+
+../../asap-$(VERSION)-win64.msi: x64/asap.wixobj wasap/wasap.ico setup/license.rtf setup/asap-banner.jpg setup/asap-dialog.jpg shellex/ASAPShellEx.propdesc x64/ASAPShellEx.dll
+	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b setup $<
+
+x64/asap.wixobj: setup/asap.wxs
+	$(CANDLE) -arch x64 -dVERSION=$(VERSION) $<
 
 wince-setup: ../../asap-$(VERSION)-wince-arm.cab
 
