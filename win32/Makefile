@@ -21,14 +21,15 @@ ASAP_CL71 = cl -nologo -O2 -GL -GR- -W3 -DNDEBUG -Fe$@ -I. -I..
 # gcc for Windows Mobile
 WINCE_GCC = arm-mingw32ce-gcc -s -O2 -Wall -o $@ -I. -I..
 WINCE_WINDRES = arm-mingw32ce-windres -o $@ -D_WIN32_WCE
-CABWIZ = "C:/Program Files/Windows Mobile 6 SDK/Tools/CabWiz/cabwiz.exe"
 
 # Microsoft compiler for Windows Mobile
 WINCE_VC = "C:/Program Files/Microsoft Visual Studio 9.0/VC/ce"
 WINCE_CL = $(WINCE_VC)/bin/x86_arm/cl -nologo -O2 -GL -W3 -DUNICODE -DUNDER_CE -D_ARM_ -Fe$@
 WINCE_SDK = "C:/Program Files/Windows Mobile 5.0 SDK R2/PocketPC"
+CABWIZ = "C:/Program Files/Windows Mobile 6 SDK/Tools/CabWiz/cabwiz.exe"
 
 # x64 gcc
+X64_ASAP_GCC = x86_64-w64-mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
 X64_ASAP_GPP = x86_64-w64-mingw32-g++ -static -s -O2 -Wall -o $@ -I. -I..
 X64_WINDRES = x86_64-w64-mingw32-windres -o $@
 
@@ -70,6 +71,9 @@ asapconv-static-lame.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
 
 asapconv-no-lame.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_GCC) ../asapconv.c $(COMMON_C)
+
+x64/asapconv.exe: ../asapconv.c $(COMMON_C) $(COMMON_H) x64
+	$(X64_ASAP_GCC) ../asapconv.c $(COMMON_C)
 
 # WASAP
 
@@ -334,7 +338,7 @@ srcdist: ../MANIFEST ../README.html $(PLAYERS_OBX)
 	$(RM) ../../asap-$(VERSION).tar.gz
 	cd .. && $(TAR) -c --numeric-owner --owner=0 --group=0 -T MANIFEST --transform=s,,asap-$(VERSION)/, | $(SEVENZIP) -tgzip -si ../asap-$(VERSION).tar.gz
 
-dist: srcdist win32 wince java csharp javascript flash setup wince-setup \
+dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-setup \
 	COPYING.txt README_Flash.html README_Java.html README_Windows.html README_WindowsCE.html \
 	install_dsf.bat uninstall_dsf.bat
 	$(RM) ../../asap-$(VERSION)-flash.zip
