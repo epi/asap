@@ -148,7 +148,7 @@ dshow/asap_dsf.res: gui.rc ../asap.h
 	$(WINDRES) -DDSHOW gui.rc
 
 wince/asap_dsf.dll: dshow/asap_dsf.cpp $(COMMON_C) wince/asap_dsf.res dshow/asap_dsf.def $(COMMON_H)
-	$(WINCE_CL) -LD -Zc:wchar_t- -I. -I.. -I$(WINCE_SDK)/Include/Armv4i dshow/asap_dsf.cpp $(COMMON_C) wince/asap_dsf.res dshow/asap_dsf.def ole32.lib strmbase.lib strmiids.lib uuid.lib -link -subsystem:windowsce -release -libpath:$(WINCE_VC)/lib/armv4i -libpath:$(WINCE_SDK)/Lib/ARMV4I
+	$(WINCE_CL) -LD -Zc:wchar_t- -I. -I.. -I$(WINCE_SDK)/Include/Armv4i dshow/asap_dsf.cpp $(COMMON_C) wince/asap_dsf.res dshow/asap_dsf.def ole32.lib strmbase.lib strmiids.lib uuid.lib -link -subsystem:windowsce,4.02 -release -libpath:$(WINCE_VC)/lib/armv4i -libpath:$(WINCE_SDK)/Lib/ARMV4I
 
 wince/asap_dsf.res: gui.rc ../asap.h
 	$(WINCE_WINDRES) -DDSHOW gui.rc
