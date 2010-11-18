@@ -1,5 +1,5 @@
 /*
- * foo_asap.cpp - ASAP plugin for foobar2000 1.0
+ * foo_asap.cpp - ASAP plugin for foobar2000
  *
  * Copyright (C) 2006-2010  Piotr Fusik
  *

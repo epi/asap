@@ -77,7 +77,7 @@ IDR_TRAYMENU MENU
 #  define APP_NAME "Winamp"
 #  define INTERNAL_NAME "in_asap"
 #elif defined(FOOBAR2000)
-#  define APP_NAME "foobar2000 1.0"
+#  define APP_NAME "foobar2000"
 #  define INTERNAL_NAME "foo_asap"
 #elif defined(GSPLAYER)
 #  define APP_NAME "GSPlayer"
