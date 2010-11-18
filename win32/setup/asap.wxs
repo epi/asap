@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<?if $(sys.BUILDARCH) = x86 ?>
-		<?define WIN64=no ?>
-		<?define PLATFORM_SUFFIX= ?>
-		<?define UPGRADE_GUID=4250B3CB-D4A1-4486-828C-AC26A84D00D9 ?>
-		<?define PROGRAM_FILES_FOLDER=ProgramFilesFolder ?>
-		<?define SRC_DIR= ?>
-		<?define SHELL_EX_LEVEL=9 ?>
-	<?elseif $(sys.BUILDARCH) = x64 ?>
-		<?define WIN64=yes ?>
-		<?define PLATFORM_SUFFIX=" (64-bit)" ?>
-		<?define UPGRADE_GUID=205ADAB1-56A1-42B9-9789-FD20FCD1DF9B ?>
-		<?define PROGRAM_FILES_FOLDER=ProgramFiles64Folder ?>
-		<?define SRC_DIR=x64\ ?>
-		<?define SHELL_EX_LEVEL=1 ?>
+	<?if $(sys.BUILDARCH) = x86?>
+		<?define WIN64=no?>
+		<?define PLATFORM_SUFFIX=""?>
+		<?define UPGRADE_GUID=4250B3CB-D4A1-4486-828C-AC26A84D00D9?>
+		<?define PROGRAM_FILES_FOLDER=ProgramFilesFolder?>
+		<?define SRC_DIR=""?>
+		<?define SHELL_EX_LEVEL=9?>
+	<?elseif $(sys.BUILDARCH) = x64?>
+		<?define WIN64=yes?>
+		<?define PLATFORM_SUFFIX=" (64-bit)"?>
+		<?define UPGRADE_GUID=205ADAB1-56A1-42B9-9789-FD20FCD1DF9B?>
+		<?define PROGRAM_FILES_FOLDER=ProgramFiles64Folder?>
+		<?define SRC_DIR=x64\?>
+		<?define SHELL_EX_LEVEL=1?>
 	<?endif?>
 
 	<Product Id="*" Name="ASAP - Another Slight Atari Player $(var.VERSION)$(var.PLATFORM_SUFFIX)" Language="1033"
@@ -31,7 +31,7 @@
 		<?define EXT_FILTER=*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2?>
 		<?define NATIVE_EXTS=cmc;cm3;cmr;cms;dmc;dlt;mpt;mpd;rmt;tmc;tm8;tm2?>
 		<?define ASAP_EXTS=sap;$(var.NATIVE_EXTS)?>
-		<?define DOUBLECLICK=Double-click SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2 file in Windows Explorer to play it in ?>
+		<?define DOUBLECLICK=Double-click SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2 file in Windows Explorer to play it in?>
 
 		<Icon Id="wasap.ico" SourceFile="wasap/wasap.ico" />
 		<Property Id="ARPHELPLINK" Value="http://asap.sourceforge.net/" />
@@ -140,7 +140,7 @@
 				</Control>
 			</Dialog>
 
-			<?if $(sys.BUILDARCH) = x86 ?>
+			<?if $(sys.BUILDARCH) = x86?>
 			<!-- handle mutually exclusive file associations, conditions generated with wix_mutex.pl -->
 			<?foreach MUTEXCOND in (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3) OR $in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)));
 (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
@@ -169,7 +169,7 @@
 		</UI>
 		<UIRef Id="WixUI_Common" />
 
-		<?if $(sys.BUILDARCH) = x86 ?>
+		<?if $(sys.BUILDARCH) = x86?>
 		<Property Id="WMP.EXE">
 			<RegistrySearch Id="wmp.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\MediaPlayer" Name="Installation Directory" Type="directory">
 				<FileSearch Id="wmp.exe" Name="wmplayer.exe" />
@@ -223,7 +223,7 @@
 		<Directory Id="TARGETDIR" Name="SourceDir">
 			<Directory Id="$(var.PROGRAM_FILES_FOLDER)">
 				<Directory Id="ASAP.DIR" Name="ASAP">
-					<?if $(sys.BUILDARCH) = x86 ?>
+					<?if $(sys.BUILDARCH) = x86?>
 					<Component Id="wasap.exe" Guid="*">
 						<File Id="wasap.exe" Name="wasap.exe" Source="wasap.exe" Checksum="yes" KeyPath="yes" />
 					</Component>
@@ -282,7 +282,7 @@
 						<File Id="ASAPShellEx.dll" Name="ASAPShellEx.dll" Source="$(var.SRC_DIR)ASAPShellEx.dll" Checksum="yes" KeyPath="yes">
 							<Class Id="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Context="InprocServer32" Description="ASAP Metadata Handler" ThreadingModel="both" />
 						</File>
-						<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" Name="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Column Handler" Type="string" Action="write" />
+						<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" Name="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Metadata Handler" Type="string" Action="write" />
 					</Component>
 					<Component Id="ASAPShellEx.propdesc" Guid="*" Win64="$(var.WIN64)">
 						<Condition>VersionNT &gt;= 600</Condition>
@@ -307,14 +307,14 @@
 						<?endforeach?>
 					</Component>
 
-					<?if $(sys.BUILDARCH) = x86 ?>
+					<?if $(sys.BUILDARCH) = x86?>
 					<Component Id="README_WindowsSetup.html" Guid="*">
 						<File Id="README_WindowsSetup.html" Name="README_WindowsSetup.html" Source="README_WindowsSetup.html" KeyPath="yes" />
 					</Component>
 					<?endif?>
 				</Directory>
 
-				<?if $(sys.BUILDARCH) = x86 ?>
+				<?if $(sys.BUILDARCH) = x86?>
 				<Directory Id="WINAMP.DIR" Name="Winamp">
 					<Directory Id="WINAMPPLUG.DIR" Name="Plugins">
 						<Component Id="in_asap.dll" Guid="*">
@@ -426,7 +426,7 @@
 				<?endif?>
 			</Directory>
 
-			<?if $(sys.BUILDARCH) = x86 ?>
+			<?if $(sys.BUILDARCH) = x86?>
 			<Directory Id="ProgramMenuFolder" Name="Programs">
 				<Directory Id="menu.dir" Name="ASAP">
 					<Component Id="WASAP.lnk" Guid="*">
@@ -459,7 +459,7 @@
 			<?endif?>
 		</Directory>
 
-		<?if $(sys.BUILDARCH) = x86 ?>
+		<?if $(sys.BUILDARCH) = x86?>
 		<Feature Id="wasap" Title="WASAP" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Tiny player controlled by a tray icon." AllowAdvertise="no">
 			<ComponentRef Id="wasap.exe" />
 			<Feature Id="wasap.lnk" Title="Start menu shortcut" Level="1" Description="Adds WASAP to the Programs menu." AllowAdvertise="no">
@@ -544,7 +544,7 @@
 			<ComponentRef Id="ASAPShellExVista.reg" />
 		</Feature>
 
-		<?if $(sys.BUILDARCH) = x86 ?>
+		<?if $(sys.BUILDARCH) = x86?>
 		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file." AllowAdvertise="no">
 			<ComponentRef Id="README_WindowsSetup.html" />
 			<Feature Id="docs.lnk" Title="Start menu shortcuts" Level="1" Description="Adds documentation and website links to the Programs menu." AllowAdvertise="no">
