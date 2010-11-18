@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <malloc.h>
 #include <streams.h>
 #include <tchar.h>
 
@@ -35,7 +36,7 @@ static const TCHAR extensions[][5] =
 #define BITS_PER_SAMPLE      16
 #define MIN_BUFFERED_BLOCKS  4096
 
-#define SZ_ASAP_SOURCE       L"ASAP source filter"
+#define SZ_ASAP_SOURCE       L"ASAP Source Filter"
 
 static const TCHAR CLSID_ASAPSource_str[] = _T("{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}");
 static const GUID CLSID_ASAPSource = { 0x8e6205a0, 0x19e2, 0x4037, { 0xaf, 0x32, 0xb2, 0x9a, 0x9b, 0x9d, 0xc, 0x93 } };
@@ -64,19 +65,12 @@ public:
 		return CSourceStream::NonDelegatingQueryInterface(riid, ppv);
 	}
 
-	HRESULT LoadWin32Error(char *filename)
-	{
-		HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-		delete[] filename;
-		return hr;
-	}
-
 	HRESULT Load(LPCOLESTR pszFileName, int cch)
 	{
-		char *filename = new char[cch * 2];
+		char *filename = (char *) alloca(cch * 2);
 		CheckPointer(filename, E_OUTOFMEMORY);
 		if (WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, filename, cch, NULL, NULL) <= 0)
-			return LoadWin32Error(filename);
+			return HRESULT_FROM_WIN32(GetLastError());
 
 		HANDLE fh = CreateFile(
 #ifdef UNICODE
@@ -86,21 +80,20 @@ public:
 #endif
 			GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (fh == INVALID_HANDLE_VALUE)
-			return LoadWin32Error(filename);
+			return HRESULT_FROM_WIN32(GetLastError());
 		byte *module = new byte[ASAP_MODULE_MAX];
 		int module_len;
 		BOOL ok = ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) &module_len, NULL);
 		CloseHandle(fh);
 		if (!ok) {
 			delete[] module;
-			return LoadWin32Error(filename);
+			return HRESULT_FROM_WIN32(GetLastError());
 		}
 
 		CAutoLock lck(&cs);
 		loaded = ASAP_Load(&asap, filename, module, module_len);
 		delete[] module;
-		delete[] filename;
-		
+
 		if (!loaded)
 			return E_FAIL;
 		int song = asap.module_info.default_song;
