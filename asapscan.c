@@ -25,6 +25,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __WIN32
+#include <windows.h>
+#endif
 
 #include "asap.h"
 #include "asap_internal.h"
@@ -49,6 +52,9 @@ static int features = 0;
 #define CPU_TRACE_PRINT        1
 #define CPU_TRACE_UNOFFICIAL   2
 int cpu_trace = 0;
+
+static abool acid = FALSE;
+static int exit_code = 0;
 
 static const char cpu_mnemonics[256][10] = {
 	"BRK", "ORA (1,X)", "CIM", "ASO (1,X)", "NOP 1", "ORA 1", "ASL 1", "ASO 1",
@@ -184,6 +190,7 @@ static void print_help(void)
 		"-t  Detect silence and loops\n"
 		"-c  Dump 6502 trace\n"
 		"-u  List unofficial 6502 instructions used\n"
+		"-a  Run Acid800 test\n"
 		"-v  Display version information\n"
 		"Options:\n"
 		"-s SONG  Process the specified subsong (zero-based)\n"
@@ -294,6 +301,38 @@ void scan_song(int song)
 	}
 	if (detect_time)
 		printf("No silence or loop detected in song %d\n", song);
+	if (acid) {
+#ifdef __WIN32
+		HANDLE so = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		GetConsoleScreenBufferInfo(so, &csbi);
+#define set_color(x) SetConsoleTextAttribute(so, x)
+#else
+#define set_color(x)
+#endif
+		for (i = 0x1000; i <= 0x17ff; i++) {
+			byte c = asap.memory[i];
+			if (c == 0)
+				break;
+			if (memcmp(asap.memory + i, "FAIL", 4) == 0) {
+				exit_code = 1;
+				set_color((csbi.wAttributes & ~0xf) | 12);
+			}
+			else if (memcmp(asap.memory + i, "Skipped", 7) == 0) {
+				exit_code = 1;
+				set_color((csbi.wAttributes & ~0xf) | 14);
+			}
+			if (c == 0x9b)
+				c = '\n';
+			putchar(c);
+		}
+		if (asap.memory[i - 1] != 0x9b) {
+			set_color((csbi.wAttributes & ~0xf) | 13);
+			printf("NO RESPONSE\n");
+			exit_code = 1;
+		}
+		set_color(csbi.wAttributes);
+	}
 }
 
 int main(int argc, char *argv[])
@@ -322,6 +361,10 @@ int main(int argc, char *argv[])
 			cpu_trace |= CPU_TRACE_UNOFFICIAL;
 		else if (strcmp(argv[i], "-s") == 0)
 			song = atoi(argv[++i]);
+		else if (strcmp(argv[i], "-a") == 0) {
+			acid = TRUE;
+			scan_seconds = 10;
+		}
 		else if (strcmp(argv[i], "-v") == 0) {
 			printf("asapscan " ASAP_VERSION "\n");
 			return 0;
@@ -334,7 +377,7 @@ int main(int argc, char *argv[])
 			input_file = argv[i];
 		}
 	}
-	if (dump + features + detect_time + cpu_trace == 0 || input_file == NULL) {
+	if (dump + features + detect_time + cpu_trace + acid == 0 || input_file == NULL) {
 		print_help();
 		return 1;
 	}
@@ -378,7 +421,7 @@ int main(int argc, char *argv[])
 		for (i = 0; i < 256; i++) {
 			if (cpu_opcodes[i] == (CPU_OPCODE_UNOFFICIAL | CPU_OPCODE_USED))
 				print_unofficial_mnemonic(i);
-		}                             
+		}
 	}
-	return 0;
+	return exit_code;
 }

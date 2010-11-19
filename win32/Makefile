@@ -48,6 +48,7 @@ GREP = grep
 CANDLE = candle -nologo -o $@
 LIGHT = light -nologo -o $@
 
+ACIDSAP = ../../Acid800/out/release/AcidSAP/standalone
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h ../anylang.h ../players.h
 
@@ -251,6 +252,19 @@ flash:
 
 asap-sdl.exe: ../asap-sdl.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_GCC) ../asap-sdl.c $(COMMON_C) -lmingw32 -lSDLmain -lSDL
+
+# Acid800
+
+acid: asapscan.exe
+	export passed=0 total=0; \
+		for name in $(ACIDSAP)/*.sap; do \
+			echo -n \*\ ; ./asapscan.exe -a $$name; \
+			passed=$$(($$passed+!$$?)); total=$$(($$total+1)); \
+		done; \
+		echo PASSED $$passed of $$total tests
+
+acid-%: $(ACIDSAP)/%.sap asapscan.exe
+	./asapscan.exe -a $<
 
 # delete generated files
 
