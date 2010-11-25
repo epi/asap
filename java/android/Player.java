@@ -45,11 +45,13 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-public class Player extends Activity implements Runnable, OnClickListener
+public class Player extends Activity implements Runnable
 {
 	private final ASAP asap = new ASAP();
-	private int duration;
+	private ASAP_ModuleInfo module_info;
+	private int song;
 	private MediaController mediaController;
+	private int newSong = -1;
 	private boolean stop;
 
 	private View getContentView()
@@ -77,10 +79,6 @@ public class Player extends Activity implements Runnable, OnClickListener
 
 	public void run()
 	{
-		ASAP_ModuleInfo module_info = asap.getModuleInfo();
-		int song = module_info.default_song;
-		asap.playSong(song, module_info.loops[song] ? -1 : this.duration);
-
 		int config = module_info.channels == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
 		int len = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, config, AudioFormat.ENCODING_PCM_8BIT);
 		if (len < 16384)
@@ -89,23 +87,28 @@ public class Player extends Activity implements Runnable, OnClickListener
 		AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE,
 			config, AudioFormat.ENCODING_PCM_8BIT, len, AudioTrack.MODE_STREAM);
 		audioTrack.play();
+
 		do {
+			int newSong;
 			synchronized (this) {
-				if (this.stop) {
+				if (stop) {
 					audioTrack.stop();
 					return;
 				}
+				newSong = this.newSong;
+				this.newSong = -1;
 			}
-			len = asap.generate(buffer, ASAP.FORMAT_U8);
+			synchronized (asap) {
+				if (newSong >= 0) {
+					song = newSong;
+					asap.playSong(song, module_info.loops[song] ? -1 : module_info.durations[song]);
+				}
+				len = asap.generate(buffer, ASAP.FORMAT_U8);
+			}
 			audioTrack.write(buffer, 0, len);
 		} while (len == buffer.length);
 		audioTrack.flush();
 		audioTrack.stop();
-	}
-
-	public void onClick(View v)
-	{
-		finish();
 	}
 
 	private static InputStream httpGet(Uri uri)
@@ -123,13 +126,26 @@ public class Player extends Activity implements Runnable, OnClickListener
 	@Override
 	public boolean onTouchEvent(MotionEvent event)
 	{
-		this.mediaController.show();
+		mediaController.show();
 		return true;
 	}
 
-	private synchronized void seek(int pos)
+	private void playSong(int song)
 	{
-		asap.seek(pos);
+		synchronized (this) {
+			newSong = song;
+		}
+		if (module_info.songs > 1)
+			setTag(R.id.song, getString(R.string.song_format, song + 1, module_info.songs));
+		else
+			setTag(R.id.song, "");
+	}
+
+	private void seek(int pos)
+	{
+		synchronized (asap) {
+			asap.seek(pos);
+		}
 	}
 
 	@Override
@@ -165,34 +181,43 @@ public class Player extends Activity implements Runnable, OnClickListener
 			showError(R.string.invalid_file);
 			return;
 		}
-		ASAP_ModuleInfo module_info = asap.getModuleInfo();
-		int song = module_info.default_song;
-		duration = module_info.durations[song];
+		module_info = asap.getModuleInfo();
 
 		setContentView(R.layout.playing);
 		setTag(R.id.name, module_info.name);
 		setTag(R.id.author, module_info.author);
 		setTag(R.id.date, module_info.date);
-		findViewById(R.id.stop_button).setOnClickListener(this);
-		this.mediaController = new MediaController(this, false);
-		this.mediaController.setAnchorView(getContentView());
-		this.mediaController.setMediaPlayer(new MediaController.MediaPlayerControl() {
+		findViewById(R.id.stop_button).setOnClickListener(new OnClickListener() {
+			public void onClick(View v) { finish(); }
+		});
+		mediaController = new MediaController(this, false);
+		mediaController.setAnchorView(getContentView());
+		mediaController.setMediaPlayer(new MediaController.MediaPlayerControl() {
 			public boolean canPause() { return false; }
 			public boolean canSeekBackward() { return false; }
 			public boolean canSeekForward() { return false; }
 			public int getBufferPercentage() { return 100; }
 			public int getCurrentPosition() { return asap.getPosition(); }
-			public int getDuration() { return duration; }
+			public int getDuration() { return module_info.durations[song]; }
 			public boolean isPlaying() { return true; }
 			public void pause() { }
 			public void seekTo(int pos) { seek(pos); }
 			public void start() { }
 		});
+		if (module_info.songs > 1) {
+			mediaController.setPrevNextListeners(new OnClickListener() {
+				public void onClick(View v) { if (song + 1 < module_info.songs) playSong(song + 1); }
+			},
+			new OnClickListener() {
+				public void onClick(View v) { if (song > 0) playSong(song - 1); }
+			});
+		}
 		new Handler().postDelayed(new Runnable() {
 			public void run() { mediaController.show(); }
 		}, 500);
 
-		this.stop = false;
+		stop = false;
+		playSong(module_info.default_song);
 		new Thread(this).start();
 	}
 
@@ -201,7 +226,7 @@ public class Player extends Activity implements Runnable, OnClickListener
 	{
 		super.onStop();
 		synchronized (this) {
-			this.stop = true;
+			stop = true;
 		}
 	}
 }

@@ -413,7 +413,7 @@
 		<since>2.1.2</since>
 		<status>in development</status>
 		<output>8-bit sound</output>
-		<subsongs>no</subsongs><!-- TODO -->
+		<subsongs>yes</subsongs>
 		<file-info>yes</file-info>
 		<edit-info>no</edit-info>
 		<convert-sap>no</convert-sap>
