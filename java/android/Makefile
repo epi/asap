@@ -61,8 +61,8 @@ AndroidASAP-debug.apk: AndroidASAP-resources.apk classes.dex
 classes.dex: net/sf/asap/FileSelector.class net/sf/asap/R.class
 	$(DX) --dex --output=$@ net ../net
 
-net/sf/asap/FileSelector.class net/sf/asap/Player.class: FileSelector.java Player.java net/sf/asap/R.class ../net/sf/asap/ASAP.class
-	$(JAVAC) -classpath ".;.." -bootclasspath "$(ANDROID_PLATFORM)/android.jar" FileSelector.java Player.java
+net/sf/asap/FileSelector.class net/sf/asap/MainMenu.class net/sf/asap/Player.class: FileSelector.java MainMenu.java Player.java net/sf/asap/R.class ../net/sf/asap/ASAP.class
+	$(JAVAC) -classpath ".;.." -bootclasspath "$(ANDROID_PLATFORM)/android.jar" FileSelector.java MainMenu.java Player.java
 
 net/sf/asap/R.class: net/sf/asap/R.java
 	$(JAVAC) net/sf/asap/R.java

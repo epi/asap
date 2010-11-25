@@ -31,6 +31,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -79,5 +81,17 @@ public class FileSelector extends ListActivity
 			Intent intent = new Intent(Intent.ACTION_VIEW, uri, this, Player.class);
 			startActivity(intent);
 		}
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		return MainMenu.onCreateOptionsMenu(this, menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		return MainMenu.onOptionsItemSelected(this, item);
 	}
 }

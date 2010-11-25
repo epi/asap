@@ -377,6 +377,7 @@ dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-set
 	$(GREP) " Version =" ../csharp/ASAP.ppcs
 	$(GREP) " VERSION =" ../java/ASAP.ppjava
 	$(GREP) android:versionName ../java/android/AndroidManifest.xml
+	$(GREP) about_title ../java/android/res/values/strings.xml
 	$(GREP) MIDlet-Version ../java/j2me/MANIFEST.MF
 	$(GREP) ASAP_VERSION ../javascript/asap.ppjs
 	$(GREP) VERSION ../flash/ASAP.ppas

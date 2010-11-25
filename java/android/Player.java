@@ -31,6 +31,8 @@ import android.media.AudioTrack;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -242,8 +244,20 @@ public class Player extends Activity implements Runnable
 	{
 		super.onStop();
 		synchronized (this) {
-			notify();
 			stop = true;
+			notify();
 		}
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		return MainMenu.onCreateOptionsMenu(this, menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		return MainMenu.onOptionsItemSelected(this, item);
 	}
 }
