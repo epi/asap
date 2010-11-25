@@ -53,6 +53,7 @@ public class Player extends Activity implements Runnable
 	private MediaController mediaController;
 	private int newSong = -1;
 	private boolean stop;
+	private AudioTrack audioTrack;
 
 	private View getContentView()
 	{
@@ -77,6 +78,47 @@ public class Player extends Activity implements Runnable
 		}
 	}
 
+	@Override
+	public boolean onTouchEvent(MotionEvent event)
+	{
+		mediaController.show();
+		return true;
+	}
+
+	private boolean isPaused()
+	{
+		return audioTrack == null || audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PAUSED;
+	}
+
+	private void resume()
+	{
+		if (audioTrack != null) {
+			audioTrack.play();
+			synchronized (this) {
+				notify();
+			}
+		}
+	}
+
+	private void playSong(int song)
+	{
+		synchronized (this) {
+			newSong = song;
+		}
+		resume();
+		if (module_info.songs > 1)
+			setTag(R.id.song, getString(R.string.song_format, song + 1, module_info.songs));
+		else
+			setTag(R.id.song, "");
+	}
+
+	private void seek(int pos)
+	{
+		synchronized (asap) {
+			asap.seek(pos);
+		}
+	}
+
 	public void run()
 	{
 		int config = module_info.channels == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
@@ -84,13 +126,19 @@ public class Player extends Activity implements Runnable
 		if (len < 16384)
 			len = 16384;
 		final byte[] buffer = new byte[len];
-		AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE,
-			config, AudioFormat.ENCODING_PCM_8BIT, len, AudioTrack.MODE_STREAM);
+		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE, config, AudioFormat.ENCODING_PCM_8BIT, len, AudioTrack.MODE_STREAM);
 		audioTrack.play();
 
 		do {
 			int newSong;
 			synchronized (this) {
+				if (isPaused()) {
+					try {
+						wait();
+					}
+					catch (InterruptedException ex) {
+					}
+				}
 				if (stop) {
 					audioTrack.stop();
 					return;
@@ -121,31 +169,6 @@ public class Player extends Activity implements Runnable
 		if (status.getStatusCode() != 200)
 			throw new IOException("HTTP error " + status);
 		return response.getEntity().getContent();
-	}
-
-	@Override
-	public boolean onTouchEvent(MotionEvent event)
-	{
-		mediaController.show();
-		return true;
-	}
-
-	private void playSong(int song)
-	{
-		synchronized (this) {
-			newSong = song;
-		}
-		if (module_info.songs > 1)
-			setTag(R.id.song, getString(R.string.song_format, song + 1, module_info.songs));
-		else
-			setTag(R.id.song, "");
-	}
-
-	private void seek(int pos)
-	{
-		synchronized (asap) {
-			asap.seek(pos);
-		}
 	}
 
 	@Override
@@ -193,16 +216,16 @@ public class Player extends Activity implements Runnable
 		mediaController = new MediaController(this, false);
 		mediaController.setAnchorView(getContentView());
 		mediaController.setMediaPlayer(new MediaController.MediaPlayerControl() {
-			public boolean canPause() { return false; }
+			public boolean canPause() { return !isPaused(); }
 			public boolean canSeekBackward() { return false; }
 			public boolean canSeekForward() { return false; }
 			public int getBufferPercentage() { return 100; }
 			public int getCurrentPosition() { return asap.getPosition(); }
 			public int getDuration() { return module_info.durations[song]; }
-			public boolean isPlaying() { return true; }
-			public void pause() { }
+			public boolean isPlaying() { return !isPaused(); }
+			public void pause() { audioTrack.pause(); }
 			public void seekTo(int pos) { seek(pos); }
-			public void start() { }
+			public void start() { resume(); }
 		});
 		if (module_info.songs > 1) {
 			mediaController.setPrevNextListeners(new OnClickListener() {
@@ -226,6 +249,7 @@ public class Player extends Activity implements Runnable
 	{
 		super.onStop();
 		synchronized (this) {
+			notify();
 			stop = true;
 		}
 	}
