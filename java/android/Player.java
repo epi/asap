@@ -51,7 +51,6 @@ public class Player extends Activity implements Runnable
 	private ASAP_ModuleInfo module_info;
 	private int song;
 	private MediaController mediaController;
-	private int newSong = -1;
 	private boolean stop;
 	private AudioTrack audioTrack;
 
@@ -102,8 +101,9 @@ public class Player extends Activity implements Runnable
 
 	private void playSong(int song)
 	{
-		synchronized (this) {
-			newSong = song;
+		this.song = song;
+		synchronized (asap) {
+			asap.playSong(song, module_info.loops[song] ? -1 : module_info.durations[song]);
 		}
 		resume();
 		if (module_info.songs > 1)
@@ -130,7 +130,6 @@ public class Player extends Activity implements Runnable
 		audioTrack.play();
 
 		do {
-			int newSong;
 			synchronized (this) {
 				if (isPaused()) {
 					try {
@@ -143,14 +142,8 @@ public class Player extends Activity implements Runnable
 					audioTrack.stop();
 					return;
 				}
-				newSong = this.newSong;
-				this.newSong = -1;
 			}
 			synchronized (asap) {
-				if (newSong >= 0) {
-					song = newSong;
-					asap.playSong(song, module_info.loops[song] ? -1 : module_info.durations[song]);
-				}
 				len = asap.generate(buffer, ASAP.FORMAT_U8);
 			}
 			audioTrack.write(buffer, 0, len);
