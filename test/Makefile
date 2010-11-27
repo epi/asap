@@ -1,7 +1,7 @@
 XASM = xasm -q -o $@
 RM = rm -f
 
-TESTS = cpu_decimal cpu_shx
+TESTS = cpu_ane cpu_anx cpu_decimal cpu_las cpu_shx
 
 all: $(TESTS:%=%.sap) $(TESTS:%=%.xex)
 

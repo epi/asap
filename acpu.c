@@ -537,9 +537,8 @@ FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 			break;
 		case 0x8b: /* ANE #ab [unofficial] */
 			data = FETCH;
-			a &= x;
+			a &= (data | 0xef) & x;
 			nz = a & data;
-			a &= data | 0xef;
 			break;
 		case 0x8f: /* SAX abcd [unofficial] */
 			ABSOLUTE;
@@ -601,7 +600,8 @@ FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 			ZPAGE_Y;
 			LAX_ZP;
 			break;
-		case 0xbb: /* LAS abcd,y [unofficial] */
+		case 0xbb: /* LAS abcd,y [unofficial, unstable] */
+			/* only Z is unstable */
 			ABSOLUTE_Y;
 			NCYCLES_Y;
 			nz = x = a = s &= GetByte(addr);
