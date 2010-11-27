@@ -5,7 +5,5 @@
 *.obj
 *.res
 players.h
-testsap.sap
-testsap.xex
 MANIFEST
 README.html

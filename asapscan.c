@@ -243,6 +243,8 @@ void scan_song(int song)
 	int silence_run = 0;
 	int loop_bytes = 18 * loop_check_player_calls;
 	ASAP_PlaySong(&asap, song, -1);
+	if (acid)
+		scan_player_calls = seconds_to_player_calls(asap.module_info.durations[song] / 1000);
 	for (i = 0; i < scan_player_calls; i++) {
 		call_6502_player(&asap);
 		if (dump) {
@@ -314,7 +316,9 @@ void scan_song(int song)
 			byte c = asap.memory[i];
 			if (c == 0)
 				break;
-			if (memcmp(asap.memory + i, "FAIL", 4) == 0) {
+			if (memcmp(asap.memory + i, "Pass", 4) == 0)
+				set_color((csbi.wAttributes & ~0xf) | 10);
+			else if (memcmp(asap.memory + i, "FAIL", 4) == 0) {
 				exit_code = 1;
 				set_color((csbi.wAttributes & ~0xf) | 12);
 			}
@@ -361,10 +365,8 @@ int main(int argc, char *argv[])
 			cpu_trace |= CPU_TRACE_UNOFFICIAL;
 		else if (strcmp(argv[i], "-s") == 0)
 			song = atoi(argv[++i]);
-		else if (strcmp(argv[i], "-a") == 0) {
+		else if (strcmp(argv[i], "-a") == 0)
 			acid = TRUE;
-			scan_seconds = 10;
-		}
 		else if (strcmp(argv[i], "-v") == 0) {
 			printf("asapscan " ASAP_VERSION "\n");
 			return 0;

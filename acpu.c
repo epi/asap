@@ -223,6 +223,19 @@ END_CONST_ARRAY;
 #define INS          INC; data = nz; DO_SBC
 #define INS_ZP       INC_ZP; data = nz; DO_SBC
 
+#define SHX(val,ind) \
+	{ \
+		V(int, hi); \
+		addr = FETCH; \
+		hi = FETCH; \
+		data = (hi + 1) & val; \
+		addr += ind; \
+		if (addr >= 0x100) \
+			hi = data - 1; \
+		addr += hi << 8; \
+		PutByte(addr, data); \
+	}
+
 #define BRANCH(cond) \
 	if (cond) { \
 		addr = SBYTE(PEEK); \
@@ -533,11 +546,18 @@ FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 			SAX;
 			break;
 		case 0x93: /* SHA (ab),y [unofficial, unstable] */
-			ZPAGE;
-			data = zGetByte(addr + 1);
-			addr = (dGetByte(addr) + (data << 8) + y) & 0xffff;
-			data = a & x & (data + 1);
-			PutByte(addr, data);
+			{ \
+				V(int, hi); \
+				addr = FETCH; \
+				hi = zGetByte(addr + 1); \
+				addr = dGetByte(addr); \
+				data = (hi + 1) & a & x; \
+				addr += y; \
+				if (addr >= 0x100) \
+					hi = data - 1; \
+				addr += hi << 8; \
+				PutByte(addr, data); \
+			}
 			break;
 		case 0x97: /* SAX ab,y [unofficial] */
 			ZPAGE_Y;
@@ -545,33 +565,17 @@ FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 			break;
 		case 0x9b: /* SHS abcd,y [unofficial, unstable] */
 			/* S seems to be stable, only memory values vary */
-			addr = FETCH;
-			data = FETCH;
-			addr = (addr + (data << 8) + y) & 0xffff;
 			s = a & x;
-			data = s & (data + 1);
-			PutByte(addr, data);
+			SHX(s, y);
 			break;
 		case 0x9c: /* SHY abcd,x [unofficial] */
-			addr = FETCH;
-			data = FETCH;
-			addr = (addr + (data << 8) + x) & 0xffff;
-			data = y & (data + 1);
-			PutByte(addr, data);
+			SHX(y, x);
 			break;
 		case 0x9e: /* SHX abcd,y [unofficial] */
-			addr = FETCH;
-			data = FETCH;
-			addr = (addr + (data << 8) + y) & 0xffff;
-			data = x & (data + 1);
-			PutByte(addr, data);
+			SHX(x, y);
 			break;
 		case 0x9f: /* SHA abcd,y [unofficial, unstable] */
-			addr = FETCH;
-			data = FETCH;
-			addr = (addr + (data << 8) + y) & 0xffff;
-			data = a & x & (data + 1);
-			PutByte(addr, data);
+			SHX(a & x, y);
 			break;
 		case 0xa3: /* LAX (ab,x) [unofficial] */
 			INDIRECT_X;

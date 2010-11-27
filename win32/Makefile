@@ -262,6 +262,13 @@ acid: asapscan.exe
 			passed=$$(($$passed+!$$?)); total=$$(($$total+1)); \
 		done; \
 		echo PASSED $$passed of $$total tests
+	$(MAKE) -C ../test
+	export passed=0 total=0; \
+		for name in ../test/*.sap; do \
+			echo -n \*\ ; ./asapscan.exe -a $$name; \
+			passed=$$(($$passed+!$$?)); total=$$(($$total+1)); \
+		done; \
+		echo PASSED $$passed of $$total tests
 
 acid-%: $(ACIDSAP)/%.sap asapscan.exe
 	./asapscan.exe -a $<
