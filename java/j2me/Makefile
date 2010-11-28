@@ -1,13 +1,12 @@
-JRE ?= C:/Program Files/Java/jdk1.6.0_10/jre
-WTK = C:/Program Files/Java/SE_SDK/WTK2
+JRE ?= C:/Program Files/Java/jre6
+WTK = C:/bin/Java_ME_platform_SDK_3.0
 
 JAVAC ?= javac -source 1.2 -d .
 JAR ?= jar
 JAR_OPTIMIZE ?= 7z a -mx=9 -tzip
 PERL = perl
-ME_CLASSES = $(WTK)/lib/cldcapi11.jar;$(WTK)/lib/midpapi20.jar;$(WTK)/lib/jsr75.jar
-PREVERIFY = "$(WTK)/bin/preverify1.1"
-ME_EMU = "$(WTK)/bin/emulatorw" -gui
+ME_CLASSES = $(WTK)/lib/cldc_1.1.jar;$(WTK)/lib/midp_2.0.jar;$(WTK)/lib/jsr75_1.0.jar
+PREVERIFY = "$(WTK)/bin/preverify"
 
 PLAYERS_SRC_DIR = ../../players
 PLAYERS_OBX_DIR = ../net/sf/asap
@@ -15,9 +14,6 @@ PLAYERS_OBX_DIR = ../net/sf/asap
 all: asap_midlet.jad
 
 include ../../players/Makefile
-
-emu: asap_midlet.jad
-	$(ME_EMU) -Xdescriptor:asap_midlet.jad
 
 asap_midlet.jad: asap_midlet.jar MANIFEST.MF
 	$(PERL) mf2jad.pl asap_midlet

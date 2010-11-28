@@ -204,16 +204,20 @@ mingw32-make foo
 This should produce `foo_asap.dll`.
 
 
-Building WASAP and the GSPlayer plugin for Windows CE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building WASAP, GSPlayer and Windows Media Player plugins for Windows CE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need http://cegcc.sourceforge.net/[CeGCC].
+For WASAP and GSPlayer plugins you need http://cegcc.sourceforge.net/[CeGCC].
+For the Windows Media Player plugin you need Visual Studio 2008
+(2005 might work, but wasn't checked, 2010 won't work).
+
+Edit the paths at the top of `win32/Makefile` so they point to your installed tools.
 From the command prompt navigate to the `win32` directory and run:
 --------------------------------------------------------------------------------
 mingw32-make wince
 --------------------------------------------------------------------------------
 
-This should produce `wasap.exe` and `gspasap.dll` for ARM processors,
+This should produce `wasap.exe`, `gspasap.dll` and `asap_dsf.dll`
 in the `win32/wince` directory.
 
 
@@ -222,8 +226,7 @@ Building Java ASAP2WAV, applet and midlet
 
 You need Java Development Kit (JDK).
 To compile the midlet, you additionally need Perl and a Java ME SDK - I use
-Sony Ericsson SDK for the Java ME Platform, but Sun Java ME platform SDK
-will work after adjusting paths.
+Sun Java ME platform SDK.
 
 Edit the paths at the top of `java/Makefile` so they point to your installed tools.
 From the command prompt navigate to the `java` directory and run:

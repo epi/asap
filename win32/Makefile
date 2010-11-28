@@ -8,7 +8,7 @@ LIB_GCC = mingw32-gcc -O2 -Wall -I..
 AR = ar rc
 
 # Microsoft compiler for Windows Media Player and foobar2000
-DSHOW_BASECLASSES_DIR = "C:/Program Files/Microsoft SDKs/Windows/v6.1/Samples/Multimedia/DirectShow/BaseClasses"
+DSHOW_BASECLASSES_DIR = "C:/Program Files/Microsoft SDKs/Windows/v7.1/Samples/multimedia/directshow/baseclasses"
 FOOBAR2000_SDK_DIR = ../../foobar2000_SDK
 CL = cl -nologo -O2 -GL -GR- -GS- -W3 -wd4996 -DNDEBUG
 LINKOPT = -link -release
@@ -23,10 +23,10 @@ WINCE_GCC = arm-mingw32ce-gcc -s -O2 -Wall -o $@ -I. -I..
 WINCE_WINDRES = arm-mingw32ce-windres -o $@ -D_WIN32_WCE
 
 # Microsoft compiler for Windows Mobile
-WINCE_VC = "C:/Program Files/Microsoft Visual Studio 9.0/VC/ce"
+WINCE_VC = "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/ce"
 WINCE_CL = $(WINCE_VC)/bin/x86_arm/cl -nologo -O2 -GL -W3 -DUNICODE -DUNDER_CE -D_ARM_ -Fe$@
-WINCE_SDK = "C:/Program Files/Windows Mobile 5.0 SDK R2/PocketPC"
-CABWIZ = "C:/Program Files/Windows Mobile 6 SDK/Tools/CabWiz/cabwiz.exe"
+WINCE_SDK = "C:/Program Files (x86)/Windows Mobile 5.0 SDK R2/PocketPC"
+CABWIZ = "C:/Program Files (x86)/Windows Mobile 6 SDK/Tools/CabWiz/cabwiz.exe"
 
 # x64 gcc
 X64_ASAP_GCC = x86_64-w64-mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
@@ -356,9 +356,8 @@ wince-setup: ../../asap-$(VERSION)-wince-arm.cab
 	fi
 
 srcdist: ../MANIFEST ../README.html $(PLAYERS_OBX)
-	chmod 644 $(PLAYERS_OBX)
 	$(RM) ../../asap-$(VERSION).tar.gz
-	cd .. && $(TAR) -c --numeric-owner --owner=0 --group=0 -T MANIFEST --transform=s,,asap-$(VERSION)/, | $(SEVENZIP) -tgzip -si ../asap-$(VERSION).tar.gz
+	cd .. && $(TAR) -c --numeric-owner --owner=0 --group=0 --mode=644 -T MANIFEST --transform=s,,asap-$(VERSION)/, | $(SEVENZIP) -tgzip -si ../asap-$(VERSION).tar.gz
 
 dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-setup \
 	COPYING.txt README_Flash.html README_Java.html README_Windows.html README_WindowsCE.html \
@@ -379,7 +378,6 @@ dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-set
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ./wince/wasap.exe ./wince/gspasap.dll
 	$(MAKE) -C ../java/android ANDROID_RELEASE=../../../asap-$(VERSION)-android.apk release
-	$(TAR) -tvzf ../../asap-$(VERSION).tar.gz | $(PERL) -ne "m'^-rwxr-xr-x .+?/(chksap|files2anylang)\.pl$$|^-rw-r--r-- ' or die \$$_"
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) " Version =" ../csharp/ASAP.ppcs

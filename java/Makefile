@@ -1,4 +1,4 @@
-JRE = C:/Program Files/Java/jdk1.6.0_10/jre
+JRE = C:/Program Files/Java/jre6
 
 JAVAC = javac -source 1.2 -d .
 #JAVAC = gcj -C -d .

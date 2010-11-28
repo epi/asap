@@ -1,8 +1,8 @@
 CSC = "C:/Windows/Microsoft.NET/Framework/v2.0.50727/csc.exe" -nologo -o+ -out:$@
 PP = cpp -C -P -I..
-NDOC = "C:/Program Files/NDoc3/bin/NDoc3Console.exe"
+NDOC = "C:/Program Files (x86)/NDoc3/bin/NDoc3Console.exe"
 SEVENZIP = 7z a -mx=9
-SL = "C:/Program Files/Reference Assemblies/Microsoft/Framework/Silverlight/v4.0"
+SL = "C:/Program Files (x86)/Reference Assemblies/Microsoft/Framework/Silverlight/v3.0"
 
 all: asap2wav.exe asapplay.exe SilverASAP.xap
 
