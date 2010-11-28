@@ -284,7 +284,7 @@ clean:
 	$(RM) foobar2000/*.obj foobar2000/*.lib foobar2000/foo_asap.res
 	$(RM) dshow/*.obj dshow/asap_dsf.res
 	$(RM) ../xbmc/*.obj ../xbmc/xbmc_asap.res
-	$(RM) wince/wasap-res.o wince/wasap.exe wince/gspasap-res.o wince/gspasap.dll wince/asap_dsf.res win32/asap_dsf.dll
+	$(RM) wince/wasap-res.o wince/wasap.exe wince/gspasap-res.o wince/gspasap.dll wince/asap_dsf.res wince/asap_dsf.dll wince/asap_dsf.exp wince/asap_dsf.lib
 	$(RM) install_dsf.bat uninstall_dsf.bat
 	$(RM) ../players/*.obx ../players.h ../README.html
 	$(RM) -rf x64
@@ -292,6 +292,7 @@ clean:
 	$(MAKE) -C ../flash clean
 	$(MAKE) -C ../java clean
 	$(MAKE) -C ../javascript clean
+	$(MAKE) -C ../test clean
 
 # prepare files for release
 
