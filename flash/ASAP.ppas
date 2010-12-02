@@ -33,6 +33,7 @@ package
 	public class ASAP
 	{
 		#define ACTIONSCRIPT
+		#define FLASH
 		#define ASAP_State  ASAP
 		#include "acpu.c"
 		#include "apokeysnd.c"

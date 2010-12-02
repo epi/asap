@@ -491,9 +491,9 @@ FUNC(int, PokeySound_Generate, (P(ASAP_State PTR, ast), P(BYTEARRAY, buffer), P(
 	else
 		blocks = samples - i;
 	for (; i < samples; i++) {
-#ifdef ACTIONSCRIPT
+#ifdef FLASH
 		acc_left += ast _ base_pokey.delta_buffer[i] - (acc_left * 3 >> 10);
-		var sample : Number = acc_left / 33553408;
+		V(Number, sample) = acc_left / 33553408;
 		buffer.writeFloat(sample);
 		if (ast.extra_pokey_mask != 0) {
 			acc_right += ast _ extra_pokey.delta_buffer[i] - (acc_right * 3 >> 10);
@@ -528,7 +528,7 @@ FUNC(int, PokeySound_Generate, (P(ASAP_State PTR, ast), P(BYTEARRAY, buffer), P(
 			sample = acc_right >> 10;
 			STORE_SAMPLE;
 		}
-#endif /* ACTIONSCRIPT */
+#endif /* FLASH */
 	}
 	if (i == ast _ samples) {
 		acc_left += ast _ base_pokey.delta_buffer[i];

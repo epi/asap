@@ -39,7 +39,7 @@
 		<status>stable</status>
 		<output>16-bit sound</output>
 		<subsongs>no</subsongs>
-		<file-info>no</file-info>
+		<file-info>yes</file-info>
 		<edit-info>no</edit-info>
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
@@ -420,5 +420,20 @@
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<lang>Java</lang>
+	</port>
+	<port name="AIRASAP">
+		<bin></bin>
+		<platform>Adobe AIR</platform>
+		<interface>HTML</interface>
+		<since>2.1.3</since>
+		<status>experimental</status>
+		<output>32-bit floating-point sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<lang>JavaScript</lang>
 	</port>
 </ports>

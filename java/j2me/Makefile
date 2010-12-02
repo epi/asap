@@ -8,7 +8,7 @@ PERL = perl
 ME_CLASSES = $(WTK)/lib/cldc_1.1.jar;$(WTK)/lib/midp_2.0.jar;$(WTK)/lib/jsr75_1.0.jar
 PREVERIFY = "$(WTK)/bin/preverify"
 
-PLAYERS_SRC_DIR = ../../players
+TOP_DIR = ../..
 PLAYERS_OBX_DIR = ../net/sf/asap
 
 all: asap_midlet.jad

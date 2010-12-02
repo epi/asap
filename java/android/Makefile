@@ -41,7 +41,7 @@ put-sap:
 create-avd:
 	$(ANDROID) create avd -n myavd -t android-3 -c 16M
 
-PLAYERS_SRC_DIR = ../../players
+TOP_DIR = ../..
 PLAYERS_OBX_DIR = players/net/sf/asap
 
 include ../../players/Makefile

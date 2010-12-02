@@ -1579,7 +1579,7 @@ FUNC(int, milliseconds_to_blocks, (P(int, milliseconds)))
 	return milliseconds * (ASAP_SAMPLE_RATE / 100) / 10;
 }
 
-#ifndef ACTIONSCRIPT
+#ifndef FLASH
 
 FUNC(void, ASAP_Seek, (P(ASAP_State PTR, ast), P(int, position)))
 {
@@ -1644,7 +1644,7 @@ FUNC(void, ASAP_GetWavHeader, (
 	serialize_int(buffer, 40, n_bytes);
 }
 
-#endif /* ACTIONSCRIPT */
+#endif /* FLASH */
 
 PRIVATE FUNC(int, ASAP_GenerateAt, (P(ASAP_State PTR, ast), P(VOIDPTR, buffer), P(int, buffer_offset), P(int, buffer_len), P(ASAP_SampleFormat, format)))
 {
@@ -1653,7 +1653,7 @@ PRIVATE FUNC(int, ASAP_GenerateAt, (P(ASAP_State PTR, ast), P(VOIDPTR, buffer), 
 	V(int, block);
 	if (ast _ silence_cycles > 0 && ast _ silence_cycles_counter <= 0)
 		return 0;
-#ifdef ACTIONSCRIPT
+#ifdef FLASH
 	block_shift = 0;
 #else
 	block_shift = (ast _ module_info.channels - 1) + (format != ASAP_FORMAT_U8 ? 1 : 0);
