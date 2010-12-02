@@ -161,8 +161,7 @@ public final class ASAP
 	{
 		int got = 0;
 		int need = b.length;
-		try
-		{
+		try {
 			while (need > 0) {
 				int i = is.read(b, got, need);
 				if (i <= 0)
@@ -181,8 +180,7 @@ public final class ASAP
 	private static byte[] getResourceBytes(String id)
 	{
 		InputStream is = ASAP.class.getResourceAsStream(id);
-		try
-		{
+		try {
 			byte[] r = new byte[4096]; // *.obx must be smaller than this!
 			readAndClose(is, r);
 			return r;

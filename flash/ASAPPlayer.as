@@ -1,7 +1,7 @@
 /*
  * ASAPPlayer.as - ASAP Flash player
  *
- * Copyright (C) 2009  Piotr Fusik
+ * Copyright (C) 2009-2010  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -91,8 +91,7 @@ package
 
 		public function stop() : void
 		{
-			if (this.soundChannel != null)
-			{
+			if (this.soundChannel != null) {
 				this.soundChannel.stop();
 				this.soundChannel = null;
 			}

@@ -252,8 +252,7 @@ public:
 
 	STDMETHODIMP SetPositions(LONGLONG *pCurrent, DWORD dwCurrentFlags, LONGLONG *pStop, DWORD dwStopFlags)
 	{
-		if ((dwCurrentFlags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_AbsolutePositioning)
-		{
+		if ((dwCurrentFlags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_AbsolutePositioning) {
 			CheckPointer(pCurrent, E_POINTER);
 			int position = (int) (*pCurrent / (UNITS / MILLISECONDS));
 			CAutoLock lck(&cs);

@@ -48,8 +48,7 @@ public class FileSelector extends ListActivity
 		listAdapter.clear();
 		if (dir.getParentFile() != null)
 			listAdapter.add("..");
-		for (File file : dir.listFiles())
-		{
+		for (File file : dir.listFiles()) {
 			String name = file.getName();
 			if (file.isDirectory())
 				listAdapter.add(name + '/');

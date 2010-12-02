@@ -157,8 +157,7 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 	playback->playing = TRUE;
 	playback->set_pb_ready(playback);
 
-	for (;;)
-	{
+	for (;;) {
 		static byte buffer[4096];
 		int len;
 		g_mutex_lock(control_mutex);

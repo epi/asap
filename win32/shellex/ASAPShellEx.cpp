@@ -402,20 +402,17 @@ public:
 			AddRef();
 			return S_OK;
 		}
-		if (riid == IID_IInitializeWithStream)
-		{
+		if (riid == IID_IInitializeWithStream) {
 			*ppv = (IInitializeWithStream *) this;
 			AddRef();
 			return S_OK;
 		}
-		if (riid == IID_IPropertyStore)
-		{
+		if (riid == IID_IPropertyStore) {
 			*ppv = (IPropertyStore *) this;
 			AddRef();
 			return S_OK;
 		}
-		if (riid == IID_IPropertyStoreCapabilities)
-		{
+		if (riid == IID_IPropertyStoreCapabilities) {
 			*ppv = (IPropertyStoreCapabilities *) this;
 			AddRef();
 			return S_OK;

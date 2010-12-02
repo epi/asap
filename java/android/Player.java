@@ -194,8 +194,7 @@ public class Player extends Activity implements Runnable
 		try {
 			asap.load(uri.getLastPathSegment(), module, module_len);
 		}
-		catch (IllegalArgumentException ex)
-		{
+		catch (IllegalArgumentException ex) {
 			showError(R.string.invalid_file);
 			return;
 		}
