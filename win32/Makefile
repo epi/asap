@@ -216,7 +216,7 @@ x64/ASAPShellEx-res.o: gui.rc ../asap.h x64
 	$(X64_WINDRES) -DSHELLEX gui.rc
 
 x64:
-	mkdir x64
+	mkdir -p x64
 
 # library
 
@@ -235,17 +235,17 @@ java:
 
 # C#
 
-csharp:
+csharp: ../players.h
 	$(MAKE) -C ../csharp
 
 # JavaScript
 
-javascript:
+javascript: ../players.h
 	$(MAKE) -C ../javascript
 
 # Flash
 
-flash:
+flash: ../players.h
 	$(MAKE) -C ../flash
 
 # SDL
@@ -381,12 +381,13 @@ dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-set
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) " Version =" ../csharp/ASAP.ppcs
+	$(GREP) VERSION ../flash/ASAP.ppas
 	$(GREP) " VERSION =" ../java/ASAP.ppjava
 	$(GREP) android:versionName ../java/android/AndroidManifest.xml
 	$(GREP) about_title ../java/android/res/values/strings.xml
 	$(GREP) MIDlet-Version ../java/j2me/MANIFEST.MF
 	$(GREP) ASAP_VERSION ../javascript/asap.ppjs
-	$(GREP) VERSION ../flash/ASAP.ppas
+	$(GREP) version ../javascript/air/AIRASAP-app.xml
 	$(GREP) "VERSION =" ../chksap.pl
 	$(GREP) Version: ../asap.spec
 	$(GREP) "<since>" ../PORTS.xml | sort -ru | head -1

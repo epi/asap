@@ -15,5 +15,6 @@ asapweb.js: asapweb.ppjs asap.ppjs $(COMMON_C) $(COMMON_H)
 
 clean:
 	rm -f asap2wav.js asapweb.js
+	$(MAKE) -C air clean
 
 .DELETE_ON_ERROR:
