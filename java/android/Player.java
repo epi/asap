@@ -31,6 +31,7 @@ import android.media.AudioTrack;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -112,6 +113,18 @@ public class Player extends Activity implements Runnable
 			setTag(R.id.song, getString(R.string.song_format, song + 1, module_info.songs));
 		else
 			setTag(R.id.song, "");
+	}
+
+	private void playNextSong()
+	{
+		if (song + 1 < module_info.songs)
+			playSong(song + 1); 
+	}
+
+	private void playPreviousSong()
+	{
+		if (song > 0)
+			playSong(song - 1); 
 	}
 
 	private void seek(int pos)
@@ -223,10 +236,10 @@ public class Player extends Activity implements Runnable
 		});
 		if (module_info.songs > 1) {
 			mediaController.setPrevNextListeners(new OnClickListener() {
-				public void onClick(View v) { if (song + 1 < module_info.songs) playSong(song + 1); }
+				public void onClick(View v) { playNextSong(); }
 			},
 			new OnClickListener() {
-				public void onClick(View v) { if (song > 0) playSong(song - 1); }
+				public void onClick(View v) { playPreviousSong(); }
 			});
 		}
 		new Handler().postDelayed(new Runnable() {
@@ -236,6 +249,27 @@ public class Player extends Activity implements Runnable
 		stop = false;
 		playSong(module_info.default_song);
 		new Thread(this).start();
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event)
+	{
+		switch (keyCode) {
+		case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+			if (isPaused())
+				resume();
+			else
+				audioTrack.pause();
+			return true;
+		case KeyEvent.KEYCODE_MEDIA_NEXT:
+			playNextSong();
+			return true;
+		case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+			playPreviousSong();
+			return true;
+		default:
+			return super.onKeyDown(keyCode, event);
+		}
 	}
 
 	@Override
