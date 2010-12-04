@@ -25,6 +25,7 @@ package net.sf.asap;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 
 import android.app.ListActivity;
 import android.content.Intent;
@@ -55,6 +56,20 @@ public class FileSelector extends ListActivity
 			else if (ASAP.isOurFile(name))
 				listAdapter.add(name);
 		}
+		listAdapter.sort(new Comparator<String>() {
+			public int compare(String name1, String name2)
+			{
+				if (name1.equals(".."))
+					return -1;
+				if (name2.equals(".."))
+					return 1;
+				boolean dir1 = name1.endsWith("/");
+				boolean dir2 = name2.endsWith("/");
+				if (dir1 != dir2)
+					return dir1 ? -1 : 1;
+				return name1.compareTo(name2);
+			}
+		});
 	}
 
 	@Override
