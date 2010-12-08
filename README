@@ -46,7 +46,7 @@ ASAP includes the following programs:
 - asapplay - simple command-line player in C#
 - http://www.silverlight.net/[Silverlight] player - for web pages {asapwww?(see link:silverlight.html[online demo])}
 - AndroidASAP - for mobile devices
-- AIRASAP {asapjavascript=}
+- AIRASAP - simple desktop player in the Adobe AIR technology {asapjavascript=}
 
 {asapports}The summary of the differences between the above versions is in link:PORTS.xml[this table].
 

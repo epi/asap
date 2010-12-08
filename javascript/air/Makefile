@@ -11,14 +11,13 @@ run: airasap.js
 TOP_DIR = ../..
 include ../../players/Makefile
 
-AIRASAP.air: AIRASAP-app.xml airasap.html airasap.js
-	# doesn't work yet
-	$(ADT) -package -storetype JKS -keystore '${USERPROFILE}/.keystore' -alias mykey $@ $^
+AIRASAP.air: AIRASAP-app.xml airasap.html airasap.js asap16x16.png asap32x32.png
+	$(ADT) -package -storetype pkcs12 -keystore pfusik-air.pfx -storepass walsie -tsa none $@ $^
 
 airasap.js: airasap.ppjs ../asap.ppjs $(COMMON_C) $(COMMON_H)
 	$(PP) $< > $@
 
 clean:
-	rm -f airasap.js
+	rm -f AIRASAP.air airasap.js
 
 .DELETE_ON_ERROR:

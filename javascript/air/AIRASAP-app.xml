@@ -9,4 +9,8 @@
 		<width>300</width>
 		<height>180</height>
 	</initialWindow>
+	<icon>
+		<image16x16>asap16x16.png</image16x16>
+		<image32x32>asap32x32.png</image32x32>
+	</icon>
 </application>
