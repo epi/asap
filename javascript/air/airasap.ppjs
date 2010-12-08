@@ -55,7 +55,8 @@ function showTag(id, value)
 
 function generate(event)
 {
-	asap.generate(event.data, 0, 8192, 0);
+	if (asap.generate(event.data, 0, 8192, 0) < 8192)
+		soundChannel = null;
 }
 
 function playSong(i)
