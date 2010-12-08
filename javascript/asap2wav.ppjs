@@ -100,7 +100,7 @@ if (typeof(WScript) == "object") {
 		BinaryFile_unicodeToCp437[BinaryFile_cp437ToUnicode[c]] = 128 + c;
 	}
 
-	function createStream()
+	var createStream = function()
 	{
 		var stream = WScript.CreateObject("ADODB.Stream");
 		stream.Type = 2;
@@ -180,9 +180,16 @@ else if (typeof(java) == "object") {
 	}
 }
 else {
-	// d8 or JaegerMonkey
+	// DMDScript, JaegerMonkey or d8
 
-	if (typeof(write) == "undefined") {
+	if (typeof(readline) == "undefined") {
+		var readline = readln;
+		var write = print;
+		var args = getenv("ARGS");
+		arguments = args == null ? [] : args.split(" ");
+		usage = "\nset ARGS=[OPTIONS] INPUTFILE\nbase64 INPUTFILE | ds asap2wav.js | base64 -d > OUTFILE";
+	}
+	else if (typeof(write) == "undefined") {
 		var write = putstr;
 		usage = "base64 INPUTFILE | js asap2wav.js [OPTIONS] INPUTFILE | base64 -d > OUTFILE";
 	}
@@ -194,11 +201,13 @@ else {
 	var readBinaryFile = function(filename)
 	{
 		var bytes = new Array();
-		var line;
 		var prev;
 		var gotBits = 0;
-		while ((line = readline()) != null) {
-			for (var i in line) {
+		for (;;) {
+			var line = readline();
+			if (line == null || line.length == 0)
+				break;
+			for (var i = 0; i < line.length; i++) {
 				var v = base64chars.indexOf(line.charAt(i));
 				if (v >= 0) {
 					gotBits = (gotBits + 6) & 6;
