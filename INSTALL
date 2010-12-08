@@ -174,8 +174,7 @@ You should get `asapconv.exe`, `wasap.exe`, `in_asap.dll`, `gspasap.dll`,
 Building Windows Media Player plugin and asap.lib on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You additionally need
-http://www.microsoft.com/downloads/details.aspx?FamilyID=e6e1c3df-a74f-4207-8586-711ebe331cdc&displaylang=en[Windows SDK]
+You additionally need Windows SDK
 (install native C++ compiler, headers, libraries and samples).
 Set `Path`, `INCLUDE` and `LIB` environment variables
 to point to the right locations in the Windows SDK.
