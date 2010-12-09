@@ -50,7 +50,7 @@ $(ANDROID_RELEASE): AndroidASAP-unaligned.apk
 	$(ZIPALIGN) -f 4 AndroidASAP-unaligned.apk $@
 
 AndroidASAP-unaligned.apk: AndroidASAP-unsigned.apk
-	$(JARSIGNER) -signedjar $@ AndroidASAP-unsigned.apk mykey
+	$(JARSIGNER) -storepass walsie -signedjar $@ AndroidASAP-unsigned.apk pfusik-android
 
 AndroidASAP-unsigned.apk: AndroidASAP-resources.apk classes.dex
 	$(APKBUILDER) $@ -u -z AndroidASAP-resources.apk -f classes.dex

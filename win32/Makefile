@@ -362,6 +362,7 @@ srcdist: ../MANIFEST ../README.html $(PLAYERS_OBX)
 dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-setup \
 	COPYING.txt README_Flash.html README_Java.html README_Windows.html README_WindowsCE.html \
 	install_dsf.bat uninstall_dsf.bat
+	$(MAKE) -C ../java/android ANDROID_RELEASE=../../../asap-$(VERSION)-android.apk release
 	$(RM) ../../asap-$(VERSION)-flash.zip
 	$(RM) ../../asap-$(VERSION)-java.zip
 	$(RM) ../../asap-$(VERSION)-win32.zip
@@ -377,7 +378,6 @@ dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-set
 		asapconv.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ./wince/wasap.exe ./wince/gspasap.dll
-	$(MAKE) -C ../java/android ANDROID_RELEASE=../../../asap-$(VERSION)-android.apk release
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) " Version =" ../csharp/ASAP.ppcs
