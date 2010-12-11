@@ -57,6 +57,13 @@ FUNC(int, ASAP_GetByte, (P(ASAP_State PTR, ast), P(int, addr)))
 		if (ast _ scanline_number == 0 && ast _ cycle == 13)
 			return ast _ module_info.ntsc ? 131 : 156;
 		return ast _ scanline_number >> 1;
+	case 0xd40f:
+		if (ast _ nmist == NMIST_WAS_VBLANK)
+			return 0x5f;
+		if (ast _ nmist == NMIST_RESET)
+			return 0x1f;
+		/* NMIST_ON_VBLANK */
+		return ast _ cycle < 28295 ? 0x1f : 0x5f;
 	default:
 		return dGetByte(addr);
 	}
@@ -92,6 +99,10 @@ FUNC(void, ASAP_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, data)))
 			ast _ cycle = ast _ next_scanline_cycle - 4;
 		else
 			ast _ cycle = ast _ next_scanline_cycle + 110;
+	}
+	else if ((addr & 0xff0f) == 0xd40f) {
+		/* FIXME */
+		ast _ nmist = ast _ scanline_number < 248 ? NMIST_ON_VBLANK : NMIST_RESET;
 	}
 	else if ((addr & 0xff00) == ast _ module_info.covox_addr) {
 		V(PokeyState PTR, pst);
@@ -1420,6 +1431,7 @@ FUNC(void, ASAP_PlaySong, (P(ASAP_State PTR, ast), P(int, song), P(int, duration
 	ast _ silence_cycles_counter = ast _ silence_cycles;
 	ast _ extra_pokey_mask = ast _ module_info.channels > 1 ? 0x10 : 0;
 	ast _ consol = 8;
+	ast _ nmist = NMIST_ON_VBLANK;
 	ast _ covox[0] = CAST(byte) 0x80;
 	ast _ covox[1] = CAST(byte) 0x80;
 	ast _ covox[2] = CAST(byte) 0x80;

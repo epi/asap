@@ -88,6 +88,7 @@ final class ASAP_State
 	int irqst;
 	int extra_pokey_mask;
 	int consol;
+	int nmist;
 	final byte[] covox = new byte[4];
 	final PokeyState base_pokey = new PokeyState();
 	final PokeyState extra_pokey = new PokeyState();

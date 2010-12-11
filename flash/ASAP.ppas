@@ -57,6 +57,7 @@ package
 		private var irqst : int;
 		private var extra_pokey_mask : int;
 		private var consol : int;
+		private var nmist : int;
 		private const covox : Array = new Array(4);
 		private const base_pokey : PokeyState = new PokeyState();
 		private const extra_pokey : PokeyState = new PokeyState();

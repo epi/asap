@@ -108,6 +108,7 @@ namespace Sf.Asap {
 		internal int irqst;
 		internal int extra_pokey_mask;
 		internal int consol;
+		internal int nmist;
 		internal readonly byte[] covox = new byte[4];
 		internal readonly PokeyState base_pokey = new PokeyState();
 		internal readonly PokeyState extra_pokey = new PokeyState();

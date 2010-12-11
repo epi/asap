@@ -83,6 +83,10 @@ void trace_cpu(const ASAP_State *ast, int pc, int a, int x, int y, int s, int nz
 
 #define NEVER                   0x800000
 
+#define NMIST_RESET             0
+#define NMIST_ON_VBLANK         1
+#define NMIST_WAS_VBLANK        2
+
 #define DELTA_SHIFT_POKEY       20
 #define DELTA_SHIFT_GTIA        20
 #define DELTA_SHIFT_COVOX       17

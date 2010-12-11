@@ -171,6 +171,7 @@ typedef struct {
 	int irqst;
 	int extra_pokey_mask;
 	int consol;
+	int nmist;
 	byte covox[4];
 	PokeyState base_pokey;
 	PokeyState extra_pokey;

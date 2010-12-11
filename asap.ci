@@ -142,6 +142,7 @@ class ASAP_State
 	int irqst;
 	int extra_pokey_mask;
 	int consol;
+	int nmist;
 	byte[4] covox;
 	PokeyState() base_pokey;
 	PokeyState() extra_pokey;

@@ -299,8 +299,10 @@ FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 		cycle = ast _ cycle;
 		if (cycle >= ast _ nearest_event_cycle) {
 			if (cycle >= ast _ next_scanline_cycle) {
-				if (++ast _ scanline_number == (ast _ module_info.ntsc ? 262 : 312))
+				if (++ast _ scanline_number == (ast _ module_info.ntsc ? 262 : 312)) {
 					ast _ scanline_number = 0;
+					ast _ nmist = ast _ nmist == NMIST_RESET ? NMIST_ON_VBLANK : NMIST_WAS_VBLANK;
+				}
 				if (ast _ cycle - ast _ next_scanline_cycle < 50) /* not WSYNC */
 					ast _ cycle = cycle += 9;
 				ast _ next_scanline_cycle += 114;
