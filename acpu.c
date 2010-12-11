@@ -301,7 +301,8 @@ FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 			if (cycle >= ast _ next_scanline_cycle) {
 				if (++ast _ scanline_number == (ast _ module_info.ntsc ? 262 : 312))
 					ast _ scanline_number = 0;
-				ast _ cycle = cycle += 9;
+				if (ast _ cycle - ast _ next_scanline_cycle < 50) /* not WSYNC */
+					ast _ cycle = cycle += 9;
 				ast _ next_scanline_cycle += 114;
 				if (--scanlines <= 0)
 					break;

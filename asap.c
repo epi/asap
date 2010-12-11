@@ -54,6 +54,8 @@ FUNC(int, ASAP_GetByte, (P(ASAP_State PTR, ast), P(int, addr)))
 		return 0xff;
 	case 0xd40b:
 	case 0xd41b:
+		if (ast _ scanline_number == 0 && ast _ cycle == 13)
+			return ast _ module_info.ntsc ? 131 : 156;
 		return ast _ scanline_number >> 1;
 	default:
 		return dGetByte(addr);
@@ -86,10 +88,10 @@ FUNC(void, ASAP_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, data)))
 			PokeySound_PutByte(ast, addr, data);
 	}
 	else if ((addr & 0xff0f) == 0xd40a) {
-		if (ast _ cycle <= ast _ next_scanline_cycle - 8)
-			ast _ cycle = ast _ next_scanline_cycle - 8;
+		if (ast _ cycle <= ast _ next_scanline_cycle - 4)
+			ast _ cycle = ast _ next_scanline_cycle - 4;
 		else
-			ast _ cycle = ast _ next_scanline_cycle + 106;
+			ast _ cycle = ast _ next_scanline_cycle + 110;
 	}
 	else if ((addr & 0xff00) == ast _ module_info.covox_addr) {
 		V(PokeyState PTR, pst);
