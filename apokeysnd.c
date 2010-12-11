@@ -28,6 +28,7 @@
 #define MUTE_FREQUENCY     1
 #define MUTE_INIT          2
 #define MUTE_USER          4
+#define MUTE_SERIN         8
 
 CONST_ARRAY(byte, poly4_lookup)
 	0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1
@@ -422,6 +423,8 @@ FUNC(void, PokeySound_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, dat
 		DO_INIT(2, (pst _ audctl & 0x50) != 0x50);
 		DO_INIT(3, (pst _ audctl & 0x20) == 0);
 		DO_INIT(4, (pst _ audctl & 0x28) != 0x28);
+		MUTE_CHANNEL(3, (data & 0x10) != 0, MUTE_SERIN);
+		MUTE_CHANNEL(4, (data & 0x10) != 0, MUTE_SERIN);
 		break;
 	default:
 		break;
