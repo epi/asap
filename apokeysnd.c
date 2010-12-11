@@ -266,6 +266,10 @@ PRIVATE FUNC(void, PokeySound_GenerateUntilCycle, (P(ASAP_State PTR, ast), P(Pok
 #define DO_INIT(ch, cond) \
 	MUTE_CHANNEL(ch, pst _ init && cond, MUTE_INIT)
 
+#define DO_STIMER(ch) \
+	if (pst _ tick_cycle##ch != NEVER) \
+		pst _ tick_cycle##ch = ast _ cycle + pst _ period_cycles##ch;
+
 FUNC(void, PokeySound_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, data)))
 {
 	V(PokeyState PTR, pst) = (addr & ast _ extra_pokey_mask) != 0
@@ -409,7 +413,11 @@ FUNC(void, PokeySound_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, dat
 		DO_INIT(4, (data & 0x28) != 0x28);
 		break;
 	case 0x09:
-		/* TODO: STIMER */
+		/* TODO: reload_cycles, out */
+		DO_STIMER(1);
+		DO_STIMER(2);
+		DO_STIMER(3);
+		DO_STIMER(4);
 		break;
 	case 0x0f:
 		DO_STORE(skctl);
