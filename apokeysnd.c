@@ -412,7 +412,12 @@ FUNC(void, PokeySound_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, dat
 		break;
 	case 0x0f:
 		DO_STORE(skctl);
-		pst _ init = ((data & 3) == 0);
+		{
+			V(abool, init) = (data & 3) == 0;
+			if (pst _ init && !init)
+				pst _ poly_index = (((pst _ audctl & 0x80) != 0) ? 15 * 31 * 511 - 1 : 15 * 31 * 131071 - 1) - ast _ cycle;
+			pst _ init = init;
+		}
 		DO_INIT(1, (pst _ audctl & 0x40) == 0);
 		DO_INIT(2, (pst _ audctl & 0x50) != 0x50);
 		DO_INIT(3, (pst _ audctl & 0x20) == 0);
