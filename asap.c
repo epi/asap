@@ -101,8 +101,7 @@ FUNC(void, ASAP_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, data)))
 			ast _ cycle = ast _ next_scanline_cycle + 110;
 	}
 	else if ((addr & 0xff0f) == 0xd40f) {
-		/* FIXME */
-		ast _ nmist = ast _ scanline_number < 248 ? NMIST_ON_VBLANK : NMIST_RESET;
+		ast _ nmist = ast _ cycle < 28296 ? NMIST_ON_VBLANK : NMIST_RESET;
 	}
 	else if ((addr & 0xff00) == ast _ module_info.covox_addr) {
 		V(PokeyState PTR, pst);
