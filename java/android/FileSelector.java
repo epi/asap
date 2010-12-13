@@ -79,7 +79,6 @@ public class FileSelector extends ListActivity
 		listAdapter = new ArrayAdapter<String>(this, R.layout.list_item);
 		setListAdapter(listAdapter);
 		enterDirectory(Environment.getExternalStorageDirectory());
-		setContentView(R.layout.file_list);
 	}
 
 	@Override
