@@ -31,6 +31,8 @@ var air = {
 	FileFilter : window.runtime.flash.net.FileFilter,
 	FileMode : window.runtime.flash.filesystem.FileMode,
 	FileStream : window.runtime.flash.filesystem.FileStream,
+	InvokeEvent : window.runtime.flash.events.InvokeEvent,
+	NativeApplication : window.runtime.flash.desktop.NativeApplication,
 	SampleDataEvent : window.runtime.flash.events.SampleDataEvent,
 	Sound : window.runtime.flash.media.Sound
 };
@@ -84,17 +86,21 @@ function nextSong()
 		playSong(song + 1);
 }
 
-function onFileSelect(event)
+function playFile(file)
 {
-	var file = event.target;
 	var s = new air.FileStream();
 	s.open(file, air.FileMode.READ);
 	var module = new air.ByteArray();
 	s.readBytes(module);
 	s.close();
-	asap.load(file.nativePath, module);
 	stop();
-	moduleInfo = asap.getModuleInfo();
+	try {
+		asap.load(file.nativePath, module);
+		moduleInfo = asap.getModuleInfo();
+	} catch (ex) {
+		alert(ex);
+		moduleInfo = { "name" : "", "author": "", "date": "", "songs": 0 };
+	}
 	showTag("name", moduleInfo.name);
 	showTag("author", moduleInfo.author);
 	showTag("date", moduleInfo.date);
@@ -105,6 +111,11 @@ function onFileSelect(event)
 	else
 		document.getElementById("song_panel").style.display = "none";
 	playSong(moduleInfo.default_song);
+}
+
+function onFileSelect(event)
+{
+	playFile(event.target);
 }
 
 function selectFile()
@@ -122,3 +133,11 @@ function selectFile()
 		new air.FileFilter("Theta Music Composer 2.x (*.tm2)", "*.tm2")
 	]);
 }
+
+function onInvoke(event)
+{
+	if (event.arguments.length == 1)
+		playFile(new air.File(event.arguments[0]));
+}
+
+air.NativeApplication.nativeApplication.addEventListener(air.InvokeEvent.INVOKE, onInvoke);
