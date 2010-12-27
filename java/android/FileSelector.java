@@ -75,6 +75,7 @@ public class FileSelector extends ListActivity
 				return name1.compareTo(name2);
 			}
 		});
+		getListView().setSelection(0); // scroll to the top
 	}
 
 	@Override
