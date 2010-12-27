@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.net.Uri;
@@ -45,15 +46,15 @@ public class FileSelector extends ListActivity
 
 	private void enterDirectory(File dir)
 	{
+		File[] files = dir.listFiles();
+		if (files == null) {
+			new AlertDialog.Builder(this).setMessage(R.string.access_denied).show();
+			return;
+		}
 		currentDir = dir;
 		listAdapter.clear();
 		if (dir.getParentFile() != null)
 			listAdapter.add("..");
-		File[] files = dir.listFiles();
-		if (files == null) {
-			listAdapter.add("ACCESS DENIED");
-			return;
-		}
 		for (File file : files) {
 			String name = file.getName();
 			if (file.isDirectory())

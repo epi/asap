@@ -23,7 +23,6 @@
 
 package net.sf.asap;
 
-import android.app.AlertDialog;
 import android.app.Activity;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -63,10 +62,12 @@ public class Player extends Activity implements Runnable
 		return vg.getChildAt(0);
 	}
 
-	private void showError(int messageId)
+	private void showError(String filename, int messageId)
 	{
-		new AlertDialog.Builder(this).setMessage(messageId).show();
-		//FIXME finish();
+		setTitle(R.string.error_title);
+		setContentView(R.layout.error);
+		((TextView) findViewById(R.id.filename)).setText(filename);
+		((TextView) findViewById(R.id.message)).setText(messageId);
 	}
 
 	private void setTag(int controlId, String value)
@@ -83,6 +84,8 @@ public class Player extends Activity implements Runnable
 	@Override
 	public boolean onTouchEvent(MotionEvent event)
 	{
+		if (mediaController == null)
+			return false;
 		mediaController.show();
 		return true;
 	}
@@ -183,9 +186,9 @@ public class Player extends Activity implements Runnable
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		setTitle(R.string.playing);
 
 		Uri uri = getIntent().getData();
+		String filename = uri.getLastPathSegment();
 		final byte[] module = new byte[ASAP.MODULE_MAX];
 		int module_len;
 		try {
@@ -202,18 +205,19 @@ public class Player extends Activity implements Runnable
 			module_len = ASAP.readAndClose(is, module);
 		}
 		catch (IOException ex) {
-			showError(R.string.error_reading_file);
+			showError(filename, R.string.error_reading_file);
 			return;
 		}
 		try {
-			asap.load(uri.getLastPathSegment(), module, module_len);
+			asap.load(filename, module, module_len);
 		}
 		catch (IllegalArgumentException ex) {
-			showError(R.string.invalid_file);
+			showError(filename, R.string.invalid_file);
 			return;
 		}
 		module_info = asap.getModuleInfo();
 
+		setTitle(R.string.playing_title);
 		setContentView(R.layout.playing);
 		setTag(R.id.name, module_info.name);
 		setTag(R.id.author, module_info.author);
@@ -255,6 +259,10 @@ public class Player extends Activity implements Runnable
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event)
 	{
+		if (mediaController == null) {
+			// error shown
+			return super.onKeyDown(keyCode, event);
+		}
 		switch (keyCode) {
 		case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
 			if (isPaused())

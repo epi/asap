@@ -3,7 +3,9 @@
 	<string name="app_name">ASAP</string>
 	<string name="app_description">ASAP is a player of 8-bit Atari music. It emulates the POKEY sound chip and the 6502 processor. ASAP supports the following file formats: SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2.</string>
 	<string name="play_in_asap">Play in ASAP</string>
-	<string name="playing">ASAP - playing</string>
+	<string name="access_denied">Access denied</string>
+	<string name="playing_title">ASAP - Playing</string>
+	<string name="error_title">ASAP - Error</string>
 	<string name="error_reading_file">Error reading file</string>
 	<string name="invalid_file">Invalid file</string>
 	<string name="stop_button">Stop</string>
