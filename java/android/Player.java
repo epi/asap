@@ -183,6 +183,7 @@ public class Player extends Activity implements Runnable
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+		setTitle(R.string.playing);
 
 		Uri uri = getIntent().getData();
 		final byte[] module = new byte[ASAP.MODULE_MAX];
