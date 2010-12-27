@@ -49,7 +49,12 @@ public class FileSelector extends ListActivity
 		listAdapter.clear();
 		if (dir.getParentFile() != null)
 			listAdapter.add("..");
-		for (File file : dir.listFiles()) {
+		File[] files = dir.listFiles();
+		if (files == null) {
+			listAdapter.add("ACCESS DENIED");
+			return;
+		}
+		for (File file : files) {
 			String name = file.getName();
 			if (file.isDirectory())
 				listAdapter.add(name + '/');
