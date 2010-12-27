@@ -3,7 +3,7 @@
 	dta	c'SAP',13,10
 	dta	c'AUTHOR "Piotr Fusik (0xF)"',13,10
 	dta	c'NAME "ANTIC NMIST Test"',13,10
-	dta	c'DATE "11/12/2010"',13,10
+	dta	c'DATE "16/12/2010"',13,10
 	dta	c'TYPE D',13,10
 	dta	c'INIT 3000',13,10
 	dta	c'TIME 00:10',13,10
@@ -34,6 +34,12 @@ main
 	bne	error
 
 	lda:rne	^4b
+	lda	^4f
+	cmp	#$5f
+	bne	error
+
+	lda	#64
+	cmp:rne	^4b
 	lda	^4f
 	cmp	#$5f
 	bne	error
