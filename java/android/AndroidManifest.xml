@@ -10,7 +10,8 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<activity android:name=".Player" android:label="@string/play_in_asap">
+		<activity android:name=".Player" android:label="@string/play_in_asap"
+			android:configChanges="mcc|mnc|keyboard|keyboardHidden|orientation">
 			<intent-filter>
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
