@@ -241,7 +241,7 @@ Building AndroidASAP
 ~~~~~~~~~~~~~~~~~~~~
 
 Install http://developer.android.com/sdk/[Android SDK]
-with an Android platform (I use 1.5 for maximum compatibility).
+with an Android platform(s) (I compile with 2.2 and test with 1.6).
 
 Edit the paths at the top of `java/android/Makefile`
 so they point to your installed SDK.

@@ -1,5 +1,5 @@
 ANDROID_SDK = C:/bin/android-sdk-windows
-ANDROID_PLATFORM = $(ANDROID_SDK)/platforms/android-3
+ANDROID_PLATFORM = $(ANDROID_SDK)/platforms/android-8
 
 JAVAC = javac -d .
 AAPT = $(ANDROID_PLATFORM)/tools/aapt
@@ -35,11 +35,14 @@ shell:
 emu:
 	$(EMULATOR) -avd myavd &
 
-put-sap:
+push-release: $(ANDROID_RELEASE)
+	$(ADB) -d push $(ANDROID_RELEASE) /sdcard/sap/
+
+push-sap:
 	$(ADB) -e push ../../../Drunk_Chessboard.sap /sdcard/
 
 create-avd:
-	$(ANDROID) create avd -n myavd -t android-3 -c 16M
+	$(ANDROID) create avd -n myavd -t android-4 -c 16M
 
 TOP_DIR = ../..
 PLAYERS_OBX_DIR = players/net/sf/asap
