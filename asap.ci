@@ -1,6 +1,6 @@
 // asap.ci - ASAP in the Ci programming language
 //
-// Copyright (C) 2010  Piotr Fusik
+// Copyright (C) 2010-2011  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -25,19 +25,16 @@ namespace net.Sf.Asap;
 public class ASAP_ModuleInfo
 {
 	/// Author's name.
-	///
 	/// A nickname may be included in parentheses after the real name.
 	/// Multiple authors are separated with `" & "`.
 	/// Empty string means the author is unknown.
 	public string(127) author;
 
 	/// Music title.
-	///
 	/// Empty string means the title is unknown.
 	public string(127) name;
 
 	/// Music creation date.
-	///
 	/// Some of the possible formats are:
 	/// * YYYY
 	/// * MM/YYYY
@@ -54,18 +51,15 @@ public class ASAP_ModuleInfo
 	public int songs;
 
 	/// 0-based index of the "main" song.
-	///
 	/// The specified song should be played by default.
 	public int default_song;
 
 	/// Lengths of songs.
-	///
 	/// Each element of the array represents length of one song,
 	/// in milliseconds. -1 means the length is indeterminate.
 	public int[32] durations;
 
 	/// Information about finite vs infinite songs.
-	///
 	/// Each element of the array represents one song, and is:
 	/// * `true` if the song loops
 	/// * `false` if the song stops

@@ -37,7 +37,8 @@ namespace Sf.Asap {
 		/// <list type="bullet">
 		/// <item><see langword="true" /> if the song loops</item>
 		/// <item><see langword="false" /> if the song stops</item>
-		/// </list></remarks>
+		/// </list>
+		/// </remarks>
 		public readonly bool[] loops = new bool[32];
 		internal bool ntsc;
 		internal int type;
