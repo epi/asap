@@ -255,7 +255,7 @@
 		<platform>Flash</platform>
 		<interface>via HTML or JavaScript</interface>
 		<since>2.0.0</since>
-		<status>in development</status>
+		<status>stable</status>
 		<output>32-bit floating-point sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info><!-- TODO: yes -->
@@ -348,7 +348,7 @@
 		<platform>Silverlight</platform>
 		<interface>via HTML or JavaScript</interface>
 		<since>2.1.2</since>
-		<status>in development</status>
+		<status>stable</status>
 		<output>16-bit sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info><!-- TODO: yes -->
@@ -426,7 +426,7 @@
 		<platform>Adobe AIR</platform>
 		<interface>HTML</interface>
 		<since>2.1.3</since>
-		<status>experimental</status>
+		<status>in development</status>
 		<output>32-bit floating-point sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>yes</file-info>
