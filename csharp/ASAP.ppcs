@@ -1,7 +1,7 @@
 /*
  * ASAP.ppcs - C# version of ASAP
  *
- * Copyright (C) 2008-2010  Piotr Fusik
+ * Copyright (C) 2008-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -28,44 +28,22 @@ using System.IO;
 
 namespace Sf.Asap
 {
-	/// <summary>Format of output samples.</summary>
-	public enum ASAP_SampleFormat
-	{
-		/// Unsigned 8-bit.
-		U8,
-		/// Signed 16-bit little-endian.
-		S16LE,
-		/// Signed 16-bit big-endian.
-		S16BE
-	}
-
 	/// <summary>8-bit Atari chip music emulator.</summary>
 	/// <remarks>This class performs no I/O operations - all music data
 	/// must be passed in byte arrays.</remarks>
-	public class ASAP
+	public partial class ASAP
 	{
+		static void Array_Clear(Array array)
+		{
+			Array.Clear(array, 0, array.Length);
+		}
 
 #include "acpu.c"
-#include "apokeysnd.c"
 #include "asap.c"
 
 #undef const
 
 		readonly ASAP_State ast = new ASAP_State();
-
-		/// <summary>ASAP version.</summary>
-		public const string Version = "2.1.2";
-
-		/// <summary>Maximum length of a supported input file.</summary>
-		/// <remarks>You can assume that files longer than this are not supported by ASAP.</remarks>
-		public const int ModuleMax = 65000;
-
-		/// <summary>Output sample rate.</summary>
-		public const int SampleRate = ASAP_SAMPLE_RATE;
-
-		/// <summary>WAV file header length.</summary>
-		/// <seealso cref="GetWavHeader" />
-		public const int WavHeaderBytes = 44;
 
 		/// <summary>Checks whether the extension of the passed filename is known to ASAP.</summary>
 		/// <param name="filename">File name. The extension is used to determine the file format.</param>

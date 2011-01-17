@@ -380,7 +380,7 @@ dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-set
 		COPYING.txt README_WindowsCE.html ./wince/wasap.exe ./wince/gspasap.dll
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
-	$(GREP) " Version =" ../csharp/ASAP.ppcs
+	$(GREP) Version ../asap.ci
 	$(GREP) VERSION ../flash/ASAP.ppas
 	$(GREP) " VERSION =" ../java/ASAP.ppjava
 	$(GREP) android:versionName ../java/android/AndroidManifest.xml
