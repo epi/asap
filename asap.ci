@@ -374,15 +374,15 @@ void PokeySound_GenerateUntilCycle(ASAP_State ast, PokeyState pst, int current_c
 	}
 }
 
-//#if APOKEYSND
-//macro CURRENT_CYCLE()  (0)
-//macro CURRENT_SAMPLE() (0)
-//macro DO_STORE(reg) {
-//	if (data == pst.reg)
-//		break;
-//	pst.reg = data;
-//}
-//#else
+#if APOKEYSND
+macro CURRENT_CYCLE()  (0)
+macro CURRENT_SAMPLE() (0)
+macro DO_STORE(reg) {
+	if (data == pst.reg)
+		break;
+	pst.reg = data;
+}
+#else
 macro CURRENT_CYCLE()  (ast.cycle)
 macro CURRENT_SAMPLE() (CYCLE_TO_SAMPLE(ast.cycle))
 macro DO_STORE(reg) {
@@ -391,7 +391,7 @@ macro DO_STORE(reg) {
 	PokeySound_GenerateUntilCycle(ast, pst, ast.cycle);
 	pst.reg = data;
 }
-//#endif // APOKEYSND
+#endif // APOKEYSND
 
 macro MUTE_CHANNEL(ch, cond, mask) {
 	if (cond) {
@@ -669,7 +669,7 @@ int PokeySound_Generate(ASAP_State ast, byte[] buffer, int buffer_offset, int bl
 		blocks = samples - i;
 	for (; i < samples; i++) {
 		acc_left += ast.base_pokey.delta_buffer[i] - (acc_left * 3 >> 10);
-//#if FLASH
+#if FLASH
 //		var sample : Number = acc_left / 33553408;
 //		buffer.writeFloat(sample);
 //		if (ast.extra_pokey_mask != 0) {
@@ -677,7 +677,7 @@ int PokeySound_Generate(ASAP_State ast, byte[] buffer, int buffer_offset, int bl
 //			sample = acc_right / 33553408;
 //		}
 //		buffer.writeFloat(sample);
-//#else
+#else
 		int sample = acc_left >> 10;
 		macro STORE_SAMPLE() {
 			if (sample < -32767)
@@ -704,7 +704,7 @@ int PokeySound_Generate(ASAP_State ast, byte[] buffer, int buffer_offset, int bl
 			sample = acc_right >> 10;
 			STORE_SAMPLE();
 		}
-//#endif // FLASH
+#endif // FLASH
 	}
 	if (i == ast.samples) {
 		acc_left += ast.base_pokey.delta_buffer[i];
@@ -713,11 +713,11 @@ int PokeySound_Generate(ASAP_State ast, byte[] buffer, int buffer_offset, int bl
 	ast.sample_index = i;
 	ast.iir_acc_left = acc_left;
 	ast.iir_acc_right = acc_right;
-//#if APOKEYSND
-//	return buffer_offset;
-//#else
+#if APOKEYSND
+	return buffer_offset;
+#else
 	return blocks;
-//#endif
+#endif
 }
 
 bool PokeySound_IsSilent(PokeyState pst)
