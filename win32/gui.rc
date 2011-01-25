@@ -1,7 +1,7 @@
 /*
  * gui.rc - Windows resources
  *
- * Copyright (C) 2005-2010  Piotr Fusik
+ * Copyright (C) 2005-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -134,7 +134,7 @@ CAPTION "ASAP Settings"
 #endif
 FONT 8, "MS Sans Serif"
 {
-	AUTORADIOBUTTON "No time limit", IDC_UNLIMITED, 16, 16, 152, 12, BS_AUTORADIOBUTTON | WS_TABSTOP | WS_GROUP
+	AUTORADIOBUTTON "Play endlessly", IDC_UNLIMITED, 16, 16, 152, 12, BS_AUTORADIOBUTTON | WS_TABSTOP | WS_GROUP
 	AUTORADIOBUTTON "Finish after", IDC_LIMITED, 16, 30, 48, 12
 	EDITTEXT IDC_MINUTES, 68, 30, 16, 12, ES_NUMBER | ES_RIGHT | WS_BORDER | WS_TABSTOP
 	LTEXT "m", IDC_STATIC, 88, 32, 10, 12
@@ -143,8 +143,8 @@ FONT 8, "MS Sans Serif"
 	AUTOCHECKBOX "Finish after", IDC_SILENCE, 16, 48, 48, 12
 	EDITTEXT IDC_SILSECONDS, 68, 48, 16, 12, ES_NUMBER | ES_RIGHT | WS_BORDER | WS_TABSTOP
 	LTEXT "seconds of silence", IDC_STATIC, 88, 50, 64, 12
-	AUTORADIOBUTTON "Same as songs with unspecified duration", IDC_LOOPS, 16, 84, 152, 12, BS_AUTORADIOBUTTON | WS_TABSTOP | WS_GROUP
-	AUTORADIOBUTTON "Finish when music starts repeating", IDC_NOLOOPS, 16, 98, 152, 12
+	AUTORADIOBUTTON "Play as above", IDC_LOOPS, 16, 84, 152, 12, BS_AUTORADIOBUTTON | WS_TABSTOP | WS_GROUP
+	AUTORADIOBUTTON "Play just once", IDC_NOLOOPS, 16, 98, 152, 12
 #ifndef _WIN32_WCE
 	AUTOCHECKBOX "Channel 1", IDC_MUTE1, 24, 132, 48, 12
 	AUTOCHECKBOX "Channel 2", IDC_MUTE1 + 1, 24, 144, 48, 12
@@ -154,8 +154,8 @@ FONT 8, "MS Sans Serif"
 	AUTOCHECKBOX "Channel 2", IDC_MUTE1 + 5, 112, 144, 48, 12
 	AUTOCHECKBOX "Channel 3", IDC_MUTE1 + 6, 112, 156, 48, 12
 	AUTOCHECKBOX "Channel 4", IDC_MUTE1 + 7, 112, 168, 48, 12
-	GROUPBOX "Songs with unspecified duration", IDC_STATIC, 8, 4, 168, 64
-	GROUPBOX "Songs marked as looping", IDC_STATIC, 8, 72, 168, 46
+	GROUPBOX "Unknown song length", IDC_STATIC, 8, 4, 168, 64
+	GROUPBOX "Loops", IDC_STATIC, 8, 72, 168, 46
 	GROUPBOX "Mute base POKEY", IDC_STATIC, 8, 122, 80, 64
 	GROUPBOX "Mute extra POKEY", IDC_STATIC, 96, 122, 80, 64
 #  ifndef FOOBAR2000
@@ -171,8 +171,8 @@ FONT 8, "MS Sans Serif"
 	AUTOCHECKBOX "Channel 2", IDC_MUTE1 + 5, 196, 94, 48, 12
 	AUTOCHECKBOX "Channel 3", IDC_MUTE1 + 6, 196, 106, 48, 12
 	AUTOCHECKBOX "Channel 4", IDC_MUTE1 + 7, 196, 118, 48, 12
-	GROUPBOX "Songs with unspecified duration", IDC_STATIC, 8, 4, 168, 64
-	GROUPBOX "Songs marked as looping", IDC_STATIC, 8, 72, 168, 46
+	GROUPBOX "Unknown song length", IDC_STATIC, 8, 4, 168, 64
+	GROUPBOX "Loops", IDC_STATIC, 8, 72, 168, 46
 	GROUPBOX "Mute base POKEY", IDC_STATIC, 180, 4, 80, 64
 	GROUPBOX "Mute extra POKEY", IDC_STATIC, 180, 72, 80, 64
 	DEFPUSHBUTTON "OK", IDOK, 38, 122, 50, 14
