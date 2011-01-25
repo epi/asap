@@ -160,12 +160,12 @@ namespace Sf.Asap {
 		static void PokeySound_InitializeChip(PokeyState pst) {
 			pst.audctl = 0;
 			pst.init = false;
-			pst.poly_index = 15 * 31 * 131071;
+			pst.poly_index = 60948015;
 			pst.div_cycles = 28;
-			pst.mute1 = 1 | 4;
-			pst.mute2 = 1 | 4;
-			pst.mute3 = 1 | 4;
-			pst.mute4 = 1 | 4;
+			pst.mute1 = 5;
+			pst.mute2 = 5;
+			pst.mute3 = 5;
+			pst.mute4 = 5;
 			pst.audf1 = 0;
 			pst.audf2 = 0;
 			pst.audf3 = 0;
@@ -246,7 +246,7 @@ namespace Sf.Asap {
 						}
 					}
 					else {
-						int poly = cycle + pst.poly_index - (3 - 1);
+						int poly = cycle + pst.poly_index - 2;
 						int newout = pst.out3;
 						switch (pst.audc3 >> 4) {
 							case 0:
@@ -309,7 +309,7 @@ namespace Sf.Asap {
 						}
 					}
 					else {
-						int poly = cycle + pst.poly_index - (4 - 1);
+						int poly = cycle + pst.poly_index - 3;
 						int newout = pst.out4;
 						switch (pst.audc4 >> 4) {
 							case 0:
@@ -370,7 +370,7 @@ namespace Sf.Asap {
 						}
 					}
 					else {
-						int poly = cycle + pst.poly_index - (1 - 1);
+						int poly = cycle + pst.poly_index - 0;
 						int newout = pst.out1;
 						switch (pst.audc1 >> 4) {
 							case 0:
@@ -434,7 +434,7 @@ namespace Sf.Asap {
 						}
 					}
 					else {
-						int poly = cycle + pst.poly_index - (2 - 1);
+						int poly = cycle + pst.poly_index - 1;
 						int newout = pst.out2;
 						switch (pst.audc2 >> 4) {
 							case 0:
@@ -897,7 +897,7 @@ namespace Sf.Asap {
 					pst.skctl = data;
 					bool init = (data & 3) == 0;
 					if (pst.init && !init)
-						pst.poly_index = ((pst.audctl & 128) != 0 ? 15 * 31 * 511 - 1 : 15 * 31 * 131071 - 1) - ast.cycle;
+						pst.poly_index = ((pst.audctl & 128) != 0 ? 237614 : 60948014) - ast.cycle;
 					pst.init = init;
 					if (pst.init && (pst.audctl & 64) == 0) {
 						pst.mute1 |= 2;
@@ -977,7 +977,7 @@ namespace Sf.Asap {
 		static void end_frame(ASAP_State ast, PokeyState pst, int cycle_limit) {
 			PokeySound_GenerateUntilCycle(ast, pst, cycle_limit);
 			pst.poly_index += cycle_limit;
-			int m = (pst.audctl & 128) != 0 ? 15 * 31 * 511 : 15 * 31 * 131071;
+			int m = (pst.audctl & 128) != 0 ? 237615 : 60948015;
 			if (pst.poly_index >= 2 * m)
 				pst.poly_index -= m;
 			if (pst.tick_cycle1 != 8388608)
