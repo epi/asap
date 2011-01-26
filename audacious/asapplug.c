@@ -1,7 +1,7 @@
 /*
  * asapplug.c - ASAP plugin for Audacious
  *
- * Copyright (C) 2010  Piotr Fusik
+ * Copyright (C) 2010-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,7 +21,9 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <gtk/gtk.h>
 #include <audacious/plugin.h>
+#include <libaudcore/audstrings.h>
 
 #include "asap.h"
 
@@ -60,7 +62,6 @@ static gint is_our_file_from_vfs(const gchar *filename, VFSFile *file)
 
 static gboolean load_module(const gchar *filename, VFSFile *file, ASAP_ModuleInfo *module_info, int *song)
 {
-	byte module[ASAP_MODULE_MAX];
 	gboolean ok = FALSE;
 #if __AUDACIOUS_PLUGIN_API__ >= 10
 	char *real_filename = filename_split_subtune(filename, song);
@@ -70,6 +71,7 @@ static gboolean load_module(const gchar *filename, VFSFile *file, ASAP_ModuleInf
 	if (file == NULL)
 		file = vfs_fopen(filename, "rb");
 	if (file != NULL) {
+		byte module[ASAP_MODULE_MAX];
 		int module_len = vfs_fread(module, 1, sizeof(module), file);
 		vfs_fclose(file);
 		if (module_info != NULL)
@@ -107,6 +109,7 @@ static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 	tuple_set(tuple, FIELD_ARTIST, module_info.author);
 	tuple_set(tuple, FIELD_TITLE, module_info.name);
 	tuple_set(tuple, FIELD_DATE, module_info.date);
+	tuple_associate_string(tuple, FIELD_CODEC, NULL, "ASAP");
 	if (song > 0) {
 		tuple_associate_int(tuple, FIELD_SUBSONG_ID, NULL, song);
 		tuple_associate_int(tuple, FIELD_SUBSONG_NUM, NULL, module_info.songs);
@@ -126,10 +129,12 @@ static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 	return tuple;
 }
 
+#if __AUDACIOUS_PLUGIN_API__ < 16
 static Tuple *get_song_tuple(const gchar *filename)
 {
 	return probe_for_tuple(filename, NULL);
 }
+#endif
 
 static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFile *file, gint start_time, gint stop_time, gboolean pause)
 {
@@ -187,10 +192,12 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 	return TRUE;
 }
 
+#if __AUDACIOUS_PLUGIN_API__ < 16
 static void play_file(InputPlayback *playback)
 {
 	play_start(playback, playback->filename, NULL, 0, -1, FALSE);
 }
+#endif
 
 static void play_pause(InputPlayback *playback, gshort pause)
 {
@@ -228,7 +235,7 @@ static
 #if __AUDACIOUS_PLUGIN_API__ >= 16
 	const 
 #endif
-	gchar *exts[] = { "sap", " cmc", " cm3", " cmr", " cms", " dmc", " dlt", " mpt", " mpd", " rmt", " tmc", " tm8", "tm2", NULL };
+	gchar *exts[] = { "sap", "cmc", "cm3", "cmr", "cms", "dmc", "dlt", "mpt", "mpd", "rmt", "tmc", "tm8", "tm2", NULL };
 
 static InputPlugin asap_ip = {
 	.description = "ASAP Plugin",
