@@ -129,12 +129,10 @@ static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 	return tuple;
 }
 
-#if __AUDACIOUS_PLUGIN_API__ < 16
 static Tuple *get_song_tuple(const gchar *filename)
 {
 	return probe_for_tuple(filename, NULL);
 }
-#endif
 
 static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFile *file, gint start_time, gint stop_time, gboolean pause)
 {
@@ -192,12 +190,10 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 	return TRUE;
 }
 
-#if __AUDACIOUS_PLUGIN_API__ < 16
 static void play_file(InputPlayback *playback)
 {
 	play_start(playback, playback->filename, NULL, 0, -1, FALSE);
 }
-#endif
 
 static void play_pause(InputPlayback *playback, gshort pause)
 {
@@ -248,10 +244,9 @@ static InputPlugin asap_ip = {
 #if __AUDACIOUS_PLUGIN_API__ >= 16
 	.probe_for_tuple = probe_for_tuple,
 	.play = play_start,
-#else
+#endif
 	.get_song_tuple = get_song_tuple,
 	.play_file = play_file,
-#endif
 	.pause = play_pause,
 	.mseek = play_mseek,
 	.stop = play_stop,
