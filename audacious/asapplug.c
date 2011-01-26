@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdlib.h>
 #include <gtk/gtk.h>
 #include <audacious/plugin.h>
 #include <libaudcore/audstrings.h>
@@ -98,7 +99,7 @@ static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 	ASAP_ModuleInfo module_info;
 	Tuple *tuple;
 	int duration;
-	/* char year[5]; */
+	char year[5];
 
 	if (!load_module(filename, file, &module_info, &song))
 		return NULL;
@@ -123,9 +124,8 @@ static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 	duration = module_info.durations[song];
 	if (duration > 0)
 		tuple_associate_int(tuple, FIELD_LENGTH, NULL, duration);
-	/* doesn't work, need int?
 	if (ASAP_DateToYear(module_info.date, year))
-		tuple_set(tuple, FIELD_YEAR, year); */
+		tuple_associate_int(tuple, FIELD_YEAR, NULL, atoi(year));
 	return tuple;
 }
 
