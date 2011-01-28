@@ -1,7 +1,7 @@
 /*
  * asap.c - ASAP engine
  *
- * Copyright (C) 2005-2010  Piotr Fusik
+ * Copyright (C) 2005-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -30,6 +30,8 @@
 #else
 
 #define GET_PLAYER(name)  GET_RESOURCE(name, obx)
+
+#ifndef ASAP_CI
 
 FUNC(int, ASAP_GetByte, (P(ASAP_State PTR, ast), P(int, addr)))
 {
@@ -126,6 +128,8 @@ FUNC(void, ASAP_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, data)))
 	else
 		dPutByte(addr, data);
 }
+
+#endif /* ASAP_CI */
 
 #endif /* ASAP_ONLY_INFO */
 

@@ -143,6 +143,7 @@ namespace Sf.Asap {
 	public partial class ASAP {
 		static readonly byte[] CiConstArray_1 = { 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
 		static readonly byte[] CiConstArray_2 = { 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1 };
+		static readonly int[] CiConstArray_3 = { 7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, 6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, 6, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 3, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, 6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 5, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, 2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 2, 6, 2, 6, 4, 4, 4, 4, 2, 5, 2, 5, 5, 5, 5, 5, 2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 2, 5, 2, 5, 4, 4, 4, 4, 2, 4, 2, 4, 4, 4, 4, 4, 2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, 2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7 };
 		public const int VersionMajor = 2;
 		public const int VersionMinor = 1;
 		public const int VersionMicro = 3;
@@ -1112,6 +1113,2737 @@ namespace Sf.Asap {
 				if (pst.tick_cycle4 == 8388608 && pst.mute4 == 0)
 					pst.tick_cycle4 = ast.cycle;
 			}
+		}
+
+		static int ASAP_GetByte(ASAP_State ast, int addr) {
+			switch (addr & 65311) {
+				case 53268:
+					return ast.module_info.ntsc ? 15 : 1;
+				case 53770:
+				case 53786:
+					return PokeySound_GetRandom(ast, addr, ast.cycle);
+				case 53774:
+					return ast.irqst;
+				case 53790:
+					if (ast.extra_pokey_mask != 0) {
+						return 255;
+					}
+					return ast.irqst;
+				case 53772:
+				case 53788:
+				case 53775:
+				case 53791:
+					return 255;
+				case 54283:
+				case 54299:
+					if (ast.scanline_number == 0 && ast.cycle == 13)
+						return ast.module_info.ntsc ? 131 : 156;
+					return ast.scanline_number >> 1;
+				case 54287:
+					if (ast.nmist == 2)
+						return 95;
+					if (ast.nmist == 0)
+						return 31;
+					return ast.cycle < 28295 ? 31 : 95;
+				default:
+					return ast.memory[addr];
+			}
+		}
+
+		static void ASAP_PutByte(ASAP_State ast, int addr, int data) {
+			if (addr >> 8 == 210) {
+				if ((addr & ast.extra_pokey_mask + 15) == 14) {
+					ast.irqst |= data ^ 255;
+					if ((data & ast.irqst & 1) != 0) {
+						if (ast.timer1_cycle == 8388608) {
+							int t = ast.base_pokey.tick_cycle1;
+							while (t < ast.cycle)
+								t += ast.base_pokey.period_cycles1;
+							ast.timer1_cycle = t;
+							if (ast.nearest_event_cycle > t)
+								ast.nearest_event_cycle = t;
+						}
+					}
+					else
+						ast.timer1_cycle = 8388608;
+					if ((data & ast.irqst & 2) != 0) {
+						if (ast.timer2_cycle == 8388608) {
+							int t = ast.base_pokey.tick_cycle2;
+							while (t < ast.cycle)
+								t += ast.base_pokey.period_cycles2;
+							ast.timer2_cycle = t;
+							if (ast.nearest_event_cycle > t)
+								ast.nearest_event_cycle = t;
+						}
+					}
+					else
+						ast.timer2_cycle = 8388608;
+					if ((data & ast.irqst & 4) != 0) {
+						if (ast.timer4_cycle == 8388608) {
+							int t = ast.base_pokey.tick_cycle4;
+							while (t < ast.cycle)
+								t += ast.base_pokey.period_cycles4;
+							ast.timer4_cycle = t;
+							if (ast.nearest_event_cycle > t)
+								ast.nearest_event_cycle = t;
+						}
+					}
+					else
+						ast.timer4_cycle = 8388608;
+				}
+				else
+					PokeySound_PutByte(ast, addr, data);
+			}
+			else
+				if ((addr & 65295) == 54282) {
+					if (ast.cycle <= ast.next_scanline_cycle - 4)
+						ast.cycle = ast.next_scanline_cycle - 4;
+					else
+						ast.cycle = ast.next_scanline_cycle + 110;
+				}
+				else
+					if ((addr & 65295) == 54287) {
+						ast.nmist = ast.cycle < 28296 ? 1 : 0;
+					}
+					else
+						if ((addr & 65280) == ast.module_info.covox_addr) {
+							PokeyState pst;
+							addr &= 3;
+							if (addr == 0 || addr == 3)
+								pst = ast.base_pokey;
+							else
+								pst = ast.extra_pokey;
+							pst.delta_buffer[(ast.cycle * 44100 + ast.sample_offset) / (ast.module_info.ntsc ? 1789772 : 1773447)] += data - ast.covox[addr] << 17;
+							ast.covox[addr] = (byte) (data);
+						}
+						else
+							if ((addr & 65311) == 53279) {
+								data &= 8;
+								int delta = ast.consol - data << 20;
+								ast.consol = data;
+								int sample = (ast.cycle * 44100 + ast.sample_offset) / (ast.module_info.ntsc ? 1789772 : 1773447);
+								ast.base_pokey.delta_buffer[sample] += delta;
+								ast.extra_pokey.delta_buffer[sample] += delta;
+							}
+							else
+								ast.memory[addr] = (byte) (data);
+		}
+
+		/// <summary>Runs 6502 emulation for the specified number of Atari scanlines.</summary>
+		/// <remarks>Each scanline is 114 cycles of which 9 is taken by ANTIC for memory refresh.</remarks>
+		static void Cpu_RunScanlines(ASAP_State ast, int scanlines) {
+			int pc = ast.cpu_pc;
+			int nz = ast.cpu_nz;
+			int a = ast.cpu_a;
+			int x = ast.cpu_x;
+			int y = ast.cpu_y;
+			int c = ast.cpu_c;
+			int s = ast.cpu_s;
+			int vdi = ast.cpu_vdi;
+			ast.next_scanline_cycle = 114;
+			int next_event_cycle = 114;
+			int cycle_limit = 114 * scanlines;
+			if (next_event_cycle > ast.timer1_cycle)
+				next_event_cycle = ast.timer1_cycle;
+			if (next_event_cycle > ast.timer2_cycle)
+				next_event_cycle = ast.timer2_cycle;
+			if (next_event_cycle > ast.timer4_cycle)
+				next_event_cycle = ast.timer4_cycle;
+			ast.nearest_event_cycle = next_event_cycle;
+			for (;;) {
+				int cycle = ast.cycle;
+				if (cycle >= ast.nearest_event_cycle) {
+					if (cycle >= ast.next_scanline_cycle) {
+						if (++ast.scanline_number == (ast.module_info.ntsc ? 262 : 312)) {
+							ast.scanline_number = 0;
+							ast.nmist = ast.nmist == 0 ? 1 : 2;
+						}
+						if (ast.cycle - ast.next_scanline_cycle < 50)
+							ast.cycle = cycle += 9;
+						ast.next_scanline_cycle += 114;
+						if (--scanlines <= 0)
+							break;
+					}
+					next_event_cycle = ast.next_scanline_cycle;
+					if (cycle >= ast.timer1_cycle) {
+						ast.irqst &= ~1;
+						ast.timer1_cycle = 8388608;
+					}
+					else
+						if (next_event_cycle > ast.timer1_cycle)
+							next_event_cycle = ast.timer1_cycle;
+					if (cycle >= ast.timer2_cycle) {
+						ast.irqst &= ~2;
+						ast.timer2_cycle = 8388608;
+					}
+					else
+						if (next_event_cycle > ast.timer2_cycle)
+							next_event_cycle = ast.timer2_cycle;
+					if (cycle >= ast.timer4_cycle) {
+						ast.irqst &= ~4;
+						ast.timer4_cycle = 8388608;
+					}
+					else
+						if (next_event_cycle > ast.timer4_cycle)
+							next_event_cycle = ast.timer4_cycle;
+					ast.nearest_event_cycle = next_event_cycle;
+					if ((vdi & 4) == 0 && ast.irqst != 255) {
+						ast.memory[256 + s] = (byte) (pc >> 8);
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) pc;
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) (((nz | nz >> 1) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32);
+						s = s - 1 & 255;
+						vdi |= 4;
+						pc = ast.memory[65534] + (ast.memory[65535] << 8);
+						ast.cycle += 7;
+					}
+				}
+				int data = ast.memory[pc++];
+				ast.cycle += CiConstArray_3[data];
+				int addr;
+				switch (data) {
+					case 0:
+						pc++;
+						ast.memory[256 + s] = (byte) (pc >> 8);
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) pc;
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) (((nz | nz >> 1) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 48);
+						s = s - 1 & 255;
+						vdi |= 4;
+						pc = ast.memory[65534] + (ast.memory[65535] << 8);
+						break;
+					case 1:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						nz = a |= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 2:
+					case 18:
+					case 34:
+					case 50:
+					case 66:
+					case 82:
+					case 98:
+					case 114:
+					case 146:
+					case 178:
+					case 210:
+					case 242:
+						ast.scanline_number = (ast.scanline_number + scanlines - 1) % (ast.module_info.ntsc ? 262 : 312);
+						scanlines = 1;
+						ast.cycle = cycle_limit;
+						break;
+					case 5:
+						addr = ast.memory[pc++];
+						nz = a |= ast.memory[addr];
+						break;
+					case 6:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 8:
+						ast.memory[256 + s] = (byte) (((nz | nz >> 1) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 48);
+						s = s - 1 & 255;
+						break;
+					case 9:
+						nz = a |= ast.memory[pc++];
+						break;
+					case 10:
+						c = a >> 7;
+						nz = a = a << 1 & 255;
+						break;
+					case 13:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = a |= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 14:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 16:
+						if (nz < 128) {
+							addr = (sbyte) ast.memory[pc];
+							pc++;
+							addr += pc;
+							if ((addr ^ pc) >> 8 != 0)
+								ast.cycle++;
+							ast.cycle++;
+							pc = addr;
+							break;
+						}
+						pc++;
+						break;
+					case 17:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = a |= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 21:
+						addr = ast.memory[pc++] + x & 255;
+						nz = a |= ast.memory[addr];
+						break;
+					case 22:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 24:
+						c = 0;
+						break;
+					case 25:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = a |= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 29:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if ((addr & 255) < x)
+							ast.cycle++;
+						nz = a |= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 30:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 32:
+						addr = ast.memory[pc++];
+						ast.memory[256 + s] = (byte) (pc >> 8);
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) pc;
+						s = s - 1 & 255;
+						pc = addr + (ast.memory[pc] << 8);
+						break;
+					case 33:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						nz = a &= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 36:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						vdi = (vdi & 12) + (nz & 64);
+						nz = ((nz & 128) << 1) + (nz & a);
+						break;
+					case 37:
+						addr = ast.memory[pc++];
+						nz = a &= ast.memory[addr];
+						break;
+					case 38:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 40:
+						s = s + 1 & 255;
+						vdi = ast.memory[256 + s];
+						nz = ((vdi & 128) << 1) + (~vdi & 2);
+						c = vdi & 1;
+						vdi &= 76;
+						if ((vdi & 4) == 0 && ast.irqst != 255) {
+							ast.memory[256 + s] = (byte) (pc >> 8);
+							s = s - 1 & 255;
+							ast.memory[256 + s] = (byte) pc;
+							s = s - 1 & 255;
+							ast.memory[256 + s] = (byte) (((nz | nz >> 1) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32);
+							s = s - 1 & 255;
+							vdi |= 4;
+							pc = ast.memory[65534] + (ast.memory[65535] << 8);
+							ast.cycle += 7;
+						}
+						break;
+					case 41:
+						nz = a &= ast.memory[pc++];
+						break;
+					case 42:
+						a = (a << 1) + c;
+						c = a >> 8;
+						nz = a &= 255;
+						break;
+					case 44:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						vdi = (vdi & 12) + (nz & 64);
+						nz = ((nz & 128) << 1) + (nz & a);
+						break;
+					case 45:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = a &= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 46:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 48:
+						if (nz >= 128) {
+							addr = (sbyte) ast.memory[pc];
+							pc++;
+							addr += pc;
+							if ((addr ^ pc) >> 8 != 0)
+								ast.cycle++;
+							ast.cycle++;
+							pc = addr;
+							break;
+						}
+						pc++;
+						break;
+					case 49:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = a &= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 53:
+						addr = ast.memory[pc++] + x & 255;
+						nz = a &= ast.memory[addr];
+						break;
+					case 54:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 56:
+						c = 1;
+						break;
+					case 57:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = a &= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 61:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if ((addr & 255) < x)
+							ast.cycle++;
+						nz = a &= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 62:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 64:
+						s = s + 1 & 255;
+						vdi = ast.memory[256 + s];
+						nz = ((vdi & 128) << 1) + (~vdi & 2);
+						c = vdi & 1;
+						vdi &= 76;
+						s = s + 1 & 255;
+						pc = ast.memory[256 + s];
+						s = s + 1 & 255;
+						addr = ast.memory[256 + s];
+						pc += addr << 8;
+						if ((vdi & 4) == 0 && ast.irqst != 255) {
+							ast.memory[256 + s] = (byte) (pc >> 8);
+							s = s - 1 & 255;
+							ast.memory[256 + s] = (byte) pc;
+							s = s - 1 & 255;
+							ast.memory[256 + s] = (byte) (((nz | nz >> 1) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32);
+							s = s - 1 & 255;
+							vdi |= 4;
+							pc = ast.memory[65534] + (ast.memory[65535] << 8);
+							ast.cycle += 7;
+						}
+						break;
+					case 65:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						nz = a ^= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 69:
+						addr = ast.memory[pc++];
+						nz = a ^= ast.memory[addr];
+						break;
+					case 70:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 72:
+						ast.memory[256 + s] = (byte) (a);
+						s = s - 1 & 255;
+						break;
+					case 73:
+						nz = a ^= ast.memory[pc++];
+						break;
+					case 74:
+						c = a & 1;
+						nz = a >>= 1;
+						break;
+					case 76:
+						addr = ast.memory[pc++];
+						pc = addr + (ast.memory[pc] << 8);
+						break;
+					case 77:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = a ^= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 78:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 80:
+						if ((vdi & 64) == 0) {
+							addr = (sbyte) ast.memory[pc];
+							pc++;
+							addr += pc;
+							if ((addr ^ pc) >> 8 != 0)
+								ast.cycle++;
+							ast.cycle++;
+							pc = addr;
+							break;
+						}
+						pc++;
+						break;
+					case 81:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = a ^= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 85:
+						addr = ast.memory[pc++] + x & 255;
+						nz = a ^= ast.memory[addr];
+						break;
+					case 86:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 88:
+						vdi &= 72;
+						if ((vdi & 4) == 0 && ast.irqst != 255) {
+							ast.memory[256 + s] = (byte) (pc >> 8);
+							s = s - 1 & 255;
+							ast.memory[256 + s] = (byte) pc;
+							s = s - 1 & 255;
+							ast.memory[256 + s] = (byte) (((nz | nz >> 1) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32);
+							s = s - 1 & 255;
+							vdi |= 4;
+							pc = ast.memory[65534] + (ast.memory[65535] << 8);
+							ast.cycle += 7;
+						}
+						break;
+					case 89:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = a ^= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 93:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if ((addr & 255) < x)
+							ast.cycle++;
+						nz = a ^= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 94:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 96:
+						s = s + 1 & 255;
+						pc = ast.memory[256 + s];
+						s = s + 1 & 255;
+						addr = ast.memory[256 + s];
+						pc += (addr << 8) + 1;
+						break;
+					case 97:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 101:
+						addr = ast.memory[pc++];
+						data = ast.memory[addr];
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 102:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr] + (c << 8);
+						c = nz & 1;
+						nz >>= 1;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 104:
+						s = s + 1 & 255;
+						a = ast.memory[256 + s];
+						nz = a;
+						break;
+					case 105:
+						data = ast.memory[pc++];
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 106:
+						nz = (c << 7) + (a >> 1);
+						c = a & 1;
+						a = nz;
+						break;
+					case 108:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if ((addr & 255) == 255)
+							pc = (ast.memory[addr - 255] << 8) + ast.memory[addr];
+						else
+							pc = ast.memory[addr] + (ast.memory[addr + 1] << 8);
+						break;
+					case 109:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 110:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz += c << 8;
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 112:
+						if ((vdi & 64) != 0) {
+							addr = (sbyte) ast.memory[pc];
+							pc++;
+							addr += pc;
+							if ((addr ^ pc) >> 8 != 0)
+								ast.cycle++;
+							ast.cycle++;
+							pc = addr;
+							break;
+						}
+						pc++;
+						break;
+					case 113:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 117:
+						addr = ast.memory[pc++] + x & 255;
+						data = ast.memory[addr];
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 118:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr] + (c << 8);
+						c = nz & 1;
+						nz >>= 1;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 120:
+						vdi |= 4;
+						break;
+					case 121:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 125:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if ((addr & 255) < x)
+							ast.cycle++;
+						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 126:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz += c << 8;
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 129:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, a);
+						else
+							ast.memory[addr] = (byte) (a);
+						break;
+					case 132:
+						addr = ast.memory[pc++];
+						ast.memory[addr] = (byte) (y);
+						break;
+					case 133:
+						addr = ast.memory[pc++];
+						ast.memory[addr] = (byte) (a);
+						break;
+					case 134:
+						addr = ast.memory[pc++];
+						ast.memory[addr] = (byte) (x);
+						break;
+					case 136:
+						nz = y = y - 1 & 255;
+						break;
+					case 138:
+						nz = a = x;
+						break;
+					case 140:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, y);
+						else
+							ast.memory[addr] = (byte) (y);
+						break;
+					case 141:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, a);
+						else
+							ast.memory[addr] = (byte) (a);
+						break;
+					case 142:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, x);
+						else
+							ast.memory[addr] = (byte) (x);
+						break;
+					case 144:
+						if (c == 0) {
+							addr = (sbyte) ast.memory[pc];
+							pc++;
+							addr += pc;
+							if ((addr ^ pc) >> 8 != 0)
+								ast.cycle++;
+							ast.cycle++;
+							pc = addr;
+							break;
+						}
+						pc++;
+						break;
+					case 145:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, a);
+						else
+							ast.memory[addr] = (byte) (a);
+						break;
+					case 148:
+						addr = ast.memory[pc++] + x & 255;
+						ast.memory[addr] = (byte) (y);
+						break;
+					case 149:
+						addr = ast.memory[pc++] + x & 255;
+						ast.memory[addr] = (byte) (a);
+						break;
+					case 150:
+						addr = ast.memory[pc++] + y & 255;
+						ast.memory[addr] = (byte) (x);
+						break;
+					case 152:
+						nz = a = y;
+						break;
+					case 153:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, a);
+						else
+							ast.memory[addr] = (byte) (a);
+						break;
+					case 154:
+						s = x;
+						break;
+					case 157:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, a);
+						else
+							ast.memory[addr] = (byte) (a);
+						break;
+					case 160:
+						nz = y = ast.memory[pc++];
+						break;
+					case 161:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						nz = a = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 162:
+						nz = x = ast.memory[pc++];
+						break;
+					case 164:
+						addr = ast.memory[pc++];
+						nz = y = ast.memory[addr];
+						break;
+					case 165:
+						addr = ast.memory[pc++];
+						nz = a = ast.memory[addr];
+						break;
+					case 166:
+						addr = ast.memory[pc++];
+						nz = x = ast.memory[addr];
+						break;
+					case 168:
+						nz = y = a;
+						break;
+					case 169:
+						nz = a = ast.memory[pc++];
+						break;
+					case 170:
+						nz = x = a;
+						break;
+					case 172:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = y = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 173:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = a = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 174:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = x = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 176:
+						if (c != 0) {
+							addr = (sbyte) ast.memory[pc];
+							pc++;
+							addr += pc;
+							if ((addr ^ pc) >> 8 != 0)
+								ast.cycle++;
+							ast.cycle++;
+							pc = addr;
+							break;
+						}
+						pc++;
+						break;
+					case 177:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = a = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 180:
+						addr = ast.memory[pc++] + x & 255;
+						nz = y = ast.memory[addr];
+						break;
+					case 181:
+						addr = ast.memory[pc++] + x & 255;
+						nz = a = ast.memory[addr];
+						break;
+					case 182:
+						addr = ast.memory[pc++] + y & 255;
+						nz = x = ast.memory[addr];
+						break;
+					case 184:
+						vdi &= 12;
+						break;
+					case 185:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = a = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 186:
+						nz = x = s;
+						break;
+					case 188:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if ((addr & 255) < x)
+							ast.cycle++;
+						nz = y = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 189:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if ((addr & 255) < x)
+							ast.cycle++;
+						nz = a = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 190:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = x = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 192:
+						nz = ast.memory[pc++];
+						c = y >= nz ? 1 : 0;
+						nz = y - (nz & 255);
+						break;
+					case 193:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						nz = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 196:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						c = y >= nz ? 1 : 0;
+						nz = y - nz & 255;
+						break;
+					case 197:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 198:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 200:
+						nz = y = y + 1 & 255;
+						break;
+					case 201:
+						nz = ast.memory[pc++];
+						c = a >= nz ? 1 : 0;
+						nz = a - (nz & 255);
+						break;
+					case 202:
+						nz = x = x - 1 & 255;
+						break;
+					case 204:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						c = y >= nz ? 1 : 0;
+						nz = y - nz & 255;
+						break;
+					case 205:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 206:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 208:
+						if ((nz & 255) != 0) {
+							addr = (sbyte) ast.memory[pc];
+							pc++;
+							addr += pc;
+							if ((addr ^ pc) >> 8 != 0)
+								ast.cycle++;
+							ast.cycle++;
+							pc = addr;
+							break;
+						}
+						pc++;
+						break;
+					case 209:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 213:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 214:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 216:
+						vdi &= 68;
+						break;
+					case 217:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 221:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if ((addr & 255) < x)
+							ast.cycle++;
+						nz = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 222:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 224:
+						nz = ast.memory[pc++];
+						c = x >= nz ? 1 : 0;
+						nz = x - (nz & 255);
+						break;
+					case 225:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 228:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						c = x >= nz ? 1 : 0;
+						nz = x - nz & 255;
+						break;
+					case 229:
+						addr = ast.memory[pc++];
+						data = ast.memory[addr];
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 230:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 232:
+						nz = x = x + 1 & 255;
+						break;
+					case 233:
+					case 235:
+						data = ast.memory[pc++];
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 234:
+					case 26:
+					case 58:
+					case 90:
+					case 122:
+					case 218:
+					case 250:
+						break;
+					case 236:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						c = x >= nz ? 1 : 0;
+						nz = x - nz & 255;
+						break;
+					case 237:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 238:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 240:
+						if ((nz & 255) == 0) {
+							addr = (sbyte) ast.memory[pc];
+							pc++;
+							addr += pc;
+							if ((addr ^ pc) >> 8 != 0)
+								ast.cycle++;
+							ast.cycle++;
+							pc = addr;
+							break;
+						}
+						pc++;
+						break;
+					case 241:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 245:
+						addr = ast.memory[pc++] + x & 255;
+						data = ast.memory[addr];
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 246:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						break;
+					case 248:
+						vdi |= 8;
+						break;
+					case 249:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 253:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if ((addr & 255) < x)
+							ast.cycle++;
+						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 254:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						break;
+					case 3:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a |= nz;
+						break;
+					case 4:
+					case 68:
+					case 100:
+					case 20:
+					case 52:
+					case 84:
+					case 116:
+					case 212:
+					case 244:
+					case 128:
+					case 130:
+					case 137:
+					case 194:
+					case 226:
+						pc++;
+						break;
+					case 7:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						nz = a |= nz;
+						break;
+					case 11:
+					case 43:
+						nz = a &= ast.memory[pc++];
+						c = nz >> 7;
+						break;
+					case 12:
+						pc += 2;
+						break;
+					case 15:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a |= nz;
+						break;
+					case 19:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a |= nz;
+						break;
+					case 23:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						nz = a |= nz;
+						break;
+					case 27:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a |= nz;
+						break;
+					case 28:
+					case 60:
+					case 92:
+					case 124:
+					case 220:
+					case 252:
+						if (ast.memory[pc++] + x >= 256)
+							ast.cycle++;
+						pc++;
+						break;
+					case 31:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz >> 7;
+						nz = nz << 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a |= nz;
+						break;
+					case 35:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a &= nz;
+						break;
+					case 39:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						ast.memory[addr] = (byte) (nz);
+						nz = a &= nz;
+						break;
+					case 47:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a &= nz;
+						break;
+					case 51:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a &= nz;
+						break;
+					case 55:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						ast.memory[addr] = (byte) (nz);
+						nz = a &= nz;
+						break;
+					case 59:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a &= nz;
+						break;
+					case 63:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = (nz << 1) + c;
+						c = nz >> 8;
+						nz &= 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a &= nz;
+						break;
+					case 67:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a ^= nz;
+						break;
+					case 71:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						ast.memory[addr] = (byte) (nz);
+						nz = a ^= nz;
+						break;
+					case 75:
+						a &= ast.memory[pc++];
+						c = a & 1;
+						nz = a >>= 1;
+						break;
+					case 79:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a ^= nz;
+						break;
+					case 83:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a ^= nz;
+						break;
+					case 87:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						ast.memory[addr] = (byte) (nz);
+						nz = a ^= nz;
+						break;
+					case 91:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a ^= nz;
+						break;
+					case 95:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						nz = a ^= nz;
+						break;
+					case 99:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz += c << 8;
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 103:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr] + (c << 8);
+						c = nz & 1;
+						nz >>= 1;
+						ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 107:
+						data = a & ast.memory[pc++];
+						nz = a = (data >> 1) + (c << 7);
+						vdi = (vdi & 12) + ((a ^ data) & 64);
+						if ((vdi & 8) == 0)
+							c = data >> 7;
+						else {
+							if ((data & 15) >= 5)
+								a = (a & 240) + (a + 6 & 15);
+							if (data >= 80) {
+								a = a + 96 & 255;
+								c = 1;
+							}
+							else
+								c = 0;
+						}
+						break;
+					case 111:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz += c << 8;
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 115:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz += c << 8;
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 119:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr] + (c << 8);
+						c = nz & 1;
+						nz >>= 1;
+						ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 123:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz += c << 8;
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 127:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz += c << 8;
+						c = nz & 1;
+						nz >>= 1;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a + data + c;
+							nz = tmp & 255;
+							if ((vdi & 8) == 0) {
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								c = tmp >> 8;
+								a = nz;
+							}
+							else {
+								int al = (a & 15) + (data & 15) + c;
+								if (al >= 10)
+									tmp += al < 26 ? 6 : -10;
+								nz = ((tmp & 128) << 1) + (nz != 0 ? 1 : 0);
+								vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
+								if (tmp >= 160) {
+									c = 1;
+									a = tmp + 96 & 255;
+								}
+								else {
+									c = 0;
+									a = tmp;
+								}
+							}
+						}
+						break;
+					case 131:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						data = a & x;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, data);
+						else
+							ast.memory[addr] = (byte) (data);
+						break;
+					case 135:
+						addr = ast.memory[pc++];
+						data = a & x;
+						ast.memory[addr] = (byte) (data);
+						break;
+					case 139:
+						data = ast.memory[pc++];
+						a &= (data | 239) & x;
+						nz = a & data;
+						break;
+					case 143:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						data = a & x;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, data);
+						else
+							ast.memory[addr] = (byte) (data);
+						break;
+					case 147:
+ {
+							addr = ast.memory[pc++];
+							int hi = ast.memory[addr + 1 & 255];
+							addr = ast.memory[addr];
+							data = hi + 1 & a & x;
+							addr += y;
+							if (addr >= 256)
+								hi = data - 1;
+							addr += hi << 8;
+							if ((addr & 63744) == 53248)
+								ASAP_PutByte(ast, addr, data);
+							else
+								ast.memory[addr] = (byte) (data);
+						}
+						break;
+					case 151:
+						addr = ast.memory[pc++] + y & 255;
+						data = a & x;
+						ast.memory[addr] = (byte) (data);
+						break;
+					case 155:
+						s = a & x;
+ {
+							addr = ast.memory[pc++];
+							int hi = ast.memory[pc++];
+							data = hi + 1 & s;
+							addr += y;
+							if (addr >= 256)
+								hi = data - 1;
+							addr += hi << 8;
+							if ((addr & 63744) == 53248)
+								ASAP_PutByte(ast, addr, data);
+							else
+								ast.memory[addr] = (byte) (data);
+						}
+						break;
+					case 156:
+ {
+							addr = ast.memory[pc++];
+							int hi = ast.memory[pc++];
+							data = hi + 1 & y;
+							addr += x;
+							if (addr >= 256)
+								hi = data - 1;
+							addr += hi << 8;
+							if ((addr & 63744) == 53248)
+								ASAP_PutByte(ast, addr, data);
+							else
+								ast.memory[addr] = (byte) (data);
+						}
+						break;
+					case 158:
+ {
+							addr = ast.memory[pc++];
+							int hi = ast.memory[pc++];
+							data = hi + 1 & x;
+							addr += y;
+							if (addr >= 256)
+								hi = data - 1;
+							addr += hi << 8;
+							if ((addr & 63744) == 53248)
+								ASAP_PutByte(ast, addr, data);
+							else
+								ast.memory[addr] = (byte) (data);
+						}
+						break;
+					case 159:
+ {
+							addr = ast.memory[pc++];
+							int hi = ast.memory[pc++];
+							data = hi + 1 & a & x;
+							addr += y;
+							if (addr >= 256)
+								hi = data - 1;
+							addr += hi << 8;
+							if ((addr & 63744) == 53248)
+								ASAP_PutByte(ast, addr, data);
+							else
+								ast.memory[addr] = (byte) (data);
+						}
+						break;
+					case 163:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						nz = x = a = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 167:
+						addr = ast.memory[pc++];
+						nz = x = a = ast.memory[addr];
+						break;
+					case 171:
+						nz = x = a &= ast.memory[pc++];
+						break;
+					case 175:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						nz = x = a = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 179:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = x = a = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 183:
+						addr = ast.memory[pc++] + y & 255;
+						nz = x = a = ast.memory[addr];
+						break;
+					case 187:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = x = a = s &= (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 191:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if ((addr & 255) < y)
+							ast.cycle++;
+						nz = x = a = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
+						break;
+					case 195:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 199:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 203:
+						nz = ast.memory[pc++];
+						x &= a;
+						c = x >= nz ? 1 : 0;
+						nz = x = x - (nz & 255);
+						break;
+					case 207:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 211:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 215:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 219:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 223:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz - 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						c = a >= nz ? 1 : 0;
+						nz = a - nz & 255;
+						break;
+					case 227:
+						addr = ast.memory[pc++] + x & 255;
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 231:
+						addr = ast.memory[pc++];
+						nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 239:
+						addr = ast.memory[pc++];
+						addr += ast.memory[pc++] << 8;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 243:
+						addr = ast.memory[pc++];
+						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 247:
+						addr = ast.memory[pc++] + x & 255;
+						nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 251:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + y & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+					case 255:
+						addr = ast.memory[pc++];
+						addr = addr + (ast.memory[pc++] << 8) + x & 65535;
+						if (addr >> 8 == 210) {
+							nz = ASAP_GetByte(ast, addr);
+							ast.cycle--;
+							ASAP_PutByte(ast, addr, nz);
+							ast.cycle++;
+						}
+						else
+							nz = ast.memory[addr];
+						nz = nz + 1 & 255;
+						if ((addr & 63744) == 53248)
+							ASAP_PutByte(ast, addr, nz);
+						else
+							ast.memory[addr] = (byte) (nz);
+						data = nz;
+ {
+							int tmp = a - data - 1 + c;
+							int al = (a & 15) - (data & 15) - 1 + c;
+							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
+							c = tmp >= 0 ? 1 : 0;
+							nz = a = tmp & 255;
+							if ((vdi & 8) != 0) {
+								if (al < 0)
+									a += al < -10 ? 10 : -6;
+								if (c == 0)
+									a = a - 96 & 255;
+							}
+						}
+						break;
+				}
+			}
+			ast.cpu_pc = pc;
+			ast.cpu_nz = nz;
+			ast.cpu_a = a;
+			ast.cpu_x = x;
+			ast.cpu_y = y;
+			ast.cpu_c = c;
+			ast.cpu_s = s;
+			ast.cpu_vdi = vdi;
+			ast.cycle -= cycle_limit;
+			if (ast.timer1_cycle != 8388608)
+				ast.timer1_cycle -= cycle_limit;
+			if (ast.timer2_cycle != 8388608)
+				ast.timer2_cycle -= cycle_limit;
+			if (ast.timer4_cycle != 8388608)
+				ast.timer4_cycle -= cycle_limit;
 		}
 	}
 }

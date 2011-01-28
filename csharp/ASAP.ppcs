@@ -22,6 +22,7 @@
  */
 
 #define CSHARP
+#define ASAP_CI
 
 using System;
 using System.IO;
@@ -38,7 +39,6 @@ namespace Sf.Asap
 			Array.Clear(array, 0, array.Length);
 		}
 
-#include "acpu.c"
 #include "asap.c"
 
 #undef const
