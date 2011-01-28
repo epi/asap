@@ -205,7 +205,7 @@ namespace Sf.Asap {
 			}
 			reg = 131071;
 			for (int i = 0; i < 16385; i++) {
-				reg = (reg >> 5 ^ (reg & 255) << 9) + (reg >> 8);
+				reg = (((reg >> 5 ^ reg) & 255) << 9) + (reg >> 8);
 				ast.poly17_lookup[i] = (byte) (reg >> 1);
 			}
 			ast.sample_offset = 0;
@@ -2304,7 +2304,7 @@ namespace Sf.Asap {
 					case 192:
 						nz = ast.memory[pc++];
 						c = y >= nz ? 1 : 0;
-						nz = y - (nz & 255);
+						nz = y - nz & 255;
 						break;
 					case 193:
 						addr = ast.memory[pc++] + x & 255;
@@ -2337,7 +2337,7 @@ namespace Sf.Asap {
 					case 201:
 						nz = ast.memory[pc++];
 						c = a >= nz ? 1 : 0;
-						nz = a - (nz & 255);
+						nz = a - nz & 255;
 						break;
 					case 202:
 						nz = x = x - 1 & 255;
@@ -2448,7 +2448,7 @@ namespace Sf.Asap {
 					case 224:
 						nz = ast.memory[pc++];
 						c = x >= nz ? 1 : 0;
-						nz = x - (nz & 255);
+						nz = x - nz & 255;
 						break;
 					case 225:
 						addr = ast.memory[pc++] + x & 255;
@@ -3546,7 +3546,7 @@ namespace Sf.Asap {
 						nz = ast.memory[pc++];
 						x &= a;
 						c = x >= nz ? 1 : 0;
-						nz = x = x - (nz & 255);
+						nz = x = x - nz & 255;
 						break;
 					case 207:
 						addr = ast.memory[pc++];

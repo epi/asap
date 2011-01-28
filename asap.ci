@@ -249,7 +249,7 @@ void PokeySound_Initialize(ASAP_State ast)
 	}
 	reg = 0x1ffff;
 	for (int i = 0; i < 16385; i++) {
-		reg = (reg >> 5) ^ reg & 0xff << 9 + reg >> 8;
+		reg = (reg >> 5 ^ reg) & 0xff << 9 + reg >> 8;
 		ast.poly17_lookup[i] = (reg >> 1).LowByte;
 	}
 	ast.sample_offset = 0;
@@ -1624,7 +1624,7 @@ void Cpu_RunScanlines(ASAP_State ast, int scanlines)
 		case 0xc0: // CPY #ab
 			nz = FETCH();
 			c = y >= nz ? 1 : 0;
-			nz = y - nz & 0xff;
+			nz = (y - nz) & 0xff;
 			break;
 		case 0xc1: // CMP (ab,x)
 			INDIRECT_X();
@@ -1648,7 +1648,7 @@ void Cpu_RunScanlines(ASAP_State ast, int scanlines)
 		case 0xc9: // CMP #ab
 			nz = FETCH();
 			c = a >= nz ? 1 : 0;
-			nz = a - nz & 0xff;
+			nz = (a - nz) & 0xff;
 			break;
 		case 0xca: // DEX
 			nz = x = (x - 1) & 0xff;
@@ -1700,7 +1700,7 @@ void Cpu_RunScanlines(ASAP_State ast, int scanlines)
 		case 0xe0: // CPX #ab
 			nz = FETCH();
 			c = x >= nz ? 1 : 0;
-			nz = x - nz & 0xff;
+			nz = (x - nz) & 0xff;
 			break;
 		case 0xe1: // SBC (ab,x)
 			INDIRECT_X();
@@ -2047,7 +2047,7 @@ void Cpu_RunScanlines(ASAP_State ast, int scanlines)
 			nz = FETCH();
 			x &= a;
 			c = x >= nz ? 1 : 0;
-			nz = x = x - nz & 0xff;
+			nz = x = (x - nz) & 0xff;
 			break;
 		case 0xcf: // DCM abcd [unofficial]
 			ABSOLUTE();
