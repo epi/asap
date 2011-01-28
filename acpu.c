@@ -1,7 +1,7 @@
 /*
  * acpu.c - another 6502 CPU emulator
  *
- * Copyright (C) 2007-2010  Piotr Fusik
+ * Copyright (C) 2007-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -548,17 +548,17 @@ FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 			SAX;
 			break;
 		case 0x93: /* SHA (ab),y [unofficial, unstable] */
-			{ \
-				V(int, hi); \
-				addr = FETCH; \
-				hi = zGetByte(addr + 1); \
-				addr = dGetByte(addr); \
-				data = (hi + 1) & a & x; \
-				addr += y; \
-				if (addr >= 0x100) \
-					hi = data - 1; \
-				addr += hi << 8; \
-				PutByte(addr, data); \
+			{
+				V(int, hi);
+				addr = FETCH;
+				hi = zGetByte(addr + 1);
+				addr = dGetByte(addr);
+				data = (hi + 1) & a & x;
+				addr += y;
+				if (addr >= 0x100)
+					hi = data - 1;
+				addr += hi << 8;
+				PutByte(addr, data);
 			}
 			break;
 		case 0x97: /* SAX ab,y [unofficial] */
