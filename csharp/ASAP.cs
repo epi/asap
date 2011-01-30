@@ -1,5 +1,5 @@
 /*
- * ASAP.ppcs - C# version of ASAP
+ * ASAP.cs - C# version of ASAP
  *
  * Copyright (C) 2008-2011  Piotr Fusik
  *
@@ -21,11 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#define CSHARP
-#define ASAP_CI
-
 using System;
-using System.IO;
 
 namespace Sf.Asap
 {
@@ -38,10 +34,6 @@ namespace Sf.Asap
 		{
 			Array.Clear(array, 0, array.Length);
 		}
-
-#include "asap.c"
-
-#undef const
 
 		readonly ASAP_State ast = new ASAP_State();
 

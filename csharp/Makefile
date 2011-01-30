@@ -1,5 +1,4 @@
 CSC = "C:/Windows/Microsoft.NET/Framework/v2.0.50727/csc.exe" -nologo -o+ -out:$@
-PP = cpp -C -P -I..
 NDOC = "C:/Program Files (x86)/NDoc3/bin/NDoc3Console.exe"
 SEVENZIP = 7z a -mx=9
 SL = "C:/Program Files (x86)/Reference Assemblies/Microsoft/Framework/Silverlight/v3.0"
@@ -20,9 +19,6 @@ SilverASAP.xap: SilverASAP.dll AppManifest.xaml
 SilverASAP.dll: SilverASAP.cs ASAP.cs asapci.cs
 	$(CSC) -t:library SilverASAP.cs ASAP.cs asapci.cs -nostdlib -noconfig -r:$(SL)/mscorlib.dll -r:$(SL)/system.dll -r:$(SL)/System.Net.dll -r:$(SL)/System.Windows.dll -r:$(SL)/System.Windows.Browser.dll
 
-ASAP.cs: ASAP.ppcs ../asap.c ../asap.h ../asap_internal.h ../anylang.h ../players.h
-	$(PP) ASAP.ppcs > $@
-
 doc: doc/ASAP.chm
 
 doc/ASAP.chm: doc/ASAP.dll
@@ -34,6 +30,6 @@ doc/ASAP.dll: ASAP.cs asapci.cs
 	$(CSC) -t:library -doc:doc/ASAP.xml ASAP.cs asapci.cs
 
 clean:
-	rm -rf asap2wav.exe asapplay.exe SilverASAP.xap SilverASAP.dll ASAP.cs doc
+	rm -rf asap2wav.exe asapplay.exe SilverASAP.xap SilverASAP.dll doc
 
 .DELETE_ON_ERROR:

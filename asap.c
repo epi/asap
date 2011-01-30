@@ -31,8 +31,6 @@
 
 #define GET_PLAYER(name)  GET_RESOURCE(name, obx)
 
-#ifndef ASAP_CI
-
 FUNC(int, ASAP_GetByte, (P(ASAP_State PTR, ast), P(int, addr)))
 {
 	switch (addr & 0xff1f) {
@@ -128,8 +126,6 @@ FUNC(void, ASAP_PutByte, (P(ASAP_State PTR, ast), P(int, addr), P(int, data)))
 	else
 		dPutByte(addr, data);
 }
-
-#endif /* ASAP_CI */
 
 #endif /* ASAP_ONLY_INFO */
 

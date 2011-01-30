@@ -144,6 +144,8 @@ namespace Sf.Asap {
 		static readonly byte[] CiConstArray_1 = { 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
 		static readonly byte[] CiConstArray_2 = { 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1 };
 		static readonly int[] CiConstArray_3 = { 7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, 6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, 6, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 3, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, 6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 5, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, 2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 2, 6, 2, 6, 4, 4, 4, 4, 2, 5, 2, 5, 5, 5, 5, 5, 2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 2, 5, 2, 5, 4, 4, 4, 4, 2, 4, 2, 4, 4, 4, 4, 4, 2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7, 2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7 };
+		static readonly byte[] CiConstArray_4 = { 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, 136, 127, 121, 115, 108, 103, 96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52, 51, 48, 45, 42, 40, 37, 36, 33, 31, 30 };
+		static readonly byte[] CiConstArray_5 = { 16, 8, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 };
 		public const int VersionMajor = 2;
 		public const int VersionMinor = 1;
 		public const int VersionMicro = 3;
@@ -3844,6 +3846,1330 @@ namespace Sf.Asap {
 				ast.timer2_cycle -= cycle_limit;
 			if (ast.timer4_cycle != 8388608)
 				ast.timer4_cycle -= cycle_limit;
+		}
+
+		static int uword(byte[] array, int i) {
+			return array[i] + (array[i + 1] << 8);
+		}
+
+		/// <summary>Loads a native module (anything except SAP) and a 6502 player routine.</summary>
+		static bool load_native(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len, byte[] player) {
+			if ((module[0] != 255 || module[1] != 255) && (module[0] != 0 || module[1] != 0))
+				return false;
+			module_info.music = uword(module, 2);
+			module_info.player = uword(player, 2);
+			int player_last_byte = uword(player, 4);
+			if (module_info.music <= player_last_byte)
+				return false;
+			int music_last_byte = uword(module, 4);
+			if (module_info.music <= 55295 && music_last_byte >= 53248)
+				return false;
+			int block_len = music_last_byte + 1 - module_info.music;
+			if (6 + block_len != module_len) {
+				if (module_info.type != 11 || 11 + block_len > module_len)
+					return false;
+				int info_addr = uword(module, 6 + block_len);
+				if (info_addr != module_info.music + block_len)
+					return false;
+				int info_len = uword(module, 8 + block_len) + 1 - info_addr;
+				if (10 + block_len + info_len != module_len)
+					return false;
+			}
+			if (ast != null) {
+				System.Array.Copy(module, 6, ast.memory, module_info.music, block_len);
+				System.Array.Copy(player, 6, ast.memory, module_info.player, player_last_byte + 1 - module_info.player);
+			}
+			return true;
+		}
+
+		static void set_song_duration(ASAP_ModuleInfo module_info, int player_calls) {
+			module_info.durations[module_info.songs] = (int) ((long) (player_calls * module_info.fastplay) * (114000) / (1773447));
+			module_info.songs++;
+		}
+
+		static void parse_cmc_song(ASAP_ModuleInfo module_info, byte[] module, int pos) {
+			int tempo = module[25];
+			int player_calls = 0;
+			int rep_start_pos = 0;
+			int rep_end_pos = 0;
+			int rep_times = 0;
+			byte[] seen = new byte[85];
+			while (pos >= 0 && pos < 85) {
+				if (pos == rep_end_pos && rep_times > 0) {
+					for (int i = 0; i < 85; i++)
+						if (seen[i] == 1 || seen[i] == 3)
+							seen[i] = 0;
+					rep_times--;
+					pos = rep_start_pos;
+				}
+				if (seen[pos] != 0) {
+					if (seen[pos] != 1)
+						module_info.loops[module_info.songs] = true;
+					break;
+				}
+				seen[pos] = (byte) (1);
+				int p1 = module[518 + pos];
+				int p2 = module[603 + pos];
+				int p3 = module[688 + pos];
+				if (p1 == 254 || p2 == 254 || p3 == 254) {
+					pos++;
+					continue;
+				}
+				p1 >>= 4;
+				if (p1 == 8)
+					break;
+				if (p1 == 9) {
+					pos = p2;
+					continue;
+				}
+				if (p1 == 10) {
+					pos -= p2;
+					continue;
+				}
+				if (p1 == 11) {
+					pos += p2;
+					continue;
+				}
+				if (p1 == 12) {
+					tempo = p2;
+					pos++;
+					continue;
+				}
+				if (p1 == 13) {
+					pos++;
+					rep_start_pos = pos;
+					rep_end_pos = pos + p2;
+					rep_times = p3 - 1;
+					continue;
+				}
+				if (p1 == 14) {
+					module_info.loops[module_info.songs] = true;
+					break;
+				}
+				p2 = rep_times > 0 ? 3 : 2;
+				for (p1 = 0; p1 < 85; p1++)
+					if (seen[p1] == 1)
+						seen[p1] = (byte) (p2);
+				player_calls += tempo * (module_info.type == 6 ? 48 : 64);
+				pos++;
+			}
+			set_song_duration(module_info, player_calls);
+		}
+
+		static bool parse_cmc(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len, int type, byte[] player) {
+			if (module_len < 774)
+				return false;
+			module_info.type = type;
+			if (!load_native(ast, module_info, module, module_len, player))
+				return false;
+			if (ast != null && type == 7) {
+			}
+			int last_pos = 84;
+			while (--last_pos >= 0) {
+				if (module[518 + last_pos] < 176 || module[603 + last_pos] < 64 || module[688 + last_pos] < 64)
+					break;
+				if (module_info.channels == 2) {
+					if (module[774 + last_pos] < 176 || module[859 + last_pos] < 64 || module[944 + last_pos] < 64)
+						break;
+				}
+			}
+			module_info.songs = 0;
+			parse_cmc_song(module_info, module, 0);
+			for (int pos = 0; pos < last_pos && module_info.songs < 32; pos++)
+				if (module[518 + pos] == 143 || module[518 + pos] == 239)
+					parse_cmc_song(module_info, module, pos + 1);
+			return true;
+		}
+
+		static bool is_dlt_track_empty(byte[] module, int pos) {
+			return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
+		}
+
+		static bool is_dlt_pattern_end(byte[] module, int pos, int i) {
+			for (int ch = 0; ch < 4; ch++) {
+				int pattern = module[8198 + (ch << 8) + pos];
+				if (pattern < 64) {
+					int offset = 6 + (pattern << 7) + (i << 1);
+					if ((module[offset] & 128) == 0 && (module[offset + 1] & 128) != 0)
+						return true;
+				}
+			}
+			return false;
+		}
+
+		static void parse_dlt_song(ASAP_ModuleInfo module_info, byte[] module, bool[] seen, int pos) {
+			while (pos < 128 && !seen[pos] && is_dlt_track_empty(module, pos))
+				seen[pos++] = true;
+			module_info.song_pos[module_info.songs] = (byte) (pos);
+			int player_calls = 0;
+			bool loop = false;
+			int tempo = 6;
+			while (pos < 128) {
+				if (seen[pos]) {
+					loop = true;
+					break;
+				}
+				seen[pos] = true;
+				int p1 = module[8198 + pos];
+				if (p1 == 64 || is_dlt_track_empty(module, pos))
+					break;
+				if (p1 == 65)
+					pos = module[8326 + pos];
+				else
+					if (p1 == 66)
+						tempo = module[8326 + pos++];
+					else {
+						for (int i = 0; i < 64 && !is_dlt_pattern_end(module, pos, i); i++)
+							player_calls += tempo;
+						pos++;
+					}
+			}
+			if (player_calls > 0) {
+				module_info.loops[module_info.songs] = loop;
+				set_song_duration(module_info, player_calls);
+			}
+		}
+
+		static bool parse_dlt(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+			if (module_len == 11270) {
+				if (ast != null)
+					ast.memory[19456] = 0;
+			}
+			else
+				if (module_len != 11271)
+					return false;
+			module_info.type = 9;
+			if (!load_native(ast, module_info, module, module_len, null) || module_info.music != 8192)
+				return false;
+			bool[] seen = new bool[128];
+			module_info.songs = 0;
+			for (int pos = 0; pos < 128 && module_info.songs < 32; pos++) {
+				if (!seen[pos])
+					parse_dlt_song(module_info, module, seen, pos);
+			}
+			return module_info.songs > 0;
+		}
+
+		static void parse_mpt_song(ASAP_ModuleInfo module_info, byte[] module, bool[] global_seen, int song_len, int pos) {
+			int addr_to_offset = uword(module, 2) - 6;
+			int tempo = module[463];
+			int player_calls = 0;
+			byte[] seen = new byte[256];
+			int[] pattern_offset = new int[4];
+			int[] blank_rows = new int[4];
+			int[] blank_rows_counter = new int[4];
+			while (pos < song_len) {
+				if (seen[pos] != 0) {
+					if (seen[pos] != 1)
+						module_info.loops[module_info.songs] = true;
+					break;
+				}
+				seen[pos] = (byte) (1);
+				global_seen[pos] = true;
+				int i = module[464 + pos * 2];
+				if (i == 255) {
+					pos = module[465 + pos * 2];
+					continue;
+				}
+				int ch;
+				for (ch = 3; ch >= 0; ch--) {
+					i = module[454 + ch] + (module[458 + ch] << 8) - addr_to_offset;
+					i = module[i + pos * 2];
+					if (i >= 64)
+						break;
+					i <<= 1;
+					i = uword(module, 70 + i);
+					pattern_offset[ch] = i == 0 ? 0 : i - addr_to_offset;
+					blank_rows_counter[ch] = 0;
+				}
+				if (ch >= 0)
+					break;
+				for (i = 0; i < song_len; i++)
+					if (seen[i] == 1)
+						seen[i] = (byte) (2);
+				for (int pattern_rows = module[462]; --pattern_rows >= 0;) {
+					for (ch = 3; ch >= 0; ch--) {
+						if (pattern_offset[ch] == 0 || --blank_rows_counter[ch] >= 0)
+							continue;
+						for (;;) {
+							i = module[pattern_offset[ch]++];
+							if (i < 64 || i == 254)
+								break;
+							if (i < 128)
+								continue;
+							if (i < 192) {
+								blank_rows[ch] = i - 128;
+								continue;
+							}
+							if (i < 208)
+								continue;
+							if (i < 224) {
+								tempo = i - 207;
+								continue;
+							}
+							pattern_rows = 0;
+						}
+						blank_rows_counter[ch] = blank_rows[ch];
+					}
+					player_calls += tempo;
+				}
+				pos++;
+			}
+			if (player_calls > 0)
+				set_song_duration(module_info, player_calls);
+		}
+
+		static bool parse_mpt(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+			if (module_len < 464)
+				return false;
+			module_info.type = 10;
+			if (!load_native(ast, module_info, module, module_len, null))
+				return false;
+			int track0_addr = uword(module, 2) + 458;
+			if (module[454] + (module[458] << 8) != track0_addr)
+				return false;
+			int song_len = module[455] + (module[459] << 8) - track0_addr >> 1;
+			if (song_len > 254)
+				return false;
+			bool[] global_seen = new bool[256];
+			module_info.songs = 0;
+			for (int pos = 0; pos < song_len && module_info.songs < 32; pos++) {
+				if (!global_seen[pos]) {
+					module_info.song_pos[module_info.songs] = (byte) (pos);
+					parse_mpt_song(module_info, module, global_seen, song_len, pos);
+				}
+			}
+			return module_info.songs > 0;
+		}
+
+		static int rmt_instrument_frames(byte[] module, int instrument, int volume, int volume_frame, bool extra_pokey) {
+			int addr_to_offset = uword(module, 2) - 6;
+			instrument = uword(module, 14) - addr_to_offset + (instrument << 1);
+			if (module[instrument + 1] == 0)
+				return 0;
+			instrument = uword(module, instrument) - addr_to_offset;
+			int per_frame = module[12];
+			int player_call = volume_frame * per_frame;
+			int player_calls = player_call;
+			int index = module[instrument] + 1 + player_call * 3;
+			int index_end = module[instrument + 2] + 3;
+			int index_loop = module[instrument + 3];
+			if (index_loop >= index_end)
+				return 0;
+			int volume_slide_depth = module[instrument + 6];
+			int volume_min = module[instrument + 7];
+			if (index >= index_end)
+				index = (index - index_end) % (index_end - index_loop) + index_loop;
+			else {
+				do {
+					int vol = module[instrument + index];
+					if (extra_pokey)
+						vol >>= 4;
+					if ((vol & 15) >= CiConstArray_5[volume])
+						player_calls = player_call + 1;
+					player_call++;
+					index += 3;
+				}
+				while (index < index_end);
+			}
+			if (volume_slide_depth == 0)
+				return player_calls / per_frame;
+			int volume_slide = 128;
+			bool silent_loop = false;
+			for (;;) {
+				if (index >= index_end) {
+					if (silent_loop)
+						break;
+					silent_loop = true;
+					index = index_loop;
+				}
+				int vol = module[instrument + index];
+				if (extra_pokey)
+					vol >>= 4;
+				if ((vol & 15) >= CiConstArray_5[volume]) {
+					player_calls = player_call + 1;
+					silent_loop = false;
+				}
+				player_call++;
+				index += 3;
+				volume_slide -= volume_slide_depth;
+				if (volume_slide < 0) {
+					volume_slide += 256;
+					if (--volume <= volume_min)
+						break;
+				}
+			}
+			return player_calls / per_frame;
+		}
+
+		static void parse_rmt_song(ASAP_ModuleInfo module_info, byte[] module, bool[] global_seen, int song_len, int pos_shift, int pos) {
+			int addr_to_offset = uword(module, 2) - 6;
+			int tempo = module[11];
+			int frames = 0;
+			int song_offset = uword(module, 20) - addr_to_offset;
+			int pattern_lo_offset = uword(module, 16) - addr_to_offset;
+			int pattern_hi_offset = uword(module, 18) - addr_to_offset;
+			byte[] seen = new byte[256];
+			int[] pattern_begin = new int[8];
+			int[] pattern_offset = new int[8];
+			int[] blank_rows = new int[8];
+			int[] instrument_no = new int[8];
+			int[] instrument_frame = new int[8];
+			int[] volume_value = new int[8];
+			int[] volume_frame = new int[8];
+			while (pos < song_len) {
+				if (seen[pos] != 0) {
+					if (seen[pos] != 1)
+						module_info.loops[module_info.songs] = true;
+					break;
+				}
+				seen[pos] = (byte) (1);
+				global_seen[pos] = true;
+				if (module[song_offset + (pos << pos_shift)] == 254) {
+					pos = module[song_offset + (pos << pos_shift) + 1];
+					continue;
+				}
+				for (int ch = 0; ch < 1 << pos_shift; ch++) {
+					int p = module[song_offset + (pos << pos_shift) + ch];
+					if (p == 255)
+						blank_rows[ch] = 256;
+					else {
+						pattern_offset[ch] = pattern_begin[ch] = module[pattern_lo_offset + p] + (module[pattern_hi_offset + p] << 8) - addr_to_offset;
+						blank_rows[ch] = 0;
+					}
+				}
+				for (int i = 0; i < song_len; i++)
+					if (seen[i] == 1)
+						seen[i] = (byte) (2);
+				for (int pattern_rows = module[10]; --pattern_rows >= 0;) {
+					for (int ch = 0; ch < 1 << pos_shift; ch++) {
+						if (--blank_rows[ch] > 0)
+							continue;
+						for (;;) {
+							int i = module[pattern_offset[ch]++];
+							if ((i & 63) < 62) {
+								i += module[pattern_offset[ch]++] << 8;
+								if ((i & 63) != 61) {
+									instrument_no[ch] = i >> 10;
+									instrument_frame[ch] = frames;
+								}
+								volume_value[ch] = i >> 6 & 15;
+								volume_frame[ch] = frames;
+								break;
+							}
+							if (i == 62) {
+								blank_rows[ch] = module[pattern_offset[ch]++];
+								break;
+							}
+							if ((i & 63) == 62) {
+								blank_rows[ch] = i >> 6;
+								break;
+							}
+							if ((i & 191) == 63) {
+								tempo = module[pattern_offset[ch]++];
+								continue;
+							}
+							if (i == 191) {
+								pattern_offset[ch] = pattern_begin[ch] + module[pattern_offset[ch]];
+								continue;
+							}
+							pattern_rows = -1;
+							break;
+						}
+						if (pattern_rows < 0)
+							break;
+					}
+					if (pattern_rows >= 0)
+						frames += tempo;
+				}
+				pos++;
+			}
+			int instrument_frames = 0;
+			for (int ch = 0; ch < 1 << pos_shift; ch++) {
+				int frame = instrument_frame[ch];
+				frame += rmt_instrument_frames(module, instrument_no[ch], volume_value[ch], volume_frame[ch] - frame, ch >= 4);
+				if (instrument_frames < frame)
+					instrument_frames = frame;
+			}
+			if (frames > instrument_frames) {
+				if (frames - instrument_frames > 100)
+					module_info.loops[module_info.songs] = false;
+				frames = instrument_frames;
+			}
+			if (frames > 0)
+				set_song_duration(module_info, frames);
+		}
+
+		static bool parse_rmt(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+			if (module_len < 48 || module[6] != 82 || module[7] != 77 || module[8] != 84 || module[13] != 1)
+				return false;
+			int pos_shift;
+			switch (module[9]) {
+				case 52:
+					pos_shift = 2;
+					break;
+				case 56:
+					module_info.channels = 2;
+					pos_shift = 3;
+					break;
+				default:
+					return false;
+			}
+			int per_frame = module[12];
+			if (per_frame < 1 || per_frame > 4)
+				return false;
+			module_info.type = 11;
+			if (!load_native(ast, module_info, module, module_len, module_info.channels == 2 ? null : null))
+				return false;
+			int song_len = uword(module, 4) + 1 - uword(module, 20);
+			if (pos_shift == 3 && (song_len & 4) != 0 && module[6 + uword(module, 4) - uword(module, 2) - 3] == 254)
+				song_len += 4;
+			song_len >>= pos_shift;
+			if (song_len >= 256)
+				return false;
+			bool[] global_seen = new bool[256];
+			module_info.songs = 0;
+			for (int pos = 0; pos < song_len && module_info.songs < 32; pos++) {
+				if (!global_seen[pos]) {
+					module_info.song_pos[module_info.songs] = (byte) (pos);
+					parse_rmt_song(module_info, module, global_seen, song_len, pos_shift, pos);
+				}
+			}
+			module_info.fastplay = 312 / per_frame;
+			module_info.player = 1536;
+			return module_info.songs > 0;
+		}
+
+		static void parse_tmc_song(ASAP_ModuleInfo module_info, byte[] module, int pos) {
+			int addr_to_offset = uword(module, 2) - 6;
+			int tempo = module[36] + 1;
+			int frames = 0;
+			int[] pattern_offset = new int[8];
+			int[] blank_rows = new int[8];
+			while (module[437 + pos] < 128) {
+				for (int ch = 7; ch >= 0; ch--) {
+					int pat = module[437 + pos - 2 * ch];
+					pattern_offset[ch] = module[166 + pat] + (module[294 + pat] << 8) - addr_to_offset;
+					blank_rows[ch] = 0;
+				}
+				for (int pattern_rows = 64; --pattern_rows >= 0;) {
+					for (int ch = 7; ch >= 0; ch--) {
+						if (--blank_rows[ch] >= 0)
+							continue;
+						for (;;) {
+							int i = module[pattern_offset[ch]++];
+							if (i < 64) {
+								pattern_offset[ch]++;
+								break;
+							}
+							if (i == 64) {
+								i = module[pattern_offset[ch]++];
+								if ((i & 127) == 0)
+									pattern_rows = 0;
+								else
+									tempo = (i & 127) + 1;
+								if (i >= 128)
+									pattern_offset[ch]++;
+								break;
+							}
+							if (i < 128) {
+								i = module[pattern_offset[ch]++] & 127;
+								if (i == 0)
+									pattern_rows = 0;
+								else
+									tempo = i + 1;
+								pattern_offset[ch]++;
+								break;
+							}
+							if (i < 192)
+								continue;
+							blank_rows[ch] = i - 191;
+							break;
+						}
+					}
+					frames += tempo;
+				}
+				pos += 16;
+			}
+			if (module[436 + pos] < 128)
+				module_info.loops[module_info.songs] = true;
+			set_song_duration(module_info, frames);
+		}
+
+		static bool parse_tmc(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+			if (module_len < 464)
+				return false;
+			module_info.type = 12;
+			if (!load_native(ast, module_info, module, module_len, null))
+				return false;
+			module_info.channels = 2;
+			int i = 0;
+			while (module[102 + i] == 0) {
+				if (++i >= 64)
+					return false;
+			}
+			int last_pos = (module[102 + i] << 8) + module[38 + i] - uword(module, 2) - 432;
+			if (437 + last_pos >= module_len)
+				return false;
+			do {
+				if (last_pos <= 0)
+					return false;
+				last_pos -= 16;
+			}
+			while (module[437 + last_pos] >= 128);
+			module_info.songs = 0;
+			parse_tmc_song(module_info, module, 0);
+			for (i = 0; i < last_pos && module_info.songs < 32; i += 16)
+				if (module[437 + i] >= 128)
+					parse_tmc_song(module_info, module, i + 16);
+			i = module[37];
+			if (i < 1 || i > 4)
+				return false;
+			if (ast != null)
+				ast.tmc_per_frame = i;
+			module_info.fastplay = 312 / i;
+			return true;
+		}
+
+		static void parse_tm2_song(ASAP_ModuleInfo module_info, byte[] module, int pos) {
+			int addr_to_offset = uword(module, 2) - 6;
+			int tempo = module[36] + 1;
+			int player_calls = 0;
+			int[] pattern_offset = new int[8];
+			int[] blank_rows = new int[8];
+			for (;;) {
+				int pattern_rows = module[918 + pos];
+				if (pattern_rows == 0)
+					break;
+				if (pattern_rows >= 128) {
+					module_info.loops[module_info.songs] = true;
+					break;
+				}
+				for (int ch = 7; ch >= 0; ch--) {
+					int pat = module[917 + pos - 2 * ch];
+					pattern_offset[ch] = module[262 + pat] + (module[518 + pat] << 8) - addr_to_offset;
+					blank_rows[ch] = 0;
+				}
+				while (--pattern_rows >= 0) {
+					for (int ch = 7; ch >= 0; ch--) {
+						if (--blank_rows[ch] >= 0)
+							continue;
+						for (;;) {
+							int i = module[pattern_offset[ch]++];
+							if (i == 0) {
+								pattern_offset[ch]++;
+								break;
+							}
+							if (i < 64) {
+								if (module[pattern_offset[ch]++] >= 128)
+									pattern_offset[ch]++;
+								break;
+							}
+							if (i < 128) {
+								pattern_offset[ch]++;
+								break;
+							}
+							if (i == 128) {
+								blank_rows[ch] = module[pattern_offset[ch]++];
+								break;
+							}
+							if (i < 192)
+								break;
+							if (i < 208) {
+								tempo = i - 191;
+								continue;
+							}
+							if (i < 224) {
+								pattern_offset[ch]++;
+								break;
+							}
+							if (i < 240) {
+								pattern_offset[ch] += 2;
+								break;
+							}
+							if (i < 255) {
+								blank_rows[ch] = i - 240;
+								break;
+							}
+							blank_rows[ch] = 64;
+							break;
+						}
+					}
+					player_calls += tempo;
+				}
+				pos += 17;
+			}
+			set_song_duration(module_info, player_calls);
+		}
+
+		static bool parse_tm2(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+			if (module_len < 932)
+				return false;
+			module_info.type = 13;
+			if (!load_native(ast, module_info, module, module_len, null))
+				return false;
+			int i = module[37];
+			if (i < 1 || i > 4)
+				return false;
+			module_info.fastplay = 312 / i;
+			module_info.player = 1280;
+			if (module[31] != 0)
+				module_info.channels = 2;
+			int last_pos = 65535;
+			for (i = 0; i < 128; i++) {
+				int instr_addr = module[134 + i] + (module[774 + i] << 8);
+				if (instr_addr != 0 && instr_addr < last_pos)
+					last_pos = instr_addr;
+			}
+			for (i = 0; i < 256; i++) {
+				int pattern_addr = module[262 + i] + (module[518 + i] << 8);
+				if (pattern_addr != 0 && pattern_addr < last_pos)
+					last_pos = pattern_addr;
+			}
+			last_pos -= uword(module, 2) + 896;
+			if (902 + last_pos >= module_len)
+				return false;
+			int c;
+			do {
+				if (last_pos <= 0)
+					return false;
+				last_pos -= 17;
+				c = module[918 + last_pos];
+			}
+			while (c == 0 || c >= 128);
+			module_info.songs = 0;
+			parse_tm2_song(module_info, module, 0);
+			for (i = 0; i < last_pos && module_info.songs < 32; i += 17) {
+				c = module[918 + i];
+				if (c == 0 || c >= 128)
+					parse_tm2_song(module_info, module, i + 17);
+			}
+			return true;
+		}
+
+		static bool has_string_at(byte[] module, int module_index, string s) {
+			int n = s.Length;
+			for (int i = 0; i < n; i++)
+				if (module[module_index + i] != s[i])
+					return false;
+			return true;
+		}
+
+		static string parse_text(byte[] module, int module_index) {
+			if (module[module_index] != 34)
+				return null;
+			for (int i = 0;; i++) {
+				int c = module[module_index + 1 + i];
+				if (c == 34)
+					break;
+				if (c < 32 || c >= 127)
+					return null;
+			}
+			return null;
+		}
+
+		static int parse_dec(byte[] module, int module_index, int maxval) {
+			if (module[module_index] == 13)
+				return -1;
+			for (int r = 0;;) {
+				int c = module[module_index++];
+				if (c == 13)
+					return r;
+				if (c < 48 || c > 57)
+					return -1;
+				r = 10 * r + c - 48;
+				if (r > maxval)
+					return -1;
+			}
+		}
+
+		static int parse_hex(byte[] module, int module_index) {
+			if (module[module_index] == 13)
+				return -1;
+			for (int r = 0;;) {
+				int c = module[module_index++];
+				if (c == 13)
+					return r;
+				if (r > 4095)
+					return -1;
+				r <<= 4;
+				if (c >= 48 && c <= 57)
+					r += c - 48;
+				else
+					if (c >= 65 && c <= 70)
+						r += c - 65 + 10;
+					else
+						if (c >= 97 && c <= 102)
+							r += c - 97 + 10;
+						else
+							return -1;
+			}
+		}
+
+		static int ASAP_ParseDuration(string s) {
+			int i = 0;
+			int n = s.Length;
+			int d;
+			if (i >= n)
+				return -1;
+			d = s[i] - 48;
+			if (d < 0 || d > 9)
+				return -1;
+			i++;
+			int r = d;
+			if (i < n) {
+				d = s[i] - 48;
+				if (d >= 0 && d <= 9) {
+					i++;
+					r = 10 * r + d;
+				}
+				if (i < n && s[i] == 58) {
+					i++;
+					if (i >= n)
+						return -1;
+					d = s[i] - 48;
+					if (d < 0 || d > 5)
+						return -1;
+					i++;
+					r = (6 * r + d) * 10;
+					if (i >= n)
+						return -1;
+					d = s[i] - 48;
+					if (d < 0 || d > 9)
+						return -1;
+					i++;
+					r += d;
+				}
+			}
+			r *= 1000;
+			if (i >= n)
+				return r;
+			if (s[i] != 46)
+				return -1;
+			i++;
+			if (i >= n)
+				return -1;
+			d = s[i] - 48;
+			if (d < 0 || d > 9)
+				return -1;
+			i++;
+			r += 100 * d;
+			if (i >= n)
+				return r;
+			d = s[i] - 48;
+			if (d < 0 || d > 9)
+				return -1;
+			i++;
+			r += 10 * d;
+			if (i >= n)
+				return r;
+			d = s[i] - 48;
+			if (d < 0 || d > 9)
+				return -1;
+			i++;
+			r += d;
+			return r;
+		}
+
+		static bool parse_sap_header(ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+			if (!has_string_at(module, 0, "SAP\r\n"))
+				return false;
+			module_info.fastplay = -1;
+			int type = 0;
+			int module_index = 5;
+			while (module[module_index] != 255) {
+				if (module_index + 8 >= module_len)
+					return false;
+				if (has_string_at(module, module_index, "SONGS ")) {
+					module_info.songs = parse_dec(module, module_index + 6, 32);
+					if (module_info.songs < 1)
+						return false;
+				}
+				else
+					if (has_string_at(module, module_index, "DEFSONG ")) {
+						module_info.default_song = parse_dec(module, module_index + 8, 31);
+						if (module_info.default_song < 0)
+							return false;
+					}
+					else
+						if (has_string_at(module, module_index, "STEREO\r"))
+							module_info.channels = 2;
+						else
+							if (has_string_at(module, module_index, "NTSC\r"))
+								module_info.ntsc = true;
+							else
+								if (has_string_at(module, module_index, "TIME ")) {
+								}
+								else
+									if (has_string_at(module, module_index, "TYPE "))
+										type = module[module_index + 5];
+									else
+										if (has_string_at(module, module_index, "FASTPLAY ")) {
+											module_info.fastplay = parse_dec(module, module_index + 9, 312);
+											if (module_info.fastplay < 1)
+												return false;
+										}
+										else
+											if (has_string_at(module, module_index, "MUSIC ")) {
+												module_info.music = parse_hex(module, module_index + 6);
+											}
+											else
+												if (has_string_at(module, module_index, "INIT ")) {
+													module_info.init = parse_hex(module, module_index + 5);
+												}
+												else
+													if (has_string_at(module, module_index, "PLAYER ")) {
+														module_info.player = parse_hex(module, module_index + 7);
+													}
+													else
+														if (has_string_at(module, module_index, "COVOX ")) {
+															module_info.covox_addr = parse_hex(module, module_index + 6);
+															if (module_info.covox_addr != 54784)
+																return false;
+															module_info.channels = 2;
+														}
+				while (module[module_index++] != 13) {
+					if (module_index >= module_len)
+						return false;
+				}
+				if (module[module_index++] != 10)
+					return false;
+			}
+			if (module_info.default_song >= module_info.songs)
+				return false;
+			switch (type) {
+				case 66:
+					if (module_info.player < 0 || module_info.init < 0)
+						return false;
+					module_info.type = 1;
+					break;
+				case 67:
+					if (module_info.player < 0 || module_info.music < 0)
+						return false;
+					module_info.type = 2;
+					break;
+				case 68:
+					if (module_info.init < 0)
+						return false;
+					module_info.type = 3;
+					break;
+				case 83:
+					if (module_info.init < 0)
+						return false;
+					module_info.type = 4;
+					module_info.fastplay = 78;
+					break;
+				default:
+					return false;
+			}
+			if (module_info.fastplay < 0)
+				module_info.fastplay = module_info.ntsc ? 262 : 312;
+			else
+				if (module_info.ntsc && module_info.fastplay > 262)
+					return false;
+			if (module[module_index + 1] != 255)
+				return false;
+			module_info.header_len = module_index;
+			return true;
+		}
+
+		static bool parse_sap(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+			if (!parse_sap_header(module_info, module, module_len))
+				return false;
+			if (ast == null)
+				return true;
+			Array_Clear(ast.memory);
+			int module_index = module_info.header_len + 2;
+			while (module_index + 5 <= module_len) {
+				int start_addr = uword(module, module_index);
+				int block_len = uword(module, module_index + 2) + 1 - start_addr;
+				if (block_len <= 0 || module_index + block_len > module_len)
+					return false;
+				module_index += 4;
+				System.Array.Copy(module, module_index, ast.memory, start_addr, block_len);
+				module_index += block_len;
+				if (module_index == module_len)
+					return true;
+				if (module_index + 7 <= module_len && module[module_index] == 255 && module[module_index + 1] == 255)
+					module_index += 2;
+			}
+			return false;
+		}
+
+		static int get_packed_ext(string filename) {
+			int ext = 0;
+			for (int i = filename.Length; --i > 0;) {
+				int c = filename[i];
+				if (c <= 32 || c > 122)
+					return 0;
+				if (c == 46)
+					return ext | 2105376;
+				ext = (ext << 8) + c;
+			}
+			return 0;
+		}
+
+		static bool is_our_ext(int ext) {
+			switch (ext) {
+				case 7364979:
+				case 6516067:
+				case 3370339:
+				case 7499107:
+				case 7564643:
+				case 6516068:
+				case 7629924:
+				case 7630957:
+				case 6582381:
+				case 7630194:
+				case 6516084:
+				case 3698036:
+				case 3304820:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		static bool ASAP_IsOurFile(string filename) {
+			return is_our_ext(get_packed_ext(filename));
+		}
+
+		static bool ASAP_IsOurExt(string ext) {
+			return ext.Length == 3 && is_our_ext(ext[0] + (ext[1] << 8) + (ext[2] << 16) | 2105376);
+		}
+
+		static bool parse_file(ASAP_State ast, ASAP_ModuleInfo module_info, string filename, byte[] module, int module_len) {
+			int len = filename.Length;
+			int basename = 0;
+			int ext = -1;
+			for (int i = 0; i < len; i++) {
+				int c = filename[i];
+				if (c == 47 || c == 92) {
+					basename = i + 1;
+					ext = -1;
+				}
+				else
+					if (c == 46)
+						ext = i;
+			}
+			if (ext < 0)
+				return false;
+			module_info.channels = 1;
+			module_info.songs = 1;
+			module_info.default_song = 0;
+			for (int i = 0; i < 32; i++) {
+				module_info.durations[i] = -1;
+				module_info.loops[i] = false;
+			}
+			module_info.ntsc = false;
+			module_info.fastplay = 312;
+			module_info.music = -1;
+			module_info.init = -1;
+			module_info.player = -1;
+			module_info.covox_addr = -1;
+			switch (get_packed_ext(filename)) {
+				case 7364979:
+					return parse_sap(ast, module_info, module, module_len);
+				case 6516067:
+					return parse_cmc(ast, module_info, module, module_len, 5, null);
+				case 3370339:
+					return parse_cmc(ast, module_info, module, module_len, 6, null);
+				case 7499107:
+					return parse_cmc(ast, module_info, module, module_len, 7, null);
+				case 7564643:
+					module_info.channels = 2;
+					return parse_cmc(ast, module_info, module, module_len, 8, null);
+				case 6516068:
+					module_info.fastplay = 156;
+					return parse_cmc(ast, module_info, module, module_len, 5, null);
+				case 7629924:
+					return parse_dlt(ast, module_info, module, module_len);
+				case 7630957:
+					return parse_mpt(ast, module_info, module, module_len);
+				case 6582381:
+					module_info.fastplay = 156;
+					return parse_mpt(ast, module_info, module, module_len);
+				case 7630194:
+					return parse_rmt(ast, module_info, module, module_len);
+				case 6516084:
+				case 3698036:
+					return parse_tmc(ast, module_info, module, module_len);
+				case 3304820:
+					return parse_tm2(ast, module_info, module, module_len);
+				default:
+					return false;
+			}
+		}
+
+		static bool ASAP_GetModuleInfo(ASAP_ModuleInfo module_info, string filename, byte[] module, int module_len) {
+			return parse_file(null, module_info, filename, module, module_len);
+		}
+
+		static bool ASAP_Load(ASAP_State ast, string filename, byte[] module, int module_len) {
+			ast.silence_cycles = 0;
+			return parse_file(ast, ast.module_info, filename, module, module_len);
+		}
+
+		static void ASAP_DetectSilence(ASAP_State ast, int seconds) {
+			ast.silence_cycles = seconds * (ast.module_info.ntsc ? 1789772 : 1773447);
+		}
+
+		static void call_6502(ASAP_State ast, int addr, int max_scanlines) {
+			ast.cpu_pc = addr;
+			ast.memory[53770] = 210;
+			ast.memory[510] = 9;
+			ast.memory[511] = 210;
+			ast.cpu_s = 253;
+			Cpu_RunScanlines(ast, max_scanlines);
+		}
+
+		static void call_6502_init(ASAP_State ast, int addr, int a, int x, int y) {
+			ast.cpu_a = a & 255;
+			ast.cpu_x = x & 255;
+			ast.cpu_y = y & 255;
+			call_6502(ast, addr, 15600);
+		}
+
+		static void ASAP_MutePokeyChannels(ASAP_State ast, int mask) {
+			PokeySound_Mute(ast, ast.base_pokey, mask);
+			PokeySound_Mute(ast, ast.extra_pokey, mask >> 4);
+		}
+
+		static void ASAP_PlaySong(ASAP_State ast, int song, int duration) {
+			ast.current_song = song;
+			ast.current_duration = duration;
+			ast.blocks_played = 0;
+			ast.silence_cycles_counter = ast.silence_cycles;
+			ast.extra_pokey_mask = ast.module_info.channels > 1 ? 16 : 0;
+			ast.consol = 8;
+			ast.nmist = 1;
+			ast.covox[0] = 128;
+			ast.covox[1] = 128;
+			ast.covox[2] = 128;
+			ast.covox[3] = 128;
+			PokeySound_Initialize(ast);
+			ast.cycle = 0;
+			ast.cpu_nz = 0;
+			ast.cpu_c = 0;
+			ast.cpu_vdi = 0;
+			ast.scanline_number = 0;
+			ast.next_scanline_cycle = 0;
+			ast.timer1_cycle = 8388608;
+			ast.timer2_cycle = 8388608;
+			ast.timer4_cycle = 8388608;
+			ast.irqst = 255;
+			switch (ast.module_info.type) {
+				case 1:
+					call_6502_init(ast, ast.module_info.init, song, 0, 0);
+					break;
+				case 2:
+				case 5:
+				case 6:
+				case 7:
+				case 8:
+					call_6502_init(ast, ast.module_info.player + 3, 112, ast.module_info.music, ast.module_info.music >> 8);
+					call_6502_init(ast, ast.module_info.player + 3, 0, song, 0);
+					break;
+				case 3:
+				case 4:
+					ast.cpu_a = song;
+					ast.cpu_x = 0;
+					ast.cpu_y = 0;
+					ast.cpu_s = 255;
+					ast.cpu_pc = ast.module_info.init;
+					break;
+				case 9:
+					call_6502_init(ast, ast.module_info.player + 256, 0, 0, ast.module_info.song_pos[song]);
+					break;
+				case 10:
+					call_6502_init(ast, ast.module_info.player, 0, ast.module_info.music >> 8, ast.module_info.music);
+					call_6502_init(ast, ast.module_info.player, 2, ast.module_info.song_pos[song], 0);
+					break;
+				case 11:
+					call_6502_init(ast, ast.module_info.player, ast.module_info.song_pos[song], ast.module_info.music, ast.module_info.music >> 8);
+					break;
+				case 12:
+				case 13:
+					call_6502_init(ast, ast.module_info.player, 112, ast.module_info.music >> 8, ast.module_info.music);
+					call_6502_init(ast, ast.module_info.player, 0, song, 0);
+					ast.tmc_per_frame_counter = 1;
+					break;
+			}
+			ASAP_MutePokeyChannels(ast, 0);
+		}
+
+		static bool call_6502_player(ASAP_State ast) {
+			PokeySound_StartFrame(ast);
+			int player = ast.module_info.player;
+			switch (ast.module_info.type) {
+				case 1:
+					call_6502(ast, player, ast.module_info.fastplay);
+					break;
+				case 2:
+				case 5:
+				case 6:
+				case 7:
+				case 8:
+					call_6502(ast, player + 6, ast.module_info.fastplay);
+					break;
+				case 3:
+					if (player >= 0) {
+						int s = ast.cpu_s;
+						ast.memory[256 + s] = (byte) (ast.cpu_pc >> 8);
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) (ast.cpu_pc & 255);
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) (((ast.cpu_nz | ast.cpu_nz >> 1) & 128) + ast.cpu_vdi + ((ast.cpu_nz & 255) == 0 ? 2 : 0) + ast.cpu_c + 32);
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) (ast.cpu_a);
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) (ast.cpu_x);
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) (ast.cpu_y);
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) (209);
+						s = s - 1 & 255;
+						ast.memory[256 + s] = (byte) (255);
+						s = s - 1 & 255;
+						ast.cpu_s = s;
+						ast.memory[53760] = 104;
+						ast.memory[53761] = 168;
+						ast.memory[53762] = 104;
+						ast.memory[53763] = 170;
+						ast.memory[53764] = 104;
+						ast.memory[53765] = 64;
+						ast.cpu_pc = player;
+					}
+					Cpu_RunScanlines(ast, ast.module_info.fastplay);
+					break;
+				case 4:
+					Cpu_RunScanlines(ast, ast.module_info.fastplay);
+ {
+						int i = ast.memory[69] - 1;
+						ast.memory[69] = (byte) (i);
+						if (i == 0)
+							ast.memory[45179] = (byte) (ast.memory[45179] + 1);
+					}
+					break;
+				case 9:
+					call_6502(ast, player + 259, ast.module_info.fastplay);
+					break;
+				case 10:
+				case 11:
+				case 13:
+					call_6502(ast, player + 3, ast.module_info.fastplay);
+					break;
+				case 12:
+					if (--ast.tmc_per_frame_counter <= 0) {
+						ast.tmc_per_frame_counter = ast.tmc_per_frame;
+						call_6502(ast, player + 3, ast.module_info.fastplay);
+					}
+					else
+						call_6502(ast, player + 6, ast.module_info.fastplay);
+					break;
+			}
+			PokeySound_EndFrame(ast, ast.module_info.fastplay * 114);
+			if (ast.silence_cycles > 0) {
+				if (PokeySound_IsSilent(ast.base_pokey) && PokeySound_IsSilent(ast.extra_pokey)) {
+					ast.silence_cycles_counter -= ast.module_info.fastplay * 114;
+					if (ast.silence_cycles_counter <= 0)
+						return false;
+				}
+				else
+					ast.silence_cycles_counter = ast.silence_cycles;
+			}
+			return true;
+		}
+
+		static int ASAP_GetPosition(ASAP_State ast) {
+			return ast.blocks_played * 10 / 441;
+		}
+
+		static int milliseconds_to_blocks(int milliseconds) {
+			return milliseconds * 441 / 10;
+		}
+
+		static void ASAP_Seek(ASAP_State ast, int position) {
+			int block = milliseconds_to_blocks(position);
+			if (block < ast.blocks_played)
+				ASAP_PlaySong(ast, ast.current_song, ast.current_duration);
+			while (ast.blocks_played + ast.samples - ast.sample_index < block) {
+				ast.blocks_played += ast.samples - ast.sample_index;
+				call_6502_player(ast);
+			}
+			ast.sample_index += block - ast.blocks_played;
+			ast.blocks_played = block;
+		}
+
+		static void serialize_int(byte[] buffer, int offset, int value) {
+			buffer[offset] = (byte) value;
+			buffer[offset + 1] = (byte) (value >> 8);
+			buffer[offset + 2] = (byte) (value >> 16);
+			buffer[offset + 3] = (byte) (value >> 24);
+		}
+
+		static void ASAP_GetWavHeader(ASAP_State ast, byte[] buffer, ASAP_SampleFormat format) {
+			int use_16bit = format != ASAP_SampleFormat.U8 ? 1 : 0;
+			int block_size = ast.module_info.channels << use_16bit;
+			int bytes_per_second = 44100 * block_size;
+			int total_blocks = milliseconds_to_blocks(ast.current_duration);
+			int n_bytes = (total_blocks - ast.blocks_played) * block_size;
+			buffer[0] = 82;
+			buffer[1] = 73;
+			buffer[2] = 70;
+			buffer[3] = 70;
+			serialize_int(buffer, 4, n_bytes + 36);
+			buffer[8] = 87;
+			buffer[9] = 65;
+			buffer[10] = 86;
+			buffer[11] = 69;
+			buffer[12] = 102;
+			buffer[13] = 109;
+			buffer[14] = 116;
+			buffer[15] = 32;
+			buffer[16] = 16;
+			buffer[17] = 0;
+			buffer[18] = 0;
+			buffer[19] = 0;
+			buffer[20] = 1;
+			buffer[21] = 0;
+			buffer[22] = (byte) (ast.module_info.channels);
+			buffer[23] = 0;
+			serialize_int(buffer, 24, 44100);
+			serialize_int(buffer, 28, bytes_per_second);
+			buffer[32] = (byte) (block_size);
+			buffer[33] = 0;
+			buffer[34] = (byte) (8 << use_16bit);
+			buffer[35] = 0;
+			buffer[36] = 100;
+			buffer[37] = 97;
+			buffer[38] = 116;
+			buffer[39] = 97;
+			serialize_int(buffer, 40, n_bytes);
+		}
+
+		static int ASAP_GenerateAt(ASAP_State ast, byte[] buffer, int buffer_offset, int buffer_len, ASAP_SampleFormat format) {
+			if (ast.silence_cycles > 0 && ast.silence_cycles_counter <= 0)
+				return 0;
+			int block_shift = ast.module_info.channels - 1 + (format != ASAP_SampleFormat.U8 ? 1 : 0);
+			int buffer_blocks = buffer_len >> block_shift;
+			if (ast.current_duration > 0) {
+				int total_blocks = milliseconds_to_blocks(ast.current_duration);
+				if (buffer_blocks > total_blocks - ast.blocks_played)
+					buffer_blocks = total_blocks - ast.blocks_played;
+			}
+			int block = 0;
+			do {
+				int blocks = PokeySound_Generate(ast, buffer, buffer_offset + (block << block_shift), buffer_blocks - block, format);
+				ast.blocks_played += blocks;
+				block += blocks;
+			}
+			while (block < buffer_blocks && call_6502_player(ast));
+			return block << block_shift;
+		}
+
+		static int ASAP_Generate(ASAP_State ast, byte[] buffer, int buffer_len, ASAP_SampleFormat format) {
+			return ASAP_GenerateAt(ast, buffer, 0, buffer_len, format);
 		}
 	}
 }
