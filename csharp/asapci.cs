@@ -5349,6 +5349,7 @@ namespace Sf.Asap {
 			if (!load_native(ast, module_info, module, module_len, player))
 				return false;
 			if (ast != null && type == 7) {
+				System.Array.Copy(CiConstArray_4, 0, ast.memory, 3087, 37);
 			}
 			int last_pos = 84;
 			while (--last_pos >= 0) {

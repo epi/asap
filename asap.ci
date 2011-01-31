@@ -2280,7 +2280,7 @@ bool parse_cmc(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int m
 			0x3d, 0x39, 0x34, 0x33, 0x30, 0x2d, 0x2a, 0x28,
 			0x25, 0x24, 0x21, 0x1f, 0x1e
 		};
-//TODO		cmr_bass_table.CopyTo(0, ast.memory, 0x500 + CMRBassTableOffset, cmr_bass_table.Length);
+		cmr_bass_table.CopyTo(0, ast.memory, 0x500 + CMRBassTableOffset, cmr_bass_table.Length);
 	}
 #endif
 	int last_pos = 0x54;
