@@ -1070,7 +1070,7 @@ void Cpu_RunScanlines(ASAP_State ast, int scanlines)
 
 		macro BRANCH(cond) {
 			if (cond) {
-				addr = PEEK().SByte; // TODO
+				addr = PEEK().SByte;
 				pc++;
 				addr += pc;
 				if ((addr ^ pc) >> 8 != 0)
@@ -2181,8 +2181,11 @@ void set_song_duration(ASAP_ModuleInfo module_info, int player_calls)
 	module_info.songs++;
 }
 
-// TODO
+#if ASAP_ONLY_INFO
 macro GET_PLAYER(name)  (null)
+#else
+macro GET_PLAYER(name)  (BinaryResource(name + ".obx"))
+#endif
 
 // TODO: enum + 0
 const int SeenThisCall = 1;
@@ -3234,17 +3237,17 @@ bool parse_file(ASAP_State ast, ASAP_ModuleInfo module_info, string filename, by
 		return parse_sap(ast, module_info, module, module_len);
 #if !ASAP_ONLY_SAP
 	case ASAP_EXT("CMC"):
-		return parse_cmc(ast, module_info, module, module_len, TypeCMC, GET_PLAYER(cmc));
+		return parse_cmc(ast, module_info, module, module_len, TypeCMC, GET_PLAYER("cmc"));
 	case ASAP_EXT("CM3"):
-		return parse_cmc(ast, module_info, module, module_len, TypeCM3, GET_PLAYER(cm3));
+		return parse_cmc(ast, module_info, module, module_len, TypeCM3, GET_PLAYER("cm3"));
 	case ASAP_EXT("CMR"):
-		return parse_cmc(ast, module_info, module, module_len, TypeCMR, GET_PLAYER(cmc));
+		return parse_cmc(ast, module_info, module, module_len, TypeCMR, GET_PLAYER("cmc"));
 	case ASAP_EXT("CMS"):
 		module_info.channels = 2;
-		return parse_cmc(ast, module_info, module, module_len, TypeCMS, GET_PLAYER(cms));
+		return parse_cmc(ast, module_info, module, module_len, TypeCMS, GET_PLAYER("cms"));
 	case ASAP_EXT("DMC"):
 		module_info.fastplay = 156;
-		return parse_cmc(ast, module_info, module, module_len, TypeCMC, GET_PLAYER(cmc));
+		return parse_cmc(ast, module_info, module, module_len, TypeCMC, GET_PLAYER("cmc"));
 	case ASAP_EXT("DLT"):
 		return parse_dlt(ast, module_info, module, module_len);
 	case ASAP_EXT("MPT"):
