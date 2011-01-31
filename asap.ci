@@ -24,7 +24,7 @@ namespace net.Sf.Asap;
 public const int VersionMajor = 2;
 public const int VersionMinor = 1;
 public const int VersionMicro = 3;
-public const string Version = "2.1.3";
+public const string Version = VersionMajor + "." + VersionMinor + "." + VersionMicro;
 
 /// Maximum length of a supported input file.
 /// You may assume that files longer than this are not supported by ASAP.
@@ -2900,32 +2900,31 @@ bool has_string_at(byte[] module, int module_index, string s)
 	return true;
 }
 
-// TODO
-string parse_text(byte[] module, int module_index) // P(OUT_STRING, dest), 
+int parse_text(byte[] module, int module_index)
 {
 	if (module[module_index] != '"')
-		return null;
-//	if (has_string_at(module, module_index + 1, "<?>\""))
-//		return dest;
-	for (int i = 0; ; i++) {
-		int c = module[module_index + 1 + i];
-		if (c == '"')
-			break;
+		return -1;
+	if (has_string_at(module, module_index + 1, "<?>\"\r"))
+		return 0;
+	for (int len = 0; ; len++) {
+		int c = module[module_index + 1 + len];
+		if (c == '"') {
+			if (module[module_index + 2 + len] != '\r')
+				return -1;
+			return len;
+		}
 		if (c < 32 || c >= 127)
-			return null;
+			return -1;
 	}
-//	BYTES_TO_STRING(dest, module, module_index + 1, i);
-//	return dest;
-return null;
 }
 
 int parse_dec(byte[] module, int module_index, int maxval)
 {
-	if (module[module_index] == 0xd)
+	if (module[module_index] == '\r')
 		return -1;
 	for (int r = 0;;) {
 		int c = module[module_index++];
-		if (c == 0xd)
+		if (c == '\r')
 			return r;
 		if (c < '0' || c > '9')
 			return -1;
@@ -2937,11 +2936,11 @@ int parse_dec(byte[] module, int module_index, int maxval)
 
 int parse_hex(byte[] module, int module_index)
 {
-	if (module[module_index] == 0xd)
+	if (module[module_index] == '\r')
 		return -1;
 	for (int r = 0;;) {
 		int c = module[module_index++];
-		if (c == 0xd)
+		if (c == '\r')
 			return r;
 		if (r > 0xfff)
 			return -1;
@@ -3008,29 +3007,30 @@ bool parse_sap_header(ASAP_ModuleInfo module_info, byte[] module, int module_len
 	module_info.fastplay = -1;
 	int type = 0;
 	int module_index = 5;
-//	int duration_index = 0;
+	int duration_index = 0;
 	while (module[module_index] != 0xff) {
 		if (module_index + 8 >= module_len)
 			return false;
 		macro TAG_IS(s)               ( has_string_at(module, module_index, s) )
-//#ifdef C
-//#define SET_TEXT(v, i)          if (parse_text(v, module, module_index + i) == NULL) return FALSE
-//#else
-//#define SET_TEXT(v, i)          v = parse_text(v, module, module_index + i); if (v == NULL) return FALSE
-//#endif
+		macro SET_TEXT(v, i) {
+			int len = parse_text(module, module_index + i);
+			if (len < 0)
+				return false;
+			if (len > 0)
+				v = module.ToString(module_index + i + 1, len);
+		}
 		macro SET_DEC(v, i, min, max) { v = parse_dec(module, module_index + i, max); if (v < min) return false; }
 		macro SET_HEX(v, i)           { v = parse_hex(module, module_index + i); }
-//		if (TAG_IS("AUTHOR ")) {
-//			SET_TEXT(module_info.author, 7);
-//		}
-//		else if (TAG_IS("NAME ")) {
-//			SET_TEXT(module_info.name, 5);
-//		}
-//		else if (TAG_IS("DATE ")) {
-//			SET_TEXT(module_info.date, 5);
-//		}
-//		else
-		if (TAG_IS("SONGS ")) {
+		if (TAG_IS("AUTHOR ")) {
+			SET_TEXT(module_info.author, 7);
+		}
+		else if (TAG_IS("NAME ")) {
+			SET_TEXT(module_info.name, 5);
+		}
+		else if (TAG_IS("DATE ")) {
+			SET_TEXT(module_info.date, 5);
+		}
+		else if (TAG_IS("SONGS ")) {
 			SET_DEC(module_info.songs, 6, 1, SongsMax);
 		}
 		else if (TAG_IS("DEFSONG ")) {
@@ -3041,24 +3041,22 @@ bool parse_sap_header(ASAP_ModuleInfo module_info, byte[] module, int module_len
 		else if (TAG_IS("NTSC\r"))
 			module_info.ntsc = true;
 		else if (TAG_IS("TIME ")) {
-// TODO
-//			int i;
-//			string(9) s;
-//			module_index += 5;
-//			for (i = 0; module[module_index + i] != 0xd; i++) { }
-//			if (i > 5 && has_string_at(module, module_index + i - 5, " LOOP")) {
-//				module_info.loops[duration_index] = true;
-//				i -= 5;
-//			}
-//#ifdef C
-//			if (i > 9)
-//				return false;
-//#endif
-//			BYTES_TO_STRING(s, module, module_index, i);
-//			i = ASAP_ParseDuration(s);
-//			if (i < 0 || duration_index >= SongsMax)
-//				return false;
-//			module_info.durations[duration_index++] = i;
+			if (duration_index >= SongsMax)
+				return false;
+			module_index += 5;
+			int len;
+			for (len = 0; module[module_index + len] != '\r'; len++) { }
+			if (len > 5 && has_string_at(module, module_index + len - 5, " LOOP")) {
+				module_info.loops[duration_index] = true;
+				len -= 5;
+			}
+			if (len > 9)
+				return false;
+			string(9) s = module.ToString(module_index, len);
+			int i = ASAP_ParseDuration(s);
+			if (i < 0)
+				return false;
+			module_info.durations[duration_index++] = i;
 		}
 		else if (TAG_IS("TYPE "))
 			type = module[module_index + 5];
@@ -3081,11 +3079,11 @@ bool parse_sap_header(ASAP_ModuleInfo module_info, byte[] module, int module_len
 			module_info.channels = 2;
 		}
 
-		while (module[module_index++] != 0x0d) {
+		while (module[module_index++] != '\r') {
 			if (module_index >= module_len)
 				return false;
 		}
-		if (module[module_index++] != 0x0a)
+		if (module[module_index++] != '\n')
 			return false;
 	}
 	if (module_info.default_song >= module_info.songs)
@@ -3215,10 +3213,9 @@ bool parse_file(ASAP_State ast, ASAP_ModuleInfo module_info, string filename, by
 	}
 	if (ext < 0)
 		return false;
-//TODO
-//	EMPTY_STRING(module_info _ author);
-//	SUBSTRING(module_info _ name, filename, basename, ext - basename);
-//	EMPTY_STRING(module_info _ date);
+	module_info.author = "";
+	module_info.name = filename.Substring(basename, ext - basename);
+	module_info.date = "";
 	module_info.channels = 1;
 	module_info.songs = 1;
 	module_info.default_song = 0;

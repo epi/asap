@@ -4555,17 +4555,21 @@ namespace Sf.Asap {
 			return true;
 		}
 
-		static string parse_text(byte[] module, int module_index) {
+		static int parse_text(byte[] module, int module_index) {
 			if (module[module_index] != 34)
-				return null;
-			for (int i = 0;; i++) {
-				int c = module[module_index + 1 + i];
-				if (c == 34)
-					break;
+				return -1;
+			if (has_string_at(module, module_index + 1, "<?>\"\r"))
+				return 0;
+			for (int len = 0;; len++) {
+				int c = module[module_index + 1 + len];
+				if (c == 34) {
+					if (module[module_index + 2 + len] != 13)
+						return -1;
+					return len;
+				}
 				if (c < 32 || c >= 127)
-					return null;
+					return -1;
 			}
-			return null;
 		}
 
 		static int parse_dec(byte[] module, int module_index, int maxval) {
@@ -4677,57 +4681,99 @@ namespace Sf.Asap {
 			module_info.fastplay = -1;
 			int type = 0;
 			int module_index = 5;
+			int duration_index = 0;
 			while (module[module_index] != 255) {
 				if (module_index + 8 >= module_len)
 					return false;
-				if (has_string_at(module, module_index, "SONGS ")) {
-					module_info.songs = parse_dec(module, module_index + 6, 32);
-					if (module_info.songs < 1)
+				if (has_string_at(module, module_index, "AUTHOR ")) {
+					int len = parse_text(module, module_index + 7);
+					if (len < 0)
 						return false;
+					if (len > 0)
+						module_info.author = System.Text.Encoding.UTF8.GetString(module, module_index + 7 + 1, len);
 				}
 				else
-					if (has_string_at(module, module_index, "DEFSONG ")) {
-						module_info.default_song = parse_dec(module, module_index + 8, 31);
-						if (module_info.default_song < 0)
+					if (has_string_at(module, module_index, "NAME ")) {
+						int len = parse_text(module, module_index + 5);
+						if (len < 0)
 							return false;
+						if (len > 0)
+							module_info.name = System.Text.Encoding.UTF8.GetString(module, module_index + 5 + 1, len);
 					}
 					else
-						if (has_string_at(module, module_index, "STEREO\r"))
-							module_info.channels = 2;
+						if (has_string_at(module, module_index, "DATE ")) {
+							int len = parse_text(module, module_index + 5);
+							if (len < 0)
+								return false;
+							if (len > 0)
+								module_info.date = System.Text.Encoding.UTF8.GetString(module, module_index + 5 + 1, len);
+						}
 						else
-							if (has_string_at(module, module_index, "NTSC\r"))
-								module_info.ntsc = true;
+							if (has_string_at(module, module_index, "SONGS ")) {
+								module_info.songs = parse_dec(module, module_index + 6, 32);
+								if (module_info.songs < 1)
+									return false;
+							}
 							else
-								if (has_string_at(module, module_index, "TIME ")) {
+								if (has_string_at(module, module_index, "DEFSONG ")) {
+									module_info.default_song = parse_dec(module, module_index + 8, 31);
+									if (module_info.default_song < 0)
+										return false;
 								}
 								else
-									if (has_string_at(module, module_index, "TYPE "))
-										type = module[module_index + 5];
+									if (has_string_at(module, module_index, "STEREO\r"))
+										module_info.channels = 2;
 									else
-										if (has_string_at(module, module_index, "FASTPLAY ")) {
-											module_info.fastplay = parse_dec(module, module_index + 9, 312);
-											if (module_info.fastplay < 1)
-												return false;
-										}
+										if (has_string_at(module, module_index, "NTSC\r"))
+											module_info.ntsc = true;
 										else
-											if (has_string_at(module, module_index, "MUSIC ")) {
-												module_info.music = parse_hex(module, module_index + 6);
+											if (has_string_at(module, module_index, "TIME ")) {
+												if (duration_index >= 32)
+													return false;
+												module_index += 5;
+												int len;
+												for (len = 0; module[module_index + len] != 13; len++) {
+												}
+												if (len > 5 && has_string_at(module, module_index + len - 5, " LOOP")) {
+													module_info.loops[duration_index] = true;
+													len -= 5;
+												}
+												if (len > 9)
+													return false;
+												string s = System.Text.Encoding.UTF8.GetString(module, module_index, len);
+												int i = ASAP_ParseDuration(s);
+												if (i < 0)
+													return false;
+												module_info.durations[duration_index++] = i;
 											}
 											else
-												if (has_string_at(module, module_index, "INIT ")) {
-													module_info.init = parse_hex(module, module_index + 5);
-												}
+												if (has_string_at(module, module_index, "TYPE "))
+													type = module[module_index + 5];
 												else
-													if (has_string_at(module, module_index, "PLAYER ")) {
-														module_info.player = parse_hex(module, module_index + 7);
+													if (has_string_at(module, module_index, "FASTPLAY ")) {
+														module_info.fastplay = parse_dec(module, module_index + 9, 312);
+														if (module_info.fastplay < 1)
+															return false;
 													}
 													else
-														if (has_string_at(module, module_index, "COVOX ")) {
-															module_info.covox_addr = parse_hex(module, module_index + 6);
-															if (module_info.covox_addr != 54784)
-																return false;
-															module_info.channels = 2;
+														if (has_string_at(module, module_index, "MUSIC ")) {
+															module_info.music = parse_hex(module, module_index + 6);
 														}
+														else
+															if (has_string_at(module, module_index, "INIT ")) {
+																module_info.init = parse_hex(module, module_index + 5);
+															}
+															else
+																if (has_string_at(module, module_index, "PLAYER ")) {
+																	module_info.player = parse_hex(module, module_index + 7);
+																}
+																else
+																	if (has_string_at(module, module_index, "COVOX ")) {
+																		module_info.covox_addr = parse_hex(module, module_index + 6);
+																		if (module_info.covox_addr != 54784)
+																			return false;
+																		module_info.channels = 2;
+																	}
 				while (module[module_index++] != 13) {
 					if (module_index >= module_len)
 						return false;
@@ -4854,6 +4900,9 @@ namespace Sf.Asap {
 			}
 			if (ext < 0)
 				return false;
+			module_info.author = "";
+			module_info.name = filename.Substring(basename, ext - basename);
+			module_info.date = "";
 			module_info.channels = 1;
 			module_info.songs = 1;
 			module_info.default_song = 0;
