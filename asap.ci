@@ -87,13 +87,13 @@ public class ASAP_ModuleInfo
 	/// Lengths of songs.
 	/// Each element of the array represents length of one song,
 	/// in milliseconds. -1 means the length is indeterminate.
-	public int[32] durations;
+	public int[SongsMax] durations;
 
 	/// Information about finite vs infinite songs.
 	/// Each element of the array represents one song, and is:
 	/// * `true` if the song loops
 	/// * `false` if the song stops
-	public bool[32] loops;
+	public bool[SongsMax] loops;
 
 	bool ntsc;
 	int type;
@@ -103,7 +103,7 @@ public class ASAP_ModuleInfo
 	int player;
 	int covox_addr;
 	int header_len;
-	byte[32] song_pos;
+	byte[SongsMax] song_pos;
 }
 
 class PokeyState
