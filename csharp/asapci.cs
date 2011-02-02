@@ -1,8 +1,10 @@
 // Generated automatically with "cito". Do not edit.
-namespace Sf.Asap {
+namespace Sf.Asap
+{
 
 	/// <summary>Format of output samples.</summary>
-	public enum ASAP_SampleFormat {
+	public enum ASAP_SampleFormat
+	{
 		/// <summary>Unsigned 8-bit.</summary>
 		U8,
 		/// <summary>Signed 16-bit little-endian.</summary>
@@ -12,7 +14,8 @@ namespace Sf.Asap {
 	}
 
 	/// <summary>Information about a music file.</summary>
-	public class ASAP_ModuleInfo {
+	public class ASAP_ModuleInfo
+	{
 		/// <summary>Author's name.</summary>
 		/// <remarks>A nickname may be included in parentheses after the real name.
 		/// Multiple authors are separated with <c>" &amp; "</c>.
@@ -61,7 +64,8 @@ namespace Sf.Asap {
 		internal readonly byte[] song_pos = new byte[32];
 	}
 
-	internal class PokeyState {
+	internal class PokeyState
+	{
 		internal int audctl;
 		internal bool init;
 		internal int poly_index;
@@ -100,7 +104,8 @@ namespace Sf.Asap {
 		internal readonly int[] delta_buffer = new int[888];
 	}
 
-	internal class ASAP_State {
+	internal class ASAP_State
+	{
 		internal int cycle;
 		internal int cpu_pc;
 		internal int cpu_a;
@@ -140,7 +145,8 @@ namespace Sf.Asap {
 		internal readonly byte[] poly17_lookup = new byte[16385];
 		internal readonly byte[] memory = new byte[65536];
 	}
-	public partial class ASAP {
+	public partial class ASAP
+	{
 		static readonly byte[] CiConstArray_1 = { 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
 		static readonly byte[] CiConstArray_2 = { 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0,
 			1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1 };
@@ -1546,7 +1552,8 @@ namespace Sf.Asap {
 		/// <summary>WAV file header length.</summary>
 		public const int WavHeaderBytes = 44;
 
-		static void PokeySound_InitializeChip(PokeyState pst) {
+		static void PokeySound_InitializeChip(PokeyState pst)
+		{
 			pst.audctl = 0;
 			pst.init = false;
 			pst.poly_index = 60948015;
@@ -1585,7 +1592,8 @@ namespace Sf.Asap {
 			Array_Clear(pst.delta_buffer);
 		}
 
-		static void PokeySound_Initialize(ASAP_State ast) {
+		static void PokeySound_Initialize(ASAP_State ast)
+		{
 			int reg = 511;
 			for (int i = 0; i < 511; i++) {
 				reg = (((reg >> 5 ^ reg) & 1) << 8) + (reg >> 1);
@@ -1606,7 +1614,8 @@ namespace Sf.Asap {
 		}
 
 		/// <summary>Fills <c>delta_buffer</c> up to <c>current_cycle</c> basing on current AUDF/AUDC/AUDCTL values.</summary>
-		static void PokeySound_GenerateUntilCycle(ASAP_State ast, PokeyState pst, int current_cycle) {
+		static void PokeySound_GenerateUntilCycle(ASAP_State ast, PokeyState pst, int current_cycle)
+		{
 			for (;;) {
 				int cycle = current_cycle;
 				if (cycle > pst.tick_cycle1)
@@ -1808,9 +1817,8 @@ namespace Sf.Asap {
 					pst.tick_cycle2 += pst.period_cycles2;
 					if ((pst.audctl & 16) != 0)
 						pst.tick_cycle1 = cycle + pst.reload_cycles1;
-					else
-						if ((pst.skctl & 8) != 0)
-							pst.tick_cycle1 = cycle + pst.period_cycles1;
+					else if ((pst.skctl & 8) != 0)
+						pst.tick_cycle1 = cycle + pst.period_cycles1;
 					if (pst.init) {
 						switch (pst.audc2 >> 4) {
 							case 10:
@@ -1871,7 +1879,8 @@ namespace Sf.Asap {
 			}
 		}
 
-		static void PokeySound_PutByte(ASAP_State ast, int addr, int data) {
+		static void PokeySound_PutByte(ASAP_State ast, int addr, int data)
+		{
 			PokeyState pst = (addr & ast.extra_pokey_mask) != 0 ? ast.extra_pokey : ast.base_pokey;
 			switch (addr & 15) {
 				case 0:
@@ -2348,7 +2357,8 @@ namespace Sf.Asap {
 			}
 		}
 
-		static int PokeySound_GetRandom(ASAP_State ast, int addr, int cycle) {
+		static int PokeySound_GetRandom(ASAP_State ast, int addr, int cycle)
+		{
 			PokeyState pst = (addr & ast.extra_pokey_mask) != 0 ? ast.extra_pokey : ast.base_pokey;
 			if (pst.init)
 				return 255;
@@ -2363,7 +2373,8 @@ namespace Sf.Asap {
 			}
 		}
 
-		static void end_frame(ASAP_State ast, PokeyState pst, int cycle_limit) {
+		static void end_frame(ASAP_State ast, PokeyState pst, int cycle_limit)
+		{
 			PokeySound_GenerateUntilCycle(ast, pst, cycle_limit);
 			pst.poly_index += cycle_limit;
 			int m = (pst.audctl & 128) != 0 ? 237615 : 60948015;
@@ -2379,13 +2390,15 @@ namespace Sf.Asap {
 				pst.tick_cycle4 -= cycle_limit;
 		}
 
-		static void PokeySound_StartFrame(ASAP_State ast) {
+		static void PokeySound_StartFrame(ASAP_State ast)
+		{
 			Array_Clear(ast.base_pokey.delta_buffer);
 			if (ast.extra_pokey_mask != 0)
 				Array_Clear(ast.extra_pokey.delta_buffer);
 		}
 
-		static void PokeySound_EndFrame(ASAP_State ast, int current_cycle) {
+		static void PokeySound_EndFrame(ASAP_State ast, int current_cycle)
+		{
 			end_frame(ast, ast.base_pokey, current_cycle);
 			if (ast.extra_pokey_mask != 0)
 				end_frame(ast, ast.extra_pokey, current_cycle);
@@ -2397,7 +2410,8 @@ namespace Sf.Asap {
 		}
 
 		/// <summary>Fills buffer with samples from <c>delta_buffer</c>.</summary>
-		static int PokeySound_Generate(ASAP_State ast, byte[] buffer, int buffer_offset, int blocks, ASAP_SampleFormat format) {
+		static int PokeySound_Generate(ASAP_State ast, byte[] buffer, int buffer_offset, int blocks, ASAP_SampleFormat format)
+		{
 			int i = ast.sample_index;
 			int samples = ast.samples;
 			int acc_left = ast.iir_acc_left;
@@ -2411,9 +2425,8 @@ namespace Sf.Asap {
 				int sample = acc_left >> 10;
 				if (sample < -32767)
 					sample = -32767;
-				else
-					if (sample > 32767)
-						sample = 32767;
+				else if (sample > 32767)
+					sample = 32767;
 				switch (format) {
 					case ASAP_SampleFormat.U8:
 						buffer[buffer_offset++] = (byte) ((sample >> 8) + 128);
@@ -2432,9 +2445,8 @@ namespace Sf.Asap {
 					sample = acc_right >> 10;
 					if (sample < -32767)
 						sample = -32767;
-					else
-						if (sample > 32767)
-							sample = 32767;
+					else if (sample > 32767)
+						sample = 32767;
 					switch (format) {
 						case ASAP_SampleFormat.U8:
 							buffer[buffer_offset++] = (byte) ((sample >> 8) + 128);
@@ -2460,11 +2472,13 @@ namespace Sf.Asap {
 			return blocks;
 		}
 
-		static bool PokeySound_IsSilent(PokeyState pst) {
+		static bool PokeySound_IsSilent(PokeyState pst)
+		{
 			return ((pst.audc1 | pst.audc2 | pst.audc3 | pst.audc4) & 15) == 0;
 		}
 
-		static void PokeySound_Mute(ASAP_State ast, PokeyState pst, int mask) {
+		static void PokeySound_Mute(ASAP_State ast, PokeyState pst, int mask)
+		{
 			if ((mask & 1) != 0) {
 				pst.mute1 |= 4;
 				pst.tick_cycle1 = 8388608;
@@ -2503,7 +2517,8 @@ namespace Sf.Asap {
 			}
 		}
 
-		static int ASAP_GetByte(ASAP_State ast, int addr) {
+		static int ASAP_GetByte(ASAP_State ast, int addr)
+		{
 			switch (addr & 65311) {
 				case 53268:
 					return ast.module_info.ntsc ? 15 : 1;
@@ -2538,7 +2553,8 @@ namespace Sf.Asap {
 			}
 		}
 
-		static void ASAP_PutByte(ASAP_State ast, int addr, int data) {
+		static void ASAP_PutByte(ASAP_State ast, int addr, int data)
+		{
 			if (addr >> 8 == 210) {
 				if ((addr & ast.extra_pokey_mask + 15) == 14) {
 					ast.irqst |= data ^ 255;
@@ -2582,44 +2598,41 @@ namespace Sf.Asap {
 				else
 					PokeySound_PutByte(ast, addr, data);
 			}
-			else
-				if ((addr & 65295) == 54282) {
-					if (ast.cycle <= ast.next_scanline_cycle - 4)
-						ast.cycle = ast.next_scanline_cycle - 4;
-					else
-						ast.cycle = ast.next_scanline_cycle + 110;
-				}
+			else if ((addr & 65295) == 54282) {
+				if (ast.cycle <= ast.next_scanline_cycle - 4)
+					ast.cycle = ast.next_scanline_cycle - 4;
 				else
-					if ((addr & 65295) == 54287) {
-						ast.nmist = ast.cycle < 28296 ? 1 : 0;
-					}
-					else
-						if ((addr & 65280) == ast.module_info.covox_addr) {
-							PokeyState pst;
-							addr &= 3;
-							if (addr == 0 || addr == 3)
-								pst = ast.base_pokey;
-							else
-								pst = ast.extra_pokey;
-							pst.delta_buffer[(ast.cycle * 44100 + ast.sample_offset) / (ast.module_info.ntsc ? 1789772 : 1773447)] += data - ast.covox[addr] << 17;
-							ast.covox[addr] = (byte) (data);
-						}
-						else
-							if ((addr & 65311) == 53279) {
-								data &= 8;
-								int delta = ast.consol - data << 20;
-								ast.consol = data;
-								int sample = (ast.cycle * 44100 + ast.sample_offset) / (ast.module_info.ntsc ? 1789772 : 1773447);
-								ast.base_pokey.delta_buffer[sample] += delta;
-								ast.extra_pokey.delta_buffer[sample] += delta;
-							}
-							else
-								ast.memory[addr] = (byte) (data);
+					ast.cycle = ast.next_scanline_cycle + 110;
+			}
+			else if ((addr & 65295) == 54287) {
+				ast.nmist = ast.cycle < 28296 ? 1 : 0;
+			}
+			else if ((addr & 65280) == ast.module_info.covox_addr) {
+				PokeyState pst;
+				addr &= 3;
+				if (addr == 0 || addr == 3)
+					pst = ast.base_pokey;
+				else
+					pst = ast.extra_pokey;
+				pst.delta_buffer[(ast.cycle * 44100 + ast.sample_offset) / (ast.module_info.ntsc ? 1789772 : 1773447)] += data - ast.covox[addr] << 17;
+				ast.covox[addr] = (byte) (data);
+			}
+			else if ((addr & 65311) == 53279) {
+				data &= 8;
+				int delta = ast.consol - data << 20;
+				ast.consol = data;
+				int sample = (ast.cycle * 44100 + ast.sample_offset) / (ast.module_info.ntsc ? 1789772 : 1773447);
+				ast.base_pokey.delta_buffer[sample] += delta;
+				ast.extra_pokey.delta_buffer[sample] += delta;
+			}
+			else
+				ast.memory[addr] = (byte) (data);
 		}
 
 		/// <summary>Runs 6502 emulation for the specified number of Atari scanlines.</summary>
 		/// <remarks>Each scanline is 114 cycles of which 9 is taken by ANTIC for memory refresh.</remarks>
-		static void Cpu_RunScanlines(ASAP_State ast, int scanlines) {
+		static void Cpu_RunScanlines(ASAP_State ast, int scanlines)
+		{
 			int pc = ast.cpu_pc;
 			int nz = ast.cpu_nz;
 			int a = ast.cpu_a;
@@ -2657,23 +2670,20 @@ namespace Sf.Asap {
 						ast.irqst &= ~1;
 						ast.timer1_cycle = 8388608;
 					}
-					else
-						if (next_event_cycle > ast.timer1_cycle)
-							next_event_cycle = ast.timer1_cycle;
+					else if (next_event_cycle > ast.timer1_cycle)
+						next_event_cycle = ast.timer1_cycle;
 					if (cycle >= ast.timer2_cycle) {
 						ast.irqst &= ~2;
 						ast.timer2_cycle = 8388608;
 					}
-					else
-						if (next_event_cycle > ast.timer2_cycle)
-							next_event_cycle = ast.timer2_cycle;
+					else if (next_event_cycle > ast.timer2_cycle)
+						next_event_cycle = ast.timer2_cycle;
 					if (cycle >= ast.timer4_cycle) {
 						ast.irqst &= ~4;
 						ast.timer4_cycle = 8388608;
 					}
-					else
-						if (next_event_cycle > ast.timer4_cycle)
-							next_event_cycle = ast.timer4_cycle;
+					else if (next_event_cycle > ast.timer4_cycle)
+						next_event_cycle = ast.timer4_cycle;
 					ast.nearest_event_cycle = next_event_cycle;
 					if ((vdi & 4) == 0 && ast.irqst != 255) {
 						ast.memory[256 + s] = (byte) (pc >> 8);
@@ -3155,7 +3165,7 @@ namespace Sf.Asap {
 						addr = ast.memory[pc++] + x & 255;
 						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
 						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -3183,7 +3193,7 @@ namespace Sf.Asap {
 					case 101:
 						addr = ast.memory[pc++];
 						data = ast.memory[addr];
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -3222,7 +3232,7 @@ namespace Sf.Asap {
 						break;
 					case 105:
 						data = ast.memory[pc++];
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -3264,7 +3274,7 @@ namespace Sf.Asap {
 						addr = ast.memory[pc++];
 						addr += ast.memory[pc++] << 8;
 						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -3327,7 +3337,7 @@ namespace Sf.Asap {
 						if ((addr & 255) < y)
 							ast.cycle++;
 						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -3355,7 +3365,7 @@ namespace Sf.Asap {
 					case 117:
 						addr = ast.memory[pc++] + x & 255;
 						data = ast.memory[addr];
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -3396,7 +3406,7 @@ namespace Sf.Asap {
 						if ((addr & 255) < y)
 							ast.cycle++;
 						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -3427,7 +3437,7 @@ namespace Sf.Asap {
 						if ((addr & 255) < x)
 							ast.cycle++;
 						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -3842,7 +3852,7 @@ namespace Sf.Asap {
 						addr = ast.memory[pc++] + x & 255;
 						addr = ast.memory[addr] + (ast.memory[addr + 1 & 255] << 8);
 						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -3865,7 +3875,7 @@ namespace Sf.Asap {
 					case 229:
 						addr = ast.memory[pc++];
 						data = ast.memory[addr];
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -3891,7 +3901,7 @@ namespace Sf.Asap {
 					case 233:
 					case 235:
 						data = ast.memory[pc++];
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -3924,7 +3934,7 @@ namespace Sf.Asap {
 						addr = ast.memory[pc++];
 						addr += ast.memory[pc++] << 8;
 						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -3974,7 +3984,7 @@ namespace Sf.Asap {
 						if ((addr & 255) < y)
 							ast.cycle++;
 						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -3991,7 +4001,7 @@ namespace Sf.Asap {
 					case 245:
 						addr = ast.memory[pc++] + x & 255;
 						data = ast.memory[addr];
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -4020,7 +4030,7 @@ namespace Sf.Asap {
 						if ((addr & 255) < y)
 							ast.cycle++;
 						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -4040,7 +4050,7 @@ namespace Sf.Asap {
 						if ((addr & 255) < x)
 							ast.cycle++;
 						data = (addr & 63744) == 53248 ? ASAP_GetByte(ast, addr) : ast.memory[addr];
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -4469,7 +4479,7 @@ namespace Sf.Asap {
 						else
 							ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -4501,7 +4511,7 @@ namespace Sf.Asap {
 						nz >>= 1;
 						ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -4562,7 +4572,7 @@ namespace Sf.Asap {
 						else
 							ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -4606,7 +4616,7 @@ namespace Sf.Asap {
 						else
 							ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -4638,7 +4648,7 @@ namespace Sf.Asap {
 						nz >>= 1;
 						ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -4682,7 +4692,7 @@ namespace Sf.Asap {
 						else
 							ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -4726,7 +4736,7 @@ namespace Sf.Asap {
 						else
 							ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a + data + c;
 							nz = tmp & 255;
 							if ((vdi & 8) == 0) {
@@ -4780,7 +4790,7 @@ namespace Sf.Asap {
 							ast.memory[addr] = (byte) (data);
 						break;
 					case 147:
- {
+						{
 							addr = ast.memory[pc++];
 							int hi = ast.memory[addr + 1 & 255];
 							addr = ast.memory[addr];
@@ -4802,7 +4812,7 @@ namespace Sf.Asap {
 						break;
 					case 155:
 						s = a & x;
- {
+						{
 							addr = ast.memory[pc++];
 							int hi = ast.memory[pc++];
 							data = hi + 1 & s;
@@ -4817,7 +4827,7 @@ namespace Sf.Asap {
 						}
 						break;
 					case 156:
- {
+						{
 							addr = ast.memory[pc++];
 							int hi = ast.memory[pc++];
 							data = hi + 1 & y;
@@ -4832,7 +4842,7 @@ namespace Sf.Asap {
 						}
 						break;
 					case 158:
- {
+						{
 							addr = ast.memory[pc++];
 							int hi = ast.memory[pc++];
 							data = hi + 1 & x;
@@ -4847,7 +4857,7 @@ namespace Sf.Asap {
 						}
 						break;
 					case 159:
- {
+						{
 							addr = ast.memory[pc++];
 							int hi = ast.memory[pc++];
 							data = hi + 1 & a & x;
@@ -5037,7 +5047,7 @@ namespace Sf.Asap {
 						else
 							ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -5057,7 +5067,7 @@ namespace Sf.Asap {
 						nz = nz + 1 & 255;
 						ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -5088,7 +5098,7 @@ namespace Sf.Asap {
 						else
 							ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -5119,7 +5129,7 @@ namespace Sf.Asap {
 						else
 							ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -5139,7 +5149,7 @@ namespace Sf.Asap {
 						nz = nz + 1 & 255;
 						ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -5170,7 +5180,7 @@ namespace Sf.Asap {
 						else
 							ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -5201,7 +5211,7 @@ namespace Sf.Asap {
 						else
 							ast.memory[addr] = (byte) (nz);
 						data = nz;
- {
+						{
 							int tmp = a - data - 1 + c;
 							int al = (a & 15) - (data & 15) - 1 + c;
 							vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
@@ -5234,12 +5244,14 @@ namespace Sf.Asap {
 				ast.timer4_cycle -= cycle_limit;
 		}
 
-		static int uword(byte[] array, int i) {
+		static int uword(byte[] array, int i)
+		{
 			return array[i] + (array[i + 1] << 8);
 		}
 
 		/// <summary>Loads a native module (anything except SAP) and a 6502 player routine.</summary>
-		static bool load_native(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len, byte[] player) {
+		static bool load_native(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len, byte[] player)
+		{
 			if ((module[0] != 255 || module[1] != 255) && (module[0] != 0 || module[1] != 0))
 				return false;
 			module_info.music = uword(module, 2);
@@ -5268,12 +5280,14 @@ namespace Sf.Asap {
 			return true;
 		}
 
-		static void set_song_duration(ASAP_ModuleInfo module_info, int player_calls) {
+		static void set_song_duration(ASAP_ModuleInfo module_info, int player_calls)
+		{
 			module_info.durations[module_info.songs] = (int) ((long) (player_calls * module_info.fastplay) * (114000) / (1773447));
 			module_info.songs++;
 		}
 
-		static void parse_cmc_song(ASAP_ModuleInfo module_info, byte[] module, int pos) {
+		static void parse_cmc_song(ASAP_ModuleInfo module_info, byte[] module, int pos)
+		{
 			int tempo = module[25];
 			int player_calls = 0;
 			int rep_start_pos = 0;
@@ -5342,7 +5356,8 @@ namespace Sf.Asap {
 			set_song_duration(module_info, player_calls);
 		}
 
-		static bool parse_cmc(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len, int type, byte[] player) {
+		static bool parse_cmc(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len, int type, byte[] player)
+		{
 			if (module_len < 774)
 				return false;
 			module_info.type = type;
@@ -5368,11 +5383,13 @@ namespace Sf.Asap {
 			return true;
 		}
 
-		static bool is_dlt_track_empty(byte[] module, int pos) {
+		static bool is_dlt_track_empty(byte[] module, int pos)
+		{
 			return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
 		}
 
-		static bool is_dlt_pattern_end(byte[] module, int pos, int i) {
+		static bool is_dlt_pattern_end(byte[] module, int pos, int i)
+		{
 			for (int ch = 0; ch < 4; ch++) {
 				int pattern = module[8198 + (ch << 8) + pos];
 				if (pattern < 64) {
@@ -5384,7 +5401,8 @@ namespace Sf.Asap {
 			return false;
 		}
 
-		static void parse_dlt_song(ASAP_ModuleInfo module_info, byte[] module, bool[] seen, int pos) {
+		static void parse_dlt_song(ASAP_ModuleInfo module_info, byte[] module, bool[] seen, int pos)
+		{
 			while (pos < 128 && !seen[pos] && is_dlt_track_empty(module, pos))
 				seen[pos++] = true;
 			module_info.song_pos[module_info.songs] = (byte) (pos);
@@ -5402,14 +5420,13 @@ namespace Sf.Asap {
 					break;
 				if (p1 == 65)
 					pos = module[8326 + pos];
-				else
-					if (p1 == 66)
-						tempo = module[8326 + pos++];
-					else {
-						for (int i = 0; i < 64 && !is_dlt_pattern_end(module, pos, i); i++)
-							player_calls += tempo;
-						pos++;
-					}
+				else if (p1 == 66)
+					tempo = module[8326 + pos++];
+				else {
+					for (int i = 0; i < 64 && !is_dlt_pattern_end(module, pos, i); i++)
+						player_calls += tempo;
+					pos++;
+				}
 			}
 			if (player_calls > 0) {
 				module_info.loops[module_info.songs] = loop;
@@ -5417,14 +5434,14 @@ namespace Sf.Asap {
 			}
 		}
 
-		static bool parse_dlt(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+		static bool parse_dlt(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len)
+		{
 			if (module_len == 11270) {
 				if (ast != null)
 					ast.memory[19456] = 0;
 			}
-			else
-				if (module_len != 11271)
-					return false;
+			else if (module_len != 11271)
+				return false;
 			module_info.type = 9;
 			if (!load_native(ast, module_info, module, module_len, CiBinaryResource_dlt_obx) || module_info.music != 8192)
 				return false;
@@ -5437,7 +5454,8 @@ namespace Sf.Asap {
 			return module_info.songs > 0;
 		}
 
-		static void parse_mpt_song(ASAP_ModuleInfo module_info, byte[] module, bool[] global_seen, int song_len, int pos) {
+		static void parse_mpt_song(ASAP_ModuleInfo module_info, byte[] module, bool[] global_seen, int song_len, int pos)
+		{
 			int addr_to_offset = uword(module, 2) - 6;
 			int tempo = module[463];
 			int player_calls = 0;
@@ -5506,7 +5524,8 @@ namespace Sf.Asap {
 				set_song_duration(module_info, player_calls);
 		}
 
-		static bool parse_mpt(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+		static bool parse_mpt(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len)
+		{
 			if (module_len < 464)
 				return false;
 			module_info.type = 10;
@@ -5529,7 +5548,8 @@ namespace Sf.Asap {
 			return module_info.songs > 0;
 		}
 
-		static int rmt_instrument_frames(byte[] module, int instrument, int volume, int volume_frame, bool extra_pokey) {
+		static int rmt_instrument_frames(byte[] module, int instrument, int volume, int volume_frame, bool extra_pokey)
+		{
 			int addr_to_offset = uword(module, 2) - 6;
 			instrument = uword(module, 14) - addr_to_offset + (instrument << 1);
 			if (module[instrument + 1] == 0)
@@ -5589,7 +5609,8 @@ namespace Sf.Asap {
 			return player_calls / per_frame;
 		}
 
-		static void parse_rmt_song(ASAP_ModuleInfo module_info, byte[] module, bool[] global_seen, int song_len, int pos_shift, int pos) {
+		static void parse_rmt_song(ASAP_ModuleInfo module_info, byte[] module, bool[] global_seen, int song_len, int pos_shift, int pos)
+		{
 			int addr_to_offset = uword(module, 2) - 6;
 			int tempo = module[11];
 			int frames = 0;
@@ -5687,7 +5708,8 @@ namespace Sf.Asap {
 				set_song_duration(module_info, frames);
 		}
 
-		static bool parse_rmt(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+		static bool parse_rmt(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len)
+		{
 			if (module_len < 48 || module[6] != 82 || module[7] != 77 || module[8] != 84 || module[13] != 1)
 				return false;
 			int pos_shift;
@@ -5727,7 +5749,8 @@ namespace Sf.Asap {
 			return module_info.songs > 0;
 		}
 
-		static void parse_tmc_song(ASAP_ModuleInfo module_info, byte[] module, int pos) {
+		static void parse_tmc_song(ASAP_ModuleInfo module_info, byte[] module, int pos)
+		{
 			int addr_to_offset = uword(module, 2) - 6;
 			int tempo = module[36] + 1;
 			int frames = 0;
@@ -5783,7 +5806,8 @@ namespace Sf.Asap {
 			set_song_duration(module_info, frames);
 		}
 
-		static bool parse_tmc(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+		static bool parse_tmc(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len)
+		{
 			if (module_len < 464)
 				return false;
 			module_info.type = 12;
@@ -5818,7 +5842,8 @@ namespace Sf.Asap {
 			return true;
 		}
 
-		static void parse_tm2_song(ASAP_ModuleInfo module_info, byte[] module, int pos) {
+		static void parse_tm2_song(ASAP_ModuleInfo module_info, byte[] module, int pos)
+		{
 			int addr_to_offset = uword(module, 2) - 6;
 			int tempo = module[36] + 1;
 			int player_calls = 0;
@@ -5889,7 +5914,8 @@ namespace Sf.Asap {
 			set_song_duration(module_info, player_calls);
 		}
 
-		static bool parse_tm2(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+		static bool parse_tm2(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len)
+		{
 			if (module_len < 932)
 				return false;
 			module_info.type = 13;
@@ -5934,7 +5960,8 @@ namespace Sf.Asap {
 			return true;
 		}
 
-		static bool has_string_at(byte[] module, int module_index, string s) {
+		static bool has_string_at(byte[] module, int module_index, string s)
+		{
 			int n = s.Length;
 			for (int i = 0; i < n; i++)
 				if (module[module_index + i] != s[i])
@@ -5942,7 +5969,8 @@ namespace Sf.Asap {
 			return true;
 		}
 
-		static int parse_text(byte[] module, int module_index) {
+		static int parse_text(byte[] module, int module_index)
+		{
 			if (module[module_index] != 34)
 				return -1;
 			if (has_string_at(module, module_index + 1, "<?>\"\r"))
@@ -5959,7 +5987,8 @@ namespace Sf.Asap {
 			}
 		}
 
-		static int parse_dec(byte[] module, int module_index, int maxval) {
+		static int parse_dec(byte[] module, int module_index, int maxval)
+		{
 			if (module[module_index] == 13)
 				return -1;
 			for (int r = 0;;) {
@@ -5974,7 +6003,8 @@ namespace Sf.Asap {
 			}
 		}
 
-		static int parse_hex(byte[] module, int module_index) {
+		static int parse_hex(byte[] module, int module_index)
+		{
 			if (module[module_index] == 13)
 				return -1;
 			for (int r = 0;;) {
@@ -5986,18 +6016,17 @@ namespace Sf.Asap {
 				r <<= 4;
 				if (c >= 48 && c <= 57)
 					r += c - 48;
+				else if (c >= 65 && c <= 70)
+					r += c - 65 + 10;
+				else if (c >= 97 && c <= 102)
+					r += c - 97 + 10;
 				else
-					if (c >= 65 && c <= 70)
-						r += c - 65 + 10;
-					else
-						if (c >= 97 && c <= 102)
-							r += c - 97 + 10;
-						else
-							return -1;
+					return -1;
 			}
 		}
 
-		static int ASAP_ParseDuration(string s) {
+		static int ASAP_ParseDuration(string s)
+		{
 			int i = 0;
 			int n = s.Length;
 			int d;
@@ -6062,7 +6091,8 @@ namespace Sf.Asap {
 			return r;
 		}
 
-		static bool parse_sap_header(ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+		static bool parse_sap_header(ASAP_ModuleInfo module_info, byte[] module, int module_len)
+		{
 			if (!has_string_at(module, 0, "SAP\r\n"))
 				return false;
 			module_info.fastplay = -1;
@@ -6079,88 +6109,75 @@ namespace Sf.Asap {
 					if (len > 0)
 						module_info.author = System.Text.Encoding.UTF8.GetString(module, module_index + 7 + 1, len);
 				}
-				else
-					if (has_string_at(module, module_index, "NAME ")) {
-						int len = parse_text(module, module_index + 5);
-						if (len < 0)
-							return false;
-						if (len > 0)
-							module_info.name = System.Text.Encoding.UTF8.GetString(module, module_index + 5 + 1, len);
+				else if (has_string_at(module, module_index, "NAME ")) {
+					int len = parse_text(module, module_index + 5);
+					if (len < 0)
+						return false;
+					if (len > 0)
+						module_info.name = System.Text.Encoding.UTF8.GetString(module, module_index + 5 + 1, len);
+				}
+				else if (has_string_at(module, module_index, "DATE ")) {
+					int len = parse_text(module, module_index + 5);
+					if (len < 0)
+						return false;
+					if (len > 0)
+						module_info.date = System.Text.Encoding.UTF8.GetString(module, module_index + 5 + 1, len);
+				}
+				else if (has_string_at(module, module_index, "SONGS ")) {
+					module_info.songs = parse_dec(module, module_index + 6, 32);
+					if (module_info.songs < 1)
+						return false;
+				}
+				else if (has_string_at(module, module_index, "DEFSONG ")) {
+					module_info.default_song = parse_dec(module, module_index + 8, 31);
+					if (module_info.default_song < 0)
+						return false;
+				}
+				else if (has_string_at(module, module_index, "STEREO\r"))
+					module_info.channels = 2;
+				else if (has_string_at(module, module_index, "NTSC\r"))
+					module_info.ntsc = true;
+				else if (has_string_at(module, module_index, "TIME ")) {
+					if (duration_index >= 32)
+						return false;
+					module_index += 5;
+					int len;
+					for (len = 0; module[module_index + len] != 13; len++) {
 					}
-					else
-						if (has_string_at(module, module_index, "DATE ")) {
-							int len = parse_text(module, module_index + 5);
-							if (len < 0)
-								return false;
-							if (len > 0)
-								module_info.date = System.Text.Encoding.UTF8.GetString(module, module_index + 5 + 1, len);
-						}
-						else
-							if (has_string_at(module, module_index, "SONGS ")) {
-								module_info.songs = parse_dec(module, module_index + 6, 32);
-								if (module_info.songs < 1)
-									return false;
-							}
-							else
-								if (has_string_at(module, module_index, "DEFSONG ")) {
-									module_info.default_song = parse_dec(module, module_index + 8, 31);
-									if (module_info.default_song < 0)
-										return false;
-								}
-								else
-									if (has_string_at(module, module_index, "STEREO\r"))
-										module_info.channels = 2;
-									else
-										if (has_string_at(module, module_index, "NTSC\r"))
-											module_info.ntsc = true;
-										else
-											if (has_string_at(module, module_index, "TIME ")) {
-												if (duration_index >= 32)
-													return false;
-												module_index += 5;
-												int len;
-												for (len = 0; module[module_index + len] != 13; len++) {
-												}
-												if (len > 5 && has_string_at(module, module_index + len - 5, " LOOP")) {
-													module_info.loops[duration_index] = true;
-													len -= 5;
-												}
-												if (len > 9)
-													return false;
-												string s = System.Text.Encoding.UTF8.GetString(module, module_index, len);
-												int i = ASAP_ParseDuration(s);
-												if (i < 0)
-													return false;
-												module_info.durations[duration_index++] = i;
-											}
-											else
-												if (has_string_at(module, module_index, "TYPE "))
-													type = module[module_index + 5];
-												else
-													if (has_string_at(module, module_index, "FASTPLAY ")) {
-														module_info.fastplay = parse_dec(module, module_index + 9, 312);
-														if (module_info.fastplay < 1)
-															return false;
-													}
-													else
-														if (has_string_at(module, module_index, "MUSIC ")) {
-															module_info.music = parse_hex(module, module_index + 6);
-														}
-														else
-															if (has_string_at(module, module_index, "INIT ")) {
-																module_info.init = parse_hex(module, module_index + 5);
-															}
-															else
-																if (has_string_at(module, module_index, "PLAYER ")) {
-																	module_info.player = parse_hex(module, module_index + 7);
-																}
-																else
-																	if (has_string_at(module, module_index, "COVOX ")) {
-																		module_info.covox_addr = parse_hex(module, module_index + 6);
-																		if (module_info.covox_addr != 54784)
-																			return false;
-																		module_info.channels = 2;
-																	}
+					if (len > 5 && has_string_at(module, module_index + len - 5, " LOOP")) {
+						module_info.loops[duration_index] = true;
+						len -= 5;
+					}
+					if (len > 9)
+						return false;
+					string s = System.Text.Encoding.UTF8.GetString(module, module_index, len);
+					int i = ASAP_ParseDuration(s);
+					if (i < 0)
+						return false;
+					module_info.durations[duration_index++] = i;
+				}
+				else if (has_string_at(module, module_index, "TYPE "))
+					type = module[module_index + 5];
+				else if (has_string_at(module, module_index, "FASTPLAY ")) {
+					module_info.fastplay = parse_dec(module, module_index + 9, 312);
+					if (module_info.fastplay < 1)
+						return false;
+				}
+				else if (has_string_at(module, module_index, "MUSIC ")) {
+					module_info.music = parse_hex(module, module_index + 6);
+				}
+				else if (has_string_at(module, module_index, "INIT ")) {
+					module_info.init = parse_hex(module, module_index + 5);
+				}
+				else if (has_string_at(module, module_index, "PLAYER ")) {
+					module_info.player = parse_hex(module, module_index + 7);
+				}
+				else if (has_string_at(module, module_index, "COVOX ")) {
+					module_info.covox_addr = parse_hex(module, module_index + 6);
+					if (module_info.covox_addr != 54784)
+						return false;
+					module_info.channels = 2;
+				}
 				while (module[module_index++] != 13) {
 					if (module_index >= module_len)
 						return false;
@@ -6197,16 +6214,16 @@ namespace Sf.Asap {
 			}
 			if (module_info.fastplay < 0)
 				module_info.fastplay = module_info.ntsc ? 262 : 312;
-			else
-				if (module_info.ntsc && module_info.fastplay > 262)
-					return false;
+			else if (module_info.ntsc && module_info.fastplay > 262)
+				return false;
 			if (module[module_index + 1] != 255)
 				return false;
 			module_info.header_len = module_index;
 			return true;
 		}
 
-		static bool parse_sap(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len) {
+		static bool parse_sap(ASAP_State ast, ASAP_ModuleInfo module_info, byte[] module, int module_len)
+		{
 			if (!parse_sap_header(module_info, module, module_len))
 				return false;
 			if (ast == null)
@@ -6229,7 +6246,8 @@ namespace Sf.Asap {
 			return false;
 		}
 
-		static int get_packed_ext(string filename) {
+		static int get_packed_ext(string filename)
+		{
 			int ext = 0;
 			for (int i = filename.Length; --i > 0;) {
 				int c = filename[i];
@@ -6242,7 +6260,8 @@ namespace Sf.Asap {
 			return 0;
 		}
 
-		static bool is_our_ext(int ext) {
+		static bool is_our_ext(int ext)
+		{
 			switch (ext) {
 				case 7364979:
 				case 6516067:
@@ -6263,15 +6282,18 @@ namespace Sf.Asap {
 			}
 		}
 
-		static bool ASAP_IsOurFile(string filename) {
+		static bool ASAP_IsOurFile(string filename)
+		{
 			return is_our_ext(get_packed_ext(filename));
 		}
 
-		static bool ASAP_IsOurExt(string ext) {
+		static bool ASAP_IsOurExt(string ext)
+		{
 			return ext.Length == 3 && is_our_ext(ext[0] + (ext[1] << 8) + (ext[2] << 16) | 2105376);
 		}
 
-		static bool parse_file(ASAP_State ast, ASAP_ModuleInfo module_info, string filename, byte[] module, int module_len) {
+		static bool parse_file(ASAP_State ast, ASAP_ModuleInfo module_info, string filename, byte[] module, int module_len)
+		{
 			int len = filename.Length;
 			int basename = 0;
 			int ext = -1;
@@ -6281,9 +6303,8 @@ namespace Sf.Asap {
 					basename = i + 1;
 					ext = -1;
 				}
-				else
-					if (c == 46)
-						ext = i;
+				else if (c == 46)
+					ext = i;
 			}
 			if (ext < 0)
 				return false;
@@ -6337,20 +6358,24 @@ namespace Sf.Asap {
 			}
 		}
 
-		static bool ASAP_GetModuleInfo(ASAP_ModuleInfo module_info, string filename, byte[] module, int module_len) {
+		static bool ASAP_GetModuleInfo(ASAP_ModuleInfo module_info, string filename, byte[] module, int module_len)
+		{
 			return parse_file(null, module_info, filename, module, module_len);
 		}
 
-		static bool ASAP_Load(ASAP_State ast, string filename, byte[] module, int module_len) {
+		static bool ASAP_Load(ASAP_State ast, string filename, byte[] module, int module_len)
+		{
 			ast.silence_cycles = 0;
 			return parse_file(ast, ast.module_info, filename, module, module_len);
 		}
 
-		static void ASAP_DetectSilence(ASAP_State ast, int seconds) {
+		static void ASAP_DetectSilence(ASAP_State ast, int seconds)
+		{
 			ast.silence_cycles = seconds * (ast.module_info.ntsc ? 1789772 : 1773447);
 		}
 
-		static void call_6502(ASAP_State ast, int addr, int max_scanlines) {
+		static void call_6502(ASAP_State ast, int addr, int max_scanlines)
+		{
 			ast.cpu_pc = addr;
 			ast.memory[53770] = 210;
 			ast.memory[510] = 9;
@@ -6359,19 +6384,22 @@ namespace Sf.Asap {
 			Cpu_RunScanlines(ast, max_scanlines);
 		}
 
-		static void call_6502_init(ASAP_State ast, int addr, int a, int x, int y) {
+		static void call_6502_init(ASAP_State ast, int addr, int a, int x, int y)
+		{
 			ast.cpu_a = a & 255;
 			ast.cpu_x = x & 255;
 			ast.cpu_y = y & 255;
 			call_6502(ast, addr, 15600);
 		}
 
-		static void ASAP_MutePokeyChannels(ASAP_State ast, int mask) {
+		static void ASAP_MutePokeyChannels(ASAP_State ast, int mask)
+		{
 			PokeySound_Mute(ast, ast.base_pokey, mask);
 			PokeySound_Mute(ast, ast.extra_pokey, mask >> 4);
 		}
 
-		static void ASAP_PlaySong(ASAP_State ast, int song, int duration) {
+		static void ASAP_PlaySong(ASAP_State ast, int song, int duration)
+		{
 			ast.current_song = song;
 			ast.current_duration = duration;
 			ast.blocks_played = 0;
@@ -6434,7 +6462,8 @@ namespace Sf.Asap {
 			ASAP_MutePokeyChannels(ast, 0);
 		}
 
-		static bool call_6502_player(ASAP_State ast) {
+		static bool call_6502_player(ASAP_State ast)
+		{
 			PokeySound_StartFrame(ast);
 			int player = ast.module_info.player;
 			switch (ast.module_info.type) {
@@ -6480,7 +6509,7 @@ namespace Sf.Asap {
 					break;
 				case 4:
 					Cpu_RunScanlines(ast, ast.module_info.fastplay);
- {
+					{
 						int i = ast.memory[69] - 1;
 						ast.memory[69] = (byte) (i);
 						if (i == 0)
@@ -6517,15 +6546,18 @@ namespace Sf.Asap {
 			return true;
 		}
 
-		static int ASAP_GetPosition(ASAP_State ast) {
+		static int ASAP_GetPosition(ASAP_State ast)
+		{
 			return ast.blocks_played * 10 / 441;
 		}
 
-		static int milliseconds_to_blocks(int milliseconds) {
+		static int milliseconds_to_blocks(int milliseconds)
+		{
 			return milliseconds * 441 / 10;
 		}
 
-		static void ASAP_Seek(ASAP_State ast, int position) {
+		static void ASAP_Seek(ASAP_State ast, int position)
+		{
 			int block = milliseconds_to_blocks(position);
 			if (block < ast.blocks_played)
 				ASAP_PlaySong(ast, ast.current_song, ast.current_duration);
@@ -6537,14 +6569,16 @@ namespace Sf.Asap {
 			ast.blocks_played = block;
 		}
 
-		static void serialize_int(byte[] buffer, int offset, int value) {
+		static void serialize_int(byte[] buffer, int offset, int value)
+		{
 			buffer[offset] = (byte) value;
 			buffer[offset + 1] = (byte) (value >> 8);
 			buffer[offset + 2] = (byte) (value >> 16);
 			buffer[offset + 3] = (byte) (value >> 24);
 		}
 
-		static void ASAP_GetWavHeader(ASAP_State ast, byte[] buffer, ASAP_SampleFormat format) {
+		static void ASAP_GetWavHeader(ASAP_State ast, byte[] buffer, ASAP_SampleFormat format)
+		{
 			int use_16bit = format != ASAP_SampleFormat.U8 ? 1 : 0;
 			int block_size = ast.module_info.channels << use_16bit;
 			int bytes_per_second = 44100 * block_size;
@@ -6584,7 +6618,8 @@ namespace Sf.Asap {
 			serialize_int(buffer, 40, n_bytes);
 		}
 
-		static int ASAP_GenerateAt(ASAP_State ast, byte[] buffer, int buffer_offset, int buffer_len, ASAP_SampleFormat format) {
+		static int ASAP_GenerateAt(ASAP_State ast, byte[] buffer, int buffer_offset, int buffer_len, ASAP_SampleFormat format)
+		{
 			if (ast.silence_cycles > 0 && ast.silence_cycles_counter <= 0)
 				return 0;
 			int block_shift = ast.module_info.channels - 1 + (format != ASAP_SampleFormat.U8 ? 1 : 0);
@@ -6604,7 +6639,8 @@ namespace Sf.Asap {
 			return block << block_shift;
 		}
 
-		static int ASAP_Generate(ASAP_State ast, byte[] buffer, int buffer_len, ASAP_SampleFormat format) {
+		static int ASAP_Generate(ASAP_State ast, byte[] buffer, int buffer_len, ASAP_SampleFormat format)
+		{
 			return ASAP_GenerateAt(ast, buffer, 0, buffer_len, format);
 		}
 	}
