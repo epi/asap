@@ -1,7 +1,7 @@
 /*
  * asapscan.c - 8-bit Atari music analyzer
  *
- * Copyright (C) 2007-2010  Piotr Fusik
+ * Copyright (C) 2007-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -38,6 +38,10 @@ static int silence_player_calls;
 static int loop_check_player_calls;
 static int loop_min_player_calls;
 static byte *registers_dump;
+#define HASH_BITS  8
+static int hash_first[1 << HASH_BITS];
+static int *hash_next;
+static int hash_last[1 << HASH_BITS];
 
 static ASAP_State asap;
 static abool dump = FALSE;
@@ -218,6 +222,28 @@ static abool store_pokey(byte *p, PokeyState *pst)
 	return is_silence;
 }
 
+static abool store_pokeys(int player_call)
+{
+	byte *p = registers_dump + 18 * player_call;
+	abool is_silence = store_pokey(p, &asap.base_pokey);
+	is_silence &= store_pokey(p + 9, &asap.extra_pokey);
+	return is_silence;
+}
+
+static abool has_loop_at(int first_call, int second_call)
+{
+	return memcmp(registers_dump + 18 * first_call, registers_dump + 18 * second_call, 18 * loop_check_player_calls) == 0;
+}
+
+static int get_hash(int player_call)
+{
+	int hash = 0;
+	int i;
+	for (i = 0; i < 18; i++)
+		hash += registers_dump[18 * player_call + i];
+	return hash;
+}
+
 static void print_pokey(PokeyState *pst)
 {
 	printf(
@@ -237,18 +263,27 @@ static int player_calls_to_milliseconds(int player_calls)
 	return (int) ceil(player_calls * asap.module_info.fastplay * 114.0 * 1000 / ASAP_MAIN_CLOCK(&asap));
 }
 
-void scan_song(int song)
+static void print_time(int player_calls, abool loop)
 {
-	int i;
+	int duration = player_calls_to_milliseconds(player_calls);
+	printf("TIME %02d:%02d.%02d%s\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100, loop ? " LOOP" : "");
+}
+
+static void scan_song(int song)
+{
+	int player_call;
 	int silence_run = 0;
-	int loop_bytes = 18 * loop_check_player_calls;
+	int running_hash = 0;
+	int i;
 	ASAP_PlaySong(&asap, song, -1);
 	if (acid)
 		scan_player_calls = seconds_to_player_calls(asap.module_info.durations[song] / 1000);
-	for (i = 0; i < scan_player_calls; i++) {
+	for (i = 0; i < 1 << HASH_BITS; i++)
+		hash_first[i] = -1;
+	for (player_call = 0; player_call < scan_player_calls; player_call++) {
 		call_6502_player(&asap);
 		if (dump) {
-			printf("%6.2f: ", i * asap.module_info.fastplay * 114.0 / ASAP_MAIN_CLOCK(&asap));
+			printf("%6.2f: ", player_call * asap.module_info.fastplay * 114.0 / ASAP_MAIN_CLOCK(&asap));
 			print_pokey(&asap.base_pokey);
 			if (asap.module_info.channels == 2) {
 				printf("  |  ");
@@ -270,35 +305,45 @@ void scan_song(int song)
 				features |= FEATURE_9_BIT_POLY;
 		}
 		if (detect_time) {
-			byte *p = registers_dump + 18 * i;
-			abool is_silence = store_pokey(p, &asap.base_pokey);
-			is_silence &= store_pokey(p + 9, &asap.extra_pokey);
-			if (is_silence) {
+			if (store_pokeys(player_call)) {
 				silence_run++;
 				if (silence_run >= silence_player_calls && /* do not trigger at the initial silence */ silence_run < i) {
-					int duration = player_calls_to_milliseconds(i + 1 - silence_run);
-					printf("TIME %02d:%02d.%02d\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100);
+					print_time(player_call + 1 - silence_run, FALSE);
 					return;
 				}
 			}
 			else
 				silence_run = 0;
-			if (i > loop_check_player_calls) {
-				byte *q;
-				if (memcmp(p - loop_bytes - 18, p - loop_bytes, loop_bytes) == 0) {
-					/* POKEY registers do not change - probably an ultrasound */
-					int duration = player_calls_to_milliseconds(i - loop_check_player_calls);
-					printf("TIME %02d:%02d.%02d\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100);
-					return;
-				}
-				for (q = registers_dump; q < p - loop_bytes - 18 * loop_min_player_calls; q += 18) {
-					if (memcmp(q, p - loop_bytes, loop_bytes) == 0) {
-						int duration = player_calls_to_milliseconds(i - loop_check_player_calls);
-						printf("TIME %02d:%02d.%02d LOOP\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100);
-						return;
+			if (player_call >= loop_check_player_calls) {
+				int first_call;
+				int second_call = player_call - loop_check_player_calls;
+				running_hash &= (1 << HASH_BITS) - 1;
+				/* Now running_hash is for the last loop_check_player_calls player calls before player_call. */
+				for (first_call = hash_first[running_hash]; first_call >= 0; first_call = hash_next[first_call]) {
+					if (has_loop_at(first_call, second_call)) {
+						int loop_len = second_call - first_call;
+						if (loop_len >= loop_min_player_calls) {
+							print_time(second_call, TRUE);
+							return;
+						}
+						if (loop_len == 1) {
+							/* POKEY registers do not change - probably an ultrasound */
+							print_time(first_call, FALSE);
+							return;
+						}
 					}
 				}
+				/* Insert into hashtable. */
+				if (hash_first[running_hash] >= 0)
+					hash_next[hash_last[running_hash]] = second_call;
+				else
+					hash_first[running_hash] = second_call;
+				hash_next[second_call] = -1;
+				hash_last[running_hash] = second_call;
+				/* Update running_hash. */
+				running_hash -= get_hash(second_call);
 			}
+			running_hash += get_hash(player_call);
 		}
 	}
 	if (detect_time)
@@ -399,7 +444,8 @@ int main(int argc, char *argv[])
 	loop_check_player_calls = seconds_to_player_calls(loop_check_seconds);
 	loop_min_player_calls = seconds_to_player_calls(loop_min_seconds);
 	registers_dump = malloc(scan_player_calls * 18);
-	if (registers_dump == NULL) {
+	hash_next = malloc(scan_player_calls * sizeof(hash_next[0]));
+	if (registers_dump == NULL || hash_next == NULL) {
 		fprintf(stderr, "asapscan: out of memory\n");
 		return 1;
 	}
