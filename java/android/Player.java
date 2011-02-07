@@ -1,7 +1,7 @@
 /*
  * Player.java - ASAP for Android
  *
- * Copyright (C) 2010  Piotr Fusik
+ * Copyright (C) 2010-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -147,9 +147,9 @@ public class Player extends Activity implements Runnable
 		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE, config, AudioFormat.ENCODING_PCM_8BIT, len, AudioTrack.MODE_STREAM);
 		audioTrack.play();
 
-		do {
+		for (;;) {
 			synchronized (this) {
-				if (isPaused()) {
+				if (len < buffer.length || isPaused()) {
 					try {
 						wait();
 					}
@@ -165,9 +165,7 @@ public class Player extends Activity implements Runnable
 				len = asap.generate(buffer, ASAP.FORMAT_U8);
 			}
 			audioTrack.write(buffer, 0, len);
-		} while (len == buffer.length);
-		audioTrack.flush();
-		audioTrack.stop();
+		}
 	}
 
 	private static InputStream httpGet(Uri uri)
