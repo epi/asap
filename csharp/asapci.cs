@@ -2615,7 +2615,7 @@ namespace Sf.Asap
 				else
 					pst = ast.extra_pokey;
 				pst.delta_buffer[(ast.cycle * 44100 + ast.sample_offset) / (ast.module_info.ntsc ? 1789772 : 1773447)] += data - ast.covox[addr] << 17;
-				ast.covox[addr] = (byte) (data);
+				ast.covox[addr] = (byte) data;
 			}
 			else if ((addr & 65311) == 53279) {
 				data &= 8;
@@ -2626,7 +2626,7 @@ namespace Sf.Asap
 				ast.extra_pokey.delta_buffer[sample] += delta;
 			}
 			else
-				ast.memory[addr] = (byte) (data);
+				ast.memory[addr] = (byte) data;
 		}
 
 		/// <summary>Runs 6502 emulation for the specified number of Atari scanlines.</summary>
@@ -2742,7 +2742,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr];
 						c = nz >> 7;
 						nz = nz << 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 8:
 						ast.memory[256 + s] = (byte) (((nz | nz >> 1) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 48);
@@ -2776,7 +2776,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 16:
 						if (nz < 128) {
@@ -2807,7 +2807,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr];
 						c = nz >> 7;
 						nz = nz << 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 24:
 						c = 0;
@@ -2842,7 +2842,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 32:
 						addr = ast.memory[pc++];
@@ -2873,7 +2873,7 @@ namespace Sf.Asap
 						nz = (nz << 1) + c;
 						c = nz >> 8;
 						nz &= 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 40:
 						s = s + 1 & 255;
@@ -2930,7 +2930,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 48:
 						if (nz >= 128) {
@@ -2962,7 +2962,7 @@ namespace Sf.Asap
 						nz = (nz << 1) + c;
 						c = nz >> 8;
 						nz &= 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 56:
 						c = 1;
@@ -2998,7 +2998,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 64:
 						s = s + 1 & 255;
@@ -3037,10 +3037,10 @@ namespace Sf.Asap
 						nz = ast.memory[addr];
 						c = nz & 1;
 						nz >>= 1;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 72:
-						ast.memory[256 + s] = (byte) (a);
+						ast.memory[256 + s] = (byte) a;
 						s = s - 1 & 255;
 						break;
 					case 73:
@@ -3075,7 +3075,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 80:
 						if ((vdi & 64) == 0) {
@@ -3106,7 +3106,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr];
 						c = nz & 1;
 						nz >>= 1;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 88:
 						vdi &= 72;
@@ -3152,7 +3152,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 96:
 						s = s + 1 & 255;
@@ -3223,7 +3223,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr] + (c << 8);
 						c = nz & 1;
 						nz >>= 1;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 104:
 						s = s + 1 & 255;
@@ -3316,7 +3316,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 112:
 						if ((vdi & 64) != 0) {
@@ -3395,7 +3395,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr] + (c << 8);
 						c = nz & 1;
 						nz >>= 1;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 120:
 						vdi |= 4;
@@ -3479,7 +3479,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 129:
 						addr = ast.memory[pc++] + x & 255;
@@ -3487,19 +3487,19 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, a);
 						else
-							ast.memory[addr] = (byte) (a);
+							ast.memory[addr] = (byte) a;
 						break;
 					case 132:
 						addr = ast.memory[pc++];
-						ast.memory[addr] = (byte) (y);
+						ast.memory[addr] = (byte) y;
 						break;
 					case 133:
 						addr = ast.memory[pc++];
-						ast.memory[addr] = (byte) (a);
+						ast.memory[addr] = (byte) a;
 						break;
 					case 134:
 						addr = ast.memory[pc++];
-						ast.memory[addr] = (byte) (x);
+						ast.memory[addr] = (byte) x;
 						break;
 					case 136:
 						nz = y = y - 1 & 255;
@@ -3513,7 +3513,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, y);
 						else
-							ast.memory[addr] = (byte) (y);
+							ast.memory[addr] = (byte) y;
 						break;
 					case 141:
 						addr = ast.memory[pc++];
@@ -3521,7 +3521,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, a);
 						else
-							ast.memory[addr] = (byte) (a);
+							ast.memory[addr] = (byte) a;
 						break;
 					case 142:
 						addr = ast.memory[pc++];
@@ -3529,7 +3529,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, x);
 						else
-							ast.memory[addr] = (byte) (x);
+							ast.memory[addr] = (byte) x;
 						break;
 					case 144:
 						if (c == 0) {
@@ -3550,19 +3550,19 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, a);
 						else
-							ast.memory[addr] = (byte) (a);
+							ast.memory[addr] = (byte) a;
 						break;
 					case 148:
 						addr = ast.memory[pc++] + x & 255;
-						ast.memory[addr] = (byte) (y);
+						ast.memory[addr] = (byte) y;
 						break;
 					case 149:
 						addr = ast.memory[pc++] + x & 255;
-						ast.memory[addr] = (byte) (a);
+						ast.memory[addr] = (byte) a;
 						break;
 					case 150:
 						addr = ast.memory[pc++] + y & 255;
-						ast.memory[addr] = (byte) (x);
+						ast.memory[addr] = (byte) x;
 						break;
 					case 152:
 						nz = a = y;
@@ -3573,7 +3573,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, a);
 						else
-							ast.memory[addr] = (byte) (a);
+							ast.memory[addr] = (byte) a;
 						break;
 					case 154:
 						s = x;
@@ -3584,7 +3584,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, a);
 						else
-							ast.memory[addr] = (byte) (a);
+							ast.memory[addr] = (byte) a;
 						break;
 					case 160:
 						nz = y = ast.memory[pc++];
@@ -3727,7 +3727,7 @@ namespace Sf.Asap
 						addr = ast.memory[pc++];
 						nz = ast.memory[addr];
 						nz = nz - 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 200:
 						nz = y = y + 1 & 255;
@@ -3769,7 +3769,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 208:
 						if ((nz & 255) != 0) {
@@ -3803,7 +3803,7 @@ namespace Sf.Asap
 						addr = ast.memory[pc++] + x & 255;
 						nz = ast.memory[addr];
 						nz = nz - 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 216:
 						vdi &= 68;
@@ -3841,7 +3841,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 224:
 						nz = ast.memory[pc++];
@@ -3893,7 +3893,7 @@ namespace Sf.Asap
 						addr = ast.memory[pc++];
 						nz = ast.memory[addr];
 						nz = nz + 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 232:
 						nz = x = x + 1 & 255;
@@ -3963,7 +3963,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 240:
 						if ((nz & 255) == 0) {
@@ -4019,7 +4019,7 @@ namespace Sf.Asap
 						addr = ast.memory[pc++] + x & 255;
 						nz = ast.memory[addr];
 						nz = nz + 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						break;
 					case 248:
 						vdi |= 8;
@@ -4079,7 +4079,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						break;
 					case 3:
 						addr = ast.memory[pc++] + x & 255;
@@ -4097,7 +4097,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a |= nz;
 						break;
 					case 4:
@@ -4121,7 +4121,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr];
 						c = nz >> 7;
 						nz = nz << 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						nz = a |= nz;
 						break;
 					case 11:
@@ -4148,7 +4148,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a |= nz;
 						break;
 					case 19:
@@ -4167,7 +4167,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a |= nz;
 						break;
 					case 23:
@@ -4175,7 +4175,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr];
 						c = nz >> 7;
 						nz = nz << 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						nz = a |= nz;
 						break;
 					case 27:
@@ -4194,7 +4194,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a |= nz;
 						break;
 					case 28:
@@ -4223,7 +4223,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a |= nz;
 						break;
 					case 35:
@@ -4243,7 +4243,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a &= nz;
 						break;
 					case 39:
@@ -4252,7 +4252,7 @@ namespace Sf.Asap
 						nz = (nz << 1) + c;
 						c = nz >> 8;
 						nz &= 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						nz = a &= nz;
 						break;
 					case 47:
@@ -4272,7 +4272,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a &= nz;
 						break;
 					case 51:
@@ -4292,7 +4292,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a &= nz;
 						break;
 					case 55:
@@ -4301,7 +4301,7 @@ namespace Sf.Asap
 						nz = (nz << 1) + c;
 						c = nz >> 8;
 						nz &= 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						nz = a &= nz;
 						break;
 					case 59:
@@ -4321,7 +4321,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a &= nz;
 						break;
 					case 63:
@@ -4341,7 +4341,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a &= nz;
 						break;
 					case 67:
@@ -4360,7 +4360,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a ^= nz;
 						break;
 					case 71:
@@ -4368,7 +4368,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr];
 						c = nz & 1;
 						nz >>= 1;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						nz = a ^= nz;
 						break;
 					case 75:
@@ -4392,7 +4392,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a ^= nz;
 						break;
 					case 83:
@@ -4411,7 +4411,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a ^= nz;
 						break;
 					case 87:
@@ -4419,7 +4419,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr];
 						c = nz & 1;
 						nz >>= 1;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						nz = a ^= nz;
 						break;
 					case 91:
@@ -4438,7 +4438,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a ^= nz;
 						break;
 					case 95:
@@ -4457,7 +4457,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						nz = a ^= nz;
 						break;
 					case 99:
@@ -4477,7 +4477,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a + data + c;
@@ -4509,7 +4509,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr] + (c << 8);
 						c = nz & 1;
 						nz >>= 1;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a + data + c;
@@ -4570,7 +4570,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a + data + c;
@@ -4614,7 +4614,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a + data + c;
@@ -4646,7 +4646,7 @@ namespace Sf.Asap
 						nz = ast.memory[addr] + (c << 8);
 						c = nz & 1;
 						nz >>= 1;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a + data + c;
@@ -4690,7 +4690,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a + data + c;
@@ -4734,7 +4734,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a + data + c;
@@ -4768,12 +4768,12 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, data);
 						else
-							ast.memory[addr] = (byte) (data);
+							ast.memory[addr] = (byte) data;
 						break;
 					case 135:
 						addr = ast.memory[pc++];
 						data = a & x;
-						ast.memory[addr] = (byte) (data);
+						ast.memory[addr] = (byte) data;
 						break;
 					case 139:
 						data = ast.memory[pc++];
@@ -4787,7 +4787,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, data);
 						else
-							ast.memory[addr] = (byte) (data);
+							ast.memory[addr] = (byte) data;
 						break;
 					case 147:
 						{
@@ -4802,13 +4802,13 @@ namespace Sf.Asap
 							if ((addr & 63744) == 53248)
 								ASAP_PutByte(ast, addr, data);
 							else
-								ast.memory[addr] = (byte) (data);
+								ast.memory[addr] = (byte) data;
 						}
 						break;
 					case 151:
 						addr = ast.memory[pc++] + y & 255;
 						data = a & x;
-						ast.memory[addr] = (byte) (data);
+						ast.memory[addr] = (byte) data;
 						break;
 					case 155:
 						s = a & x;
@@ -4823,7 +4823,7 @@ namespace Sf.Asap
 							if ((addr & 63744) == 53248)
 								ASAP_PutByte(ast, addr, data);
 							else
-								ast.memory[addr] = (byte) (data);
+								ast.memory[addr] = (byte) data;
 						}
 						break;
 					case 156:
@@ -4838,7 +4838,7 @@ namespace Sf.Asap
 							if ((addr & 63744) == 53248)
 								ASAP_PutByte(ast, addr, data);
 							else
-								ast.memory[addr] = (byte) (data);
+								ast.memory[addr] = (byte) data;
 						}
 						break;
 					case 158:
@@ -4853,7 +4853,7 @@ namespace Sf.Asap
 							if ((addr & 63744) == 53248)
 								ASAP_PutByte(ast, addr, data);
 							else
-								ast.memory[addr] = (byte) (data);
+								ast.memory[addr] = (byte) data;
 						}
 						break;
 					case 159:
@@ -4868,7 +4868,7 @@ namespace Sf.Asap
 							if ((addr & 63744) == 53248)
 								ASAP_PutByte(ast, addr, data);
 							else
-								ast.memory[addr] = (byte) (data);
+								ast.memory[addr] = (byte) data;
 						}
 						break;
 					case 163:
@@ -4928,7 +4928,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						c = a >= nz ? 1 : 0;
 						nz = a - nz & 255;
 						break;
@@ -4936,7 +4936,7 @@ namespace Sf.Asap
 						addr = ast.memory[pc++];
 						nz = ast.memory[addr];
 						nz = nz - 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						c = a >= nz ? 1 : 0;
 						nz = a - nz & 255;
 						break;
@@ -4961,7 +4961,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						c = a >= nz ? 1 : 0;
 						nz = a - nz & 255;
 						break;
@@ -4980,7 +4980,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						c = a >= nz ? 1 : 0;
 						nz = a - nz & 255;
 						break;
@@ -4988,7 +4988,7 @@ namespace Sf.Asap
 						addr = ast.memory[pc++] + x & 255;
 						nz = ast.memory[addr];
 						nz = nz - 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						c = a >= nz ? 1 : 0;
 						nz = a - nz & 255;
 						break;
@@ -5007,7 +5007,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						c = a >= nz ? 1 : 0;
 						nz = a - nz & 255;
 						break;
@@ -5026,7 +5026,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						c = a >= nz ? 1 : 0;
 						nz = a - nz & 255;
 						break;
@@ -5045,7 +5045,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a - data - 1 + c;
@@ -5065,7 +5065,7 @@ namespace Sf.Asap
 						addr = ast.memory[pc++];
 						nz = ast.memory[addr];
 						nz = nz + 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a - data - 1 + c;
@@ -5096,7 +5096,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a - data - 1 + c;
@@ -5127,7 +5127,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a - data - 1 + c;
@@ -5147,7 +5147,7 @@ namespace Sf.Asap
 						addr = ast.memory[pc++] + x & 255;
 						nz = ast.memory[addr];
 						nz = nz + 1 & 255;
-						ast.memory[addr] = (byte) (nz);
+						ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a - data - 1 + c;
@@ -5178,7 +5178,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a - data - 1 + c;
@@ -5209,7 +5209,7 @@ namespace Sf.Asap
 						if ((addr & 63744) == 53248)
 							ASAP_PutByte(ast, addr, nz);
 						else
-							ast.memory[addr] = (byte) (nz);
+							ast.memory[addr] = (byte) nz;
 						data = nz;
 						{
 							int tmp = a - data - 1 + c;
@@ -5307,7 +5307,7 @@ namespace Sf.Asap
 						module_info.loops[module_info.songs] = true;
 					break;
 				}
-				seen[pos] = (byte) (1);
+				seen[pos] = 1;
 				int p1 = module[518 + pos];
 				int p2 = module[603 + pos];
 				int p3 = module[688 + pos];
@@ -5349,7 +5349,7 @@ namespace Sf.Asap
 				p2 = rep_times > 0 ? 3 : 2;
 				for (p1 = 0; p1 < 85; p1++)
 					if (seen[p1] == 1)
-						seen[p1] = (byte) (p2);
+						seen[p1] = (byte) p2;
 				player_calls += tempo * (module_info.type == 6 ? 48 : 64);
 				pos++;
 			}
@@ -5405,7 +5405,7 @@ namespace Sf.Asap
 		{
 			while (pos < 128 && !seen[pos] && is_dlt_track_empty(module, pos))
 				seen[pos++] = true;
-			module_info.song_pos[module_info.songs] = (byte) (pos);
+			module_info.song_pos[module_info.songs] = (byte) pos;
 			int player_calls = 0;
 			bool loop = false;
 			int tempo = 6;
@@ -5469,7 +5469,7 @@ namespace Sf.Asap
 						module_info.loops[module_info.songs] = true;
 					break;
 				}
-				seen[pos] = (byte) (1);
+				seen[pos] = 1;
 				global_seen[pos] = true;
 				int i = module[464 + pos * 2];
 				if (i == 255) {
@@ -5491,7 +5491,7 @@ namespace Sf.Asap
 					break;
 				for (i = 0; i < song_len; i++)
 					if (seen[i] == 1)
-						seen[i] = (byte) (2);
+						seen[i] = 2;
 				for (int pattern_rows = module[462]; --pattern_rows >= 0;) {
 					for (ch = 3; ch >= 0; ch--) {
 						if (pattern_offset[ch] == 0 || --blank_rows_counter[ch] >= 0)
@@ -5541,7 +5541,7 @@ namespace Sf.Asap
 			module_info.songs = 0;
 			for (int pos = 0; pos < song_len && module_info.songs < 32; pos++) {
 				if (!global_seen[pos]) {
-					module_info.song_pos[module_info.songs] = (byte) (pos);
+					module_info.song_pos[module_info.songs] = (byte) pos;
 					parse_mpt_song(module_info, module, global_seen, song_len, pos);
 				}
 			}
@@ -5631,7 +5631,7 @@ namespace Sf.Asap
 						module_info.loops[module_info.songs] = true;
 					break;
 				}
-				seen[pos] = (byte) (1);
+				seen[pos] = 1;
 				global_seen[pos] = true;
 				if (module[song_offset + (pos << pos_shift)] == 254) {
 					pos = module[song_offset + (pos << pos_shift) + 1];
@@ -5648,7 +5648,7 @@ namespace Sf.Asap
 				}
 				for (int i = 0; i < song_len; i++)
 					if (seen[i] == 1)
-						seen[i] = (byte) (2);
+						seen[i] = 2;
 				for (int pattern_rows = module[10]; --pattern_rows >= 0;) {
 					for (int ch = 0; ch < 1 << pos_shift; ch++) {
 						if (--blank_rows[ch] > 0)
@@ -5740,7 +5740,7 @@ namespace Sf.Asap
 			module_info.songs = 0;
 			for (int pos = 0; pos < song_len && module_info.songs < 32; pos++) {
 				if (!global_seen[pos]) {
-					module_info.song_pos[module_info.songs] = (byte) (pos);
+					module_info.song_pos[module_info.songs] = (byte) pos;
 					parse_rmt_song(module_info, module, global_seen, song_len, pos_shift, pos);
 				}
 			}
@@ -6486,15 +6486,15 @@ namespace Sf.Asap
 						s = s - 1 & 255;
 						ast.memory[256 + s] = (byte) (((ast.cpu_nz | ast.cpu_nz >> 1) & 128) + ast.cpu_vdi + ((ast.cpu_nz & 255) == 0 ? 2 : 0) + ast.cpu_c + 32);
 						s = s - 1 & 255;
-						ast.memory[256 + s] = (byte) (ast.cpu_a);
+						ast.memory[256 + s] = (byte) ast.cpu_a;
 						s = s - 1 & 255;
-						ast.memory[256 + s] = (byte) (ast.cpu_x);
+						ast.memory[256 + s] = (byte) ast.cpu_x;
 						s = s - 1 & 255;
-						ast.memory[256 + s] = (byte) (ast.cpu_y);
+						ast.memory[256 + s] = (byte) ast.cpu_y;
 						s = s - 1 & 255;
-						ast.memory[256 + s] = (byte) (209);
+						ast.memory[256 + s] = 209;
 						s = s - 1 & 255;
-						ast.memory[256 + s] = (byte) (255);
+						ast.memory[256 + s] = 255;
 						s = s - 1 & 255;
 						ast.cpu_s = s;
 						ast.memory[53760] = 104;
@@ -6511,7 +6511,7 @@ namespace Sf.Asap
 					Cpu_RunScanlines(ast, ast.module_info.fastplay);
 					{
 						int i = ast.memory[69] - 1;
-						ast.memory[69] = (byte) (i);
+						ast.memory[69] = (byte) i;
 						if (i == 0)
 							ast.memory[45179] = (byte) (ast.memory[45179] + 1);
 					}
@@ -6603,11 +6603,11 @@ namespace Sf.Asap
 			buffer[19] = 0;
 			buffer[20] = 1;
 			buffer[21] = 0;
-			buffer[22] = (byte) (ast.module_info.channels);
+			buffer[22] = (byte) ast.module_info.channels;
 			buffer[23] = 0;
 			serialize_int(buffer, 24, 44100);
 			serialize_int(buffer, 28, bytes_per_second);
-			buffer[32] = (byte) (block_size);
+			buffer[32] = (byte) block_size;
 			buffer[33] = 0;
 			buffer[34] = (byte) (8 << use_16bit);
 			buffer[35] = 0;
