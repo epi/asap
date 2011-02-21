@@ -31,9 +31,8 @@
    nz contains 6502 flags N and Z.
    N is set if (nz >= 0x80). Z is set if ((nz & 0xff) == 0).
    Usually nz is simply assigned the unsigned 8-bit operation result.
-   There are just a few operations (ADC in decimal mode, BIT, PLP and RTI)
-   where both N and Z may be set. In these cases, N is reflected by the 8th
-   (not 7th) bit of nz.
+   There are just a few operations (BIT, PLP and RTI) where both N and Z may
+   be set. In these cases, N is reflected by the 8th (not 7th) bit of nz.
    vdi contains rarely used flags V, D and I, as a combination
    of V_FLAG, D_FLAG and I_FLAG. Other vdi bits are clear.
 
@@ -106,9 +105,12 @@ END_CONST_ARRAY;
 		else { \
 			/* decimal mode */ \
 			V(int, al) = (a & 0x0f) + (data & 0x0f) + c; \
-			if (al >= 10) \
+			if (al >= 10) { \
 				tmp += (al < 26) ? 6 : -10; \
-			nz = ((tmp & 0x80) << 1) + (nz != 0 ? 1 : 0); \
+				/* Set N from tmp, leave Z unchanged. Zero can only change to 6, this doesn't affect N. */ \
+				if (nz != 0) \
+					nz = (tmp & 0x80) + 1; \
+			} \
 			vdi = (vdi & (D_FLAG | I_FLAG)) + (((~(data ^ a) & (a ^ tmp)) >> 1) & V_FLAG); \
 			if (tmp >= 0xa0) { \
 				c = 1; \
