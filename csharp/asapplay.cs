@@ -1,7 +1,7 @@
 /*
  * asapplay.cs - .NET ASAP player
  *
- * Copyright (C) 2010  Piotr Fusik
+ * Copyright (C) 2010-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -31,42 +31,42 @@ public class ASAPWavStream : Stream
 {
 	readonly ASAP asap = new ASAP();
 	readonly byte[] buffer = new byte[8192];
-	int buffer_pos = 0;
-	int buffer_len;
+	int bufferPos = 0;
+	int bufferLen;
 
 	public ASAPWavStream(string inputFilename, int song, int duration)
 	{
 		Stream s = File.OpenRead(inputFilename);
-		byte[] module = new byte[ASAP.ModuleMax];
-		int module_len = s.Read(module, 0, module.Length);
+		byte[] module = new byte[ASAPInfo.ModuleMax];
+		int moduleLen = s.Read(module, 0, module.Length);
 		s.Close();
-		asap.Load(inputFilename, module, module_len);
-		ASAP_ModuleInfo module_info = asap.GetModuleInfo();
+		asap.Load(inputFilename, module, moduleLen);
+		ASAPInfo moduleInfo = asap.ModuleInfo;
 		if (song < 0)
-			song = module_info.default_song;
+			song = moduleInfo.DefaultSong;
 		if (duration < 0) {
-			duration = module_info.durations[song];
+			duration = moduleInfo.Durations[song];
 			if (duration < 0)
 				duration = 180 * 1000;
 		}
 		asap.PlaySong(song, duration);
-		asap.GetWavHeader(buffer, ASAP_SampleFormat.S16LE);
-		buffer_len = ASAP.WavHeaderBytes;
+		asap.GetWavHeader(buffer, ASAPSampleFormat.S16LE);
+		bufferLen = ASAP.WavHeaderBytes;
 	}
 
 	public override int Read(byte[] outputBuffer, int offset, int count)
 	{
-		int i = buffer_pos;
-		if (i >= buffer_len) {
-			buffer_len = asap.Generate(buffer, ASAP_SampleFormat.S16LE);
-			if (buffer_len == 0)
+		int i = bufferPos;
+		if (i >= bufferLen) {
+			bufferLen = asap.Generate(buffer, buffer.Length, ASAPSampleFormat.S16LE);
+			if (bufferLen == 0)
 				return 0;
 			i = 0;
 		}
-		if (count > buffer_len - i)
-			count = buffer_len - i;
+		if (count > bufferLen - i)
+			count = bufferLen - i;
 		Array.Copy(buffer, i, outputBuffer, offset, count);
-		buffer_pos = i + count;
+		bufferPos = i + count;
 		return count;
 	}
 
@@ -161,7 +161,7 @@ public class asapplay
 
 	static void SetTime(string s)
 	{
-		duration = ASAP.ParseDuration(s);
+		duration = ASAPInfo.ParseDuration(s);
 	}
 
 	static void ProcessFile(string inputFilename)
@@ -194,7 +194,7 @@ public class asapplay
 				noInputFiles = false;
 			}
 			else if (arg == "-v" || arg == "--version") {
-				Console.WriteLine("asapplay (.NET) " + ASAP.Version);
+				Console.WriteLine("asapplay (.NET) " + ASAPInfo.Version);
 				noInputFiles = false;
 			}
 			else

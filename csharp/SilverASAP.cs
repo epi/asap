@@ -1,7 +1,7 @@
 /*
  * SilverASAP.cs - Silverlight version of ASAP
  *
- * Copyright (C) 2010  Piotr Fusik
+ * Copyright (C) 2010-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -55,7 +55,7 @@ class ASAPMediaStreamSource : MediaStreamSource
 
 	protected override void OpenMediaAsync()
 	{
-		int channels = asap.GetModuleInfo().channels;
+		int channels = asap.ModuleInfo.Channels;
 		int blockSize = channels * BitsPerSample >> 3;
 		string waveFormatHex = string.Format("0100{0:X2}00{1}{2}{3:X2}00{4:X2}000000",
 			channels, LittleEndianHex(ASAP.SampleRate), LittleEndianHex(ASAP.SampleRate * blockSize),
@@ -75,13 +75,13 @@ class ASAPMediaStreamSource : MediaStreamSource
 	{
 		byte[] buffer = new byte[8192];
 		int blocksPlayed;
-		int buffer_len;
+		int bufferLen;
 		lock (asap) {
-			blocksPlayed = asap.GetBlocksPlayed();
-			buffer_len = asap.Generate(buffer, BitsPerSample == 8 ? ASAP_SampleFormat.U8 : ASAP_SampleFormat.S16LE);
+			blocksPlayed = asap.BlocksPlayed;
+			bufferLen = asap.Generate(buffer, buffer.Length, BitsPerSample == 8 ? ASAPSampleFormat.U8 : ASAPSampleFormat.S16LE);
 		}
 		Stream s = new MemoryStream(buffer);
-		MediaStreamSample mss = new MediaStreamSample(this.mediaStreamDescription, s, 0, buffer_len,
+		MediaStreamSample mss = new MediaStreamSample(this.mediaStreamDescription, s, 0, bufferLen,
 			blocksPlayed * 10000000 / ASAP.SampleRate, SampleAttributes);
 		ReportGetSampleCompleted(mss);
 	}
@@ -129,7 +129,7 @@ public class SilverASAP : Application
 	{
 		set
 		{
-			this.defaultPlaybackTime = ASAP.ParseDuration(value);
+			this.defaultPlaybackTime = string.IsNullOrEmpty(value) ? -1 : ASAPInfo.ParseDuration(value);
 		}
 	}
 
@@ -138,10 +138,10 @@ public class SilverASAP : Application
 	{
 		set
 		{
-			if (value == "ONCE")
-				this.loopPlaybackTime = Once;
-			else
-				this.loopPlaybackTime = ASAP.ParseDuration(value);
+			this.loopPlaybackTime =
+				string.IsNullOrEmpty(value) ? -1 :
+				value == "ONCE" ? Once :
+				ASAPInfo.ParseDuration(value);
 		}
 	}
 
@@ -151,17 +151,17 @@ public class SilverASAP : Application
 		if (e.Cancelled || e.Error != null)
 			return;
 		byte[] module = new byte[e.Result.Length];
-		int module_len = e.Result.Read(module, 0, module.Length);
+		int moduleLen = e.Result.Read(module, 0, module.Length);
 
 		ASAP asap = new ASAP();
-		asap.Load(this.filename, module, module_len);
-		ASAP_ModuleInfo module_info = asap.GetModuleInfo();
+		asap.Load(this.filename, module, moduleLen);
+		ASAPInfo moduleInfo = asap.ModuleInfo;
 		if (this.song < 0)
-			this.song = module_info.default_song;
-		int duration = module_info.durations[this.song];
+			this.song = moduleInfo.DefaultSong;
+		int duration = moduleInfo.Durations[this.song];
 		if (duration < 0)
 			duration = this.defaultPlaybackTime;
-		else if (module_info.loops[this.song] && this.loopPlaybackTime != Once)
+		else if (moduleInfo.Loops[this.song] && this.loopPlaybackTime != Once)
 			duration = this.loopPlaybackTime;
 		asap.PlaySong(this.song, duration);
 

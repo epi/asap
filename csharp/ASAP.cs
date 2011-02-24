@@ -51,8 +51,7 @@ namespace Sf.Asap
 		public static ASAP_ModuleInfo GetModuleInfo(string filename, byte[] module, int module_len)
 		{
 			ASAP_ModuleInfo module_info = new ASAP_ModuleInfo();
-			if (!ASAP_GetModuleInfo(module_info, filename, module, module_len))
-				throw new Exception();
+			ASAP_GetModuleInfo(module_info, filename, module, module_len);
 			return module_info;
 		}
 
@@ -75,8 +74,7 @@ namespace Sf.Asap
 		/// <param name="module_len">Length of the file.</param>
 		public void Load(string filename, byte[] module, int module_len)
 		{
-			if (!ASAP_Load(ast, filename, module, module_len))
-				throw new Exception();
+			ASAP_Load(ast, filename, module, module_len);
 		}
 
 		/// <summary>Returns information about the loaded module.</summary>

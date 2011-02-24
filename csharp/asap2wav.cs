@@ -1,7 +1,7 @@
 /*
  * asap2wav.cs - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2008-2009  Piotr Fusik
+ * Copyright (C) 2008-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -31,7 +31,7 @@ public class asap2wav
 	static string outputFilename = null;
 	static bool outputHeader = true;
 	static int song = -1;
-	static ASAP_SampleFormat format = ASAP_SampleFormat.S16LE;
+	static ASAPSampleFormat format = ASAPSampleFormat.S16LE;
 	static int duration = -1;
 	static int muteMask = 0;
 
@@ -61,7 +61,7 @@ public class asap2wav
 
 	static void SetTime(string s)
 	{
-		duration = ASAP.ParseDuration(s);
+		duration = ASAPInfo.ParseDuration(s);
 	}
 
 	static void SetMuteMask(string s)
@@ -77,16 +77,16 @@ public class asap2wav
 	static void ProcessFile(string inputFilename)
 	{
 		Stream s = File.OpenRead(inputFilename);
-		byte[] module = new byte[ASAP.ModuleMax];
-		int module_len = s.Read(module, 0, module.Length);
+		byte[] module = new byte[ASAPInfo.ModuleMax];
+		int moduleLen = s.Read(module, 0, module.Length);
 		s.Close();
 		ASAP asap = new ASAP();
-		asap.Load(inputFilename, module, module_len);
-		ASAP_ModuleInfo module_info = asap.GetModuleInfo();
+		asap.Load(inputFilename, module, moduleLen);
+		ASAPInfo moduleInfo = asap.ModuleInfo;
 		if (song < 0)
-			song = module_info.default_song;
+			song = moduleInfo.DefaultSong;
 		if (duration < 0) {
-			duration = module_info.durations[song];
+			duration = moduleInfo.Durations[song];
 			if (duration < 0)
 				duration = 180 * 1000;
 		}
@@ -102,11 +102,11 @@ public class asap2wav
 			asap.GetWavHeader(buffer, format);
 			s.Write(buffer, 0, ASAP.WavHeaderBytes);
 		}
-		int n_bytes;
+		int nBytes;
 		do {
-			n_bytes = asap.Generate(buffer, format);
-			s.Write(buffer, 0, n_bytes);
-		} while (n_bytes == buffer.Length);
+			nBytes = asap.Generate(buffer, buffer.Length, format);
+			s.Write(buffer, 0, nBytes);
+		} while (nBytes == buffer.Length);
 		s.Close();
 		outputFilename = null;
 		song = -1;
@@ -135,9 +135,9 @@ public class asap2wav
 			else if (arg.StartsWith("--time="))
 				SetTime(arg.Substring(7));
 			else if (arg == "-b" || arg == "--byte-samples")
-				format = ASAP_SampleFormat.U8;
+				format = ASAPSampleFormat.U8;
 			else if (arg == "-w" || arg == "--word-samples")
-				format = ASAP_SampleFormat.S16LE;
+				format = ASAPSampleFormat.S16LE;
 			else if (arg == "--raw")
 				outputHeader = false;
 			else if (arg == "-m")
@@ -149,7 +149,7 @@ public class asap2wav
 				noInputFiles = false;
 			}
 			else if (arg == "-v" || arg == "--version") {
-				Console.WriteLine("ASAP2WAV (.NET) " + ASAP.Version);
+				Console.WriteLine("ASAP2WAV (.NET) " + ASAPInfo.Version);
 				noInputFiles = false;
 			}
 			else
