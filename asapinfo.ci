@@ -1,4 +1,4 @@
-// asapinfo.ci - ASAP in the Ci programming language
+// asapinfo.ci - module parser
 //
 // Copyright (C) 2010-2011  Piotr Fusik
 //
@@ -39,9 +39,13 @@ enum ASAPModuleType
 /// Information about a music file.
 public class ASAPInfo
 {
+	/// ASAP version - major part.
 	public const int VersionMajor = 3;
+	/// ASAP version - minor part.
 	public const int VersionMinor = 0;
+	/// ASAP version - micro part.
 	public const int VersionMicro = 0;
+	/// ASAP version as a string.
 	public const string Version = VersionMajor + "." + VersionMinor + "." + VersionMicro;
 
 	/// Maximum length of a supported input file.
@@ -51,11 +55,11 @@ public class ASAPInfo
 	/// Author's name.
 	/// A nickname may be included in parentheses after the real name.
 	/// Multiple authors are separated with `" & "`.
-	/// Empty string means the author is unknown.
+	/// An empty string means the author is unknown.
 	public string(127) Author;
 
 	/// Music title.
-	/// Empty string means the title is unknown.
+	/// An empty string means the title is unknown.
 	public string(127) Name;
 
 	/// Music creation date.
@@ -65,7 +69,7 @@ public class ASAPInfo
 	/// * DD/MM/YYYY
 	/// * YYYY-YYYY
 	///
-	/// Empty string means the date is unknown.
+	/// An empty string means the date is unknown.
 	public string(127) Date;
 
 	/// 1 for mono or 2 for stereo.
@@ -93,9 +97,7 @@ public class ASAPInfo
 	public bool[SongsMax] Loops;
 
 	bool Ntsc;
-
 	ASAPModuleType Type;
-
 	int Fastplay;
 	int Music;
 	int Init;
@@ -925,7 +927,11 @@ public class ASAPInfo
 		}
 	}
 
-	public static int ParseDuration(string s)
+	/// Parses a string and returns the number of milliseconds it represents.
+	// TODO: <returns>Number of milliseconds represented by the string.</returns>
+	public static int ParseDuration(
+		/// Time in the `"mm:ss.xxx"` format.
+		string s)
 	{
 		int i = 0;
 		int n = s.Length;
@@ -1159,12 +1165,18 @@ public class ASAPInfo
 		}
 	}
 
-	public static bool IsOurFile(string filename)
+	/// Checks whether the filename represents a module type supported by ASAP.
+	public static bool IsOurFile(
+		/// Filename to check the extension of.
+		string filename)
 	{
 		return IsOurPackedExt(GetPackedExt(filename));
 	}
 
-	public static bool IsOurExt(string ext)
+	/// Checks whether the extension represents a module type supported by ASAP.
+	public static bool IsOurExt(
+		/// Filename extension without the leading dot.
+		string ext)
 	{
 		return ext.Length == 3 && IsOurPackedExt(ASAP_EXT(ext));
 	}
@@ -1249,7 +1261,14 @@ public class ASAPInfo
 		}
 	}
 
-	public void Load(string filename, byte[] module, int moduleLen)
+	/// Loads file information.
+	public void Load(
+		/// Filename, used to determine the format.
+		string filename,
+		/// Contents of the file.
+		byte[] module,
+		/// Length of the file.
+		int moduleLen)
 	{
 		ParseFile(null, filename, module, moduleLen);
 	}

@@ -6,6 +6,8 @@ namespace Sf.Asap
 	/// <remarks>This class performs no I/O operations - all music data must be passed in byte arrays.</remarks>
 	public class ASAP
 	{
+		/// <summary>Current playback position in blocks.</summary>
+		/// <remarks>A block is one sample or a pair of samples for stereo.</remarks>
 		public int BlocksPlayed;
 
 		internal void Call6502(int addr)
@@ -86,6 +88,10 @@ namespace Sf.Asap
 		internal int CurrentSong;
 		internal int Cycle;
 
+		/// <summary>Enables silence detection.</summary>
+		/// <remarks>Causes playback to stop after the specified period of silence.
+		/// Must be called after each call of <c>Load</c>.</remarks>
+		/// <param name="seconds">Length of silence which ends playback.</param>
 		public void DetectSilence(int seconds)
 		{
 			this.SilenceCycles = seconds * this.Pokeys.MainClock;
@@ -136,6 +142,10 @@ namespace Sf.Asap
 			return cycles;
 		}
 
+		/// <summary>Fills the specified buffer with generated samples.</summary>
+		/// <param name="buffer">The destination buffer.</param>
+		/// <param name="bufferLen">Number of bytes to fill.</param>
+		/// <param name="format">Format of samples.</param>
 		public int Generate(byte[] buffer, int bufferLen, ASAPSampleFormat format)
 		{
 			return GenerateAt(buffer, 0, bufferLen, format);
@@ -179,6 +189,10 @@ namespace Sf.Asap
 			return this.BlocksPlayed * 10 / 441;
 		}
 
+		/// <summary>Fills leading bytes of the specified buffer with WAV file header.</summary>
+		/// <remarks>The number of changed bytes is <c>WavHeaderBytes</c>.</remarks>
+		/// <param name="buffer">The destination buffer.</param>
+		/// <param name="format">Format of samples.</param>
 		public void GetWavHeader(byte[] buffer, ASAPSampleFormat format)
 		{
 			int use16bit = format != ASAPSampleFormat.U8 ? 1 : 0;
@@ -254,6 +268,10 @@ namespace Sf.Asap
 			this.NextEventCycle = nextEventCycle;
 		}
 
+		/// <summary>Loads music data ("module").</summary>
+		/// <param name="filename">Filename, used to determine the format.</param>
+		/// <param name="module">Contents of the file.</param>
+		/// <param name="moduleLen">Length of the file.</param>
 		public void Load(string filename, byte[] module, int moduleLen)
 		{
 			this.SilenceCycles = 0;
@@ -265,8 +283,11 @@ namespace Sf.Asap
 		{
 			return milliseconds * 441 / 10;
 		}
+		/// <summary>Information about the loaded module.</summary>
 		public readonly ASAPInfo ModuleInfo = new ASAPInfo();
 
+		/// <summary>Mutes the selected POKEY channels.</summary>
+		/// <param name="mask">An 8-bit mask which selects POKEY channels to be muted.</param>
 		public void MutePokeyChannels(int mask)
 		{
 			this.Pokeys.BasePokey.Mute(mask);
@@ -499,7 +520,7 @@ namespace Sf.Asap
 		/// <summary>Author's name.</summary>
 		/// <remarks>A nickname may be included in parentheses after the real name.
 		/// Multiple authors are separated with <c>" &amp; "</c>.
-		/// Empty string means the author is unknown.</remarks>
+		/// An empty string means the author is unknown.</remarks>
 		public string Author;
 		/// <summary>1 for mono or 2 for stereo.</summary>
 		public int Channels;
@@ -512,7 +533,7 @@ namespace Sf.Asap
 		/// <item>DD/MM/YYYY</item>
 		/// <item>YYYY-YYYY</item>
 		/// </list>
-		/// Empty string means the date is unknown.</remarks>
+		/// An empty string means the date is unknown.</remarks>
 		public string Date;
 		/// <summary>0-based index of the "main" song.</summary>
 		/// <remarks>The specified song should be played by default.</remarks>
@@ -632,11 +653,15 @@ namespace Sf.Asap
 			return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
 		}
 
+		/// <summary>Checks whether the extension represents a module type supported by ASAP.</summary>
+		/// <param name="ext">Filename extension without the leading dot.</param>
 		public static bool IsOurExt(string ext)
 		{
 			return ext.Length == 3 && IsOurPackedExt(ext[0] + (ext[1] << 8) + (ext[2] << 16) | 2105376);
 		}
 
+		/// <summary>Checks whether the filename represents a module type supported by ASAP.</summary>
+		/// <param name="filename">Filename to check the extension of.</param>
 		public static bool IsOurFile(string filename)
 		{
 			return IsOurPackedExt(GetPackedExt(filename));
@@ -664,6 +689,10 @@ namespace Sf.Asap
 			}
 		}
 
+		/// <summary>Loads information.</summary>
+		/// <param name="filename">Filename, used to determine the format.</param>
+		/// <param name="module">Contents of the file.</param>
+		/// <param name="moduleLen">Length of the file.</param>
 		public void Load(string filename, byte[] module, int moduleLen)
 		{
 			ParseFile(null, filename, module, moduleLen);
@@ -711,7 +740,7 @@ namespace Sf.Asap
 		public const int ModuleMax = 65000;
 		internal int Music;
 		/// <summary>Music title.</summary>
-		/// <remarks>Empty string means the title is unknown.</remarks>
+		/// <remarks>An empty string means the title is unknown.</remarks>
 		public string Name;
 		internal bool Ntsc;
 
@@ -881,6 +910,8 @@ namespace Sf.Asap
 			}
 		}
 
+		/// <summary>Parses a string and returns the number of milliseconds it represents.</summary>
+		/// <param name="s">Time in the <c>"mm:ss.xxx"</c> format.</param>
 		public static int ParseDuration(string s)
 		{
 			int i = 0;
@@ -1665,9 +1696,13 @@ namespace Sf.Asap
 		/// <summary>Maximum number of songs in a file.</summary>
 		public const int SongsMax = 32;
 		internal ASAPModuleType Type;
+		/// <summary>ASAP version as a string.</summary>
 		public const string Version = "3.0.0";
+		/// <summary>ASAP version major part.</summary>
 		public const int VersionMajor = 3;
+		/// <summary>ASAP version micro part.</summary>
 		public const int VersionMicro = 0;
+		/// <summary>ASAP version minor part.</summary>
 		public const int VersionMinor = 0;
 		static readonly byte[] CiConstArray_1 = { 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, 136, 127, 121, 115, 108, 103,
 			96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52, 51, 48, 45, 42, 40,
