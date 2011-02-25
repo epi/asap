@@ -305,7 +305,7 @@ FUNC(void, Cpu_RunScanlines, (P(ASAP_State PTR, ast), P(int, scanlines)))
 					ast _ scanline_number = 0;
 					ast _ nmist = ast _ nmist == NMIST_RESET ? NMIST_ON_VBLANK : NMIST_WAS_VBLANK;
 				}
-				if (ast _ cycle - ast _ next_scanline_cycle < 50) /* not WSYNC */
+				if (cycle - ast _ next_scanline_cycle < 50) /* not WSYNC */
 					ast _ cycle = cycle += 9;
 				ast _ next_scanline_cycle += 114;
 				if (--scanlines <= 0)
