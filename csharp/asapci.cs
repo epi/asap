@@ -95,7 +95,7 @@ namespace Sf.Asap
 		{
 			this.NextEventCycle = 0;
 			this.NextScanlineCycle = 0;
-			this.Nmist = this.Nmist == 0 ? 1 : 2;
+			this.Nmist = this.Nmist == NmiStatus.Reset ? NmiStatus.OnVBlank : NmiStatus.WasVBlank;
 			int cycles = this.ModuleInfo.Ntsc ? 29868 : 35568;
 			this.Cpu.DoFrame(this, cycles);
 			this.Cycle -= cycles;
@@ -275,7 +275,7 @@ namespace Sf.Asap
 		internal int NextEventCycle;
 		internal int NextPlayerCycle;
 		internal int NextScanlineCycle;
-		internal int Nmist;
+		internal NmiStatus Nmist;
 
 		internal int PeekHardware(int addr)
 		{
@@ -303,11 +303,15 @@ namespace Sf.Asap
 						return this.ModuleInfo.Ntsc ? 131 : 156;
 					return this.Cycle / 228;
 				case 54287:
-					if (this.Nmist == 2)
-						return 95;
-					if (this.Nmist == 0)
-						return 31;
-					return this.Cycle < 28295 ? 31 : 95;
+					switch (this.Nmist) {
+						case NmiStatus.Reset:
+							return 31;
+						case NmiStatus.WasVBlank:
+							return 95;
+						case NmiStatus.OnVBlank:
+						default:
+							return this.Cycle < 28295 ? 31 : 95;
+					}
 				default:
 					return this.Memory[addr];
 			}
@@ -329,7 +333,7 @@ namespace Sf.Asap
 			this.Cpu.NZ = 0;
 			this.Cpu.C = 0;
 			this.Cpu.VDI = 0;
-			this.Nmist = 1;
+			this.Nmist = NmiStatus.OnVBlank;
 			this.Consol = 8;
 			this.Covox[0] = 128;
 			this.Covox[1] = 128;
@@ -428,7 +432,7 @@ namespace Sf.Asap
 				this.Cycle += (x <= 110 ? 224 : 110) - x;
 			}
 			else if ((addr & 65295) == 54287) {
-				this.Nmist = this.Cycle < 28296 ? 1 : 0;
+				this.Nmist = this.Cycle < 28296 ? NmiStatus.OnVBlank : NmiStatus.Reset;
 			}
 			else if ((addr & 65280) == this.ModuleInfo.CovoxAddr) {
 				Pokey pokey;
@@ -5693,6 +5697,13 @@ namespace Sf.Asap
 			2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
 			2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6,
 			2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7 };
+	}
+
+	internal enum NmiStatus
+	{
+		Reset,
+		OnVBlank,
+		WasVBlank
 	}
 
 	internal class Pokey

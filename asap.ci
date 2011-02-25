@@ -30,6 +30,13 @@ public enum ASAPSampleFormat
 	S16BE
 }
 
+enum NmiStatus
+{
+	Reset,
+	OnVBlank,
+	WasVBlank
+}
+
 /// 8-bit Atari chip music emulator.
 /// This class performs no I/O operations - all music data must be passed in byte arrays.
 public class ASAP
@@ -47,11 +54,7 @@ public class ASAP
 
 	// ANTIC:
 	int NextScanlineCycle;
-	int Nmist;
-	// TODO: enum
-	const int NmistReset = 0;
-	const int NmistOnVBlank = 1;
-	const int NmistWasVBlank = 2;
+	NmiStatus Nmist;
 
 	// GTIA:
 	int Consol;
@@ -99,12 +102,15 @@ public class ASAP
 				return ModuleInfo.Ntsc ? 131 : 156;
 			return Cycle / 228;
 		case 0xd40f:
-			if (Nmist == NmistWasVBlank)
-				return 0x5f;
-			if (Nmist == NmistReset)
+			switch (Nmist) {
+			case NmiStatus.Reset:
 				return 0x1f;
-			// NmistOnVBlank
-			return Cycle < 28295 ? 0x1f : 0x5f;
+			case NmiStatus.WasVBlank:
+				return 0x5f;
+			case NmiStatus.OnVBlank:
+			default: // shut up compilers
+				return Cycle < 28295 ? 0x1f : 0x5f;
+			}
 		default:
 			return Memory[addr];
 		}
@@ -141,7 +147,7 @@ public class ASAP
 			Cycle += (x <= 110 ? 110 + 114 : 110) - x;
 		}
 		else if ((addr & 0xff0f) == 0xd40f) {
-			Nmist = Cycle < 28296 ? NmistOnVBlank : NmistReset;
+			Nmist = Cycle < 28296 ? NmiStatus.OnVBlank : NmiStatus.Reset;
 		}
 		else if ((addr & 0xff00) == ModuleInfo.CovoxAddr) {
 			Pokey pokey;
@@ -275,7 +281,7 @@ public class ASAP
 	{
 		NextEventCycle = 0;
 		NextScanlineCycle = 0;
-		Nmist = Nmist == NmistReset ? NmistOnVBlank : NmistWasVBlank;
+		Nmist = Nmist == NmiStatus.Reset ? NmiStatus.OnVBlank : NmiStatus.WasVBlank;
 		int cycles = ModuleInfo.Ntsc ? 262 * 114 : 312 * 114;
 		Cpu.DoFrame(this, cycles);
 		Cycle -= cycles;
@@ -353,7 +359,7 @@ public class ASAP
 		Cpu.NZ = 0;
 		Cpu.C = 0;
 		Cpu.VDI = 0;
-		Nmist = NmistOnVBlank;
+		Nmist = NmiStatus.OnVBlank;
 		Consol = 8;
 		Covox[0] = 0x80;
 		Covox[1] = 0x80;
