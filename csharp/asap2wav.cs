@@ -26,14 +26,14 @@ using System.IO;
 
 using Sf.Asap;
 
-public class asap2wav
+public class Asap2Wav
 {
-	static string outputFilename = null;
-	static bool outputHeader = true;
-	static int song = -1;
-	static ASAPSampleFormat format = ASAPSampleFormat.S16LE;
-	static int duration = -1;
-	static int muteMask = 0;
+	static string OutputFilename = null;
+	static bool OutputHeader = true;
+	static int Song = -1;
+	static ASAPSampleFormat Format = ASAPSampleFormat.S16LE;
+	static int Duration = -1;
+	static int MuteMask = 0;
 
 	static void PrintHelp()
 	{
@@ -56,12 +56,12 @@ public class asap2wav
 
 	static void SetSong(string s)
 	{
-		song = int.Parse(s);
+		Song = int.Parse(s);
 	}
 
 	static void SetTime(string s)
 	{
-		duration = ASAPInfo.ParseDuration(s);
+		Duration = ASAPInfo.ParseDuration(s);
 	}
 
 	static void SetMuteMask(string s)
@@ -71,7 +71,7 @@ public class asap2wav
 			if (c >= '1' && c <= '8')
 				mask |= 1 << (c - '1');
 		}
-		muteMask = mask;
+		MuteMask = mask;
 	}
 
 	static void ProcessFile(string inputFilename)
@@ -83,34 +83,34 @@ public class asap2wav
 		ASAP asap = new ASAP();
 		asap.Load(inputFilename, module, moduleLen);
 		ASAPInfo moduleInfo = asap.ModuleInfo;
-		if (song < 0)
-			song = moduleInfo.DefaultSong;
-		if (duration < 0) {
-			duration = moduleInfo.Durations[song];
-			if (duration < 0)
-				duration = 180 * 1000;
+		if (Song < 0)
+			Song = moduleInfo.DefaultSong;
+		if (Duration < 0) {
+			Duration = moduleInfo.Durations[Song];
+			if (Duration < 0)
+				Duration = 180 * 1000;
 		}
-		asap.PlaySong(song, duration);
-		asap.MutePokeyChannels(muteMask);
-		if (outputFilename == null) {
+		asap.PlaySong(Song, Duration);
+		asap.MutePokeyChannels(MuteMask);
+		if (OutputFilename == null) {
 			int i = inputFilename.LastIndexOf('.');
-			outputFilename = inputFilename.Substring(0, i + 1) + (outputHeader ? "wav" : "raw");
+			OutputFilename = inputFilename.Substring(0, i + 1) + (OutputHeader ? "wav" : "raw");
 		}
-		s = File.Create(outputFilename);
+		s = File.Create(OutputFilename);
 		byte[] buffer = new byte[8192];
-		if (outputHeader) {
-			asap.GetWavHeader(buffer, format);
+		if (OutputHeader) {
+			asap.GetWavHeader(buffer, Format);
 			s.Write(buffer, 0, ASAP.WavHeaderBytes);
 		}
 		int nBytes;
 		do {
-			nBytes = asap.Generate(buffer, buffer.Length, format);
+			nBytes = asap.Generate(buffer, buffer.Length, Format);
 			s.Write(buffer, 0, nBytes);
 		} while (nBytes == buffer.Length);
 		s.Close();
-		outputFilename = null;
-		song = -1;
-		duration = -1;
+		OutputFilename = null;
+		Song = -1;
+		Duration = -1;
 	}
 
 	public static int Main(string[] args)
@@ -123,9 +123,9 @@ public class asap2wav
 				noInputFiles = false;
 			}
 			else if (arg == "-o")
-				outputFilename = args[++i];
+				OutputFilename = args[++i];
 			else if (arg.StartsWith("--output="))
-				outputFilename = arg.Substring(9);
+				OutputFilename = arg.Substring(9);
 			else if (arg == "-s")
 				SetSong(args[++i]);
 			else if (arg.StartsWith("--song="))
@@ -135,11 +135,11 @@ public class asap2wav
 			else if (arg.StartsWith("--time="))
 				SetTime(arg.Substring(7));
 			else if (arg == "-b" || arg == "--byte-samples")
-				format = ASAPSampleFormat.U8;
+				Format = ASAPSampleFormat.U8;
 			else if (arg == "-w" || arg == "--word-samples")
-				format = ASAPSampleFormat.S16LE;
+				Format = ASAPSampleFormat.S16LE;
 			else if (arg == "--raw")
-				outputHeader = false;
+				OutputHeader = false;
 			else if (arg == "-m")
 				SetMuteMask(args[++i]);
 			else if (arg.StartsWith("--mute="))

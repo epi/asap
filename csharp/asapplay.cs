@@ -29,10 +29,10 @@ using Sf.Asap;
 
 public class ASAPWavStream : Stream
 {
-	readonly ASAP asap = new ASAP();
-	readonly byte[] buffer = new byte[8192];
-	int bufferPos = 0;
-	int bufferLen;
+	readonly ASAP Asap = new ASAP();
+	readonly byte[] Buffer = new byte[8192];
+	int BufferPos = 0;
+	int BufferLen;
 
 	public ASAPWavStream(string inputFilename, int song, int duration)
 	{
@@ -40,8 +40,8 @@ public class ASAPWavStream : Stream
 		byte[] module = new byte[ASAPInfo.ModuleMax];
 		int moduleLen = s.Read(module, 0, module.Length);
 		s.Close();
-		asap.Load(inputFilename, module, moduleLen);
-		ASAPInfo moduleInfo = asap.ModuleInfo;
+		Asap.Load(inputFilename, module, moduleLen);
+		ASAPInfo moduleInfo = Asap.ModuleInfo;
 		if (song < 0)
 			song = moduleInfo.DefaultSong;
 		if (duration < 0) {
@@ -49,24 +49,24 @@ public class ASAPWavStream : Stream
 			if (duration < 0)
 				duration = 180 * 1000;
 		}
-		asap.PlaySong(song, duration);
-		asap.GetWavHeader(buffer, ASAPSampleFormat.S16LE);
-		bufferLen = ASAP.WavHeaderBytes;
+		Asap.PlaySong(song, duration);
+		Asap.GetWavHeader(Buffer, ASAPSampleFormat.S16LE);
+		BufferLen = ASAP.WavHeaderBytes;
 	}
 
 	public override int Read(byte[] outputBuffer, int offset, int count)
 	{
-		int i = bufferPos;
-		if (i >= bufferLen) {
-			bufferLen = asap.Generate(buffer, buffer.Length, ASAPSampleFormat.S16LE);
-			if (bufferLen == 0)
+		int i = BufferPos;
+		if (i >= BufferLen) {
+			BufferLen = Asap.Generate(Buffer, Buffer.Length, ASAPSampleFormat.S16LE);
+			if (BufferLen == 0)
 				return 0;
 			i = 0;
 		}
-		if (count > bufferLen - i)
-			count = bufferLen - i;
-		Array.Copy(buffer, i, outputBuffer, offset, count);
-		bufferPos = i + count;
+		if (count > BufferLen - i)
+			count = BufferLen - i;
+		Array.Copy(Buffer, i, outputBuffer, offset, count);
+		BufferPos = i + count;
 		return count;
 	}
 
