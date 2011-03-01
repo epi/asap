@@ -76,9 +76,6 @@ AndroidASAP-resources.apk net/sf/asap/R.java: AndroidManifest.xml res/drawable/i
 ../net/sf/asap/ASAP.class:
 	$(MAKE) -C .. net/sf/asap/ASAP.class
 
-../net/sf/asap/ASAP_ModuleInfo.class:
-	$(MAKE) -C .. net/sf/asap/ASAP_ModuleInfo.class
-
 clean:
 	rm -f AndroidASAP.apk AndroidASAP-unaligned.apk AndroidASAP-unsigned.apk AndroidASAP-debug.apk AndroidASAP-resources.apk classes.dex
 	rm -rf net players

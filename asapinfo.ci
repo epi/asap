@@ -21,19 +21,19 @@
 
 enum ASAPModuleType
 {
-	SAPB,
-	SAPC,
-	SAPD,
-	SAPS,
-	CMC,
-	CM3,
-	CMR,
-	CMS,
-	DLT ,
-	MPT,
-	RMT,
-	TMC,
-	TM2
+	SapB,
+	SapC,
+	SapD,
+	SapS,
+	Cmc,
+	Cm3,
+	Cmr,
+	Cms,
+	Dlt ,
+	Mpt,
+	Rmt,
+	Tmc,
+	Tm2
 }
 
 /// Information about a music file.
@@ -129,7 +129,7 @@ public class ASAPInfo
 			throw "Module address conflicts with hardware registers";
 		int blockLen = musicLastByte + 1 - Music;
 		if (6 + blockLen != moduleLen) {
-			if (Type != ASAPModuleType.RMT || 11 + blockLen > moduleLen)
+			if (Type != ASAPModuleType.Rmt || 11 + blockLen > moduleLen)
 				throw "Module length doesn't match headers";
 			// allow optional info for Raster Music Tracker
 			int infoAddr = GetWord(module, 6 + blockLen);
@@ -227,7 +227,7 @@ public class ASAPInfo
 			for (p1 = 0; p1 < 0x55; p1++)
 				if (seen[p1] == SeenThisCall)
 					seen[p1] = p2;
-			playerCalls += tempo * (Type == ASAPModuleType.CM3 ? 48 : 64);
+			playerCalls += tempo * (Type == ASAPModuleType.Cm3 ? 48 : 64);
 			pos++;
 		}
 		AddSong(playerCalls);
@@ -242,7 +242,7 @@ public class ASAPInfo
 		Type = type;
 		LoadNative(asap, module, moduleLen, playerRoutine);
 #if !ASAP_ONLY_INFO
-		if (asap != null && type == ASAPModuleType.CMR) {
+		if (asap != null && type == ASAPModuleType.Cmr) {
 			const byte[] cmrBassTable = {
 				0x5c, 0x56, 0x50, 0x4d, 0x47, 0x44, 0x41, 0x3e,
 				0x38, 0x35, 0x88, 0x7f, 0x79, 0x73, 0x6c, 0x67,
@@ -335,7 +335,7 @@ public class ASAPInfo
 		}
 		else if (moduleLen != 0x2c07)
 			throw "Invalid module length";
-		Type = ASAPModuleType.DLT;
+		Type = ASAPModuleType.Dlt;
 		LoadNative(asap, module, moduleLen, GET_PLAYER("dlt"));
 		if (Music != 0x2000)
 			throw "Unsupported module address";
@@ -423,7 +423,7 @@ public class ASAPInfo
 	{
 		if (moduleLen < 0x1d0)
 			throw "Module too short";
-		Type = ASAPModuleType.MPT;
+		Type = ASAPModuleType.Mpt;
 		LoadNative(asap, module, moduleLen, GET_PLAYER("mpt"));
 		int track0Addr = GetWord(module, 2) + 0x1ca;
 		if (module[0x1c6] + (module[0x1ca] << 8) != track0Addr)
@@ -630,7 +630,7 @@ public class ASAPInfo
 		int perFrame = module[0xc];
 		if (perFrame < 1 || perFrame > 4)
 			throw "Unsupported player call rate";
-		Type = ASAPModuleType.RMT;
+		Type = ASAPModuleType.Rmt;
 		LoadNative(asap, module, moduleLen, Channels == 2 ? GET_PLAYER("rmt8") : GET_PLAYER("rmt4"));
 		int songLen = GetWord(module, 4) + 1 - GetWord(module, 0x14);
 		if (posShift == 3 && (songLen & 4) != 0 && module[6 + GetWord(module, 4) - GetWord(module, 2) - 3] == 0xfe)
@@ -714,7 +714,7 @@ public class ASAPInfo
 	{
 		if (moduleLen < 0x1d0)
 			throw "Module too short";
-		Type = ASAPModuleType.TMC;
+		Type = ASAPModuleType.Tmc;
 		LoadNative(asap, module, moduleLen, GET_PLAYER("tmc"));
 		Channels = 2;
 		int i = 0;
@@ -822,7 +822,7 @@ public class ASAPInfo
 	{
 		if (moduleLen < 0x3a4)
 			throw "Module too short";
-		Type = ASAPModuleType.TM2;
+		Type = ASAPModuleType.Tm2;
 		LoadNative(asap, module, moduleLen, GET_PLAYER("tm2"));
 		int i = module[0x25];
 		if (i < 1 || i > 4)
@@ -1070,24 +1070,24 @@ public class ASAPInfo
 				throw "Missing PLAYER tag";
 			if (Init < 0)
 				throw "Missing INIT tag";
-			Type = ASAPModuleType.SAPB;
+			Type = ASAPModuleType.SapB;
 			break;
 		case 'C':
 			if (Player < 0)
 				throw "Missing PLAYER tag";
 			if (Music < 0)
 				throw "Missing MUSIC tag";
-			Type = ASAPModuleType.SAPC;
+			Type = ASAPModuleType.SapC;
 			break;
 		case 'D':
 			if (Init < 0)
 				throw "Missing INIT tag";
-			Type = ASAPModuleType.SAPD;
+			Type = ASAPModuleType.SapD;
 			break;
 		case 'S':
 			if (Init < 0)
 				throw "Missing INIT tag";
-			Type = ASAPModuleType.SAPS;
+			Type = ASAPModuleType.SapS;
 			Fastplay = 78;
 			break;
 		default:
@@ -1219,21 +1219,21 @@ public class ASAPInfo
 			return;
 #if !ASAP_ONLY_SAP
 		case ASAP_EXT("CMC"):
-			ParseCmc(asap, module, moduleLen, ASAPModuleType.CMC, GET_PLAYER("cmc"));
+			ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmc, GET_PLAYER("cmc"));
 			return;
 		case ASAP_EXT("CM3"):
-			ParseCmc(asap, module, moduleLen, ASAPModuleType.CM3, GET_PLAYER("cm3"));
+			ParseCmc(asap, module, moduleLen, ASAPModuleType.Cm3, GET_PLAYER("cm3"));
 			return;
 		case ASAP_EXT("CMR"):
-			ParseCmc(asap, module, moduleLen, ASAPModuleType.CMR, GET_PLAYER("cmc"));
+			ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmr, GET_PLAYER("cmc"));
 			return;
 		case ASAP_EXT("CMS"):
 			Channels = 2;
-			ParseCmc(asap, module, moduleLen, ASAPModuleType.CMS, GET_PLAYER("cms"));
+			ParseCmc(asap, module, moduleLen, ASAPModuleType.Cms, GET_PLAYER("cms"));
 			return;
 		case ASAP_EXT("DMC"):
 			Fastplay = 156;
-			ParseCmc(asap, module, moduleLen, ASAPModuleType.CMC, GET_PLAYER("cmc"));
+			ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmc, GET_PLAYER("cmc"));
 			return;
 		case ASAP_EXT("DLT"):
 			ParseDlt(asap, module, moduleLen);

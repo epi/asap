@@ -45,10 +45,6 @@ The applet understands the following parameters:
 
 - `file` - URL of the file to play
 - `song` - zero-based subsong number
-- `defaultPlaybackTime` - playback time for songs with unspecified duration,
-  in the `"mm:ss.xxx"` format
-- `loopPlaybackTime` - playback time for songs marked as looping
-  (use `"ONCE"` to stop playback when the loop starts)
 - `background` - background color specified as six hexadecimal digits (`"rrggbb"`)
 - `foreground` - volume bars color specified as six hexadecimal digits (`"rrggbb"`)
 - `onPlaybackEnd` - JavaScript to be executed when playback ends
@@ -56,8 +52,6 @@ The applet understands the following parameters:
 
 The applet contains the following methods that can be called from JavaScript:
 
-- `void setPlaybackTime(String defaultPlaybackTime, String loopPlaybackTime)` - sets
-  playback times (see above)
 - `void play(String filename, int song)` - plays the specified song (-1 for default)
 - `void stop()` - stops playback
 - `boolean togglePause()` - toggles pause and returns `true` if pause has been enabled

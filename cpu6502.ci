@@ -48,14 +48,14 @@
 
 class Cpu6502
 {
-	int PC;
+	int Pc;
 	int A;
 	int X;
 	int Y;
 	int S;
-	int NZ;
+	int Nz;
 	int C;
-	int VDI;
+	int Vdi;
 
 	const int VFlag = 0x40;
 	const int DFlag = 0x08;
@@ -67,14 +67,14 @@ class Cpu6502
 	void DoFrame(ASAP asap, int cycleLimit)
 	{
 		// copy registers from ASAP_State to local variables for improved performance
-		int pc = PC;
-		int nz = NZ;
+		int pc = Pc;
+		int nz = Nz;
 		int a = A;
 		int x = X;
 		int y = Y;
 		int c = C;
 		int s = S;
-		int vdi =VDI;
+		int vdi =Vdi;
 
 		while (asap.Cycle < cycleLimit) {
 
@@ -89,8 +89,8 @@ class Cpu6502
 
 			macro PEEK_RMW(dest, addr) {
 				if ((addr) >> 8 == 0xd2) {
-					dest = asap.PeekHardware(addr);
 					asap.Cycle--;
+					dest = asap.PeekHardware(addr);
 					asap.PokeHardware(addr, dest);
 					asap.Cycle++;
 				}
@@ -283,10 +283,10 @@ class Cpu6502
 			}
 
 			if (asap.Cycle >= asap.NextEventCycle) {
-				PC = pc;
+				Pc = pc;
 				S = s;
 				asap.HandleEvent();
-				pc = PC;
+				pc = Pc;
 				s = S;
 				CHECK_IRQ();
 			}
@@ -1267,13 +1267,13 @@ class Cpu6502
 	#endif // ACPU_NO_UNOFFICIAL
 			}
 		}
-		PC = pc;
-		NZ = nz;
+		Pc = pc;
+		Nz = nz;
 		A = a;
 		X = x;
 		Y = y;
 		C = c;
 		S = s;
-		VDI = vdi;
+		Vdi = vdi;
 	}
 }

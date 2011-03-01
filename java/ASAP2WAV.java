@@ -1,7 +1,7 @@
 /*
  * ASAP2WAV.java - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2007-2010  Piotr Fusik
+ * Copyright (C) 2007-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,16 +21,20 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import net.sf.asap.ASAP;
-import net.sf.asap.ASAP_ModuleInfo;
+import net.sf.asap.ASAPInfo;
+import net.sf.asap.ASAPSampleFormat;
 
 public class ASAP2WAV
 {
 	private static String outputFilename = null;
 	private static boolean outputHeader = true;
 	private static int song = -1;
-	private static int format = ASAP.FORMAT_S16_LE;
+	private static int format = ASAPSampleFormat.S16_L_E;
 	private static int duration = -1;
 	private static int muteMask = 0;
 
@@ -59,9 +63,9 @@ public class ASAP2WAV
 		song = Integer.parseInt(s);
 	}
 
-	private static void setTime(String s)
+	private static void setTime(String s) throws Exception
 	{
-		duration = ASAP.parseDuration(s);
+		duration = ASAPInfo.parseDuration(s);
 	}
 
 	private static void setMuteMask(String s)
@@ -75,18 +79,18 @@ public class ASAP2WAV
 		muteMask = mask;
 	}
 
-	private static void processFile(String inputFilename) throws IOException
+	private static void processFile(String inputFilename) throws Exception
 	{
 		InputStream is = new FileInputStream(inputFilename);
-		byte[] module = new byte[ASAP.MODULE_MAX];
-		int module_len = ASAP.readAndClose(is, module);
+		byte[] module = new byte[ASAPInfo.MODULE_MAX];
+		int moduleLen = ASAPInfo.readAndClose(is, module);
 		ASAP asap = new ASAP();
-		asap.load(inputFilename, module, module_len);
-		ASAP_ModuleInfo module_info = asap.getModuleInfo();
+		asap.load(inputFilename, module, moduleLen);
+		ASAPInfo moduleInfo = asap.moduleInfo;
 		if (song < 0)
-			song = module_info.default_song;
+			song = moduleInfo.defaultSong;
 		if (duration < 0) {
-			duration = module_info.durations[song];
+			duration = moduleInfo.durations[song];
 			if (duration < 0)
 				duration = 180 * 1000;
 		}
@@ -106,18 +110,18 @@ public class ASAP2WAV
 			asap.getWavHeader(buffer, format);
 			os.write(buffer, 0, ASAP.WAV_HEADER_BYTES);
 		}
-		int n_bytes;
+		int nBytes;
 		do {
-			n_bytes = asap.generate(buffer, format);
-			os.write(buffer, 0, n_bytes);
-		} while (n_bytes == buffer.length);
+			nBytes = asap.generate(buffer, buffer.length, format);
+			os.write(buffer, 0, nBytes);
+		} while (nBytes == buffer.length);
 		os.close();
 		outputFilename = null;
 		song = -1;
 		duration = -1;
 	}
 
-	public static void main(String[] args) throws IOException
+	public static void main(String[] args) throws Exception
 	{
 		boolean noInputFiles = true;
 		for (int i = 0; i < args.length; i++) {
@@ -139,9 +143,9 @@ public class ASAP2WAV
 			else if (arg.startsWith("--time="))
 				setTime(arg.substring(7));
 			else if (arg.equals("-b") || arg.equals("--byte-samples"))
-				format = ASAP.FORMAT_U8;
+				format = ASAPSampleFormat.U8;
 			else if (arg.equals("-w") || arg.equals("--word-samples"))
-				format = ASAP.FORMAT_S16_LE;
+				format = ASAPSampleFormat.S16_L_E;
 			else if (arg.equals("--raw"))
 				outputHeader = false;
 			else if (arg.equals("-m"))
@@ -153,7 +157,7 @@ public class ASAP2WAV
 				noInputFiles = false;
 			}
 			else if (arg.equals("-v") || arg.equals("--version")) {
-				System.out.println("ASAP2WAV (Java) " + ASAP.VERSION);
+				System.out.println("ASAP2WAV (Java) " + ASAPInfo.VERSION);
 				noInputFiles = false;
 			}
 			else

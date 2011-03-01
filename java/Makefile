@@ -5,10 +5,8 @@ JAVAC = javac -source 1.2 -d .
 JAR = jar
 JAR_OPTIMIZE = 7z a -mx=9 -tzip
 JAVADOC = javadoc
-PP = cpp -C -P -I..
 
-COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
-COMMON_H = ../asap.h ../asap_internal.h ../anylang.h
+COMMON_JAVA = ASAP.java ASAPInfo.java ASAPModuleType.java ASAPSampleFormat.java Cpu6502.java NmiStatus.java Pokey.java PokeyPair.java
 PLAYERS_OBX_DIR = net/sf/asap
 
 all: asap2wav.jar asap_applet.jar j2me
@@ -32,20 +30,14 @@ ASAPApplet.class: ASAPApplet.java net/sf/asap/ASAP.class
 j2me:
 	$(MAKE) -C j2me asap_midlet.jad
 
-net/sf/asap/ASAP.class: ASAP.java net/sf/asap/ASAP_ModuleInfo.class
-	$(JAVAC) -classpath . ASAP.java
+net/sf/asap/ASAP.class: $(COMMON_JAVA)
+	$(JAVAC) $(COMMON_JAVA)
 
-ASAP.java: ASAP.ppjava $(COMMON_C) $(COMMON_H)
-	$(PP) ASAP.ppjava > ASAP.java
-
-net/sf/asap/ASAP_ModuleInfo.class: ASAP_ModuleInfo.java
-	$(JAVAC) -classpath . ASAP_ModuleInfo.java
-
-doc: ASAP.java ASAP_ModuleInfo.java
-	$(JAVADOC) -d doc ASAP.java ASAP_ModuleInfo.java
+doc: $(COMMON_JAVA)
+	$(JAVADOC) -d doc $(COMMON_JAVA)
 
 clean:
-	rm -f asap2wav.jar asap_applet.jar *.class ASAP.java
+	rm -f asap2wav.jar asap_applet.jar *.class
 	rm -rf net doc
 	$(MAKE) -C j2me clean
 	$(MAKE) -C android clean

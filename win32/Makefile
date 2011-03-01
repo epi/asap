@@ -1,4 +1,4 @@
-VERSION = 2.1.2
+VERSION = 3.0.0
 
 # gcc for most ports
 ASAP_GCC = mingw32-gcc -s -O2 -Wall -o $@ -I. -I..
@@ -380,9 +380,8 @@ dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-set
 		COPYING.txt README_WindowsCE.html ./wince/wasap.exe ./wince/gspasap.dll
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
-	$(GREP) Version ../asap.ci
+	$(GREP) Version ../asapinfo.ci
 	$(GREP) VERSION ../flash/ASAP.ppas
-	$(GREP) " VERSION =" ../java/ASAP.ppjava
 	$(GREP) android:versionName ../java/android/AndroidManifest.xml
 	$(GREP) about_title ../java/android/res/values/strings.xml
 	$(GREP) MIDlet-Version ../java/j2me/MANIFEST.MF

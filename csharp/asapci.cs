@@ -16,28 +16,28 @@ namespace Sf.Asap
 			this.Memory[53761] = (byte) addr;
 			this.Memory[53762] = (byte) (addr >> 8);
 			this.Memory[53763] = 210;
-			this.Cpu.PC = 53760;
+			this.Cpu.Pc = 53760;
 		}
 
 		internal void Call6502Player()
 		{
 			int player = this.ModuleInfo.Player;
 			switch (this.ModuleInfo.Type) {
-				case ASAPModuleType.SAPB:
+				case ASAPModuleType.SapB:
 					Call6502(player);
 					break;
-				case ASAPModuleType.SAPC:
-				case ASAPModuleType.CMC:
-				case ASAPModuleType.CM3:
-				case ASAPModuleType.CMR:
-				case ASAPModuleType.CMS:
+				case ASAPModuleType.SapC:
+				case ASAPModuleType.Cmc:
+				case ASAPModuleType.Cm3:
+				case ASAPModuleType.Cmr:
+				case ASAPModuleType.Cms:
 					Call6502(player + 6);
 					break;
-				case ASAPModuleType.SAPD:
+				case ASAPModuleType.SapD:
 					if (player >= 0) {
-						this.Memory[256 + this.Cpu.S] = (byte) (this.Cpu.PC >> 8);
+						this.Memory[256 + this.Cpu.S] = (byte) (this.Cpu.Pc >> 8);
 						this.Cpu.S = this.Cpu.S - 1 & 255;
-						this.Memory[256 + this.Cpu.S] = (byte) this.Cpu.PC;
+						this.Memory[256 + this.Cpu.S] = (byte) this.Cpu.Pc;
 						this.Cpu.S = this.Cpu.S - 1 & 255;
 						this.Memory[53760] = 8;
 						this.Memory[53761] = 72;
@@ -54,24 +54,24 @@ namespace Sf.Asap
 						this.Memory[53772] = 170;
 						this.Memory[53773] = 104;
 						this.Memory[53774] = 64;
-						this.Cpu.PC = 53760;
+						this.Cpu.Pc = 53760;
 					}
 					break;
-				case ASAPModuleType.SAPS:
+				case ASAPModuleType.SapS:
 					int i = this.Memory[69] - 1;
 					this.Memory[69] = (byte) i;
 					if (i == 0)
 						this.Memory[45179] = (byte) (this.Memory[45179] + 1);
 					break;
-				case ASAPModuleType.DLT:
+				case ASAPModuleType.Dlt:
 					Call6502(player + 259);
 					break;
-				case ASAPModuleType.MPT:
-				case ASAPModuleType.RMT:
-				case ASAPModuleType.TM2:
+				case ASAPModuleType.Mpt:
+				case ASAPModuleType.Rmt:
+				case ASAPModuleType.Tm2:
 					Call6502(player + 3);
 					break;
-				case ASAPModuleType.TMC:
+				case ASAPModuleType.Tmc:
 					if (--this.TmcPerFrameCounter <= 0) {
 						this.TmcPerFrameCounter = this.TmcPerFrame;
 						Call6502(player + 3);
@@ -118,7 +118,7 @@ namespace Sf.Asap
 
 		internal void Do6502Init(int pc, int a, int x, int y)
 		{
-			this.Cpu.PC = pc;
+			this.Cpu.Pc = pc;
 			this.Cpu.A = a & 255;
 			this.Cpu.X = x & 255;
 			this.Cpu.Y = y & 255;
@@ -128,7 +128,7 @@ namespace Sf.Asap
 			this.Cpu.S = 253;
 			for (int frame = 0; frame < 50; frame++) {
 				Do6502Frame();
-				if (this.Cpu.PC == 53760)
+				if (this.Cpu.Pc == 53760)
 					return;
 			}
 			throw new System.Exception("INIT routine didn't return");
@@ -181,6 +181,32 @@ namespace Sf.Asap
 				}
 			}
 			return block << blockShift;
+		}
+
+		/// <summary>Returns POKEY channel volume.</summary>
+		/// <param name="channel">POKEY channel number (from 0 to 7).</param>
+		public int GetPokeyChannelVolume(int channel)
+		{
+			switch (channel) {
+				case 0:
+					return this.Pokeys.BasePokey.Audc1 & 15;
+				case 1:
+					return this.Pokeys.BasePokey.Audc2 & 15;
+				case 2:
+					return this.Pokeys.BasePokey.Audc3 & 15;
+				case 3:
+					return this.Pokeys.BasePokey.Audc4 & 15;
+				case 4:
+					return this.Pokeys.ExtraPokey.Audc1 & 15;
+				case 5:
+					return this.Pokeys.ExtraPokey.Audc2 & 15;
+				case 6:
+					return this.Pokeys.ExtraPokey.Audc3 & 15;
+				case 7:
+					return this.Pokeys.ExtraPokey.Audc4 & 15;
+				default:
+					return 0;
+			}
 		}
 
 		/// <summary>Returns current playback position in milliseconds.</summary>
@@ -351,9 +377,9 @@ namespace Sf.Asap
 			this.BlocksPlayed = 0;
 			this.SilenceCyclesCounter = this.SilenceCycles;
 			this.Cycle = 0;
-			this.Cpu.NZ = 0;
+			this.Cpu.Nz = 0;
 			this.Cpu.C = 0;
-			this.Cpu.VDI = 0;
+			this.Cpu.Vdi = 0;
 			this.Nmist = NmiStatus.OnVBlank;
 			this.Consol = 8;
 			this.Covox[0] = 128;
@@ -363,37 +389,37 @@ namespace Sf.Asap
 			this.Pokeys.Initialize(this.ModuleInfo.Channels > 1);
 			this.Pokeys.MainClock = this.ModuleInfo.Ntsc ? 1789772 : 1773447;
 			switch (this.ModuleInfo.Type) {
-				case ASAPModuleType.SAPB:
+				case ASAPModuleType.SapB:
 					Do6502Init(this.ModuleInfo.Init, song, 0, 0);
 					break;
-				case ASAPModuleType.SAPC:
-				case ASAPModuleType.CMC:
-				case ASAPModuleType.CM3:
-				case ASAPModuleType.CMR:
-				case ASAPModuleType.CMS:
+				case ASAPModuleType.SapC:
+				case ASAPModuleType.Cmc:
+				case ASAPModuleType.Cm3:
+				case ASAPModuleType.Cmr:
+				case ASAPModuleType.Cms:
 					Do6502Init(this.ModuleInfo.Player + 3, 112, this.ModuleInfo.Music, this.ModuleInfo.Music >> 8);
 					Do6502Init(this.ModuleInfo.Player + 3, 0, song, 0);
 					break;
-				case ASAPModuleType.SAPD:
-				case ASAPModuleType.SAPS:
-					this.Cpu.PC = this.ModuleInfo.Init;
+				case ASAPModuleType.SapD:
+				case ASAPModuleType.SapS:
+					this.Cpu.Pc = this.ModuleInfo.Init;
 					this.Cpu.A = song;
 					this.Cpu.X = 0;
 					this.Cpu.Y = 0;
 					this.Cpu.S = 255;
 					break;
-				case ASAPModuleType.DLT:
+				case ASAPModuleType.Dlt:
 					Do6502Init(this.ModuleInfo.Player + 256, 0, 0, this.ModuleInfo.SongPos[song]);
 					break;
-				case ASAPModuleType.MPT:
+				case ASAPModuleType.Mpt:
 					Do6502Init(this.ModuleInfo.Player, 0, this.ModuleInfo.Music >> 8, this.ModuleInfo.Music);
 					Do6502Init(this.ModuleInfo.Player, 2, this.ModuleInfo.SongPos[song], 0);
 					break;
-				case ASAPModuleType.RMT:
+				case ASAPModuleType.Rmt:
 					Do6502Init(this.ModuleInfo.Player, this.ModuleInfo.SongPos[song], this.ModuleInfo.Music, this.ModuleInfo.Music >> 8);
 					break;
-				case ASAPModuleType.TMC:
-				case ASAPModuleType.TM2:
+				case ASAPModuleType.Tmc:
+				case ASAPModuleType.Tm2:
 					Do6502Init(this.ModuleInfo.Player, 112, this.ModuleInfo.Music >> 8, this.ModuleInfo.Music);
 					Do6502Init(this.ModuleInfo.Player, 0, song, 0);
 					this.TmcPerFrameCounter = 1;
@@ -515,7 +541,7 @@ namespace Sf.Asap
 
 		internal void AddSong(int playerCalls)
 		{
-			this.Durations[this.Songs++] = (int) ((long) (playerCalls * this.Fastplay) * (114000) / (1773447));
+			this.Durations[this.Songs++] = (int) ((long) (playerCalls * this.Fastplay) * 114000 / 1773447);
 		}
 		/// <summary>Author's name.</summary>
 		/// <remarks>A nickname may be included in parentheses after the real name.
@@ -689,7 +715,7 @@ namespace Sf.Asap
 			}
 		}
 
-		/// <summary>Loads information.</summary>
+		/// <summary>Loads file information.</summary>
 		/// <param name="filename">Filename, used to determine the format.</param>
 		/// <param name="module">Contents of the file.</param>
 		/// <param name="moduleLen">Length of the file.</param>
@@ -713,7 +739,7 @@ namespace Sf.Asap
 				throw new System.Exception("Module address conflicts with hardware registers");
 			int blockLen = musicLastByte + 1 - this.Music;
 			if (6 + blockLen != moduleLen) {
-				if (this.Type != ASAPModuleType.RMT || 11 + blockLen > moduleLen)
+				if (this.Type != ASAPModuleType.Rmt || 11 + blockLen > moduleLen)
 					throw new System.Exception("Module length doesn't match headers");
 				int infoAddr = GetWord(module, 6 + blockLen);
 				if (infoAddr != this.Music + blockLen)
@@ -750,7 +776,7 @@ namespace Sf.Asap
 				throw new System.Exception("Module too short");
 			this.Type = type;
 			LoadNative(asap, module, moduleLen, playerRoutine);
-			if (asap != null && type == ASAPModuleType.CMR) {
+			if (asap != null && type == ASAPModuleType.Cmr) {
 				System.Array.Copy(CiConstArray_1, 0, asap.Memory, 3087, 37);
 			}
 			int lastPos = 84;
@@ -833,7 +859,7 @@ namespace Sf.Asap
 				for (p1 = 0; p1 < 85; p1++)
 					if (seen[p1] == 1)
 						seen[p1] = (byte) p2;
-				playerCalls += tempo * (this.Type == ASAPModuleType.CM3 ? 48 : 64);
+				playerCalls += tempo * (this.Type == ASAPModuleType.Cm3 ? 48 : 64);
 				pos++;
 			}
 			AddSong(playerCalls);
@@ -863,7 +889,7 @@ namespace Sf.Asap
 			}
 			else if (moduleLen != 11271)
 				throw new System.Exception("Invalid module length");
-			this.Type = ASAPModuleType.DLT;
+			this.Type = ASAPModuleType.Dlt;
 			LoadNative(asap, module, moduleLen, CiBinaryResource_dlt_obx);
 			if (this.Music != 8192)
 				throw new System.Exception("Unsupported module address");
@@ -1015,21 +1041,21 @@ namespace Sf.Asap
 					ParseSap(asap, module, moduleLen);
 					return;
 				case 6516067:
-					ParseCmc(asap, module, moduleLen, ASAPModuleType.CMC, CiBinaryResource_cmc_obx);
+					ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmc, CiBinaryResource_cmc_obx);
 					return;
 				case 3370339:
-					ParseCmc(asap, module, moduleLen, ASAPModuleType.CM3, CiBinaryResource_cm3_obx);
+					ParseCmc(asap, module, moduleLen, ASAPModuleType.Cm3, CiBinaryResource_cm3_obx);
 					return;
 				case 7499107:
-					ParseCmc(asap, module, moduleLen, ASAPModuleType.CMR, CiBinaryResource_cmc_obx);
+					ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmr, CiBinaryResource_cmc_obx);
 					return;
 				case 7564643:
 					this.Channels = 2;
-					ParseCmc(asap, module, moduleLen, ASAPModuleType.CMS, CiBinaryResource_cms_obx);
+					ParseCmc(asap, module, moduleLen, ASAPModuleType.Cms, CiBinaryResource_cms_obx);
 					return;
 				case 6516068:
 					this.Fastplay = 156;
-					ParseCmc(asap, module, moduleLen, ASAPModuleType.CMC, CiBinaryResource_cmc_obx);
+					ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmc, CiBinaryResource_cmc_obx);
 					return;
 				case 7629924:
 					ParseDlt(asap, module, moduleLen);
@@ -1082,7 +1108,7 @@ namespace Sf.Asap
 		{
 			if (moduleLen < 464)
 				throw new System.Exception("Module too short");
-			this.Type = ASAPModuleType.MPT;
+			this.Type = ASAPModuleType.Mpt;
 			LoadNative(asap, module, moduleLen, CiBinaryResource_mpt_obx);
 			int track0Addr = GetWord(module, 2) + 458;
 			if (module[454] + (module[458] << 8) != track0Addr)
@@ -1193,7 +1219,7 @@ namespace Sf.Asap
 			int perFrame = module[12];
 			if (perFrame < 1 || perFrame > 4)
 				throw new System.Exception("Unsupported player call rate");
-			this.Type = ASAPModuleType.RMT;
+			this.Type = ASAPModuleType.Rmt;
 			LoadNative(asap, module, moduleLen, this.Channels == 2 ? CiBinaryResource_rmt8_obx : CiBinaryResource_rmt4_obx);
 			int songLen = GetWord(module, 4) + 1 - GetWord(module, 20);
 			if (posShift == 3 && (songLen & 4) != 0 && module[6 + GetWord(module, 4) - GetWord(module, 2) - 3] == 254)
@@ -1433,24 +1459,24 @@ namespace Sf.Asap
 						throw new System.Exception("Missing PLAYER tag");
 					if (this.Init < 0)
 						throw new System.Exception("Missing INIT tag");
-					this.Type = ASAPModuleType.SAPB;
+					this.Type = ASAPModuleType.SapB;
 					break;
 				case 67:
 					if (this.Player < 0)
 						throw new System.Exception("Missing PLAYER tag");
 					if (this.Music < 0)
 						throw new System.Exception("Missing MUSIC tag");
-					this.Type = ASAPModuleType.SAPC;
+					this.Type = ASAPModuleType.SapC;
 					break;
 				case 68:
 					if (this.Init < 0)
 						throw new System.Exception("Missing INIT tag");
-					this.Type = ASAPModuleType.SAPD;
+					this.Type = ASAPModuleType.SapD;
 					break;
 				case 83:
 					if (this.Init < 0)
 						throw new System.Exception("Missing INIT tag");
-					this.Type = ASAPModuleType.SAPS;
+					this.Type = ASAPModuleType.SapS;
 					this.Fastplay = 78;
 					break;
 				default:
@@ -1487,7 +1513,7 @@ namespace Sf.Asap
 		{
 			if (moduleLen < 932)
 				throw new System.Exception("Module too short");
-			this.Type = ASAPModuleType.TM2;
+			this.Type = ASAPModuleType.Tm2;
 			LoadNative(asap, module, moduleLen, CiBinaryResource_tm2_obx);
 			int i = module[37];
 			if (i < 1 || i > 4)
@@ -1603,7 +1629,7 @@ namespace Sf.Asap
 		{
 			if (moduleLen < 464)
 				throw new System.Exception("Module too short");
-			this.Type = ASAPModuleType.TMC;
+			this.Type = ASAPModuleType.Tmc;
 			LoadNative(asap, module, moduleLen, CiBinaryResource_tmc_obx);
 			this.Channels = 2;
 			int i = 0;
@@ -1698,11 +1724,11 @@ namespace Sf.Asap
 		internal ASAPModuleType Type;
 		/// <summary>ASAP version as a string.</summary>
 		public const string Version = "3.0.0";
-		/// <summary>ASAP version major part.</summary>
+		/// <summary>ASAP version - major part.</summary>
 		public const int VersionMajor = 3;
-		/// <summary>ASAP version micro part.</summary>
+		/// <summary>ASAP version - micro part.</summary>
 		public const int VersionMicro = 0;
-		/// <summary>ASAP version minor part.</summary>
+		/// <summary>ASAP version - minor part.</summary>
 		public const int VersionMinor = 0;
 		static readonly byte[] CiConstArray_1 = { 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, 136, 127, 121, 115, 108, 103,
 			96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52, 51, 48, 45, 42, 40,
@@ -3080,19 +3106,19 @@ namespace Sf.Asap
 
 	internal enum ASAPModuleType
 	{
-		SAPB,
-		SAPC,
-		SAPD,
-		SAPS,
-		CMC,
-		CM3,
-		CMR,
-		CMS,
-		DLT,
-		MPT,
-		RMT,
-		TMC,
-		TM2
+		SapB,
+		SapC,
+		SapD,
+		SapS,
+		Cmc,
+		Cm3,
+		Cmr,
+		Cms,
+		Dlt,
+		Mpt,
+		Rmt,
+		Tmc,
+		Tm2
 	}
 
 	/// <summary>Format of output samples.</summary>
@@ -3115,20 +3141,20 @@ namespace Sf.Asap
 		/// <remarks>Each scanline is 114 cycles of which 9 is taken by ANTIC for memory refresh.</remarks>
 		internal void DoFrame(ASAP asap, int cycleLimit)
 		{
-			int pc = this.PC;
-			int nz = this.NZ;
+			int pc = this.Pc;
+			int nz = this.Nz;
 			int a = this.A;
 			int x = this.X;
 			int y = this.Y;
 			int c = this.C;
 			int s = this.S;
-			int vdi = this.VDI;
+			int vdi = this.Vdi;
 			while (asap.Cycle < cycleLimit) {
 				if (asap.Cycle >= asap.NextEventCycle) {
-					this.PC = pc;
+					this.Pc = pc;
 					this.S = s;
 					asap.HandleEvent();
-					pc = this.PC;
+					pc = this.Pc;
 					s = this.S;
 					if ((vdi & 4) == 0 && asap.Pokeys.Irqst != 255) {
 						asap.Memory[256 + s] = (byte) (pc >> 8);
@@ -3208,8 +3234,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -3274,8 +3300,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -3361,8 +3387,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -3429,8 +3455,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -3507,8 +3533,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -3584,8 +3610,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -3755,8 +3781,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -3926,8 +3952,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4218,8 +4244,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4290,8 +4316,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4412,8 +4438,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4528,8 +4554,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4545,8 +4571,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++] + x & 255;
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8);
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4596,8 +4622,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4615,8 +4641,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4642,8 +4668,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4671,8 +4697,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4690,8 +4716,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++] + x & 255;
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8);
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4719,8 +4745,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4739,8 +4765,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4768,8 +4794,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4788,8 +4814,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4808,8 +4834,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++] + x & 255;
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8);
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4840,8 +4866,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4859,8 +4885,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4886,8 +4912,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4905,8 +4931,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -4924,8 +4950,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++] + x & 255;
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8);
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5021,8 +5047,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5067,8 +5093,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5147,8 +5173,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5193,8 +5219,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5391,8 +5417,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++] + x & 255;
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8);
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5424,8 +5450,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5443,8 +5469,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5470,8 +5496,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5489,8 +5515,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5508,8 +5534,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++] + x & 255;
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8);
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5559,8 +5585,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr += asap.Memory[pc++] << 8;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5590,8 +5616,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = asap.Memory[addr] + (asap.Memory[addr + 1 & 255] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5641,8 +5667,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + y & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5672,8 +5698,8 @@ namespace Sf.Asap
 						addr = asap.Memory[pc++];
 						addr = addr + (asap.Memory[pc++] << 8) + x & 65535;
 						if (addr >> 8 == 210) {
-							nz = asap.PeekHardware(addr);
 							asap.Cycle--;
+							nz = asap.PeekHardware(addr);
 							asap.PokeHardware(addr, nz);
 							asap.Cycle++;
 						}
@@ -5701,19 +5727,19 @@ namespace Sf.Asap
 						break;
 				}
 			}
-			this.PC = pc;
-			this.NZ = nz;
+			this.Pc = pc;
+			this.Nz = nz;
 			this.A = a;
 			this.X = x;
 			this.Y = y;
 			this.C = c;
 			this.S = s;
-			this.VDI = vdi;
+			this.Vdi = vdi;
 		}
-		internal int NZ;
-		internal int PC;
+		internal int Nz;
+		internal int Pc;
 		internal int S;
-		internal int VDI;
+		internal int Vdi;
 		internal int X;
 		internal int Y;
 		static readonly int[] CiConstArray_1 = { 7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6,

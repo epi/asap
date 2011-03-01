@@ -1,7 +1,7 @@
 /*
  * FileSelector.java - ASAP for Android
  *
- * Copyright (C) 2010  Piotr Fusik
+ * Copyright (C) 2010-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -59,7 +59,7 @@ public class FileSelector extends ListActivity
 			String name = file.getName();
 			if (file.isDirectory())
 				listAdapter.add(name + '/');
-			else if (ASAP.isOurFile(name))
+			else if (ASAPInfo.isOurFile(name))
 				listAdapter.add(name);
 		}
 		listAdapter.sort(new Comparator<String>() {
