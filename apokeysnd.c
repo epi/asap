@@ -1,7 +1,7 @@
 /*
  * apokeysnd.c - another POKEY sound emulator
  *
- * Copyright (C) 2007-2010  Piotr Fusik
+ * Copyright (C) 2007-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -572,44 +572,3 @@ FUNC(void, PokeySound_Mute, (P(CONST ASAP_State PTR, ast), P(PokeyState PTR, pst
 	MUTE_CHANNEL(3, (mask & 4) != 0, MUTE_USER);
 	MUTE_CHANNEL(4, (mask & 8) != 0, MUTE_USER);
 }
-
-#ifdef APOKEYSND
-
-static ASAP_State asap;
-
-__declspec(dllexport) void APokeySound_Initialize(abool stereo)
-{
-	asap.extra_pokey_mask = stereo ? 0x10 : 0;
-	PokeySound_Initialize(&asap);
-	PokeySound_Mute(&asap, &asap.base_pokey, 0);
-	PokeySound_Mute(&asap, &asap.extra_pokey, 0);
-	PokeySound_StartFrame(&asap);
-}
-
-__declspec(dllexport) void APokeySound_PutByte(int addr, int data)
-{
-	PokeySound_PutByte(&asap, addr, data);
-}
-
-__declspec(dllexport) int APokeySound_GetRandom(int addr, int cycle)
-{
-	return PokeySound_GetRandom(&asap, addr, cycle);
-}
-
-__declspec(dllexport) int APokeySound_Generate(int cycles, byte buffer[], ASAP_SampleFormat format)
-{
-	int len;
-	PokeySound_EndFrame(&asap, cycles);
-	len = PokeySound_Generate(&asap, buffer, 0, asap.samples, format);
-	PokeySound_StartFrame(&asap);
-	return len;
-}
-
-__declspec(dllexport) void APokeySound_About(const char **name, const char **author, const char **description)
-{
-	*name = "Another POKEY sound emulator, v" ASAP_VERSION;
-	*author = "Piotr Fusik, (C) " ASAP_YEARS;
-	*description = "Part of ASAP, http://asap.sourceforge.net";
-}
-
-#endif /* APOKEYSND */

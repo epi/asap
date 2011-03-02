@@ -188,12 +188,12 @@ bass_asap.dll: bass/bass_asap.c $(COMMON_C) bass_asap-res.o $(COMMON_H) bass/bas
 bass_asap-res.o: gui.rc ../asap.h
 	$(WINDRES) -DBASS gui.rc
 
-# APokeySound
+# Raster Music Tracker
 
-apokeysnd.dll: ../apokeysnd.c apokeysnd-res.o ../asap.h ../asap_internal.h ../anylang.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DAPOKEYSND ../apokeysnd.c apokeysnd-res.o
+apokeysnd.dll: rmt/apokeysnd_dll.c ../apokeysnd.c rmt/apokeysnd-res.o ../asap.h ../asap_internal.h ../anylang.h
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DAPOKEYSND rmt/apokeysnd_dll.c ../apokeysnd.c rmt/apokeysnd-res.o
 
-apokeysnd-res.o: gui.rc ../asap.h
+rmt/apokeysnd-res.o: gui.rc ../asap.h
 	$(WINDRES) -DAPOKEYSND gui.rc
 
 # asapscan
@@ -285,6 +285,7 @@ clean:
 	$(RM) dshow/*.obj dshow/asap_dsf.res
 	$(RM) ../xbmc/*.obj ../xbmc/xbmc_asap.res
 	$(RM) wince/wasap-res.o wince/wasap.exe wince/gspasap-res.o wince/gspasap.dll wince/asap_dsf.res wince/asap_dsf.dll wince/asap_dsf.exp wince/asap_dsf.lib
+	$(RM) rmt/apokeysnd-res.o
 	$(RM) install_dsf.bat uninstall_dsf.bat
 	$(RM) ../players/*.obx ../players.h ../README.html
 	$(RM) -rf x64
