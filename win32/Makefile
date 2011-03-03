@@ -190,8 +190,8 @@ bass_asap-res.o: gui.rc ../asap.h
 
 # Raster Music Tracker
 
-apokeysnd.dll: rmt/apokeysnd_dll.c ../apokeysnd.c rmt/apokeysnd-res.o ../asap.h ../asap_internal.h ../anylang.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DAPOKEYSND rmt/apokeysnd_dll.c ../apokeysnd.c rmt/apokeysnd-res.o
+apokeysnd.dll: rmt/apokeysnd_dll.c rmt/pokey.c rmt/apokeysnd-res.o rmt/pokey.h
+	$(ASAP_GCC) --std=c99 -shared -Wl,-subsystem,windows -DAPOKEYSND rmt/apokeysnd_dll.c rmt/pokey.c rmt/apokeysnd-res.o
 
 rmt/apokeysnd-res.o: gui.rc ../asap.h
 	$(WINDRES) -DAPOKEYSND gui.rc
@@ -382,6 +382,7 @@ dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-set
 	$(GREP) -m 1 ^ASAP ../NEWS
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) Version ../asapinfo.ci
+	$(GREP) "*name" rmt/apokeysnd_dll.c
 	$(GREP) VERSION ../flash/ASAP.ppas
 	$(GREP) android:versionName ../java/android/AndroidManifest.xml
 	$(GREP) about_title ../java/android/res/values/strings.xml

@@ -21,41 +21,41 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "asap_internal.h"
+#include <stddef.h>
+#include "pokey.h"
 
-static ASAP_State asap;
+static PokeyPair *pokeys = NULL;
 
-__declspec(dllexport) void APokeySound_Initialize(abool stereo)
+__declspec(dllexport) void APokeySound_Initialize(bool stereo)
 {
-	asap.extra_pokey_mask = stereo ? 0x10 : 0;
-	PokeySound_Initialize(&asap);
-	PokeySound_Mute(&asap, &asap.base_pokey, 0);
-	PokeySound_Mute(&asap, &asap.extra_pokey, 0);
-	PokeySound_StartFrame(&asap);
+	if (pokeys != NULL)
+		PokeyPair_Delete(pokeys);
+	pokeys = PokeyPair_New();
+	PokeyPair_Initialize(pokeys, 1773447, stereo);
+	PokeyPair_StartFrame(pokeys);
 }
 
 __declspec(dllexport) void APokeySound_PutByte(int addr, int data)
 {
-	PokeySound_PutByte(&asap, addr, data);
+	PokeyPair_Poke(pokeys, addr, data, 0);
 }
 
 __declspec(dllexport) int APokeySound_GetRandom(int addr, int cycle)
 {
-	return PokeySound_GetRandom(&asap, addr, cycle);
+	return PokeyPair_GetRandom(pokeys, addr, cycle);
 }
 
-__declspec(dllexport) int APokeySound_Generate(int cycles, byte buffer[], ASAP_SampleFormat format)
+__declspec(dllexport) int APokeySound_Generate(int cycles, unsigned char *buffer, int depth)
 {
-	int len;
-	PokeySound_EndFrame(&asap, cycles);
-	len = PokeySound_Generate(&asap, buffer, 0, asap.samples, format);
-	PokeySound_StartFrame(&asap);
+	int len = PokeyPair_EndFrame(pokeys, cycles);
+	len = PokeyPair_Generate(pokeys, buffer, 0, len, depth == 16 ? ASAPSampleFormat_S16_L_E : ASAPSampleFormat_U8);
+	PokeyPair_StartFrame(pokeys);
 	return len;
 }
 
 __declspec(dllexport) void APokeySound_About(const char **name, const char **author, const char **description)
 {
-	*name = "Another POKEY Sound Emulator, v" ASAP_VERSION;
-	*author = "Piotr Fusik, (C) " ASAP_YEARS;
+	*name = "Another POKEY Sound Emulator, v3.0.0";
+	*author = "Piotr Fusik, (C) 2007-2011";
 	*description = "Part of ASAP, http://asap.sourceforge.net";
 }
