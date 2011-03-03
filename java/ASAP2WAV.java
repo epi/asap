@@ -82,15 +82,15 @@ public class ASAP2WAV
 	private static void processFile(String inputFilename) throws Exception
 	{
 		InputStream is = new FileInputStream(inputFilename);
-		byte[] module = new byte[ASAPInfo.MODULE_MAX];
+		byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 		int moduleLen = ASAPInfo.readAndClose(is, module);
 		ASAP asap = new ASAP();
 		asap.load(inputFilename, module, moduleLen);
-		ASAPInfo moduleInfo = asap.moduleInfo;
+		ASAPInfo moduleInfo = asap.getInfo();
 		if (song < 0)
-			song = moduleInfo.defaultSong;
+			song = moduleInfo.getDefaultSong();
 		if (duration < 0) {
-			duration = moduleInfo.durations[song];
+			duration = moduleInfo.getDuration(song);
 			if (duration < 0)
 				duration = 180 * 1000;
 		}
@@ -108,7 +108,7 @@ public class ASAP2WAV
 		byte[] buffer = new byte[8192];
 		if (outputHeader) {
 			asap.getWavHeader(buffer, format);
-			os.write(buffer, 0, ASAP.WAV_HEADER_BYTES);
+			os.write(buffer, 0, ASAP.WAV_HEADER_LENGTH);
 		}
 		int nBytes;
 		do {

@@ -11,20 +11,36 @@ public final class ASAPInfo
 	{
 		this.durations[this.songs++] = (int) ((long) (playerCalls * this.fastplay) * 114000 / 1773447);
 	}
+	String author;
+	int channels;
+	int covoxAddr;
+	String date;
+	int defaultSong;
+	final int[] durations = new int[32];
+	int fastplay;
+	String filename;
+
 	/**
-	 * Author's name.
+	 * Returns author's name.
 	 * A nickname may be included in parentheses after the real name.
 	 * Multiple authors are separated with <code>" &amp; "</code>.
 	 * An empty string means the author is unknown.
 	 */
-	public String author;
+	public String getAuthor()
+	{
+		return this.author;
+	}
+
 	/**
-	 * 1 for mono or 2 for stereo.
+	 * Returns 1 for mono or 2 for stereo.
 	 */
-	public int channels;
-	int covoxAddr;
+	public int getChannels()
+	{
+		return this.channels;
+	}
+
 	/**
-	 * Music creation date.
+	 * Returns music creation date.
 	 * Some of the possible formats are:
 	 * <ul>
 	 * <li>YYYY</li>
@@ -34,19 +50,42 @@ public final class ASAPInfo
 	 * </ul>
 	 * An empty string means the date is unknown.
 	 */
-	public String date;
+	public String getDate()
+	{
+		return this.date;
+	}
+
 	/**
-	 * 0-based index of the "main" song.
+	 * Returns 0-based index of the "main" song.
 	 * The specified song should be played by default.
 	 */
-	public int defaultSong;
+	public int getDefaultSong()
+	{
+		return this.defaultSong;
+	}
+
 	/**
-	 * Lengths of songs.
-	 * Each element of the array represents length of one song,
-	 * in milliseconds. -1 means the length is indeterminate.
+	 * Returns length of the specified song.
+	 * The result is in milliseconds. -1 means the length is indeterminate.
 	 */
-	public final int[] durations = new int[32];
-	int fastplay;
+	public int getDuration(int song)
+	{
+		return this.durations[song];
+	}
+
+	/**
+	 * Returns information whether the specified song loops.
+	 * Returns:
+	 * <ul>
+	 * <li><code>true</code> if the song loops</li>
+	 * <li><code>false</code> if the song stops</li>
+	 * </ul>
+	 * 
+	 */
+	public boolean getLoop(int song)
+	{
+		return this.loops[song];
+	}
 
 	static int getPackedExt(String filename)
 	{
@@ -121,6 +160,32 @@ public final class ASAPInfo
 			}
 		}
 		return playerCalls / perFrame;
+	}
+
+	/**
+	 * Returns number of songs in the file.
+	 */
+	public int getSongs()
+	{
+		return this.songs;
+	}
+
+	/**
+	 * Returns music title.
+	 * An empty string means the title is unknown.
+	 */
+	public String getTitle()
+	{
+		return this.name;
+	}
+
+	/**
+	 * Returns music title or filename.
+	 * If title is unknown returns filename without the path or extension.
+	 */
+	public String getTitleOrFilename()
+	{
+		return this.name.length() > 0 ? this.name : this.filename;
 	}
 
 	static int getWord(byte[] array, int i)
@@ -205,7 +270,7 @@ public final class ASAPInfo
 	 */
 	public void load(String filename, byte[] module, int moduleLen) throws Exception
 	{
-		parseFile(null, filename, module, moduleLen);
+		this.parseFile(null, filename, module, moduleLen);
 	}
 
 	/**
@@ -239,27 +304,18 @@ public final class ASAPInfo
 			System.arraycopy(playerRoutine, 6, asap.memory, this.player, playerLastByte + 1 - this.player);
 		}
 	}
-	/**
-	 * Information about finite vs infinite songs.
-	 * Each element of the array represents one song, and is:
-	 * <ul>
-	 * <li><code>true</code> if the song loops</li>
-	 * <li><code>false</code> if the song stops</li>
-	 * </ul>
-	 * 
-	 */
-	public final boolean[] loops = new boolean[32];
+	final boolean[] loops = new boolean[32];
 	/**
 	 * Maximum length of a supported input file.
 	 * You may assume that files longer than this are not supported by ASAP.
 	 */
-	public static final int MODULE_MAX = 65000;
-	int music;
+	public static final int MAX_MODULE_LENGTH = 65000;
 	/**
-	 * Music title.
-	 * An empty string means the title is unknown.
+	 * Maximum number of songs in a file.
 	 */
-	public String name;
+	public static final int MAX_SONGS = 32;
+	int music;
+	String name;
 	boolean ntsc;
 
 	void parseCmc(ASAP asap, byte[] module, int moduleLen, int type, byte[] playerRoutine) throws Exception
@@ -267,7 +323,7 @@ public final class ASAPInfo
 		if (moduleLen < 774)
 			throw new Exception("Module too short");
 		this.type = type;
-		loadNative(asap, module, moduleLen, playerRoutine);
+		this.loadNative(asap, module, moduleLen, playerRoutine);
 		if (asap != null && type == ASAPModuleType.CMR) {
 			System.arraycopy(CI_CONST_ARRAY_1, 0, asap.memory, 3087, 37);
 		}
@@ -281,10 +337,10 @@ public final class ASAPInfo
 			}
 		}
 		this.songs = 0;
-		parseCmcSong(module, 0);
+		this.parseCmcSong(module, 0);
 		for (int pos = 0; pos < lastPos && this.songs < 32; pos++)
 			if (module[518 + pos] == -113 || module[518 + pos] == -17)
-				parseCmcSong(module, pos + 1);
+				this.parseCmcSong(module, pos + 1);
 	}
 
 	void parseCmcSong(byte[] module, int pos)
@@ -354,7 +410,7 @@ public final class ASAPInfo
 			playerCalls += tempo * (this.type == ASAPModuleType.CM3 ? 48 : 64);
 			pos++;
 		}
-		addSong(playerCalls);
+		this.addSong(playerCalls);
 	}
 
 	static int parseDec(byte[] module, int moduleIndex, int maxVal) throws Exception
@@ -382,14 +438,14 @@ public final class ASAPInfo
 		else if (moduleLen != 11271)
 			throw new Exception("Invalid module length");
 		this.type = ASAPModuleType.DLT;
-		loadNative(asap, module, moduleLen, getBinaryResource("dlt.obx", 2125));
+		this.loadNative(asap, module, moduleLen, getBinaryResource("dlt.obx", 2125));
 		if (this.music != 8192)
 			throw new Exception("Unsupported module address");
 		boolean[] seen = new boolean[128];
 		this.songs = 0;
 		for (int pos = 0; pos < 128 && this.songs < 32; pos++) {
 			if (!seen[pos])
-				parseDltSong(module, seen, pos);
+				this.parseDltSong(module, seen, pos);
 		}
 		if (this.songs == 0)
 			throw new Exception("No songs found");
@@ -424,7 +480,7 @@ public final class ASAPInfo
 		}
 		if (playerCalls > 0) {
 			this.loops[this.songs] = loop;
-			addSong(playerCalls);
+			this.addSong(playerCalls);
 		}
 	}
 
@@ -503,19 +559,23 @@ public final class ASAPInfo
 		int len = filename.length();
 		int basename = 0;
 		int ext = -1;
-		for (int i = 0; i < len; i++) {
+		for (int i = len; --i >= 0;) {
 			int c = filename.charAt(i);
 			if (c == 47 || c == 92) {
 				basename = i + 1;
-				ext = -1;
+				break;
 			}
-			else if (c == 46)
+			if (c == 46)
 				ext = i;
 		}
 		if (ext < 0)
 			throw new Exception("Filename has no extension");
+		ext -= basename;
+		if (ext > 127)
+			ext = 127;
+		this.filename = filename.substring(basename, basename + ext);
 		this.author = "";
-		this.name = filename.substring(basename, basename + ext - basename);
+		this.name = "";
 		this.date = "";
 		this.channels = 1;
 		this.songs = 1;
@@ -532,44 +592,44 @@ public final class ASAPInfo
 		this.covoxAddr = -1;
 		switch (getPackedExt(filename)) {
 			case 7364979:
-				parseSap(asap, module, moduleLen);
+				this.parseSap(asap, module, moduleLen);
 				return;
 			case 6516067:
-				parseCmc(asap, module, moduleLen, ASAPModuleType.CMC, getBinaryResource("cmc.obx", 2019));
+				this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMC, getBinaryResource("cmc.obx", 2019));
 				return;
 			case 3370339:
-				parseCmc(asap, module, moduleLen, ASAPModuleType.CM3, getBinaryResource("cm3.obx", 2022));
+				this.parseCmc(asap, module, moduleLen, ASAPModuleType.CM3, getBinaryResource("cm3.obx", 2022));
 				return;
 			case 7499107:
-				parseCmc(asap, module, moduleLen, ASAPModuleType.CMR, getBinaryResource("cmc.obx", 2019));
+				this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMR, getBinaryResource("cmc.obx", 2019));
 				return;
 			case 7564643:
 				this.channels = 2;
-				parseCmc(asap, module, moduleLen, ASAPModuleType.CMS, getBinaryResource("cms.obx", 2753));
+				this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMS, getBinaryResource("cms.obx", 2753));
 				return;
 			case 6516068:
 				this.fastplay = 156;
-				parseCmc(asap, module, moduleLen, ASAPModuleType.CMC, getBinaryResource("cmc.obx", 2019));
+				this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMC, getBinaryResource("cmc.obx", 2019));
 				return;
 			case 7629924:
-				parseDlt(asap, module, moduleLen);
+				this.parseDlt(asap, module, moduleLen);
 				return;
 			case 7630957:
-				parseMpt(asap, module, moduleLen);
+				this.parseMpt(asap, module, moduleLen);
 				return;
 			case 6582381:
 				this.fastplay = 156;
-				parseMpt(asap, module, moduleLen);
+				this.parseMpt(asap, module, moduleLen);
 				return;
 			case 7630194:
-				parseRmt(asap, module, moduleLen);
+				this.parseRmt(asap, module, moduleLen);
 				return;
 			case 6516084:
 			case 3698036:
-				parseTmc(asap, module, moduleLen);
+				this.parseTmc(asap, module, moduleLen);
 				return;
 			case 3304820:
-				parseTm2(asap, module, moduleLen);
+				this.parseTm2(asap, module, moduleLen);
 				return;
 			default:
 				throw new Exception("Unknown filename extension");
@@ -603,7 +663,7 @@ public final class ASAPInfo
 		if (moduleLen < 464)
 			throw new Exception("Module too short");
 		this.type = ASAPModuleType.MPT;
-		loadNative(asap, module, moduleLen, getBinaryResource("mpt.obx", 2233));
+		this.loadNative(asap, module, moduleLen, getBinaryResource("mpt.obx", 2233));
 		int track0Addr = getWord(module, 2) + 458;
 		if ((module[454] & 0xff) + ((module[458] & 0xff) << 8) != track0Addr)
 			throw new Exception("Invalid address of the first track");
@@ -615,7 +675,7 @@ public final class ASAPInfo
 		for (int pos = 0; pos < songLen && this.songs < 32; pos++) {
 			if (!globalSeen[pos]) {
 				this.songPos[this.songs] = (byte) pos;
-				parseMptSong(module, globalSeen, songLen, pos);
+				this.parseMptSong(module, globalSeen, songLen, pos);
 			}
 		}
 		if (this.songs == 0)
@@ -689,7 +749,7 @@ public final class ASAPInfo
 			pos++;
 		}
 		if (playerCalls > 0)
-			addSong(playerCalls);
+			this.addSong(playerCalls);
 	}
 
 	void parseRmt(ASAP asap, byte[] module, int moduleLen) throws Exception
@@ -714,7 +774,7 @@ public final class ASAPInfo
 		if (perFrame < 1 || perFrame > 4)
 			throw new Exception("Unsupported player call rate");
 		this.type = ASAPModuleType.RMT;
-		loadNative(asap, module, moduleLen, this.channels == 2 ? getBinaryResource("rmt8.obx", 2275) : getBinaryResource("rmt4.obx", 2007));
+		this.loadNative(asap, module, moduleLen, this.channels == 2 ? getBinaryResource("rmt8.obx", 2275) : getBinaryResource("rmt4.obx", 2007));
 		int songLen = getWord(module, 4) + 1 - getWord(module, 20);
 		if (posShift == 3 && (songLen & 4) != 0 && module[6 + getWord(module, 4) - getWord(module, 2) - 3] == -2)
 			songLen += 4;
@@ -726,7 +786,7 @@ public final class ASAPInfo
 		for (int pos = 0; pos < songLen && this.songs < 32; pos++) {
 			if (!globalSeen[pos]) {
 				this.songPos[this.songs] = (byte) pos;
-				parseRmtSong(module, globalSeen, songLen, posShift, pos);
+				this.parseRmtSong(module, globalSeen, songLen, posShift, pos);
 			}
 		}
 		this.fastplay = 312 / perFrame;
@@ -831,12 +891,12 @@ public final class ASAPInfo
 			frames = instrumentFrames;
 		}
 		if (frames > 0)
-			addSong(frames);
+			this.addSong(frames);
 	}
 
 	void parseSap(ASAP asap, byte[] module, int moduleLen) throws Exception
 	{
-		parseSapHeader(module, moduleLen);
+		this.parseSapHeader(module, moduleLen);
 		if (asap == null)
 			return;
 		clear(asap.memory);
@@ -1008,7 +1068,7 @@ public final class ASAPInfo
 		if (moduleLen < 932)
 			throw new Exception("Module too short");
 		this.type = ASAPModuleType.TM2;
-		loadNative(asap, module, moduleLen, getBinaryResource("tm2.obx", 3698));
+		this.loadNative(asap, module, moduleLen, getBinaryResource("tm2.obx", 3698));
 		int i = module[37] & 0xff;
 		if (i < 1 || i > 4)
 			throw new Exception("Unsupported player call rate");
@@ -1039,11 +1099,11 @@ public final class ASAPInfo
 		}
 		while (c == 0 || c >= 128);
 		this.songs = 0;
-		parseTm2Song(module, 0);
+		this.parseTm2Song(module, 0);
 		for (i = 0; i < lastPos && this.songs < 32; i += 17) {
 			c = module[918 + i] & 0xff;
 			if (c == 0 || c >= 128)
-				parseTm2Song(module, i + 17);
+				this.parseTm2Song(module, i + 17);
 		}
 	}
 
@@ -1116,7 +1176,7 @@ public final class ASAPInfo
 			}
 			pos += 17;
 		}
-		addSong(playerCalls);
+		this.addSong(playerCalls);
 	}
 
 	void parseTmc(ASAP asap, byte[] module, int moduleLen) throws Exception
@@ -1124,7 +1184,7 @@ public final class ASAPInfo
 		if (moduleLen < 464)
 			throw new Exception("Module too short");
 		this.type = ASAPModuleType.TMC;
-		loadNative(asap, module, moduleLen, getBinaryResource("tmc.obx", 2671));
+		this.loadNative(asap, module, moduleLen, getBinaryResource("tmc.obx", 2671));
 		this.channels = 2;
 		int i = 0;
 		while (module[102 + i] == 0) {
@@ -1141,10 +1201,10 @@ public final class ASAPInfo
 		}
 		while ((module[437 + lastPos] & 0xff) >= 128);
 		this.songs = 0;
-		parseTmcSong(module, 0);
+		this.parseTmcSong(module, 0);
 		for (i = 0; i < lastPos && this.songs < 32; i += 16)
 			if ((module[437 + i] & 0xff) >= 128)
-				parseTmcSong(module, i + 16);
+				this.parseTmcSong(module, i + 16);
 		i = module[37] & 0xff;
 		if (i < 1 || i > 4)
 			throw new Exception("Unsupported player call rate");
@@ -1207,18 +1267,11 @@ public final class ASAPInfo
 		}
 		if ((module[436 + pos] & 0xff) < 128)
 			this.loops[this.songs] = true;
-		addSong(frames);
+		this.addSong(frames);
 	}
 	int player;
 	final byte[] songPos = new byte[32];
-	/**
-	 * Number of songs in the file.
-	 */
-	public int songs;
-	/**
-	 * Maximum number of songs in a file.
-	 */
-	public static final int SONGS_MAX = 32;
+	int songs;
 	int type;
 	/**
 	 * ASAP version as a string.

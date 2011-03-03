@@ -19,17 +19,6 @@
 // along with ASAP; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-/// Format of output samples.
-public enum ASAPSampleFormat
-{
-	/// Unsigned 8-bit.
-	U8,
-	/// Signed 16-bit little-endian.
-	S16LE,
-	/// Signed 16-bit big-endian.
-	S16BE
-}
-
 enum NmiStatus
 {
 	Reset,
@@ -42,11 +31,10 @@ enum NmiStatus
 public class ASAP
 {
 	/// Output sample rate.
-	public const int SampleRate = 44100;
+	public const int SampleRate = Pokey.SampleRate;
 
 	int Cycle;
 	int NextEventCycle;
-	const int NeverCycle = 0x800000;
 
 	byte[65536] Memory;
 
@@ -65,19 +53,13 @@ public class ASAP
 	// POKEYs:
 	PokeyPair() Pokeys;
 
-	/// Information about the loaded module.
-	public ASAPInfo() ModuleInfo;
-
+	ASAPInfo() ModuleInfo;
 	int NextPlayerCycle;
 	int TmcPerFrame;
 	int TmcPerFrameCounter;
 	int CurrentSong;
 	int CurrentDuration;
-
-	/// Current playback position in blocks.
-	/// A block is one sample or a pair of samples for stereo.
-	public int BlocksPlayed;
-
+	int BlocksPlayed;
 	int SilenceCycles;
 	int SilenceCyclesCounter;
 
@@ -129,7 +111,7 @@ public class ASAP
 				Pokeys.Irqst |= data ^ 0xff;
 				macro SET_TIMER_IRQ(ch) {
 					if ((data & Pokeys.Irqst & ch) != 0) {
-						if (Pokeys.Timer##ch##Cycle == NeverCycle) {
+						if (Pokeys.Timer##ch##Cycle == Pokey.NeverCycle) {
 							int t = Pokeys.BasePokey.TickCycle##ch;
 							while (t < Cycle)
 								t += Pokeys.BasePokey.PeriodCycles##ch;
@@ -139,7 +121,7 @@ public class ASAP
 						}
 					}
 					else
-						Pokeys.Timer##ch##Cycle = NeverCycle;
+						Pokeys.Timer##ch##Cycle = Pokey.NeverCycle;
 				}
 				SET_TIMER_IRQ(1);
 				SET_TIMER_IRQ(2);
@@ -272,7 +254,7 @@ public class ASAP
 		macro CHECK_TIMER_IRQ(ch) {
 			if (cycle >= Pokeys.Timer##ch##Cycle) {
 				Pokeys.Irqst &= ~ch;
-				Pokeys.Timer##ch##Cycle = NeverCycle;
+				Pokeys.Timer##ch##Cycle = Pokey.NeverCycle;
 			}
 			else if (nextEventCycle > Pokeys.Timer##ch##Cycle)
 				nextEventCycle = Pokeys.Timer##ch##Cycle;
@@ -291,13 +273,13 @@ public class ASAP
 		int cycles = ModuleInfo.Ntsc ? 262 * 114 : 312 * 114;
 		Cpu.DoFrame(this, cycles);
 		Cycle -= cycles;
-		if (NextPlayerCycle != NeverCycle)
+		if (NextPlayerCycle != Pokey.NeverCycle)
 			NextPlayerCycle -= cycles;
-		if (Pokeys.Timer1Cycle != NeverCycle)
+		if (Pokeys.Timer1Cycle != Pokey.NeverCycle)
 			Pokeys.Timer1Cycle -= cycles;
-		if (Pokeys.Timer2Cycle != NeverCycle)
+		if (Pokeys.Timer2Cycle != Pokey.NeverCycle)
 			Pokeys.Timer2Cycle -= cycles;
-		if (Pokeys.Timer4Cycle != NeverCycle)
+		if (Pokeys.Timer4Cycle != Pokey.NeverCycle)
 			Pokeys.Timer4Cycle -= cycles;
 		return cycles;
 	}
@@ -321,6 +303,12 @@ public class ASAP
 	{
 		SilenceCycles = 0;
 		ModuleInfo.ParseFile(this, filename, module, moduleLen);
+	}
+
+	/// Returns information about the loaded module.
+	public ASAPInfo GetInfo()
+	{
+		return ModuleInfo;
 	}
 
 	/// Enables silence detection.
@@ -372,7 +360,7 @@ public class ASAP
 			throw "Song number out of range";
 		CurrentSong = song;
 		CurrentDuration = duration;
-		NextPlayerCycle = NeverCycle;
+		NextPlayerCycle = Pokey.NeverCycle;
 		BlocksPlayed = 0;
 		SilenceCyclesCounter = SilenceCycles;
 
@@ -386,8 +374,8 @@ public class ASAP
 		Covox[1] = 0x80;
 		Covox[2] = 0x80;
 		Covox[3] = 0x80;
-		Pokeys.Initialize(ModuleInfo.Channels > 1);
-		Pokeys.MainClock = ModuleInfo.Ntsc ? 1789772 : 1773447;
+		Pokeys.Initialize(ModuleInfo.Ntsc ? 1789772 : 1773447, ModuleInfo.Channels > 1);
+		MutePokeyChannels(0xff);
 		switch (ModuleInfo.Type) {
 		case ASAPModuleType.SapB:
 			Do6502Init(ModuleInfo.Init, song, 0, 0);
@@ -433,6 +421,13 @@ public class ASAP
 		NextPlayerCycle = 0;
 	}
 
+	/// Returns current playback position in blocks.
+	/// A block is one sample or a pair of samples for stereo.
+	public int GetBlocksPlayed()
+	{
+		return BlocksPlayed;
+	}
+
 	/// Returns current playback position in milliseconds.
 	public int GetPosition()
 	{
@@ -470,11 +465,11 @@ public class ASAP
 
 	/// WAV file header length.
 	// TODO: <seealso cref="GetWavHeader" />
-	public const int WavHeaderBytes = 44;
+	public const int WavHeaderLength = 44;
 
 	/// Fills leading bytes of the specified buffer with WAV file header.
-	/// The number of changed bytes is `WavHeaderBytes`.
-	// TODO: <see cref="WavHeaderBytes" />
+	/// The number of changed bytes is `WavHeaderLength`.
+	// TODO: <see cref="WavHeaderLength" />
 	public void GetWavHeader(
 		/// The destination buffer.
 		byte[] buffer,

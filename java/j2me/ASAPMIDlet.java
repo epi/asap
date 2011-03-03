@@ -120,7 +120,7 @@ class ASAPInputStream extends InputStream
 	private final ASAP asap;
 	private final ASAPMIDlet midlet;
 	private final byte[] buffer = new byte[16384];
-	private int bufferLen = ASAP.WAV_HEADER_BYTES;
+	private int bufferLen = ASAP.WAV_HEADER_LENGTH;
 	private int bufferOffset = 0;
 
 	private static final int FORMAT = ASAPSampleFormat.U8;
@@ -228,14 +228,14 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 
 	private void playSong(int song) throws Exception
 	{
-		ASAPInfo moduleInfo = asap.moduleInfo;
-		int duration = moduleInfo.durations[song];
+		ASAPInfo moduleInfo = asap.getInfo();
+		int duration = moduleInfo.getDuration(song);
 
 		gauge = new Gauge(null, false, 1, 0);
 		Form playForm = new Form("ASAP " + ASAPInfo.VERSION);
-		appendStringItem(playForm, "Name: ", moduleInfo.name);
-		appendStringItem(playForm, "Author: ", moduleInfo.author);
-		appendStringItem(playForm, "Date: ", moduleInfo.date);
+		appendStringItem(playForm, "Name: ", moduleInfo.getTitleOrFilename());
+		appendStringItem(playForm, "Author: ", moduleInfo.getAuthor());
+		appendStringItem(playForm, "Date: ", moduleInfo.getDate());
 		appendStringItem(playForm, "Time: ", durationToString(duration));
 		playForm.append(gauge);
 		playForm.addCommand(stopCommand);
@@ -259,7 +259,7 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 		backCommand = new Command("Back", Command.BACK, 1);
 		stopCommand = new Command("Stop", Command.STOP, 1);
 		exitCommand = new Command("Exit", Command.EXIT, 2);
-		module = new byte[ASAPInfo.MODULE_MAX];
+		module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 		asap = new ASAP();
 		displayFileList(new FileList("Select File", "", null, FileSystemRegistry.listRoots()));
 	}
@@ -295,12 +295,13 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 				InputStream is = fc.openInputStream();
 				int moduleLen = ASAPInfo.readAndClose(is, module);
 				asap.load(filename, module, moduleLen);
-				int songs = asap.moduleInfo.songs;
+				ASAPInfo moduleInfo = asap.getInfo();
+				int songs = moduleInfo.getSongs();
 				if (songs > 1) {
-					songListControl = new List(asap.moduleInfo.name, List.IMPLICIT);
+					songListControl = new List(moduleInfo.getTitleOrFilename(), List.IMPLICIT);
 					for (int i = 1; i <= songs; i++)
 						songListControl.append("Song " + i, null);
-					songListControl.setSelectedIndex(asap.moduleInfo.defaultSong, true);
+					songListControl.setSelectedIndex(moduleInfo.getDefaultSong(), true);
 					songListControl.addCommand(selectCommand);
 					songListControl.addCommand(backCommand);
 					songListControl.setCommandListener(this);

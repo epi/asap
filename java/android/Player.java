@@ -111,7 +111,7 @@ public class Player extends Activity implements Runnable
 		this.song = song;
 		try {
 			synchronized (asap) {
-				asap.playSong(song, moduleInfo.loops[song] ? -1 : moduleInfo.durations[song]);
+				asap.playSong(song, moduleInfo.getLoop(song) ? -1 : moduleInfo.getDuration(song));
 			}
 		}
 		catch (Exception ex) {
@@ -119,15 +119,16 @@ public class Player extends Activity implements Runnable
 			return;
 		}
 		resume();
-		if (moduleInfo.songs > 1)
-			setTag(R.id.song, getString(R.string.song_format, song + 1, moduleInfo.songs));
+		int songs = moduleInfo.getSongs();
+		if (songs > 1)
+			setTag(R.id.song, getString(R.string.song_format, song + 1, songs));
 		else
 			setTag(R.id.song, "");
 	}
 
 	private void playNextSong()
 	{
-		if (song + 1 < moduleInfo.songs)
+		if (song + 1 < moduleInfo.getSongs())
 			playSong(song + 1);
 	}
 
@@ -151,7 +152,7 @@ public class Player extends Activity implements Runnable
 
 	public void run()
 	{
-		int config = moduleInfo.channels == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
+		int config = moduleInfo.getChannels() == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
 		int len = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, config, AudioFormat.ENCODING_PCM_8BIT);
 		if (len < 16384)
 			len = 16384;
@@ -199,7 +200,7 @@ public class Player extends Activity implements Runnable
 
 		Uri uri = getIntent().getData();
 		filename = uri.getLastPathSegment();
-		final byte[] module = new byte[ASAPInfo.MODULE_MAX];
+		final byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 		int moduleLen;
 		try {
 			InputStream is;
@@ -225,13 +226,13 @@ public class Player extends Activity implements Runnable
 			showError(R.string.invalid_file);
 			return;
 		}
-		moduleInfo = asap.moduleInfo;
+		moduleInfo = asap.getInfo();
 
 		setTitle(R.string.playing_title);
 		setContentView(R.layout.playing);
-		setTag(R.id.name, moduleInfo.name);
-		setTag(R.id.author, moduleInfo.author);
-		setTag(R.id.date, moduleInfo.date);
+		setTag(R.id.name, moduleInfo.getTitleOrFilename());
+		setTag(R.id.author, moduleInfo.getAuthor());
+		setTag(R.id.date, moduleInfo.getDate());
 		findViewById(R.id.stop_button).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) { finish(); }
 		});
@@ -243,13 +244,13 @@ public class Player extends Activity implements Runnable
 			public boolean canSeekForward() { return false; }
 			public int getBufferPercentage() { return 100; }
 			public int getCurrentPosition() { return asap.getPosition(); }
-			public int getDuration() { return moduleInfo.durations[song]; }
+			public int getDuration() { return moduleInfo.getDuration(song); }
 			public boolean isPlaying() { return !isPaused(); }
 			public void pause() { audioTrack.pause(); }
 			public void seekTo(int pos) { seek(pos); }
 			public void start() { resume(); }
 		});
-		if (moduleInfo.songs > 1) {
+		if (moduleInfo.getSongs() > 1) {
 			mediaController.setPrevNextListeners(new OnClickListener() {
 				public void onClick(View v) { playNextSong(); }
 			},
@@ -262,7 +263,7 @@ public class Player extends Activity implements Runnable
 		}, 500);
 
 		stop = false;
-		playSong(moduleInfo.defaultSong);
+		playSong(moduleInfo.getDefaultSong());
 		new Thread(this).start();
 	}
 

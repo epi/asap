@@ -6,9 +6,7 @@ namespace Sf.Asap
 	/// <remarks>This class performs no I/O operations - all music data must be passed in byte arrays.</remarks>
 	public class ASAP
 	{
-		/// <summary>Current playback position in blocks.</summary>
-		/// <remarks>A block is one sample or a pair of samples for stereo.</remarks>
-		public int BlocksPlayed;
+		internal int BlocksPlayed;
 
 		internal void Call6502(int addr)
 		{
@@ -24,14 +22,14 @@ namespace Sf.Asap
 			int player = this.ModuleInfo.Player;
 			switch (this.ModuleInfo.Type) {
 				case ASAPModuleType.SapB:
-					Call6502(player);
+					this.Call6502(player);
 					break;
 				case ASAPModuleType.SapC:
 				case ASAPModuleType.Cmc:
 				case ASAPModuleType.Cm3:
 				case ASAPModuleType.Cmr:
 				case ASAPModuleType.Cms:
-					Call6502(player + 6);
+					this.Call6502(player + 6);
 					break;
 				case ASAPModuleType.SapD:
 					if (player >= 0) {
@@ -64,20 +62,20 @@ namespace Sf.Asap
 						this.Memory[45179] = (byte) (this.Memory[45179] + 1);
 					break;
 				case ASAPModuleType.Dlt:
-					Call6502(player + 259);
+					this.Call6502(player + 259);
 					break;
 				case ASAPModuleType.Mpt:
 				case ASAPModuleType.Rmt:
 				case ASAPModuleType.Tm2:
-					Call6502(player + 3);
+					this.Call6502(player + 3);
 					break;
 				case ASAPModuleType.Tmc:
 					if (--this.TmcPerFrameCounter <= 0) {
 						this.TmcPerFrameCounter = this.TmcPerFrame;
-						Call6502(player + 3);
+						this.Call6502(player + 3);
 					}
 					else
-						Call6502(player + 6);
+						this.Call6502(player + 6);
 					break;
 			}
 		}
@@ -127,7 +125,7 @@ namespace Sf.Asap
 			this.Memory[511] = 209;
 			this.Cpu.S = 253;
 			for (int frame = 0; frame < 50; frame++) {
-				Do6502Frame();
+				this.Do6502Frame();
 				if (this.Cpu.Pc == 53760)
 					return;
 			}
@@ -137,7 +135,7 @@ namespace Sf.Asap
 		internal int DoFrame()
 		{
 			this.Pokeys.StartFrame();
-			int cycles = Do6502Frame();
+			int cycles = this.Do6502Frame();
 			this.Pokeys.EndFrame(cycles);
 			return cycles;
 		}
@@ -148,7 +146,7 @@ namespace Sf.Asap
 		/// <param name="format">Format of samples.</param>
 		public int Generate(byte[] buffer, int bufferLen, ASAPSampleFormat format)
 		{
-			return GenerateAt(buffer, 0, bufferLen, format);
+			return this.GenerateAt(buffer, 0, bufferLen, format);
 		}
 
 		internal int GenerateAt(byte[] buffer, int bufferOffset, int bufferLen, ASAPSampleFormat format)
@@ -169,7 +167,7 @@ namespace Sf.Asap
 				block += blocks;
 				if (block >= bufferBlocks)
 					break;
-				int cycles = DoFrame();
+				int cycles = this.DoFrame();
 				if (this.SilenceCycles > 0) {
 					if (this.Pokeys.IsSilent()) {
 						this.SilenceCyclesCounter -= cycles;
@@ -181,6 +179,19 @@ namespace Sf.Asap
 				}
 			}
 			return block << blockShift;
+		}
+
+		/// <summary>Returns current playback position in blocks.</summary>
+		/// <remarks>A block is one sample or a pair of samples for stereo.</remarks>
+		public int GetBlocksPlayed()
+		{
+			return this.BlocksPlayed;
+		}
+
+		/// <summary>Returns information about the loaded module.</summary>
+		public ASAPInfo GetInfo()
+		{
+			return this.ModuleInfo;
 		}
 
 		/// <summary>Returns POKEY channel volume.</summary>
@@ -216,7 +227,7 @@ namespace Sf.Asap
 		}
 
 		/// <summary>Fills leading bytes of the specified buffer with WAV file header.</summary>
-		/// <remarks>The number of changed bytes is <c>WavHeaderBytes</c>.</remarks>
+		/// <remarks>The number of changed bytes is <c>WavHeaderLength</c>.</remarks>
 		/// <param name="buffer">The destination buffer.</param>
 		/// <param name="format">Format of samples.</param>
 		public void GetWavHeader(byte[] buffer, ASAPSampleFormat format)
@@ -268,7 +279,7 @@ namespace Sf.Asap
 					this.Cycle = cycle += 9;
 				this.NextScanlineCycle += 114;
 				if (cycle >= this.NextPlayerCycle) {
-					Call6502Player();
+					this.Call6502Player();
 					this.NextPlayerCycle += 114 * this.ModuleInfo.Fastplay;
 				}
 			}
@@ -309,8 +320,7 @@ namespace Sf.Asap
 		{
 			return milliseconds * 441 / 10;
 		}
-		/// <summary>Information about the loaded module.</summary>
-		public readonly ASAPInfo ModuleInfo = new ASAPInfo();
+		internal readonly ASAPInfo ModuleInfo = new ASAPInfo();
 
 		/// <summary>Mutes the selected POKEY channels.</summary>
 		/// <param name="mask">An 8-bit mask which selects POKEY channels to be muted.</param>
@@ -386,19 +396,19 @@ namespace Sf.Asap
 			this.Covox[1] = 128;
 			this.Covox[2] = 128;
 			this.Covox[3] = 128;
-			this.Pokeys.Initialize(this.ModuleInfo.Channels > 1);
-			this.Pokeys.MainClock = this.ModuleInfo.Ntsc ? 1789772 : 1773447;
+			this.Pokeys.Initialize(this.ModuleInfo.Ntsc ? 1789772 : 1773447, this.ModuleInfo.Channels > 1);
+			this.MutePokeyChannels(255);
 			switch (this.ModuleInfo.Type) {
 				case ASAPModuleType.SapB:
-					Do6502Init(this.ModuleInfo.Init, song, 0, 0);
+					this.Do6502Init(this.ModuleInfo.Init, song, 0, 0);
 					break;
 				case ASAPModuleType.SapC:
 				case ASAPModuleType.Cmc:
 				case ASAPModuleType.Cm3:
 				case ASAPModuleType.Cmr:
 				case ASAPModuleType.Cms:
-					Do6502Init(this.ModuleInfo.Player + 3, 112, this.ModuleInfo.Music, this.ModuleInfo.Music >> 8);
-					Do6502Init(this.ModuleInfo.Player + 3, 0, song, 0);
+					this.Do6502Init(this.ModuleInfo.Player + 3, 112, this.ModuleInfo.Music, this.ModuleInfo.Music >> 8);
+					this.Do6502Init(this.ModuleInfo.Player + 3, 0, song, 0);
 					break;
 				case ASAPModuleType.SapD:
 				case ASAPModuleType.SapS:
@@ -409,23 +419,23 @@ namespace Sf.Asap
 					this.Cpu.S = 255;
 					break;
 				case ASAPModuleType.Dlt:
-					Do6502Init(this.ModuleInfo.Player + 256, 0, 0, this.ModuleInfo.SongPos[song]);
+					this.Do6502Init(this.ModuleInfo.Player + 256, 0, 0, this.ModuleInfo.SongPos[song]);
 					break;
 				case ASAPModuleType.Mpt:
-					Do6502Init(this.ModuleInfo.Player, 0, this.ModuleInfo.Music >> 8, this.ModuleInfo.Music);
-					Do6502Init(this.ModuleInfo.Player, 2, this.ModuleInfo.SongPos[song], 0);
+					this.Do6502Init(this.ModuleInfo.Player, 0, this.ModuleInfo.Music >> 8, this.ModuleInfo.Music);
+					this.Do6502Init(this.ModuleInfo.Player, 2, this.ModuleInfo.SongPos[song], 0);
 					break;
 				case ASAPModuleType.Rmt:
-					Do6502Init(this.ModuleInfo.Player, this.ModuleInfo.SongPos[song], this.ModuleInfo.Music, this.ModuleInfo.Music >> 8);
+					this.Do6502Init(this.ModuleInfo.Player, this.ModuleInfo.SongPos[song], this.ModuleInfo.Music, this.ModuleInfo.Music >> 8);
 					break;
 				case ASAPModuleType.Tmc:
 				case ASAPModuleType.Tm2:
-					Do6502Init(this.ModuleInfo.Player, 112, this.ModuleInfo.Music >> 8, this.ModuleInfo.Music);
-					Do6502Init(this.ModuleInfo.Player, 0, song, 0);
+					this.Do6502Init(this.ModuleInfo.Player, 112, this.ModuleInfo.Music >> 8, this.ModuleInfo.Music);
+					this.Do6502Init(this.ModuleInfo.Player, 0, song, 0);
 					this.TmcPerFrameCounter = 1;
 					break;
 			}
-			MutePokeyChannels(0);
+			this.MutePokeyChannels(0);
 			this.NextPlayerCycle = 0;
 		}
 
@@ -519,10 +529,10 @@ namespace Sf.Asap
 		{
 			int block = MillisecondsToBlocks(position);
 			if (block < this.BlocksPlayed)
-				PlaySong(this.CurrentSong, this.CurrentDuration);
+				this.PlaySong(this.CurrentSong, this.CurrentDuration);
 			while (this.BlocksPlayed + this.Pokeys.Samples < block) {
 				this.BlocksPlayed += this.Pokeys.Samples;
-				DoFrame();
+				this.DoFrame();
 			}
 			this.Pokeys.SampleIndex = block - this.BlocksPlayed;
 			this.BlocksPlayed = block;
@@ -532,7 +542,7 @@ namespace Sf.Asap
 		internal int TmcPerFrame;
 		internal int TmcPerFrameCounter;
 		/// <summary>WAV file header length.</summary>
-		public const int WavHeaderBytes = 44;
+		public const int WavHeaderLength = 44;
 	}
 
 	/// <summary>Information about a music file.</summary>
@@ -543,15 +553,31 @@ namespace Sf.Asap
 		{
 			this.Durations[this.Songs++] = (int) ((long) (playerCalls * this.Fastplay) * 114000 / 1773447);
 		}
-		/// <summary>Author's name.</summary>
+		internal string Author;
+		internal int Channels;
+		internal int CovoxAddr;
+		internal string Date;
+		internal int DefaultSong;
+		internal readonly int[] Durations = new int[32];
+		internal int Fastplay;
+		internal string Filename;
+
+		/// <summary>Returns author's name.</summary>
 		/// <remarks>A nickname may be included in parentheses after the real name.
 		/// Multiple authors are separated with <c>" &amp; "</c>.
 		/// An empty string means the author is unknown.</remarks>
-		public string Author;
-		/// <summary>1 for mono or 2 for stereo.</summary>
-		public int Channels;
-		internal int CovoxAddr;
-		/// <summary>Music creation date.</summary>
+		public string GetAuthor()
+		{
+			return this.Author;
+		}
+
+		/// <summary>Returns 1 for mono or 2 for stereo.</summary>
+		public int GetChannels()
+		{
+			return this.Channels;
+		}
+
+		/// <summary>Returns music creation date.</summary>
 		/// <remarks>Some of the possible formats are:
 		/// <list type="bullet">
 		/// <item>YYYY</item>
@@ -560,15 +586,36 @@ namespace Sf.Asap
 		/// <item>YYYY-YYYY</item>
 		/// </list>
 		/// An empty string means the date is unknown.</remarks>
-		public string Date;
-		/// <summary>0-based index of the "main" song.</summary>
+		public string GetDate()
+		{
+			return this.Date;
+		}
+
+		/// <summary>Returns 0-based index of the "main" song.</summary>
 		/// <remarks>The specified song should be played by default.</remarks>
-		public int DefaultSong;
-		/// <summary>Lengths of songs.</summary>
-		/// <remarks>Each element of the array represents length of one song,
-		/// in milliseconds. -1 means the length is indeterminate.</remarks>
-		public readonly int[] Durations = new int[32];
-		internal int Fastplay;
+		public int GetDefaultSong()
+		{
+			return this.DefaultSong;
+		}
+
+		/// <summary>Returns length of the specified song.</summary>
+		/// <remarks>The result is in milliseconds. -1 means the length is indeterminate.</remarks>
+		public int GetDuration(int song)
+		{
+			return this.Durations[song];
+		}
+
+		/// <summary>Returns information whether the specified song loops.</summary>
+		/// <remarks>Returns:
+		/// <list type="bullet">
+		/// <item><see langword="true" /> if the song loops</item>
+		/// <item><see langword="false" /> if the song stops</item>
+		/// </list>
+		/// </remarks>
+		public bool GetLoop(int song)
+		{
+			return this.Loops[song];
+		}
 
 		internal static int GetPackedExt(string filename)
 		{
@@ -643,6 +690,26 @@ namespace Sf.Asap
 				}
 			}
 			return playerCalls / perFrame;
+		}
+
+		/// <summary>Returns number of songs in the file.</summary>
+		public int GetSongs()
+		{
+			return this.Songs;
+		}
+
+		/// <summary>Returns music title.</summary>
+		/// <remarks>An empty string means the title is unknown.</remarks>
+		public string GetTitle()
+		{
+			return this.Name;
+		}
+
+		/// <summary>Returns music title or filename.</summary>
+		/// <remarks>If title is unknown returns filename without the path or extension.</remarks>
+		public string GetTitleOrFilename()
+		{
+			return this.Name.Length > 0 ? this.Name : this.Filename;
 		}
 
 		internal static int GetWord(byte[] array, int i)
@@ -721,7 +788,7 @@ namespace Sf.Asap
 		/// <param name="moduleLen">Length of the file.</param>
 		public void Load(string filename, byte[] module, int moduleLen)
 		{
-			ParseFile(null, filename, module, moduleLen);
+			this.ParseFile(null, filename, module, moduleLen);
 		}
 
 		/// <summary>Loads a native module (anything except SAP) and a 6502 player routine.</summary>
@@ -753,21 +820,14 @@ namespace Sf.Asap
 				System.Array.Copy(playerRoutine, 6, asap.Memory, this.Player, playerLastByte + 1 - this.Player);
 			}
 		}
-		/// <summary>Information about finite vs infinite songs.</summary>
-		/// <remarks>Each element of the array represents one song, and is:
-		/// <list type="bullet">
-		/// <item><see langword="true" /> if the song loops</item>
-		/// <item><see langword="false" /> if the song stops</item>
-		/// </list>
-		/// </remarks>
-		public readonly bool[] Loops = new bool[32];
+		internal readonly bool[] Loops = new bool[32];
 		/// <summary>Maximum length of a supported input file.</summary>
 		/// <remarks>You may assume that files longer than this are not supported by ASAP.</remarks>
-		public const int ModuleMax = 65000;
+		public const int MaxModuleLength = 65000;
+		/// <summary>Maximum number of songs in a file.</summary>
+		public const int MaxSongs = 32;
 		internal int Music;
-		/// <summary>Music title.</summary>
-		/// <remarks>An empty string means the title is unknown.</remarks>
-		public string Name;
+		internal string Name;
 		internal bool Ntsc;
 
 		internal void ParseCmc(ASAP asap, byte[] module, int moduleLen, ASAPModuleType type, byte[] playerRoutine)
@@ -775,7 +835,7 @@ namespace Sf.Asap
 			if (moduleLen < 774)
 				throw new System.Exception("Module too short");
 			this.Type = type;
-			LoadNative(asap, module, moduleLen, playerRoutine);
+			this.LoadNative(asap, module, moduleLen, playerRoutine);
 			if (asap != null && type == ASAPModuleType.Cmr) {
 				System.Array.Copy(CiConstArray_1, 0, asap.Memory, 3087, 37);
 			}
@@ -789,10 +849,10 @@ namespace Sf.Asap
 				}
 			}
 			this.Songs = 0;
-			ParseCmcSong(module, 0);
+			this.ParseCmcSong(module, 0);
 			for (int pos = 0; pos < lastPos && this.Songs < 32; pos++)
 				if (module[518 + pos] == 143 || module[518 + pos] == 239)
-					ParseCmcSong(module, pos + 1);
+					this.ParseCmcSong(module, pos + 1);
 		}
 
 		internal void ParseCmcSong(byte[] module, int pos)
@@ -862,7 +922,7 @@ namespace Sf.Asap
 				playerCalls += tempo * (this.Type == ASAPModuleType.Cm3 ? 48 : 64);
 				pos++;
 			}
-			AddSong(playerCalls);
+			this.AddSong(playerCalls);
 		}
 
 		internal static int ParseDec(byte[] module, int moduleIndex, int maxVal)
@@ -890,14 +950,14 @@ namespace Sf.Asap
 			else if (moduleLen != 11271)
 				throw new System.Exception("Invalid module length");
 			this.Type = ASAPModuleType.Dlt;
-			LoadNative(asap, module, moduleLen, CiBinaryResource_dlt_obx);
+			this.LoadNative(asap, module, moduleLen, CiBinaryResource_dlt_obx);
 			if (this.Music != 8192)
 				throw new System.Exception("Unsupported module address");
 			bool[] seen = new bool[128];
 			this.Songs = 0;
 			for (int pos = 0; pos < 128 && this.Songs < 32; pos++) {
 				if (!seen[pos])
-					ParseDltSong(module, seen, pos);
+					this.ParseDltSong(module, seen, pos);
 			}
 			if (this.Songs == 0)
 				throw new System.Exception("No songs found");
@@ -932,7 +992,7 @@ namespace Sf.Asap
 			}
 			if (playerCalls > 0) {
 				this.Loops[this.Songs] = loop;
-				AddSong(playerCalls);
+				this.AddSong(playerCalls);
 			}
 		}
 
@@ -1009,19 +1069,23 @@ namespace Sf.Asap
 			int len = filename.Length;
 			int basename = 0;
 			int ext = -1;
-			for (int i = 0; i < len; i++) {
+			for (int i = len; --i >= 0;) {
 				int c = filename[i];
 				if (c == 47 || c == 92) {
 					basename = i + 1;
-					ext = -1;
+					break;
 				}
-				else if (c == 46)
+				if (c == 46)
 					ext = i;
 			}
 			if (ext < 0)
 				throw new System.Exception("Filename has no extension");
+			ext -= basename;
+			if (ext > 127)
+				ext = 127;
+			this.Filename = filename.Substring(basename, ext);
 			this.Author = "";
-			this.Name = filename.Substring(basename, ext - basename);
+			this.Name = "";
 			this.Date = "";
 			this.Channels = 1;
 			this.Songs = 1;
@@ -1038,44 +1102,44 @@ namespace Sf.Asap
 			this.CovoxAddr = -1;
 			switch (GetPackedExt(filename)) {
 				case 7364979:
-					ParseSap(asap, module, moduleLen);
+					this.ParseSap(asap, module, moduleLen);
 					return;
 				case 6516067:
-					ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmc, CiBinaryResource_cmc_obx);
+					this.ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmc, CiBinaryResource_cmc_obx);
 					return;
 				case 3370339:
-					ParseCmc(asap, module, moduleLen, ASAPModuleType.Cm3, CiBinaryResource_cm3_obx);
+					this.ParseCmc(asap, module, moduleLen, ASAPModuleType.Cm3, CiBinaryResource_cm3_obx);
 					return;
 				case 7499107:
-					ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmr, CiBinaryResource_cmc_obx);
+					this.ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmr, CiBinaryResource_cmc_obx);
 					return;
 				case 7564643:
 					this.Channels = 2;
-					ParseCmc(asap, module, moduleLen, ASAPModuleType.Cms, CiBinaryResource_cms_obx);
+					this.ParseCmc(asap, module, moduleLen, ASAPModuleType.Cms, CiBinaryResource_cms_obx);
 					return;
 				case 6516068:
 					this.Fastplay = 156;
-					ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmc, CiBinaryResource_cmc_obx);
+					this.ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmc, CiBinaryResource_cmc_obx);
 					return;
 				case 7629924:
-					ParseDlt(asap, module, moduleLen);
+					this.ParseDlt(asap, module, moduleLen);
 					return;
 				case 7630957:
-					ParseMpt(asap, module, moduleLen);
+					this.ParseMpt(asap, module, moduleLen);
 					return;
 				case 6582381:
 					this.Fastplay = 156;
-					ParseMpt(asap, module, moduleLen);
+					this.ParseMpt(asap, module, moduleLen);
 					return;
 				case 7630194:
-					ParseRmt(asap, module, moduleLen);
+					this.ParseRmt(asap, module, moduleLen);
 					return;
 				case 6516084:
 				case 3698036:
-					ParseTmc(asap, module, moduleLen);
+					this.ParseTmc(asap, module, moduleLen);
 					return;
 				case 3304820:
-					ParseTm2(asap, module, moduleLen);
+					this.ParseTm2(asap, module, moduleLen);
 					return;
 				default:
 					throw new System.Exception("Unknown filename extension");
@@ -1109,7 +1173,7 @@ namespace Sf.Asap
 			if (moduleLen < 464)
 				throw new System.Exception("Module too short");
 			this.Type = ASAPModuleType.Mpt;
-			LoadNative(asap, module, moduleLen, CiBinaryResource_mpt_obx);
+			this.LoadNative(asap, module, moduleLen, CiBinaryResource_mpt_obx);
 			int track0Addr = GetWord(module, 2) + 458;
 			if (module[454] + (module[458] << 8) != track0Addr)
 				throw new System.Exception("Invalid address of the first track");
@@ -1121,7 +1185,7 @@ namespace Sf.Asap
 			for (int pos = 0; pos < songLen && this.Songs < 32; pos++) {
 				if (!globalSeen[pos]) {
 					this.SongPos[this.Songs] = (byte) pos;
-					ParseMptSong(module, globalSeen, songLen, pos);
+					this.ParseMptSong(module, globalSeen, songLen, pos);
 				}
 			}
 			if (this.Songs == 0)
@@ -1195,7 +1259,7 @@ namespace Sf.Asap
 				pos++;
 			}
 			if (playerCalls > 0)
-				AddSong(playerCalls);
+				this.AddSong(playerCalls);
 		}
 
 		internal void ParseRmt(ASAP asap, byte[] module, int moduleLen)
@@ -1220,7 +1284,7 @@ namespace Sf.Asap
 			if (perFrame < 1 || perFrame > 4)
 				throw new System.Exception("Unsupported player call rate");
 			this.Type = ASAPModuleType.Rmt;
-			LoadNative(asap, module, moduleLen, this.Channels == 2 ? CiBinaryResource_rmt8_obx : CiBinaryResource_rmt4_obx);
+			this.LoadNative(asap, module, moduleLen, this.Channels == 2 ? CiBinaryResource_rmt8_obx : CiBinaryResource_rmt4_obx);
 			int songLen = GetWord(module, 4) + 1 - GetWord(module, 20);
 			if (posShift == 3 && (songLen & 4) != 0 && module[6 + GetWord(module, 4) - GetWord(module, 2) - 3] == 254)
 				songLen += 4;
@@ -1232,7 +1296,7 @@ namespace Sf.Asap
 			for (int pos = 0; pos < songLen && this.Songs < 32; pos++) {
 				if (!globalSeen[pos]) {
 					this.SongPos[this.Songs] = (byte) pos;
-					ParseRmtSong(module, globalSeen, songLen, posShift, pos);
+					this.ParseRmtSong(module, globalSeen, songLen, posShift, pos);
 				}
 			}
 			this.Fastplay = 312 / perFrame;
@@ -1337,12 +1401,12 @@ namespace Sf.Asap
 				frames = instrumentFrames;
 			}
 			if (frames > 0)
-				AddSong(frames);
+				this.AddSong(frames);
 		}
 
 		internal void ParseSap(ASAP asap, byte[] module, int moduleLen)
 		{
-			ParseSapHeader(module, moduleLen);
+			this.ParseSapHeader(module, moduleLen);
 			if (asap == null)
 				return;
 			System.Array.Clear(asap.Memory, 0, 65536);
@@ -1514,7 +1578,7 @@ namespace Sf.Asap
 			if (moduleLen < 932)
 				throw new System.Exception("Module too short");
 			this.Type = ASAPModuleType.Tm2;
-			LoadNative(asap, module, moduleLen, CiBinaryResource_tm2_obx);
+			this.LoadNative(asap, module, moduleLen, CiBinaryResource_tm2_obx);
 			int i = module[37];
 			if (i < 1 || i > 4)
 				throw new System.Exception("Unsupported player call rate");
@@ -1545,11 +1609,11 @@ namespace Sf.Asap
 			}
 			while (c == 0 || c >= 128);
 			this.Songs = 0;
-			ParseTm2Song(module, 0);
+			this.ParseTm2Song(module, 0);
 			for (i = 0; i < lastPos && this.Songs < 32; i += 17) {
 				c = module[918 + i];
 				if (c == 0 || c >= 128)
-					ParseTm2Song(module, i + 17);
+					this.ParseTm2Song(module, i + 17);
 			}
 		}
 
@@ -1622,7 +1686,7 @@ namespace Sf.Asap
 				}
 				pos += 17;
 			}
-			AddSong(playerCalls);
+			this.AddSong(playerCalls);
 		}
 
 		internal void ParseTmc(ASAP asap, byte[] module, int moduleLen)
@@ -1630,7 +1694,7 @@ namespace Sf.Asap
 			if (moduleLen < 464)
 				throw new System.Exception("Module too short");
 			this.Type = ASAPModuleType.Tmc;
-			LoadNative(asap, module, moduleLen, CiBinaryResource_tmc_obx);
+			this.LoadNative(asap, module, moduleLen, CiBinaryResource_tmc_obx);
 			this.Channels = 2;
 			int i = 0;
 			while (module[102 + i] == 0) {
@@ -1647,10 +1711,10 @@ namespace Sf.Asap
 			}
 			while (module[437 + lastPos] >= 128);
 			this.Songs = 0;
-			ParseTmcSong(module, 0);
+			this.ParseTmcSong(module, 0);
 			for (i = 0; i < lastPos && this.Songs < 32; i += 16)
 				if (module[437 + i] >= 128)
-					ParseTmcSong(module, i + 16);
+					this.ParseTmcSong(module, i + 16);
 			i = module[37];
 			if (i < 1 || i > 4)
 				throw new System.Exception("Unsupported player call rate");
@@ -1713,14 +1777,11 @@ namespace Sf.Asap
 			}
 			if (module[436 + pos] < 128)
 				this.Loops[this.Songs] = true;
-			AddSong(frames);
+			this.AddSong(frames);
 		}
 		internal int Player;
 		internal readonly byte[] SongPos = new byte[32];
-		/// <summary>Number of songs in the file.</summary>
-		public int Songs;
-		/// <summary>Maximum number of songs in a file.</summary>
-		public const int SongsMax = 32;
+		internal int Songs;
 		internal ASAPModuleType Type;
 		/// <summary>ASAP version as a string.</summary>
 		public const string Version = "3.0.0";
@@ -5792,7 +5853,7 @@ namespace Sf.Asap
 
 		internal void EndFrame(PokeyPair pokeys, int cycle)
 		{
-			GenerateUntilCycle(pokeys, cycle);
+			this.GenerateUntilCycle(pokeys, cycle);
 			this.PolyIndex += cycle;
 			int m = (this.Audctl & 128) != 0 ? 237615 : 60948015;
 			if (this.PolyIndex >= 2 * m)
@@ -5826,7 +5887,7 @@ namespace Sf.Asap
 					this.TickCycle3 += this.PeriodCycles3;
 					if ((this.Audctl & 4) != 0 && this.Delta1 > 0 && this.Mute1 == 0) {
 						this.Delta1 = -this.Delta1;
-						AddDelta(pokeys, cycle, this.Delta1);
+						this.AddDelta(pokeys, cycle, this.Delta1);
 					}
 					if (this.Init) {
 						switch (this.Audc3 >> 4) {
@@ -5834,7 +5895,7 @@ namespace Sf.Asap
 							case 14:
 								this.Out3 ^= 1;
 								this.Delta3 = -this.Delta3;
-								AddDelta(pokeys, cycle, this.Delta3);
+								this.AddDelta(pokeys, cycle, this.Delta3);
 								break;
 							default:
 								break;
@@ -5883,7 +5944,7 @@ namespace Sf.Asap
 						if (newOut != this.Out3) {
 							this.Out3 = newOut;
 							this.Delta3 = -this.Delta3;
-							AddDelta(pokeys, cycle, this.Delta3);
+							this.AddDelta(pokeys, cycle, this.Delta3);
 						}
 					}
 				}
@@ -5893,7 +5954,7 @@ namespace Sf.Asap
 						this.TickCycle3 = cycle + this.ReloadCycles3;
 					if ((this.Audctl & 2) != 0 && this.Delta2 > 0 && this.Mute2 == 0) {
 						this.Delta2 = -this.Delta2;
-						AddDelta(pokeys, cycle, this.Delta2);
+						this.AddDelta(pokeys, cycle, this.Delta2);
 					}
 					if (this.Init) {
 						switch (this.Audc4 >> 4) {
@@ -5901,7 +5962,7 @@ namespace Sf.Asap
 							case 14:
 								this.Out4 ^= 1;
 								this.Delta4 = -this.Delta4;
-								AddDelta(pokeys, cycle, this.Delta4);
+								this.AddDelta(pokeys, cycle, this.Delta4);
 								break;
 							default:
 								break;
@@ -5950,7 +6011,7 @@ namespace Sf.Asap
 						if (newOut != this.Out4) {
 							this.Out4 = newOut;
 							this.Delta4 = -this.Delta4;
-							AddDelta(pokeys, cycle, this.Delta4);
+							this.AddDelta(pokeys, cycle, this.Delta4);
 						}
 					}
 				}
@@ -5964,7 +6025,7 @@ namespace Sf.Asap
 							case 14:
 								this.Out1 ^= 1;
 								this.Delta1 = -this.Delta1;
-								AddDelta(pokeys, cycle, this.Delta1);
+								this.AddDelta(pokeys, cycle, this.Delta1);
 								break;
 							default:
 								break;
@@ -6013,7 +6074,7 @@ namespace Sf.Asap
 						if (newOut != this.Out1) {
 							this.Out1 = newOut;
 							this.Delta1 = -this.Delta1;
-							AddDelta(pokeys, cycle, this.Delta1);
+							this.AddDelta(pokeys, cycle, this.Delta1);
 						}
 					}
 				}
@@ -6029,7 +6090,7 @@ namespace Sf.Asap
 							case 14:
 								this.Out2 ^= 1;
 								this.Delta2 = -this.Delta2;
-								AddDelta(pokeys, cycle, this.Delta2);
+								this.AddDelta(pokeys, cycle, this.Delta2);
 								break;
 							default:
 								break;
@@ -6078,7 +6139,7 @@ namespace Sf.Asap
 						if (newOut != this.Out2) {
 							this.Out2 = newOut;
 							this.Delta2 = -this.Delta2;
-							AddDelta(pokeys, cycle, this.Delta2);
+							this.AddDelta(pokeys, cycle, this.Delta2);
 						}
 					}
 				}
@@ -6088,14 +6149,6 @@ namespace Sf.Asap
 
 		internal void Initialize()
 		{
-			this.Audctl = 0;
-			this.Init = false;
-			this.PolyIndex = 60948015;
-			this.DivCycles = 28;
-			this.Mute1 = 5;
-			this.Mute2 = 5;
-			this.Mute3 = 5;
-			this.Mute4 = 5;
 			this.Audf1 = 0;
 			this.Audf2 = 0;
 			this.Audf3 = 0;
@@ -6104,16 +6157,25 @@ namespace Sf.Asap
 			this.Audc2 = 0;
 			this.Audc3 = 0;
 			this.Audc4 = 0;
-			this.TickCycle1 = 8388608;
-			this.TickCycle2 = 8388608;
-			this.TickCycle3 = 8388608;
-			this.TickCycle4 = 8388608;
+			this.Audctl = 0;
+			this.Skctl = 3;
+			this.Init = false;
+			this.DivCycles = 28;
 			this.PeriodCycles1 = 28;
 			this.PeriodCycles2 = 28;
 			this.PeriodCycles3 = 28;
 			this.PeriodCycles4 = 28;
 			this.ReloadCycles1 = 28;
 			this.ReloadCycles3 = 28;
+			this.PolyIndex = 60948015;
+			this.TickCycle1 = 8388608;
+			this.TickCycle2 = 8388608;
+			this.TickCycle3 = 8388608;
+			this.TickCycle4 = 8388608;
+			this.Mute1 = 1;
+			this.Mute2 = 1;
+			this.Mute3 = 1;
+			this.Mute4 = 1;
 			this.Out1 = 0;
 			this.Out2 = 0;
 			this.Out3 = 0;
@@ -6122,7 +6184,6 @@ namespace Sf.Asap
 			this.Delta2 = 0;
 			this.Delta3 = 0;
 			this.Delta4 = 0;
-			this.Skctl = 3;
 			System.Array.Clear(this.DeltaBuffer, 0, 888);
 		}
 
@@ -6197,9 +6258,22 @@ namespace Sf.Asap
 
 	internal class PokeyPair
 	{
+		public PokeyPair()
+		{
+			int reg = 511;
+			for (int i = 0; i < 511; i++) {
+				reg = (((reg >> 5 ^ reg) & 1) << 8) + (reg >> 1);
+				this.Poly9Lookup[i] = (byte) reg;
+			}
+			reg = 131071;
+			for (int i = 0; i < 16385; i++) {
+				reg = (((reg >> 5 ^ reg) & 255) << 9) + (reg >> 8);
+				this.Poly17Lookup[i] = (byte) (reg >> 1);
+			}
+		}
 		internal readonly Pokey BasePokey = new Pokey();
 
-		internal void EndFrame(int cycle)
+		internal int EndFrame(int cycle)
 		{
 			this.BasePokey.EndFrame(this, cycle);
 			if (this.ExtraPokeyMask != 0)
@@ -6208,6 +6282,7 @@ namespace Sf.Asap
 			this.SampleIndex = 0;
 			this.Samples = this.SampleOffset / this.MainClock;
 			this.SampleOffset %= this.MainClock;
+			return this.Samples;
 		}
 		internal readonly Pokey ExtraPokey = new Pokey();
 		internal int ExtraPokeyMask;
@@ -6293,18 +6368,9 @@ namespace Sf.Asap
 		internal int IirAccLeft;
 		internal int IirAccRight;
 
-		internal void Initialize(bool stereo)
+		internal void Initialize(int mainClock, bool stereo)
 		{
-			int reg = 511;
-			for (int i = 0; i < 511; i++) {
-				reg = (((reg >> 5 ^ reg) & 1) << 8) + (reg >> 1);
-				this.Poly9Lookup[i] = (byte) reg;
-			}
-			reg = 131071;
-			for (int i = 0; i < 16385; i++) {
-				reg = (((reg >> 5 ^ reg) & 255) << 9) + (reg >> 8);
-				this.Poly17Lookup[i] = (byte) (reg >> 1);
-			}
+			this.MainClock = mainClock;
 			this.ExtraPokeyMask = stereo ? 16 : 0;
 			this.Timer1Cycle = 8388608;
 			this.Timer2Cycle = 8388608;
@@ -6340,7 +6406,7 @@ namespace Sf.Asap
 							pokey.PeriodCycles1 = pokey.DivCycles * (data + 1);
 							break;
 						case 16:
-							pokey.PeriodCycles2 = pokey.DivCycles * (data + 256 * pokey.Audf2 + 1);
+							pokey.PeriodCycles2 = pokey.DivCycles * (data + (pokey.Audf2 << 8) + 1);
 							pokey.ReloadCycles1 = pokey.DivCycles * (data + 1);
 							if (pokey.PeriodCycles2 <= 112 && (pokey.Audc2 >> 4 == 10 || pokey.Audc2 >> 4 == 14)) {
 								pokey.Mute2 |= 1;
@@ -6356,7 +6422,7 @@ namespace Sf.Asap
 							pokey.PeriodCycles1 = data + 4;
 							break;
 						case 80:
-							pokey.PeriodCycles2 = data + 256 * pokey.Audf2 + 7;
+							pokey.PeriodCycles2 = data + (pokey.Audf2 << 8) + 7;
 							pokey.ReloadCycles1 = data + 4;
 							if (pokey.PeriodCycles2 <= 112 && (pokey.Audc2 >> 4 == 10 || pokey.Audc2 >> 4 == 14)) {
 								pokey.Mute2 |= 1;
@@ -6421,10 +6487,10 @@ namespace Sf.Asap
 							pokey.PeriodCycles2 = pokey.DivCycles * (data + 1);
 							break;
 						case 16:
-							pokey.PeriodCycles2 = pokey.DivCycles * (pokey.Audf1 + 256 * data + 1);
+							pokey.PeriodCycles2 = pokey.DivCycles * (pokey.Audf1 + (data << 8) + 1);
 							break;
 						case 80:
-							pokey.PeriodCycles2 = pokey.Audf1 + 256 * data + 7;
+							pokey.PeriodCycles2 = pokey.Audf1 + (data << 8) + 7;
 							break;
 					}
 					if (pokey.PeriodCycles2 <= 112 && (pokey.Audc2 >> 4 == 10 || pokey.Audc2 >> 4 == 14)) {
@@ -6478,7 +6544,7 @@ namespace Sf.Asap
 							pokey.PeriodCycles3 = pokey.DivCycles * (data + 1);
 							break;
 						case 8:
-							pokey.PeriodCycles4 = pokey.DivCycles * (data + 256 * pokey.Audf4 + 1);
+							pokey.PeriodCycles4 = pokey.DivCycles * (data + (pokey.Audf4 << 8) + 1);
 							pokey.ReloadCycles3 = pokey.DivCycles * (data + 1);
 							if (pokey.PeriodCycles4 <= 112 && (pokey.Audc4 >> 4 == 10 || pokey.Audc4 >> 4 == 14)) {
 								pokey.Mute4 |= 1;
@@ -6494,7 +6560,7 @@ namespace Sf.Asap
 							pokey.PeriodCycles3 = data + 4;
 							break;
 						case 40:
-							pokey.PeriodCycles4 = data + 256 * pokey.Audf4 + 7;
+							pokey.PeriodCycles4 = data + (pokey.Audf4 << 8) + 7;
 							pokey.ReloadCycles3 = data + 4;
 							if (pokey.PeriodCycles4 <= 112 && (pokey.Audc4 >> 4 == 10 || pokey.Audc4 >> 4 == 14)) {
 								pokey.Mute4 |= 1;
@@ -6559,10 +6625,10 @@ namespace Sf.Asap
 							pokey.PeriodCycles4 = pokey.DivCycles * (data + 1);
 							break;
 						case 8:
-							pokey.PeriodCycles4 = pokey.DivCycles * (pokey.Audf3 + 256 * data + 1);
+							pokey.PeriodCycles4 = pokey.DivCycles * (pokey.Audf3 + (data << 8) + 1);
 							break;
 						case 40:
-							pokey.PeriodCycles4 = pokey.Audf3 + 256 * data + 7;
+							pokey.PeriodCycles4 = pokey.Audf3 + (data << 8) + 7;
 							break;
 					}
 					if (pokey.PeriodCycles4 <= 112 && (pokey.Audc4 >> 4 == 10 || pokey.Audc4 >> 4 == 14)) {
@@ -6618,8 +6684,8 @@ namespace Sf.Asap
 							pokey.PeriodCycles2 = pokey.DivCycles * (pokey.Audf2 + 1);
 							break;
 						case 16:
-							pokey.PeriodCycles1 = pokey.DivCycles * 256;
-							pokey.PeriodCycles2 = pokey.DivCycles * (pokey.Audf1 + 256 * pokey.Audf2 + 1);
+							pokey.PeriodCycles1 = pokey.DivCycles << 8;
+							pokey.PeriodCycles2 = pokey.DivCycles * (pokey.Audf1 + (pokey.Audf2 << 8) + 1);
 							pokey.ReloadCycles1 = pokey.DivCycles * (pokey.Audf1 + 1);
 							break;
 						case 64:
@@ -6628,7 +6694,7 @@ namespace Sf.Asap
 							break;
 						case 80:
 							pokey.PeriodCycles1 = 256;
-							pokey.PeriodCycles2 = pokey.Audf1 + 256 * pokey.Audf2 + 7;
+							pokey.PeriodCycles2 = pokey.Audf1 + (pokey.Audf2 << 8) + 7;
 							pokey.ReloadCycles1 = pokey.Audf1 + 4;
 							break;
 					}
@@ -6656,8 +6722,8 @@ namespace Sf.Asap
 							pokey.PeriodCycles4 = pokey.DivCycles * (pokey.Audf4 + 1);
 							break;
 						case 8:
-							pokey.PeriodCycles3 = pokey.DivCycles * 256;
-							pokey.PeriodCycles4 = pokey.DivCycles * (pokey.Audf3 + 256 * pokey.Audf4 + 1);
+							pokey.PeriodCycles3 = pokey.DivCycles << 8;
+							pokey.PeriodCycles4 = pokey.DivCycles * (pokey.Audf3 + (pokey.Audf4 << 8) + 1);
 							pokey.ReloadCycles3 = pokey.DivCycles * (pokey.Audf3 + 1);
 							break;
 						case 32:
@@ -6666,7 +6732,7 @@ namespace Sf.Asap
 							break;
 						case 40:
 							pokey.PeriodCycles3 = 256;
-							pokey.PeriodCycles4 = pokey.Audf3 + 256 * pokey.Audf4 + 7;
+							pokey.PeriodCycles4 = pokey.Audf3 + (pokey.Audf4 << 8) + 7;
 							pokey.ReloadCycles3 = pokey.Audf3 + 4;
 							break;
 					}

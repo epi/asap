@@ -55,7 +55,7 @@ class ASAPMediaStreamSource : MediaStreamSource
 
 	protected override void OpenMediaAsync()
 	{
-		int channels = Asap.ModuleInfo.Channels;
+		int channels = Asap.GetInfo().GetChannels();
 		int blockSize = channels * BitsPerSample >> 3;
 		string waveFormatHex = string.Format("0100{0:X2}00{1}{2}{3:X2}00{4:X2}000000",
 			channels, LittleEndianHex(ASAP.SampleRate), LittleEndianHex(ASAP.SampleRate * blockSize),
@@ -77,7 +77,7 @@ class ASAPMediaStreamSource : MediaStreamSource
 		int blocksPlayed;
 		int bufferLen;
 		lock (Asap) {
-			blocksPlayed = Asap.BlocksPlayed;
+			blocksPlayed = Asap.GetBlocksPlayed();
 			bufferLen = Asap.Generate(buffer, buffer.Length, BitsPerSample == 8 ? ASAPSampleFormat.U8 : ASAPSampleFormat.S16LE);
 		}
 		Stream s = new MemoryStream(buffer);
@@ -131,10 +131,10 @@ public class SilverASAP : Application
 
 		ASAP asap = new ASAP();
 		asap.Load(Filename, module, moduleLen);
-		ASAPInfo moduleInfo = asap.ModuleInfo;
+		ASAPInfo moduleInfo = asap.GetInfo();
 		if (Song < 0)
-			Song = moduleInfo.DefaultSong;
-		int duration = moduleInfo.Loops[Song] ? -1 : moduleInfo.Durations[Song];
+			Song = moduleInfo.GetDefaultSong();
+		int duration = moduleInfo.GetLoop(Song) ? -1 : moduleInfo.GetDuration(Song);
 		asap.PlaySong(Song, duration);
 
 		Stop();

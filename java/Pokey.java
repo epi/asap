@@ -26,7 +26,7 @@ final class Pokey
 
 	void endFrame(PokeyPair pokeys, int cycle)
 	{
-		generateUntilCycle(pokeys, cycle);
+		this.generateUntilCycle(pokeys, cycle);
 		this.polyIndex += cycle;
 		int m = (this.audctl & 128) != 0 ? 237615 : 60948015;
 		if (this.polyIndex >= 2 * m)
@@ -62,7 +62,7 @@ final class Pokey
 				this.tickCycle3 += this.periodCycles3;
 				if ((this.audctl & 4) != 0 && this.delta1 > 0 && this.mute1 == 0) {
 					this.delta1 = -this.delta1;
-					addDelta(pokeys, cycle, this.delta1);
+					this.addDelta(pokeys, cycle, this.delta1);
 				}
 				if (this.init) {
 					switch (this.audc3 >> 4) {
@@ -70,7 +70,7 @@ final class Pokey
 						case 14:
 							this.out3 ^= 1;
 							this.delta3 = -this.delta3;
-							addDelta(pokeys, cycle, this.delta3);
+							this.addDelta(pokeys, cycle, this.delta3);
 							break;
 						default:
 							break;
@@ -119,7 +119,7 @@ final class Pokey
 					if (newOut != this.out3) {
 						this.out3 = newOut;
 						this.delta3 = -this.delta3;
-						addDelta(pokeys, cycle, this.delta3);
+						this.addDelta(pokeys, cycle, this.delta3);
 					}
 				}
 			}
@@ -129,7 +129,7 @@ final class Pokey
 					this.tickCycle3 = cycle + this.reloadCycles3;
 				if ((this.audctl & 2) != 0 && this.delta2 > 0 && this.mute2 == 0) {
 					this.delta2 = -this.delta2;
-					addDelta(pokeys, cycle, this.delta2);
+					this.addDelta(pokeys, cycle, this.delta2);
 				}
 				if (this.init) {
 					switch (this.audc4 >> 4) {
@@ -137,7 +137,7 @@ final class Pokey
 						case 14:
 							this.out4 ^= 1;
 							this.delta4 = -this.delta4;
-							addDelta(pokeys, cycle, this.delta4);
+							this.addDelta(pokeys, cycle, this.delta4);
 							break;
 						default:
 							break;
@@ -186,7 +186,7 @@ final class Pokey
 					if (newOut != this.out4) {
 						this.out4 = newOut;
 						this.delta4 = -this.delta4;
-						addDelta(pokeys, cycle, this.delta4);
+						this.addDelta(pokeys, cycle, this.delta4);
 					}
 				}
 			}
@@ -200,7 +200,7 @@ final class Pokey
 						case 14:
 							this.out1 ^= 1;
 							this.delta1 = -this.delta1;
-							addDelta(pokeys, cycle, this.delta1);
+							this.addDelta(pokeys, cycle, this.delta1);
 							break;
 						default:
 							break;
@@ -249,7 +249,7 @@ final class Pokey
 					if (newOut != this.out1) {
 						this.out1 = newOut;
 						this.delta1 = -this.delta1;
-						addDelta(pokeys, cycle, this.delta1);
+						this.addDelta(pokeys, cycle, this.delta1);
 					}
 				}
 			}
@@ -265,7 +265,7 @@ final class Pokey
 						case 14:
 							this.out2 ^= 1;
 							this.delta2 = -this.delta2;
-							addDelta(pokeys, cycle, this.delta2);
+							this.addDelta(pokeys, cycle, this.delta2);
 							break;
 						default:
 							break;
@@ -314,7 +314,7 @@ final class Pokey
 					if (newOut != this.out2) {
 						this.out2 = newOut;
 						this.delta2 = -this.delta2;
-						addDelta(pokeys, cycle, this.delta2);
+						this.addDelta(pokeys, cycle, this.delta2);
 					}
 				}
 			}
@@ -324,14 +324,6 @@ final class Pokey
 
 	void initialize()
 	{
-		this.audctl = 0;
-		this.init = false;
-		this.polyIndex = 60948015;
-		this.divCycles = 28;
-		this.mute1 = 5;
-		this.mute2 = 5;
-		this.mute3 = 5;
-		this.mute4 = 5;
 		this.audf1 = 0;
 		this.audf2 = 0;
 		this.audf3 = 0;
@@ -340,16 +332,25 @@ final class Pokey
 		this.audc2 = 0;
 		this.audc3 = 0;
 		this.audc4 = 0;
-		this.tickCycle1 = 8388608;
-		this.tickCycle2 = 8388608;
-		this.tickCycle3 = 8388608;
-		this.tickCycle4 = 8388608;
+		this.audctl = 0;
+		this.skctl = 3;
+		this.init = false;
+		this.divCycles = 28;
 		this.periodCycles1 = 28;
 		this.periodCycles2 = 28;
 		this.periodCycles3 = 28;
 		this.periodCycles4 = 28;
 		this.reloadCycles1 = 28;
 		this.reloadCycles3 = 28;
+		this.polyIndex = 60948015;
+		this.tickCycle1 = 8388608;
+		this.tickCycle2 = 8388608;
+		this.tickCycle3 = 8388608;
+		this.tickCycle4 = 8388608;
+		this.mute1 = 1;
+		this.mute2 = 1;
+		this.mute3 = 1;
+		this.mute4 = 1;
 		this.out1 = 0;
 		this.out2 = 0;
 		this.out3 = 0;
@@ -358,7 +359,6 @@ final class Pokey
 		this.delta2 = 0;
 		this.delta3 = 0;
 		this.delta4 = 0;
-		this.skctl = 3;
 		clear(this.deltaBuffer);
 	}
 

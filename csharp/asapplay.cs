@@ -37,21 +37,21 @@ public class ASAPWavStream : Stream
 	public ASAPWavStream(string inputFilename, int song, int duration)
 	{
 		Stream s = File.OpenRead(inputFilename);
-		byte[] module = new byte[ASAPInfo.ModuleMax];
+		byte[] module = new byte[ASAPInfo.MaxModuleLength];
 		int moduleLen = s.Read(module, 0, module.Length);
 		s.Close();
 		Asap.Load(inputFilename, module, moduleLen);
-		ASAPInfo moduleInfo = Asap.ModuleInfo;
+		ASAPInfo moduleInfo = Asap.GetInfo();
 		if (song < 0)
-			song = moduleInfo.DefaultSong;
+			song = moduleInfo.GetDefaultSong();
 		if (duration < 0) {
-			duration = moduleInfo.Durations[song];
+			duration = moduleInfo.GetDuration(song);
 			if (duration < 0)
 				duration = 180 * 1000;
 		}
 		Asap.PlaySong(song, duration);
 		Asap.GetWavHeader(Buffer, ASAPSampleFormat.S16LE);
-		BufferLen = ASAP.WavHeaderBytes;
+		BufferLen = ASAP.WavHeaderLength;
 	}
 
 	public override int Read(byte[] outputBuffer, int offset, int count)

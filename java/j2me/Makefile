@@ -20,12 +20,12 @@ asap_midlet.jad: asap_midlet.jar MANIFEST.MF
 
 asap_midlet.jar: MANIFEST.MF preverified/ASAPMIDlet.class $(PLAYERS_OBX)
 	$(JAR) cfm $@ MANIFEST.MF -C preverified .
-	# the following is needed and is not just an optimization
+# the following is needed and is not just an optimization
 	cd .. && $(JAR_OPTIMIZE) j2me/$@ $(PLAYERS:%=net/sf/asap/%.obx)
 	cd preverified && $(JAR_OPTIMIZE) ../$@ .
 
-preverified/ASAPMIDlet.class: ASAPMIDlet.class ../net/sf/asap/ASAP.class ../net/sf/asap/ASAP_ModuleInfo.class
-	$(PREVERIFY) -classpath "$(ME_CLASSES);.;.." -d preverified ASAPMIDlet FileList ASAPInputStream net.sf.asap.ASAP net.sf.asap.ASAP_ModuleInfo net.sf.asap.ASAP_State net.sf.asap.PokeyState
+preverified/ASAPMIDlet.class: ASAPMIDlet.class ../net/sf/asap/ASAP.class
+	$(PREVERIFY) -classpath "$(ME_CLASSES);.;.." -d preverified ASAPMIDlet FileList ASAPInputStream net.sf.asap.ASAP net.sf.asap.ASAPInfo net.sf.asap.ASAPModuleType net.sf.asap.ASAPSampleFormat net.sf.asap.Cpu6502 net.sf.asap.NmiStatus net.sf.asap.Pokey net.sf.asap.PokeyPair
 
 ASAPMIDlet.class: ASAPMIDlet.java ../net/sf/asap/ASAP.class
 	$(JAVAC) -classpath ".;.." -bootclasspath "$(ME_CLASSES)" ASAPMIDlet.java
@@ -33,11 +33,10 @@ ASAPMIDlet.class: ASAPMIDlet.java ../net/sf/asap/ASAP.class
 ../net/sf/asap/ASAP.class:
 	$(MAKE) -C .. net/sf/asap/ASAP.class
 
-../net/sf/asap/ASAP_ModuleInfo.class:
-	$(MAKE) -C .. net/sf/asap/ASAP_ModuleInfo.class
-
 clean:
 	rm -f asap_midlet.jar asap_midlet.jad *.class
 	rm -rf preverified
+
+.PHONY: all ../net/sf/asap/ASAP.class clean
 
 .DELETE_ON_ERROR:

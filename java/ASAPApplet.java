@@ -61,7 +61,7 @@ public class ASAPApplet extends Applet implements Runnable
 	{
 		if (!running)
 			return;
-		int channels = 4 * asap.moduleInfo.channels;
+		int channels = 4 * asap.getInfo().getChannels();
 		int channelWidth = getWidth() / channels;
 		int totalHeight = getHeight();
 		int unitHeight = totalHeight / 15;
@@ -73,12 +73,12 @@ public class ASAPApplet extends Applet implements Runnable
 			g.fillRect(i * channelWidth, totalHeight - height, channelWidth, height);
 		}
 	/*
-		ASAPInfo moduleInfo = asap.moduleInfo();
-		g.drawString("Author: " + moduleInfo.author, 10, 20);
-		g.drawString("Name: " + moduleInfo.name, 10, 40);
-		g.drawString("Date: " + moduleInfo.date, 10, 60);
-		if (moduleInfo.songs > 1)
-			g.drawString("Song " + (song + 1) + " of " + moduleInfo.songs, 10, 80);
+		ASAPInfo moduleInfo = asap.getInfo();
+		g.drawString("Author: " + moduleInfo.getAuthor(), 10, 20);
+		g.drawString("Name: " + moduleInfo.getTitleOrFilename(), 10, 40);
+		g.drawString("Date: " + moduleInfo.getDate(), 10, 60);
+		if (moduleInfo.getSongs() > 1)
+			g.drawString("Song " + (song + 1) + " of " + moduleInfo.getSongs(), 10, 80);
 	*/
 	}
 
@@ -117,7 +117,7 @@ public class ASAPApplet extends Applet implements Runnable
 		int moduleLen;
 		try {
 			InputStream is = new URL(getDocumentBase(), filename).openStream();
-			module = new byte[ASAPInfo.MODULE_MAX];
+			module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 			moduleLen = ASAPInfo.readAndClose(is, module);
 		} catch (IOException e) {
 			showStatus("ERROR LOADING " + filename);
@@ -127,16 +127,16 @@ public class ASAPApplet extends Applet implements Runnable
 		synchronized (asap) {
 			try {
 				asap.load(filename, module, moduleLen);
-				moduleInfo = asap.moduleInfo;
+				moduleInfo = asap.getInfo();
 				if (song < 0)
-					song = moduleInfo.defaultSong;
-				asap.playSong(song, moduleInfo.loops[song] ? -1 : moduleInfo.durations[song]);
+					song = moduleInfo.getDefaultSong();
+				asap.playSong(song, moduleInfo.getLoop(song) ? -1 : moduleInfo.getDuration(song));
 			} catch (Exception e) {
 				showStatus(e.getMessage());
 				return;
 			}
 		}
-		AudioFormat format = new AudioFormat(ASAP.SAMPLE_RATE, 16, moduleInfo.channels, true, false);
+		AudioFormat format = new AudioFormat(ASAP.SAMPLE_RATE, 16, moduleInfo.getChannels(), true, false);
 		try {
 			line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, format));
 			line.open(format);
@@ -198,16 +198,16 @@ public class ASAPApplet extends Applet implements Runnable
 
 	public String getAuthor()
 	{
-		return asap.moduleInfo.author;
+		return asap.getInfo().getAuthor();
 	}
 
 	public String getName()
 	{
-		return asap.moduleInfo.name;
+		return asap.getInfo().getTitleOrFilename();
 	}
 
 	public String getDate()
 	{
-		return asap.moduleInfo.date;
+		return asap.getInfo().getDate();
 	}
 }

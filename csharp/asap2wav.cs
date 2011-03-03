@@ -77,16 +77,16 @@ public class Asap2Wav
 	static void ProcessFile(string inputFilename)
 	{
 		Stream s = File.OpenRead(inputFilename);
-		byte[] module = new byte[ASAPInfo.ModuleMax];
+		byte[] module = new byte[ASAPInfo.MaxModuleLength];
 		int moduleLen = s.Read(module, 0, module.Length);
 		s.Close();
 		ASAP asap = new ASAP();
 		asap.Load(inputFilename, module, moduleLen);
-		ASAPInfo moduleInfo = asap.ModuleInfo;
+		ASAPInfo moduleInfo = asap.GetInfo();
 		if (Song < 0)
-			Song = moduleInfo.DefaultSong;
+			Song = moduleInfo.GetDefaultSong();
 		if (Duration < 0) {
-			Duration = moduleInfo.Durations[Song];
+			Duration = moduleInfo.GetDuration(Song);
 			if (Duration < 0)
 				Duration = 180 * 1000;
 		}
@@ -100,7 +100,7 @@ public class Asap2Wav
 		byte[] buffer = new byte[8192];
 		if (OutputHeader) {
 			asap.GetWavHeader(buffer, Format);
-			s.Write(buffer, 0, ASAP.WavHeaderBytes);
+			s.Write(buffer, 0, ASAP.WavHeaderLength);
 		}
 		int nBytes;
 		do {

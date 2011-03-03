@@ -7,11 +7,7 @@ package net.sf.asap;
  */
 public final class ASAP
 {
-	/**
-	 * Current playback position in blocks.
-	 * A block is one sample or a pair of samples for stereo.
-	 */
-	public int blocksPlayed;
+	int blocksPlayed;
 
 	void call6502(int addr)
 	{
@@ -27,14 +23,14 @@ public final class ASAP
 		int player = this.moduleInfo.player;
 		switch (this.moduleInfo.type) {
 			case ASAPModuleType.SAP_B:
-				call6502(player);
+				this.call6502(player);
 				break;
 			case ASAPModuleType.SAP_C:
 			case ASAPModuleType.CMC:
 			case ASAPModuleType.CM3:
 			case ASAPModuleType.CMR:
 			case ASAPModuleType.CMS:
-				call6502(player + 6);
+				this.call6502(player + 6);
 				break;
 			case ASAPModuleType.SAP_D:
 				if (player >= 0) {
@@ -67,20 +63,20 @@ public final class ASAP
 					this.memory[45179] = (byte) ((this.memory[45179] & 0xff) + 1);
 				break;
 			case ASAPModuleType.DLT:
-				call6502(player + 259);
+				this.call6502(player + 259);
 				break;
 			case ASAPModuleType.MPT:
 			case ASAPModuleType.RMT:
 			case ASAPModuleType.TM2:
-				call6502(player + 3);
+				this.call6502(player + 3);
 				break;
 			case ASAPModuleType.TMC:
 				if (--this.tmcPerFrameCounter <= 0) {
 					this.tmcPerFrameCounter = this.tmcPerFrame;
-					call6502(player + 3);
+					this.call6502(player + 3);
 				}
 				else
-					call6502(player + 6);
+					this.call6502(player + 6);
 				break;
 		}
 	}
@@ -132,7 +128,7 @@ public final class ASAP
 		this.memory[511] = -47;
 		this.cpu.s = 253;
 		for (int frame = 0; frame < 50; frame++) {
-			do6502Frame();
+			this.do6502Frame();
 			if (this.cpu.pc == 53760)
 				return;
 		}
@@ -142,7 +138,7 @@ public final class ASAP
 	int doFrame()
 	{
 		this.pokeys.startFrame();
-		int cycles = do6502Frame();
+		int cycles = this.do6502Frame();
 		this.pokeys.endFrame(cycles);
 		return cycles;
 	}
@@ -155,7 +151,7 @@ public final class ASAP
 	 */
 	public int generate(byte[] buffer, int bufferLen, int format)
 	{
-		return generateAt(buffer, 0, bufferLen, format);
+		return this.generateAt(buffer, 0, bufferLen, format);
 	}
 
 	int generateAt(byte[] buffer, int bufferOffset, int bufferLen, int format)
@@ -176,7 +172,7 @@ public final class ASAP
 			block += blocks;
 			if (block >= bufferBlocks)
 				break;
-			int cycles = doFrame();
+			int cycles = this.doFrame();
 			if (this.silenceCycles > 0) {
 				if (this.pokeys.isSilent()) {
 					this.silenceCyclesCounter -= cycles;
@@ -188,6 +184,23 @@ public final class ASAP
 			}
 		}
 		return block << blockShift;
+	}
+
+	/**
+	 * Returns current playback position in blocks.
+	 * A block is one sample or a pair of samples for stereo.
+	 */
+	public int getBlocksPlayed()
+	{
+		return this.blocksPlayed;
+	}
+
+	/**
+	 * Returns information about the loaded module.
+	 */
+	public ASAPInfo getInfo()
+	{
+		return this.moduleInfo;
 	}
 
 	/**
@@ -228,7 +241,7 @@ public final class ASAP
 
 	/**
 	 * Fills leading bytes of the specified buffer with WAV file header.
-	 * The number of changed bytes is <code>WavHeaderBytes</code>.
+	 * The number of changed bytes is <code>WavHeaderLength</code>.
 	 * @param buffer The destination buffer.
 	 * @param format Format of samples.
 	 */
@@ -281,7 +294,7 @@ public final class ASAP
 				this.cycle = cycle += 9;
 			this.nextScanlineCycle += 114;
 			if (cycle >= this.nextPlayerCycle) {
-				call6502Player();
+				this.call6502Player();
 				this.nextPlayerCycle += 114 * this.moduleInfo.fastplay;
 			}
 		}
@@ -324,10 +337,7 @@ public final class ASAP
 	{
 		return milliseconds * 441 / 10;
 	}
-	/**
-	 * Information about the loaded module.
-	 */
-	public final ASAPInfo moduleInfo = new ASAPInfo();
+	final ASAPInfo moduleInfo = new ASAPInfo();
 
 	/**
 	 * Mutes the selected POKEY channels.
@@ -407,19 +417,19 @@ public final class ASAP
 		this.covox[1] = -128;
 		this.covox[2] = -128;
 		this.covox[3] = -128;
-		this.pokeys.initialize(this.moduleInfo.channels > 1);
-		this.pokeys.mainClock = this.moduleInfo.ntsc ? 1789772 : 1773447;
+		this.pokeys.initialize(this.moduleInfo.ntsc ? 1789772 : 1773447, this.moduleInfo.channels > 1);
+		this.mutePokeyChannels(255);
 		switch (this.moduleInfo.type) {
 			case ASAPModuleType.SAP_B:
-				do6502Init(this.moduleInfo.init, song, 0, 0);
+				this.do6502Init(this.moduleInfo.init, song, 0, 0);
 				break;
 			case ASAPModuleType.SAP_C:
 			case ASAPModuleType.CMC:
 			case ASAPModuleType.CM3:
 			case ASAPModuleType.CMR:
 			case ASAPModuleType.CMS:
-				do6502Init(this.moduleInfo.player + 3, 112, this.moduleInfo.music, this.moduleInfo.music >> 8);
-				do6502Init(this.moduleInfo.player + 3, 0, song, 0);
+				this.do6502Init(this.moduleInfo.player + 3, 112, this.moduleInfo.music, this.moduleInfo.music >> 8);
+				this.do6502Init(this.moduleInfo.player + 3, 0, song, 0);
 				break;
 			case ASAPModuleType.SAP_D:
 			case ASAPModuleType.SAP_S:
@@ -430,23 +440,23 @@ public final class ASAP
 				this.cpu.s = 255;
 				break;
 			case ASAPModuleType.DLT:
-				do6502Init(this.moduleInfo.player + 256, 0, 0, this.moduleInfo.songPos[song] & 0xff);
+				this.do6502Init(this.moduleInfo.player + 256, 0, 0, this.moduleInfo.songPos[song] & 0xff);
 				break;
 			case ASAPModuleType.MPT:
-				do6502Init(this.moduleInfo.player, 0, this.moduleInfo.music >> 8, this.moduleInfo.music);
-				do6502Init(this.moduleInfo.player, 2, this.moduleInfo.songPos[song] & 0xff, 0);
+				this.do6502Init(this.moduleInfo.player, 0, this.moduleInfo.music >> 8, this.moduleInfo.music);
+				this.do6502Init(this.moduleInfo.player, 2, this.moduleInfo.songPos[song] & 0xff, 0);
 				break;
 			case ASAPModuleType.RMT:
-				do6502Init(this.moduleInfo.player, this.moduleInfo.songPos[song] & 0xff, this.moduleInfo.music, this.moduleInfo.music >> 8);
+				this.do6502Init(this.moduleInfo.player, this.moduleInfo.songPos[song] & 0xff, this.moduleInfo.music, this.moduleInfo.music >> 8);
 				break;
 			case ASAPModuleType.TMC:
 			case ASAPModuleType.TM2:
-				do6502Init(this.moduleInfo.player, 112, this.moduleInfo.music >> 8, this.moduleInfo.music);
-				do6502Init(this.moduleInfo.player, 0, song, 0);
+				this.do6502Init(this.moduleInfo.player, 112, this.moduleInfo.music >> 8, this.moduleInfo.music);
+				this.do6502Init(this.moduleInfo.player, 0, song, 0);
 				this.tmcPerFrameCounter = 1;
 				break;
 		}
-		mutePokeyChannels(0);
+		this.mutePokeyChannels(0);
 		this.nextPlayerCycle = 0;
 	}
 
@@ -544,10 +554,10 @@ public final class ASAP
 	{
 		int block = millisecondsToBlocks(position);
 		if (block < this.blocksPlayed)
-			playSong(this.currentSong, this.currentDuration);
+			this.playSong(this.currentSong, this.currentDuration);
 		while (this.blocksPlayed + this.pokeys.samples < block) {
 			this.blocksPlayed += this.pokeys.samples;
-			doFrame();
+			this.doFrame();
 		}
 		this.pokeys.sampleIndex = block - this.blocksPlayed;
 		this.blocksPlayed = block;
@@ -559,5 +569,5 @@ public final class ASAP
 	/**
 	 * WAV file header length.
 	 */
-	public static final int WAV_HEADER_BYTES = 44;
+	public static final int WAV_HEADER_LENGTH = 44;
 }

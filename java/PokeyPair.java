@@ -3,9 +3,22 @@ package net.sf.asap;
 
 final class PokeyPair
 {
+	public PokeyPair()
+	{
+		int reg = 511;
+		for (int i = 0; i < 511; i++) {
+			reg = (((reg >> 5 ^ reg) & 1) << 8) + (reg >> 1);
+			this.poly9Lookup[i] = (byte) reg;
+		}
+		reg = 131071;
+		for (int i = 0; i < 16385; i++) {
+			reg = (((reg >> 5 ^ reg) & 255) << 9) + (reg >> 8);
+			this.poly17Lookup[i] = (byte) (reg >> 1);
+		}
+	}
 	final Pokey basePokey = new Pokey();
 
-	void endFrame(int cycle)
+	int endFrame(int cycle)
 	{
 		this.basePokey.endFrame(this, cycle);
 		if (this.extraPokeyMask != 0)
@@ -14,6 +27,7 @@ final class PokeyPair
 		this.sampleIndex = 0;
 		this.samples = this.sampleOffset / this.mainClock;
 		this.sampleOffset %= this.mainClock;
+		return this.samples;
 	}
 	final Pokey extraPokey = new Pokey();
 	int extraPokeyMask;
@@ -101,18 +115,9 @@ final class PokeyPair
 	int iirAccLeft;
 	int iirAccRight;
 
-	void initialize(boolean stereo)
+	void initialize(int mainClock, boolean stereo)
 	{
-		int reg = 511;
-		for (int i = 0; i < 511; i++) {
-			reg = (((reg >> 5 ^ reg) & 1) << 8) + (reg >> 1);
-			this.poly9Lookup[i] = (byte) reg;
-		}
-		reg = 131071;
-		for (int i = 0; i < 16385; i++) {
-			reg = (((reg >> 5 ^ reg) & 255) << 9) + (reg >> 8);
-			this.poly17Lookup[i] = (byte) (reg >> 1);
-		}
+		this.mainClock = mainClock;
 		this.extraPokeyMask = stereo ? 16 : 0;
 		this.timer1Cycle = 8388608;
 		this.timer2Cycle = 8388608;
@@ -148,7 +153,7 @@ final class PokeyPair
 						pokey.periodCycles1 = pokey.divCycles * (data + 1);
 						break;
 					case 16:
-						pokey.periodCycles2 = pokey.divCycles * (data + 256 * pokey.audf2 + 1);
+						pokey.periodCycles2 = pokey.divCycles * (data + (pokey.audf2 << 8) + 1);
 						pokey.reloadCycles1 = pokey.divCycles * (data + 1);
 						if (pokey.periodCycles2 <= 112 && (pokey.audc2 >> 4 == 10 || pokey.audc2 >> 4 == 14)) {
 							pokey.mute2 |= 1;
@@ -164,7 +169,7 @@ final class PokeyPair
 						pokey.periodCycles1 = data + 4;
 						break;
 					case 80:
-						pokey.periodCycles2 = data + 256 * pokey.audf2 + 7;
+						pokey.periodCycles2 = data + (pokey.audf2 << 8) + 7;
 						pokey.reloadCycles1 = data + 4;
 						if (pokey.periodCycles2 <= 112 && (pokey.audc2 >> 4 == 10 || pokey.audc2 >> 4 == 14)) {
 							pokey.mute2 |= 1;
@@ -229,10 +234,10 @@ final class PokeyPair
 						pokey.periodCycles2 = pokey.divCycles * (data + 1);
 						break;
 					case 16:
-						pokey.periodCycles2 = pokey.divCycles * (pokey.audf1 + 256 * data + 1);
+						pokey.periodCycles2 = pokey.divCycles * (pokey.audf1 + (data << 8) + 1);
 						break;
 					case 80:
-						pokey.periodCycles2 = pokey.audf1 + 256 * data + 7;
+						pokey.periodCycles2 = pokey.audf1 + (data << 8) + 7;
 						break;
 				}
 				if (pokey.periodCycles2 <= 112 && (pokey.audc2 >> 4 == 10 || pokey.audc2 >> 4 == 14)) {
@@ -286,7 +291,7 @@ final class PokeyPair
 						pokey.periodCycles3 = pokey.divCycles * (data + 1);
 						break;
 					case 8:
-						pokey.periodCycles4 = pokey.divCycles * (data + 256 * pokey.audf4 + 1);
+						pokey.periodCycles4 = pokey.divCycles * (data + (pokey.audf4 << 8) + 1);
 						pokey.reloadCycles3 = pokey.divCycles * (data + 1);
 						if (pokey.periodCycles4 <= 112 && (pokey.audc4 >> 4 == 10 || pokey.audc4 >> 4 == 14)) {
 							pokey.mute4 |= 1;
@@ -302,7 +307,7 @@ final class PokeyPair
 						pokey.periodCycles3 = data + 4;
 						break;
 					case 40:
-						pokey.periodCycles4 = data + 256 * pokey.audf4 + 7;
+						pokey.periodCycles4 = data + (pokey.audf4 << 8) + 7;
 						pokey.reloadCycles3 = data + 4;
 						if (pokey.periodCycles4 <= 112 && (pokey.audc4 >> 4 == 10 || pokey.audc4 >> 4 == 14)) {
 							pokey.mute4 |= 1;
@@ -367,10 +372,10 @@ final class PokeyPair
 						pokey.periodCycles4 = pokey.divCycles * (data + 1);
 						break;
 					case 8:
-						pokey.periodCycles4 = pokey.divCycles * (pokey.audf3 + 256 * data + 1);
+						pokey.periodCycles4 = pokey.divCycles * (pokey.audf3 + (data << 8) + 1);
 						break;
 					case 40:
-						pokey.periodCycles4 = pokey.audf3 + 256 * data + 7;
+						pokey.periodCycles4 = pokey.audf3 + (data << 8) + 7;
 						break;
 				}
 				if (pokey.periodCycles4 <= 112 && (pokey.audc4 >> 4 == 10 || pokey.audc4 >> 4 == 14)) {
@@ -426,8 +431,8 @@ final class PokeyPair
 						pokey.periodCycles2 = pokey.divCycles * (pokey.audf2 + 1);
 						break;
 					case 16:
-						pokey.periodCycles1 = pokey.divCycles * 256;
-						pokey.periodCycles2 = pokey.divCycles * (pokey.audf1 + 256 * pokey.audf2 + 1);
+						pokey.periodCycles1 = pokey.divCycles << 8;
+						pokey.periodCycles2 = pokey.divCycles * (pokey.audf1 + (pokey.audf2 << 8) + 1);
 						pokey.reloadCycles1 = pokey.divCycles * (pokey.audf1 + 1);
 						break;
 					case 64:
@@ -436,7 +441,7 @@ final class PokeyPair
 						break;
 					case 80:
 						pokey.periodCycles1 = 256;
-						pokey.periodCycles2 = pokey.audf1 + 256 * pokey.audf2 + 7;
+						pokey.periodCycles2 = pokey.audf1 + (pokey.audf2 << 8) + 7;
 						pokey.reloadCycles1 = pokey.audf1 + 4;
 						break;
 				}
@@ -464,8 +469,8 @@ final class PokeyPair
 						pokey.periodCycles4 = pokey.divCycles * (pokey.audf4 + 1);
 						break;
 					case 8:
-						pokey.periodCycles3 = pokey.divCycles * 256;
-						pokey.periodCycles4 = pokey.divCycles * (pokey.audf3 + 256 * pokey.audf4 + 1);
+						pokey.periodCycles3 = pokey.divCycles << 8;
+						pokey.periodCycles4 = pokey.divCycles * (pokey.audf3 + (pokey.audf4 << 8) + 1);
 						pokey.reloadCycles3 = pokey.divCycles * (pokey.audf3 + 1);
 						break;
 					case 32:
@@ -474,7 +479,7 @@ final class PokeyPair
 						break;
 					case 40:
 						pokey.periodCycles3 = 256;
-						pokey.periodCycles4 = pokey.audf3 + 256 * pokey.audf4 + 7;
+						pokey.periodCycles4 = pokey.audf3 + (pokey.audf4 << 8) + 7;
 						pokey.reloadCycles3 = pokey.audf3 + 4;
 						break;
 				}
