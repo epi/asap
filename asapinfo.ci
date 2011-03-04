@@ -1069,10 +1069,8 @@ public class ASAPInfo
 				if (len > 9)
 					throw "Invalid TIME tag";
 				string(9) s = module.ToString(moduleIndex, len);
-				int i = ParseDuration(s);
-				if (i < 0)
-					throw "Invalid TIME tag";
-				Durations[durationIndex++] = i;
+				int duration = ParseDuration(s);
+				Durations[durationIndex++] = duration;
 			}
 			else if (TAG_IS("TYPE "))
 				type = module[moduleIndex + 5];

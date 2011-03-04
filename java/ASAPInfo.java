@@ -971,10 +971,8 @@ public final class ASAPInfo
 				if (len > 9)
 					throw new Exception("Invalid TIME tag");
 				String s = new String(module, moduleIndex, len);
-				int i = parseDuration(s);
-				if (i < 0)
-					throw new Exception("Invalid TIME tag");
-				this.durations[durationIndex++] = i;
+				int duration = parseDuration(s);
+				this.durations[durationIndex++] = duration;
 			}
 			else if (hasStringAt(module, moduleIndex, "TYPE "))
 				type = module[moduleIndex + 5] & 0xff;

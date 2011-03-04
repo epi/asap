@@ -1481,10 +1481,8 @@ namespace Sf.Asap
 					if (len > 9)
 						throw new System.Exception("Invalid TIME tag");
 					string s = System.Text.Encoding.UTF8.GetString(module, moduleIndex, len);
-					int i = ParseDuration(s);
-					if (i < 0)
-						throw new System.Exception("Invalid TIME tag");
-					this.Durations[durationIndex++] = i;
+					int duration = ParseDuration(s);
+					this.Durations[durationIndex++] = duration;
 				}
 				else if (HasStringAt(module, moduleIndex, "TYPE "))
 					type = module[moduleIndex + 5];
