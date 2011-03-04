@@ -1,7 +1,7 @@
 /*
  * asap_dsf.cpp - ASAP DirectShow source filter
  *
- * Copyright (C) 2008-2010  Piotr Fusik
+ * Copyright (C) 2008-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -25,7 +25,7 @@
 #include <streams.h>
 #include <tchar.h>
 
-#include "asap.h"
+#include "asapci.h"
 
 static const TCHAR extensions[][5] =
 	{ _T(".sap"), _T(".cmc"), _T(".cm3"), _T(".cmr"), _T(".cms"), _T(".dmc"), _T(".dlt"),
@@ -44,16 +44,23 @@ static const GUID CLSID_ASAPSource = { 0x8e6205a0, 0x19e2, 0x4037, { 0xaf, 0x32,
 class CASAPSourceStream : public CSourceStream, IMediaSeeking
 {
 	CCritSec cs;
-	ASAP_State asap;
+	ASAP *asap;
 	BOOL loaded;
+	int channels;
 	int duration;
 	LONGLONG blocks;
 
 public:
 
 	CASAPSourceStream(HRESULT *phr, CSource *pFilter)
-		: CSourceStream(NAME("ASAPSourceStream"), phr, pFilter, L"Out"), loaded(FALSE), duration(0)
+		: CSourceStream(NAME("ASAPSourceStream"), phr, pFilter, L"Out"), asap(NULL), loaded(FALSE), duration(0)
 	{
+	}
+
+	~CASAPSourceStream()
+	{
+		if (asap != NULL)
+			ASAP_Delete(asap);
 	}
 
 	DECLARE_IUNKNOWN
@@ -81,9 +88,9 @@ public:
 			GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (fh == INVALID_HANDLE_VALUE)
 			return HRESULT_FROM_WIN32(GetLastError());
-		byte *module = new byte[ASAP_MODULE_MAX];
+		BYTE *module = new byte[ASAPInfo_MAX_MODULE_LENGTH];
 		int module_len;
-		BOOL ok = ReadFile(fh, module, ASAP_MODULE_MAX, (LPDWORD) &module_len, NULL);
+		BOOL ok = ReadFile(fh, module, ASAPInfo_MAX_MODULE_LENGTH, (LPDWORD) &module_len, NULL);
 		CloseHandle(fh);
 		if (!ok) {
 			delete[] module;
@@ -91,14 +98,20 @@ public:
 		}
 
 		CAutoLock lck(&cs);
-		loaded = ASAP_Load(&asap, filename, module, module_len);
+		if (asap == NULL) {
+			asap = ASAP_New();
+			CheckPointer(asap, E_OUTOFMEMORY);
+		}
+		loaded = ASAP_Load(asap, filename, module, module_len);
 		delete[] module;
 
 		if (!loaded)
 			return E_FAIL;
-		int song = asap.module_info.default_song;
-		duration = asap.module_info.durations[song];
-		ASAP_PlaySong(&asap, song, duration);
+		const ASAPInfo *info = ASAP_GetInfo(asap);
+		channels = ASAPInfo_GetChannels(info);
+		int song = ASAPInfo_GetDefaultSong(info);
+		duration = ASAPInfo_GetDuration(info, song);
+		ASAP_PlaySong(asap, song, duration);
 		blocks = 0;
 		return S_OK;
 	}
@@ -111,7 +124,6 @@ public:
 			return E_FAIL;
 		WAVEFORMATEX *wfx = (WAVEFORMATEX *) pMediaType->AllocFormatBuffer(sizeof(WAVEFORMATEX));
 		CheckPointer(wfx, E_OUTOFMEMORY);
-		int channels = asap.module_info.channels;
 		pMediaType->SetType(&MEDIATYPE_Audio);
 		pMediaType->SetSubtype(&MEDIASUBTYPE_PCM);
 		pMediaType->SetTemporalCompression(FALSE);
@@ -136,7 +148,7 @@ public:
 			return E_FAIL;
 		if (pRequest->cBuffers == 0)
 			pRequest->cBuffers = 2;
-		int bytes = MIN_BUFFERED_BLOCKS * asap.module_info.channels * (BITS_PER_SAMPLE / 8);
+		int bytes = MIN_BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
 		if (pRequest->cbBuffer < bytes)
 			pRequest->cbBuffer = bytes;
 		ALLOCATOR_PROPERTIES actual;
@@ -159,12 +171,12 @@ public:
 		if (FAILED(hr))
 			return hr;
 		int cbData = pSample->GetSize();
-		cbData = ASAP_Generate(&asap, pData, cbData, (ASAP_SampleFormat) BITS_PER_SAMPLE);
+		cbData = ASAP_Generate(asap, pData, cbData, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 		if (cbData == 0)
 			return S_FALSE;
 		pSample->SetActualDataLength(cbData);
 		LONGLONG startTime = blocks * UNITS / ASAP_SAMPLE_RATE;
-		blocks += cbData / (asap.module_info.channels * (BITS_PER_SAMPLE / 8));
+		blocks += cbData / (channels * (BITS_PER_SAMPLE / 8));
 		LONGLONG endTime = blocks * UNITS / ASAP_SAMPLE_RATE;
 		pSample->SetTime(&startTime, &endTime);
 		pSample->SetSyncPoint(TRUE);
@@ -256,7 +268,7 @@ public:
 			CheckPointer(pCurrent, E_POINTER);
 			int position = (int) (*pCurrent / (UNITS / MILLISECONDS));
 			CAutoLock lck(&cs);
-			ASAP_Seek(&asap, position);
+			ASAP_Seek(asap, position);
 			blocks = 0;
 			if ((dwCurrentFlags & AM_SEEKING_ReturnTime) != 0)
 				*pCurrent = position * (UNITS / MILLISECONDS);

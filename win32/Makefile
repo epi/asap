@@ -142,14 +142,14 @@ dsf: asap_dsf.dll
 
 DSHOW_BASECLASSES = $(DSHOW_BASECLASSES_DIR)/amfilter.cpp $(DSHOW_BASECLASSES_DIR)/combase.cpp $(DSHOW_BASECLASSES_DIR)/dllentry.cpp $(DSHOW_BASECLASSES_DIR)/dllsetup.cpp $(DSHOW_BASECLASSES_DIR)/mtype.cpp $(DSHOW_BASECLASSES_DIR)/source.cpp $(DSHOW_BASECLASSES_DIR)/wxlist.cpp $(DSHOW_BASECLASSES_DIR)/wxutil.cpp
 
-asap_dsf.dll: dshow/asap_dsf.cpp $(COMMON_C) dshow/asap_dsf.res dshow/asap_dsf.def $(COMMON_H)
-	$(ASAP_CL) -Fodshow/ -DDSHOW -LD -I$(DSHOW_BASECLASSES_DIR) dshow/asap_dsf.cpp $(COMMON_C) $(DSHOW_BASECLASSES) dshow/asap_dsf.res dshow/asap_dsf.def advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(LINKOPT)
+asap_dsf.dll: dshow/asap_dsf.cpp ../asapci.c dshow/asap_dsf.res dshow/asap_dsf.def ../asapci.h
+	$(ASAP_CL) -Fodshow/ -DDSHOW -LD -I$(DSHOW_BASECLASSES_DIR) dshow/asap_dsf.cpp ../asapci.c $(DSHOW_BASECLASSES) dshow/asap_dsf.res dshow/asap_dsf.def advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(LINKOPT)
 
 dshow/asap_dsf.res: gui.rc ../asap.h
 	$(WINDRES) -DDSHOW gui.rc
 
-wince/asap_dsf.dll: dshow/asap_dsf.cpp $(COMMON_C) wince/asap_dsf.res dshow/asap_dsf.def $(COMMON_H)
-	$(WINCE_CL) -LD -Zc:wchar_t- -I. -I.. -I$(WINCE_SDK)/Include/Armv4i dshow/asap_dsf.cpp $(COMMON_C) wince/asap_dsf.res dshow/asap_dsf.def ole32.lib strmbase.lib strmiids.lib uuid.lib -link -subsystem:windowsce,4.02 -release -libpath:$(WINCE_VC)/lib/armv4i -libpath:$(WINCE_SDK)/Lib/ARMV4I
+wince/asap_dsf.dll: dshow/asap_dsf.cpp ../asapci.c wince/asap_dsf.res dshow/asap_dsf.def ../asapci.h
+	$(WINCE_CL) -LD -Zc:wchar_t- -I. -I.. -I$(WINCE_SDK)/Include/Armv4i dshow/asap_dsf.cpp ../asapci.c wince/asap_dsf.res dshow/asap_dsf.def ole32.lib strmbase.lib strmiids.lib uuid.lib -link -subsystem:windowsce,4.02 -release -libpath:$(WINCE_VC)/lib/armv4i -libpath:$(WINCE_SDK)/Lib/ARMV4I
 
 wince/asap_dsf.res: gui.rc ../asap.h
 	$(WINCE_WINDRES) -DDSHOW gui.rc

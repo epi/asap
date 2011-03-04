@@ -1,5 +1,8 @@
 // Generated automatically with "cito". Do not edit.
 #include <stdbool.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
 	ASAPSampleFormat_U8,
@@ -16,3 +19,6 @@ int PokeyPair_GetRandom(PokeyPair const *self, int addr, int cycle);
 void PokeyPair_Initialize(PokeyPair *self, int mainClock, bool stereo);
 void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
 void PokeyPair_StartFrame(PokeyPair *self);
+#ifdef __cplusplus
+}
+#endif

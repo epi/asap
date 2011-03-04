@@ -6,6 +6,9 @@ typedef int cibool;
 #ifndef FALSE
 #define FALSE 0
 #endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct ASAP ASAP;
 typedef struct ASAPInfo ASAPInfo;
 
@@ -51,3 +54,6 @@ int ASAPInfo_ParseDuration(const char *s);
 #define ASAPInfo_VERSION_MAJOR  3
 #define ASAPInfo_VERSION_MICRO  0
 #define ASAPInfo_VERSION_MINOR  0
+#ifdef __cplusplus
+}
+#endif
