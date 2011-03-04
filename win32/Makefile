@@ -250,8 +250,8 @@ flash: ../players.h
 
 # SDL
 
-asap-sdl.exe: ../asap-sdl.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_GCC) ../asap-sdl.c $(COMMON_C) -lmingw32 -lSDLmain -lSDL
+asap-sdl.exe: ../asap-sdl.c ../asapci.c ../asapci.h
+	$(ASAP_GCC) ../asap-sdl.c ../asapci.c -lmingw32 -lSDLmain -lSDL
 
 # Acid800
 

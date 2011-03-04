@@ -60,8 +60,8 @@ audacious: asapplug.so
 asapplug.so: audacious/asapplug.c $(COMMON_C) $(COMMON_H)
 	$(CC) $(AUDACIOUS_CFLAGS) -shared -fPIC -o $@ -I. audacious/asapplug.c $(COMMON_C)
 
-asap-sdl: asap-sdl.c $(COMMON_C) $(COMMON_H)
-	$(CC) $(SDL_CFLAGS) -o $@ -I. asap-sdl.c $(COMMON_C) $(SDL_LIBS)
+asap-sdl: asap-sdl.c asapci.c asapci.h
+	$(CC) $(SDL_CFLAGS) -o $@ -I. asap-sdl.c asapci.c $(SDL_LIBS)
 
 players.h: files2anylang.pl $(PLAYERS_OBX)
 	$(PERL) files2anylang.pl $(PLAYERS_OBX) >$@
