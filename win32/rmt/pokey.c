@@ -133,7 +133,7 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 								newOut = pokeys->poly9Lookup[poly % 511] & 1;
 							else {
 								poly %= 131071;
-								newOut = pokeys->poly17Lookup[poly >> 3] >> (poly & 7) & 1;
+								newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 							}
 						}
 						break;
@@ -150,7 +150,7 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 							newOut = pokeys->poly9Lookup[poly % 511] & 1;
 						else {
 							poly %= 131071;
-							newOut = pokeys->poly17Lookup[poly >> 3] >> (poly & 7) & 1;
+							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 						}
 						break;
 					case 10:
@@ -200,7 +200,7 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 								newOut = pokeys->poly9Lookup[poly % 511] & 1;
 							else {
 								poly %= 131071;
-								newOut = pokeys->poly17Lookup[poly >> 3] >> (poly & 7) & 1;
+								newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 							}
 						}
 						break;
@@ -217,7 +217,7 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 							newOut = pokeys->poly9Lookup[poly % 511] & 1;
 						else {
 							poly %= 131071;
-							newOut = pokeys->poly17Lookup[poly >> 3] >> (poly & 7) & 1;
+							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 						}
 						break;
 					case 10:
@@ -263,7 +263,7 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 								newOut = pokeys->poly9Lookup[poly % 511] & 1;
 							else {
 								poly %= 131071;
-								newOut = pokeys->poly17Lookup[poly >> 3] >> (poly & 7) & 1;
+								newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 							}
 						}
 						break;
@@ -280,7 +280,7 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 							newOut = pokeys->poly9Lookup[poly % 511] & 1;
 						else {
 							poly %= 131071;
-							newOut = pokeys->poly17Lookup[poly >> 3] >> (poly & 7) & 1;
+							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 						}
 						break;
 					case 10:
@@ -328,7 +328,7 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 								newOut = pokeys->poly9Lookup[poly % 511] & 1;
 							else {
 								poly %= 131071;
-								newOut = pokeys->poly17Lookup[poly >> 3] >> (poly & 7) & 1;
+								newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 							}
 						}
 						break;
@@ -345,7 +345,7 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 							newOut = pokeys->poly9Lookup[poly % 511] & 1;
 						else {
 							poly %= 131071;
-							newOut = pokeys->poly17Lookup[poly >> 3] >> (poly & 7) & 1;
+							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 						}
 						break;
 					case 10:
@@ -412,12 +412,12 @@ static void PokeyPair_Construct(PokeyPair *self)
 {
 	int reg = 511;
 	for (int i = 0; i < 511; i++) {
-		reg = (((reg >> 5 ^ reg) & 1) << 8) + (reg >> 1);
+		reg = ((((reg >> 5) ^ reg) & 1) << 8) + (reg >> 1);
 		self->poly9Lookup[i] = (unsigned char) reg;
 	}
 	reg = 131071;
 	for (int i = 0; i < 16385; i++) {
-		reg = (((reg >> 5 ^ reg) & 255) << 9) + (reg >> 8);
+		reg = ((((reg >> 5) ^ reg) & 255) << 9) + (reg >> 8);
 		self->poly17Lookup[i] = (unsigned char) (reg >> 1);
 	}
 }
@@ -521,7 +521,7 @@ int PokeyPair_GetRandom(PokeyPair const *self, int addr, int cycle)
 		i %= 131071;
 		int j = i >> 3;
 		i &= 7;
-		return (self->poly17Lookup[j] >> i) + (self->poly17Lookup[j + 1] << 8 - i) & 255;
+		return ((self->poly17Lookup[j] >> i) + (self->poly17Lookup[j + 1] << (8 - i))) & 255;
 	}
 }
 

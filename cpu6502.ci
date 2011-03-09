@@ -74,7 +74,7 @@ class Cpu6502
 		int y = Y;
 		int c = C;
 		int s = S;
-		int vdi =Vdi;
+		int vdi = Vdi;
 
 		while (asap.Cycle < cycleLimit) {
 
@@ -115,12 +115,12 @@ class Cpu6502
 			macro PL(dest)     { s = (s + 1) & 0xff; dest = PEEK_MEMORY(0x0100 + s); }
 			macro PLP()        { PL(vdi); nz = ((vdi & 0x80) << 1) + (~vdi & ZFlag); c = vdi & 1; vdi &= VFlag | DFlag | IFlag; }
 			macro PH(data)     { POKE_MEMORY(0x0100 + s, data); s = (s - 1) & 0xff; }
-			macro PHP(bflag)   { PH(((nz | (nz >> 1)) & 0x80) + vdi + (nz & 0xff == 0 ? ZFlag : 0) + c + bflag); }
+			macro PHP(bflag)   { PH(((nz | (nz >> 1)) & 0x80) + vdi + ((nz & 0xff) == 0 ? ZFlag : 0) + c + bflag); }
 			macro PHPB0()      { PHP(0x20); }  // push flags with B flag clear (NMI, IRQ)
 			macro PHPB1()      { PHP(0x30); }  // push flags with B flag set (PHP, BRK)
 			macro PHPC()       { PH(pc >> 8); PH(pc.LowByte); }
 
-	#if ACPU_NO_DECIMAL
+#if ACPU_NO_DECIMAL
 
 			macro DO_ADC() {{
 				// binary mode
@@ -138,7 +138,7 @@ class Cpu6502
 				nz = a = tmp & 0xff;
 			}}
 
-	#else // ACPU_NO_DECIMAL
+#else // ACPU_NO_DECIMAL
 
 			macro DO_ADC() {{
 				int tmp = a + data + c;
@@ -185,7 +185,7 @@ class Cpu6502
 				}
 			}}
 
-	#endif // ACPU_NO_DECIMAL
+#endif // ACPU_NO_DECIMAL
 
 			macro LDA()        { nz = a = PEEK(addr); }
 			macro LDA_ZP()     { nz = a = PEEK_MEMORY(addr); }
@@ -222,12 +222,12 @@ class Cpu6502
 
 			macro ASL()        { PEEK_RMW(nz, addr); c = nz >> 7; nz = (nz << 1) & 0xff; POKE(addr, nz); }
 			macro ASL_ZP()     { nz = PEEK_MEMORY(addr); c = nz >> 7; nz = (nz << 1) & 0xff; POKE_MEMORY(addr, nz); }
-			macro ROL()        { PEEK_RMW(nz, addr); nz = nz << 1 + c; c = nz >> 8; nz &= 0xff; POKE(addr, nz); }
-			macro ROL_ZP()     { nz = PEEK_MEMORY(addr); nz = nz << 1 + c; c = nz >> 8; nz &= 0xff; POKE_MEMORY(addr, nz); }
+			macro ROL()        { PEEK_RMW(nz, addr); nz = (nz << 1) + c; c = nz >> 8; nz &= 0xff; POKE(addr, nz); }
+			macro ROL_ZP()     { nz = PEEK_MEMORY(addr); nz = (nz << 1) + c; c = nz >> 8; nz &= 0xff; POKE_MEMORY(addr, nz); }
 			macro LSR()        { PEEK_RMW(nz, addr); c = nz & 1; nz >>= 1; POKE(addr, nz); }
 			macro LSR_ZP()     { nz = PEEK_MEMORY(addr); c = nz & 1; nz >>= 1; POKE_MEMORY(addr, nz); }
 			macro ROR()        { PEEK_RMW(nz, addr); nz += c << 8; c = nz & 1; nz >>= 1; POKE(addr, nz); }
-			macro ROR_ZP()     { nz = PEEK_MEMORY(addr) + c << 8; c = nz & 1; nz >>= 1; POKE_MEMORY(addr, nz); }
+			macro ROR_ZP()     { nz = PEEK_MEMORY(addr) + (c << 8); c = nz & 1; nz >>= 1; POKE_MEMORY(addr, nz); }
 			macro DEC()        { PEEK_RMW(nz, addr); nz = (nz - 1) & 0xff; POKE(addr, nz); }
 			macro DEC_ZP()     { nz = PEEK_MEMORY(addr); nz = (nz - 1) & 0xff; POKE_MEMORY(addr, nz); }
 			macro INC()        { PEEK_RMW(nz, addr); nz = (nz + 1) & 0xff; POKE(addr, nz); }
@@ -291,8 +291,10 @@ class Cpu6502
 				CHECK_IRQ();
 			}
 #if ASAPSCAN
-			if (cpu_trace != 0)
-				trace_cpu(asap, pc, a, x, y, s, nz, vdi, c);
+			native {
+				if (cpu_trace != 0)
+					trace_cpu(asap, pc, a, x, y, s, nz, vdi, c);
+			}
 #endif
 			int data = FETCH();
 			const int[256] opcodeCycles = {
@@ -405,7 +407,7 @@ class Cpu6502
 			case 0x20: // JSR abcd
 				addr = FETCH();
 				PHPC();
-				pc = addr + PEEK_CODE() << 8;
+				pc = addr + (PEEK_CODE() << 8);
 				break;
 			case 0x21: // AND (ab,x)
 				INDIRECT_X();
@@ -514,7 +516,7 @@ class Cpu6502
 				break;
 			case 0x4c: // JMP abcd
 				addr = FETCH();
-				pc = addr + PEEK_CODE() << 8;
+				pc = addr + (PEEK_CODE() << 8);
 				break;
 			case 0x4d: // EOR abcd
 				ABSOLUTE();
@@ -946,7 +948,7 @@ class Cpu6502
 				INC();
 				break;
 
-	#if !ACPU_NO_UNOFFICIAL
+#if !ACPU_NO_UNOFFICIAL
 			case 0x03: // ASO (ab,x) [unofficial]
 				INDIRECT_X();
 				ASO();
@@ -1082,9 +1084,9 @@ class Cpu6502
 				data = a & FETCH();
 				nz = a = (data >> 1) + (c << 7);
 				vdi = (vdi & (DFlag | IFlag)) + ((a ^ data) & VFlag);
-	#if ACPU_NO_DECIMAL
+#if ACPU_NO_DECIMAL
 				c = data >> 7;
-	#else
+#else
 				if ((vdi & DFlag) == 0)
 					c = data >> 7;
 				else {
@@ -1097,7 +1099,7 @@ class Cpu6502
 					else
 						c = 0;
 				}
-	#endif
+#endif
 				break;
 			case 0x6f: // RRA abcd [unofficial]
 				ABSOLUTE();
@@ -1264,7 +1266,7 @@ class Cpu6502
 				ABSOLUTE_X();
 				INS();
 				break;
-	#endif // ACPU_NO_UNOFFICIAL
+#endif // ACPU_NO_UNOFFICIAL
 			}
 		}
 		Pc = pc;

@@ -550,7 +550,7 @@ class PokeyPair
 			break;
 		case 0x0f:
 			DO_STORE(Skctl);
-			bool init = data & 3 == 0;
+			bool init = (data & 3) == 0;
 			if (pokey.Init && !init)
 				pokey.PolyIndex = ((pokey.Audctl & 0x80) != 0 ? 15 * 31 * 511 - 1 : 15 * 31 * 131071 - 1) - cycle;
 			pokey.Init = init;
@@ -649,7 +649,7 @@ class PokeyPair
 					sample = 32767;
 				switch (format) {
 				case ASAPSampleFormat.U8:
-					buffer[bufferOffset++] = sample >> 8 + 128;
+					buffer[bufferOffset++] = (sample >> 8) + 128;
 					break;
 				case ASAPSampleFormat.S16LE:
 					buffer[bufferOffset++] = sample.LowByte;

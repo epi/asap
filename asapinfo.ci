@@ -590,7 +590,7 @@ public class ASAPInfo
 				int vol = module[instrument + index];
 				if (onExtraPokey)
 					vol >>= 4;
-				if (vol & 0xf >= rmtVolumeSilent[volume])
+				if ((vol & 0xf) >= rmtVolumeSilent[volume])
 					playerCalls = playerCall + 1;
 				playerCall++;
 				index += 3;
@@ -655,12 +655,12 @@ public class ASAPInfo
 				continue;
 			}
 			for (int ch = 0; ch < 1 << posShift; ch++) {
-				int p = module[songOffset + pos << posShift + ch];
+				int p = module[songOffset + (pos << posShift) + ch];
 				if (p == 0xff)
 					blankRows[ch] = 256;
 				else {
 					patternOffset[ch] = patternBegin[ch] = module[patternLoOffset + p]
-						+ module[patternHiOffset + p] << 8 - addrToOffset;
+						+ (module[patternHiOffset + p] << 8) - addrToOffset;
 					blankRows[ch] = 0;
 				}
 			}
@@ -673,9 +673,9 @@ public class ASAPInfo
 						continue;
 					for (;;) {
 						int i = module[patternOffset[ch]++];
-						if (i & 0x3f < 62) {
+						if ((i & 0x3f) < 62) {
 							i += module[patternOffset[ch]++] << 8;
-							if (i & 0x3f != 61) {
+							if ((i & 0x3f) != 61) {
 								instrumentNo[ch] = i >> 10;
 								instrumentFrame[ch] = frames;
 							}
@@ -796,10 +796,10 @@ public class ASAPInfo
 						}
 						if (i == 0x40) {
 							i = module[patternOffset[ch]++];
-							if (i & 0x7f == 0)
+							if ((i & 0x7f) == 0)
 								patternRows = 0;
 							else
-								tempo = i & 0x7f + 1;
+								tempo = (i & 0x7f) + 1;
 							if (i >= 0x80)
 								patternOffset[ch]++;
 							break;
@@ -1241,7 +1241,7 @@ public class ASAPInfo
 		throw "Invalid binary block";
 	}
 
-	macro ASAP_EXT(s) ( s[0] + s[1] << 8 + s[2] << 16 | 0x202020 )
+	macro ASAP_EXT(s) ( s[0] + (s[1] << 8) + (s[2] << 16) | 0x202020 )
 
 	static int GetPackedExt(string filename)
 	{

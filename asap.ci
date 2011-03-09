@@ -107,7 +107,7 @@ public class ASAP
 	void PokeHardware(int addr, int data)
 	{
 		if (addr >> 8 == 0xd2) {
-			if (addr & (Pokeys.ExtraPokeyMask + 0xf) == 0xe) {
+			if ((addr & (Pokeys.ExtraPokeyMask + 0xf)) == 0xe) {
 				Pokeys.Irqst |= data ^ 0xff;
 				macro SET_TIMER_IRQ(ch) {
 					if ((data & Pokeys.Irqst & ch) != 0) {
@@ -179,12 +179,12 @@ public class ASAP
 			Call6502(player);
 			break;
 		case ASAPModuleType.SapC:
-	#if !ASAP_ONLY_SAP
+#if !ASAP_ONLY_SAP
 		case ASAPModuleType.Cmc:
 		case ASAPModuleType.Cm3:
 		case ASAPModuleType.Cmr:
 		case ASAPModuleType.Cms:
-	#endif
+#endif
 			Call6502(player + 6);
 			break;
 		case ASAPModuleType.SapD:
@@ -217,7 +217,7 @@ public class ASAP
 			if (i == 0)
 				Memory[0xb07b] = (Memory[0xb07b] + 1).LowByte;
 			break;
-	#if !ASAP_ONLY_SAP
+#if !ASAP_ONLY_SAP
 		case ASAPModuleType.Dlt:
 			Call6502(player + 0x103);
 			break;
@@ -234,7 +234,7 @@ public class ASAP
 			else
 				Call6502(player + 6);
 			break;
-	#endif
+#endif
 		}
 	}
 
