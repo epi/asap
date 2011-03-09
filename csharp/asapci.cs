@@ -583,7 +583,12 @@ namespace Sf.Asap
 			int d2 = this.Date[i + 1];
 			return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
 		}
+		/// <summary>Short GPL notice.</summary>
+		/// <remarks>Display after the credits.</remarks>
+		public const string Copyright = "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version.";
 		internal int CovoxAddr;
+		/// <summary>Short credits for ASAP.</summary>
+		public const string Credits = "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n";
 		internal string Date;
 		internal int DefaultSong;
 		internal readonly int[] Durations = new int[32];
@@ -1848,6 +1853,8 @@ namespace Sf.Asap
 		public const int VersionMicro = 0;
 		/// <summary>ASAP version - minor part.</summary>
 		public const int VersionMinor = 0;
+		/// <summary>Years ASAP was created in.</summary>
+		public const string Years = "2005-2011";
 		static readonly byte[] CiConstArray_1 = { 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, 136, 127, 121, 115, 108, 103,
 			96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52, 51, 48, 45, 42, 40,
 			37, 36, 33, 31, 30 };

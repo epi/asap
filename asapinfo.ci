@@ -48,6 +48,25 @@ public class ASAPInfo
 	/// ASAP version as a string.
 	public const string Version = VersionMajor + "." + VersionMinor + "." + VersionMicro;
 
+	/// Years ASAP was created in.
+	public const string Years = "2005-2011";
+
+	/// Short credits for ASAP.
+	public const string Credits =
+		"Another Slight Atari Player (C) " + Years + " Piotr Fusik\n" +
+		"CMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\n" +
+		"RMT player (C) 2002-2005 Radek Sterba\n" +
+		"DLT player (C) 2009 Marek Konopka\n" +
+		"CMS player (C) 1999 David Spilka\n";
+
+	/// Short license notice.
+	/// Display after the credits.
+	public const string Copyright =
+		"This program is free software; you can redistribute it and/or modify\n" +
+		"it under the terms of the GNU General Public License as published\n" +
+		"by the Free Software Foundation; either version 2 of the License,\n" +
+		"or (at your option) any later version.";
+
 	/// Maximum length of a supported input file.
 	/// You may assume that files longer than this are not supported by ASAP.
 	public const int MaxModuleLength = 65000;

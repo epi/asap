@@ -1,7 +1,7 @@
 /*
  * libasap-xmms.c - ASAP plugin for XMMS
  *
- * Copyright (C) 2006-2010  Piotr Fusik
+ * Copyright (C) 2006-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -34,7 +34,7 @@
 #include <xmms/titlestring.h>
 #include <xmms/util.h>
 
-#include "asap.h"
+#include "asapci.h"
 
 #define BITS_PER_SAMPLE  16
 #define BUFFERED_BLOCKS  512
@@ -43,14 +43,14 @@ static int channels;
 
 static InputPlugin mod;
 
-static byte module[ASAP_MODULE_MAX];
+static unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
 static int module_len;
-static ASAP_State asap;
+static ASAP *asap;
 
 static volatile int seek_to;
 static pthread_t thread_handle;
-static volatile abool thread_run = FALSE;
-static volatile abool generated_eof = FALSE;
+static volatile cibool thread_run = FALSE;
+static volatile cibool generated_eof = FALSE;
 
 static char *asap_stpcpy(char *dest, const char *src)
 {
@@ -64,18 +64,23 @@ static void asap_show_message(gchar *title, gchar *text)
 	xmms_show_message(title, text, "Ok", FALSE, NULL, NULL);
 }
 
+static void asap_init(void)
+{
+	asap = ASAP_New();
+}
+
 static void asap_about(void)
 {
-	asap_show_message("About ASAP XMMS plugin " ASAP_VERSION,
-		ASAP_CREDITS "\n" ASAP_COPYRIGHT);
+	asap_show_message("About ASAP XMMS plugin " ASAPInfo_VERSION,
+		ASAPInfo_CREDITS "\n" ASAPInfo_COPYRIGHT);
 }
 
 static int asap_is_our_file(char *filename)
 {
-	return ASAP_IsOurFile(filename);
+	return ASAPInfo_IsOurFile(filename);
 }
 
-static int asap_load_file(const char *filename)
+static cibool asap_load_file(const char *filename)
 {
 #ifdef USE_STDIO
 	FILE *fp;
@@ -97,12 +102,29 @@ static int asap_load_file(const char *filename)
 	return TRUE;
 }
 
-static char *asap_get_title(char *filename, ASAP_ModuleInfo *module_info)
+static ASAPInfo *asap_get_info(const char *filename)
+{
+	ASAPInfo *info;
+	if (!asap_load_file(filename))
+		return NULL;
+	info = ASAPInfo_New();
+	if (info == NULL)
+		return NULL;
+	if (!ASAPInfo_Load(info, filename, module, module_len)) {
+		ASAPInfo_Delete(info);
+		return NULL;
+	}
+	return info;
+}
+
+static char *asap_get_title(const char *filename, const ASAPInfo *info)
 {
 	char *path;
 	char *filepart;
 	char *ext;
 	TitleInput *title_input;
+	const char *p;
+	int year;
 	char *title;
 
 	path = g_strdup(filename);
@@ -118,17 +140,22 @@ static char *asap_get_title(char *filename, ASAP_ModuleInfo *module_info)
 		ext++;
 
 	XMMS_NEW_TITLEINPUT(title_input);
-	if (module_info->author[0] != '\0')
-		title_input->performer = module_info->author;
-	title_input->track_name = module_info->name;
-	if (module_info->date[0] != '\0')
-		title_input->date = module_info->date;
+	p = ASAPInfo_GetAuthor(info);
+	if (p[0] != '\0')
+		title_input->performer = (gchar *) p;
+	title_input->track_name = (gchar *) ASAPInfo_GetTitleOrFilename(info);
+	year = ASAPInfo_GetYear(info);
+	if (year > 0)
+		title_input->year = year;
+	p = ASAPInfo_GetDate(info);
+	if (p[0] != '\0')
+		title_input->date = (gchar *) p;
 	title_input->file_name = g_basename(filename);
 	title_input->file_ext = ext;
 	title_input->file_path = path;
 	title = xmms_get_titlestring(xmms_get_gentitle_format(), title_input);
 	if (title == NULL)
-		title = g_strdup(module_info->name);
+		title = g_strdup(ASAPInfo_GetTitleOrFilename(info));
 
 	g_free(path);
 	return title;
@@ -137,13 +164,7 @@ static char *asap_get_title(char *filename, ASAP_ModuleInfo *module_info)
 static void *asap_play_thread(void *arg)
 {
 	while (thread_run) {
-		static
-#if BITS_PER_SAMPLE == 8
-			byte
-#else
-			short
-#endif
-			buffer[BUFFERED_BLOCKS * 2];
+		static unsigned char buffer[BUFFERED_BLOCKS * (BITS_PER_SAMPLE / 8) * 2];
 		int buffered_bytes;
 		if (generated_eof) {
 			xmms_usleep(10000);
@@ -151,11 +172,12 @@ static void *asap_play_thread(void *arg)
 		}
 		if (seek_to >= 0) {
 			mod.output->flush(seek_to);
-			ASAP_Seek(&asap, seek_to);
+			ASAP_Seek(asap, seek_to);
 			seek_to = -1;
 		}
 		buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
-		buffered_bytes = ASAP_Generate(&asap, buffer, buffered_bytes, BITS_PER_SAMPLE);
+		buffered_bytes = ASAP_Generate(asap, buffer, buffered_bytes,
+			BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 		if (buffered_bytes == 0) {
 			generated_eof = TRUE;
 			mod.output->buffer_free();
@@ -175,21 +197,24 @@ static void *asap_play_thread(void *arg)
 
 static void asap_play_file(char *filename)
 {
+	const ASAPInfo *info;
 	int song;
 	int duration;
 	char *title;
+	if (asap == NULL)
+		return;
 	if (!asap_load_file(filename))
 		return;
-	if (!ASAP_Load(&asap, filename, module, module_len))
+	if (!ASAP_Load(asap, filename, module, module_len))
 		return;
-	song = asap.module_info.default_song;
-	duration = asap.module_info.durations[song];
-	ASAP_PlaySong(&asap, song, duration);
-	channels = asap.module_info.channels;
-	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_LE,
-		ASAP_SAMPLE_RATE, channels))
+	info = ASAP_GetInfo(asap);
+	song = ASAPInfo_GetDefaultSong(info);
+	duration = ASAPInfo_GetDuration(info, song);
+	ASAP_PlaySong(asap, song, duration);
+	channels = ASAPInfo_GetChannels(info);
+	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_LE, ASAP_SAMPLE_RATE, channels))
 		return;
-	title = asap_get_title(filename, &asap.module_info);
+	title = asap_get_title(filename, info);
 	mod.set_info(title, duration, BITS_PER_SAMPLE * 1000, ASAP_SAMPLE_RATE, channels);
 	g_free(title);
 	seek_to = -1;
@@ -229,38 +254,35 @@ static int asap_get_time(void)
 
 static void asap_get_song_info(char *filename, char **title, int *length)
 {
-	ASAP_ModuleInfo module_info;
-	if (!asap_load_file(filename))
+	ASAPInfo *info = asap_get_info(filename);
+	if (info == NULL)
 		return;
-	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
-		return;
-	*title = asap_get_title(filename, &module_info);
-	*length = module_info.durations[module_info.default_song];
+	*title = asap_get_title(filename, info);
+	*length = ASAPInfo_GetDuration(info, ASAPInfo_GetDefaultSong(info));
+	ASAPInfo_Delete(info);
 }
 
 static void asap_file_info_box(char *filename)
 {
-	ASAP_ModuleInfo module_info;
-	char info[512];
+	ASAPInfo *info = asap_get_info(filename);
+	char s[3 * ASAPInfo_MAX_TEXT_LENGTH + 100];
 	char *p;
-	if (!asap_load_file(filename))
+	if (info == NULL)
 		return;
-	if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
-		return;
-	p = asap_stpcpy(info, "Author: ");
-	p = asap_stpcpy(p, module_info.author);
+	p = asap_stpcpy(s, "Author: ");
+	p = asap_stpcpy(p, ASAPInfo_GetAuthor(info));
 	p = asap_stpcpy(p, "\nName: ");
-	p = asap_stpcpy(p, module_info.name);
+	p = asap_stpcpy(p, ASAPInfo_GetTitle(info));
 	p = asap_stpcpy(p, "\nDate: ");
-	p = asap_stpcpy(p, module_info.date);
+	p = asap_stpcpy(p, ASAPInfo_GetDate(info));
 	*p = '\0';
-	asap_show_message("File information", info);
+	asap_show_message("File information", s);
 }
 
 static InputPlugin mod = {
 	NULL, NULL,
-	"ASAP " ASAP_VERSION,
-	NULL,
+	"ASAP " ASAPInfo_VERSION,
+	asap_init,
 	asap_about,
 	NULL,
 	asap_is_our_file,

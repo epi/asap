@@ -39,7 +39,16 @@ public final class ASAPInfo
 		int d2 = this.date.charAt(i + 1);
 		return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
 	}
+	/**
+	 * Short GPL notice.
+	 * Display after the credits.
+	 */
+	public static final String COPYRIGHT = "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version.";
 	int covoxAddr;
+	/**
+	 * Short credits for ASAP.
+	 */
+	public static final String CREDITS = "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n";
 	String date;
 	int defaultSong;
 	final int[] durations = new int[32];
@@ -1346,6 +1355,10 @@ public final class ASAPInfo
 	 * ASAP version - minor part.
 	 */
 	public static final int VERSION_MINOR = 0;
+	/**
+	 * Years ASAP was created in.
+	 */
+	public static final String YEARS = "2005-2011";
 	private static void clear(byte[] array)
 	{
 		for (int i = 0; i < array.length; i++)

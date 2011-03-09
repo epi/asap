@@ -35,6 +35,8 @@ cibool ASAP_Seek(ASAP *self, int position);
 #define ASAP_WAV_HEADER_LENGTH  44
 ASAPInfo *ASAPInfo_New(void);
 void ASAPInfo_Delete(ASAPInfo *self);
+#define ASAPInfo_COPYRIGHT  "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version."
+#define ASAPInfo_CREDITS  "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n"
 const char *ASAPInfo_GetAuthor(ASAPInfo const *self);
 int ASAPInfo_GetChannels(ASAPInfo const *self);
 const char *ASAPInfo_GetDate(ASAPInfo const *self);
@@ -58,6 +60,7 @@ int ASAPInfo_ParseDuration(const char *s);
 #define ASAPInfo_VERSION_MAJOR  3
 #define ASAPInfo_VERSION_MICRO  0
 #define ASAPInfo_VERSION_MINOR  0
+#define ASAPInfo_YEARS  "2005-2011"
 #ifdef __cplusplus
 }
 #endif
