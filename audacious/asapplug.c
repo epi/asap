@@ -21,25 +21,26 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <stdlib.h>
 #include <gtk/gtk.h>
 #include <audacious/plugin.h>
 #include <libaudcore/audstrings.h>
 
-#include "asap.h"
+#include "asapci.h"
 
 #define BITS_PER_SAMPLE  16
 
 static GMutex *control_mutex;
-static ASAP_State asap;
+static ASAP *asap;
 
 static void plugin_init(void)
 {
 	control_mutex = g_mutex_new();
+	asap = ASAP_New();
 }
 
 static void plugin_cleanup(void)
 {
+	ASAP_Delete(asap);
 	g_mutex_free(control_mutex);
 }
 
@@ -48,8 +49,8 @@ static void plugin_about(void)
 	static GtkWidget *aboutbox = NULL;
 	if (aboutbox == NULL) {
 		aboutbox = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, "%s",
-			ASAP_CREDITS "\n" ASAP_COPYRIGHT);
-		gtk_window_set_title((GtkWindow *) aboutbox, "About ASAP plugin " ASAP_VERSION);
+			ASAPInfo_CREDITS "\n" ASAPInfo_COPYRIGHT);
+		gtk_window_set_title((GtkWindow *) aboutbox, "About ASAP plugin " ASAPInfo_VERSION);
 		g_signal_connect(aboutbox, "response", (GCallback) gtk_widget_destroy, NULL);
 		g_signal_connect(aboutbox, "destroy", (GCallback) gtk_widget_destroyed, &aboutbox);
 	}
@@ -58,18 +59,18 @@ static void plugin_about(void)
 
 static gint is_our_file_from_vfs(const gchar *filename, VFSFile *file)
 {
-	return ASAP_IsOurFile(filename);
+	return ASAPInfo_IsOurFile(filename);
 }
 
-static int load_module(const gchar *filename, VFSFile *file, byte *module)
+static int load_module(const gchar *filename, VFSFile *file, unsigned char *module)
 {
 	int module_len;
 	if (file != NULL)
-		return vfs_fread(module, 1, ASAP_MODULE_MAX, file);
+		return vfs_fread(module, 1, ASAPInfo_MAX_MODULE_LENGTH, file);
 	file = vfs_fopen(filename, "rb");
 	if (file == NULL)
 		return -1;
-	module_len = vfs_fread(module, 1, ASAP_MODULE_MAX, file);
+	module_len = vfs_fread(module, 1, ASAPInfo_MAX_MODULE_LENGTH, file);
 	vfs_fclose(file);
 	return module_len;
 }
@@ -83,12 +84,13 @@ static void tuple_set(Tuple *tuple, gint nfield, const char *value)
 static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 {
 	int song = -1;
-	byte module[ASAP_MODULE_MAX];
+	unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
-	ASAP_ModuleInfo module_info;
+	ASAPInfo *info = NULL;
 	Tuple *tuple = NULL;
+	int songs;
 	int duration;
-	char year[5];
+	int year;
 
 #if __AUDACIOUS_PLUGIN_API__ >= 10
 	char *real_filename = filename_split_subtune(filename, &song);
@@ -96,34 +98,43 @@ static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 		filename = real_filename;
 #endif
 	module_len = load_module(filename, file, module);
-	if (module_len > 0 && ASAP_GetModuleInfo(&module_info, filename, module, module_len))
-		tuple = tuple_new_from_filename(filename);
+	if (module_len > 0) {
+		info = ASAPInfo_New();
+		if (info != NULL && ASAPInfo_Load(info, filename, module, module_len))
+			tuple = tuple_new_from_filename(filename);
+	}
 #if __AUDACIOUS_PLUGIN_API__ >= 10
 	if (real_filename != NULL)
 		g_free(real_filename);
 #endif
-	if (tuple == NULL)
+	if (tuple == NULL) {
+		if (info != NULL)
+			ASAPInfo_Delete(info);
 		return NULL;
+	}
 
-	tuple_set(tuple, FIELD_ARTIST, module_info.author);
-	tuple_set(tuple, FIELD_TITLE, module_info.name);
-	tuple_set(tuple, FIELD_DATE, module_info.date);
+	tuple_set(tuple, FIELD_ARTIST, ASAPInfo_GetAuthor(info));
+	tuple_set(tuple, FIELD_TITLE, ASAPInfo_GetTitleOrFilename(info));
+	tuple_set(tuple, FIELD_DATE, ASAPInfo_GetDate(info));
 	tuple_associate_string(tuple, FIELD_CODEC, NULL, "ASAP");
+	songs = ASAPInfo_GetSongs(info);
 	if (song > 0) {
 		tuple_associate_int(tuple, FIELD_SUBSONG_ID, NULL, song);
-		tuple_associate_int(tuple, FIELD_SUBSONG_NUM, NULL, module_info.songs);
+		tuple_associate_int(tuple, FIELD_SUBSONG_NUM, NULL, songs);
 		song--;
 	}
 	else {
-		if (module_info.songs > 1)
-			tuple->nsubtunes = module_info.songs;
-		song = module_info.default_song;
+		if (songs > 1)
+			tuple->nsubtunes = songs;
+		song = ASAPInfo_GetDefaultSong(info);
 	}
-	duration = module_info.durations[song];
+	duration = ASAPInfo_GetDuration(info, song);
 	if (duration > 0)
 		tuple_associate_int(tuple, FIELD_LENGTH, NULL, duration);
-	if (ASAP_DateToYear(module_info.date, year))
-		tuple_associate_int(tuple, FIELD_YEAR, NULL, atoi(year));
+	year = ASAPInfo_GetYear(info);
+	if (year > 0)
+		tuple_associate_int(tuple, FIELD_YEAR, NULL, year);
+	ASAPInfo_Delete(info);
 	return tuple;
 }
 
@@ -135,9 +146,10 @@ static Tuple *get_song_tuple(const gchar *filename)
 static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFile *file, gint start_time, gint stop_time, gboolean pause)
 {
 	int song = -1;
-	byte module[ASAP_MODULE_MAX];
+	unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
 	gboolean ok;
+	const ASAPInfo *info;
 	int channels;
 
 #if __AUDACIOUS_PLUGIN_API__ >= 10
@@ -146,7 +158,7 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 		filename = real_filename;
 #endif
 	module_len = load_module(filename, file, module);
-	ok = module_len > 0 && ASAP_Load(&asap, filename, module, module_len);
+	ok = module_len > 0 && ASAP_Load(asap, filename, module, module_len);
 #if __AUDACIOUS_PLUGIN_API__ >= 10
 	if (real_filename != NULL)
 		g_free(real_filename);
@@ -154,16 +166,17 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 	if (!ok)
 		return FALSE;
 
-	channels = asap.module_info.channels;
+	info = ASAP_GetInfo(asap);
+	channels = ASAPInfo_GetChannels(info);
 	if (song > 0)
 		song--;
 	else
-		song = asap.module_info.default_song;
+		song = ASAPInfo_GetDefaultSong(info);
 	if (stop_time < 0)
-		stop_time = asap.module_info.durations[song];
-	ASAP_PlaySong(&asap, song, stop_time);
+		stop_time = ASAPInfo_GetDuration(info, song);
+	ASAP_PlaySong(asap, song, stop_time);
 	if (start_time > 0)
-		ASAP_Seek(&asap, start_time);
+		ASAP_Seek(asap, start_time);
 
 	if (!playback->output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_LE, ASAP_SAMPLE_RATE, channels))
 		return FALSE;
@@ -174,14 +187,14 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 	playback->set_pb_ready(playback);
 
 	for (;;) {
-		static byte buffer[4096];
+		static unsigned char buffer[4096];
 		int len;
 		g_mutex_lock(control_mutex);
 		if (!playback->playing) {
 			g_mutex_unlock(control_mutex);
 			break;
 		}
-		len = ASAP_Generate(&asap, buffer, sizeof(buffer), BITS_PER_SAMPLE);
+		len = ASAP_Generate(asap, buffer, sizeof(buffer), BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 		g_mutex_unlock(control_mutex);
 		if (len <= 0) {
 			playback->eof = TRUE;
@@ -220,7 +233,7 @@ static void play_mseek(InputPlayback *playback, gulong time)
 {
 	g_mutex_lock(control_mutex);
 	if (playback->playing) {
-		ASAP_Seek(&asap, time);
+		ASAP_Seek(asap, time);
 #if __AUDACIOUS_PLUGIN_API__ >= 15
 		playback->output->abort_write();
 #endif

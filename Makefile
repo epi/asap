@@ -57,8 +57,8 @@ xbmc_asap-i486-linux.so: xbmc/xbmc_asap.c asapci.c asapci.h
 
 audacious: asapplug.so
 
-asapplug.so: audacious/asapplug.c $(COMMON_C) $(COMMON_H)
-	$(CC) $(AUDACIOUS_CFLAGS) -shared -fPIC -o $@ -I. audacious/asapplug.c $(COMMON_C)
+asapplug.so: audacious/asapplug.c asapci.c asapci.h
+	$(CC) $(AUDACIOUS_CFLAGS) -shared -fPIC -o $@ -I. audacious/asapplug.c asapci.c
 
 asap-sdl: asap-sdl.c asapci.c asapci.h
 	$(CC) $(SDL_CFLAGS) -o $@ -I. asap-sdl.c asapci.c $(SDL_LIBS)
