@@ -220,13 +220,13 @@ x64:
 
 # library
 
-asap.lib: $(COMMON_C) $(COMMON_H)
-	$(CL) -c $(COMMON_C)
-	$(MKLIB) asap.obj acpu.obj apokeysnd.obj
+asap.lib: ../asapci.c ../asapci.h
+	$(CL) -c ../asapci.c
+	$(MKLIB) asapci.obj
 
-libasap.a: $(COMMON_C) $(COMMON_H)
-	$(LIB_GCC) -c $(COMMON_C)
-	$(AR) $@ asap.o acpu.o apokeysnd.o
+libasap.a: ../asapci.c ../asapci.h
+	$(LIB_GCC) -c ../asapci.c
+	$(AR) $@ asapci.o
 
 # Java
 

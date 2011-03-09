@@ -36,9 +36,9 @@ asapconv: asapconv.c $(COMMON_C) $(COMMON_H)
 
 lib: libasap.a
 
-libasap.a: $(COMMON_C) $(COMMON_H)
-	$(CC) -c -I. $(COMMON_C)
-	$(AR) $@ asap.o acpu.o apokeysnd.o
+libasap.a: asapci.c asapci.h
+	$(CC) -c -I. asapci.c
+	$(AR) $@ asapci.o
 
 asap-xmms: libasap-xmms.so
 
