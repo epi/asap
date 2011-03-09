@@ -13,6 +13,32 @@ public final class ASAPInfo
 	}
 	String author;
 	int channels;
+
+	int checkDate()
+	{
+		int n = this.date.length();
+		switch (n) {
+			case 10:
+				if (!this.checkTwoDateDigits(0) || this.date.charAt(2) != 47)
+					return -1;
+			case 7:
+				if (!this.checkTwoDateDigits(n - 7) || this.date.charAt(n - 5) != 47)
+					return -1;
+			case 4:
+				if (!this.checkTwoDateDigits(n - 4) || !this.checkTwoDateDigits(n - 2))
+					return -1;
+				return n;
+			default:
+				return -1;
+		}
+	}
+
+	boolean checkTwoDateDigits(int i)
+	{
+		int d1 = this.date.charAt(i);
+		int d2 = this.date.charAt(i + 1);
+		return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
+	}
 	int covoxAddr;
 	String date;
 	int defaultSong;
@@ -55,6 +81,14 @@ public final class ASAPInfo
 		return this.date;
 	}
 
+	public int getDayOfMonth()
+	{
+		int n = this.checkDate();
+		if (n != 10)
+			return -1;
+		return this.getTwoDateDigits(0);
+	}
+
 	/**
 	 * Returns 0-based index of the "main" song.
 	 * The specified song should be played by default.
@@ -85,6 +119,14 @@ public final class ASAPInfo
 	public boolean getLoop(int song)
 	{
 		return this.loops[song];
+	}
+
+	public int getMonth()
+	{
+		int n = this.checkDate();
+		if (n < 7)
+			return -1;
+		return this.getTwoDateDigits(n - 7);
 	}
 
 	static int getPackedExt(String filename)
@@ -188,9 +230,22 @@ public final class ASAPInfo
 		return this.name.length() > 0 ? this.name : this.filename;
 	}
 
+	int getTwoDateDigits(int i)
+	{
+		return (this.date.charAt(i) - 48) * 10 + this.date.charAt(i + 1) - 48;
+	}
+
 	static int getWord(byte[] array, int i)
 	{
 		return (array[i] & 0xff) + ((array[i + 1] & 0xff) << 8);
+	}
+
+	public int getYear()
+	{
+		int n = this.checkDate();
+		if (n < 0)
+			return -1;
+		return this.getTwoDateDigits(n - 4) * 100 + this.getTwoDateDigits(n - 2);
 	}
 
 	static boolean hasStringAt(byte[] module, int moduleIndex, String s)
@@ -314,6 +369,10 @@ public final class ASAPInfo
 	 * Maximum number of songs in a file.
 	 */
 	public static final int MAX_SONGS = 32;
+	/**
+	 * Maximum length of text metadata.
+	 */
+	public static final int MAX_TEXT_LENGTH = 127;
 	int music;
 	String name;
 	boolean ntsc;

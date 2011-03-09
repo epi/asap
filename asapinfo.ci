@@ -52,8 +52,30 @@ public class ASAPInfo
 	/// You may assume that files longer than this are not supported by ASAP.
 	public const int MaxModuleLength = 65000;
 
+	/// Maximum length of text metadata.
+	public const int MaxTextLength = 127;
+
 	/// Maximum number of songs in a file.
 	public const int MaxSongs = 32;
+
+	string(MaxTextLength) Filename;
+	string(MaxTextLength) Author;
+	string(MaxTextLength) Name;
+	string(MaxTextLength) Date;
+	int Channels;
+	int Songs;
+	int DefaultSong;
+	int[MaxSongs] Durations;
+	bool[MaxSongs] Loops;
+	bool Ntsc;
+	ASAPModuleType Type;
+	int Fastplay;
+	int Music;
+	int Init;
+	int Player;
+	int CovoxAddr;
+	int HeaderLen;
+	byte[MaxSongs] SongPos;
 
 	/// Returns author's name.
 	/// A nickname may be included in parentheses after the real name.
@@ -91,6 +113,63 @@ public class ASAPInfo
 		return Date;
 	}
 
+	bool CheckTwoDateDigits(int i)
+	{
+		int d1 = Date[i];
+		int d2 = Date[i + 1];
+		return d1 >= '0' && d1 <= '9' && d2 >= '0' && d2 <= '9';
+	}
+
+	int CheckDate()
+	{
+		int n = Date.Length;
+		switch (n) {
+		case 10:
+			if (!CheckTwoDateDigits(0) || Date[2] != '/')
+				return -1;
+			goto case 7;
+		case 7:
+			if (!CheckTwoDateDigits(n - 7) || Date[n - 5] != '/')
+				return -1;
+			goto case 4;
+		case 4:
+			if (!CheckTwoDateDigits(n - 4) || !CheckTwoDateDigits(n - 2))
+				return -1;
+			return n;
+		default:
+			return -1;
+		}
+	}
+
+	int GetTwoDateDigits(int i)
+	{
+		return (Date[i] - '0') * 10 + Date[i + 1] - '0';
+	}
+
+	public int GetYear()
+	{
+		int n = CheckDate();
+		if (n < 0)
+			return -1;
+		return GetTwoDateDigits(n - 4) * 100 + GetTwoDateDigits(n - 2);
+	}
+
+	public int GetMonth()
+	{
+		int n = CheckDate();
+		if (n < 7)
+			return -1;
+		return GetTwoDateDigits(n - 7);
+	}
+
+	public int GetDayOfMonth()
+	{
+		int n = CheckDate();
+		if (n != 10)
+			return -1;
+		return GetTwoDateDigits(0);
+	}
+
 	/// Returns 1 for mono or 2 for stereo.
 	public int GetChannels()
 	{
@@ -125,26 +204,6 @@ public class ASAPInfo
 	{
 		return Loops[song];
 	}
-
-	const int MaxTextLength = 127;
-	string(MaxTextLength) Filename;
-	string(MaxTextLength) Author;
-	string(MaxTextLength) Name;
-	string(MaxTextLength) Date;
-	int Channels;
-	int Songs;
-	int DefaultSong;
-	int[MaxSongs] Durations;
-	bool[MaxSongs] Loops;
-	bool Ntsc;
-	ASAPModuleType Type;
-	int Fastplay;
-	int Music;
-	int Init;
-	int Player;
-	int CovoxAddr;
-	int HeaderLen;
-	byte[MaxSongs] SongPos;
 
 	static int GetWord(byte[] array, int i)
 	{

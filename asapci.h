@@ -38,17 +38,21 @@ void ASAPInfo_Delete(ASAPInfo *self);
 const char *ASAPInfo_GetAuthor(ASAPInfo const *self);
 int ASAPInfo_GetChannels(ASAPInfo const *self);
 const char *ASAPInfo_GetDate(ASAPInfo const *self);
+int ASAPInfo_GetDayOfMonth(ASAPInfo const *self);
 int ASAPInfo_GetDefaultSong(ASAPInfo const *self);
 int ASAPInfo_GetDuration(ASAPInfo const *self, int song);
 cibool ASAPInfo_GetLoop(ASAPInfo const *self, int song);
+int ASAPInfo_GetMonth(ASAPInfo const *self);
 int ASAPInfo_GetSongs(ASAPInfo const *self);
 const char *ASAPInfo_GetTitle(ASAPInfo const *self);
 const char *ASAPInfo_GetTitleOrFilename(ASAPInfo const *self);
+int ASAPInfo_GetYear(ASAPInfo const *self);
 cibool ASAPInfo_IsOurExt(const char *ext);
 cibool ASAPInfo_IsOurFile(const char *filename);
 cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *module, int moduleLen);
 #define ASAPInfo_MAX_MODULE_LENGTH  65000
 #define ASAPInfo_MAX_SONGS  32
+#define ASAPInfo_MAX_TEXT_LENGTH  127
 int ASAPInfo_ParseDuration(const char *s);
 #define ASAPInfo_VERSION  "3.0.0"
 #define ASAPInfo_VERSION_MAJOR  3

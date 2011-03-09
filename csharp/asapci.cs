@@ -555,6 +555,34 @@ namespace Sf.Asap
 		}
 		internal string Author;
 		internal int Channels;
+
+		internal int CheckDate()
+		{
+			int n = this.Date.Length;
+			switch (n) {
+				case 10:
+					if (!this.CheckTwoDateDigits(0) || this.Date[2] != 47)
+						return -1;
+					goto case 7;
+				case 7:
+					if (!this.CheckTwoDateDigits(n - 7) || this.Date[n - 5] != 47)
+						return -1;
+					goto case 4;
+				case 4:
+					if (!this.CheckTwoDateDigits(n - 4) || !this.CheckTwoDateDigits(n - 2))
+						return -1;
+					return n;
+				default:
+					return -1;
+			}
+		}
+
+		internal bool CheckTwoDateDigits(int i)
+		{
+			int d1 = this.Date[i];
+			int d2 = this.Date[i + 1];
+			return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
+		}
 		internal int CovoxAddr;
 		internal string Date;
 		internal int DefaultSong;
@@ -591,6 +619,14 @@ namespace Sf.Asap
 			return this.Date;
 		}
 
+		public int GetDayOfMonth()
+		{
+			int n = this.CheckDate();
+			if (n != 10)
+				return -1;
+			return this.GetTwoDateDigits(0);
+		}
+
 		/// <summary>Returns 0-based index of the "main" song.</summary>
 		/// <remarks>The specified song should be played by default.</remarks>
 		public int GetDefaultSong()
@@ -615,6 +651,14 @@ namespace Sf.Asap
 		public bool GetLoop(int song)
 		{
 			return this.Loops[song];
+		}
+
+		public int GetMonth()
+		{
+			int n = this.CheckDate();
+			if (n < 7)
+				return -1;
+			return this.GetTwoDateDigits(n - 7);
 		}
 
 		internal static int GetPackedExt(string filename)
@@ -712,9 +756,22 @@ namespace Sf.Asap
 			return this.Name.Length > 0 ? this.Name : this.Filename;
 		}
 
+		internal int GetTwoDateDigits(int i)
+		{
+			return (this.Date[i] - 48) * 10 + this.Date[i + 1] - 48;
+		}
+
 		internal static int GetWord(byte[] array, int i)
 		{
 			return array[i] + (array[i + 1] << 8);
+		}
+
+		public int GetYear()
+		{
+			int n = this.CheckDate();
+			if (n < 0)
+				return -1;
+			return this.GetTwoDateDigits(n - 4) * 100 + this.GetTwoDateDigits(n - 2);
 		}
 
 		internal static bool HasStringAt(byte[] module, int moduleIndex, string s)
@@ -826,6 +883,8 @@ namespace Sf.Asap
 		public const int MaxModuleLength = 65000;
 		/// <summary>Maximum number of songs in a file.</summary>
 		public const int MaxSongs = 32;
+		/// <summary>Maximum length of text metadata.</summary>
+		public const int MaxTextLength = 127;
 		internal int Music;
 		internal string Name;
 		internal bool Ntsc;

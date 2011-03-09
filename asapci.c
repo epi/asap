@@ -63,8 +63,11 @@ struct ASAPInfo {
 	ASAPModuleType type;
 };
 static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls);
+static int ASAPInfo_CheckDate(ASAPInfo const *self);
+static cibool ASAPInfo_CheckTwoDateDigits(ASAPInfo const *self, int i);
 static int ASAPInfo_GetPackedExt(const char *filename);
 static int ASAPInfo_GetRmtInstrumentFrames(unsigned char const *module, int instrument, int volume, int volumeFrame, cibool onExtraPokey);
+static int ASAPInfo_GetTwoDateDigits(ASAPInfo const *self, int i);
 static int ASAPInfo_GetWord(unsigned char const *array, int i);
 static cibool ASAPInfo_HasStringAt(unsigned char const *module, int moduleIndex, const char *s);
 static cibool ASAPInfo_IsDltPatternEnd(unsigned char const *module, int pos, int i);
@@ -2104,6 +2107,32 @@ static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls)
 	self->durations[self->songs++] = (int) ((double) (playerCalls * self->fastplay) * 114000 / 1773447);
 }
 
+static int ASAPInfo_CheckDate(ASAPInfo const *self)
+{
+	int n = strlen(self->date);
+	switch (n) {
+		case 10:
+			if (!ASAPInfo_CheckTwoDateDigits(self, 0) || self->date[2] != 47)
+				return -1;
+		case 7:
+			if (!ASAPInfo_CheckTwoDateDigits(self, n - 7) || self->date[n - 5] != 47)
+				return -1;
+		case 4:
+			if (!ASAPInfo_CheckTwoDateDigits(self, n - 4) || !ASAPInfo_CheckTwoDateDigits(self, n - 2))
+				return -1;
+			return n;
+		default:
+			return -1;
+	}
+}
+
+static cibool ASAPInfo_CheckTwoDateDigits(ASAPInfo const *self, int i)
+{
+	int d1 = self->date[i];
+	int d2 = self->date[i + 1];
+	return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
+}
+
 const char *ASAPInfo_GetAuthor(ASAPInfo const *self)
 {
 	return self->author;
@@ -2119,6 +2148,14 @@ const char *ASAPInfo_GetDate(ASAPInfo const *self)
 	return self->date;
 }
 
+int ASAPInfo_GetDayOfMonth(ASAPInfo const *self)
+{
+	int n = ASAPInfo_CheckDate(self);
+	if (n != 10)
+		return -1;
+	return ASAPInfo_GetTwoDateDigits(self, 0);
+}
+
 int ASAPInfo_GetDefaultSong(ASAPInfo const *self)
 {
 	return self->defaultSong;
@@ -2132,6 +2169,14 @@ int ASAPInfo_GetDuration(ASAPInfo const *self, int song)
 cibool ASAPInfo_GetLoop(ASAPInfo const *self, int song)
 {
 	return self->loops[song];
+}
+
+int ASAPInfo_GetMonth(ASAPInfo const *self)
+{
+	int n = ASAPInfo_CheckDate(self);
+	if (n < 7)
+		return -1;
+	return ASAPInfo_GetTwoDateDigits(self, n - 7);
 }
 
 static int ASAPInfo_GetPackedExt(const char *filename)
@@ -2237,9 +2282,22 @@ const char *ASAPInfo_GetTitleOrFilename(ASAPInfo const *self)
 	return strlen(self->name) > 0 ? self->name : self->filename;
 }
 
+static int ASAPInfo_GetTwoDateDigits(ASAPInfo const *self, int i)
+{
+	return (self->date[i] - 48) * 10 + self->date[i + 1] - 48;
+}
+
 static int ASAPInfo_GetWord(unsigned char const *array, int i)
 {
 	return array[i] + (array[i + 1] << 8);
+}
+
+int ASAPInfo_GetYear(ASAPInfo const *self)
+{
+	int n = ASAPInfo_CheckDate(self);
+	if (n < 0)
+		return -1;
+	return ASAPInfo_GetTwoDateDigits(self, n - 4) * 100 + ASAPInfo_GetTwoDateDigits(self, n - 2);
 }
 
 static cibool ASAPInfo_HasStringAt(unsigned char const *module, int moduleIndex, const char *s)
