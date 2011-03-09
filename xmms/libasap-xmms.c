@@ -276,6 +276,7 @@ static void asap_file_info_box(char *filename)
 	p = asap_stpcpy(p, "\nDate: ");
 	p = asap_stpcpy(p, ASAPInfo_GetDate(info));
 	*p = '\0';
+	ASAPInfo_Delete(info);
 	asap_show_message("File information", s);
 }
 
