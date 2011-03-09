@@ -52,8 +52,8 @@ libasap_decoder.so: moc/libasap_decoder.c $(COMMON_C) $(COMMON_H)
 
 asap-xbmc: xbmc_asap-i486-linux.so
 
-xbmc_asap-i486-linux.so: xbmc/xbmc_asap.c $(COMMON_C) $(COMMON_H)
-	$(CC) -shared -fPIC -o $@ -I. xbmc/xbmc_asap.c `cat $(XBMC_DLL_LOADER_EXPORTS)/wrapper.def` $(XBMC_DLL_LOADER_EXPORTS)/wrapper.o $(COMMON_C)
+xbmc_asap-i486-linux.so: xbmc/xbmc_asap.c asapci.c asapci.h
+	$(CC) -shared -fPIC -o $@ -I. xbmc/xbmc_asap.c `cat $(XBMC_DLL_LOADER_EXPORTS)/wrapper.def` $(XBMC_DLL_LOADER_EXPORTS)/wrapper.o asapci.c
 
 audacious: asapplug.so
 

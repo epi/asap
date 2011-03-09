@@ -166,8 +166,8 @@ ASAP_Apollo-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
 
 xbmc: xbmc_asap.dll
 
-xbmc_asap.dll: ../xbmc/xbmc_asap.c $(COMMON_C) ../xbmc/xbmc_asap.res $(COMMON_H)
-	$(ASAP_CL71) -Fo../xbmc/ -LD -MD ../xbmc/xbmc_asap.c $(COMMON_C) ../xbmc/xbmc_asap.res $(LINKOPT)
+xbmc_asap.dll: ../xbmc/xbmc_asap.c ../asapci.c ../xbmc/xbmc_asap.res ../asapci.h
+	$(ASAP_CL71) -Fo../xbmc/ -LD -MD ../xbmc/xbmc_asap.c ../asapci.c ../xbmc/xbmc_asap.res $(LINKOPT)
 
 ../xbmc/xbmc_asap.res: gui.rc ../asap.h
 	$(WINDRES) -DXBMC gui.rc

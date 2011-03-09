@@ -1,7 +1,7 @@
 /*
  * xbmc_asap.c - ASAP plugin for XBMC
  *
- * Copyright (C) 2008-2010  Piotr Fusik
+ * Copyright (C) 2008-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -28,11 +28,11 @@
 #define __declspec(x)
 #endif
 
-#include "asap.h"
+#include "asapci.h"
 
 typedef struct {
-	char author[ASAP_INFO_CHARS];
-	char name[ASAP_INFO_CHARS];
+	char author[ASAPInfo_MAX_TEXT_LENGTH + 1];
+	char name[ASAPInfo_MAX_TEXT_LENGTH + 1];
 	int year;
 	int month;
 	int day;
@@ -40,112 +40,97 @@ typedef struct {
 	int duration;
 } ASAP_SongInfo;
 
-static ASAP_State asap;
+static ASAP *asap = NULL;
 
-static abool loadModule(const char *filename, byte *module, int *module_len)
+static cibool loadModule(const char *filename, unsigned char *module, int *module_len)
 {
-	FILE *fp;
-	fp = fopen(filename, "rb");
+	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL)
 		return FALSE;
-	*module_len = (int) fread(module, 1, ASAP_MODULE_MAX, fp);
+	*module_len = (int) fread(module, 1, ASAPInfo_MAX_MODULE_LENGTH, fp);
 	fclose(fp);
 	return TRUE;
 }
 
-static abool getModuleInfo(const char *filename, ASAP_ModuleInfo *module_info)
+static ASAPInfo *getModuleInfo(const char *filename)
 {
-	byte module[ASAP_MODULE_MAX];
+	unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
+	ASAPInfo *info;
 	if (!loadModule(filename, module, &module_len))
-		return FALSE;
-	return ASAP_GetModuleInfo(module_info, filename, module, module_len);
-}
-
-static int getTwoDigits(const char *s)
-{
-	if (s[0] < '0' || s[0] > '9' || s[1] < '0' || s[1] > '9')
-		return -1;
-	return 10 * (s[0] - '0') + s[1] - '0';
-}
-
-static void parseDate(const char *s, ASAP_SongInfo *song_info)
-{
-	int x;
-	int y;
-	song_info->year = 0;
-	song_info->month = 0;
-	song_info->day = 0;
-	x = getTwoDigits(s);
-	if (x <= 0)
-		return;
-	if (s[2] == '/') {
-		s += 3;
-		y = getTwoDigits(s);
-		if (y <= 0)
-			return;
-		if (s[2] == '/') {
-			song_info->day = x;
-			s += 3;
-			x = y;
-			y = getTwoDigits(s);
-			if (y <= 0)
-				return;
-		}
-		song_info->month = x;
-		x = y;
+		return NULL;
+	info = ASAPInfo_New();
+	if (info == NULL)
+		return NULL;
+	if (!ASAPInfo_Load(info, filename, module, module_len)) {
+		ASAPInfo_Delete(info);
+		return NULL;
 	}
-	y = getTwoDigits(s + 2);
-	if (y < 0 || s[4] != '\0')
-		return;
-	song_info->year = 100 * x + y;
+	return info;
 }
 
 __declspec(dllexport) int asapGetSongs(const char *filename)
 {
-	ASAP_ModuleInfo module_info;
-	if (!getModuleInfo(filename, &module_info))
+	ASAPInfo *info = getModuleInfo(filename);
+	int songs;
+	if (info == NULL)
 		return 0;
-	return module_info.songs;
+	songs = ASAPInfo_GetSongs(info);
+	ASAPInfo_Delete(info);
+	return songs;
 }
 
-__declspec(dllexport) abool asapGetInfo(const char *filename, int song, ASAP_SongInfo *song_info)
+static int zeroIfNegative(int x)
 {
-	ASAP_ModuleInfo module_info;
-	if (!getModuleInfo(filename, &module_info))
+	return x >= 0 ? x : 0;
+}
+
+__declspec(dllexport) cibool asapGetInfo(const char *filename, int song, ASAP_SongInfo *song_info)
+{
+	ASAPInfo *info = getModuleInfo(filename);
+	if (info == NULL)
 		return FALSE;
 	if (song < 0)
-		song = module_info.default_song;
-	strcpy(song_info->author, module_info.author);
-	strcpy(song_info->name, module_info.name);
-	parseDate(module_info.date, song_info);
-	song_info->channels = module_info.channels;
-	song_info->duration = module_info.durations[song];
+		song = ASAPInfo_GetDefaultSong(info);
+	strcpy(song_info->author, ASAPInfo_GetAuthor(info));
+	strcpy(song_info->name, ASAPInfo_GetTitleOrFilename(info));
+	song_info->year = zeroIfNegative(ASAPInfo_GetYear(info));
+	song_info->month = zeroIfNegative(ASAPInfo_GetMonth(info));
+	song_info->day = zeroIfNegative(ASAPInfo_GetDayOfMonth(info));
+	song_info->channels = ASAPInfo_GetChannels(info);
+	song_info->duration = ASAPInfo_GetDuration(info, song);
+	ASAPInfo_Delete(info);
 	return TRUE;
 }
 
-__declspec(dllexport) abool asapLoad(const char *filename, int song, int *channels, int *duration)
+__declspec(dllexport) cibool asapLoad(const char *filename, int song, int *channels, int *duration)
 {
-	byte module[ASAP_MODULE_MAX];
+	unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
+	const ASAPInfo *info;
 	if (!loadModule(filename, module, &module_len))
 		return FALSE;
-	if (!ASAP_Load(&asap, filename, module, module_len))
+	if (asap == NULL) {
+		asap = ASAP_New();
+		if (asap == NULL)
+			return FALSE;
+	}
+	if (!ASAP_Load(asap, filename, module, module_len))
 		return FALSE;
-	*channels = asap.module_info.channels;
+	info = ASAP_GetInfo(asap);
+	*channels = ASAPInfo_GetChannels(info);
 	if (song < 0)
-		song = asap.module_info.default_song;
-	*duration = asap.module_info.durations[song];
-	ASAP_PlaySong(&asap, song, *duration);
-	return TRUE;
+		song = ASAPInfo_GetDefaultSong(info);
+	*duration = ASAPInfo_GetDuration(info, song);
+	return ASAP_PlaySong(asap, song, *duration);
 }
 
 __declspec(dllexport) void asapSeek(int position)
 {
-	ASAP_Seek(&asap, position);
+	ASAP_Seek(asap, position);
 }
 
 __declspec(dllexport) int asapGenerate(void *buffer, int buffer_len)
 {
-	return ASAP_Generate(&asap, buffer, buffer_len, ASAP_FORMAT_S16_LE);
+	return ASAP_Generate(asap, buffer, buffer_len, ASAPSampleFormat_S16_L_E);
 }
