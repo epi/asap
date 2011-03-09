@@ -583,7 +583,7 @@ namespace Sf.Asap
 			int d2 = this.Date[i + 1];
 			return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
 		}
-		/// <summary>Short GPL notice.</summary>
+		/// <summary>Short license notice.</summary>
 		/// <remarks>Display after the credits.</remarks>
 		public const string Copyright = "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version.";
 		internal int CovoxAddr;

@@ -431,7 +431,7 @@ final class Pokey
 		for (int i = 0; i < array.length; i++)
 			array[i] = 0;
 	}
-	static final byte[] CI_CONST_ARRAY_1 = { 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
-	static final byte[] CI_CONST_ARRAY_2 = { 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0,
+	private static final byte[] CI_CONST_ARRAY_1 = { 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
+	private static final byte[] CI_CONST_ARRAY_2 = { 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0,
 		1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1 };
 }

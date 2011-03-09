@@ -40,7 +40,7 @@ public final class ASAPInfo
 		return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
 	}
 	/**
-	 * Short GPL notice.
+	 * Short license notice.
 	 * Display after the credits.
 	 */
 	public static final String COPYRIGHT = "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version.";
@@ -1402,8 +1402,8 @@ public final class ASAPInfo
 			throw new RuntimeException();
 		}
 	}
-	static final byte[] CI_CONST_ARRAY_1 = { 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, -120, 127, 121, 115, 108, 103,
+	private static final byte[] CI_CONST_ARRAY_1 = { 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, -120, 127, 121, 115, 108, 103,
 		96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52, 51, 48, 45, 42, 40,
 		37, 36, 33, 31, 30 };
-	static final byte[] CI_CONST_ARRAY_2 = { 16, 8, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 };
+	private static final byte[] CI_CONST_ARRAY_2 = { 16, 8, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 };
 }
