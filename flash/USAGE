@@ -18,14 +18,8 @@ The player understands the following parameters (in ampersand-separated `FlashVa
 
 - `file` - URL of the file to play
 - `song` - zero-based subsong number
-- `defaultPlaybackTime` - playback time for songs with unspecified duration,
-  in the `"mm:ss.xxx"` format
-- `loopPlaybackTime` - playback time for songs marked as looping
-  (use `"ONCE"` to stop playback when the loop starts)
 
 The player contains the following methods that can be called from JavaScript:
 
-- `setPlaybackTime(defaultPlaybackTime : String, loopPlaybackTime : String) : void` - sets
-  playback times (see above)
 - `asapPlay(filename : String, song : int = -1) : void` - plays the specified song (-1 for default)
 - `asapStop() : void` - stops playback

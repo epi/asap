@@ -1,7 +1,7 @@
 /*
  * ASAPPlayer.as - ASAP Flash player
  *
- * Copyright (C) 2009-2010  Piotr Fusik
+ * Copyright (C) 2009-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -36,23 +36,10 @@ package
 
 	public class ASAPPlayer extends Sprite
 	{
-		private static const ONCE : int = -2;
-		private var defaultPlaybackTime : int = -1;
-		private var loopPlaybackTime : int = -1;
-
 		private var filename : String;
 		private var song : int;
 
 		private var soundChannel : SoundChannel = null;
-
-		public function setPlaybackTime(defaultPlaybackTime : String, loopPlaybackTime : String = null) : void
-		{
-			this.defaultPlaybackTime = ASAP.parseDuration(defaultPlaybackTime);
-			if (loopPlaybackTime == "ONCE")
-				this.loopPlaybackTime = ONCE;
-			else
-				this.loopPlaybackTime = ASAP.parseDuration(loopPlaybackTime);
-		}
 
 		private function completeHandler(event : Event) : void
 		{
@@ -63,11 +50,7 @@ package
 			var song : int = this.song;
 			if (song < 0)
 				song = asap.moduleInfo.default_song;
-			var duration : int = asap.moduleInfo.durations[song];
-			if (duration < 0)
-				duration = this.defaultPlaybackTime;
-			else if (asap.moduleInfo.loops[song] && this.loopPlaybackTime != ONCE)
-				duration = this.loopPlaybackTime;
+			var duration : int = asap.moduleInfo.loops[song] ? -1 : asap.moduleInfo.durations[song];
 			asap.playSong(song, duration);
 
 			var sound : Sound = new Sound();
@@ -99,11 +82,9 @@ package
 
 		public function ASAPPlayer()
 		{
-			ExternalInterface.addCallback("setPlaybackTime", setPlaybackTime);
 			ExternalInterface.addCallback("asapPlay", play);
 			ExternalInterface.addCallback("asapStop", stop);
 			var parameters : Object = this.loaderInfo.parameters;
-			setPlaybackTime(parameters.defaultPlaybackTime, parameters.loopPlaybackTime);
 			if (parameters.file != null)
 				play(parameters.file, parameters.song != null ? parameters.song : -1);
 		}
