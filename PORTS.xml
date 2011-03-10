@@ -425,7 +425,7 @@
 		<bin></bin>
 		<platform>Adobe AIR</platform>
 		<interface>HTML</interface>
-		<since>2.1.3</since>
+		<since>3.0.0</since>
 		<status>in development</status>
 		<output>32-bit floating-point sound</output>
 		<subsongs>yes</subsongs>

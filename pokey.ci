@@ -629,13 +629,13 @@ class PokeyPair
 #if FLASH
 			native {
 				var sample
-#if ACTIONSCRIPT
-					: Number
-#endif
+//#if ACTIONSCRIPT
+//					: Number
+//#endif
 					= accLeft / 33553408;
 				buffer.writeFloat(sample);
-				if (ExtraPokeyMask != 0) {
-					accRight += ExtraPokey.DeltaBuffer[i] - (accRight * 3 >> 10);
+				if (this.extraPokeyMask != 0) {
+					accRight += this.extraPokey.deltaBuffer[i] - (accRight * 3 >> 10);
 					sample = accRight / 33553408;
 				}
 				buffer.writeFloat(sample);

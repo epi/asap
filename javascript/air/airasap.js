@@ -1,7 +1,7 @@
 /*
- * airasap.ppjs - ASAP for Adobe AIR
+ * airasap.js - ASAP for Adobe AIR
  *
- * Copyright (C) 2010  Piotr Fusik
+ * Copyright (C) 2010-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,9 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#define FLASH
-#include "asap.ppjs"
-
 var air = {
 	ByteArray : window.runtime.flash.utils.ByteArray,
 	Event : window.runtime.flash.events.Event,
@@ -38,7 +35,7 @@ var air = {
 };
 
 var asap = new ASAP();
-var moduleInfo;
+var info;
 var soundChannel;
 var song;
 
@@ -57,7 +54,7 @@ function showTag(id, value)
 
 function generate(event)
 {
-	if (asap.generate(event.data, 0, 8192, 0) < 8192)
+	if (asap.generate(event.data, 8192, 0) < 8192)
 		soundChannel = null;
 }
 
@@ -65,7 +62,7 @@ function playSong(i)
 {
 	song = i;
 	showTag("song", i + 1);
-	var duration = moduleInfo.loops[i] ? -1 : moduleInfo.durations[i];
+	var duration = info.getLoop(i) ? -1 : info.getDuration(i);
 	asap.playSong(i, duration);
 	if (soundChannel == null) {
 		var sound = new air.Sound();
@@ -82,8 +79,13 @@ function prevSong()
 
 function nextSong()
 {
-	if (song + 1 < moduleInfo.songs)
+	if (song + 1 < info.getSongs())
 		playSong(song + 1);
+}
+
+function displaySongPanel(display)
+{
+	document.getElementById("song_panel").style.display = display;
 }
 
 function playFile(file)
@@ -95,22 +97,23 @@ function playFile(file)
 	s.close();
 	stop();
 	try {
-		asap.load(file.nativePath, module);
-		moduleInfo = asap.getModuleInfo();
+		asap.load(file.nativePath, module, module.length);
+		info = asap.getInfo();
 	} catch (ex) {
+		displaySongPanel("none");
 		alert(ex);
-		moduleInfo = { "name" : "", "author": "", "date": "", "songs": 0 };
+		return;
 	}
-	showTag("name", moduleInfo.name);
-	showTag("author", moduleInfo.author);
-	showTag("date", moduleInfo.date);
-	if (moduleInfo.songs > 1) {
-		showTag("songs", moduleInfo.songs);
-		document.getElementById("song_panel").style.display = "block";
+	showTag("name", info.getTitleOrFilename());
+	showTag("author", info.getAuthor());
+	showTag("date", info.getDate());
+	if (info.getSongs() > 1) {
+		showTag("songs", info.getSongs());
+		displaySongPanel("block");
 	}
 	else
-		document.getElementById("song_panel").style.display = "none";
-	playSong(moduleInfo.default_song);
+		displaySongPanel("none");
+	playSong(info.getDefaultSong());
 }
 
 function onFileSelect(event)
