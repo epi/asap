@@ -131,10 +131,10 @@ public class SilverASAP : Application
 
 		ASAP asap = new ASAP();
 		asap.Load(Filename, module, moduleLen);
-		ASAPInfo moduleInfo = asap.GetInfo();
+		ASAPInfo info = asap.GetInfo();
 		if (Song < 0)
-			Song = moduleInfo.GetDefaultSong();
-		int duration = moduleInfo.GetLoop(Song) ? -1 : moduleInfo.GetDuration(Song);
+			Song = info.GetDefaultSong();
+		int duration = info.GetLoop(Song) ? -1 : info.GetDuration(Song);
 		asap.PlaySong(Song, duration);
 
 		Stop();

@@ -82,11 +82,11 @@ public class Asap2Wav
 		s.Close();
 		ASAP asap = new ASAP();
 		asap.Load(inputFilename, module, moduleLen);
-		ASAPInfo moduleInfo = asap.GetInfo();
+		ASAPInfo info = asap.GetInfo();
 		if (Song < 0)
-			Song = moduleInfo.GetDefaultSong();
+			Song = info.GetDefaultSong();
 		if (Duration < 0) {
-			Duration = moduleInfo.GetDuration(Song);
+			Duration = info.GetDuration(Song);
 			if (Duration < 0)
 				Duration = 180 * 1000;
 		}

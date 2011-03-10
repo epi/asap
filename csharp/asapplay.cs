@@ -41,11 +41,11 @@ public class ASAPWavStream : Stream
 		int moduleLen = s.Read(module, 0, module.Length);
 		s.Close();
 		Asap.Load(inputFilename, module, moduleLen);
-		ASAPInfo moduleInfo = Asap.GetInfo();
+		ASAPInfo info = Asap.GetInfo();
 		if (song < 0)
-			song = moduleInfo.GetDefaultSong();
+			song = info.GetDefaultSong();
 		if (duration < 0) {
-			duration = moduleInfo.GetDuration(song);
+			duration = info.GetDuration(song);
 			if (duration < 0)
 				duration = 180 * 1000;
 		}
