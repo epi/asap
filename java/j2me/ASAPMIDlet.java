@@ -228,14 +228,14 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 
 	private void playSong(int song) throws Exception
 	{
-		ASAPInfo moduleInfo = asap.getInfo();
-		int duration = moduleInfo.getDuration(song);
+		ASAPInfo info = asap.getInfo();
+		int duration = info.getDuration(song);
 
 		gauge = new Gauge(null, false, 1, 0);
 		Form playForm = new Form("ASAP " + ASAPInfo.VERSION);
-		appendStringItem(playForm, "Name: ", moduleInfo.getTitleOrFilename());
-		appendStringItem(playForm, "Author: ", moduleInfo.getAuthor());
-		appendStringItem(playForm, "Date: ", moduleInfo.getDate());
+		appendStringItem(playForm, "Name: ", info.getTitleOrFilename());
+		appendStringItem(playForm, "Author: ", info.getAuthor());
+		appendStringItem(playForm, "Date: ", info.getDate());
 		appendStringItem(playForm, "Time: ", durationToString(duration));
 		playForm.append(gauge);
 		playForm.addCommand(stopCommand);
@@ -295,13 +295,13 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 				InputStream is = fc.openInputStream();
 				int moduleLen = ASAPInfo.readAndClose(is, module);
 				asap.load(filename, module, moduleLen);
-				ASAPInfo moduleInfo = asap.getInfo();
-				int songs = moduleInfo.getSongs();
+				ASAPInfo info = asap.getInfo();
+				int songs = info.getSongs();
 				if (songs > 1) {
-					songListControl = new List(moduleInfo.getTitleOrFilename(), List.IMPLICIT);
+					songListControl = new List(info.getTitleOrFilename(), List.IMPLICIT);
 					for (int i = 1; i <= songs; i++)
 						songListControl.append("Song " + i, null);
-					songListControl.setSelectedIndex(moduleInfo.getDefaultSong(), true);
+					songListControl.setSelectedIndex(info.getDefaultSong(), true);
 					songListControl.addCommand(selectCommand);
 					songListControl.addCommand(backCommand);
 					songListControl.setCommandListener(this);

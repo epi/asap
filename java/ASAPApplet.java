@@ -73,12 +73,12 @@ public class ASAPApplet extends Applet implements Runnable
 			g.fillRect(i * channelWidth, totalHeight - height, channelWidth, height);
 		}
 	/*
-		ASAPInfo moduleInfo = asap.getInfo();
-		g.drawString("Author: " + moduleInfo.getAuthor(), 10, 20);
-		g.drawString("Name: " + moduleInfo.getTitleOrFilename(), 10, 40);
-		g.drawString("Date: " + moduleInfo.getDate(), 10, 60);
-		if (moduleInfo.getSongs() > 1)
-			g.drawString("Song " + (song + 1) + " of " + moduleInfo.getSongs(), 10, 80);
+		ASAPInfo info = asap.getInfo();
+		g.drawString("Author: " + info.getAuthor(), 10, 20);
+		g.drawString("Name: " + info.getTitleOrFilename(), 10, 40);
+		g.drawString("Date: " + info.getDate(), 10, 60);
+		if (info.getSongs() > 1)
+			g.drawString("Song " + (song + 1) + " of " + info.getSongs(), 10, 80);
 	*/
 	}
 
@@ -123,20 +123,20 @@ public class ASAPApplet extends Applet implements Runnable
 			showStatus("ERROR LOADING " + filename);
 			return;
 		}
-		ASAPInfo moduleInfo;
+		ASAPInfo info;
 		synchronized (asap) {
 			try {
 				asap.load(filename, module, moduleLen);
-				moduleInfo = asap.getInfo();
+				info = asap.getInfo();
 				if (song < 0)
-					song = moduleInfo.getDefaultSong();
-				asap.playSong(song, moduleInfo.getLoop(song) ? -1 : moduleInfo.getDuration(song));
+					song = info.getDefaultSong();
+				asap.playSong(song, info.getLoop(song) ? -1 : info.getDuration(song));
 			} catch (Exception e) {
 				showStatus(e.getMessage());
 				return;
 			}
 		}
-		AudioFormat format = new AudioFormat(ASAP.SAMPLE_RATE, 16, moduleInfo.getChannels(), true, false);
+		AudioFormat format = new AudioFormat(ASAP.SAMPLE_RATE, 16, info.getChannels(), true, false);
 		try {
 			line = (SourceDataLine) AudioSystem.getLine(new DataLine.Info(SourceDataLine.class, format));
 			line.open(format);

@@ -86,11 +86,11 @@ public class ASAP2WAV
 		int moduleLen = ASAPInfo.readAndClose(is, module);
 		ASAP asap = new ASAP();
 		asap.load(inputFilename, module, moduleLen);
-		ASAPInfo moduleInfo = asap.getInfo();
+		ASAPInfo info = asap.getInfo();
 		if (song < 0)
-			song = moduleInfo.getDefaultSong();
+			song = info.getDefaultSong();
 		if (duration < 0) {
-			duration = moduleInfo.getDuration(song);
+			duration = info.getDuration(song);
 			if (duration < 0)
 				duration = 180 * 1000;
 		}
