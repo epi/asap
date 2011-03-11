@@ -47,8 +47,8 @@ libasap-xmms.so: xmms/libasap-xmms.c asapci.c asapci.h
 
 asap-moc: libasap_decoder.so
 
-libasap_decoder.so: moc/libasap_decoder.c $(COMMON_C) $(COMMON_H)
-	$(CC) -shared -fPIC -o $@ -I. -I$(MOC_INCLUDE) moc/libasap_decoder.c $(COMMON_C)
+libasap_decoder.so: moc/libasap_decoder.c asapci.c asapci.h
+	$(CC) -shared -fPIC -o $@ -I. -I$(MOC_INCLUDE) moc/libasap_decoder.c asapci.c
 
 asap-xbmc: xbmc_asap-i486-linux.so
 
