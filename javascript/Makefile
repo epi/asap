@@ -1,18 +1,10 @@
-PP = cpp -C -P -I..
-JSC = jsc -nologo -w:2 -out:$@
-
-COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
-COMMON_H = ../asap.h ../asap_internal.h ../anylang.h ../players.h
-
 all: asap2wav.js
 
-include ../players/Makefile
-
 asap2wav.exe: asap2wav.js
-	$(JSC) $<
+	jsc -nologo -w:2 -out:$@ $<
 
-asap2wav.js: asap2wav.ppjs asap.ppjs $(COMMON_C) $(COMMON_H)
-	$(PP) $< > $@
+asap2wav.js: asap.js asap2wav1.js
+	cat asap.js asap2wav1.js > $@
 
 clean:
 	rm -f asap2wav.exe asap2wav.js

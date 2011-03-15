@@ -1,7 +1,7 @@
 /*
- * asap2wav.ppjs - converter of ASAP-supported formats to WAV files
+ * asap2wav1.js - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2009-2010 Piotr Fusik
+ * Copyright (C) 2009-2011 Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -20,8 +20,6 @@
  * along with ASAP; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
-#include "asap.ppjs"
 
 var usage;
 
@@ -257,7 +255,7 @@ else {
 var outputFilename = null;
 var outputHeader = true;
 var song = -1;
-var format = ASAP_SampleFormat.S16LE;
+var format = ASAPSampleFormat.S16_L_E;
 var duration = -1;
 var muteMask = 0;
 
@@ -265,12 +263,8 @@ function printHelp()
 {
 	print(
 		"Usage: " + usage + "\n" +
-#ifdef ASAP_ONLY_SAP
-		"INPUTFILEs must be in the SAP format.\n" +
-#else
 		"Each INPUTFILE must be in a supported format:\n" +
 		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2.\n" +
-#endif
 		"Options:\n" +
 		"-o FILE     --output=FILE      Set output file name\n" +
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n" +
@@ -291,7 +285,7 @@ function setSong(s)
 
 function setTime(s)
 {
-	duration = ASAP_ParseDuration(s);
+	duration = ASAP.parseDuration(s);
 }
 
 function setMuteMask(s)
@@ -308,12 +302,12 @@ function processFile(inputFilename)
 {
 	var module = readBinaryFile(inputFilename);
 	var asap = new ASAP();
-	asap.load(inputFilename, module);
-	var moduleInfo = asap.getModuleInfo();
+	asap.load(inputFilename, module, module.length);
+	var info = asap.getInfo();
 	if (song < 0)
-		song = moduleInfo.default_song;
+		song = info.getDefaultSong();
 	if (duration < 0) {
-		duration = moduleInfo.durations[song];
+		duration = info.getDuration(song);
 		if (duration < 0)
 			duration = 180 * 1000;
 	}
@@ -327,11 +321,11 @@ function processFile(inputFilename)
 	var buffer = new Array(8192);
 	if (outputHeader) {
 		asap.getWavHeader(buffer, format);
-		of.write(buffer, ASAP_WAV_HEADER_BYTES);
+		of.write(buffer, ASAP.WAV_HEADER_LENGTH);
 	}
 	var nBytes;
 	do {
-		nBytes = asap.generate(buffer, 0, 8192, format);
+		nBytes = asap.generate(buffer, 8192, format);
 		of.write(buffer, nBytes);
 	} while (nBytes == 8192);
 	of.close();
@@ -360,9 +354,9 @@ for (var i = 0; i < arguments.length; i++) {
 	else if (arg.substring(0, 7) ==  "--time=")
 		setTime(arg.substring(7, arg.length));
 	else if (arg == "-b" || arg == "--byte-samples")
-		format = ASAP_SampleFormat.U8;
+		format = ASAPSampleFormat.U8;
 	else if (arg == "-w" || arg == "--word-samples")
-		format = ASAP_SampleFormat.S16_LE;
+		format = ASAPSampleFormat.S16_L_E;
 	else if (arg == "--raw")
 		outputHeader = false;
 	else if (arg == "-m")
@@ -374,7 +368,7 @@ for (var i = 0; i < arguments.length; i++) {
 		noInputFiles = false;
 	}
 	else if (arg == "-v" || arg == "--version") {
-		print("ASAP2WAV (JavaScript) " + ASAP_VERSION);
+		print("ASAP2WAV (JavaScript) " + ASAPInfo.VERSION);
 		noInputFiles = false;
 	}
 	else
