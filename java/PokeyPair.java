@@ -112,8 +112,8 @@ final class PokeyPair
 			return ((this.poly17Lookup[j] & 0xff) >> i) + ((this.poly17Lookup[j + 1] & 0xff) << 8 - i) & 255;
 		}
 	}
-	int iirAccLeft;
-	int iirAccRight;
+	private int iirAccLeft;
+	private int iirAccRight;
 
 	void initialize(int mainClock, boolean stereo)
 	{

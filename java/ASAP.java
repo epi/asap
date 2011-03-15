@@ -7,9 +7,9 @@ package net.sf.asap;
  */
 public final class ASAP
 {
-	int blocksPlayed;
+	private int blocksPlayed;
 
-	void call6502(int addr)
+	private void call6502(int addr)
 	{
 		this.memory[53760] = 32;
 		this.memory[53761] = (byte) addr;
@@ -18,7 +18,7 @@ public final class ASAP
 		this.cpu.pc = 53760;
 	}
 
-	void call6502Player()
+	private void call6502Player()
 	{
 		int player = this.moduleInfo.player;
 		switch (this.moduleInfo.type) {
@@ -80,11 +80,11 @@ public final class ASAP
 				break;
 		}
 	}
-	int consol;
-	final byte[] covox = new byte[4];
-	final Cpu6502 cpu = new Cpu6502();
-	int currentDuration;
-	int currentSong;
+	private int consol;
+	private final byte[] covox = new byte[4];
+	private final Cpu6502 cpu = new Cpu6502();
+	private int currentDuration;
+	private int currentSong;
 	int cycle;
 
 	/**
@@ -98,7 +98,7 @@ public final class ASAP
 		this.silenceCycles = seconds * this.pokeys.mainClock;
 	}
 
-	int do6502Frame()
+	private int do6502Frame()
 	{
 		this.nextEventCycle = 0;
 		this.nextScanlineCycle = 0;
@@ -117,7 +117,7 @@ public final class ASAP
 		return cycles;
 	}
 
-	void do6502Init(int pc, int a, int x, int y) throws Exception
+	private void do6502Init(int pc, int a, int x, int y) throws Exception
 	{
 		this.cpu.pc = pc;
 		this.cpu.a = a & 255;
@@ -135,7 +135,7 @@ public final class ASAP
 		throw new Exception("INIT routine didn't return");
 	}
 
-	int doFrame()
+	private int doFrame()
 	{
 		this.pokeys.startFrame();
 		int cycles = this.do6502Frame();
@@ -154,7 +154,7 @@ public final class ASAP
 		return this.generateAt(buffer, 0, bufferLen, format);
 	}
 
-	int generateAt(byte[] buffer, int bufferOffset, int bufferLen, int format)
+	private int generateAt(byte[] buffer, int bufferOffset, int bufferLen, int format)
 	{
 		if (this.silenceCycles > 0 && this.silenceCyclesCounter <= 0)
 			return 0;
@@ -333,11 +333,11 @@ public final class ASAP
 	}
 	final byte[] memory = new byte[65536];
 
-	static int millisecondsToBlocks(int milliseconds)
+	private static int millisecondsToBlocks(int milliseconds)
 	{
 		return milliseconds * 441 / 10;
 	}
-	final ASAPInfo moduleInfo = new ASAPInfo();
+	private final ASAPInfo moduleInfo = new ASAPInfo();
 
 	/**
 	 * Mutes the selected POKEY channels.
@@ -349,9 +349,9 @@ public final class ASAP
 		this.pokeys.extraPokey.mute(mask >> 4);
 	}
 	int nextEventCycle;
-	int nextPlayerCycle;
-	int nextScanlineCycle;
-	int nmist;
+	private int nextPlayerCycle;
+	private int nextScanlineCycle;
+	private int nmist;
 
 	int peekHardware(int addr)
 	{
@@ -534,7 +534,7 @@ public final class ASAP
 	}
 	final PokeyPair pokeys = new PokeyPair();
 
-	static void putLittleEndian(byte[] buffer, int offset, int value)
+	private static void putLittleEndian(byte[] buffer, int offset, int value)
 	{
 		buffer[offset] = (byte) value;
 		buffer[offset + 1] = (byte) (value >> 8);
@@ -562,10 +562,10 @@ public final class ASAP
 		this.pokeys.sampleIndex = block - this.blocksPlayed;
 		this.blocksPlayed = block;
 	}
-	int silenceCycles;
-	int silenceCyclesCounter;
+	private int silenceCycles;
+	private int silenceCyclesCounter;
 	int tmcPerFrame;
-	int tmcPerFrameCounter;
+	private int tmcPerFrameCounter;
 	/**
 	 * WAV file header length.
 	 */

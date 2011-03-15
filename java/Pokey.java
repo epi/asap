@@ -410,10 +410,10 @@ final class Pokey
 	int mute2;
 	int mute3;
 	int mute4;
-	int out1;
-	int out2;
-	int out3;
-	int out4;
+	private int out1;
+	private int out2;
+	private int out3;
+	private int out4;
 	int periodCycles1;
 	int periodCycles2;
 	int periodCycles3;

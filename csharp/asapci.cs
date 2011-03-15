@@ -6,9 +6,9 @@ namespace Sf.Asap
 	/// <remarks>This class performs no I/O operations - all music data must be passed in byte arrays.</remarks>
 	public class ASAP
 	{
-		internal int BlocksPlayed;
+		int BlocksPlayed;
 
-		internal void Call6502(int addr)
+		void Call6502(int addr)
 		{
 			this.Memory[53760] = 32;
 			this.Memory[53761] = (byte) addr;
@@ -17,7 +17,7 @@ namespace Sf.Asap
 			this.Cpu.Pc = 53760;
 		}
 
-		internal void Call6502Player()
+		void Call6502Player()
 		{
 			int player = this.ModuleInfo.Player;
 			switch (this.ModuleInfo.Type) {
@@ -79,11 +79,11 @@ namespace Sf.Asap
 					break;
 			}
 		}
-		internal int Consol;
-		internal readonly byte[] Covox = new byte[4];
-		internal readonly Cpu6502 Cpu = new Cpu6502();
-		internal int CurrentDuration;
-		internal int CurrentSong;
+		int Consol;
+		readonly byte[] Covox = new byte[4];
+		readonly Cpu6502 Cpu = new Cpu6502();
+		int CurrentDuration;
+		int CurrentSong;
 		internal int Cycle;
 
 		/// <summary>Enables silence detection.</summary>
@@ -95,7 +95,7 @@ namespace Sf.Asap
 			this.SilenceCycles = seconds * this.Pokeys.MainClock;
 		}
 
-		internal int Do6502Frame()
+		int Do6502Frame()
 		{
 			this.NextEventCycle = 0;
 			this.NextScanlineCycle = 0;
@@ -114,7 +114,7 @@ namespace Sf.Asap
 			return cycles;
 		}
 
-		internal void Do6502Init(int pc, int a, int x, int y)
+		void Do6502Init(int pc, int a, int x, int y)
 		{
 			this.Cpu.Pc = pc;
 			this.Cpu.A = a & 255;
@@ -132,7 +132,7 @@ namespace Sf.Asap
 			throw new System.Exception("INIT routine didn't return");
 		}
 
-		internal int DoFrame()
+		int DoFrame()
 		{
 			this.Pokeys.StartFrame();
 			int cycles = this.Do6502Frame();
@@ -149,7 +149,7 @@ namespace Sf.Asap
 			return this.GenerateAt(buffer, 0, bufferLen, format);
 		}
 
-		internal int GenerateAt(byte[] buffer, int bufferOffset, int bufferLen, ASAPSampleFormat format)
+		int GenerateAt(byte[] buffer, int bufferOffset, int bufferLen, ASAPSampleFormat format)
 		{
 			if (this.SilenceCycles > 0 && this.SilenceCyclesCounter <= 0)
 				return 0;
@@ -316,11 +316,11 @@ namespace Sf.Asap
 		}
 		internal readonly byte[] Memory = new byte[65536];
 
-		internal static int MillisecondsToBlocks(int milliseconds)
+		static int MillisecondsToBlocks(int milliseconds)
 		{
 			return milliseconds * 441 / 10;
 		}
-		internal readonly ASAPInfo ModuleInfo = new ASAPInfo();
+		readonly ASAPInfo ModuleInfo = new ASAPInfo();
 
 		/// <summary>Mutes the selected POKEY channels.</summary>
 		/// <param name="mask">An 8-bit mask which selects POKEY channels to be muted.</param>
@@ -330,9 +330,9 @@ namespace Sf.Asap
 			this.Pokeys.ExtraPokey.Mute(mask >> 4);
 		}
 		internal int NextEventCycle;
-		internal int NextPlayerCycle;
-		internal int NextScanlineCycle;
-		internal NmiStatus Nmist;
+		int NextPlayerCycle;
+		int NextScanlineCycle;
+		NmiStatus Nmist;
 
 		internal int PeekHardware(int addr)
 		{
@@ -513,7 +513,7 @@ namespace Sf.Asap
 		}
 		internal readonly PokeyPair Pokeys = new PokeyPair();
 
-		internal static void PutLittleEndian(byte[] buffer, int offset, int value)
+		static void PutLittleEndian(byte[] buffer, int offset, int value)
 		{
 			buffer[offset] = (byte) value;
 			buffer[offset + 1] = (byte) (value >> 8);
@@ -537,10 +537,10 @@ namespace Sf.Asap
 			this.Pokeys.SampleIndex = block - this.BlocksPlayed;
 			this.BlocksPlayed = block;
 		}
-		internal int SilenceCycles;
-		internal int SilenceCyclesCounter;
+		int SilenceCycles;
+		int SilenceCyclesCounter;
 		internal int TmcPerFrame;
-		internal int TmcPerFrameCounter;
+		int TmcPerFrameCounter;
 		/// <summary>WAV file header length.</summary>
 		public const int WavHeaderLength = 44;
 	}
@@ -549,14 +549,14 @@ namespace Sf.Asap
 	public class ASAPInfo
 	{
 
-		internal void AddSong(int playerCalls)
+		void AddSong(int playerCalls)
 		{
 			this.Durations[this.Songs++] = (int) ((long) (playerCalls * this.Fastplay) * 114000 / 1773447);
 		}
-		internal string Author;
+		string Author;
 		internal int Channels;
 
-		internal int CheckDate()
+		int CheckDate()
 		{
 			int n = this.Date.Length;
 			switch (n) {
@@ -577,7 +577,7 @@ namespace Sf.Asap
 			}
 		}
 
-		internal bool CheckTwoDateDigits(int i)
+		bool CheckTwoDateDigits(int i)
 		{
 			int d1 = this.Date[i];
 			int d2 = this.Date[i + 1];
@@ -589,11 +589,11 @@ namespace Sf.Asap
 		internal int CovoxAddr;
 		/// <summary>Short credits for ASAP.</summary>
 		public const string Credits = "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n";
-		internal string Date;
-		internal int DefaultSong;
-		internal readonly int[] Durations = new int[32];
+		string Date;
+		int DefaultSong;
+		readonly int[] Durations = new int[32];
 		internal int Fastplay;
-		internal string Filename;
+		string Filename;
 
 		/// <summary>Returns author's name.</summary>
 		/// <remarks>A nickname may be included in parentheses after the real name.
@@ -666,7 +666,7 @@ namespace Sf.Asap
 			return this.GetTwoDateDigits(n - 7);
 		}
 
-		internal static int GetPackedExt(string filename)
+		static int GetPackedExt(string filename)
 		{
 			int ext = 0;
 			for (int i = filename.Length; --i > 0;) {
@@ -680,7 +680,7 @@ namespace Sf.Asap
 			return 0;
 		}
 
-		internal static int GetRmtInstrumentFrames(byte[] module, int instrument, int volume, int volumeFrame, bool onExtraPokey)
+		static int GetRmtInstrumentFrames(byte[] module, int instrument, int volume, int volumeFrame, bool onExtraPokey)
 		{
 			int addrToOffset = GetWord(module, 2) - 6;
 			instrument = GetWord(module, 14) - addrToOffset + (instrument << 1);
@@ -761,12 +761,12 @@ namespace Sf.Asap
 			return this.Name.Length > 0 ? this.Name : this.Filename;
 		}
 
-		internal int GetTwoDateDigits(int i)
+		int GetTwoDateDigits(int i)
 		{
 			return (this.Date[i] - 48) * 10 + this.Date[i + 1] - 48;
 		}
 
-		internal static int GetWord(byte[] array, int i)
+		static int GetWord(byte[] array, int i)
 		{
 			return array[i] + (array[i + 1] << 8);
 		}
@@ -779,7 +779,7 @@ namespace Sf.Asap
 			return this.GetTwoDateDigits(n - 4) * 100 + this.GetTwoDateDigits(n - 2);
 		}
 
-		internal static bool HasStringAt(byte[] module, int moduleIndex, string s)
+		static bool HasStringAt(byte[] module, int moduleIndex, string s)
 		{
 			int n = s.Length;
 			for (int i = 0; i < n; i++)
@@ -787,10 +787,10 @@ namespace Sf.Asap
 					return false;
 			return true;
 		}
-		internal int HeaderLen;
+		int HeaderLen;
 		internal int Init;
 
-		internal static bool IsDltPatternEnd(byte[] module, int pos, int i)
+		static bool IsDltPatternEnd(byte[] module, int pos, int i)
 		{
 			for (int ch = 0; ch < 4; ch++) {
 				int pattern = module[8198 + (ch << 8) + pos];
@@ -803,7 +803,7 @@ namespace Sf.Asap
 			return false;
 		}
 
-		internal static bool IsDltTrackEmpty(byte[] module, int pos)
+		static bool IsDltTrackEmpty(byte[] module, int pos)
 		{
 			return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
 		}
@@ -822,7 +822,7 @@ namespace Sf.Asap
 			return IsOurPackedExt(GetPackedExt(filename));
 		}
 
-		internal static bool IsOurPackedExt(int ext)
+		static bool IsOurPackedExt(int ext)
 		{
 			switch (ext) {
 				case 7364979:
@@ -854,7 +854,7 @@ namespace Sf.Asap
 		}
 
 		/// <summary>Loads a native module (anything except SAP) and a 6502 player routine.</summary>
-		internal void LoadNative(ASAP asap, byte[] module, int moduleLen, byte[] playerRoutine)
+		void LoadNative(ASAP asap, byte[] module, int moduleLen, byte[] playerRoutine)
 		{
 			if ((module[0] != 255 || module[1] != 255) && (module[0] != 0 || module[1] != 0))
 				throw new System.Exception("Invalid two leading bytes of the module");
@@ -882,7 +882,7 @@ namespace Sf.Asap
 				System.Array.Copy(playerRoutine, 6, asap.Memory, this.Player, playerLastByte + 1 - this.Player);
 			}
 		}
-		internal readonly bool[] Loops = new bool[32];
+		readonly bool[] Loops = new bool[32];
 		/// <summary>Maximum length of a supported input file.</summary>
 		/// <remarks>You may assume that files longer than this are not supported by ASAP.</remarks>
 		public const int MaxModuleLength = 65000;
@@ -891,10 +891,10 @@ namespace Sf.Asap
 		/// <summary>Maximum length of text metadata.</summary>
 		public const int MaxTextLength = 127;
 		internal int Music;
-		internal string Name;
+		string Name;
 		internal bool Ntsc;
 
-		internal void ParseCmc(ASAP asap, byte[] module, int moduleLen, ASAPModuleType type, byte[] playerRoutine)
+		void ParseCmc(ASAP asap, byte[] module, int moduleLen, ASAPModuleType type, byte[] playerRoutine)
 		{
 			if (moduleLen < 774)
 				throw new System.Exception("Module too short");
@@ -919,7 +919,7 @@ namespace Sf.Asap
 					this.ParseCmcSong(module, pos + 1);
 		}
 
-		internal void ParseCmcSong(byte[] module, int pos)
+		void ParseCmcSong(byte[] module, int pos)
 		{
 			int tempo = module[25];
 			int playerCalls = 0;
@@ -989,7 +989,7 @@ namespace Sf.Asap
 			this.AddSong(playerCalls);
 		}
 
-		internal static int ParseDec(byte[] module, int moduleIndex, int maxVal)
+		static int ParseDec(byte[] module, int moduleIndex, int maxVal)
 		{
 			if (module[moduleIndex] == 13)
 				throw new System.Exception("Missing number");
@@ -1005,7 +1005,7 @@ namespace Sf.Asap
 			}
 		}
 
-		internal void ParseDlt(ASAP asap, byte[] module, int moduleLen)
+		void ParseDlt(ASAP asap, byte[] module, int moduleLen)
 		{
 			if (moduleLen == 11270) {
 				if (asap != null)
@@ -1027,7 +1027,7 @@ namespace Sf.Asap
 				throw new System.Exception("No songs found");
 		}
 
-		internal void ParseDltSong(byte[] module, bool[] seen, int pos)
+		void ParseDltSong(byte[] module, bool[] seen, int pos)
 		{
 			while (pos < 128 && !seen[pos] && IsDltTrackEmpty(module, pos))
 				seen[pos++] = true;
@@ -1210,7 +1210,7 @@ namespace Sf.Asap
 			}
 		}
 
-		internal static int ParseHex(byte[] module, int moduleIndex)
+		static int ParseHex(byte[] module, int moduleIndex)
 		{
 			if (module[moduleIndex] == 13)
 				throw new System.Exception("Missing number");
@@ -1232,7 +1232,7 @@ namespace Sf.Asap
 			}
 		}
 
-		internal void ParseMpt(ASAP asap, byte[] module, int moduleLen)
+		void ParseMpt(ASAP asap, byte[] module, int moduleLen)
 		{
 			if (moduleLen < 464)
 				throw new System.Exception("Module too short");
@@ -1256,7 +1256,7 @@ namespace Sf.Asap
 				throw new System.Exception("No songs found");
 		}
 
-		internal void ParseMptSong(byte[] module, bool[] globalSeen, int songLen, int pos)
+		void ParseMptSong(byte[] module, bool[] globalSeen, int songLen, int pos)
 		{
 			int addrToOffset = GetWord(module, 2) - 6;
 			int tempo = module[463];
@@ -1326,7 +1326,7 @@ namespace Sf.Asap
 				this.AddSong(playerCalls);
 		}
 
-		internal void ParseRmt(ASAP asap, byte[] module, int moduleLen)
+		void ParseRmt(ASAP asap, byte[] module, int moduleLen)
 		{
 			if (moduleLen < 48)
 				throw new System.Exception("Module too short");
@@ -1369,7 +1369,7 @@ namespace Sf.Asap
 				throw new System.Exception("No songs found");
 		}
 
-		internal void ParseRmtSong(byte[] module, bool[] globalSeen, int songLen, int posShift, int pos)
+		void ParseRmtSong(byte[] module, bool[] globalSeen, int songLen, int posShift, int pos)
 		{
 			int addrToOffset = GetWord(module, 2) - 6;
 			int tempo = module[11];
@@ -1468,7 +1468,7 @@ namespace Sf.Asap
 				this.AddSong(frames);
 		}
 
-		internal void ParseSap(ASAP asap, byte[] module, int moduleLen)
+		void ParseSap(ASAP asap, byte[] module, int moduleLen)
 		{
 			this.ParseSapHeader(module, moduleLen);
 			if (asap == null)
@@ -1491,7 +1491,7 @@ namespace Sf.Asap
 			throw new System.Exception("Invalid binary block");
 		}
 
-		internal void ParseSapHeader(byte[] module, int moduleLen)
+		void ParseSapHeader(byte[] module, int moduleLen)
 		{
 			if (!HasStringAt(module, 0, "SAP\r\n"))
 				throw new System.Exception("Missing SAP header");
@@ -1617,7 +1617,7 @@ namespace Sf.Asap
 			this.HeaderLen = moduleIndex;
 		}
 
-		internal static int ParseText(byte[] module, int moduleIndex)
+		static int ParseText(byte[] module, int moduleIndex)
 		{
 			if (module[moduleIndex] != 34)
 				throw new System.Exception("Missing quote");
@@ -1635,7 +1635,7 @@ namespace Sf.Asap
 			}
 		}
 
-		internal void ParseTm2(ASAP asap, byte[] module, int moduleLen)
+		void ParseTm2(ASAP asap, byte[] module, int moduleLen)
 		{
 			if (moduleLen < 932)
 				throw new System.Exception("Module too short");
@@ -1679,7 +1679,7 @@ namespace Sf.Asap
 			}
 		}
 
-		internal void ParseTm2Song(byte[] module, int pos)
+		void ParseTm2Song(byte[] module, int pos)
 		{
 			int addrToOffset = GetWord(module, 2) - 6;
 			int tempo = module[36] + 1;
@@ -1751,7 +1751,7 @@ namespace Sf.Asap
 			this.AddSong(playerCalls);
 		}
 
-		internal void ParseTmc(ASAP asap, byte[] module, int moduleLen)
+		void ParseTmc(ASAP asap, byte[] module, int moduleLen)
 		{
 			if (moduleLen < 464)
 				throw new System.Exception("Module too short");
@@ -1785,7 +1785,7 @@ namespace Sf.Asap
 			this.Fastplay = 312 / i;
 		}
 
-		internal void ParseTmcSong(byte[] module, int pos)
+		void ParseTmcSong(byte[] module, int pos)
 		{
 			int addrToOffset = GetWord(module, 2) - 6;
 			int tempo = module[36] + 1;
@@ -6299,10 +6299,10 @@ namespace Sf.Asap
 		internal int Mute2;
 		internal int Mute3;
 		internal int Mute4;
-		internal int Out1;
-		internal int Out2;
-		internal int Out3;
-		internal int Out4;
+		int Out1;
+		int Out2;
+		int Out3;
+		int Out4;
 		internal int PeriodCycles1;
 		internal int PeriodCycles2;
 		internal int PeriodCycles3;
@@ -6429,8 +6429,8 @@ namespace Sf.Asap
 				return (this.Poly17Lookup[j] >> i) + (this.Poly17Lookup[j + 1] << 8 - i) & 255;
 			}
 		}
-		internal int IirAccLeft;
-		internal int IirAccRight;
+		int IirAccLeft;
+		int IirAccRight;
 
 		internal void Initialize(int mainClock, bool stereo)
 		{

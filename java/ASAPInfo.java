@@ -7,14 +7,14 @@ package net.sf.asap;
 public final class ASAPInfo
 {
 
-	void addSong(int playerCalls)
+	private void addSong(int playerCalls)
 	{
 		this.durations[this.songs++] = (int) ((long) (playerCalls * this.fastplay) * 114000 / 1773447);
 	}
-	String author;
+	private String author;
 	int channels;
 
-	int checkDate()
+	private int checkDate()
 	{
 		int n = this.date.length();
 		switch (n) {
@@ -33,7 +33,7 @@ public final class ASAPInfo
 		}
 	}
 
-	boolean checkTwoDateDigits(int i)
+	private boolean checkTwoDateDigits(int i)
 	{
 		int d1 = this.date.charAt(i);
 		int d2 = this.date.charAt(i + 1);
@@ -49,11 +49,11 @@ public final class ASAPInfo
 	 * Short credits for ASAP.
 	 */
 	public static final String CREDITS = "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n";
-	String date;
-	int defaultSong;
-	final int[] durations = new int[32];
+	private String date;
+	private int defaultSong;
+	private final int[] durations = new int[32];
 	int fastplay;
-	String filename;
+	private String filename;
 
 	/**
 	 * Returns author's name.
@@ -138,7 +138,7 @@ public final class ASAPInfo
 		return this.getTwoDateDigits(n - 7);
 	}
 
-	static int getPackedExt(String filename)
+	private static int getPackedExt(String filename)
 	{
 		int ext = 0;
 		for (int i = filename.length(); --i > 0;) {
@@ -152,7 +152,7 @@ public final class ASAPInfo
 		return 0;
 	}
 
-	static int getRmtInstrumentFrames(byte[] module, int instrument, int volume, int volumeFrame, boolean onExtraPokey)
+	private static int getRmtInstrumentFrames(byte[] module, int instrument, int volume, int volumeFrame, boolean onExtraPokey)
 	{
 		int addrToOffset = getWord(module, 2) - 6;
 		instrument = getWord(module, 14) - addrToOffset + (instrument << 1);
@@ -239,12 +239,12 @@ public final class ASAPInfo
 		return this.name.length() > 0 ? this.name : this.filename;
 	}
 
-	int getTwoDateDigits(int i)
+	private int getTwoDateDigits(int i)
 	{
 		return (this.date.charAt(i) - 48) * 10 + this.date.charAt(i + 1) - 48;
 	}
 
-	static int getWord(byte[] array, int i)
+	private static int getWord(byte[] array, int i)
 	{
 		return (array[i] & 0xff) + ((array[i + 1] & 0xff) << 8);
 	}
@@ -257,7 +257,7 @@ public final class ASAPInfo
 		return this.getTwoDateDigits(n - 4) * 100 + this.getTwoDateDigits(n - 2);
 	}
 
-	static boolean hasStringAt(byte[] module, int moduleIndex, String s)
+	private static boolean hasStringAt(byte[] module, int moduleIndex, String s)
 	{
 		int n = s.length();
 		for (int i = 0; i < n; i++)
@@ -265,10 +265,10 @@ public final class ASAPInfo
 				return false;
 		return true;
 	}
-	int headerLen;
+	private int headerLen;
 	int init;
 
-	static boolean isDltPatternEnd(byte[] module, int pos, int i)
+	private static boolean isDltPatternEnd(byte[] module, int pos, int i)
 	{
 		for (int ch = 0; ch < 4; ch++) {
 			int pattern = module[8198 + (ch << 8) + pos] & 0xff;
@@ -281,7 +281,7 @@ public final class ASAPInfo
 		return false;
 	}
 
-	static boolean isDltTrackEmpty(byte[] module, int pos)
+	private static boolean isDltTrackEmpty(byte[] module, int pos)
 	{
 		return (module[8198 + pos] & 0xff) >= 67 && (module[8454 + pos] & 0xff) >= 64 && (module[8710 + pos] & 0xff) >= 64 && (module[8966 + pos] & 0xff) >= 64;
 	}
@@ -304,7 +304,7 @@ public final class ASAPInfo
 		return isOurPackedExt(getPackedExt(filename));
 	}
 
-	static boolean isOurPackedExt(int ext)
+	private static boolean isOurPackedExt(int ext)
 	{
 		switch (ext) {
 			case 7364979:
@@ -340,7 +340,7 @@ public final class ASAPInfo
 	/**
 	 * Loads a native module (anything except SAP) and a 6502 player routine.
 	 */
-	void loadNative(ASAP asap, byte[] module, int moduleLen, byte[] playerRoutine) throws Exception
+	private void loadNative(ASAP asap, byte[] module, int moduleLen, byte[] playerRoutine) throws Exception
 	{
 		if ((module[0] != -1 || module[1] != -1) && (module[0] != 0 || module[1] != 0))
 			throw new Exception("Invalid two leading bytes of the module");
@@ -368,7 +368,7 @@ public final class ASAPInfo
 			System.arraycopy(playerRoutine, 6, asap.memory, this.player, playerLastByte + 1 - this.player);
 		}
 	}
-	final boolean[] loops = new boolean[32];
+	private final boolean[] loops = new boolean[32];
 	/**
 	 * Maximum length of a supported input file.
 	 * You may assume that files longer than this are not supported by ASAP.
@@ -383,10 +383,10 @@ public final class ASAPInfo
 	 */
 	public static final int MAX_TEXT_LENGTH = 127;
 	int music;
-	String name;
+	private String name;
 	boolean ntsc;
 
-	void parseCmc(ASAP asap, byte[] module, int moduleLen, int type, byte[] playerRoutine) throws Exception
+	private void parseCmc(ASAP asap, byte[] module, int moduleLen, int type, byte[] playerRoutine) throws Exception
 	{
 		if (moduleLen < 774)
 			throw new Exception("Module too short");
@@ -411,7 +411,7 @@ public final class ASAPInfo
 				this.parseCmcSong(module, pos + 1);
 	}
 
-	void parseCmcSong(byte[] module, int pos)
+	private void parseCmcSong(byte[] module, int pos)
 	{
 		int tempo = module[25] & 0xff;
 		int playerCalls = 0;
@@ -481,7 +481,7 @@ public final class ASAPInfo
 		this.addSong(playerCalls);
 	}
 
-	static int parseDec(byte[] module, int moduleIndex, int maxVal) throws Exception
+	private static int parseDec(byte[] module, int moduleIndex, int maxVal) throws Exception
 	{
 		if (module[moduleIndex] == 13)
 			throw new Exception("Missing number");
@@ -497,7 +497,7 @@ public final class ASAPInfo
 		}
 	}
 
-	void parseDlt(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseDlt(ASAP asap, byte[] module, int moduleLen) throws Exception
 	{
 		if (moduleLen == 11270) {
 			if (asap != null)
@@ -519,7 +519,7 @@ public final class ASAPInfo
 			throw new Exception("No songs found");
 	}
 
-	void parseDltSong(byte[] module, boolean[] seen, int pos)
+	private void parseDltSong(byte[] module, boolean[] seen, int pos)
 	{
 		while (pos < 128 && !seen[pos] && isDltTrackEmpty(module, pos))
 			seen[pos++] = true;
@@ -704,7 +704,7 @@ public final class ASAPInfo
 		}
 	}
 
-	static int parseHex(byte[] module, int moduleIndex) throws Exception
+	private static int parseHex(byte[] module, int moduleIndex) throws Exception
 	{
 		if (module[moduleIndex] == 13)
 			throw new Exception("Missing number");
@@ -726,7 +726,7 @@ public final class ASAPInfo
 		}
 	}
 
-	void parseMpt(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseMpt(ASAP asap, byte[] module, int moduleLen) throws Exception
 	{
 		if (moduleLen < 464)
 			throw new Exception("Module too short");
@@ -750,7 +750,7 @@ public final class ASAPInfo
 			throw new Exception("No songs found");
 	}
 
-	void parseMptSong(byte[] module, boolean[] globalSeen, int songLen, int pos)
+	private void parseMptSong(byte[] module, boolean[] globalSeen, int songLen, int pos)
 	{
 		int addrToOffset = getWord(module, 2) - 6;
 		int tempo = module[463] & 0xff;
@@ -820,7 +820,7 @@ public final class ASAPInfo
 			this.addSong(playerCalls);
 	}
 
-	void parseRmt(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseRmt(ASAP asap, byte[] module, int moduleLen) throws Exception
 	{
 		if (moduleLen < 48)
 			throw new Exception("Module too short");
@@ -863,7 +863,7 @@ public final class ASAPInfo
 			throw new Exception("No songs found");
 	}
 
-	void parseRmtSong(byte[] module, boolean[] globalSeen, int songLen, int posShift, int pos)
+	private void parseRmtSong(byte[] module, boolean[] globalSeen, int songLen, int posShift, int pos)
 	{
 		int addrToOffset = getWord(module, 2) - 6;
 		int tempo = module[11] & 0xff;
@@ -962,7 +962,7 @@ public final class ASAPInfo
 			this.addSong(frames);
 	}
 
-	void parseSap(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseSap(ASAP asap, byte[] module, int moduleLen) throws Exception
 	{
 		this.parseSapHeader(module, moduleLen);
 		if (asap == null)
@@ -985,7 +985,7 @@ public final class ASAPInfo
 		throw new Exception("Invalid binary block");
 	}
 
-	void parseSapHeader(byte[] module, int moduleLen) throws Exception
+	private void parseSapHeader(byte[] module, int moduleLen) throws Exception
 	{
 		if (!hasStringAt(module, 0, "SAP\r\n"))
 			throw new Exception("Missing SAP header");
@@ -1111,7 +1111,7 @@ public final class ASAPInfo
 		this.headerLen = moduleIndex;
 	}
 
-	static int parseText(byte[] module, int moduleIndex) throws Exception
+	private static int parseText(byte[] module, int moduleIndex) throws Exception
 	{
 		if (module[moduleIndex] != 34)
 			throw new Exception("Missing quote");
@@ -1129,7 +1129,7 @@ public final class ASAPInfo
 		}
 	}
 
-	void parseTm2(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseTm2(ASAP asap, byte[] module, int moduleLen) throws Exception
 	{
 		if (moduleLen < 932)
 			throw new Exception("Module too short");
@@ -1173,7 +1173,7 @@ public final class ASAPInfo
 		}
 	}
 
-	void parseTm2Song(byte[] module, int pos)
+	private void parseTm2Song(byte[] module, int pos)
 	{
 		int addrToOffset = getWord(module, 2) - 6;
 		int tempo = (module[36] & 0xff) + 1;
@@ -1245,7 +1245,7 @@ public final class ASAPInfo
 		this.addSong(playerCalls);
 	}
 
-	void parseTmc(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseTmc(ASAP asap, byte[] module, int moduleLen) throws Exception
 	{
 		if (moduleLen < 464)
 			throw new Exception("Module too short");
@@ -1279,7 +1279,7 @@ public final class ASAPInfo
 		this.fastplay = 312 / i;
 	}
 
-	void parseTmcSong(byte[] module, int pos)
+	private void parseTmcSong(byte[] module, int pos)
 	{
 		int addrToOffset = getWord(module, 2) - 6;
 		int tempo = (module[36] & 0xff) + 1;
