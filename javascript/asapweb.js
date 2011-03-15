@@ -1,7 +1,7 @@
 /*
- * asapweb.ppjs - pure JavaScript ASAP for web browsers
+ * asapweb.js - pure JavaScript ASAP for web browsers
  *
- * Copyright (C) 2009  Piotr Fusik
+ * Copyright (C) 2009-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,8 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "asap.ppjs"
-
 function downloadBinaryFile(url)
 {
 	try {
@@ -39,7 +37,7 @@ function downloadBinaryFile(url)
 		return result;
 	}
 	catch (e) {
-		throw new Error("Error: Failed to load " + url);
+		throw "Error: Failed to load " + url;
 	}
 }
 
@@ -47,16 +45,14 @@ function ASAP2WAVURL(url, song, duration, format)
 {
 	var module = downloadBinaryFile(url);
 	var asap = new ASAP();
-	asap.load(url, module);
-	var moduleInfo = asap.getModuleInfo();
+	asap.load(url, module, module.length);
+	var info = asap.getInfo();
 	if (song < 0)
-		song = moduleInfo.default_song;
-	if (duration == null)
-		duration = -1;
-	else
-		duration = ASAP_ParseDuration(duration);
-	if (duration < 0) {
-		duration = moduleInfo.durations[song];
+		song = info.getDefaultSong();
+	if (duration != null)
+		duration = ASAPInfo.parseDuration(duration);
+	else {
+		duration = info.getDuration(song);
 		if (duration < 0)
 			duration = 180 * 1000;
 	}
@@ -87,9 +83,9 @@ function ASAP2WAVURL(url, song, duration, format)
 
 	var buffer = new Array(8193); // must be multiple of 3
 	asap.getWavHeader(buffer, format);
-	var got = ASAP_WAV_HEADER_BYTES;
+	var got = ASAP.WAV_HEADER_LENGTH;
 	for (;;) {
-		got += asap.generate(buffer, got, buffer.length - got, format);
+		got += asap.generateAt(buffer, got, buffer.length - got, format);
 		appendBase64(buffer, got);
 		if (got < buffer.length)
 			break;
