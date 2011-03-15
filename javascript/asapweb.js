@@ -28,7 +28,7 @@ function downloadBinaryFile(url)
 		req.open("GET", url, false);
 		req.overrideMimeType("text/plain; charset=x-user-defined");
 		req.send(null);
-		if (req.status != 200)
+		if (req.status != 200 && req.status != 0)
 			throw "Status: " + req.status;
 		var response = req.responseText;
 		var result = new Array(response.length);
