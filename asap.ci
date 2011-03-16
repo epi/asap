@@ -86,8 +86,8 @@ public class ASAP
 			return 0xff;
 		case 0xd40b:
 		case 0xd41b:
-			if (Cycle == 13)
-				return ModuleInfo.Ntsc ? 131 : 156;
+			if (Cycle > (ModuleInfo.Ntsc ? 262 * 114 : 312 * 114))
+				return 0;
 			return Cycle / 228;
 		case 0xd40f:
 			switch (Nmist) {
@@ -97,7 +97,7 @@ public class ASAP
 				return 0x5f;
 			case NmiStatus.OnVBlank:
 			default: // shut up compilers
-				return Cycle < 28295 ? 0x1f : 0x5f;
+				return Cycle < 28291 ? 0x1f : 0x5f;
 			}
 		default:
 			return Memory[addr];
@@ -132,10 +132,10 @@ public class ASAP
 		}
 		else if ((addr & 0xff0f) == 0xd40a) {
 			int x = Cycle % 114;
-			Cycle += (x <= 110 ? 110 : 110 + 114) - x;
+			Cycle += (x <= 106 ? 106 : 106 + 114) - x;
 		}
 		else if ((addr & 0xff0f) == 0xd40f) {
-			Nmist = Cycle < 28296 ? NmiStatus.OnVBlank : NmiStatus.Reset;
+			Nmist = Cycle < 28292 ? NmiStatus.OnVBlank : NmiStatus.Reset;
 		}
 		else if ((addr & 0xff00) == ModuleInfo.CovoxAddr) {
 			Pokey pokey;

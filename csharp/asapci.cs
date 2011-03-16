@@ -356,8 +356,8 @@ namespace Sf.Asap
 					return 255;
 				case 54283:
 				case 54299:
-					if (this.Cycle == 13)
-						return this.ModuleInfo.Ntsc ? 131 : 156;
+					if (this.Cycle > (this.ModuleInfo.Ntsc ? 29868 : 35568))
+						return 0;
 					return this.Cycle / 228;
 				case 54287:
 					switch (this.Nmist) {
@@ -367,7 +367,7 @@ namespace Sf.Asap
 							return 95;
 						case NmiStatus.OnVBlank:
 						default:
-							return this.Cycle < 28295 ? 31 : 95;
+							return this.Cycle < 28291 ? 31 : 95;
 					}
 				default:
 					return this.Memory[addr];
@@ -486,10 +486,10 @@ namespace Sf.Asap
 			}
 			else if ((addr & 65295) == 54282) {
 				int x = this.Cycle % 114;
-				this.Cycle += (x <= 110 ? 110 : 224) - x;
+				this.Cycle += (x <= 106 ? 106 : 220) - x;
 			}
 			else if ((addr & 65295) == 54287) {
-				this.Nmist = this.Cycle < 28296 ? NmiStatus.OnVBlank : NmiStatus.Reset;
+				this.Nmist = this.Cycle < 28292 ? NmiStatus.OnVBlank : NmiStatus.Reset;
 			}
 			else if ((addr & 65280) == this.ModuleInfo.CovoxAddr) {
 				Pokey pokey;

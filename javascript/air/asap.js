@@ -316,8 +316,8 @@ ASAP.prototype.peekHardware = function(addr) {
 			return 255;
 		case 54283:
 		case 54299:
-			if (this.cycle == 13)
-				return this.moduleInfo.ntsc ? 131 : 156;
+			if (this.cycle > (this.moduleInfo.ntsc ? 29868 : 35568))
+				return 0;
 			return Math.floor(this.cycle / 228);
 		case 54287:
 			switch (this.nmist) {
@@ -327,7 +327,7 @@ ASAP.prototype.peekHardware = function(addr) {
 					return 95;
 				case NmiStatus.ON_V_BLANK:
 				default:
-					return this.cycle < 28295 ? 31 : 95;
+					return this.cycle < 28291 ? 31 : 95;
 			}
 		default:
 			return this.memory[addr];
@@ -441,10 +441,10 @@ ASAP.prototype.pokeHardware = function(addr, data) {
 	}
 	else if ((addr & 65295) == 54282) {
 		var x = this.cycle % 114;
-		this.cycle += (x <= 110 ? 110 : 224) - x;
+		this.cycle += (x <= 106 ? 106 : 220) - x;
 	}
 	else if ((addr & 65295) == 54287) {
-		this.nmist = this.cycle < 28296 ? NmiStatus.ON_V_BLANK : NmiStatus.RESET;
+		this.nmist = this.cycle < 28292 ? NmiStatus.ON_V_BLANK : NmiStatus.RESET;
 	}
 	else if ((addr & 65280) == this.moduleInfo.covoxAddr) {
 		var pokey;

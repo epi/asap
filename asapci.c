@@ -1904,8 +1904,8 @@ static int ASAP_PeekHardware(ASAP const *self, int addr)
 			return 255;
 		case 54283:
 		case 54299:
-			if (self->cycle == 13)
-				return self->moduleInfo.ntsc ? 131 : 156;
+			if (self->cycle > (self->moduleInfo.ntsc ? 29868 : 35568))
+				return 0;
 			return self->cycle / 228;
 		case 54287:
 			switch (self->nmist) {
@@ -1915,7 +1915,7 @@ static int ASAP_PeekHardware(ASAP const *self, int addr)
 					return 95;
 				case NmiStatus_ON_V_BLANK:
 				default:
-					return self->cycle < 28295 ? 31 : 95;
+					return self->cycle < 28291 ? 31 : 95;
 			}
 		default:
 			return self->memory[addr];
@@ -2041,10 +2041,10 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 	}
 	else if ((addr & 65295) == 54282) {
 		int x = self->cycle % 114;
-		self->cycle += (x <= 110 ? 110 : 224) - x;
+		self->cycle += (x <= 106 ? 106 : 220) - x;
 	}
 	else if ((addr & 65295) == 54287) {
-		self->nmist = self->cycle < 28296 ? NmiStatus_ON_V_BLANK : NmiStatus_RESET;
+		self->nmist = self->cycle < 28292 ? NmiStatus_ON_V_BLANK : NmiStatus_RESET;
 	}
 	else if ((addr & 65280) == self->moduleInfo.covoxAddr) {
 		Pokey *pokey;
