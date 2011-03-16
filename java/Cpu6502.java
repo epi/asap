@@ -121,7 +121,7 @@ final class Cpu6502
 					break;
 				case 16:
 					if (nz < 128) {
-						addr = (byte) asap.memory[pc];
+						addr = asap.memory[pc];
 						pc++;
 						addr += pc;
 						if ((addr ^ pc) >> 8 != 0)
@@ -275,7 +275,7 @@ final class Cpu6502
 					break;
 				case 48:
 					if (nz >= 128) {
-						addr = (byte) asap.memory[pc];
+						addr = asap.memory[pc];
 						pc++;
 						addr += pc;
 						if ((addr ^ pc) >> 8 != 0)
@@ -420,7 +420,7 @@ final class Cpu6502
 					break;
 				case 80:
 					if ((vdi & 64) == 0) {
-						addr = (byte) asap.memory[pc];
+						addr = asap.memory[pc];
 						pc++;
 						addr += pc;
 						if ((addr ^ pc) >> 8 != 0)
@@ -669,7 +669,7 @@ final class Cpu6502
 					break;
 				case 112:
 					if ((vdi & 64) != 0) {
-						addr = (byte) asap.memory[pc];
+						addr = asap.memory[pc];
 						pc++;
 						addr += pc;
 						if ((addr ^ pc) >> 8 != 0)
@@ -890,7 +890,7 @@ final class Cpu6502
 					break;
 				case 144:
 					if (c == 0) {
-						addr = (byte) asap.memory[pc];
+						addr = asap.memory[pc];
 						pc++;
 						addr += pc;
 						if ((addr ^ pc) >> 8 != 0)
@@ -992,7 +992,7 @@ final class Cpu6502
 					break;
 				case 176:
 					if (c != 0) {
-						addr = (byte) asap.memory[pc];
+						addr = asap.memory[pc];
 						pc++;
 						addr += pc;
 						if ((addr ^ pc) >> 8 != 0)
@@ -1130,7 +1130,7 @@ final class Cpu6502
 					break;
 				case 208:
 					if ((nz & 255) != 0) {
-						addr = (byte) asap.memory[pc];
+						addr = asap.memory[pc];
 						pc++;
 						addr += pc;
 						if ((addr ^ pc) >> 8 != 0)
@@ -1324,7 +1324,7 @@ final class Cpu6502
 					break;
 				case 240:
 					if ((nz & 255) == 0) {
-						addr = (byte) asap.memory[pc];
+						addr = asap.memory[pc];
 						pc++;
 						addr += pc;
 						if ((addr ^ pc) >> 8 != 0)
