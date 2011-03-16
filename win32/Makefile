@@ -198,8 +198,8 @@ rmt/apokeysnd-res.o: gui.rc ../asap.h
 
 # asapscan
 
-asapscan.exe: ../asapscan.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_GCC) -DASAPSCAN ../asapscan.c $(COMMON_C)
+asapscan.exe: ../asapscan.c ../asap-asapscan.c ../asap-asapscan.h
+	$(ASAP_GCC) ../asapscan.c
 
 # ASAPShellEx
 

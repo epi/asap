@@ -1,4 +1,6 @@
 // Generated automatically with "cito". Do not edit.
+#ifndef _POKEY_H_
+#define _POKEY_H_
 #include <stdbool.h>
 #ifdef __cplusplus
 extern "C" {
@@ -21,4 +23,5 @@ void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
 void PokeyPair_StartFrame(PokeyPair *self);
 #ifdef __cplusplus
 }
+#endif
 #endif

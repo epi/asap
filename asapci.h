@@ -1,4 +1,6 @@
 /* Generated automatically with "cito". Do not edit. */
+#ifndef _ASAPCI_H_
+#define _ASAPCI_H_
 typedef int cibool;
 #ifndef TRUE
 #define TRUE 1
@@ -63,4 +65,5 @@ int ASAPInfo_ParseDuration(const char *s);
 #define ASAPInfo_YEARS  "2005-2011"
 #ifdef __cplusplus
 }
+#endif
 #endif
