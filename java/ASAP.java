@@ -507,7 +507,7 @@ public final class ASAP
 		}
 		else if ((addr & 65295) == 54282) {
 			int x = this.cycle % 114;
-			this.cycle += (x <= 110 ? 224 : 110) - x;
+			this.cycle += (x <= 110 ? 110 : 224) - x;
 		}
 		else if ((addr & 65295) == 54287) {
 			this.nmist = this.cycle < 28296 ? NmiStatus.ON_V_BLANK : NmiStatus.RESET;

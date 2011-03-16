@@ -2041,7 +2041,7 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 	}
 	else if ((addr & 65295) == 54282) {
 		int x = self->cycle % 114;
-		self->cycle += (x <= 110 ? 224 : 110) - x;
+		self->cycle += (x <= 110 ? 110 : 224) - x;
 	}
 	else if ((addr & 65295) == 54287) {
 		self->nmist = self->cycle < 28296 ? NmiStatus_ON_V_BLANK : NmiStatus_RESET;

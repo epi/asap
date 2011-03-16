@@ -132,7 +132,7 @@ public class ASAP
 		}
 		else if ((addr & 0xff0f) == 0xd40a) {
 			int x = Cycle % 114;
-			Cycle += (x <= 110 ? 110 + 114 : 110) - x;
+			Cycle += (x <= 110 ? 110 : 110 + 114) - x;
 		}
 		else if ((addr & 0xff0f) == 0xd40f) {
 			Nmist = Cycle < 28296 ? NmiStatus.OnVBlank : NmiStatus.Reset;

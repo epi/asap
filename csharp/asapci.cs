@@ -486,7 +486,7 @@ namespace Sf.Asap
 			}
 			else if ((addr & 65295) == 54282) {
 				int x = this.Cycle % 114;
-				this.Cycle += (x <= 110 ? 224 : 110) - x;
+				this.Cycle += (x <= 110 ? 110 : 224) - x;
 			}
 			else if ((addr & 65295) == 54287) {
 				this.Nmist = this.Cycle < 28296 ? NmiStatus.OnVBlank : NmiStatus.Reset;
