@@ -3214,7 +3214,7 @@ Cpu6502.prototype.doFrame = function(asap, cycleLimit) {
 				break;
 			case 16:
 				if (nz < 128) {
-					addr = Ci.toSByte(asap.memory[pc]);
+					addr = (asap.memory[pc] ^ 128) - 128;
 					pc++;
 					addr += pc;
 					if ((addr ^ pc) >> 8 != 0)
@@ -3368,7 +3368,7 @@ Cpu6502.prototype.doFrame = function(asap, cycleLimit) {
 				break;
 			case 48:
 				if (nz >= 128) {
-					addr = Ci.toSByte(asap.memory[pc]);
+					addr = (asap.memory[pc] ^ 128) - 128;
 					pc++;
 					addr += pc;
 					if ((addr ^ pc) >> 8 != 0)
@@ -3513,7 +3513,7 @@ Cpu6502.prototype.doFrame = function(asap, cycleLimit) {
 				break;
 			case 80:
 				if ((vdi & 64) == 0) {
-					addr = Ci.toSByte(asap.memory[pc]);
+					addr = (asap.memory[pc] ^ 128) - 128;
 					pc++;
 					addr += pc;
 					if ((addr ^ pc) >> 8 != 0)
@@ -3762,7 +3762,7 @@ Cpu6502.prototype.doFrame = function(asap, cycleLimit) {
 				break;
 			case 112:
 				if ((vdi & 64) != 0) {
-					addr = Ci.toSByte(asap.memory[pc]);
+					addr = (asap.memory[pc] ^ 128) - 128;
 					pc++;
 					addr += pc;
 					if ((addr ^ pc) >> 8 != 0)
@@ -3983,7 +3983,7 @@ Cpu6502.prototype.doFrame = function(asap, cycleLimit) {
 				break;
 			case 144:
 				if (c == 0) {
-					addr = Ci.toSByte(asap.memory[pc]);
+					addr = (asap.memory[pc] ^ 128) - 128;
 					pc++;
 					addr += pc;
 					if ((addr ^ pc) >> 8 != 0)
@@ -4085,7 +4085,7 @@ Cpu6502.prototype.doFrame = function(asap, cycleLimit) {
 				break;
 			case 176:
 				if (c != 0) {
-					addr = Ci.toSByte(asap.memory[pc]);
+					addr = (asap.memory[pc] ^ 128) - 128;
 					pc++;
 					addr += pc;
 					if ((addr ^ pc) >> 8 != 0)
@@ -4223,7 +4223,7 @@ Cpu6502.prototype.doFrame = function(asap, cycleLimit) {
 				break;
 			case 208:
 				if ((nz & 255) != 0) {
-					addr = Ci.toSByte(asap.memory[pc]);
+					addr = (asap.memory[pc] ^ 128) - 128;
 					pc++;
 					addr += pc;
 					if ((addr ^ pc) >> 8 != 0)
@@ -4417,7 +4417,7 @@ Cpu6502.prototype.doFrame = function(asap, cycleLimit) {
 				break;
 			case 240:
 				if ((nz & 255) == 0) {
-					addr = Ci.toSByte(asap.memory[pc]);
+					addr = (asap.memory[pc] ^ 128) - 128;
 					pc++;
 					addr += pc;
 					if ((addr ^ pc) >> 8 != 0)
@@ -6736,9 +6736,6 @@ PokeyPair.prototype.startFrame = function() {
 		Ci.clearArray(this.extraPokey.deltaBuffer);
 }
 var Ci = {
-	toSByte : function(x) {
-		return x < 0x80 ? x : x - 256;
-	},
 	copyArray : function(sa, soffset, da, doffset, length) {
 		for (var i = 0; i < length; i++)
 			da[doffset + i] = sa[soffset + i];
