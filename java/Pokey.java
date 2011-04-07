@@ -83,7 +83,7 @@ final class Pokey
 						case 0:
 							if (CI_CONST_ARRAY_2[poly % 31] != 0) {
 								if ((this.audctl & 128) != 0)
-									newOut = pokeys.poly9Lookup[poly % 511] & 0xff & 1;
+									newOut = pokeys.poly9Lookup[poly % 511] & 1;
 								else {
 									poly %= 131071;
 									newOut = (pokeys.poly17Lookup[poly >> 3] & 0xff) >> (poly & 7) & 1;
@@ -92,15 +92,15 @@ final class Pokey
 							break;
 						case 2:
 						case 6:
-							newOut ^= CI_CONST_ARRAY_2[poly % 31] & 0xff;
+							newOut ^= CI_CONST_ARRAY_2[poly % 31];
 							break;
 						case 4:
 							if (CI_CONST_ARRAY_2[poly % 31] != 0)
-								newOut = CI_CONST_ARRAY_1[poly % 15] & 0xff;
+								newOut = CI_CONST_ARRAY_1[poly % 15];
 							break;
 						case 8:
 							if ((this.audctl & 128) != 0)
-								newOut = pokeys.poly9Lookup[poly % 511] & 0xff & 1;
+								newOut = pokeys.poly9Lookup[poly % 511] & 1;
 							else {
 								poly %= 131071;
 								newOut = (pokeys.poly17Lookup[poly >> 3] & 0xff) >> (poly & 7) & 1;
@@ -111,7 +111,7 @@ final class Pokey
 							newOut ^= 1;
 							break;
 						case 12:
-							newOut = CI_CONST_ARRAY_1[poly % 15] & 0xff;
+							newOut = CI_CONST_ARRAY_1[poly % 15];
 							break;
 						default:
 							break;
@@ -150,7 +150,7 @@ final class Pokey
 						case 0:
 							if (CI_CONST_ARRAY_2[poly % 31] != 0) {
 								if ((this.audctl & 128) != 0)
-									newOut = pokeys.poly9Lookup[poly % 511] & 0xff & 1;
+									newOut = pokeys.poly9Lookup[poly % 511] & 1;
 								else {
 									poly %= 131071;
 									newOut = (pokeys.poly17Lookup[poly >> 3] & 0xff) >> (poly & 7) & 1;
@@ -159,15 +159,15 @@ final class Pokey
 							break;
 						case 2:
 						case 6:
-							newOut ^= CI_CONST_ARRAY_2[poly % 31] & 0xff;
+							newOut ^= CI_CONST_ARRAY_2[poly % 31];
 							break;
 						case 4:
 							if (CI_CONST_ARRAY_2[poly % 31] != 0)
-								newOut = CI_CONST_ARRAY_1[poly % 15] & 0xff;
+								newOut = CI_CONST_ARRAY_1[poly % 15];
 							break;
 						case 8:
 							if ((this.audctl & 128) != 0)
-								newOut = pokeys.poly9Lookup[poly % 511] & 0xff & 1;
+								newOut = pokeys.poly9Lookup[poly % 511] & 1;
 							else {
 								poly %= 131071;
 								newOut = (pokeys.poly17Lookup[poly >> 3] & 0xff) >> (poly & 7) & 1;
@@ -178,7 +178,7 @@ final class Pokey
 							newOut ^= 1;
 							break;
 						case 12:
-							newOut = CI_CONST_ARRAY_1[poly % 15] & 0xff;
+							newOut = CI_CONST_ARRAY_1[poly % 15];
 							break;
 						default:
 							break;
@@ -213,7 +213,7 @@ final class Pokey
 						case 0:
 							if (CI_CONST_ARRAY_2[poly % 31] != 0) {
 								if ((this.audctl & 128) != 0)
-									newOut = pokeys.poly9Lookup[poly % 511] & 0xff & 1;
+									newOut = pokeys.poly9Lookup[poly % 511] & 1;
 								else {
 									poly %= 131071;
 									newOut = (pokeys.poly17Lookup[poly >> 3] & 0xff) >> (poly & 7) & 1;
@@ -222,15 +222,15 @@ final class Pokey
 							break;
 						case 2:
 						case 6:
-							newOut ^= CI_CONST_ARRAY_2[poly % 31] & 0xff;
+							newOut ^= CI_CONST_ARRAY_2[poly % 31];
 							break;
 						case 4:
 							if (CI_CONST_ARRAY_2[poly % 31] != 0)
-								newOut = CI_CONST_ARRAY_1[poly % 15] & 0xff;
+								newOut = CI_CONST_ARRAY_1[poly % 15];
 							break;
 						case 8:
 							if ((this.audctl & 128) != 0)
-								newOut = pokeys.poly9Lookup[poly % 511] & 0xff & 1;
+								newOut = pokeys.poly9Lookup[poly % 511] & 1;
 							else {
 								poly %= 131071;
 								newOut = (pokeys.poly17Lookup[poly >> 3] & 0xff) >> (poly & 7) & 1;
@@ -241,7 +241,7 @@ final class Pokey
 							newOut ^= 1;
 							break;
 						case 12:
-							newOut = CI_CONST_ARRAY_1[poly % 15] & 0xff;
+							newOut = CI_CONST_ARRAY_1[poly % 15];
 							break;
 						default:
 							break;
@@ -278,7 +278,7 @@ final class Pokey
 						case 0:
 							if (CI_CONST_ARRAY_2[poly % 31] != 0) {
 								if ((this.audctl & 128) != 0)
-									newOut = pokeys.poly9Lookup[poly % 511] & 0xff & 1;
+									newOut = pokeys.poly9Lookup[poly % 511] & 1;
 								else {
 									poly %= 131071;
 									newOut = (pokeys.poly17Lookup[poly >> 3] & 0xff) >> (poly & 7) & 1;
@@ -287,15 +287,15 @@ final class Pokey
 							break;
 						case 2:
 						case 6:
-							newOut ^= CI_CONST_ARRAY_2[poly % 31] & 0xff;
+							newOut ^= CI_CONST_ARRAY_2[poly % 31];
 							break;
 						case 4:
 							if (CI_CONST_ARRAY_2[poly % 31] != 0)
-								newOut = CI_CONST_ARRAY_1[poly % 15] & 0xff;
+								newOut = CI_CONST_ARRAY_1[poly % 15];
 							break;
 						case 8:
 							if ((this.audctl & 128) != 0)
-								newOut = pokeys.poly9Lookup[poly % 511] & 0xff & 1;
+								newOut = pokeys.poly9Lookup[poly % 511] & 1;
 							else {
 								poly %= 131071;
 								newOut = (pokeys.poly17Lookup[poly >> 3] & 0xff) >> (poly & 7) & 1;
@@ -306,7 +306,7 @@ final class Pokey
 							newOut ^= 1;
 							break;
 						case 12:
-							newOut = CI_CONST_ARRAY_1[poly % 15] & 0xff;
+							newOut = CI_CONST_ARRAY_1[poly % 15];
 							break;
 						default:
 							break;

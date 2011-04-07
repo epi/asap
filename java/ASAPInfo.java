@@ -176,7 +176,7 @@ public final class ASAPInfo
 				int vol = module[instrument + index] & 0xff;
 				if (onExtraPokey)
 					vol >>= 4;
-				if ((vol & 15) >= (CI_CONST_ARRAY_2[volume] & 0xff))
+				if ((vol & 15) >= CI_CONST_ARRAY_2[volume])
 					playerCalls = playerCall + 1;
 				playerCall++;
 				index += 3;
@@ -197,7 +197,7 @@ public final class ASAPInfo
 			int vol = module[instrument + index] & 0xff;
 			if (onExtraPokey)
 				vol >>= 4;
-			if ((vol & 15) >= (CI_CONST_ARRAY_2[volume] & 0xff)) {
+			if ((vol & 15) >= CI_CONST_ARRAY_2[volume]) {
 				playerCalls = playerCall + 1;
 				silentLoop = false;
 			}
@@ -274,7 +274,7 @@ public final class ASAPInfo
 			int pattern = module[8198 + (ch << 8) + pos] & 0xff;
 			if (pattern < 64) {
 				int offset = 6 + (pattern << 7) + (i << 1);
-				if ((module[offset] & 0xff & 128) == 0 && (module[offset + 1] & 0xff & 128) != 0)
+				if ((module[offset] & 128) == 0 && (module[offset + 1] & 128) != 0)
 					return true;
 			}
 		}
@@ -1313,7 +1313,7 @@ public final class ASAPInfo
 							break;
 						}
 						if (i < 128) {
-							i = module[patternOffset[ch]++] & 0xff & 127;
+							i = module[patternOffset[ch]++] & 127;
 							if (i == 0)
 								patternRows = 0;
 							else
