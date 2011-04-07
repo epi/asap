@@ -33,6 +33,8 @@ package
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
+	import net.sf.asap.ASAP;
+	import net.sf.asap.ASAPInfo;
 
 	public class ASAPPlayer extends Sprite
 	{
@@ -46,17 +48,18 @@ package
 			var module : ByteArray = URLLoader(event.target).data;
 
 			var asap : ASAP = new ASAP();
-			asap.load(filename, module);
+			asap.load(filename, module, module.length);
+			var info : ASAPInfo = asap.getInfo();
 			var song : int = this.song;
 			if (song < 0)
-				song = asap.moduleInfo.default_song;
-			var duration : int = asap.moduleInfo.loops[song] ? -1 : asap.moduleInfo.durations[song];
+				song = info.getDefaultSong();
+			var duration : int = info.getLoop(song) ? -1 : info.getDuration(song);
 			asap.playSong(song, duration);
 
 			var sound : Sound = new Sound();
 			function generator(event : SampleDataEvent) : void
 			{
-				asap.generate(event.data, 8192);
+				asap.generate(event.data, 8192, 0);
 			}
 			sound.addEventListener(SampleDataEvent.SAMPLE_DATA, generator);
 			this.soundChannel = sound.play();

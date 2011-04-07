@@ -383,7 +383,6 @@ dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-set
 	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) Version ../asapinfo.ci
 	$(GREP) "*name" rmt/apokeysnd_dll.c
-	$(GREP) VERSION ../flash/ASAP.ppas
 	$(GREP) android:versionName ../java/android/AndroidManifest.xml
 	$(GREP) about_title ../java/android/res/values/strings.xml
 	$(GREP) MIDlet-Version ../java/j2me/MANIFEST.MF
