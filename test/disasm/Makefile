@@ -15,4 +15,7 @@ asap.jasm: ../../java/net/sf/asap/ASAP.class
 asap.abc: ../../flash/asap.swf
 	swfdump -abc $< > $@
 
+clean:
+	rm -f asap.s asap64.s asap.html asap.jasm asap.abc
+
 .DELETE_ON_ERROR:
