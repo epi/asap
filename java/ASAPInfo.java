@@ -21,9 +21,11 @@ public final class ASAPInfo
 			case 10:
 				if (!this.checkTwoDateDigits(0) || this.date.charAt(2) != 47)
 					return -1;
+				//$FALL-THROUGH$
 			case 7:
 				if (!this.checkTwoDateDigits(n - 7) || this.date.charAt(n - 5) != 47)
 					return -1;
+				//$FALL-THROUGH$
 			case 4:
 				if (!this.checkTwoDateDigits(n - 4) || !this.checkTwoDateDigits(n - 2))
 					return -1;

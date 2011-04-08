@@ -6422,12 +6422,10 @@ namespace Sf.Asap
 			int i = cycle + pokey.PolyIndex;
 			if ((pokey.Audctl & 128) != 0)
 				return this.Poly9Lookup[i % 511];
-			else {
-				i %= 131071;
-				int j = i >> 3;
-				i &= 7;
-				return (this.Poly17Lookup[j] >> i) + (this.Poly17Lookup[j + 1] << 8 - i) & 255;
-			}
+			i %= 131071;
+			int j = i >> 3;
+			i &= 7;
+			return (this.Poly17Lookup[j] >> i) + (this.Poly17Lookup[j + 1] << 8 - i) & 255;
 		}
 		int IirAccLeft;
 		int IirAccRight;

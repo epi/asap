@@ -6225,12 +6225,10 @@ PokeyPair.prototype.getRandom = function(addr, cycle) {
 	var i = cycle + pokey.polyIndex;
 	if ((pokey.audctl & 128) != 0)
 		return this.poly9Lookup[i % 511];
-	else {
-		i %= 131071;
-		var j = i >> 3;
-		i &= 7;
-		return (this.poly17Lookup[j] >> i) + (this.poly17Lookup[j + 1] << 8 - i) & 255;
-	}
+	i %= 131071;
+	var j = i >> 3;
+	i &= 7;
+	return (this.poly17Lookup[j] >> i) + (this.poly17Lookup[j + 1] << 8 - i) & 255;
 }
 
 PokeyPair.prototype.initialize = function(mainClock, stereo) {

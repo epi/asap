@@ -105,12 +105,10 @@ final class PokeyPair
 		int i = cycle + pokey.polyIndex;
 		if ((pokey.audctl & 128) != 0)
 			return this.poly9Lookup[i % 511] & 0xff;
-		else {
-			i %= 131071;
-			int j = i >> 3;
-			i &= 7;
-			return ((this.poly17Lookup[j] & 0xff) >> i) + ((this.poly17Lookup[j + 1] & 0xff) << 8 - i) & 255;
-		}
+		i %= 131071;
+		int j = i >> 3;
+		i &= 7;
+		return ((this.poly17Lookup[j] & 0xff) >> i) + ((this.poly17Lookup[j + 1] & 0xff) << 8 - i) & 255;
 	}
 	private int iirAccLeft;
 	private int iirAccRight;

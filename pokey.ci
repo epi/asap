@@ -577,12 +577,10 @@ class PokeyPair
 		int i = cycle + pokey.PolyIndex;
 		if ((pokey.Audctl & 0x80) != 0)
 			return Poly9Lookup[i % 511];
-		else {
-			i %= 131071;
-			int j = i >> 3;
-			i &= 7;
-			return ((Poly17Lookup[j] >> i) + (Poly17Lookup[j + 1] << (8 - i))) & 0xff;
-		}
+		i %= 131071;
+		int j = i >> 3;
+		i &= 7;
+		return ((Poly17Lookup[j] >> i) + (Poly17Lookup[j + 1] << (8 - i))) & 0xff;
 	}
 
 #if APOKEYSND

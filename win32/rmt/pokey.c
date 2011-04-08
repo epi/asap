@@ -517,12 +517,10 @@ int PokeyPair_GetRandom(PokeyPair const *self, int addr, int cycle)
 	int i = cycle + pokey->polyIndex;
 	if ((pokey->audctl & 128) != 0)
 		return self->poly9Lookup[i % 511];
-	else {
-		i %= 131071;
-		int j = i >> 3;
-		i &= 7;
-		return ((self->poly17Lookup[j] >> i) + (self->poly17Lookup[j + 1] << (8 - i))) & 255;
-	}
+	i %= 131071;
+	int j = i >> 3;
+	i &= 7;
+	return ((self->poly17Lookup[j] >> i) + (self->poly17Lookup[j + 1] << (8 - i))) & 255;
 }
 
 void PokeyPair_Initialize(PokeyPair *self, int mainClock, bool stereo)

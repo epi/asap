@@ -6525,18 +6525,16 @@ static int PokeyPair_GetRandom(PokeyPair const *self, int addr, int cycle)
 {
 	Pokey const *pokey = (addr & self->extraPokeyMask) != 0 ? &self->extraPokey : &self->basePokey;
 	int i;
+	int j;
 	if (pokey->init)
 		return 255;
 	i = cycle + pokey->polyIndex;
 	if ((pokey->audctl & 128) != 0)
 		return self->poly9Lookup[i % 511];
-	else {
-		int j;
-		i %= 131071;
-		j = i >> 3;
-		i &= 7;
-		return ((self->poly17Lookup[j] >> i) + (self->poly17Lookup[j + 1] << (8 - i))) & 255;
-	}
+	i %= 131071;
+	j = i >> 3;
+	i &= 7;
+	return ((self->poly17Lookup[j] >> i) + (self->poly17Lookup[j + 1] << (8 - i))) & 255;
 }
 
 static void PokeyPair_Initialize(PokeyPair *self, int mainClock, cibool stereo)
