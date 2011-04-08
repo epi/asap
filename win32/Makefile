@@ -73,7 +73,8 @@ asapconv-static-lame.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
 asapconv-no-lame.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
 	$(ASAP_GCC) ../asapconv.c $(COMMON_C)
 
-x64/asapconv.exe: ../asapconv.c $(COMMON_C) $(COMMON_H) x64
+x64/asapconv.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
+	test -d x64 || mkdir x64
 	$(X64_ASAP_GCC) ../asapconv.c $(COMMON_C)
 
 # WASAP
@@ -212,11 +213,9 @@ ASAPShellEx-res.o: gui.rc ../asap.h
 x64/ASAPShellEx.dll: shellex/ASAPShellEx.cpp ../asap.c x64/ASAPShellEx-res.o $(COMMON_H)
 	$(X64_ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at -DASAP_ONLY_INFO shellex/ASAPShellEx.cpp ../asap.c x64/ASAPShellEx-res.o -lole32 -loleaut32 -lshlwapi -luuid
 
-x64/ASAPShellEx-res.o: gui.rc ../asap.h x64
+x64/ASAPShellEx-res.o: gui.rc ../asap.h
+	test -d x64 || mkdir x64
 	$(X64_WINDRES) -DSHELLEX gui.rc
-
-x64:
-	mkdir -p x64
 
 # library
 
@@ -342,6 +341,7 @@ x64-setup: ../../asap-$(VERSION)-win64.msi
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b setup $<
 
 x64/asap.wixobj: setup/asap.wxs
+	test -d x64 || mkdir x64
 	$(CANDLE) -arch x64 -dVERSION=$(VERSION) $<
 
 wince-setup: ../../asap-$(VERSION)-wince-arm.cab
@@ -417,6 +417,6 @@ www: ../../www/index.html ../../www/apokeysnd.dll ../../www/asap.swf ../../www/a
 ../../www/PORTS.xsl: ../PORTS.xsl
 	$(CP) $< $@
 
-.PHONY: all win32 mingw foo wince dsf xbmc java csharp javascript flash clean setup ../MANIFEST srcdist dist www
+.PHONY: all win32 mingw foo wince dsf xbmc java csharp javascript flash clean setup x64-setup ../MANIFEST srcdist dist www
 
 .DELETE_ON_ERROR:
