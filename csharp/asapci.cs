@@ -71,7 +71,7 @@ namespace Sf.Asap
 					break;
 				case ASAPModuleType.Tmc:
 					if (--this.TmcPerFrameCounter <= 0) {
-						this.TmcPerFrameCounter = this.TmcPerFrame;
+						this.TmcPerFrameCounter = this.Memory[this.ModuleInfo.Music + 31];
 						this.Call6502(player + 3);
 					}
 					else
@@ -156,7 +156,7 @@ namespace Sf.Asap
 			int blockShift = this.ModuleInfo.Channels - 1 + (format != ASAPSampleFormat.U8 ? 1 : 0);
 			int bufferBlocks = bufferLen >> blockShift;
 			if (this.CurrentDuration > 0) {
-				int totalBlocks = MillisecondsToBlocks(this.CurrentDuration);
+				int totalBlocks = ASAP.MillisecondsToBlocks(this.CurrentDuration);
 				if (bufferBlocks > totalBlocks - this.BlocksPlayed)
 					bufferBlocks = totalBlocks - this.BlocksPlayed;
 			}
@@ -235,13 +235,13 @@ namespace Sf.Asap
 			int use16bit = format != ASAPSampleFormat.U8 ? 1 : 0;
 			int blockSize = this.ModuleInfo.Channels << use16bit;
 			int bytesPerSecond = 44100 * blockSize;
-			int totalBlocks = MillisecondsToBlocks(this.CurrentDuration);
+			int totalBlocks = ASAP.MillisecondsToBlocks(this.CurrentDuration);
 			int nBytes = (totalBlocks - this.BlocksPlayed) * blockSize;
 			buffer[0] = 82;
 			buffer[1] = 73;
 			buffer[2] = 70;
 			buffer[3] = 70;
-			PutLittleEndian(buffer, 4, nBytes + 36);
+			ASAP.PutLittleEndian(buffer, 4, nBytes + 36);
 			buffer[8] = 87;
 			buffer[9] = 65;
 			buffer[10] = 86;
@@ -258,8 +258,8 @@ namespace Sf.Asap
 			buffer[21] = 0;
 			buffer[22] = (byte) this.ModuleInfo.Channels;
 			buffer[23] = 0;
-			PutLittleEndian(buffer, 24, 44100);
-			PutLittleEndian(buffer, 28, bytesPerSecond);
+			ASAP.PutLittleEndian(buffer, 24, 44100);
+			ASAP.PutLittleEndian(buffer, 28, bytesPerSecond);
 			buffer[32] = (byte) blockSize;
 			buffer[33] = 0;
 			buffer[34] = (byte) (8 << use16bit);
@@ -268,7 +268,7 @@ namespace Sf.Asap
 			buffer[37] = 97;
 			buffer[38] = 116;
 			buffer[39] = 97;
-			PutLittleEndian(buffer, 40, nBytes);
+			ASAP.PutLittleEndian(buffer, 40, nBytes);
 		}
 
 		internal void HandleEvent()
@@ -312,7 +312,36 @@ namespace Sf.Asap
 		public void Load(string filename, byte[] module, int moduleLen)
 		{
 			this.SilenceCycles = 0;
-			this.ModuleInfo.ParseFile(this, filename, module, moduleLen);
+			this.ModuleInfo.Load(filename, module, moduleLen);
+			byte[] playerRoutine = ASAP6502.GetPlayerRoutine(this.ModuleInfo);
+			if (playerRoutine != null) {
+				int player = ASAPInfo.GetWord(playerRoutine, 2);
+				int playerLastByte = ASAPInfo.GetWord(playerRoutine, 4);
+				if (this.ModuleInfo.Music <= playerLastByte)
+					throw new System.Exception("Module address conflicts with the player routine");
+				this.Memory[19456] = 0;
+				System.Array.Copy(module, 6, this.Memory, this.ModuleInfo.Music, moduleLen - 6);
+				System.Array.Copy(playerRoutine, 6, this.Memory, player, playerLastByte + 1 - player);
+				if (this.ModuleInfo.Player < 0)
+					this.ModuleInfo.Player = player;
+				return;
+			}
+			System.Array.Clear(this.Memory, 0, 65536);
+			int moduleIndex = this.ModuleInfo.HeaderLen + 2;
+			while (moduleIndex + 5 <= moduleLen) {
+				int startAddr = ASAPInfo.GetWord(module, moduleIndex);
+				int blockLen = ASAPInfo.GetWord(module, moduleIndex + 2) + 1 - startAddr;
+				if (blockLen <= 0 || moduleIndex + blockLen > moduleLen)
+					throw new System.Exception("Invalid binary block");
+				moduleIndex += 4;
+				System.Array.Copy(module, moduleIndex, this.Memory, startAddr, blockLen);
+				moduleIndex += blockLen;
+				if (moduleIndex == moduleLen)
+					return;
+				if (moduleIndex + 7 <= moduleLen && module[moduleIndex] == 255 && module[moduleIndex + 1] == 255)
+					moduleIndex += 2;
+			}
+			throw new System.Exception("Invalid binary block");
 		}
 		internal readonly byte[] Memory = new byte[65536];
 
@@ -527,7 +556,7 @@ namespace Sf.Asap
 		/// <param name="position">The requested absolute position in milliseconds.</param>
 		public void Seek(int position)
 		{
-			int block = MillisecondsToBlocks(position);
+			int block = ASAP.MillisecondsToBlocks(position);
 			if (block < this.BlocksPlayed)
 				this.PlaySong(this.CurrentSong, this.CurrentDuration);
 			while (this.BlocksPlayed + this.Pokeys.Samples < block) {
@@ -539,1326 +568,39 @@ namespace Sf.Asap
 		}
 		int SilenceCycles;
 		int SilenceCyclesCounter;
-		internal int TmcPerFrame;
 		int TmcPerFrameCounter;
 		/// <summary>WAV file header length.</summary>
 		public const int WavHeaderLength = 44;
 	}
 
-	/// <summary>Information about a music file.</summary>
-	public class ASAPInfo
+	internal class ASAP6502
 	{
 
-		void AddSong(int playerCalls)
+		internal static byte[] GetPlayerRoutine(ASAPInfo info)
 		{
-			this.Durations[this.Songs++] = (int) ((long) (playerCalls * this.Fastplay) * 114000 / 1773447);
-		}
-		string Author;
-		internal int Channels;
-
-		int CheckDate()
-		{
-			int n = this.Date.Length;
-			switch (n) {
-				case 10:
-					if (!this.CheckTwoDateDigits(0) || this.Date[2] != 47)
-						return -1;
-					goto case 7;
-				case 7:
-					if (!this.CheckTwoDateDigits(n - 7) || this.Date[n - 5] != 47)
-						return -1;
-					goto case 4;
-				case 4:
-					if (!this.CheckTwoDateDigits(n - 4) || !this.CheckTwoDateDigits(n - 2))
-						return -1;
-					return n;
+			switch (info.Type) {
+				case ASAPModuleType.Cmc:
+					return CiBinaryResource_cmc_obx;
+				case ASAPModuleType.Cm3:
+					return CiBinaryResource_cm3_obx;
+				case ASAPModuleType.Cmr:
+					return CiBinaryResource_cmr_obx;
+				case ASAPModuleType.Cms:
+					return CiBinaryResource_cms_obx;
+				case ASAPModuleType.Dlt:
+					return CiBinaryResource_dlt_obx;
+				case ASAPModuleType.Mpt:
+					return CiBinaryResource_mpt_obx;
+				case ASAPModuleType.Rmt:
+					return info.Channels == 1 ? CiBinaryResource_rmt4_obx : CiBinaryResource_rmt8_obx;
+				case ASAPModuleType.Tmc:
+					return CiBinaryResource_tmc_obx;
+				case ASAPModuleType.Tm2:
+					return CiBinaryResource_tm2_obx;
 				default:
-					return -1;
+					return null;
 			}
 		}
-
-		bool CheckTwoDateDigits(int i)
-		{
-			int d1 = this.Date[i];
-			int d2 = this.Date[i + 1];
-			return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
-		}
-		/// <summary>Short license notice.</summary>
-		/// <remarks>Display after the credits.</remarks>
-		public const string Copyright = "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version.";
-		internal int CovoxAddr;
-		/// <summary>Short credits for ASAP.</summary>
-		public const string Credits = "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n";
-		string Date;
-		int DefaultSong;
-		readonly int[] Durations = new int[32];
-		internal int Fastplay;
-		string Filename;
-
-		/// <summary>Returns author's name.</summary>
-		/// <remarks>A nickname may be included in parentheses after the real name.
-		/// Multiple authors are separated with <c>" &amp; "</c>.
-		/// An empty string means the author is unknown.</remarks>
-		public string GetAuthor()
-		{
-			return this.Author;
-		}
-
-		/// <summary>Returns 1 for mono or 2 for stereo.</summary>
-		public int GetChannels()
-		{
-			return this.Channels;
-		}
-
-		/// <summary>Returns music creation date.</summary>
-		/// <remarks>Some of the possible formats are:
-		/// <list type="bullet">
-		/// <item>YYYY</item>
-		/// <item>MM/YYYY</item>
-		/// <item>DD/MM/YYYY</item>
-		/// <item>YYYY-YYYY</item>
-		/// </list>
-		/// An empty string means the date is unknown.</remarks>
-		public string GetDate()
-		{
-			return this.Date;
-		}
-
-		public int GetDayOfMonth()
-		{
-			int n = this.CheckDate();
-			if (n != 10)
-				return -1;
-			return this.GetTwoDateDigits(0);
-		}
-
-		/// <summary>Returns 0-based index of the "main" song.</summary>
-		/// <remarks>The specified song should be played by default.</remarks>
-		public int GetDefaultSong()
-		{
-			return this.DefaultSong;
-		}
-
-		/// <summary>Returns length of the specified song.</summary>
-		/// <remarks>The result is in milliseconds. -1 means the length is indeterminate.</remarks>
-		public int GetDuration(int song)
-		{
-			return this.Durations[song];
-		}
-
-		/// <summary>Returns information whether the specified song loops.</summary>
-		/// <remarks>Returns:
-		/// <list type="bullet">
-		/// <item><see langword="true" /> if the song loops</item>
-		/// <item><see langword="false" /> if the song stops</item>
-		/// </list>
-		/// </remarks>
-		public bool GetLoop(int song)
-		{
-			return this.Loops[song];
-		}
-
-		public int GetMonth()
-		{
-			int n = this.CheckDate();
-			if (n < 7)
-				return -1;
-			return this.GetTwoDateDigits(n - 7);
-		}
-
-		static int GetPackedExt(string filename)
-		{
-			int ext = 0;
-			for (int i = filename.Length; --i > 0;) {
-				int c = filename[i];
-				if (c <= 32 || c > 122)
-					return 0;
-				if (c == 46)
-					return ext | 2105376;
-				ext = (ext << 8) + c;
-			}
-			return 0;
-		}
-
-		static int GetRmtInstrumentFrames(byte[] module, int instrument, int volume, int volumeFrame, bool onExtraPokey)
-		{
-			int addrToOffset = GetWord(module, 2) - 6;
-			instrument = GetWord(module, 14) - addrToOffset + (instrument << 1);
-			if (module[instrument + 1] == 0)
-				return 0;
-			instrument = GetWord(module, instrument) - addrToOffset;
-			int perFrame = module[12];
-			int playerCall = volumeFrame * perFrame;
-			int playerCalls = playerCall;
-			int index = module[instrument] + 1 + playerCall * 3;
-			int indexEnd = module[instrument + 2] + 3;
-			int indexLoop = module[instrument + 3];
-			if (indexLoop >= indexEnd)
-				return 0;
-			int volumeSlideDepth = module[instrument + 6];
-			int volumeMin = module[instrument + 7];
-			if (index >= indexEnd)
-				index = (index - indexEnd) % (indexEnd - indexLoop) + indexLoop;
-			else {
-				do {
-					int vol = module[instrument + index];
-					if (onExtraPokey)
-						vol >>= 4;
-					if ((vol & 15) >= CiConstArray_2[volume])
-						playerCalls = playerCall + 1;
-					playerCall++;
-					index += 3;
-				}
-				while (index < indexEnd);
-			}
-			if (volumeSlideDepth == 0)
-				return playerCalls / perFrame;
-			int volumeSlide = 128;
-			bool silentLoop = false;
-			for (;;) {
-				if (index >= indexEnd) {
-					if (silentLoop)
-						break;
-					silentLoop = true;
-					index = indexLoop;
-				}
-				int vol = module[instrument + index];
-				if (onExtraPokey)
-					vol >>= 4;
-				if ((vol & 15) >= CiConstArray_2[volume]) {
-					playerCalls = playerCall + 1;
-					silentLoop = false;
-				}
-				playerCall++;
-				index += 3;
-				volumeSlide -= volumeSlideDepth;
-				if (volumeSlide < 0) {
-					volumeSlide += 256;
-					if (--volume <= volumeMin)
-						break;
-				}
-			}
-			return playerCalls / perFrame;
-		}
-
-		/// <summary>Returns number of songs in the file.</summary>
-		public int GetSongs()
-		{
-			return this.Songs;
-		}
-
-		/// <summary>Returns music title.</summary>
-		/// <remarks>An empty string means the title is unknown.</remarks>
-		public string GetTitle()
-		{
-			return this.Name;
-		}
-
-		/// <summary>Returns music title or filename.</summary>
-		/// <remarks>If title is unknown returns filename without the path or extension.</remarks>
-		public string GetTitleOrFilename()
-		{
-			return this.Name.Length > 0 ? this.Name : this.Filename;
-		}
-
-		int GetTwoDateDigits(int i)
-		{
-			return (this.Date[i] - 48) * 10 + this.Date[i + 1] - 48;
-		}
-
-		static int GetWord(byte[] array, int i)
-		{
-			return array[i] + (array[i + 1] << 8);
-		}
-
-		public int GetYear()
-		{
-			int n = this.CheckDate();
-			if (n < 0)
-				return -1;
-			return this.GetTwoDateDigits(n - 4) * 100 + this.GetTwoDateDigits(n - 2);
-		}
-
-		static bool HasStringAt(byte[] module, int moduleIndex, string s)
-		{
-			int n = s.Length;
-			for (int i = 0; i < n; i++)
-				if (module[moduleIndex + i] != s[i])
-					return false;
-			return true;
-		}
-		int HeaderLen;
-		internal int Init;
-
-		static bool IsDltPatternEnd(byte[] module, int pos, int i)
-		{
-			for (int ch = 0; ch < 4; ch++) {
-				int pattern = module[8198 + (ch << 8) + pos];
-				if (pattern < 64) {
-					int offset = 6 + (pattern << 7) + (i << 1);
-					if ((module[offset] & 128) == 0 && (module[offset + 1] & 128) != 0)
-						return true;
-				}
-			}
-			return false;
-		}
-
-		static bool IsDltTrackEmpty(byte[] module, int pos)
-		{
-			return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
-		}
-
-		/// <summary>Checks whether the extension represents a module type supported by ASAP.</summary>
-		/// <param name="ext">Filename extension without the leading dot.</param>
-		public static bool IsOurExt(string ext)
-		{
-			return ext.Length == 3 && IsOurPackedExt(ext[0] + (ext[1] << 8) + (ext[2] << 16) | 2105376);
-		}
-
-		/// <summary>Checks whether the filename represents a module type supported by ASAP.</summary>
-		/// <param name="filename">Filename to check the extension of.</param>
-		public static bool IsOurFile(string filename)
-		{
-			return IsOurPackedExt(GetPackedExt(filename));
-		}
-
-		static bool IsOurPackedExt(int ext)
-		{
-			switch (ext) {
-				case 7364979:
-				case 6516067:
-				case 3370339:
-				case 7499107:
-				case 7564643:
-				case 6516068:
-				case 7629924:
-				case 7630957:
-				case 6582381:
-				case 7630194:
-				case 6516084:
-				case 3698036:
-				case 3304820:
-					return true;
-				default:
-					return false;
-			}
-		}
-
-		/// <summary>Loads file information.</summary>
-		/// <param name="filename">Filename, used to determine the format.</param>
-		/// <param name="module">Contents of the file.</param>
-		/// <param name="moduleLen">Length of the file.</param>
-		public void Load(string filename, byte[] module, int moduleLen)
-		{
-			this.ParseFile(null, filename, module, moduleLen);
-		}
-
-		/// <summary>Loads a native module (anything except SAP) and a 6502 player routine.</summary>
-		void LoadNative(ASAP asap, byte[] module, int moduleLen, byte[] playerRoutine)
-		{
-			if ((module[0] != 255 || module[1] != 255) && (module[0] != 0 || module[1] != 0))
-				throw new System.Exception("Invalid two leading bytes of the module");
-			this.Music = GetWord(module, 2);
-			this.Player = GetWord(playerRoutine, 2);
-			int playerLastByte = GetWord(playerRoutine, 4);
-			if (this.Music <= playerLastByte)
-				throw new System.Exception("Module address conflicts with the player routine");
-			int musicLastByte = GetWord(module, 4);
-			if (this.Music <= 55295 && musicLastByte >= 53248)
-				throw new System.Exception("Module address conflicts with hardware registers");
-			int blockLen = musicLastByte + 1 - this.Music;
-			if (6 + blockLen != moduleLen) {
-				if (this.Type != ASAPModuleType.Rmt || 11 + blockLen > moduleLen)
-					throw new System.Exception("Module length doesn't match headers");
-				int infoAddr = GetWord(module, 6 + blockLen);
-				if (infoAddr != this.Music + blockLen)
-					throw new System.Exception("Invalid address of RMT info");
-				int infoLen = GetWord(module, 8 + blockLen) + 1 - infoAddr;
-				if (10 + blockLen + infoLen != moduleLen)
-					throw new System.Exception("Invalid RMT info block");
-			}
-			if (asap != null) {
-				System.Array.Copy(module, 6, asap.Memory, this.Music, blockLen);
-				System.Array.Copy(playerRoutine, 6, asap.Memory, this.Player, playerLastByte + 1 - this.Player);
-			}
-		}
-		readonly bool[] Loops = new bool[32];
-		/// <summary>Maximum length of a supported input file.</summary>
-		/// <remarks>You may assume that files longer than this are not supported by ASAP.</remarks>
-		public const int MaxModuleLength = 65000;
-		/// <summary>Maximum number of songs in a file.</summary>
-		public const int MaxSongs = 32;
-		/// <summary>Maximum length of text metadata.</summary>
-		public const int MaxTextLength = 127;
-		internal int Music;
-		string Name;
-		internal bool Ntsc;
-
-		void ParseCmc(ASAP asap, byte[] module, int moduleLen, ASAPModuleType type, byte[] playerRoutine)
-		{
-			if (moduleLen < 774)
-				throw new System.Exception("Module too short");
-			this.Type = type;
-			this.LoadNative(asap, module, moduleLen, playerRoutine);
-			if (asap != null && type == ASAPModuleType.Cmr) {
-				System.Array.Copy(CiConstArray_1, 0, asap.Memory, 3087, 37);
-			}
-			int lastPos = 84;
-			while (--lastPos >= 0) {
-				if (module[518 + lastPos] < 176 || module[603 + lastPos] < 64 || module[688 + lastPos] < 64)
-					break;
-				if (this.Channels == 2) {
-					if (module[774 + lastPos] < 176 || module[859 + lastPos] < 64 || module[944 + lastPos] < 64)
-						break;
-				}
-			}
-			this.Songs = 0;
-			this.ParseCmcSong(module, 0);
-			for (int pos = 0; pos < lastPos && this.Songs < 32; pos++)
-				if (module[518 + pos] == 143 || module[518 + pos] == 239)
-					this.ParseCmcSong(module, pos + 1);
-		}
-
-		void ParseCmcSong(byte[] module, int pos)
-		{
-			int tempo = module[25];
-			int playerCalls = 0;
-			int repStartPos = 0;
-			int repEndPos = 0;
-			int repTimes = 0;
-			byte[] seen = new byte[85];
-			while (pos >= 0 && pos < 85) {
-				if (pos == repEndPos && repTimes > 0) {
-					for (int i = 0; i < 85; i++)
-						if (seen[i] == 1 || seen[i] == 3)
-							seen[i] = 0;
-					repTimes--;
-					pos = repStartPos;
-				}
-				if (seen[pos] != 0) {
-					if (seen[pos] != 1)
-						this.Loops[this.Songs] = true;
-					break;
-				}
-				seen[pos] = 1;
-				int p1 = module[518 + pos];
-				int p2 = module[603 + pos];
-				int p3 = module[688 + pos];
-				if (p1 == 254 || p2 == 254 || p3 == 254) {
-					pos++;
-					continue;
-				}
-				p1 >>= 4;
-				if (p1 == 8)
-					break;
-				if (p1 == 9) {
-					pos = p2;
-					continue;
-				}
-				if (p1 == 10) {
-					pos -= p2;
-					continue;
-				}
-				if (p1 == 11) {
-					pos += p2;
-					continue;
-				}
-				if (p1 == 12) {
-					tempo = p2;
-					pos++;
-					continue;
-				}
-				if (p1 == 13) {
-					pos++;
-					repStartPos = pos;
-					repEndPos = pos + p2;
-					repTimes = p3 - 1;
-					continue;
-				}
-				if (p1 == 14) {
-					this.Loops[this.Songs] = true;
-					break;
-				}
-				p2 = repTimes > 0 ? 3 : 2;
-				for (p1 = 0; p1 < 85; p1++)
-					if (seen[p1] == 1)
-						seen[p1] = (byte) p2;
-				playerCalls += tempo * (this.Type == ASAPModuleType.Cm3 ? 48 : 64);
-				pos++;
-			}
-			this.AddSong(playerCalls);
-		}
-
-		static int ParseDec(byte[] module, int moduleIndex, int maxVal)
-		{
-			if (module[moduleIndex] == 13)
-				throw new System.Exception("Missing number");
-			for (int r = 0;;) {
-				int c = module[moduleIndex++];
-				if (c == 13)
-					return r;
-				if (c < 48 || c > 57)
-					throw new System.Exception("Invalid number");
-				r = 10 * r + c - 48;
-				if (r > maxVal)
-					throw new System.Exception("Number too big");
-			}
-		}
-
-		void ParseDlt(ASAP asap, byte[] module, int moduleLen)
-		{
-			if (moduleLen == 11270) {
-				if (asap != null)
-					asap.Memory[19456] = 0;
-			}
-			else if (moduleLen != 11271)
-				throw new System.Exception("Invalid module length");
-			this.Type = ASAPModuleType.Dlt;
-			this.LoadNative(asap, module, moduleLen, CiBinaryResource_dlt_obx);
-			if (this.Music != 8192)
-				throw new System.Exception("Unsupported module address");
-			bool[] seen = new bool[128];
-			this.Songs = 0;
-			for (int pos = 0; pos < 128 && this.Songs < 32; pos++) {
-				if (!seen[pos])
-					this.ParseDltSong(module, seen, pos);
-			}
-			if (this.Songs == 0)
-				throw new System.Exception("No songs found");
-		}
-
-		void ParseDltSong(byte[] module, bool[] seen, int pos)
-		{
-			while (pos < 128 && !seen[pos] && IsDltTrackEmpty(module, pos))
-				seen[pos++] = true;
-			this.SongPos[this.Songs] = (byte) pos;
-			int playerCalls = 0;
-			bool loop = false;
-			int tempo = 6;
-			while (pos < 128) {
-				if (seen[pos]) {
-					loop = true;
-					break;
-				}
-				seen[pos] = true;
-				int p1 = module[8198 + pos];
-				if (p1 == 64 || IsDltTrackEmpty(module, pos))
-					break;
-				if (p1 == 65)
-					pos = module[8326 + pos];
-				else if (p1 == 66)
-					tempo = module[8326 + pos++];
-				else {
-					for (int i = 0; i < 64 && !IsDltPatternEnd(module, pos, i); i++)
-						playerCalls += tempo;
-					pos++;
-				}
-			}
-			if (playerCalls > 0) {
-				this.Loops[this.Songs] = loop;
-				this.AddSong(playerCalls);
-			}
-		}
-
-		/// <summary>Parses a string and returns the number of milliseconds it represents.</summary>
-		/// <param name="s">Time in the <c>"mm:ss.xxx"</c> format.</param>
-		public static int ParseDuration(string s)
-		{
-			int i = 0;
-			int n = s.Length;
-			int d;
-			if (i >= n)
-				throw new System.Exception("Invalid duration");
-			d = s[i] - 48;
-			if (d < 0 || d > 9)
-				throw new System.Exception("Invalid duration");
-			i++;
-			int r = d;
-			if (i < n) {
-				d = s[i] - 48;
-				if (d >= 0 && d <= 9) {
-					i++;
-					r = 10 * r + d;
-				}
-				if (i < n && s[i] == 58) {
-					i++;
-					if (i >= n)
-						throw new System.Exception("Invalid duration");
-					d = s[i] - 48;
-					if (d < 0 || d > 5)
-						throw new System.Exception("Invalid duration");
-					i++;
-					r = (6 * r + d) * 10;
-					if (i >= n)
-						throw new System.Exception("Invalid duration");
-					d = s[i] - 48;
-					if (d < 0 || d > 9)
-						throw new System.Exception("Invalid duration");
-					i++;
-					r += d;
-				}
-			}
-			r *= 1000;
-			if (i >= n)
-				return r;
-			if (s[i] != 46)
-				throw new System.Exception("Invalid duration");
-			i++;
-			if (i >= n)
-				throw new System.Exception("Invalid duration");
-			d = s[i] - 48;
-			if (d < 0 || d > 9)
-				throw new System.Exception("Invalid duration");
-			i++;
-			r += 100 * d;
-			if (i >= n)
-				return r;
-			d = s[i] - 48;
-			if (d < 0 || d > 9)
-				throw new System.Exception("Invalid duration");
-			i++;
-			r += 10 * d;
-			if (i >= n)
-				return r;
-			d = s[i] - 48;
-			if (d < 0 || d > 9)
-				throw new System.Exception("Invalid duration");
-			i++;
-			r += d;
-			return r;
-		}
-
-		internal void ParseFile(ASAP asap, string filename, byte[] module, int moduleLen)
-		{
-			int len = filename.Length;
-			int basename = 0;
-			int ext = -1;
-			for (int i = len; --i >= 0;) {
-				int c = filename[i];
-				if (c == 47 || c == 92) {
-					basename = i + 1;
-					break;
-				}
-				if (c == 46)
-					ext = i;
-			}
-			if (ext < 0)
-				throw new System.Exception("Filename has no extension");
-			ext -= basename;
-			if (ext > 127)
-				ext = 127;
-			this.Filename = filename.Substring(basename, ext);
-			this.Author = "";
-			this.Name = "";
-			this.Date = "";
-			this.Channels = 1;
-			this.Songs = 1;
-			this.DefaultSong = 0;
-			for (int i = 0; i < 32; i++) {
-				this.Durations[i] = -1;
-				this.Loops[i] = false;
-			}
-			this.Ntsc = false;
-			this.Fastplay = 312;
-			this.Music = -1;
-			this.Init = -1;
-			this.Player = -1;
-			this.CovoxAddr = -1;
-			switch (GetPackedExt(filename)) {
-				case 7364979:
-					this.ParseSap(asap, module, moduleLen);
-					return;
-				case 6516067:
-					this.ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmc, CiBinaryResource_cmc_obx);
-					return;
-				case 3370339:
-					this.ParseCmc(asap, module, moduleLen, ASAPModuleType.Cm3, CiBinaryResource_cm3_obx);
-					return;
-				case 7499107:
-					this.ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmr, CiBinaryResource_cmc_obx);
-					return;
-				case 7564643:
-					this.Channels = 2;
-					this.ParseCmc(asap, module, moduleLen, ASAPModuleType.Cms, CiBinaryResource_cms_obx);
-					return;
-				case 6516068:
-					this.Fastplay = 156;
-					this.ParseCmc(asap, module, moduleLen, ASAPModuleType.Cmc, CiBinaryResource_cmc_obx);
-					return;
-				case 7629924:
-					this.ParseDlt(asap, module, moduleLen);
-					return;
-				case 7630957:
-					this.ParseMpt(asap, module, moduleLen);
-					return;
-				case 6582381:
-					this.Fastplay = 156;
-					this.ParseMpt(asap, module, moduleLen);
-					return;
-				case 7630194:
-					this.ParseRmt(asap, module, moduleLen);
-					return;
-				case 6516084:
-				case 3698036:
-					this.ParseTmc(asap, module, moduleLen);
-					return;
-				case 3304820:
-					this.ParseTm2(asap, module, moduleLen);
-					return;
-				default:
-					throw new System.Exception("Unknown filename extension");
-			}
-		}
-
-		static int ParseHex(byte[] module, int moduleIndex)
-		{
-			if (module[moduleIndex] == 13)
-				throw new System.Exception("Missing number");
-			for (int r = 0;;) {
-				int c = module[moduleIndex++];
-				if (c == 13)
-					return r;
-				if (r > 4095)
-					throw new System.Exception("Number too big");
-				r <<= 4;
-				if (c >= 48 && c <= 57)
-					r += c - 48;
-				else if (c >= 65 && c <= 70)
-					r += c - 65 + 10;
-				else if (c >= 97 && c <= 102)
-					r += c - 97 + 10;
-				else
-					throw new System.Exception("Invalid number");
-			}
-		}
-
-		void ParseMpt(ASAP asap, byte[] module, int moduleLen)
-		{
-			if (moduleLen < 464)
-				throw new System.Exception("Module too short");
-			this.Type = ASAPModuleType.Mpt;
-			this.LoadNative(asap, module, moduleLen, CiBinaryResource_mpt_obx);
-			int track0Addr = GetWord(module, 2) + 458;
-			if (module[454] + (module[458] << 8) != track0Addr)
-				throw new System.Exception("Invalid address of the first track");
-			int songLen = module[455] + (module[459] << 8) - track0Addr >> 1;
-			if (songLen > 254)
-				throw new System.Exception("Song too long");
-			bool[] globalSeen = new bool[256];
-			this.Songs = 0;
-			for (int pos = 0; pos < songLen && this.Songs < 32; pos++) {
-				if (!globalSeen[pos]) {
-					this.SongPos[this.Songs] = (byte) pos;
-					this.ParseMptSong(module, globalSeen, songLen, pos);
-				}
-			}
-			if (this.Songs == 0)
-				throw new System.Exception("No songs found");
-		}
-
-		void ParseMptSong(byte[] module, bool[] globalSeen, int songLen, int pos)
-		{
-			int addrToOffset = GetWord(module, 2) - 6;
-			int tempo = module[463];
-			int playerCalls = 0;
-			byte[] seen = new byte[256];
-			int[] patternOffset = new int[4];
-			int[] blankRows = new int[4];
-			int[] blankRowsCounter = new int[4];
-			while (pos < songLen) {
-				if (seen[pos] != 0) {
-					if (seen[pos] != 1)
-						this.Loops[this.Songs] = true;
-					break;
-				}
-				seen[pos] = 1;
-				globalSeen[pos] = true;
-				int i = module[464 + pos * 2];
-				if (i == 255) {
-					pos = module[465 + pos * 2];
-					continue;
-				}
-				int ch;
-				for (ch = 3; ch >= 0; ch--) {
-					i = module[454 + ch] + (module[458 + ch] << 8) - addrToOffset;
-					i = module[i + pos * 2];
-					if (i >= 64)
-						break;
-					i <<= 1;
-					i = GetWord(module, 70 + i);
-					patternOffset[ch] = i == 0 ? 0 : i - addrToOffset;
-					blankRowsCounter[ch] = 0;
-				}
-				if (ch >= 0)
-					break;
-				for (i = 0; i < songLen; i++)
-					if (seen[i] == 1)
-						seen[i] = 2;
-				for (int patternRows = module[462]; --patternRows >= 0;) {
-					for (ch = 3; ch >= 0; ch--) {
-						if (patternOffset[ch] == 0 || --blankRowsCounter[ch] >= 0)
-							continue;
-						for (;;) {
-							i = module[patternOffset[ch]++];
-							if (i < 64 || i == 254)
-								break;
-							if (i < 128)
-								continue;
-							if (i < 192) {
-								blankRows[ch] = i - 128;
-								continue;
-							}
-							if (i < 208)
-								continue;
-							if (i < 224) {
-								tempo = i - 207;
-								continue;
-							}
-							patternRows = 0;
-						}
-						blankRowsCounter[ch] = blankRows[ch];
-					}
-					playerCalls += tempo;
-				}
-				pos++;
-			}
-			if (playerCalls > 0)
-				this.AddSong(playerCalls);
-		}
-
-		void ParseRmt(ASAP asap, byte[] module, int moduleLen)
-		{
-			if (moduleLen < 48)
-				throw new System.Exception("Module too short");
-			if (module[6] != 82 || module[7] != 77 || module[8] != 84 || module[13] != 1)
-				throw new System.Exception("Invalid module header");
-			int posShift;
-			switch (module[9]) {
-				case 52:
-					posShift = 2;
-					break;
-				case 56:
-					this.Channels = 2;
-					posShift = 3;
-					break;
-				default:
-					throw new System.Exception("Unsupported number of channels");
-			}
-			int perFrame = module[12];
-			if (perFrame < 1 || perFrame > 4)
-				throw new System.Exception("Unsupported player call rate");
-			this.Type = ASAPModuleType.Rmt;
-			this.LoadNative(asap, module, moduleLen, this.Channels == 2 ? CiBinaryResource_rmt8_obx : CiBinaryResource_rmt4_obx);
-			int songLen = GetWord(module, 4) + 1 - GetWord(module, 20);
-			if (posShift == 3 && (songLen & 4) != 0 && module[6 + GetWord(module, 4) - GetWord(module, 2) - 3] == 254)
-				songLen += 4;
-			songLen >>= posShift;
-			if (songLen >= 256)
-				throw new System.Exception("Song too long");
-			bool[] globalSeen = new bool[256];
-			this.Songs = 0;
-			for (int pos = 0; pos < songLen && this.Songs < 32; pos++) {
-				if (!globalSeen[pos]) {
-					this.SongPos[this.Songs] = (byte) pos;
-					this.ParseRmtSong(module, globalSeen, songLen, posShift, pos);
-				}
-			}
-			this.Fastplay = 312 / perFrame;
-			this.Player = 1536;
-			if (this.Songs == 0)
-				throw new System.Exception("No songs found");
-		}
-
-		void ParseRmtSong(byte[] module, bool[] globalSeen, int songLen, int posShift, int pos)
-		{
-			int addrToOffset = GetWord(module, 2) - 6;
-			int tempo = module[11];
-			int frames = 0;
-			int songOffset = GetWord(module, 20) - addrToOffset;
-			int patternLoOffset = GetWord(module, 16) - addrToOffset;
-			int patternHiOffset = GetWord(module, 18) - addrToOffset;
-			byte[] seen = new byte[256];
-			int[] patternBegin = new int[8];
-			int[] patternOffset = new int[8];
-			int[] blankRows = new int[8];
-			int[] instrumentNo = new int[8];
-			int[] instrumentFrame = new int[8];
-			int[] volumeValue = new int[8];
-			int[] volumeFrame = new int[8];
-			while (pos < songLen) {
-				if (seen[pos] != 0) {
-					if (seen[pos] != 1)
-						this.Loops[this.Songs] = true;
-					break;
-				}
-				seen[pos] = 1;
-				globalSeen[pos] = true;
-				if (module[songOffset + (pos << posShift)] == 254) {
-					pos = module[songOffset + (pos << posShift) + 1];
-					continue;
-				}
-				for (int ch = 0; ch < 1 << posShift; ch++) {
-					int p = module[songOffset + (pos << posShift) + ch];
-					if (p == 255)
-						blankRows[ch] = 256;
-					else {
-						patternOffset[ch] = patternBegin[ch] = module[patternLoOffset + p] + (module[patternHiOffset + p] << 8) - addrToOffset;
-						blankRows[ch] = 0;
-					}
-				}
-				for (int i = 0; i < songLen; i++)
-					if (seen[i] == 1)
-						seen[i] = 2;
-				for (int patternRows = module[10]; --patternRows >= 0;) {
-					for (int ch = 0; ch < 1 << posShift; ch++) {
-						if (--blankRows[ch] > 0)
-							continue;
-						for (;;) {
-							int i = module[patternOffset[ch]++];
-							if ((i & 63) < 62) {
-								i += module[patternOffset[ch]++] << 8;
-								if ((i & 63) != 61) {
-									instrumentNo[ch] = i >> 10;
-									instrumentFrame[ch] = frames;
-								}
-								volumeValue[ch] = i >> 6 & 15;
-								volumeFrame[ch] = frames;
-								break;
-							}
-							if (i == 62) {
-								blankRows[ch] = module[patternOffset[ch]++];
-								break;
-							}
-							if ((i & 63) == 62) {
-								blankRows[ch] = i >> 6;
-								break;
-							}
-							if ((i & 191) == 63) {
-								tempo = module[patternOffset[ch]++];
-								continue;
-							}
-							if (i == 191) {
-								patternOffset[ch] = patternBegin[ch] + module[patternOffset[ch]];
-								continue;
-							}
-							patternRows = -1;
-							break;
-						}
-						if (patternRows < 0)
-							break;
-					}
-					if (patternRows >= 0)
-						frames += tempo;
-				}
-				pos++;
-			}
-			int instrumentFrames = 0;
-			for (int ch = 0; ch < 1 << posShift; ch++) {
-				int frame = instrumentFrame[ch];
-				frame += GetRmtInstrumentFrames(module, instrumentNo[ch], volumeValue[ch], volumeFrame[ch] - frame, ch >= 4);
-				if (instrumentFrames < frame)
-					instrumentFrames = frame;
-			}
-			if (frames > instrumentFrames) {
-				if (frames - instrumentFrames > 100)
-					this.Loops[this.Songs] = false;
-				frames = instrumentFrames;
-			}
-			if (frames > 0)
-				this.AddSong(frames);
-		}
-
-		void ParseSap(ASAP asap, byte[] module, int moduleLen)
-		{
-			this.ParseSapHeader(module, moduleLen);
-			if (asap == null)
-				return;
-			System.Array.Clear(asap.Memory, 0, 65536);
-			int moduleIndex = this.HeaderLen + 2;
-			while (moduleIndex + 5 <= moduleLen) {
-				int start_addr = GetWord(module, moduleIndex);
-				int block_len = GetWord(module, moduleIndex + 2) + 1 - start_addr;
-				if (block_len <= 0 || moduleIndex + block_len > moduleLen)
-					throw new System.Exception("Invalid binary block");
-				moduleIndex += 4;
-				System.Array.Copy(module, moduleIndex, asap.Memory, start_addr, block_len);
-				moduleIndex += block_len;
-				if (moduleIndex == moduleLen)
-					return;
-				if (moduleIndex + 7 <= moduleLen && module[moduleIndex] == 255 && module[moduleIndex + 1] == 255)
-					moduleIndex += 2;
-			}
-			throw new System.Exception("Invalid binary block");
-		}
-
-		void ParseSapHeader(byte[] module, int moduleLen)
-		{
-			if (!HasStringAt(module, 0, "SAP\r\n"))
-				throw new System.Exception("Missing SAP header");
-			this.Fastplay = -1;
-			int type = 0;
-			int moduleIndex = 5;
-			int durationIndex = 0;
-			while (module[moduleIndex] != 255) {
-				if (moduleIndex + 8 >= moduleLen)
-					throw new System.Exception("Missing binary part");
-				if (HasStringAt(module, moduleIndex, "AUTHOR ")) {
-					int len = ParseText(module, moduleIndex + 7);
-					if (len > 0)
-						this.Author = System.Text.Encoding.UTF8.GetString(module, moduleIndex + 7 + 1, len);
-				}
-				else if (HasStringAt(module, moduleIndex, "NAME ")) {
-					int len = ParseText(module, moduleIndex + 5);
-					if (len > 0)
-						this.Name = System.Text.Encoding.UTF8.GetString(module, moduleIndex + 5 + 1, len);
-				}
-				else if (HasStringAt(module, moduleIndex, "DATE ")) {
-					int len = ParseText(module, moduleIndex + 5);
-					if (len > 0)
-						this.Date = System.Text.Encoding.UTF8.GetString(module, moduleIndex + 5 + 1, len);
-				}
-				else if (HasStringAt(module, moduleIndex, "SONGS ")) {
-					this.Songs = ParseDec(module, moduleIndex + 6, 32);
-					if (this.Songs < 1)
-						throw new System.Exception("Number too small");
-				}
-				else if (HasStringAt(module, moduleIndex, "DEFSONG ")) {
-					this.DefaultSong = ParseDec(module, moduleIndex + 8, 31);
-					if (this.DefaultSong < 0)
-						throw new System.Exception("Number too small");
-				}
-				else if (HasStringAt(module, moduleIndex, "STEREO\r"))
-					this.Channels = 2;
-				else if (HasStringAt(module, moduleIndex, "NTSC\r"))
-					this.Ntsc = true;
-				else if (HasStringAt(module, moduleIndex, "TIME ")) {
-					if (durationIndex >= 32)
-						throw new System.Exception("Too many TIME tags");
-					moduleIndex += 5;
-					int len;
-					for (len = 0; module[moduleIndex + len] != 13; len++) {
-					}
-					if (len > 5 && HasStringAt(module, moduleIndex + len - 5, " LOOP")) {
-						this.Loops[durationIndex] = true;
-						len -= 5;
-					}
-					if (len > 9)
-						throw new System.Exception("Invalid TIME tag");
-					string s = System.Text.Encoding.UTF8.GetString(module, moduleIndex, len);
-					int duration = ParseDuration(s);
-					this.Durations[durationIndex++] = duration;
-				}
-				else if (HasStringAt(module, moduleIndex, "TYPE "))
-					type = module[moduleIndex + 5];
-				else if (HasStringAt(module, moduleIndex, "FASTPLAY ")) {
-					this.Fastplay = ParseDec(module, moduleIndex + 9, 312);
-					if (this.Fastplay < 1)
-						throw new System.Exception("Number too small");
-				}
-				else if (HasStringAt(module, moduleIndex, "MUSIC ")) {
-					this.Music = ParseHex(module, moduleIndex + 6);
-				}
-				else if (HasStringAt(module, moduleIndex, "INIT ")) {
-					this.Init = ParseHex(module, moduleIndex + 5);
-				}
-				else if (HasStringAt(module, moduleIndex, "PLAYER ")) {
-					this.Player = ParseHex(module, moduleIndex + 7);
-				}
-				else if (HasStringAt(module, moduleIndex, "COVOX ")) {
-					this.CovoxAddr = ParseHex(module, moduleIndex + 6);
-					if (this.CovoxAddr != 54784)
-						throw new System.Exception("COVOX should be D600");
-					this.Channels = 2;
-				}
-				while (module[moduleIndex++] != 13) {
-					if (moduleIndex >= moduleLen)
-						throw new System.Exception("Malformed SAP header");
-				}
-				if (module[moduleIndex++] != 10)
-					throw new System.Exception("Malformed SAP header");
-			}
-			if (this.DefaultSong >= this.Songs)
-				throw new System.Exception("DEFSONG too big");
-			switch (type) {
-				case 66:
-					if (this.Player < 0)
-						throw new System.Exception("Missing PLAYER tag");
-					if (this.Init < 0)
-						throw new System.Exception("Missing INIT tag");
-					this.Type = ASAPModuleType.SapB;
-					break;
-				case 67:
-					if (this.Player < 0)
-						throw new System.Exception("Missing PLAYER tag");
-					if (this.Music < 0)
-						throw new System.Exception("Missing MUSIC tag");
-					this.Type = ASAPModuleType.SapC;
-					break;
-				case 68:
-					if (this.Init < 0)
-						throw new System.Exception("Missing INIT tag");
-					this.Type = ASAPModuleType.SapD;
-					break;
-				case 83:
-					if (this.Init < 0)
-						throw new System.Exception("Missing INIT tag");
-					this.Type = ASAPModuleType.SapS;
-					this.Fastplay = 78;
-					break;
-				default:
-					throw new System.Exception("Unsupported TYPE");
-			}
-			if (this.Fastplay < 0)
-				this.Fastplay = this.Ntsc ? 262 : 312;
-			else if (this.Ntsc && this.Fastplay > 262)
-				throw new System.Exception("FASTPLAY too big");
-			if (module[moduleIndex + 1] != 255)
-				throw new System.Exception("Invalid binary header");
-			this.HeaderLen = moduleIndex;
-		}
-
-		static int ParseText(byte[] module, int moduleIndex)
-		{
-			if (module[moduleIndex] != 34)
-				throw new System.Exception("Missing quote");
-			if (HasStringAt(module, moduleIndex + 1, "<?>\"\r"))
-				return 0;
-			for (int len = 0;; len++) {
-				int c = module[moduleIndex + 1 + len];
-				if (c == 34) {
-					if (module[moduleIndex + 2 + len] != 13)
-						throw new System.Exception("Invalid text tag");
-					return len;
-				}
-				if (c < 32 || c >= 127)
-					throw new System.Exception("Invalid character");
-			}
-		}
-
-		void ParseTm2(ASAP asap, byte[] module, int moduleLen)
-		{
-			if (moduleLen < 932)
-				throw new System.Exception("Module too short");
-			this.Type = ASAPModuleType.Tm2;
-			this.LoadNative(asap, module, moduleLen, CiBinaryResource_tm2_obx);
-			int i = module[37];
-			if (i < 1 || i > 4)
-				throw new System.Exception("Unsupported player call rate");
-			this.Fastplay = 312 / i;
-			this.Player = 1280;
-			if (module[31] != 0)
-				this.Channels = 2;
-			int lastPos = 65535;
-			for (i = 0; i < 128; i++) {
-				int instrAddr = module[134 + i] + (module[774 + i] << 8);
-				if (instrAddr != 0 && instrAddr < lastPos)
-					lastPos = instrAddr;
-			}
-			for (i = 0; i < 256; i++) {
-				int patternAddr = module[262 + i] + (module[518 + i] << 8);
-				if (patternAddr != 0 && patternAddr < lastPos)
-					lastPos = patternAddr;
-			}
-			lastPos -= GetWord(module, 2) + 896;
-			if (902 + lastPos >= moduleLen)
-				throw new System.Exception("Module too short");
-			int c;
-			do {
-				if (lastPos <= 0)
-					throw new System.Exception("No songs found");
-				lastPos -= 17;
-				c = module[918 + lastPos];
-			}
-			while (c == 0 || c >= 128);
-			this.Songs = 0;
-			this.ParseTm2Song(module, 0);
-			for (i = 0; i < lastPos && this.Songs < 32; i += 17) {
-				c = module[918 + i];
-				if (c == 0 || c >= 128)
-					this.ParseTm2Song(module, i + 17);
-			}
-		}
-
-		void ParseTm2Song(byte[] module, int pos)
-		{
-			int addrToOffset = GetWord(module, 2) - 6;
-			int tempo = module[36] + 1;
-			int playerCalls = 0;
-			int[] patternOffset = new int[8];
-			int[] blankRows = new int[8];
-			for (;;) {
-				int patternRows = module[918 + pos];
-				if (patternRows == 0)
-					break;
-				if (patternRows >= 128) {
-					this.Loops[this.Songs] = true;
-					break;
-				}
-				for (int ch = 7; ch >= 0; ch--) {
-					int pat = module[917 + pos - 2 * ch];
-					patternOffset[ch] = module[262 + pat] + (module[518 + pat] << 8) - addrToOffset;
-					blankRows[ch] = 0;
-				}
-				while (--patternRows >= 0) {
-					for (int ch = 7; ch >= 0; ch--) {
-						if (--blankRows[ch] >= 0)
-							continue;
-						for (;;) {
-							int i = module[patternOffset[ch]++];
-							if (i == 0) {
-								patternOffset[ch]++;
-								break;
-							}
-							if (i < 64) {
-								if (module[patternOffset[ch]++] >= 128)
-									patternOffset[ch]++;
-								break;
-							}
-							if (i < 128) {
-								patternOffset[ch]++;
-								break;
-							}
-							if (i == 128) {
-								blankRows[ch] = module[patternOffset[ch]++];
-								break;
-							}
-							if (i < 192)
-								break;
-							if (i < 208) {
-								tempo = i - 191;
-								continue;
-							}
-							if (i < 224) {
-								patternOffset[ch]++;
-								break;
-							}
-							if (i < 240) {
-								patternOffset[ch] += 2;
-								break;
-							}
-							if (i < 255) {
-								blankRows[ch] = i - 240;
-								break;
-							}
-							blankRows[ch] = 64;
-							break;
-						}
-					}
-					playerCalls += tempo;
-				}
-				pos += 17;
-			}
-			this.AddSong(playerCalls);
-		}
-
-		void ParseTmc(ASAP asap, byte[] module, int moduleLen)
-		{
-			if (moduleLen < 464)
-				throw new System.Exception("Module too short");
-			this.Type = ASAPModuleType.Tmc;
-			this.LoadNative(asap, module, moduleLen, CiBinaryResource_tmc_obx);
-			this.Channels = 2;
-			int i = 0;
-			while (module[102 + i] == 0) {
-				if (++i >= 64)
-					throw new System.Exception("No instruments");
-			}
-			int lastPos = (module[102 + i] << 8) + module[38 + i] - GetWord(module, 2) - 432;
-			if (437 + lastPos >= moduleLen)
-				throw new System.Exception("Module too short");
-			do {
-				if (lastPos <= 0)
-					throw new System.Exception("No songs found");
-				lastPos -= 16;
-			}
-			while (module[437 + lastPos] >= 128);
-			this.Songs = 0;
-			this.ParseTmcSong(module, 0);
-			for (i = 0; i < lastPos && this.Songs < 32; i += 16)
-				if (module[437 + i] >= 128)
-					this.ParseTmcSong(module, i + 16);
-			i = module[37];
-			if (i < 1 || i > 4)
-				throw new System.Exception("Unsupported player call rate");
-			if (asap != null)
-				asap.TmcPerFrame = i;
-			this.Fastplay = 312 / i;
-		}
-
-		void ParseTmcSong(byte[] module, int pos)
-		{
-			int addrToOffset = GetWord(module, 2) - 6;
-			int tempo = module[36] + 1;
-			int frames = 0;
-			int[] patternOffset = new int[8];
-			int[] blankRows = new int[8];
-			while (module[437 + pos] < 128) {
-				for (int ch = 7; ch >= 0; ch--) {
-					int pat = module[437 + pos - 2 * ch];
-					patternOffset[ch] = module[166 + pat] + (module[294 + pat] << 8) - addrToOffset;
-					blankRows[ch] = 0;
-				}
-				for (int patternRows = 64; --patternRows >= 0;) {
-					for (int ch = 7; ch >= 0; ch--) {
-						if (--blankRows[ch] >= 0)
-							continue;
-						for (;;) {
-							int i = module[patternOffset[ch]++];
-							if (i < 64) {
-								patternOffset[ch]++;
-								break;
-							}
-							if (i == 64) {
-								i = module[patternOffset[ch]++];
-								if ((i & 127) == 0)
-									patternRows = 0;
-								else
-									tempo = (i & 127) + 1;
-								if (i >= 128)
-									patternOffset[ch]++;
-								break;
-							}
-							if (i < 128) {
-								i = module[patternOffset[ch]++] & 127;
-								if (i == 0)
-									patternRows = 0;
-								else
-									tempo = i + 1;
-								patternOffset[ch]++;
-								break;
-							}
-							if (i < 192)
-								continue;
-							blankRows[ch] = i - 191;
-							break;
-						}
-					}
-					frames += tempo;
-				}
-				pos += 16;
-			}
-			if (module[436 + pos] < 128)
-				this.Loops[this.Songs] = true;
-			this.AddSong(frames);
-		}
-		internal int Player;
-		internal readonly byte[] SongPos = new byte[32];
-		internal int Songs;
-		internal ASAPModuleType Type;
-		/// <summary>ASAP version as a string.</summary>
-		public const string Version = "3.0.0";
-		/// <summary>ASAP version - major part.</summary>
-		public const int VersionMajor = 3;
-		/// <summary>ASAP version - micro part.</summary>
-		public const int VersionMicro = 0;
-		/// <summary>ASAP version - minor part.</summary>
-		public const int VersionMinor = 0;
-		/// <summary>Years ASAP was created in.</summary>
-		public const string Years = "2005-2011";
-		static readonly byte[] CiConstArray_1 = { 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, 136, 127, 121, 115, 108, 103,
-			96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52, 51, 48, 45, 42, 40,
-			37, 36, 33, 31, 30 };
-		static readonly byte[] CiConstArray_2 = { 16, 8, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 };
 		static readonly byte[] CiBinaryResource_cm3_obx = { 255, 255, 0, 5, 223, 12, 76, 18, 11, 76, 120, 5, 76, 203, 7, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 160, 227, 237, 227, 160, 240, 236, 225,
 			249, 229, 242, 160, 246, 160, 178, 174, 177, 160, 0, 0, 0, 0, 0, 0,
@@ -2102,6 +844,133 @@ namespace Sf.Asap
 			122, 113, 107, 101, 95, 0, 86, 80, 103, 96, 90, 85, 81, 76, 72, 67,
 			63, 61, 57, 52, 51, 57, 45, 42, 40, 37, 36, 33, 31, 30, 0, 0,
 			15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+			0, 56, 11, 140, 10, 0, 10, 106, 9, 232, 8, 106, 8, 239, 7, 128,
+			7, 8, 7, 174, 6, 70, 6, 230, 5, 149, 5, 65, 5, 246, 4, 176,
+			4, 110, 4, 48, 4, 246, 3, 187, 3, 132, 3, 82, 3, 34, 3, 244,
+			2, 200, 2, 160, 2, 122, 2, 85, 2, 52, 2, 20, 2, 245, 1, 216,
+			1, 189, 1, 164, 1, 141, 1, 119, 1, 96, 1, 78, 1, 56, 1, 39,
+			1, 21, 1, 6, 1, 247, 0, 232, 0, 219, 0, 207, 0, 195, 0, 184,
+			0, 172, 0, 162, 0, 154, 0, 144, 0, 136, 0, 127, 0, 120, 0, 112,
+			0, 106, 0, 100, 0, 94, 0, 87, 0, 82, 0, 50, 0, 10, 0, 0,
+			1, 2, 131, 0, 1, 2, 3, 1, 0, 2, 131, 1, 0, 2, 3, 1,
+			2, 128, 3, 128, 64, 32, 16, 8, 4, 2, 1, 3, 3, 3, 3, 7,
+			11, 15, 19 };
+		static readonly byte[] CiBinaryResource_cmr_obx = { 255, 255, 0, 5, 220, 12, 76, 15, 11, 76, 120, 5, 76, 203, 7, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 160, 227, 237, 227, 160, 240, 236, 225,
+			249, 229, 242, 160, 246, 160, 178, 174, 177, 160, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255,
+			255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 128, 128, 128, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 141, 110,
+			5, 142, 111, 5, 140, 112, 5, 41, 112, 74, 74, 74, 170, 189, 145, 11,
+			141, 169, 5, 189, 146, 11, 141, 170, 5, 169, 3, 141, 15, 210, 216, 165,
+			254, 72, 165, 255, 72, 172, 112, 5, 174, 111, 5, 173, 110, 5, 32, 178,
+			5, 104, 133, 255, 104, 133, 254, 96, 173, 118, 5, 133, 254, 173, 119, 5,
+			133, 255, 160, 0, 138, 240, 28, 177, 254, 201, 143, 240, 4, 201, 239, 208,
+			12, 202, 208, 9, 200, 192, 84, 176, 9, 152, 170, 16, 6, 200, 192, 84,
+			144, 229, 96, 142, 104, 5, 32, 123, 6, 169, 0, 162, 9, 157, 69, 5,
+			202, 16, 250, 141, 103, 5, 169, 1, 141, 113, 5, 169, 255, 141, 106, 5,
+			173, 114, 5, 133, 254, 173, 115, 5, 133, 255, 160, 19, 177, 254, 170, 173,
+			118, 5, 133, 254, 173, 119, 5, 133, 255, 172, 104, 5, 177, 254, 201, 207,
+			208, 13, 152, 24, 105, 85, 168, 177, 254, 48, 15, 170, 76, 52, 6, 201,
+			143, 240, 7, 201, 239, 240, 3, 136, 16, 226, 142, 108, 5, 142, 109, 5,
+			96, 41, 15, 240, 245, 142, 218, 10, 142, 240, 10, 142, 255, 10, 140, 219,
+			10, 140, 241, 10, 140, 0, 11, 96, 142, 114, 5, 134, 254, 140, 115, 5,
+			132, 255, 24, 138, 105, 20, 141, 116, 5, 152, 105, 0, 141, 117, 5, 142,
+			118, 5, 200, 200, 140, 119, 5, 160, 19, 177, 254, 141, 108, 5, 141, 109,
+			5, 162, 8, 169, 0, 141, 113, 5, 157, 0, 210, 224, 3, 176, 8, 157,
+			9, 5, 169, 255, 157, 57, 5, 202, 16, 233, 169, 128, 162, 3, 157, 75,
+			5, 202, 16, 250, 96, 169, 1, 141, 113, 5, 169, 0, 240, 238, 41, 3,
+			201, 3, 240, 240, 224, 64, 176, 236, 192, 26, 176, 232, 170, 169, 128, 157,
+			75, 5, 169, 0, 157, 57, 5, 157, 60, 5, 157, 63, 5, 173, 111, 5,
+			157, 12, 5, 173, 112, 5, 10, 10, 10, 133, 254, 24, 173, 114, 5, 105,
+			48, 72, 173, 115, 5, 105, 1, 168, 104, 24, 101, 254, 157, 97, 5, 152,
+			105, 0, 157, 100, 5, 24, 173, 114, 5, 105, 148, 133, 254, 173, 115, 5,
+			105, 0, 133, 255, 173, 112, 5, 10, 109, 112, 5, 10, 168, 177, 254, 157,
+			79, 5, 200, 177, 254, 157, 82, 5, 41, 7, 141, 110, 5, 200, 177, 254,
+			157, 85, 5, 200, 177, 254, 157, 88, 5, 200, 177, 254, 157, 91, 5, 200,
+			177, 254, 157, 94, 5, 160, 0, 173, 110, 5, 201, 3, 208, 2, 160, 2,
+			201, 7, 208, 2, 160, 4, 185, 175, 11, 133, 254, 185, 176, 11, 133, 255,
+			189, 85, 5, 74, 74, 74, 74, 24, 109, 111, 5, 141, 111, 5, 141, 194,
+			7, 168, 173, 110, 5, 201, 7, 208, 15, 152, 10, 168, 177, 254, 157, 45,
+			5, 200, 140, 111, 5, 76, 131, 7, 177, 254, 157, 45, 5, 189, 85, 5,
+			41, 15, 24, 109, 111, 5, 141, 111, 5, 172, 111, 5, 173, 110, 5, 201,
+			5, 8, 177, 254, 40, 240, 8, 221, 45, 5, 208, 3, 56, 233, 1, 157,
+			48, 5, 189, 79, 5, 72, 41, 3, 168, 185, 181, 11, 157, 54, 5, 104,
+			74, 74, 74, 74, 160, 62, 201, 15, 240, 16, 160, 55, 201, 14, 240, 10,
+			160, 48, 201, 13, 240, 4, 24, 105, 0, 168, 185, 185, 11, 157, 51, 5,
+			96, 216, 165, 252, 72, 165, 253, 72, 165, 254, 72, 165, 255, 72, 173, 113,
+			5, 208, 3, 76, 2, 11, 173, 78, 5, 240, 3, 76, 107, 9, 173, 108,
+			5, 205, 109, 5, 240, 3, 76, 88, 9, 173, 103, 5, 240, 3, 76, 220,
+			8, 162, 2, 188, 75, 5, 48, 3, 157, 75, 5, 157, 69, 5, 202, 16,
+			242, 173, 118, 5, 133, 252, 173, 119, 5, 133, 253, 172, 104, 5, 132, 254,
+			204, 106, 5, 208, 25, 173, 107, 5, 240, 20, 173, 104, 5, 172, 105, 5,
+			140, 104, 5, 206, 107, 5, 208, 232, 141, 104, 5, 168, 16, 226, 162, 0,
+			177, 252, 201, 254, 208, 14, 172, 104, 5, 200, 196, 254, 240, 67, 140, 104,
+			5, 76, 26, 8, 157, 66, 5, 24, 152, 105, 85, 168, 232, 224, 3, 144,
+			223, 172, 104, 5, 177, 252, 16, 122, 201, 255, 240, 118, 74, 74, 74, 41,
+			14, 170, 189, 161, 11, 141, 126, 8, 189, 162, 11, 141, 127, 8, 173, 67,
+			5, 133, 255, 32, 147, 8, 140, 104, 5, 192, 85, 176, 4, 196, 254, 208,
+			143, 164, 254, 140, 104, 5, 76, 2, 11, 32, 148, 6, 160, 255, 96, 48,
+			251, 168, 96, 48, 247, 56, 152, 229, 255, 168, 96, 48, 239, 24, 152, 101,
+			255, 168, 96, 48, 231, 141, 108, 5, 141, 109, 5, 200, 96, 48, 221, 173,
+			68, 5, 48, 216, 141, 107, 5, 200, 140, 105, 5, 24, 152, 101, 255, 141,
+			106, 5, 96, 136, 48, 10, 177, 252, 201, 143, 240, 4, 201, 239, 208, 243,
+			200, 96, 162, 2, 189, 72, 5, 240, 5, 222, 72, 5, 16, 99, 189, 75,
+			5, 208, 94, 188, 66, 5, 192, 64, 176, 87, 173, 116, 5, 133, 252, 173,
+			117, 5, 133, 253, 177, 252, 133, 254, 24, 152, 105, 64, 168, 177, 252, 133,
+			255, 37, 254, 201, 255, 240, 58, 188, 69, 5, 177, 254, 41, 192, 208, 12,
+			177, 254, 41, 63, 157, 15, 5, 254, 69, 5, 16, 235, 201, 64, 208, 19,
+			177, 254, 41, 63, 141, 111, 5, 189, 15, 5, 141, 112, 5, 32, 188, 6,
+			76, 72, 9, 201, 128, 208, 10, 177, 254, 41, 63, 157, 72, 5, 254, 69,
+			5, 202, 16, 144, 174, 103, 5, 232, 138, 41, 63, 141, 103, 5, 206, 109,
+			5, 208, 14, 173, 108, 5, 141, 109, 5, 173, 103, 5, 208, 3, 238, 104,
+			5, 172, 48, 5, 173, 82, 5, 41, 7, 201, 5, 240, 4, 201, 6, 208,
+			1, 136, 140, 39, 5, 160, 0, 201, 5, 240, 4, 201, 6, 208, 2, 160,
+			2, 201, 7, 208, 2, 160, 40, 140, 44, 5, 162, 2, 189, 82, 5, 41,
+			224, 157, 40, 5, 189, 97, 5, 133, 252, 189, 100, 5, 133, 253, 189, 57,
+			5, 201, 255, 240, 54, 201, 15, 208, 32, 189, 63, 5, 240, 45, 222, 63,
+			5, 189, 63, 5, 208, 37, 188, 9, 5, 240, 1, 136, 152, 157, 9, 5,
+			189, 88, 5, 157, 63, 5, 76, 229, 9, 189, 57, 5, 74, 168, 177, 252,
+			144, 4, 74, 74, 74, 74, 41, 15, 157, 9, 5, 188, 45, 5, 189, 82,
+			5, 41, 7, 201, 1, 208, 31, 136, 152, 200, 221, 48, 5, 8, 169, 1,
+			40, 208, 2, 10, 10, 61, 60, 5, 240, 12, 188, 48, 5, 192, 255, 208,
+			5, 169, 0, 157, 9, 5, 152, 157, 36, 5, 169, 1, 141, 110, 5, 189,
+			57, 5, 201, 15, 240, 56, 41, 7, 168, 185, 205, 12, 133, 254, 189, 57,
+			5, 41, 8, 8, 138, 40, 24, 240, 2, 105, 3, 168, 185, 91, 5, 37,
+			254, 240, 27, 189, 51, 5, 157, 36, 5, 142, 110, 5, 202, 16, 8, 141,
+			39, 5, 169, 0, 141, 44, 5, 232, 189, 54, 5, 157, 40, 5, 189, 57,
+			5, 41, 15, 201, 15, 240, 16, 254, 57, 5, 189, 57, 5, 201, 15, 208,
+			6, 189, 88, 5, 157, 63, 5, 189, 75, 5, 16, 10, 189, 9, 5, 208,
+			5, 169, 64, 157, 75, 5, 254, 60, 5, 160, 0, 189, 82, 5, 74, 74,
+			74, 74, 144, 1, 136, 74, 144, 1, 200, 24, 152, 125, 45, 5, 157, 45,
+			5, 189, 48, 5, 201, 255, 208, 2, 160, 0, 24, 152, 125, 48, 5, 157,
+			48, 5, 202, 48, 3, 76, 150, 9, 173, 40, 5, 141, 43, 5, 173, 82,
+			5, 41, 7, 170, 160, 3, 173, 110, 5, 240, 3, 188, 213, 12, 152, 72,
+			185, 185, 12, 8, 41, 127, 170, 152, 41, 3, 10, 168, 189, 36, 5, 153,
+			0, 210, 200, 189, 9, 5, 224, 3, 208, 3, 173, 9, 5, 29, 40, 5,
+			40, 16, 2, 169, 0, 153, 0, 210, 104, 168, 136, 41, 3, 208, 207, 160,
+			8, 173, 44, 5, 153, 0, 210, 24, 104, 133, 255, 104, 133, 254, 104, 133,
+			253, 104, 133, 252, 96, 104, 170, 240, 78, 201, 2, 240, 6, 104, 104, 202,
+			208, 251, 96, 165, 20, 197, 20, 240, 252, 173, 36, 2, 201, 134, 208, 7,
+			173, 37, 2, 201, 11, 240, 230, 173, 36, 2, 141, 143, 11, 173, 37, 2,
+			141, 144, 11, 169, 134, 141, 36, 2, 169, 11, 141, 37, 2, 104, 104, 240,
+			3, 56, 233, 1, 141, 93, 11, 104, 168, 104, 170, 169, 112, 32, 120, 5,
+			169, 0, 162, 0, 76, 120, 5, 165, 20, 197, 20, 240, 252, 173, 36, 2,
+			201, 134, 208, 174, 173, 37, 2, 201, 11, 208, 167, 173, 143, 11, 141, 36,
+			2, 173, 144, 11, 141, 37, 2, 169, 64, 76, 120, 5, 32, 203, 7, 144,
+			3, 32, 117, 11, 76, 255, 255, 178, 5, 221, 5, 168, 6, 59, 6, 123,
+			6, 148, 6, 159, 6, 82, 6, 147, 8, 153, 8, 157, 8, 165, 8, 173,
+			8, 183, 8, 205, 8, 185, 11, 250, 11, 59, 12, 128, 160, 32, 64, 255,
+			241, 228, 215, 203, 192, 181, 170, 161, 152, 143, 135, 127, 120, 114, 107, 101,
+			95, 90, 85, 80, 75, 71, 67, 63, 60, 56, 53, 50, 47, 44, 42, 39,
+			37, 35, 33, 31, 29, 28, 26, 24, 23, 22, 20, 19, 18, 17, 16, 15,
+			14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0,
+			0, 0, 0, 0, 242, 233, 218, 206, 191, 182, 170, 161, 152, 143, 137, 128,
+			122, 113, 107, 101, 95, 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, 136,
+			127, 121, 115, 108, 103, 96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52,
+			51, 48, 45, 42, 40, 37, 36, 33, 31, 30, 5, 4, 3, 2, 1, 0,
 			0, 56, 11, 140, 10, 0, 10, 106, 9, 232, 8, 106, 8, 239, 7, 128,
 			7, 8, 7, 174, 6, 70, 6, 230, 5, 149, 5, 65, 5, 246, 4, 176,
 			4, 110, 4, 48, 4, 246, 3, 187, 3, 132, 3, 82, 3, 34, 3, 244,
@@ -3227,6 +2096,1359 @@ namespace Sf.Asap
 			156, 8, 157, 164, 8, 136, 177, 252, 41, 192, 24, 125, 228, 7, 157, 228,
 			7, 157, 34, 5, 168, 185, 60, 6, 157, 244, 7, 169, 0, 157, 44, 8,
 			157, 100, 8, 157, 108, 8, 157, 148, 8, 169, 1, 157, 188, 7, 96 };
+	}
+
+	/// <summary>Information about a music file.</summary>
+	public class ASAPInfo
+	{
+
+		void AddSong(int playerCalls)
+		{
+			this.Durations[this.Songs++] = (int) ((long) (playerCalls * this.Fastplay) * 114000 / 1773447);
+		}
+		string Author;
+		internal int Channels;
+
+		int CheckDate()
+		{
+			int n = this.Date.Length;
+			switch (n) {
+				case 10:
+					if (!this.CheckTwoDateDigits(0) || this.Date[2] != 47)
+						return -1;
+					goto case 7;
+				case 7:
+					if (!this.CheckTwoDateDigits(n - 7) || this.Date[n - 5] != 47)
+						return -1;
+					goto case 4;
+				case 4:
+					if (!this.CheckTwoDateDigits(n - 4) || !this.CheckTwoDateDigits(n - 2))
+						return -1;
+					return n;
+				default:
+					return -1;
+			}
+		}
+
+		bool CheckTwoDateDigits(int i)
+		{
+			int d1 = this.Date[i];
+			int d2 = this.Date[i + 1];
+			return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
+		}
+		/// <summary>Short license notice.</summary>
+		/// <remarks>Display after the credits.</remarks>
+		public const string Copyright = "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version.";
+		internal int CovoxAddr;
+		/// <summary>Short credits for ASAP.</summary>
+		public const string Credits = "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n";
+		string Date;
+		int DefaultSong;
+		readonly int[] Durations = new int[32];
+		internal int Fastplay;
+		string Filename;
+
+		/// <summary>Returns author's name.</summary>
+		/// <remarks>A nickname may be included in parentheses after the real name.
+		/// Multiple authors are separated with <c>" &amp; "</c>.
+		/// An empty string means the author is unknown.</remarks>
+		public string GetAuthor()
+		{
+			return this.Author;
+		}
+
+		/// <summary>Returns 1 for mono or 2 for stereo.</summary>
+		public int GetChannels()
+		{
+			return this.Channels;
+		}
+
+		/// <summary>Returns music creation date.</summary>
+		/// <remarks>Some of the possible formats are:
+		/// <list type="bullet">
+		/// <item>YYYY</item>
+		/// <item>MM/YYYY</item>
+		/// <item>DD/MM/YYYY</item>
+		/// <item>YYYY-YYYY</item>
+		/// </list>
+		/// An empty string means the date is unknown.</remarks>
+		public string GetDate()
+		{
+			return this.Date;
+		}
+
+		public int GetDayOfMonth()
+		{
+			int n = this.CheckDate();
+			if (n != 10)
+				return -1;
+			return this.GetTwoDateDigits(0);
+		}
+
+		/// <summary>Returns 0-based index of the "main" song.</summary>
+		/// <remarks>The specified song should be played by default.</remarks>
+		public int GetDefaultSong()
+		{
+			return this.DefaultSong;
+		}
+
+		/// <summary>Returns length of the specified song.</summary>
+		/// <remarks>The result is in milliseconds. -1 means the length is indeterminate.</remarks>
+		public int GetDuration(int song)
+		{
+			return this.Durations[song];
+		}
+
+		public static string GetExtDescription(string ext)
+		{
+			if (ext.Length != 3)
+				throw new System.Exception("Unknown extension");
+			switch (ext[0] + (ext[1] << 8) + (ext[2] << 16) | 2105376) {
+				case 7364979:
+					return "Slight Atari Player";
+				case 6516067:
+					return "Chaos Music Composer";
+				case 3370339:
+					return "CMC \"3/4\"";
+				case 7499107:
+					return "CMC \"Rzog\"";
+				case 7564643:
+					return "Stereo Double CMC";
+				case 6516068:
+					return "DoublePlay CMC";
+				case 7629924:
+					return "Delta Music Composer";
+				case 7630957:
+					return "Music ProTracker";
+				case 6582381:
+					return "MPT DoublePlay";
+				case 7630194:
+					return "Raster Music Tracker";
+				case 6516084:
+				case 3698036:
+					return "Theta Music Composer 1.x";
+				case 3304820:
+					return "Theta Music Composer 2.x";
+				default:
+					throw new System.Exception("Unknown extension");
+			}
+		}
+
+		/// <summary>Returns information whether the specified song loops.</summary>
+		/// <remarks>Returns:
+		/// <list type="bullet">
+		/// <item><see langword="true" /> if the song loops</item>
+		/// <item><see langword="false" /> if the song stops</item>
+		/// </list>
+		/// </remarks>
+		public bool GetLoop(int song)
+		{
+			return this.Loops[song];
+		}
+
+		public int GetMonth()
+		{
+			int n = this.CheckDate();
+			if (n < 7)
+				return -1;
+			return this.GetTwoDateDigits(n - 7);
+		}
+
+		public string GetOriginalModuleExt(byte[] module, int moduleLen)
+		{
+			switch (this.Type) {
+				case ASAPModuleType.SapB:
+					if ((this.Init == 1019 || this.Init == 1017) && this.Player == 1283)
+						return "dlt";
+					if (this.Init == 1267 || this.Init == 62707 || this.Init == 1263)
+						return this.Fastplay == 156 ? "mpd" : "mpt";
+					if (this.Init == 3200)
+						return "rmt";
+					if (this.Init == 1269 || this.Init == 62709 || this.Init == 1266 || (this.Init == 1255 || this.Init == 62695 || this.Init == 1252) && this.Fastplay == 156 || (this.Init == 1253 || this.Init == 62693 || this.Init == 1250) && (this.Fastplay == 104 || this.Fastplay == 78))
+						return "tmc";
+					if (this.Init == 4224)
+						return "tm2";
+					return null;
+				case ASAPModuleType.SapC:
+					if ((this.Player == 1280 || this.Player == 62720) && moduleLen >= 1024) {
+						if (this.Fastplay == 156)
+							return "dmc";
+						if (this.Channels > 1)
+							return "cms";
+						if (module[moduleLen - 170] == 30)
+							return "cmr";
+						if (module[moduleLen - 909] == 48)
+							return "cm3";
+						return "cmc";
+					}
+					return null;
+				case ASAPModuleType.Cmc:
+					return this.Fastplay == 156 ? "dmc" : "cmc";
+				case ASAPModuleType.Cm3:
+					return "cm3";
+				case ASAPModuleType.Cmr:
+					return "cmr";
+				case ASAPModuleType.Cms:
+					return "cms";
+				case ASAPModuleType.Dlt:
+					return "dlt";
+				case ASAPModuleType.Mpt:
+					return this.Fastplay == 156 ? "mpd" : "mpt";
+				case ASAPModuleType.Rmt:
+					return "rmt";
+				case ASAPModuleType.Tmc:
+					return "tmc";
+				case ASAPModuleType.Tm2:
+					return "tm2";
+				default:
+					return null;
+			}
+		}
+
+		static int GetPackedExt(string filename)
+		{
+			int ext = 0;
+			for (int i = filename.Length; --i > 0;) {
+				int c = filename[i];
+				if (c <= 32 || c > 122)
+					return 0;
+				if (c == 46)
+					return ext | 2105376;
+				ext = (ext << 8) + c;
+			}
+			return 0;
+		}
+
+		static int GetRmtInstrumentFrames(byte[] module, int instrument, int volume, int volumeFrame, bool onExtraPokey)
+		{
+			int addrToOffset = ASAPInfo.GetWord(module, 2) - 6;
+			instrument = ASAPInfo.GetWord(module, 14) - addrToOffset + (instrument << 1);
+			if (module[instrument + 1] == 0)
+				return 0;
+			instrument = ASAPInfo.GetWord(module, instrument) - addrToOffset;
+			int perFrame = module[12];
+			int playerCall = volumeFrame * perFrame;
+			int playerCalls = playerCall;
+			int index = module[instrument] + 1 + playerCall * 3;
+			int indexEnd = module[instrument + 2] + 3;
+			int indexLoop = module[instrument + 3];
+			if (indexLoop >= indexEnd)
+				return 0;
+			int volumeSlideDepth = module[instrument + 6];
+			int volumeMin = module[instrument + 7];
+			if (index >= indexEnd)
+				index = (index - indexEnd) % (indexEnd - indexLoop) + indexLoop;
+			else {
+				do {
+					int vol = module[instrument + index];
+					if (onExtraPokey)
+						vol >>= 4;
+					if ((vol & 15) >= CiConstArray_1[volume])
+						playerCalls = playerCall + 1;
+					playerCall++;
+					index += 3;
+				}
+				while (index < indexEnd);
+			}
+			if (volumeSlideDepth == 0)
+				return playerCalls / perFrame;
+			int volumeSlide = 128;
+			bool silentLoop = false;
+			for (;;) {
+				if (index >= indexEnd) {
+					if (silentLoop)
+						break;
+					silentLoop = true;
+					index = indexLoop;
+				}
+				int vol = module[instrument + index];
+				if (onExtraPokey)
+					vol >>= 4;
+				if ((vol & 15) >= CiConstArray_1[volume]) {
+					playerCalls = playerCall + 1;
+					silentLoop = false;
+				}
+				playerCall++;
+				index += 3;
+				volumeSlide -= volumeSlideDepth;
+				if (volumeSlide < 0) {
+					volumeSlide += 256;
+					if (--volume <= volumeMin)
+						break;
+				}
+			}
+			return playerCalls / perFrame;
+		}
+
+		/// <summary>Returns number of songs in the file.</summary>
+		public int GetSongs()
+		{
+			return this.Songs;
+		}
+
+		/// <summary>Returns music title.</summary>
+		/// <remarks>An empty string means the title is unknown.</remarks>
+		public string GetTitle()
+		{
+			return this.Name;
+		}
+
+		/// <summary>Returns music title or filename.</summary>
+		/// <remarks>If title is unknown returns filename without the path or extension.</remarks>
+		public string GetTitleOrFilename()
+		{
+			return this.Name.Length > 0 ? this.Name : this.Filename;
+		}
+
+		int GetTwoDateDigits(int i)
+		{
+			return (this.Date[i] - 48) * 10 + this.Date[i + 1] - 48;
+		}
+
+		internal static int GetWord(byte[] array, int i)
+		{
+			return array[i] + (array[i + 1] << 8);
+		}
+
+		public int GetYear()
+		{
+			int n = this.CheckDate();
+			if (n < 0)
+				return -1;
+			return this.GetTwoDateDigits(n - 4) * 100 + this.GetTwoDateDigits(n - 2);
+		}
+
+		static bool HasStringAt(byte[] module, int moduleIndex, string s)
+		{
+			int n = s.Length;
+			for (int i = 0; i < n; i++)
+				if (module[moduleIndex + i] != s[i])
+					return false;
+			return true;
+		}
+		internal int HeaderLen;
+		internal int Init;
+
+		static bool IsDltPatternEnd(byte[] module, int pos, int i)
+		{
+			for (int ch = 0; ch < 4; ch++) {
+				int pattern = module[8198 + (ch << 8) + pos];
+				if (pattern < 64) {
+					int offset = 6 + (pattern << 7) + (i << 1);
+					if ((module[offset] & 128) == 0 && (module[offset + 1] & 128) != 0)
+						return true;
+				}
+			}
+			return false;
+		}
+
+		static bool IsDltTrackEmpty(byte[] module, int pos)
+		{
+			return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
+		}
+
+		/// <summary>Checks whether the extension represents a module type supported by ASAP.</summary>
+		/// <param name="ext">Filename extension without the leading dot.</param>
+		public static bool IsOurExt(string ext)
+		{
+			return ext.Length == 3 && ASAPInfo.IsOurPackedExt(ext[0] + (ext[1] << 8) + (ext[2] << 16) | 2105376);
+		}
+
+		/// <summary>Checks whether the filename represents a module type supported by ASAP.</summary>
+		/// <param name="filename">Filename to check the extension of.</param>
+		public static bool IsOurFile(string filename)
+		{
+			return ASAPInfo.IsOurPackedExt(ASAPInfo.GetPackedExt(filename));
+		}
+
+		static bool IsOurPackedExt(int ext)
+		{
+			switch (ext) {
+				case 7364979:
+				case 6516067:
+				case 3370339:
+				case 7499107:
+				case 7564643:
+				case 6516068:
+				case 7629924:
+				case 7630957:
+				case 6582381:
+				case 7630194:
+				case 6516084:
+				case 3698036:
+				case 3304820:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>Loads file information.</summary>
+		/// <param name="filename">Filename, used to determine the format.</param>
+		/// <param name="module">Contents of the file.</param>
+		/// <param name="moduleLen">Length of the file.</param>
+		public void Load(string filename, byte[] module, int moduleLen)
+		{
+			int len = filename.Length;
+			int basename = 0;
+			int ext = -1;
+			for (int i = len; --i >= 0;) {
+				int c = filename[i];
+				if (c == 47 || c == 92) {
+					basename = i + 1;
+					break;
+				}
+				if (c == 46)
+					ext = i;
+			}
+			if (ext < 0)
+				throw new System.Exception("Filename has no extension");
+			ext -= basename;
+			if (ext > 127)
+				ext = 127;
+			this.Filename = filename.Substring(basename, ext);
+			this.Author = "";
+			this.Name = "";
+			this.Date = "";
+			this.Channels = 1;
+			this.Songs = 1;
+			this.DefaultSong = 0;
+			for (int i = 0; i < 32; i++) {
+				this.Durations[i] = -1;
+				this.Loops[i] = false;
+			}
+			this.Ntsc = false;
+			this.Fastplay = 312;
+			this.Music = -1;
+			this.Init = -1;
+			this.Player = -1;
+			this.CovoxAddr = -1;
+			switch (ASAPInfo.GetPackedExt(filename)) {
+				case 7364979:
+					this.ParseSap(module, moduleLen);
+					return;
+				case 6516067:
+					this.ParseCmc(module, moduleLen, ASAPModuleType.Cmc);
+					return;
+				case 3370339:
+					this.ParseCmc(module, moduleLen, ASAPModuleType.Cm3);
+					return;
+				case 7499107:
+					this.ParseCmc(module, moduleLen, ASAPModuleType.Cmr);
+					return;
+				case 7564643:
+					this.Channels = 2;
+					this.ParseCmc(module, moduleLen, ASAPModuleType.Cms);
+					return;
+				case 6516068:
+					this.Fastplay = 156;
+					this.ParseCmc(module, moduleLen, ASAPModuleType.Cmc);
+					return;
+				case 7629924:
+					this.ParseDlt(module, moduleLen);
+					return;
+				case 7630957:
+					this.ParseMpt(module, moduleLen);
+					return;
+				case 6582381:
+					this.Fastplay = 156;
+					this.ParseMpt(module, moduleLen);
+					return;
+				case 7630194:
+					this.ParseRmt(module, moduleLen);
+					return;
+				case 6516084:
+				case 3698036:
+					this.ParseTmc(module, moduleLen);
+					return;
+				case 3304820:
+					this.ParseTm2(module, moduleLen);
+					return;
+				default:
+					throw new System.Exception("Unknown filename extension");
+			}
+		}
+		readonly bool[] Loops = new bool[32];
+		/// <summary>Maximum length of a supported input file.</summary>
+		/// <remarks>You may assume that files longer than this are not supported by ASAP.</remarks>
+		public const int MaxModuleLength = 65000;
+		/// <summary>Maximum number of songs in a file.</summary>
+		public const int MaxSongs = 32;
+		/// <summary>Maximum length of text metadata.</summary>
+		public const int MaxTextLength = 127;
+		internal int Music;
+		string Name;
+		internal bool Ntsc;
+
+		void ParseCmc(byte[] module, int moduleLen, ASAPModuleType type)
+		{
+			if (moduleLen < 774)
+				throw new System.Exception("Module too short");
+			this.Type = type;
+			this.ParseModule(module, moduleLen);
+			int lastPos = 84;
+			while (--lastPos >= 0) {
+				if (module[518 + lastPos] < 176 || module[603 + lastPos] < 64 || module[688 + lastPos] < 64)
+					break;
+				if (this.Channels == 2) {
+					if (module[774 + lastPos] < 176 || module[859 + lastPos] < 64 || module[944 + lastPos] < 64)
+						break;
+				}
+			}
+			this.Songs = 0;
+			this.ParseCmcSong(module, 0);
+			for (int pos = 0; pos < lastPos && this.Songs < 32; pos++)
+				if (module[518 + pos] == 143 || module[518 + pos] == 239)
+					this.ParseCmcSong(module, pos + 1);
+		}
+
+		void ParseCmcSong(byte[] module, int pos)
+		{
+			int tempo = module[25];
+			int playerCalls = 0;
+			int repStartPos = 0;
+			int repEndPos = 0;
+			int repTimes = 0;
+			byte[] seen = new byte[85];
+			while (pos >= 0 && pos < 85) {
+				if (pos == repEndPos && repTimes > 0) {
+					for (int i = 0; i < 85; i++)
+						if (seen[i] == 1 || seen[i] == 3)
+							seen[i] = 0;
+					repTimes--;
+					pos = repStartPos;
+				}
+				if (seen[pos] != 0) {
+					if (seen[pos] != 1)
+						this.Loops[this.Songs] = true;
+					break;
+				}
+				seen[pos] = 1;
+				int p1 = module[518 + pos];
+				int p2 = module[603 + pos];
+				int p3 = module[688 + pos];
+				if (p1 == 254 || p2 == 254 || p3 == 254) {
+					pos++;
+					continue;
+				}
+				p1 >>= 4;
+				if (p1 == 8)
+					break;
+				if (p1 == 9) {
+					pos = p2;
+					continue;
+				}
+				if (p1 == 10) {
+					pos -= p2;
+					continue;
+				}
+				if (p1 == 11) {
+					pos += p2;
+					continue;
+				}
+				if (p1 == 12) {
+					tempo = p2;
+					pos++;
+					continue;
+				}
+				if (p1 == 13) {
+					pos++;
+					repStartPos = pos;
+					repEndPos = pos + p2;
+					repTimes = p3 - 1;
+					continue;
+				}
+				if (p1 == 14) {
+					this.Loops[this.Songs] = true;
+					break;
+				}
+				p2 = repTimes > 0 ? 3 : 2;
+				for (p1 = 0; p1 < 85; p1++)
+					if (seen[p1] == 1)
+						seen[p1] = (byte) p2;
+				playerCalls += tempo * (this.Type == ASAPModuleType.Cm3 ? 48 : 64);
+				pos++;
+			}
+			this.AddSong(playerCalls);
+		}
+
+		static int ParseDec(byte[] module, int moduleIndex, int maxVal)
+		{
+			if (module[moduleIndex] == 13)
+				throw new System.Exception("Missing number");
+			for (int r = 0;;) {
+				int c = module[moduleIndex++];
+				if (c == 13)
+					return r;
+				if (c < 48 || c > 57)
+					throw new System.Exception("Invalid number");
+				r = 10 * r + c - 48;
+				if (r > maxVal)
+					throw new System.Exception("Number too big");
+			}
+		}
+
+		void ParseDlt(byte[] module, int moduleLen)
+		{
+			if (moduleLen != 11270 && moduleLen != 11271)
+				throw new System.Exception("Invalid module length");
+			this.Type = ASAPModuleType.Dlt;
+			this.ParseModule(module, moduleLen);
+			if (this.Music != 8192)
+				throw new System.Exception("Unsupported module address");
+			bool[] seen = new bool[128];
+			this.Songs = 0;
+			for (int pos = 0; pos < 128 && this.Songs < 32; pos++) {
+				if (!seen[pos])
+					this.ParseDltSong(module, seen, pos);
+			}
+			if (this.Songs == 0)
+				throw new System.Exception("No songs found");
+		}
+
+		void ParseDltSong(byte[] module, bool[] seen, int pos)
+		{
+			while (pos < 128 && !seen[pos] && ASAPInfo.IsDltTrackEmpty(module, pos))
+				seen[pos++] = true;
+			this.SongPos[this.Songs] = (byte) pos;
+			int playerCalls = 0;
+			bool loop = false;
+			int tempo = 6;
+			while (pos < 128) {
+				if (seen[pos]) {
+					loop = true;
+					break;
+				}
+				seen[pos] = true;
+				int p1 = module[8198 + pos];
+				if (p1 == 64 || ASAPInfo.IsDltTrackEmpty(module, pos))
+					break;
+				if (p1 == 65)
+					pos = module[8326 + pos];
+				else if (p1 == 66)
+					tempo = module[8326 + pos++];
+				else {
+					for (int i = 0; i < 64 && !ASAPInfo.IsDltPatternEnd(module, pos, i); i++)
+						playerCalls += tempo;
+					pos++;
+				}
+			}
+			if (playerCalls > 0) {
+				this.Loops[this.Songs] = loop;
+				this.AddSong(playerCalls);
+			}
+		}
+
+		/// <summary>Parses a string and returns the number of milliseconds it represents.</summary>
+		/// <param name="s">Time in the <c>"mm:ss.xxx"</c> format.</param>
+		public static int ParseDuration(string s)
+		{
+			int i = 0;
+			int n = s.Length;
+			int d;
+			if (i >= n)
+				throw new System.Exception("Invalid duration");
+			d = s[i] - 48;
+			if (d < 0 || d > 9)
+				throw new System.Exception("Invalid duration");
+			i++;
+			int r = d;
+			if (i < n) {
+				d = s[i] - 48;
+				if (d >= 0 && d <= 9) {
+					i++;
+					r = 10 * r + d;
+				}
+				if (i < n && s[i] == 58) {
+					i++;
+					if (i >= n)
+						throw new System.Exception("Invalid duration");
+					d = s[i] - 48;
+					if (d < 0 || d > 5)
+						throw new System.Exception("Invalid duration");
+					i++;
+					r = (6 * r + d) * 10;
+					if (i >= n)
+						throw new System.Exception("Invalid duration");
+					d = s[i] - 48;
+					if (d < 0 || d > 9)
+						throw new System.Exception("Invalid duration");
+					i++;
+					r += d;
+				}
+			}
+			r *= 1000;
+			if (i >= n)
+				return r;
+			if (s[i] != 46)
+				throw new System.Exception("Invalid duration");
+			i++;
+			if (i >= n)
+				throw new System.Exception("Invalid duration");
+			d = s[i] - 48;
+			if (d < 0 || d > 9)
+				throw new System.Exception("Invalid duration");
+			i++;
+			r += 100 * d;
+			if (i >= n)
+				return r;
+			d = s[i] - 48;
+			if (d < 0 || d > 9)
+				throw new System.Exception("Invalid duration");
+			i++;
+			r += 10 * d;
+			if (i >= n)
+				return r;
+			d = s[i] - 48;
+			if (d < 0 || d > 9)
+				throw new System.Exception("Invalid duration");
+			i++;
+			r += d;
+			return r;
+		}
+
+		static int ParseHex(byte[] module, int moduleIndex)
+		{
+			if (module[moduleIndex] == 13)
+				throw new System.Exception("Missing number");
+			for (int r = 0;;) {
+				int c = module[moduleIndex++];
+				if (c == 13)
+					return r;
+				if (r > 4095)
+					throw new System.Exception("Number too big");
+				r <<= 4;
+				if (c >= 48 && c <= 57)
+					r += c - 48;
+				else if (c >= 65 && c <= 70)
+					r += c - 65 + 10;
+				else if (c >= 97 && c <= 102)
+					r += c - 97 + 10;
+				else
+					throw new System.Exception("Invalid number");
+			}
+		}
+
+		void ParseModule(byte[] module, int moduleLen)
+		{
+			if ((module[0] != 255 || module[1] != 255) && (module[0] != 0 || module[1] != 0))
+				throw new System.Exception("Invalid two leading bytes of the module");
+			this.Music = ASAPInfo.GetWord(module, 2);
+			int musicLastByte = ASAPInfo.GetWord(module, 4);
+			if (this.Music <= 55295 && musicLastByte >= 53248)
+				throw new System.Exception("Module address conflicts with hardware registers");
+			int blockLen = musicLastByte + 1 - this.Music;
+			if (6 + blockLen != moduleLen) {
+				if (this.Type != ASAPModuleType.Rmt || 11 + blockLen > moduleLen)
+					throw new System.Exception("Module length doesn't match headers");
+				int infoAddr = ASAPInfo.GetWord(module, 6 + blockLen);
+				if (infoAddr != this.Music + blockLen)
+					throw new System.Exception("Invalid address of RMT info");
+				int infoLen = ASAPInfo.GetWord(module, 8 + blockLen) + 1 - infoAddr;
+				if (10 + blockLen + infoLen != moduleLen)
+					throw new System.Exception("Invalid RMT info block");
+			}
+		}
+
+		void ParseMpt(byte[] module, int moduleLen)
+		{
+			if (moduleLen < 464)
+				throw new System.Exception("Module too short");
+			this.Type = ASAPModuleType.Mpt;
+			this.ParseModule(module, moduleLen);
+			int track0Addr = ASAPInfo.GetWord(module, 2) + 458;
+			if (module[454] + (module[458] << 8) != track0Addr)
+				throw new System.Exception("Invalid address of the first track");
+			int songLen = module[455] + (module[459] << 8) - track0Addr >> 1;
+			if (songLen > 254)
+				throw new System.Exception("Song too long");
+			bool[] globalSeen = new bool[256];
+			this.Songs = 0;
+			for (int pos = 0; pos < songLen && this.Songs < 32; pos++) {
+				if (!globalSeen[pos]) {
+					this.SongPos[this.Songs] = (byte) pos;
+					this.ParseMptSong(module, globalSeen, songLen, pos);
+				}
+			}
+			if (this.Songs == 0)
+				throw new System.Exception("No songs found");
+		}
+
+		void ParseMptSong(byte[] module, bool[] globalSeen, int songLen, int pos)
+		{
+			int addrToOffset = ASAPInfo.GetWord(module, 2) - 6;
+			int tempo = module[463];
+			int playerCalls = 0;
+			byte[] seen = new byte[256];
+			int[] patternOffset = new int[4];
+			int[] blankRows = new int[4];
+			int[] blankRowsCounter = new int[4];
+			while (pos < songLen) {
+				if (seen[pos] != 0) {
+					if (seen[pos] != 1)
+						this.Loops[this.Songs] = true;
+					break;
+				}
+				seen[pos] = 1;
+				globalSeen[pos] = true;
+				int i = module[464 + pos * 2];
+				if (i == 255) {
+					pos = module[465 + pos * 2];
+					continue;
+				}
+				int ch;
+				for (ch = 3; ch >= 0; ch--) {
+					i = module[454 + ch] + (module[458 + ch] << 8) - addrToOffset;
+					i = module[i + pos * 2];
+					if (i >= 64)
+						break;
+					i <<= 1;
+					i = ASAPInfo.GetWord(module, 70 + i);
+					patternOffset[ch] = i == 0 ? 0 : i - addrToOffset;
+					blankRowsCounter[ch] = 0;
+				}
+				if (ch >= 0)
+					break;
+				for (i = 0; i < songLen; i++)
+					if (seen[i] == 1)
+						seen[i] = 2;
+				for (int patternRows = module[462]; --patternRows >= 0;) {
+					for (ch = 3; ch >= 0; ch--) {
+						if (patternOffset[ch] == 0 || --blankRowsCounter[ch] >= 0)
+							continue;
+						for (;;) {
+							i = module[patternOffset[ch]++];
+							if (i < 64 || i == 254)
+								break;
+							if (i < 128)
+								continue;
+							if (i < 192) {
+								blankRows[ch] = i - 128;
+								continue;
+							}
+							if (i < 208)
+								continue;
+							if (i < 224) {
+								tempo = i - 207;
+								continue;
+							}
+							patternRows = 0;
+						}
+						blankRowsCounter[ch] = blankRows[ch];
+					}
+					playerCalls += tempo;
+				}
+				pos++;
+			}
+			if (playerCalls > 0)
+				this.AddSong(playerCalls);
+		}
+
+		void ParseRmt(byte[] module, int moduleLen)
+		{
+			if (moduleLen < 48)
+				throw new System.Exception("Module too short");
+			if (module[6] != 82 || module[7] != 77 || module[8] != 84 || module[13] != 1)
+				throw new System.Exception("Invalid module header");
+			int posShift;
+			switch (module[9]) {
+				case 52:
+					posShift = 2;
+					break;
+				case 56:
+					this.Channels = 2;
+					posShift = 3;
+					break;
+				default:
+					throw new System.Exception("Unsupported number of channels");
+			}
+			int perFrame = module[12];
+			if (perFrame < 1 || perFrame > 4)
+				throw new System.Exception("Unsupported player call rate");
+			this.Type = ASAPModuleType.Rmt;
+			this.ParseModule(module, moduleLen);
+			int songLen = ASAPInfo.GetWord(module, 4) + 1 - ASAPInfo.GetWord(module, 20);
+			if (posShift == 3 && (songLen & 4) != 0 && module[6 + ASAPInfo.GetWord(module, 4) - ASAPInfo.GetWord(module, 2) - 3] == 254)
+				songLen += 4;
+			songLen >>= posShift;
+			if (songLen >= 256)
+				throw new System.Exception("Song too long");
+			bool[] globalSeen = new bool[256];
+			this.Songs = 0;
+			for (int pos = 0; pos < songLen && this.Songs < 32; pos++) {
+				if (!globalSeen[pos]) {
+					this.SongPos[this.Songs] = (byte) pos;
+					this.ParseRmtSong(module, globalSeen, songLen, posShift, pos);
+				}
+			}
+			this.Fastplay = 312 / perFrame;
+			this.Player = 1536;
+			if (this.Songs == 0)
+				throw new System.Exception("No songs found");
+		}
+
+		void ParseRmtSong(byte[] module, bool[] globalSeen, int songLen, int posShift, int pos)
+		{
+			int addrToOffset = ASAPInfo.GetWord(module, 2) - 6;
+			int tempo = module[11];
+			int frames = 0;
+			int songOffset = ASAPInfo.GetWord(module, 20) - addrToOffset;
+			int patternLoOffset = ASAPInfo.GetWord(module, 16) - addrToOffset;
+			int patternHiOffset = ASAPInfo.GetWord(module, 18) - addrToOffset;
+			byte[] seen = new byte[256];
+			int[] patternBegin = new int[8];
+			int[] patternOffset = new int[8];
+			int[] blankRows = new int[8];
+			int[] instrumentNo = new int[8];
+			int[] instrumentFrame = new int[8];
+			int[] volumeValue = new int[8];
+			int[] volumeFrame = new int[8];
+			while (pos < songLen) {
+				if (seen[pos] != 0) {
+					if (seen[pos] != 1)
+						this.Loops[this.Songs] = true;
+					break;
+				}
+				seen[pos] = 1;
+				globalSeen[pos] = true;
+				if (module[songOffset + (pos << posShift)] == 254) {
+					pos = module[songOffset + (pos << posShift) + 1];
+					continue;
+				}
+				for (int ch = 0; ch < 1 << posShift; ch++) {
+					int p = module[songOffset + (pos << posShift) + ch];
+					if (p == 255)
+						blankRows[ch] = 256;
+					else {
+						patternOffset[ch] = patternBegin[ch] = module[patternLoOffset + p] + (module[patternHiOffset + p] << 8) - addrToOffset;
+						blankRows[ch] = 0;
+					}
+				}
+				for (int i = 0; i < songLen; i++)
+					if (seen[i] == 1)
+						seen[i] = 2;
+				for (int patternRows = module[10]; --patternRows >= 0;) {
+					for (int ch = 0; ch < 1 << posShift; ch++) {
+						if (--blankRows[ch] > 0)
+							continue;
+						for (;;) {
+							int i = module[patternOffset[ch]++];
+							if ((i & 63) < 62) {
+								i += module[patternOffset[ch]++] << 8;
+								if ((i & 63) != 61) {
+									instrumentNo[ch] = i >> 10;
+									instrumentFrame[ch] = frames;
+								}
+								volumeValue[ch] = i >> 6 & 15;
+								volumeFrame[ch] = frames;
+								break;
+							}
+							if (i == 62) {
+								blankRows[ch] = module[patternOffset[ch]++];
+								break;
+							}
+							if ((i & 63) == 62) {
+								blankRows[ch] = i >> 6;
+								break;
+							}
+							if ((i & 191) == 63) {
+								tempo = module[patternOffset[ch]++];
+								continue;
+							}
+							if (i == 191) {
+								patternOffset[ch] = patternBegin[ch] + module[patternOffset[ch]];
+								continue;
+							}
+							patternRows = -1;
+							break;
+						}
+						if (patternRows < 0)
+							break;
+					}
+					if (patternRows >= 0)
+						frames += tempo;
+				}
+				pos++;
+			}
+			int instrumentFrames = 0;
+			for (int ch = 0; ch < 1 << posShift; ch++) {
+				int frame = instrumentFrame[ch];
+				frame += ASAPInfo.GetRmtInstrumentFrames(module, instrumentNo[ch], volumeValue[ch], volumeFrame[ch] - frame, ch >= 4);
+				if (instrumentFrames < frame)
+					instrumentFrames = frame;
+			}
+			if (frames > instrumentFrames) {
+				if (frames - instrumentFrames > 100)
+					this.Loops[this.Songs] = false;
+				frames = instrumentFrames;
+			}
+			if (frames > 0)
+				this.AddSong(frames);
+		}
+
+		void ParseSap(byte[] module, int moduleLen)
+		{
+			if (!ASAPInfo.HasStringAt(module, 0, "SAP\r\n"))
+				throw new System.Exception("Missing SAP header");
+			this.Fastplay = -1;
+			int type = 0;
+			int moduleIndex = 5;
+			int durationIndex = 0;
+			while (module[moduleIndex] != 255) {
+				if (moduleIndex + 8 >= moduleLen)
+					throw new System.Exception("Missing binary part");
+				if (ASAPInfo.HasStringAt(module, moduleIndex, "AUTHOR ")) {
+					int len = ASAPInfo.ParseText(module, moduleIndex + 7);
+					if (len > 0)
+						this.Author = System.Text.Encoding.UTF8.GetString(module, moduleIndex + 7 + 1, len);
+				}
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "NAME ")) {
+					int len = ASAPInfo.ParseText(module, moduleIndex + 5);
+					if (len > 0)
+						this.Name = System.Text.Encoding.UTF8.GetString(module, moduleIndex + 5 + 1, len);
+				}
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "DATE ")) {
+					int len = ASAPInfo.ParseText(module, moduleIndex + 5);
+					if (len > 0)
+						this.Date = System.Text.Encoding.UTF8.GetString(module, moduleIndex + 5 + 1, len);
+				}
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "SONGS ")) {
+					this.Songs = ASAPInfo.ParseDec(module, moduleIndex + 6, 32);
+					if (this.Songs < 1)
+						throw new System.Exception("Number too small");
+				}
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "DEFSONG ")) {
+					this.DefaultSong = ASAPInfo.ParseDec(module, moduleIndex + 8, 31);
+					if (this.DefaultSong < 0)
+						throw new System.Exception("Number too small");
+				}
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "STEREO\r"))
+					this.Channels = 2;
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "NTSC\r"))
+					this.Ntsc = true;
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "TIME ")) {
+					if (durationIndex >= 32)
+						throw new System.Exception("Too many TIME tags");
+					moduleIndex += 5;
+					int len;
+					for (len = 0; module[moduleIndex + len] != 13; len++) {
+					}
+					if (len > 5 && ASAPInfo.HasStringAt(module, moduleIndex + len - 5, " LOOP")) {
+						this.Loops[durationIndex] = true;
+						len -= 5;
+					}
+					if (len > 9)
+						throw new System.Exception("Invalid TIME tag");
+					string s = System.Text.Encoding.UTF8.GetString(module, moduleIndex, len);
+					int duration = ASAPInfo.ParseDuration(s);
+					this.Durations[durationIndex++] = duration;
+				}
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "TYPE "))
+					type = module[moduleIndex + 5];
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "FASTPLAY ")) {
+					this.Fastplay = ASAPInfo.ParseDec(module, moduleIndex + 9, 312);
+					if (this.Fastplay < 1)
+						throw new System.Exception("Number too small");
+				}
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "MUSIC ")) {
+					this.Music = ASAPInfo.ParseHex(module, moduleIndex + 6);
+				}
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "INIT ")) {
+					this.Init = ASAPInfo.ParseHex(module, moduleIndex + 5);
+				}
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "PLAYER ")) {
+					this.Player = ASAPInfo.ParseHex(module, moduleIndex + 7);
+				}
+				else if (ASAPInfo.HasStringAt(module, moduleIndex, "COVOX ")) {
+					this.CovoxAddr = ASAPInfo.ParseHex(module, moduleIndex + 6);
+					if (this.CovoxAddr != 54784)
+						throw new System.Exception("COVOX should be D600");
+					this.Channels = 2;
+				}
+				while (module[moduleIndex++] != 13) {
+					if (moduleIndex >= moduleLen)
+						throw new System.Exception("Malformed SAP header");
+				}
+				if (module[moduleIndex++] != 10)
+					throw new System.Exception("Malformed SAP header");
+			}
+			if (this.DefaultSong >= this.Songs)
+				throw new System.Exception("DEFSONG too big");
+			switch (type) {
+				case 66:
+					if (this.Player < 0)
+						throw new System.Exception("Missing PLAYER tag");
+					if (this.Init < 0)
+						throw new System.Exception("Missing INIT tag");
+					this.Type = ASAPModuleType.SapB;
+					break;
+				case 67:
+					if (this.Player < 0)
+						throw new System.Exception("Missing PLAYER tag");
+					if (this.Music < 0)
+						throw new System.Exception("Missing MUSIC tag");
+					this.Type = ASAPModuleType.SapC;
+					break;
+				case 68:
+					if (this.Init < 0)
+						throw new System.Exception("Missing INIT tag");
+					this.Type = ASAPModuleType.SapD;
+					break;
+				case 83:
+					if (this.Init < 0)
+						throw new System.Exception("Missing INIT tag");
+					this.Type = ASAPModuleType.SapS;
+					this.Fastplay = 78;
+					break;
+				default:
+					throw new System.Exception("Unsupported TYPE");
+			}
+			if (this.Fastplay < 0)
+				this.Fastplay = this.Ntsc ? 262 : 312;
+			else if (this.Ntsc && this.Fastplay > 262)
+				throw new System.Exception("FASTPLAY too big");
+			if (module[moduleIndex + 1] != 255)
+				throw new System.Exception("Invalid binary header");
+			this.HeaderLen = moduleIndex;
+		}
+
+		static int ParseText(byte[] module, int moduleIndex)
+		{
+			if (module[moduleIndex] != 34)
+				throw new System.Exception("Missing quote");
+			if (ASAPInfo.HasStringAt(module, moduleIndex + 1, "<?>\"\r"))
+				return 0;
+			for (int len = 0;; len++) {
+				int c = module[moduleIndex + 1 + len];
+				if (c == 34) {
+					if (module[moduleIndex + 2 + len] != 13)
+						throw new System.Exception("Invalid text tag");
+					return len;
+				}
+				if (c < 32 || c >= 127)
+					throw new System.Exception("Invalid character");
+			}
+		}
+
+		void ParseTm2(byte[] module, int moduleLen)
+		{
+			if (moduleLen < 932)
+				throw new System.Exception("Module too short");
+			this.Type = ASAPModuleType.Tm2;
+			this.ParseModule(module, moduleLen);
+			int i = module[37];
+			if (i < 1 || i > 4)
+				throw new System.Exception("Unsupported player call rate");
+			this.Fastplay = 312 / i;
+			this.Player = 1280;
+			if (module[31] != 0)
+				this.Channels = 2;
+			int lastPos = 65535;
+			for (i = 0; i < 128; i++) {
+				int instrAddr = module[134 + i] + (module[774 + i] << 8);
+				if (instrAddr != 0 && instrAddr < lastPos)
+					lastPos = instrAddr;
+			}
+			for (i = 0; i < 256; i++) {
+				int patternAddr = module[262 + i] + (module[518 + i] << 8);
+				if (patternAddr != 0 && patternAddr < lastPos)
+					lastPos = patternAddr;
+			}
+			lastPos -= ASAPInfo.GetWord(module, 2) + 896;
+			if (902 + lastPos >= moduleLen)
+				throw new System.Exception("Module too short");
+			int c;
+			do {
+				if (lastPos <= 0)
+					throw new System.Exception("No songs found");
+				lastPos -= 17;
+				c = module[918 + lastPos];
+			}
+			while (c == 0 || c >= 128);
+			this.Songs = 0;
+			this.ParseTm2Song(module, 0);
+			for (i = 0; i < lastPos && this.Songs < 32; i += 17) {
+				c = module[918 + i];
+				if (c == 0 || c >= 128)
+					this.ParseTm2Song(module, i + 17);
+			}
+		}
+
+		void ParseTm2Song(byte[] module, int pos)
+		{
+			int addrToOffset = ASAPInfo.GetWord(module, 2) - 6;
+			int tempo = module[36] + 1;
+			int playerCalls = 0;
+			int[] patternOffset = new int[8];
+			int[] blankRows = new int[8];
+			for (;;) {
+				int patternRows = module[918 + pos];
+				if (patternRows == 0)
+					break;
+				if (patternRows >= 128) {
+					this.Loops[this.Songs] = true;
+					break;
+				}
+				for (int ch = 7; ch >= 0; ch--) {
+					int pat = module[917 + pos - 2 * ch];
+					patternOffset[ch] = module[262 + pat] + (module[518 + pat] << 8) - addrToOffset;
+					blankRows[ch] = 0;
+				}
+				while (--patternRows >= 0) {
+					for (int ch = 7; ch >= 0; ch--) {
+						if (--blankRows[ch] >= 0)
+							continue;
+						for (;;) {
+							int i = module[patternOffset[ch]++];
+							if (i == 0) {
+								patternOffset[ch]++;
+								break;
+							}
+							if (i < 64) {
+								if (module[patternOffset[ch]++] >= 128)
+									patternOffset[ch]++;
+								break;
+							}
+							if (i < 128) {
+								patternOffset[ch]++;
+								break;
+							}
+							if (i == 128) {
+								blankRows[ch] = module[patternOffset[ch]++];
+								break;
+							}
+							if (i < 192)
+								break;
+							if (i < 208) {
+								tempo = i - 191;
+								continue;
+							}
+							if (i < 224) {
+								patternOffset[ch]++;
+								break;
+							}
+							if (i < 240) {
+								patternOffset[ch] += 2;
+								break;
+							}
+							if (i < 255) {
+								blankRows[ch] = i - 240;
+								break;
+							}
+							blankRows[ch] = 64;
+							break;
+						}
+					}
+					playerCalls += tempo;
+				}
+				pos += 17;
+			}
+			this.AddSong(playerCalls);
+		}
+
+		void ParseTmc(byte[] module, int moduleLen)
+		{
+			if (moduleLen < 464)
+				throw new System.Exception("Module too short");
+			this.Type = ASAPModuleType.Tmc;
+			this.ParseModule(module, moduleLen);
+			this.Channels = 2;
+			int i = 0;
+			while (module[102 + i] == 0) {
+				if (++i >= 64)
+					throw new System.Exception("No instruments");
+			}
+			int lastPos = (module[102 + i] << 8) + module[38 + i] - ASAPInfo.GetWord(module, 2) - 432;
+			if (437 + lastPos >= moduleLen)
+				throw new System.Exception("Module too short");
+			do {
+				if (lastPos <= 0)
+					throw new System.Exception("No songs found");
+				lastPos -= 16;
+			}
+			while (module[437 + lastPos] >= 128);
+			this.Songs = 0;
+			this.ParseTmcSong(module, 0);
+			for (i = 0; i < lastPos && this.Songs < 32; i += 16)
+				if (module[437 + i] >= 128)
+					this.ParseTmcSong(module, i + 16);
+			i = module[37];
+			if (i < 1 || i > 4)
+				throw new System.Exception("Unsupported player call rate");
+			this.Fastplay = 312 / i;
+		}
+
+		void ParseTmcSong(byte[] module, int pos)
+		{
+			int addrToOffset = ASAPInfo.GetWord(module, 2) - 6;
+			int tempo = module[36] + 1;
+			int frames = 0;
+			int[] patternOffset = new int[8];
+			int[] blankRows = new int[8];
+			while (module[437 + pos] < 128) {
+				for (int ch = 7; ch >= 0; ch--) {
+					int pat = module[437 + pos - 2 * ch];
+					patternOffset[ch] = module[166 + pat] + (module[294 + pat] << 8) - addrToOffset;
+					blankRows[ch] = 0;
+				}
+				for (int patternRows = 64; --patternRows >= 0;) {
+					for (int ch = 7; ch >= 0; ch--) {
+						if (--blankRows[ch] >= 0)
+							continue;
+						for (;;) {
+							int i = module[patternOffset[ch]++];
+							if (i < 64) {
+								patternOffset[ch]++;
+								break;
+							}
+							if (i == 64) {
+								i = module[patternOffset[ch]++];
+								if ((i & 127) == 0)
+									patternRows = 0;
+								else
+									tempo = (i & 127) + 1;
+								if (i >= 128)
+									patternOffset[ch]++;
+								break;
+							}
+							if (i < 128) {
+								i = module[patternOffset[ch]++] & 127;
+								if (i == 0)
+									patternRows = 0;
+								else
+									tempo = i + 1;
+								patternOffset[ch]++;
+								break;
+							}
+							if (i < 192)
+								continue;
+							blankRows[ch] = i - 191;
+							break;
+						}
+					}
+					frames += tempo;
+				}
+				pos += 16;
+			}
+			if (module[436 + pos] < 128)
+				this.Loops[this.Songs] = true;
+			this.AddSong(frames);
+		}
+		internal int Player;
+		internal readonly byte[] SongPos = new byte[32];
+		internal int Songs;
+		internal ASAPModuleType Type;
+		/// <summary>ASAP version as a string.</summary>
+		public const string Version = "3.0.0";
+		/// <summary>ASAP version - major part.</summary>
+		public const int VersionMajor = 3;
+		/// <summary>ASAP version - micro part.</summary>
+		public const int VersionMicro = 0;
+		/// <summary>ASAP version - minor part.</summary>
+		public const int VersionMinor = 0;
+		/// <summary>Years ASAP was created in.</summary>
+		public const string Years = "2005-2011";
+		static readonly byte[] CiConstArray_1 = { 16, 8, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 };
 	}
 
 	internal enum ASAPModuleType

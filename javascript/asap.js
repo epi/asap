@@ -18,7 +18,6 @@ function ASAP()
 	this.pokeys = new PokeyPair();
 	this.silenceCycles = 0;
 	this.silenceCyclesCounter = 0;
-	this.tmcPerFrame = 0;
 	this.tmcPerFrameCounter = 0;
 }
 
@@ -83,7 +82,7 @@ ASAP.prototype.call6502Player = function() {
 			break;
 		case ASAPModuleType.TMC:
 			if (--this.tmcPerFrameCounter <= 0) {
-				this.tmcPerFrameCounter = this.tmcPerFrame;
+				this.tmcPerFrameCounter = this.memory[this.moduleInfo.music + 31];
 				this.call6502(player + 3);
 			}
 			else
@@ -283,7 +282,36 @@ ASAP.prototype.handleEvent = function() {
 
 ASAP.prototype.load = function(filename, module, moduleLen) {
 	this.silenceCycles = 0;
-	this.moduleInfo.parseFile(this, filename, module, moduleLen);
+	this.moduleInfo.load(filename, module, moduleLen);
+	var playerRoutine = ASAP6502.getPlayerRoutine(this.moduleInfo);
+	if (playerRoutine != null) {
+		var player = ASAPInfo.getWord(playerRoutine, 2);
+		var playerLastByte = ASAPInfo.getWord(playerRoutine, 4);
+		if (this.moduleInfo.music <= playerLastByte)
+			throw "Module address conflicts with the player routine";
+		this.memory[19456] = 0;
+		Ci.copyArray(module, 6, this.memory, this.moduleInfo.music, moduleLen - 6);
+		Ci.copyArray(playerRoutine, 6, this.memory, player, playerLastByte + 1 - player);
+		if (this.moduleInfo.player < 0)
+			this.moduleInfo.player = player;
+		return;
+	}
+	Ci.clearArray(this.memory, 0);
+	var moduleIndex = this.moduleInfo.headerLen + 2;
+	while (moduleIndex + 5 <= moduleLen) {
+		var startAddr = ASAPInfo.getWord(module, moduleIndex);
+		var blockLen = ASAPInfo.getWord(module, moduleIndex + 2) + 1 - startAddr;
+		if (blockLen <= 0 || moduleIndex + blockLen > moduleLen)
+			throw "Invalid binary block";
+		moduleIndex += 4;
+		Ci.copyArray(module, moduleIndex, this.memory, startAddr, blockLen);
+		moduleIndex += blockLen;
+		if (moduleIndex == moduleLen)
+			return;
+		if (moduleIndex + 7 <= moduleLen && module[moduleIndex] == 255 && module[moduleIndex + 1] == 255)
+			moduleIndex += 2;
+	}
+	throw "Invalid binary block";
 }
 
 ASAP.millisecondsToBlocks = function(milliseconds) {
@@ -488,1220 +516,35 @@ ASAP.prototype.seek = function(position) {
 }
 ASAP.WAV_HEADER_LENGTH = 44;
 
-function ASAPInfo()
+function ASAP6502()
 {
-	this.author = null;
-	this.channels = 0;
-	this.covoxAddr = 0;
-	this.date = null;
-	this.defaultSong = 0;
-	this.durations = new Array(32);
-	this.fastplay = 0;
-	this.filename = null;
-	this.headerLen = 0;
-	this.init = 0;
-	this.loops = new Array(32);
-	this.music = 0;
-	this.name = null;
-	this.ntsc = false;
-	this.player = 0;
-	this.songPos = new Array(32);
-	this.songs = 0;
-	this.type = ASAPModuleType.SAP_B;
 }
 
-ASAPInfo.prototype.addSong = function(playerCalls) {
-	this.durations[this.songs++] = Math.floor(playerCalls * this.fastplay * 114000 / 1773447);
-}
-
-ASAPInfo.prototype.checkDate = function() {
-	var n = this.date.length;
-	switch (n) {
-		case 10:
-			if (!this.checkTwoDateDigits(0) || this.date.charCodeAt(2) != 47)
-				return -1;
-		case 7:
-			if (!this.checkTwoDateDigits(n - 7) || this.date.charCodeAt(n - 5) != 47)
-				return -1;
-		case 4:
-			if (!this.checkTwoDateDigits(n - 4) || !this.checkTwoDateDigits(n - 2))
-				return -1;
-			return n;
+ASAP6502.getPlayerRoutine = function(info) {
+	switch (info.type) {
+		case ASAPModuleType.CMC:
+			return ASAP6502.CI_BINARY_RESOURCE_CMC_OBX;
+		case ASAPModuleType.CM3:
+			return ASAP6502.CI_BINARY_RESOURCE_CM3_OBX;
+		case ASAPModuleType.CMR:
+			return ASAP6502.CI_BINARY_RESOURCE_CMR_OBX;
+		case ASAPModuleType.CMS:
+			return ASAP6502.CI_BINARY_RESOURCE_CMS_OBX;
+		case ASAPModuleType.DLT:
+			return ASAP6502.CI_BINARY_RESOURCE_DLT_OBX;
+		case ASAPModuleType.MPT:
+			return ASAP6502.CI_BINARY_RESOURCE_MPT_OBX;
+		case ASAPModuleType.RMT:
+			return info.channels == 1 ? ASAP6502.CI_BINARY_RESOURCE_RMT4_OBX : ASAP6502.CI_BINARY_RESOURCE_RMT8_OBX;
+		case ASAPModuleType.TMC:
+			return ASAP6502.CI_BINARY_RESOURCE_TMC_OBX;
+		case ASAPModuleType.TM2:
+			return ASAP6502.CI_BINARY_RESOURCE_TM2_OBX;
 		default:
-			return -1;
+			return null;
 	}
 }
-
-ASAPInfo.prototype.checkTwoDateDigits = function(i) {
-	var d1 = this.date.charCodeAt(i);
-	var d2 = this.date.charCodeAt(i + 1);
-	return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
-}
-ASAPInfo.COPYRIGHT = "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version.";
-ASAPInfo.CREDITS = "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n";
-
-ASAPInfo.prototype.getAuthor = function() {
-	return this.author;
-}
-
-ASAPInfo.prototype.getChannels = function() {
-	return this.channels;
-}
-
-ASAPInfo.prototype.getDate = function() {
-	return this.date;
-}
-
-ASAPInfo.prototype.getDayOfMonth = function() {
-	var n = this.checkDate();
-	if (n != 10)
-		return -1;
-	return this.getTwoDateDigits(0);
-}
-
-ASAPInfo.prototype.getDefaultSong = function() {
-	return this.defaultSong;
-}
-
-ASAPInfo.prototype.getDuration = function(song) {
-	return this.durations[song];
-}
-
-ASAPInfo.prototype.getLoop = function(song) {
-	return this.loops[song];
-}
-
-ASAPInfo.prototype.getMonth = function() {
-	var n = this.checkDate();
-	if (n < 7)
-		return -1;
-	return this.getTwoDateDigits(n - 7);
-}
-
-ASAPInfo.getPackedExt = function(filename) {
-	var ext = 0;
-	for (var i = filename.length; --i > 0;) {
-		var c = filename.charCodeAt(i);
-		if (c <= 32 || c > 122)
-			return 0;
-		if (c == 46)
-			return ext | 2105376;
-		ext = (ext << 8) + c;
-	}
-	return 0;
-}
-
-ASAPInfo.getRmtInstrumentFrames = function(module, instrument, volume, volumeFrame, onExtraPokey) {
-	var addrToOffset = ASAPInfo.getWord(module, 2) - 6;
-	instrument = ASAPInfo.getWord(module, 14) - addrToOffset + (instrument << 1);
-	if (module[instrument + 1] == 0)
-		return 0;
-	instrument = ASAPInfo.getWord(module, instrument) - addrToOffset;
-	var perFrame = module[12];
-	var playerCall = volumeFrame * perFrame;
-	var playerCalls = playerCall;
-	var index = module[instrument] + 1 + playerCall * 3;
-	var indexEnd = module[instrument + 2] + 3;
-	var indexLoop = module[instrument + 3];
-	if (indexLoop >= indexEnd)
-		return 0;
-	var volumeSlideDepth = module[instrument + 6];
-	var volumeMin = module[instrument + 7];
-	if (index >= indexEnd)
-		index = (index - indexEnd) % (indexEnd - indexLoop) + indexLoop;
-	else {
-		do {
-			var vol = module[instrument + index];
-			if (onExtraPokey)
-				vol >>= 4;
-			if ((vol & 15) >= ASAPInfo.CI_CONST_ARRAY_2[volume])
-				playerCalls = playerCall + 1;
-			playerCall++;
-			index += 3;
-		}
-		while (index < indexEnd);
-	}
-	if (volumeSlideDepth == 0)
-		return Math.floor(playerCalls / perFrame);
-	var volumeSlide = 128;
-	var silentLoop = false;
-	for (;;) {
-		if (index >= indexEnd) {
-			if (silentLoop)
-				break;
-			silentLoop = true;
-			index = indexLoop;
-		}
-		var vol = module[instrument + index];
-		if (onExtraPokey)
-			vol >>= 4;
-		if ((vol & 15) >= ASAPInfo.CI_CONST_ARRAY_2[volume]) {
-			playerCalls = playerCall + 1;
-			silentLoop = false;
-		}
-		playerCall++;
-		index += 3;
-		volumeSlide -= volumeSlideDepth;
-		if (volumeSlide < 0) {
-			volumeSlide += 256;
-			if (--volume <= volumeMin)
-				break;
-		}
-	}
-	return Math.floor(playerCalls / perFrame);
-}
-
-ASAPInfo.prototype.getSongs = function() {
-	return this.songs;
-}
-
-ASAPInfo.prototype.getTitle = function() {
-	return this.name;
-}
-
-ASAPInfo.prototype.getTitleOrFilename = function() {
-	return this.name.length > 0 ? this.name : this.filename;
-}
-
-ASAPInfo.prototype.getTwoDateDigits = function(i) {
-	return (this.date.charCodeAt(i) - 48) * 10 + this.date.charCodeAt(i + 1) - 48;
-}
-
-ASAPInfo.getWord = function(array, i) {
-	return array[i] + (array[i + 1] << 8);
-}
-
-ASAPInfo.prototype.getYear = function() {
-	var n = this.checkDate();
-	if (n < 0)
-		return -1;
-	return this.getTwoDateDigits(n - 4) * 100 + this.getTwoDateDigits(n - 2);
-}
-
-ASAPInfo.hasStringAt = function(module, moduleIndex, s) {
-	var n = s.length;
-	for (var i = 0; i < n; i++)
-		if (module[moduleIndex + i] != s.charCodeAt(i))
-			return false;
-	return true;
-}
-
-ASAPInfo.isDltPatternEnd = function(module, pos, i) {
-	for (var ch = 0; ch < 4; ch++) {
-		var pattern = module[8198 + (ch << 8) + pos];
-		if (pattern < 64) {
-			var offset = 6 + (pattern << 7) + (i << 1);
-			if ((module[offset] & 128) == 0 && (module[offset + 1] & 128) != 0)
-				return true;
-		}
-	}
-	return false;
-}
-
-ASAPInfo.isDltTrackEmpty = function(module, pos) {
-	return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
-}
-
-ASAPInfo.isOurExt = function(ext) {
-	return ext.length == 3 && ASAPInfo.isOurPackedExt(ext.charCodeAt(0) + (ext.charCodeAt(1) << 8) + (ext.charCodeAt(2) << 16) | 2105376);
-}
-
-ASAPInfo.isOurFile = function(filename) {
-	return ASAPInfo.isOurPackedExt(ASAPInfo.getPackedExt(filename));
-}
-
-ASAPInfo.isOurPackedExt = function(ext) {
-	switch (ext) {
-		case 7364979:
-		case 6516067:
-		case 3370339:
-		case 7499107:
-		case 7564643:
-		case 6516068:
-		case 7629924:
-		case 7630957:
-		case 6582381:
-		case 7630194:
-		case 6516084:
-		case 3698036:
-		case 3304820:
-			return true;
-		default:
-			return false;
-	}
-}
-
-ASAPInfo.prototype.load = function(filename, module, moduleLen) {
-	this.parseFile(null, filename, module, moduleLen);
-}
-
-ASAPInfo.prototype.loadNative = function(asap, module, moduleLen, playerRoutine) {
-	if ((module[0] != 255 || module[1] != 255) && (module[0] != 0 || module[1] != 0))
-		throw "Invalid two leading bytes of the module";
-	this.music = ASAPInfo.getWord(module, 2);
-	this.player = ASAPInfo.getWord(playerRoutine, 2);
-	var playerLastByte = ASAPInfo.getWord(playerRoutine, 4);
-	if (this.music <= playerLastByte)
-		throw "Module address conflicts with the player routine";
-	var musicLastByte = ASAPInfo.getWord(module, 4);
-	if (this.music <= 55295 && musicLastByte >= 53248)
-		throw "Module address conflicts with hardware registers";
-	var blockLen = musicLastByte + 1 - this.music;
-	if (6 + blockLen != moduleLen) {
-		if (this.type != ASAPModuleType.RMT || 11 + blockLen > moduleLen)
-			throw "Module length doesn't match headers";
-		var infoAddr = ASAPInfo.getWord(module, 6 + blockLen);
-		if (infoAddr != this.music + blockLen)
-			throw "Invalid address of RMT info";
-		var infoLen = ASAPInfo.getWord(module, 8 + blockLen) + 1 - infoAddr;
-		if (10 + blockLen + infoLen != moduleLen)
-			throw "Invalid RMT info block";
-	}
-	if (asap != null) {
-		Ci.copyArray(module, 6, asap.memory, this.music, blockLen);
-		Ci.copyArray(playerRoutine, 6, asap.memory, this.player, playerLastByte + 1 - this.player);
-	}
-}
-ASAPInfo.MAX_MODULE_LENGTH = 65000;
-ASAPInfo.MAX_SONGS = 32;
-ASAPInfo.MAX_TEXT_LENGTH = 127;
-
-ASAPInfo.prototype.parseCmc = function(asap, module, moduleLen, type, playerRoutine) {
-	if (moduleLen < 774)
-		throw "Module too short";
-	this.type = type;
-	this.loadNative(asap, module, moduleLen, playerRoutine);
-	if (asap != null && type == ASAPModuleType.CMR) {
-		Ci.copyArray(ASAPInfo.CI_CONST_ARRAY_1, 0, asap.memory, 3087, 37);
-	}
-	var lastPos = 84;
-	while (--lastPos >= 0) {
-		if (module[518 + lastPos] < 176 || module[603 + lastPos] < 64 || module[688 + lastPos] < 64)
-			break;
-		if (this.channels == 2) {
-			if (module[774 + lastPos] < 176 || module[859 + lastPos] < 64 || module[944 + lastPos] < 64)
-				break;
-		}
-	}
-	this.songs = 0;
-	this.parseCmcSong(module, 0);
-	for (var pos = 0; pos < lastPos && this.songs < 32; pos++)
-		if (module[518 + pos] == 143 || module[518 + pos] == 239)
-			this.parseCmcSong(module, pos + 1);
-}
-
-ASAPInfo.prototype.parseCmcSong = function(module, pos) {
-	var tempo = module[25];
-	var playerCalls = 0;
-	var repStartPos = 0;
-	var repEndPos = 0;
-	var repTimes = 0;
-	var seen = new Array(85);
-	while (pos >= 0 && pos < 85) {
-		if (pos == repEndPos && repTimes > 0) {
-			for (var i = 0; i < 85; i++)
-				if (seen[i] == 1 || seen[i] == 3)
-					seen[i] = 0;
-			repTimes--;
-			pos = repStartPos;
-		}
-		if (seen[pos] != 0) {
-			if (seen[pos] != 1)
-				this.loops[this.songs] = true;
-			break;
-		}
-		seen[pos] = 1;
-		var p1 = module[518 + pos];
-		var p2 = module[603 + pos];
-		var p3 = module[688 + pos];
-		if (p1 == 254 || p2 == 254 || p3 == 254) {
-			pos++;
-			continue;
-		}
-		p1 >>= 4;
-		if (p1 == 8)
-			break;
-		if (p1 == 9) {
-			pos = p2;
-			continue;
-		}
-		if (p1 == 10) {
-			pos -= p2;
-			continue;
-		}
-		if (p1 == 11) {
-			pos += p2;
-			continue;
-		}
-		if (p1 == 12) {
-			tempo = p2;
-			pos++;
-			continue;
-		}
-		if (p1 == 13) {
-			pos++;
-			repStartPos = pos;
-			repEndPos = pos + p2;
-			repTimes = p3 - 1;
-			continue;
-		}
-		if (p1 == 14) {
-			this.loops[this.songs] = true;
-			break;
-		}
-		p2 = repTimes > 0 ? 3 : 2;
-		for (p1 = 0; p1 < 85; p1++)
-			if (seen[p1] == 1)
-				seen[p1] = p2;
-		playerCalls += tempo * (this.type == ASAPModuleType.CM3 ? 48 : 64);
-		pos++;
-	}
-	this.addSong(playerCalls);
-}
-
-ASAPInfo.parseDec = function(module, moduleIndex, maxVal) {
-	if (module[moduleIndex] == 13)
-		throw "Missing number";
-	for (var r = 0;;) {
-		var c = module[moduleIndex++];
-		if (c == 13)
-			return r;
-		if (c < 48 || c > 57)
-			throw "Invalid number";
-		r = 10 * r + c - 48;
-		if (r > maxVal)
-			throw "Number too big";
-	}
-}
-
-ASAPInfo.prototype.parseDlt = function(asap, module, moduleLen) {
-	if (moduleLen == 11270) {
-		if (asap != null)
-			asap.memory[19456] = 0;
-	}
-	else if (moduleLen != 11271)
-		throw "Invalid module length";
-	this.type = ASAPModuleType.DLT;
-	this.loadNative(asap, module, moduleLen, ASAPInfo.CI_BINARY_RESOURCE_DLT_OBX);
-	if (this.music != 8192)
-		throw "Unsupported module address";
-	var seen = new Array(128);
-	this.songs = 0;
-	for (var pos = 0; pos < 128 && this.songs < 32; pos++) {
-		if (!seen[pos])
-			this.parseDltSong(module, seen, pos);
-	}
-	if (this.songs == 0)
-		throw "No songs found";
-}
-
-ASAPInfo.prototype.parseDltSong = function(module, seen, pos) {
-	while (pos < 128 && !seen[pos] && ASAPInfo.isDltTrackEmpty(module, pos))
-		seen[pos++] = true;
-	this.songPos[this.songs] = pos;
-	var playerCalls = 0;
-	var loop = false;
-	var tempo = 6;
-	while (pos < 128) {
-		if (seen[pos]) {
-			loop = true;
-			break;
-		}
-		seen[pos] = true;
-		var p1 = module[8198 + pos];
-		if (p1 == 64 || ASAPInfo.isDltTrackEmpty(module, pos))
-			break;
-		if (p1 == 65)
-			pos = module[8326 + pos];
-		else if (p1 == 66)
-			tempo = module[8326 + pos++];
-		else {
-			for (var i = 0; i < 64 && !ASAPInfo.isDltPatternEnd(module, pos, i); i++)
-				playerCalls += tempo;
-			pos++;
-		}
-	}
-	if (playerCalls > 0) {
-		this.loops[this.songs] = loop;
-		this.addSong(playerCalls);
-	}
-}
-
-ASAPInfo.parseDuration = function(s) {
-	var i = 0;
-	var n = s.length;
-	var d;
-	if (i >= n)
-		throw "Invalid duration";
-	d = s.charCodeAt(i) - 48;
-	if (d < 0 || d > 9)
-		throw "Invalid duration";
-	i++;
-	var r = d;
-	if (i < n) {
-		d = s.charCodeAt(i) - 48;
-		if (d >= 0 && d <= 9) {
-			i++;
-			r = 10 * r + d;
-		}
-		if (i < n && s.charCodeAt(i) == 58) {
-			i++;
-			if (i >= n)
-				throw "Invalid duration";
-			d = s.charCodeAt(i) - 48;
-			if (d < 0 || d > 5)
-				throw "Invalid duration";
-			i++;
-			r = (6 * r + d) * 10;
-			if (i >= n)
-				throw "Invalid duration";
-			d = s.charCodeAt(i) - 48;
-			if (d < 0 || d > 9)
-				throw "Invalid duration";
-			i++;
-			r += d;
-		}
-	}
-	r *= 1000;
-	if (i >= n)
-		return r;
-	if (s.charCodeAt(i) != 46)
-		throw "Invalid duration";
-	i++;
-	if (i >= n)
-		throw "Invalid duration";
-	d = s.charCodeAt(i) - 48;
-	if (d < 0 || d > 9)
-		throw "Invalid duration";
-	i++;
-	r += 100 * d;
-	if (i >= n)
-		return r;
-	d = s.charCodeAt(i) - 48;
-	if (d < 0 || d > 9)
-		throw "Invalid duration";
-	i++;
-	r += 10 * d;
-	if (i >= n)
-		return r;
-	d = s.charCodeAt(i) - 48;
-	if (d < 0 || d > 9)
-		throw "Invalid duration";
-	i++;
-	r += d;
-	return r;
-}
-
-ASAPInfo.prototype.parseFile = function(asap, filename, module, moduleLen) {
-	var len = filename.length;
-	var basename = 0;
-	var ext = -1;
-	for (var i = len; --i >= 0;) {
-		var c = filename.charCodeAt(i);
-		if (c == 47 || c == 92) {
-			basename = i + 1;
-			break;
-		}
-		if (c == 46)
-			ext = i;
-	}
-	if (ext < 0)
-		throw "Filename has no extension";
-	ext -= basename;
-	if (ext > 127)
-		ext = 127;
-	this.filename = filename.substring(basename, basename + ext);
-	this.author = "";
-	this.name = "";
-	this.date = "";
-	this.channels = 1;
-	this.songs = 1;
-	this.defaultSong = 0;
-	for (var i = 0; i < 32; i++) {
-		this.durations[i] = -1;
-		this.loops[i] = false;
-	}
-	this.ntsc = false;
-	this.fastplay = 312;
-	this.music = -1;
-	this.init = -1;
-	this.player = -1;
-	this.covoxAddr = -1;
-	switch (ASAPInfo.getPackedExt(filename)) {
-		case 7364979:
-			this.parseSap(asap, module, moduleLen);
-			return;
-		case 6516067:
-			this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMC, ASAPInfo.CI_BINARY_RESOURCE_CMC_OBX);
-			return;
-		case 3370339:
-			this.parseCmc(asap, module, moduleLen, ASAPModuleType.CM3, ASAPInfo.CI_BINARY_RESOURCE_CM3_OBX);
-			return;
-		case 7499107:
-			this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMR, ASAPInfo.CI_BINARY_RESOURCE_CMC_OBX);
-			return;
-		case 7564643:
-			this.channels = 2;
-			this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMS, ASAPInfo.CI_BINARY_RESOURCE_CMS_OBX);
-			return;
-		case 6516068:
-			this.fastplay = 156;
-			this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMC, ASAPInfo.CI_BINARY_RESOURCE_CMC_OBX);
-			return;
-		case 7629924:
-			this.parseDlt(asap, module, moduleLen);
-			return;
-		case 7630957:
-			this.parseMpt(asap, module, moduleLen);
-			return;
-		case 6582381:
-			this.fastplay = 156;
-			this.parseMpt(asap, module, moduleLen);
-			return;
-		case 7630194:
-			this.parseRmt(asap, module, moduleLen);
-			return;
-		case 6516084:
-		case 3698036:
-			this.parseTmc(asap, module, moduleLen);
-			return;
-		case 3304820:
-			this.parseTm2(asap, module, moduleLen);
-			return;
-		default:
-			throw "Unknown filename extension";
-	}
-}
-
-ASAPInfo.parseHex = function(module, moduleIndex) {
-	if (module[moduleIndex] == 13)
-		throw "Missing number";
-	for (var r = 0;;) {
-		var c = module[moduleIndex++];
-		if (c == 13)
-			return r;
-		if (r > 4095)
-			throw "Number too big";
-		r <<= 4;
-		if (c >= 48 && c <= 57)
-			r += c - 48;
-		else if (c >= 65 && c <= 70)
-			r += c - 65 + 10;
-		else if (c >= 97 && c <= 102)
-			r += c - 97 + 10;
-		else
-			throw "Invalid number";
-	}
-}
-
-ASAPInfo.prototype.parseMpt = function(asap, module, moduleLen) {
-	if (moduleLen < 464)
-		throw "Module too short";
-	this.type = ASAPModuleType.MPT;
-	this.loadNative(asap, module, moduleLen, ASAPInfo.CI_BINARY_RESOURCE_MPT_OBX);
-	var track0Addr = ASAPInfo.getWord(module, 2) + 458;
-	if (module[454] + (module[458] << 8) != track0Addr)
-		throw "Invalid address of the first track";
-	var songLen = module[455] + (module[459] << 8) - track0Addr >> 1;
-	if (songLen > 254)
-		throw "Song too long";
-	var globalSeen = new Array(256);
-	this.songs = 0;
-	for (var pos = 0; pos < songLen && this.songs < 32; pos++) {
-		if (!globalSeen[pos]) {
-			this.songPos[this.songs] = pos;
-			this.parseMptSong(module, globalSeen, songLen, pos);
-		}
-	}
-	if (this.songs == 0)
-		throw "No songs found";
-}
-
-ASAPInfo.prototype.parseMptSong = function(module, globalSeen, songLen, pos) {
-	var addrToOffset = ASAPInfo.getWord(module, 2) - 6;
-	var tempo = module[463];
-	var playerCalls = 0;
-	var seen = new Array(256);
-	var patternOffset = new Array(4);
-	var blankRows = new Array(4);
-	var blankRowsCounter = new Array(4);
-	while (pos < songLen) {
-		if (seen[pos] != 0) {
-			if (seen[pos] != 1)
-				this.loops[this.songs] = true;
-			break;
-		}
-		seen[pos] = 1;
-		globalSeen[pos] = true;
-		var i = module[464 + pos * 2];
-		if (i == 255) {
-			pos = module[465 + pos * 2];
-			continue;
-		}
-		var ch;
-		for (ch = 3; ch >= 0; ch--) {
-			i = module[454 + ch] + (module[458 + ch] << 8) - addrToOffset;
-			i = module[i + pos * 2];
-			if (i >= 64)
-				break;
-			i <<= 1;
-			i = ASAPInfo.getWord(module, 70 + i);
-			patternOffset[ch] = i == 0 ? 0 : i - addrToOffset;
-			blankRowsCounter[ch] = 0;
-		}
-		if (ch >= 0)
-			break;
-		for (i = 0; i < songLen; i++)
-			if (seen[i] == 1)
-				seen[i] = 2;
-		for (var patternRows = module[462]; --patternRows >= 0;) {
-			for (ch = 3; ch >= 0; ch--) {
-				if (patternOffset[ch] == 0 || --blankRowsCounter[ch] >= 0)
-					continue;
-				for (;;) {
-					i = module[patternOffset[ch]++];
-					if (i < 64 || i == 254)
-						break;
-					if (i < 128)
-						continue;
-					if (i < 192) {
-						blankRows[ch] = i - 128;
-						continue;
-					}
-					if (i < 208)
-						continue;
-					if (i < 224) {
-						tempo = i - 207;
-						continue;
-					}
-					patternRows = 0;
-				}
-				blankRowsCounter[ch] = blankRows[ch];
-			}
-			playerCalls += tempo;
-		}
-		pos++;
-	}
-	if (playerCalls > 0)
-		this.addSong(playerCalls);
-}
-
-ASAPInfo.prototype.parseRmt = function(asap, module, moduleLen) {
-	if (moduleLen < 48)
-		throw "Module too short";
-	if (module[6] != 82 || module[7] != 77 || module[8] != 84 || module[13] != 1)
-		throw "Invalid module header";
-	var posShift;
-	switch (module[9]) {
-		case 52:
-			posShift = 2;
-			break;
-		case 56:
-			this.channels = 2;
-			posShift = 3;
-			break;
-		default:
-			throw "Unsupported number of channels";
-	}
-	var perFrame = module[12];
-	if (perFrame < 1 || perFrame > 4)
-		throw "Unsupported player call rate";
-	this.type = ASAPModuleType.RMT;
-	this.loadNative(asap, module, moduleLen, this.channels == 2 ? ASAPInfo.CI_BINARY_RESOURCE_RMT8_OBX : ASAPInfo.CI_BINARY_RESOURCE_RMT4_OBX);
-	var songLen = ASAPInfo.getWord(module, 4) + 1 - ASAPInfo.getWord(module, 20);
-	if (posShift == 3 && (songLen & 4) != 0 && module[6 + ASAPInfo.getWord(module, 4) - ASAPInfo.getWord(module, 2) - 3] == 254)
-		songLen += 4;
-	songLen >>= posShift;
-	if (songLen >= 256)
-		throw "Song too long";
-	var globalSeen = new Array(256);
-	this.songs = 0;
-	for (var pos = 0; pos < songLen && this.songs < 32; pos++) {
-		if (!globalSeen[pos]) {
-			this.songPos[this.songs] = pos;
-			this.parseRmtSong(module, globalSeen, songLen, posShift, pos);
-		}
-	}
-	this.fastplay = Math.floor(312 / perFrame);
-	this.player = 1536;
-	if (this.songs == 0)
-		throw "No songs found";
-}
-
-ASAPInfo.prototype.parseRmtSong = function(module, globalSeen, songLen, posShift, pos) {
-	var addrToOffset = ASAPInfo.getWord(module, 2) - 6;
-	var tempo = module[11];
-	var frames = 0;
-	var songOffset = ASAPInfo.getWord(module, 20) - addrToOffset;
-	var patternLoOffset = ASAPInfo.getWord(module, 16) - addrToOffset;
-	var patternHiOffset = ASAPInfo.getWord(module, 18) - addrToOffset;
-	var seen = new Array(256);
-	var patternBegin = new Array(8);
-	var patternOffset = new Array(8);
-	var blankRows = new Array(8);
-	var instrumentNo = new Array(8);
-	var instrumentFrame = new Array(8);
-	var volumeValue = new Array(8);
-	var volumeFrame = new Array(8);
-	while (pos < songLen) {
-		if (seen[pos] != 0) {
-			if (seen[pos] != 1)
-				this.loops[this.songs] = true;
-			break;
-		}
-		seen[pos] = 1;
-		globalSeen[pos] = true;
-		if (module[songOffset + (pos << posShift)] == 254) {
-			pos = module[songOffset + (pos << posShift) + 1];
-			continue;
-		}
-		for (var ch = 0; ch < 1 << posShift; ch++) {
-			var p = module[songOffset + (pos << posShift) + ch];
-			if (p == 255)
-				blankRows[ch] = 256;
-			else {
-				patternOffset[ch] = patternBegin[ch] = module[patternLoOffset + p] + (module[patternHiOffset + p] << 8) - addrToOffset;
-				blankRows[ch] = 0;
-			}
-		}
-		for (var i = 0; i < songLen; i++)
-			if (seen[i] == 1)
-				seen[i] = 2;
-		for (var patternRows = module[10]; --patternRows >= 0;) {
-			for (var ch = 0; ch < 1 << posShift; ch++) {
-				if (--blankRows[ch] > 0)
-					continue;
-				for (;;) {
-					var i = module[patternOffset[ch]++];
-					if ((i & 63) < 62) {
-						i += module[patternOffset[ch]++] << 8;
-						if ((i & 63) != 61) {
-							instrumentNo[ch] = i >> 10;
-							instrumentFrame[ch] = frames;
-						}
-						volumeValue[ch] = i >> 6 & 15;
-						volumeFrame[ch] = frames;
-						break;
-					}
-					if (i == 62) {
-						blankRows[ch] = module[patternOffset[ch]++];
-						break;
-					}
-					if ((i & 63) == 62) {
-						blankRows[ch] = i >> 6;
-						break;
-					}
-					if ((i & 191) == 63) {
-						tempo = module[patternOffset[ch]++];
-						continue;
-					}
-					if (i == 191) {
-						patternOffset[ch] = patternBegin[ch] + module[patternOffset[ch]];
-						continue;
-					}
-					patternRows = -1;
-					break;
-				}
-				if (patternRows < 0)
-					break;
-			}
-			if (patternRows >= 0)
-				frames += tempo;
-		}
-		pos++;
-	}
-	var instrumentFrames = 0;
-	for (var ch = 0; ch < 1 << posShift; ch++) {
-		var frame = instrumentFrame[ch];
-		frame += ASAPInfo.getRmtInstrumentFrames(module, instrumentNo[ch], volumeValue[ch], volumeFrame[ch] - frame, ch >= 4);
-		if (instrumentFrames < frame)
-			instrumentFrames = frame;
-	}
-	if (frames > instrumentFrames) {
-		if (frames - instrumentFrames > 100)
-			this.loops[this.songs] = false;
-		frames = instrumentFrames;
-	}
-	if (frames > 0)
-		this.addSong(frames);
-}
-
-ASAPInfo.prototype.parseSap = function(asap, module, moduleLen) {
-	this.parseSapHeader(module, moduleLen);
-	if (asap == null)
-		return;
-	Ci.clearArray(asap.memory);
-	var moduleIndex = this.headerLen + 2;
-	while (moduleIndex + 5 <= moduleLen) {
-		var start_addr = ASAPInfo.getWord(module, moduleIndex);
-		var block_len = ASAPInfo.getWord(module, moduleIndex + 2) + 1 - start_addr;
-		if (block_len <= 0 || moduleIndex + block_len > moduleLen)
-			throw "Invalid binary block";
-		moduleIndex += 4;
-		Ci.copyArray(module, moduleIndex, asap.memory, start_addr, block_len);
-		moduleIndex += block_len;
-		if (moduleIndex == moduleLen)
-			return;
-		if (moduleIndex + 7 <= moduleLen && module[moduleIndex] == 255 && module[moduleIndex + 1] == 255)
-			moduleIndex += 2;
-	}
-	throw "Invalid binary block";
-}
-
-ASAPInfo.prototype.parseSapHeader = function(module, moduleLen) {
-	if (!ASAPInfo.hasStringAt(module, 0, "SAP\r\n"))
-		throw "Missing SAP header";
-	this.fastplay = -1;
-	var type = 0;
-	var moduleIndex = 5;
-	var durationIndex = 0;
-	while (module[moduleIndex] != 255) {
-		if (moduleIndex + 8 >= moduleLen)
-			throw "Missing binary part";
-		if (ASAPInfo.hasStringAt(module, moduleIndex, "AUTHOR ")) {
-			var len = ASAPInfo.parseText(module, moduleIndex + 7);
-			if (len > 0)
-				this.author = Ci.bytesToString(module, moduleIndex + 7 + 1, len);
-		}
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "NAME ")) {
-			var len = ASAPInfo.parseText(module, moduleIndex + 5);
-			if (len > 0)
-				this.name = Ci.bytesToString(module, moduleIndex + 5 + 1, len);
-		}
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "DATE ")) {
-			var len = ASAPInfo.parseText(module, moduleIndex + 5);
-			if (len > 0)
-				this.date = Ci.bytesToString(module, moduleIndex + 5 + 1, len);
-		}
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "SONGS ")) {
-			this.songs = ASAPInfo.parseDec(module, moduleIndex + 6, 32);
-			if (this.songs < 1)
-				throw "Number too small";
-		}
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "DEFSONG ")) {
-			this.defaultSong = ASAPInfo.parseDec(module, moduleIndex + 8, 31);
-			if (this.defaultSong < 0)
-				throw "Number too small";
-		}
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "STEREO\r"))
-			this.channels = 2;
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "NTSC\r"))
-			this.ntsc = true;
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "TIME ")) {
-			if (durationIndex >= 32)
-				throw "Too many TIME tags";
-			moduleIndex += 5;
-			var len;
-			for (len = 0; module[moduleIndex + len] != 13; len++) {
-			}
-			if (len > 5 && ASAPInfo.hasStringAt(module, moduleIndex + len - 5, " LOOP")) {
-				this.loops[durationIndex] = true;
-				len -= 5;
-			}
-			if (len > 9)
-				throw "Invalid TIME tag";
-			var s = Ci.bytesToString(module, moduleIndex, len);
-			var duration = ASAPInfo.parseDuration(s);
-			this.durations[durationIndex++] = duration;
-		}
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "TYPE "))
-			type = module[moduleIndex + 5];
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "FASTPLAY ")) {
-			this.fastplay = ASAPInfo.parseDec(module, moduleIndex + 9, 312);
-			if (this.fastplay < 1)
-				throw "Number too small";
-		}
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "MUSIC ")) {
-			this.music = ASAPInfo.parseHex(module, moduleIndex + 6);
-		}
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "INIT ")) {
-			this.init = ASAPInfo.parseHex(module, moduleIndex + 5);
-		}
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "PLAYER ")) {
-			this.player = ASAPInfo.parseHex(module, moduleIndex + 7);
-		}
-		else if (ASAPInfo.hasStringAt(module, moduleIndex, "COVOX ")) {
-			this.covoxAddr = ASAPInfo.parseHex(module, moduleIndex + 6);
-			if (this.covoxAddr != 54784)
-				throw "COVOX should be D600";
-			this.channels = 2;
-		}
-		while (module[moduleIndex++] != 13) {
-			if (moduleIndex >= moduleLen)
-				throw "Malformed SAP header";
-		}
-		if (module[moduleIndex++] != 10)
-			throw "Malformed SAP header";
-	}
-	if (this.defaultSong >= this.songs)
-		throw "DEFSONG too big";
-	switch (type) {
-		case 66:
-			if (this.player < 0)
-				throw "Missing PLAYER tag";
-			if (this.init < 0)
-				throw "Missing INIT tag";
-			this.type = ASAPModuleType.SAP_B;
-			break;
-		case 67:
-			if (this.player < 0)
-				throw "Missing PLAYER tag";
-			if (this.music < 0)
-				throw "Missing MUSIC tag";
-			this.type = ASAPModuleType.SAP_C;
-			break;
-		case 68:
-			if (this.init < 0)
-				throw "Missing INIT tag";
-			this.type = ASAPModuleType.SAP_D;
-			break;
-		case 83:
-			if (this.init < 0)
-				throw "Missing INIT tag";
-			this.type = ASAPModuleType.SAP_S;
-			this.fastplay = 78;
-			break;
-		default:
-			throw "Unsupported TYPE";
-	}
-	if (this.fastplay < 0)
-		this.fastplay = this.ntsc ? 262 : 312;
-	else if (this.ntsc && this.fastplay > 262)
-		throw "FASTPLAY too big";
-	if (module[moduleIndex + 1] != 255)
-		throw "Invalid binary header";
-	this.headerLen = moduleIndex;
-}
-
-ASAPInfo.parseText = function(module, moduleIndex) {
-	if (module[moduleIndex] != 34)
-		throw "Missing quote";
-	if (ASAPInfo.hasStringAt(module, moduleIndex + 1, "<?>\"\r"))
-		return 0;
-	for (var len = 0;; len++) {
-		var c = module[moduleIndex + 1 + len];
-		if (c == 34) {
-			if (module[moduleIndex + 2 + len] != 13)
-				throw "Invalid text tag";
-			return len;
-		}
-		if (c < 32 || c >= 127)
-			throw "Invalid character";
-	}
-}
-
-ASAPInfo.prototype.parseTm2 = function(asap, module, moduleLen) {
-	if (moduleLen < 932)
-		throw "Module too short";
-	this.type = ASAPModuleType.TM2;
-	this.loadNative(asap, module, moduleLen, ASAPInfo.CI_BINARY_RESOURCE_TM2_OBX);
-	var i = module[37];
-	if (i < 1 || i > 4)
-		throw "Unsupported player call rate";
-	this.fastplay = Math.floor(312 / i);
-	this.player = 1280;
-	if (module[31] != 0)
-		this.channels = 2;
-	var lastPos = 65535;
-	for (i = 0; i < 128; i++) {
-		var instrAddr = module[134 + i] + (module[774 + i] << 8);
-		if (instrAddr != 0 && instrAddr < lastPos)
-			lastPos = instrAddr;
-	}
-	for (i = 0; i < 256; i++) {
-		var patternAddr = module[262 + i] + (module[518 + i] << 8);
-		if (patternAddr != 0 && patternAddr < lastPos)
-			lastPos = patternAddr;
-	}
-	lastPos -= ASAPInfo.getWord(module, 2) + 896;
-	if (902 + lastPos >= moduleLen)
-		throw "Module too short";
-	var c;
-	do {
-		if (lastPos <= 0)
-			throw "No songs found";
-		lastPos -= 17;
-		c = module[918 + lastPos];
-	}
-	while (c == 0 || c >= 128);
-	this.songs = 0;
-	this.parseTm2Song(module, 0);
-	for (i = 0; i < lastPos && this.songs < 32; i += 17) {
-		c = module[918 + i];
-		if (c == 0 || c >= 128)
-			this.parseTm2Song(module, i + 17);
-	}
-}
-
-ASAPInfo.prototype.parseTm2Song = function(module, pos) {
-	var addrToOffset = ASAPInfo.getWord(module, 2) - 6;
-	var tempo = module[36] + 1;
-	var playerCalls = 0;
-	var patternOffset = new Array(8);
-	var blankRows = new Array(8);
-	for (;;) {
-		var patternRows = module[918 + pos];
-		if (patternRows == 0)
-			break;
-		if (patternRows >= 128) {
-			this.loops[this.songs] = true;
-			break;
-		}
-		for (var ch = 7; ch >= 0; ch--) {
-			var pat = module[917 + pos - 2 * ch];
-			patternOffset[ch] = module[262 + pat] + (module[518 + pat] << 8) - addrToOffset;
-			blankRows[ch] = 0;
-		}
-		while (--patternRows >= 0) {
-			for (var ch = 7; ch >= 0; ch--) {
-				if (--blankRows[ch] >= 0)
-					continue;
-				for (;;) {
-					var i = module[patternOffset[ch]++];
-					if (i == 0) {
-						patternOffset[ch]++;
-						break;
-					}
-					if (i < 64) {
-						if (module[patternOffset[ch]++] >= 128)
-							patternOffset[ch]++;
-						break;
-					}
-					if (i < 128) {
-						patternOffset[ch]++;
-						break;
-					}
-					if (i == 128) {
-						blankRows[ch] = module[patternOffset[ch]++];
-						break;
-					}
-					if (i < 192)
-						break;
-					if (i < 208) {
-						tempo = i - 191;
-						continue;
-					}
-					if (i < 224) {
-						patternOffset[ch]++;
-						break;
-					}
-					if (i < 240) {
-						patternOffset[ch] += 2;
-						break;
-					}
-					if (i < 255) {
-						blankRows[ch] = i - 240;
-						break;
-					}
-					blankRows[ch] = 64;
-					break;
-				}
-			}
-			playerCalls += tempo;
-		}
-		pos += 17;
-	}
-	this.addSong(playerCalls);
-}
-
-ASAPInfo.prototype.parseTmc = function(asap, module, moduleLen) {
-	if (moduleLen < 464)
-		throw "Module too short";
-	this.type = ASAPModuleType.TMC;
-	this.loadNative(asap, module, moduleLen, ASAPInfo.CI_BINARY_RESOURCE_TMC_OBX);
-	this.channels = 2;
-	var i = 0;
-	while (module[102 + i] == 0) {
-		if (++i >= 64)
-			throw "No instruments";
-	}
-	var lastPos = (module[102 + i] << 8) + module[38 + i] - ASAPInfo.getWord(module, 2) - 432;
-	if (437 + lastPos >= moduleLen)
-		throw "Module too short";
-	do {
-		if (lastPos <= 0)
-			throw "No songs found";
-		lastPos -= 16;
-	}
-	while (module[437 + lastPos] >= 128);
-	this.songs = 0;
-	this.parseTmcSong(module, 0);
-	for (i = 0; i < lastPos && this.songs < 32; i += 16)
-		if (module[437 + i] >= 128)
-			this.parseTmcSong(module, i + 16);
-	i = module[37];
-	if (i < 1 || i > 4)
-		throw "Unsupported player call rate";
-	if (asap != null)
-		asap.tmcPerFrame = i;
-	this.fastplay = Math.floor(312 / i);
-}
-
-ASAPInfo.prototype.parseTmcSong = function(module, pos) {
-	var addrToOffset = ASAPInfo.getWord(module, 2) - 6;
-	var tempo = module[36] + 1;
-	var frames = 0;
-	var patternOffset = new Array(8);
-	var blankRows = new Array(8);
-	while (module[437 + pos] < 128) {
-		for (var ch = 7; ch >= 0; ch--) {
-			var pat = module[437 + pos - 2 * ch];
-			patternOffset[ch] = module[166 + pat] + (module[294 + pat] << 8) - addrToOffset;
-			blankRows[ch] = 0;
-		}
-		for (var patternRows = 64; --patternRows >= 0;) {
-			for (var ch = 7; ch >= 0; ch--) {
-				if (--blankRows[ch] >= 0)
-					continue;
-				for (;;) {
-					var i = module[patternOffset[ch]++];
-					if (i < 64) {
-						patternOffset[ch]++;
-						break;
-					}
-					if (i == 64) {
-						i = module[patternOffset[ch]++];
-						if ((i & 127) == 0)
-							patternRows = 0;
-						else
-							tempo = (i & 127) + 1;
-						if (i >= 128)
-							patternOffset[ch]++;
-						break;
-					}
-					if (i < 128) {
-						i = module[patternOffset[ch]++] & 127;
-						if (i == 0)
-							patternRows = 0;
-						else
-							tempo = i + 1;
-						patternOffset[ch]++;
-						break;
-					}
-					if (i < 192)
-						continue;
-					blankRows[ch] = i - 191;
-					break;
-				}
-			}
-			frames += tempo;
-		}
-		pos += 16;
-	}
-	if (module[436 + pos] < 128)
-		this.loops[this.songs] = true;
-	this.addSong(frames);
-}
-ASAPInfo.VERSION = "3.0.0";
-ASAPInfo.VERSION_MAJOR = 3;
-ASAPInfo.VERSION_MICRO = 0;
-ASAPInfo.VERSION_MINOR = 0;
-ASAPInfo.YEARS = "2005-2011";
-ASAPInfo.CI_CONST_ARRAY_1 = [ 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, 136, 127, 121, 115, 108, 103,
-	96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52, 51, 48, 45, 42, 40,
-	37, 36, 33, 31, 30 ];
-ASAPInfo.CI_CONST_ARRAY_2 = [ 16, 8, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 ];
-ASAPInfo.CI_BINARY_RESOURCE_CM3_OBX = [ 255, 255, 0, 5, 223, 12, 76, 18, 11, 76, 120, 5, 76, 203, 7, 0,
+ASAP6502.CI_BINARY_RESOURCE_CM3_OBX = [ 255, 255, 0, 5, 223, 12, 76, 18, 11, 76, 120, 5, 76, 203, 7, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 160, 227, 237, 227, 160, 240, 236, 225,
 	249, 229, 242, 160, 246, 160, 178, 174, 177, 160, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255,
@@ -1828,7 +671,7 @@ ASAPInfo.CI_BINARY_RESOURCE_CM3_OBX = [ 255, 255, 0, 5, 223, 12, 76, 18, 11, 76,
 	10, 0, 0, 1, 2, 131, 0, 1, 2, 3, 1, 0, 2, 131, 1, 0,
 	2, 3, 1, 2, 128, 3, 128, 64, 32, 16, 8, 4, 2, 1, 3, 3,
 	3, 3, 7, 11, 15, 19 ];
-ASAPInfo.CI_BINARY_RESOURCE_CMC_OBX = [ 255, 255, 0, 5, 220, 12, 76, 15, 11, 76, 120, 5, 76, 203, 7, 0,
+ASAP6502.CI_BINARY_RESOURCE_CMC_OBX = [ 255, 255, 0, 5, 220, 12, 76, 15, 11, 76, 120, 5, 76, 203, 7, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 160, 227, 237, 227, 160, 240, 236, 225,
 	249, 229, 242, 160, 246, 160, 178, 174, 177, 160, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255,
@@ -1955,7 +798,134 @@ ASAPInfo.CI_BINARY_RESOURCE_CMC_OBX = [ 255, 255, 0, 5, 220, 12, 76, 15, 11, 76,
 	1, 2, 131, 0, 1, 2, 3, 1, 0, 2, 131, 1, 0, 2, 3, 1,
 	2, 128, 3, 128, 64, 32, 16, 8, 4, 2, 1, 3, 3, 3, 3, 7,
 	11, 15, 19 ];
-ASAPInfo.CI_BINARY_RESOURCE_CMS_OBX = [ 255, 255, 0, 5, 186, 15, 234, 234, 234, 76, 21, 8, 76, 92, 15, 35,
+ASAP6502.CI_BINARY_RESOURCE_CMR_OBX = [ 255, 255, 0, 5, 220, 12, 76, 15, 11, 76, 120, 5, 76, 203, 7, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 160, 227, 237, 227, 160, 240, 236, 225,
+	249, 229, 242, 160, 246, 160, 178, 174, 177, 160, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255,
+	255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 128, 128, 128, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 141, 110,
+	5, 142, 111, 5, 140, 112, 5, 41, 112, 74, 74, 74, 170, 189, 145, 11,
+	141, 169, 5, 189, 146, 11, 141, 170, 5, 169, 3, 141, 15, 210, 216, 165,
+	254, 72, 165, 255, 72, 172, 112, 5, 174, 111, 5, 173, 110, 5, 32, 178,
+	5, 104, 133, 255, 104, 133, 254, 96, 173, 118, 5, 133, 254, 173, 119, 5,
+	133, 255, 160, 0, 138, 240, 28, 177, 254, 201, 143, 240, 4, 201, 239, 208,
+	12, 202, 208, 9, 200, 192, 84, 176, 9, 152, 170, 16, 6, 200, 192, 84,
+	144, 229, 96, 142, 104, 5, 32, 123, 6, 169, 0, 162, 9, 157, 69, 5,
+	202, 16, 250, 141, 103, 5, 169, 1, 141, 113, 5, 169, 255, 141, 106, 5,
+	173, 114, 5, 133, 254, 173, 115, 5, 133, 255, 160, 19, 177, 254, 170, 173,
+	118, 5, 133, 254, 173, 119, 5, 133, 255, 172, 104, 5, 177, 254, 201, 207,
+	208, 13, 152, 24, 105, 85, 168, 177, 254, 48, 15, 170, 76, 52, 6, 201,
+	143, 240, 7, 201, 239, 240, 3, 136, 16, 226, 142, 108, 5, 142, 109, 5,
+	96, 41, 15, 240, 245, 142, 218, 10, 142, 240, 10, 142, 255, 10, 140, 219,
+	10, 140, 241, 10, 140, 0, 11, 96, 142, 114, 5, 134, 254, 140, 115, 5,
+	132, 255, 24, 138, 105, 20, 141, 116, 5, 152, 105, 0, 141, 117, 5, 142,
+	118, 5, 200, 200, 140, 119, 5, 160, 19, 177, 254, 141, 108, 5, 141, 109,
+	5, 162, 8, 169, 0, 141, 113, 5, 157, 0, 210, 224, 3, 176, 8, 157,
+	9, 5, 169, 255, 157, 57, 5, 202, 16, 233, 169, 128, 162, 3, 157, 75,
+	5, 202, 16, 250, 96, 169, 1, 141, 113, 5, 169, 0, 240, 238, 41, 3,
+	201, 3, 240, 240, 224, 64, 176, 236, 192, 26, 176, 232, 170, 169, 128, 157,
+	75, 5, 169, 0, 157, 57, 5, 157, 60, 5, 157, 63, 5, 173, 111, 5,
+	157, 12, 5, 173, 112, 5, 10, 10, 10, 133, 254, 24, 173, 114, 5, 105,
+	48, 72, 173, 115, 5, 105, 1, 168, 104, 24, 101, 254, 157, 97, 5, 152,
+	105, 0, 157, 100, 5, 24, 173, 114, 5, 105, 148, 133, 254, 173, 115, 5,
+	105, 0, 133, 255, 173, 112, 5, 10, 109, 112, 5, 10, 168, 177, 254, 157,
+	79, 5, 200, 177, 254, 157, 82, 5, 41, 7, 141, 110, 5, 200, 177, 254,
+	157, 85, 5, 200, 177, 254, 157, 88, 5, 200, 177, 254, 157, 91, 5, 200,
+	177, 254, 157, 94, 5, 160, 0, 173, 110, 5, 201, 3, 208, 2, 160, 2,
+	201, 7, 208, 2, 160, 4, 185, 175, 11, 133, 254, 185, 176, 11, 133, 255,
+	189, 85, 5, 74, 74, 74, 74, 24, 109, 111, 5, 141, 111, 5, 141, 194,
+	7, 168, 173, 110, 5, 201, 7, 208, 15, 152, 10, 168, 177, 254, 157, 45,
+	5, 200, 140, 111, 5, 76, 131, 7, 177, 254, 157, 45, 5, 189, 85, 5,
+	41, 15, 24, 109, 111, 5, 141, 111, 5, 172, 111, 5, 173, 110, 5, 201,
+	5, 8, 177, 254, 40, 240, 8, 221, 45, 5, 208, 3, 56, 233, 1, 157,
+	48, 5, 189, 79, 5, 72, 41, 3, 168, 185, 181, 11, 157, 54, 5, 104,
+	74, 74, 74, 74, 160, 62, 201, 15, 240, 16, 160, 55, 201, 14, 240, 10,
+	160, 48, 201, 13, 240, 4, 24, 105, 0, 168, 185, 185, 11, 157, 51, 5,
+	96, 216, 165, 252, 72, 165, 253, 72, 165, 254, 72, 165, 255, 72, 173, 113,
+	5, 208, 3, 76, 2, 11, 173, 78, 5, 240, 3, 76, 107, 9, 173, 108,
+	5, 205, 109, 5, 240, 3, 76, 88, 9, 173, 103, 5, 240, 3, 76, 220,
+	8, 162, 2, 188, 75, 5, 48, 3, 157, 75, 5, 157, 69, 5, 202, 16,
+	242, 173, 118, 5, 133, 252, 173, 119, 5, 133, 253, 172, 104, 5, 132, 254,
+	204, 106, 5, 208, 25, 173, 107, 5, 240, 20, 173, 104, 5, 172, 105, 5,
+	140, 104, 5, 206, 107, 5, 208, 232, 141, 104, 5, 168, 16, 226, 162, 0,
+	177, 252, 201, 254, 208, 14, 172, 104, 5, 200, 196, 254, 240, 67, 140, 104,
+	5, 76, 26, 8, 157, 66, 5, 24, 152, 105, 85, 168, 232, 224, 3, 144,
+	223, 172, 104, 5, 177, 252, 16, 122, 201, 255, 240, 118, 74, 74, 74, 41,
+	14, 170, 189, 161, 11, 141, 126, 8, 189, 162, 11, 141, 127, 8, 173, 67,
+	5, 133, 255, 32, 147, 8, 140, 104, 5, 192, 85, 176, 4, 196, 254, 208,
+	143, 164, 254, 140, 104, 5, 76, 2, 11, 32, 148, 6, 160, 255, 96, 48,
+	251, 168, 96, 48, 247, 56, 152, 229, 255, 168, 96, 48, 239, 24, 152, 101,
+	255, 168, 96, 48, 231, 141, 108, 5, 141, 109, 5, 200, 96, 48, 221, 173,
+	68, 5, 48, 216, 141, 107, 5, 200, 140, 105, 5, 24, 152, 101, 255, 141,
+	106, 5, 96, 136, 48, 10, 177, 252, 201, 143, 240, 4, 201, 239, 208, 243,
+	200, 96, 162, 2, 189, 72, 5, 240, 5, 222, 72, 5, 16, 99, 189, 75,
+	5, 208, 94, 188, 66, 5, 192, 64, 176, 87, 173, 116, 5, 133, 252, 173,
+	117, 5, 133, 253, 177, 252, 133, 254, 24, 152, 105, 64, 168, 177, 252, 133,
+	255, 37, 254, 201, 255, 240, 58, 188, 69, 5, 177, 254, 41, 192, 208, 12,
+	177, 254, 41, 63, 157, 15, 5, 254, 69, 5, 16, 235, 201, 64, 208, 19,
+	177, 254, 41, 63, 141, 111, 5, 189, 15, 5, 141, 112, 5, 32, 188, 6,
+	76, 72, 9, 201, 128, 208, 10, 177, 254, 41, 63, 157, 72, 5, 254, 69,
+	5, 202, 16, 144, 174, 103, 5, 232, 138, 41, 63, 141, 103, 5, 206, 109,
+	5, 208, 14, 173, 108, 5, 141, 109, 5, 173, 103, 5, 208, 3, 238, 104,
+	5, 172, 48, 5, 173, 82, 5, 41, 7, 201, 5, 240, 4, 201, 6, 208,
+	1, 136, 140, 39, 5, 160, 0, 201, 5, 240, 4, 201, 6, 208, 2, 160,
+	2, 201, 7, 208, 2, 160, 40, 140, 44, 5, 162, 2, 189, 82, 5, 41,
+	224, 157, 40, 5, 189, 97, 5, 133, 252, 189, 100, 5, 133, 253, 189, 57,
+	5, 201, 255, 240, 54, 201, 15, 208, 32, 189, 63, 5, 240, 45, 222, 63,
+	5, 189, 63, 5, 208, 37, 188, 9, 5, 240, 1, 136, 152, 157, 9, 5,
+	189, 88, 5, 157, 63, 5, 76, 229, 9, 189, 57, 5, 74, 168, 177, 252,
+	144, 4, 74, 74, 74, 74, 41, 15, 157, 9, 5, 188, 45, 5, 189, 82,
+	5, 41, 7, 201, 1, 208, 31, 136, 152, 200, 221, 48, 5, 8, 169, 1,
+	40, 208, 2, 10, 10, 61, 60, 5, 240, 12, 188, 48, 5, 192, 255, 208,
+	5, 169, 0, 157, 9, 5, 152, 157, 36, 5, 169, 1, 141, 110, 5, 189,
+	57, 5, 201, 15, 240, 56, 41, 7, 168, 185, 205, 12, 133, 254, 189, 57,
+	5, 41, 8, 8, 138, 40, 24, 240, 2, 105, 3, 168, 185, 91, 5, 37,
+	254, 240, 27, 189, 51, 5, 157, 36, 5, 142, 110, 5, 202, 16, 8, 141,
+	39, 5, 169, 0, 141, 44, 5, 232, 189, 54, 5, 157, 40, 5, 189, 57,
+	5, 41, 15, 201, 15, 240, 16, 254, 57, 5, 189, 57, 5, 201, 15, 208,
+	6, 189, 88, 5, 157, 63, 5, 189, 75, 5, 16, 10, 189, 9, 5, 208,
+	5, 169, 64, 157, 75, 5, 254, 60, 5, 160, 0, 189, 82, 5, 74, 74,
+	74, 74, 144, 1, 136, 74, 144, 1, 200, 24, 152, 125, 45, 5, 157, 45,
+	5, 189, 48, 5, 201, 255, 208, 2, 160, 0, 24, 152, 125, 48, 5, 157,
+	48, 5, 202, 48, 3, 76, 150, 9, 173, 40, 5, 141, 43, 5, 173, 82,
+	5, 41, 7, 170, 160, 3, 173, 110, 5, 240, 3, 188, 213, 12, 152, 72,
+	185, 185, 12, 8, 41, 127, 170, 152, 41, 3, 10, 168, 189, 36, 5, 153,
+	0, 210, 200, 189, 9, 5, 224, 3, 208, 3, 173, 9, 5, 29, 40, 5,
+	40, 16, 2, 169, 0, 153, 0, 210, 104, 168, 136, 41, 3, 208, 207, 160,
+	8, 173, 44, 5, 153, 0, 210, 24, 104, 133, 255, 104, 133, 254, 104, 133,
+	253, 104, 133, 252, 96, 104, 170, 240, 78, 201, 2, 240, 6, 104, 104, 202,
+	208, 251, 96, 165, 20, 197, 20, 240, 252, 173, 36, 2, 201, 134, 208, 7,
+	173, 37, 2, 201, 11, 240, 230, 173, 36, 2, 141, 143, 11, 173, 37, 2,
+	141, 144, 11, 169, 134, 141, 36, 2, 169, 11, 141, 37, 2, 104, 104, 240,
+	3, 56, 233, 1, 141, 93, 11, 104, 168, 104, 170, 169, 112, 32, 120, 5,
+	169, 0, 162, 0, 76, 120, 5, 165, 20, 197, 20, 240, 252, 173, 36, 2,
+	201, 134, 208, 174, 173, 37, 2, 201, 11, 208, 167, 173, 143, 11, 141, 36,
+	2, 173, 144, 11, 141, 37, 2, 169, 64, 76, 120, 5, 32, 203, 7, 144,
+	3, 32, 117, 11, 76, 255, 255, 178, 5, 221, 5, 168, 6, 59, 6, 123,
+	6, 148, 6, 159, 6, 82, 6, 147, 8, 153, 8, 157, 8, 165, 8, 173,
+	8, 183, 8, 205, 8, 185, 11, 250, 11, 59, 12, 128, 160, 32, 64, 255,
+	241, 228, 215, 203, 192, 181, 170, 161, 152, 143, 135, 127, 120, 114, 107, 101,
+	95, 90, 85, 80, 75, 71, 67, 63, 60, 56, 53, 50, 47, 44, 42, 39,
+	37, 35, 33, 31, 29, 28, 26, 24, 23, 22, 20, 19, 18, 17, 16, 15,
+	14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0,
+	0, 0, 0, 0, 242, 233, 218, 206, 191, 182, 170, 161, 152, 143, 137, 128,
+	122, 113, 107, 101, 95, 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, 136,
+	127, 121, 115, 108, 103, 96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52,
+	51, 48, 45, 42, 40, 37, 36, 33, 31, 30, 5, 4, 3, 2, 1, 0,
+	0, 56, 11, 140, 10, 0, 10, 106, 9, 232, 8, 106, 8, 239, 7, 128,
+	7, 8, 7, 174, 6, 70, 6, 230, 5, 149, 5, 65, 5, 246, 4, 176,
+	4, 110, 4, 48, 4, 246, 3, 187, 3, 132, 3, 82, 3, 34, 3, 244,
+	2, 200, 2, 160, 2, 122, 2, 85, 2, 52, 2, 20, 2, 245, 1, 216,
+	1, 189, 1, 164, 1, 141, 1, 119, 1, 96, 1, 78, 1, 56, 1, 39,
+	1, 21, 1, 6, 1, 247, 0, 232, 0, 219, 0, 207, 0, 195, 0, 184,
+	0, 172, 0, 162, 0, 154, 0, 144, 0, 136, 0, 127, 0, 120, 0, 112,
+	0, 106, 0, 100, 0, 94, 0, 87, 0, 82, 0, 50, 0, 10, 0, 0,
+	1, 2, 131, 0, 1, 2, 3, 1, 0, 2, 131, 1, 0, 2, 3, 1,
+	2, 128, 3, 128, 64, 32, 16, 8, 4, 2, 1, 3, 3, 3, 3, 7,
+	11, 15, 19 ];
+ASAP6502.CI_BINARY_RESOURCE_CMS_OBX = [ 255, 255, 0, 5, 186, 15, 234, 234, 234, 76, 21, 8, 76, 92, 15, 35,
 	5, 169, 5, 173, 5, 184, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 128, 128, 128, 128, 128, 128, 0, 0, 0, 0, 0, 0, 255,
 	255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2128,7 +1098,7 @@ ASAPInfo.CI_BINARY_RESOURCE_CMS_OBX = [ 255, 255, 0, 5, 186, 15, 234, 234, 234, 
 	189, 233, 6, 166, 200, 157, 35, 5, 173, 172, 5, 29, 38, 5, 170, 189,
 	233, 6, 166, 200, 157, 38, 5, 202, 16, 221, 96, 168, 185, 13, 8, 168,
 	96 ];
-ASAPInfo.CI_BINARY_RESOURCE_DLT_OBX = [ 255, 255, 0, 4, 70, 12, 255, 241, 228, 215, 203, 192, 181, 170, 161, 152,
+ASAP6502.CI_BINARY_RESOURCE_DLT_OBX = [ 255, 255, 0, 4, 70, 12, 255, 241, 228, 215, 203, 192, 181, 170, 161, 152,
 	143, 135, 127, 121, 114, 107, 101, 95, 90, 85, 80, 75, 71, 67, 63, 60,
 	56, 53, 50, 47, 44, 42, 39, 37, 35, 33, 31, 29, 28, 26, 24, 23,
 	22, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6,
@@ -2261,7 +1231,7 @@ ASAPInfo.CI_BINARY_RESOURCE_DLT_OBX = [ 255, 255, 0, 4, 70, 12, 255, 241, 228, 2
 	168, 177, 238, 170, 160, 51, 177, 238, 48, 14, 138, 109, 11, 3, 170, 173,
 	31, 3, 141, 55, 3, 76, 60, 12, 138, 109, 31, 3, 141, 55, 3, 174,
 	11, 3, 189, 0, 4, 24, 109, 55, 3, 141, 39, 3, 96 ];
-ASAPInfo.CI_BINARY_RESOURCE_MPT_OBX = [ 255, 255, 0, 5, 178, 13, 76, 205, 11, 173, 46, 7, 208, 1, 96, 169,
+ASAP6502.CI_BINARY_RESOURCE_MPT_OBX = [ 255, 255, 0, 5, 178, 13, 76, 205, 11, 173, 46, 7, 208, 1, 96, 169,
 	0, 141, 28, 14, 238, 29, 14, 173, 23, 14, 205, 187, 13, 144, 80, 206,
 	21, 14, 240, 3, 76, 197, 5, 162, 0, 142, 23, 14, 169, 0, 157, 237,
 	13, 157, 245, 13, 189, 179, 13, 133, 236, 189, 183, 13, 133, 237, 172, 22,
@@ -2401,7 +1371,7 @@ ASAPInfo.CI_BINARY_RESOURCE_MPT_OBX = [ 255, 255, 0, 5, 178, 13, 76, 205, 11, 17
 	208, 7, 140, 121, 13, 140, 127, 13, 96, 177, 250, 36, 249, 48, 4, 74,
 	74, 74, 74, 41, 15, 168, 185, 69, 10, 160, 0, 96, 160, 0, 140, 27,
 	14, 140, 26, 14, 136, 140, 25, 14, 96 ];
-ASAPInfo.CI_BINARY_RESOURCE_RMT4_OBX = [ 255, 255, 144, 3, 96, 11, 128, 0, 128, 32, 128, 64, 0, 192, 128, 128,
+ASAP6502.CI_BINARY_RESOURCE_RMT4_OBX = [ 255, 255, 144, 3, 96, 11, 128, 0, 128, 32, 128, 64, 0, 192, 128, 128,
 	128, 160, 0, 192, 64, 192, 0, 1, 5, 11, 21, 0, 1, 255, 255, 1,
 	1, 0, 255, 255, 0, 1, 1, 1, 0, 255, 255, 255, 255, 0, 1, 1,
 	0, 0, 0, 0, 0, 0, 242, 51, 150, 226, 56, 140, 0, 106, 232, 106,
@@ -2527,7 +1497,7 @@ ASAPInfo.CI_BINARY_RESOURCE_RMT4_OBX = [ 255, 255, 144, 3, 96, 11, 128, 0, 128, 
 	25, 3, 174, 29, 3, 141, 2, 210, 142, 3, 210, 173, 26, 3, 174, 30,
 	3, 141, 4, 210, 142, 5, 210, 173, 27, 3, 174, 31, 3, 141, 6, 210,
 	142, 7, 210, 140, 8, 210, 96 ];
-ASAPInfo.CI_BINARY_RESOURCE_RMT8_OBX = [ 255, 255, 144, 3, 108, 12, 128, 0, 128, 32, 128, 64, 0, 192, 128, 128,
+ASAP6502.CI_BINARY_RESOURCE_RMT8_OBX = [ 255, 255, 144, 3, 108, 12, 128, 0, 128, 32, 128, 64, 0, 192, 128, 128,
 	128, 160, 0, 192, 64, 192, 0, 1, 5, 11, 21, 0, 1, 255, 255, 1,
 	1, 0, 255, 255, 0, 1, 1, 1, 0, 255, 255, 255, 255, 0, 1, 1,
 	0, 0, 0, 0, 0, 0, 242, 51, 150, 226, 56, 140, 0, 106, 232, 106,
@@ -2670,7 +1640,7 @@ ASAPInfo.CI_BINARY_RESOURCE_RMT8_OBX = [ 255, 255, 144, 3, 108, 12, 128, 0, 128,
 	5, 210, 173, 55, 3, 174, 51, 3, 141, 22, 210, 142, 6, 210, 173, 63,
 	3, 174, 59, 3, 141, 23, 210, 142, 7, 210, 169, 255, 140, 24, 210, 141,
 	8, 210, 96 ];
-ASAPInfo.CI_BINARY_RESOURCE_TM2_OBX = [ 255, 255, 0, 2, 107, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ASAP6502.CI_BINARY_RESOURCE_TM2_OBX = [ 255, 255, 0, 2, 107, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
 	1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
 	1, 1, 2, 2, 2, 2, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2,
@@ -2902,7 +1872,7 @@ ASAPInfo.CI_BINARY_RESOURCE_TM2_OBX = [ 255, 255, 0, 2, 107, 16, 0, 0, 0, 0, 0, 
 	0, 3, 157, 56, 5, 169, 0, 157, 184, 5, 157, 32, 6, 157, 8, 6,
 	157, 72, 6, 157, 128, 6, 157, 136, 6, 157, 144, 6, 169, 1, 157, 120,
 	5, 96 ];
-ASAPInfo.CI_BINARY_RESOURCE_TMC_OBX = [ 255, 255, 0, 5, 104, 15, 76, 206, 13, 76, 208, 8, 76, 239, 9, 15,
+ASAP6502.CI_BINARY_RESOURCE_TMC_OBX = [ 255, 255, 0, 5, 104, 15, 76, 206, 13, 76, 208, 8, 76, 239, 9, 15,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -3069,6 +2039,1269 @@ ASAPInfo.CI_BINARY_RESOURCE_TMC_OBX = [ 255, 255, 0, 5, 104, 15, 76, 206, 13, 76
 	156, 8, 157, 164, 8, 136, 177, 252, 41, 192, 24, 125, 228, 7, 157, 228,
 	7, 157, 34, 5, 168, 185, 60, 6, 157, 244, 7, 169, 0, 157, 44, 8,
 	157, 100, 8, 157, 108, 8, 157, 148, 8, 169, 1, 157, 188, 7, 96 ];
+
+function ASAPInfo()
+{
+	this.author = null;
+	this.channels = 0;
+	this.covoxAddr = 0;
+	this.date = null;
+	this.defaultSong = 0;
+	this.durations = new Array(32);
+	this.fastplay = 0;
+	this.filename = null;
+	this.headerLen = 0;
+	this.init = 0;
+	this.loops = new Array(32);
+	this.music = 0;
+	this.name = null;
+	this.ntsc = false;
+	this.player = 0;
+	this.songPos = new Array(32);
+	this.songs = 0;
+	this.type = ASAPModuleType.SAP_B;
+}
+
+ASAPInfo.prototype.addSong = function(playerCalls) {
+	this.durations[this.songs++] = Math.floor(playerCalls * this.fastplay * 114000 / 1773447);
+}
+
+ASAPInfo.prototype.checkDate = function() {
+	var n = this.date.length;
+	switch (n) {
+		case 10:
+			if (!this.checkTwoDateDigits(0) || this.date.charCodeAt(2) != 47)
+				return -1;
+		case 7:
+			if (!this.checkTwoDateDigits(n - 7) || this.date.charCodeAt(n - 5) != 47)
+				return -1;
+		case 4:
+			if (!this.checkTwoDateDigits(n - 4) || !this.checkTwoDateDigits(n - 2))
+				return -1;
+			return n;
+		default:
+			return -1;
+	}
+}
+
+ASAPInfo.prototype.checkTwoDateDigits = function(i) {
+	var d1 = this.date.charCodeAt(i);
+	var d2 = this.date.charCodeAt(i + 1);
+	return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
+}
+ASAPInfo.COPYRIGHT = "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version.";
+ASAPInfo.CREDITS = "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n";
+
+ASAPInfo.prototype.getAuthor = function() {
+	return this.author;
+}
+
+ASAPInfo.prototype.getChannels = function() {
+	return this.channels;
+}
+
+ASAPInfo.prototype.getDate = function() {
+	return this.date;
+}
+
+ASAPInfo.prototype.getDayOfMonth = function() {
+	var n = this.checkDate();
+	if (n != 10)
+		return -1;
+	return this.getTwoDateDigits(0);
+}
+
+ASAPInfo.prototype.getDefaultSong = function() {
+	return this.defaultSong;
+}
+
+ASAPInfo.prototype.getDuration = function(song) {
+	return this.durations[song];
+}
+
+ASAPInfo.getExtDescription = function(ext) {
+	if (ext.length != 3)
+		throw "Unknown extension";
+	switch (ext.charCodeAt(0) + (ext.charCodeAt(1) << 8) + (ext.charCodeAt(2) << 16) | 2105376) {
+		case 7364979:
+			return "Slight Atari Player";
+		case 6516067:
+			return "Chaos Music Composer";
+		case 3370339:
+			return "CMC \"3/4\"";
+		case 7499107:
+			return "CMC \"Rzog\"";
+		case 7564643:
+			return "Stereo Double CMC";
+		case 6516068:
+			return "DoublePlay CMC";
+		case 7629924:
+			return "Delta Music Composer";
+		case 7630957:
+			return "Music ProTracker";
+		case 6582381:
+			return "MPT DoublePlay";
+		case 7630194:
+			return "Raster Music Tracker";
+		case 6516084:
+		case 3698036:
+			return "Theta Music Composer 1.x";
+		case 3304820:
+			return "Theta Music Composer 2.x";
+		default:
+			throw "Unknown extension";
+	}
+}
+
+ASAPInfo.prototype.getLoop = function(song) {
+	return this.loops[song];
+}
+
+ASAPInfo.prototype.getMonth = function() {
+	var n = this.checkDate();
+	if (n < 7)
+		return -1;
+	return this.getTwoDateDigits(n - 7);
+}
+
+ASAPInfo.prototype.getOriginalModuleExt = function(module, moduleLen) {
+	switch (this.type) {
+		case ASAPModuleType.SAP_B:
+			if ((this.init == 1019 || this.init == 1017) && this.player == 1283)
+				return "dlt";
+			if (this.init == 1267 || this.init == 62707 || this.init == 1263)
+				return this.fastplay == 156 ? "mpd" : "mpt";
+			if (this.init == 3200)
+				return "rmt";
+			if (this.init == 1269 || this.init == 62709 || this.init == 1266 || (this.init == 1255 || this.init == 62695 || this.init == 1252) && this.fastplay == 156 || (this.init == 1253 || this.init == 62693 || this.init == 1250) && (this.fastplay == 104 || this.fastplay == 78))
+				return "tmc";
+			if (this.init == 4224)
+				return "tm2";
+			return null;
+		case ASAPModuleType.SAP_C:
+			if ((this.player == 1280 || this.player == 62720) && moduleLen >= 1024) {
+				if (this.fastplay == 156)
+					return "dmc";
+				if (this.channels > 1)
+					return "cms";
+				if (module[moduleLen - 170] == 30)
+					return "cmr";
+				if (module[moduleLen - 909] == 48)
+					return "cm3";
+				return "cmc";
+			}
+			return null;
+		case ASAPModuleType.CMC:
+			return this.fastplay == 156 ? "dmc" : "cmc";
+		case ASAPModuleType.CM3:
+			return "cm3";
+		case ASAPModuleType.CMR:
+			return "cmr";
+		case ASAPModuleType.CMS:
+			return "cms";
+		case ASAPModuleType.DLT:
+			return "dlt";
+		case ASAPModuleType.MPT:
+			return this.fastplay == 156 ? "mpd" : "mpt";
+		case ASAPModuleType.RMT:
+			return "rmt";
+		case ASAPModuleType.TMC:
+			return "tmc";
+		case ASAPModuleType.TM2:
+			return "tm2";
+		default:
+			return null;
+	}
+}
+
+ASAPInfo.getPackedExt = function(filename) {
+	var ext = 0;
+	for (var i = filename.length; --i > 0;) {
+		var c = filename.charCodeAt(i);
+		if (c <= 32 || c > 122)
+			return 0;
+		if (c == 46)
+			return ext | 2105376;
+		ext = (ext << 8) + c;
+	}
+	return 0;
+}
+
+ASAPInfo.getRmtInstrumentFrames = function(module, instrument, volume, volumeFrame, onExtraPokey) {
+	var addrToOffset = ASAPInfo.getWord(module, 2) - 6;
+	instrument = ASAPInfo.getWord(module, 14) - addrToOffset + (instrument << 1);
+	if (module[instrument + 1] == 0)
+		return 0;
+	instrument = ASAPInfo.getWord(module, instrument) - addrToOffset;
+	var perFrame = module[12];
+	var playerCall = volumeFrame * perFrame;
+	var playerCalls = playerCall;
+	var index = module[instrument] + 1 + playerCall * 3;
+	var indexEnd = module[instrument + 2] + 3;
+	var indexLoop = module[instrument + 3];
+	if (indexLoop >= indexEnd)
+		return 0;
+	var volumeSlideDepth = module[instrument + 6];
+	var volumeMin = module[instrument + 7];
+	if (index >= indexEnd)
+		index = (index - indexEnd) % (indexEnd - indexLoop) + indexLoop;
+	else {
+		do {
+			var vol = module[instrument + index];
+			if (onExtraPokey)
+				vol >>= 4;
+			if ((vol & 15) >= ASAPInfo.CI_CONST_ARRAY_1[volume])
+				playerCalls = playerCall + 1;
+			playerCall++;
+			index += 3;
+		}
+		while (index < indexEnd);
+	}
+	if (volumeSlideDepth == 0)
+		return Math.floor(playerCalls / perFrame);
+	var volumeSlide = 128;
+	var silentLoop = false;
+	for (;;) {
+		if (index >= indexEnd) {
+			if (silentLoop)
+				break;
+			silentLoop = true;
+			index = indexLoop;
+		}
+		var vol = module[instrument + index];
+		if (onExtraPokey)
+			vol >>= 4;
+		if ((vol & 15) >= ASAPInfo.CI_CONST_ARRAY_1[volume]) {
+			playerCalls = playerCall + 1;
+			silentLoop = false;
+		}
+		playerCall++;
+		index += 3;
+		volumeSlide -= volumeSlideDepth;
+		if (volumeSlide < 0) {
+			volumeSlide += 256;
+			if (--volume <= volumeMin)
+				break;
+		}
+	}
+	return Math.floor(playerCalls / perFrame);
+}
+
+ASAPInfo.prototype.getSongs = function() {
+	return this.songs;
+}
+
+ASAPInfo.prototype.getTitle = function() {
+	return this.name;
+}
+
+ASAPInfo.prototype.getTitleOrFilename = function() {
+	return this.name.length > 0 ? this.name : this.filename;
+}
+
+ASAPInfo.prototype.getTwoDateDigits = function(i) {
+	return (this.date.charCodeAt(i) - 48) * 10 + this.date.charCodeAt(i + 1) - 48;
+}
+
+ASAPInfo.getWord = function(array, i) {
+	return array[i] + (array[i + 1] << 8);
+}
+
+ASAPInfo.prototype.getYear = function() {
+	var n = this.checkDate();
+	if (n < 0)
+		return -1;
+	return this.getTwoDateDigits(n - 4) * 100 + this.getTwoDateDigits(n - 2);
+}
+
+ASAPInfo.hasStringAt = function(module, moduleIndex, s) {
+	var n = s.length;
+	for (var i = 0; i < n; i++)
+		if (module[moduleIndex + i] != s.charCodeAt(i))
+			return false;
+	return true;
+}
+
+ASAPInfo.isDltPatternEnd = function(module, pos, i) {
+	for (var ch = 0; ch < 4; ch++) {
+		var pattern = module[8198 + (ch << 8) + pos];
+		if (pattern < 64) {
+			var offset = 6 + (pattern << 7) + (i << 1);
+			if ((module[offset] & 128) == 0 && (module[offset + 1] & 128) != 0)
+				return true;
+		}
+	}
+	return false;
+}
+
+ASAPInfo.isDltTrackEmpty = function(module, pos) {
+	return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
+}
+
+ASAPInfo.isOurExt = function(ext) {
+	return ext.length == 3 && ASAPInfo.isOurPackedExt(ext.charCodeAt(0) + (ext.charCodeAt(1) << 8) + (ext.charCodeAt(2) << 16) | 2105376);
+}
+
+ASAPInfo.isOurFile = function(filename) {
+	return ASAPInfo.isOurPackedExt(ASAPInfo.getPackedExt(filename));
+}
+
+ASAPInfo.isOurPackedExt = function(ext) {
+	switch (ext) {
+		case 7364979:
+		case 6516067:
+		case 3370339:
+		case 7499107:
+		case 7564643:
+		case 6516068:
+		case 7629924:
+		case 7630957:
+		case 6582381:
+		case 7630194:
+		case 6516084:
+		case 3698036:
+		case 3304820:
+			return true;
+		default:
+			return false;
+	}
+}
+
+ASAPInfo.prototype.load = function(filename, module, moduleLen) {
+	var len = filename.length;
+	var basename = 0;
+	var ext = -1;
+	for (var i = len; --i >= 0;) {
+		var c = filename.charCodeAt(i);
+		if (c == 47 || c == 92) {
+			basename = i + 1;
+			break;
+		}
+		if (c == 46)
+			ext = i;
+	}
+	if (ext < 0)
+		throw "Filename has no extension";
+	ext -= basename;
+	if (ext > 127)
+		ext = 127;
+	this.filename = filename.substring(basename, basename + ext);
+	this.author = "";
+	this.name = "";
+	this.date = "";
+	this.channels = 1;
+	this.songs = 1;
+	this.defaultSong = 0;
+	for (var i = 0; i < 32; i++) {
+		this.durations[i] = -1;
+		this.loops[i] = false;
+	}
+	this.ntsc = false;
+	this.fastplay = 312;
+	this.music = -1;
+	this.init = -1;
+	this.player = -1;
+	this.covoxAddr = -1;
+	switch (ASAPInfo.getPackedExt(filename)) {
+		case 7364979:
+			this.parseSap(module, moduleLen);
+			return;
+		case 6516067:
+			this.parseCmc(module, moduleLen, ASAPModuleType.CMC);
+			return;
+		case 3370339:
+			this.parseCmc(module, moduleLen, ASAPModuleType.CM3);
+			return;
+		case 7499107:
+			this.parseCmc(module, moduleLen, ASAPModuleType.CMR);
+			return;
+		case 7564643:
+			this.channels = 2;
+			this.parseCmc(module, moduleLen, ASAPModuleType.CMS);
+			return;
+		case 6516068:
+			this.fastplay = 156;
+			this.parseCmc(module, moduleLen, ASAPModuleType.CMC);
+			return;
+		case 7629924:
+			this.parseDlt(module, moduleLen);
+			return;
+		case 7630957:
+			this.parseMpt(module, moduleLen);
+			return;
+		case 6582381:
+			this.fastplay = 156;
+			this.parseMpt(module, moduleLen);
+			return;
+		case 7630194:
+			this.parseRmt(module, moduleLen);
+			return;
+		case 6516084:
+		case 3698036:
+			this.parseTmc(module, moduleLen);
+			return;
+		case 3304820:
+			this.parseTm2(module, moduleLen);
+			return;
+		default:
+			throw "Unknown filename extension";
+	}
+}
+ASAPInfo.MAX_MODULE_LENGTH = 65000;
+ASAPInfo.MAX_SONGS = 32;
+ASAPInfo.MAX_TEXT_LENGTH = 127;
+
+ASAPInfo.prototype.parseCmc = function(module, moduleLen, type) {
+	if (moduleLen < 774)
+		throw "Module too short";
+	this.type = type;
+	this.parseModule(module, moduleLen);
+	var lastPos = 84;
+	while (--lastPos >= 0) {
+		if (module[518 + lastPos] < 176 || module[603 + lastPos] < 64 || module[688 + lastPos] < 64)
+			break;
+		if (this.channels == 2) {
+			if (module[774 + lastPos] < 176 || module[859 + lastPos] < 64 || module[944 + lastPos] < 64)
+				break;
+		}
+	}
+	this.songs = 0;
+	this.parseCmcSong(module, 0);
+	for (var pos = 0; pos < lastPos && this.songs < 32; pos++)
+		if (module[518 + pos] == 143 || module[518 + pos] == 239)
+			this.parseCmcSong(module, pos + 1);
+}
+
+ASAPInfo.prototype.parseCmcSong = function(module, pos) {
+	var tempo = module[25];
+	var playerCalls = 0;
+	var repStartPos = 0;
+	var repEndPos = 0;
+	var repTimes = 0;
+	var seen = new Array(85);
+	Ci.clearArray(seen, 0);
+	while (pos >= 0 && pos < 85) {
+		if (pos == repEndPos && repTimes > 0) {
+			for (var i = 0; i < 85; i++)
+				if (seen[i] == 1 || seen[i] == 3)
+					seen[i] = 0;
+			repTimes--;
+			pos = repStartPos;
+		}
+		if (seen[pos] != 0) {
+			if (seen[pos] != 1)
+				this.loops[this.songs] = true;
+			break;
+		}
+		seen[pos] = 1;
+		var p1 = module[518 + pos];
+		var p2 = module[603 + pos];
+		var p3 = module[688 + pos];
+		if (p1 == 254 || p2 == 254 || p3 == 254) {
+			pos++;
+			continue;
+		}
+		p1 >>= 4;
+		if (p1 == 8)
+			break;
+		if (p1 == 9) {
+			pos = p2;
+			continue;
+		}
+		if (p1 == 10) {
+			pos -= p2;
+			continue;
+		}
+		if (p1 == 11) {
+			pos += p2;
+			continue;
+		}
+		if (p1 == 12) {
+			tempo = p2;
+			pos++;
+			continue;
+		}
+		if (p1 == 13) {
+			pos++;
+			repStartPos = pos;
+			repEndPos = pos + p2;
+			repTimes = p3 - 1;
+			continue;
+		}
+		if (p1 == 14) {
+			this.loops[this.songs] = true;
+			break;
+		}
+		p2 = repTimes > 0 ? 3 : 2;
+		for (p1 = 0; p1 < 85; p1++)
+			if (seen[p1] == 1)
+				seen[p1] = p2;
+		playerCalls += tempo * (this.type == ASAPModuleType.CM3 ? 48 : 64);
+		pos++;
+	}
+	this.addSong(playerCalls);
+}
+
+ASAPInfo.parseDec = function(module, moduleIndex, maxVal) {
+	if (module[moduleIndex] == 13)
+		throw "Missing number";
+	for (var r = 0;;) {
+		var c = module[moduleIndex++];
+		if (c == 13)
+			return r;
+		if (c < 48 || c > 57)
+			throw "Invalid number";
+		r = 10 * r + c - 48;
+		if (r > maxVal)
+			throw "Number too big";
+	}
+}
+
+ASAPInfo.prototype.parseDlt = function(module, moduleLen) {
+	if (moduleLen != 11270 && moduleLen != 11271)
+		throw "Invalid module length";
+	this.type = ASAPModuleType.DLT;
+	this.parseModule(module, moduleLen);
+	if (this.music != 8192)
+		throw "Unsupported module address";
+	var seen = new Array(128);
+	Ci.clearArray(seen, false);
+	this.songs = 0;
+	for (var pos = 0; pos < 128 && this.songs < 32; pos++) {
+		if (!seen[pos])
+			this.parseDltSong(module, seen, pos);
+	}
+	if (this.songs == 0)
+		throw "No songs found";
+}
+
+ASAPInfo.prototype.parseDltSong = function(module, seen, pos) {
+	while (pos < 128 && !seen[pos] && ASAPInfo.isDltTrackEmpty(module, pos))
+		seen[pos++] = true;
+	this.songPos[this.songs] = pos;
+	var playerCalls = 0;
+	var loop = false;
+	var tempo = 6;
+	while (pos < 128) {
+		if (seen[pos]) {
+			loop = true;
+			break;
+		}
+		seen[pos] = true;
+		var p1 = module[8198 + pos];
+		if (p1 == 64 || ASAPInfo.isDltTrackEmpty(module, pos))
+			break;
+		if (p1 == 65)
+			pos = module[8326 + pos];
+		else if (p1 == 66)
+			tempo = module[8326 + pos++];
+		else {
+			for (var i = 0; i < 64 && !ASAPInfo.isDltPatternEnd(module, pos, i); i++)
+				playerCalls += tempo;
+			pos++;
+		}
+	}
+	if (playerCalls > 0) {
+		this.loops[this.songs] = loop;
+		this.addSong(playerCalls);
+	}
+}
+
+ASAPInfo.parseDuration = function(s) {
+	var i = 0;
+	var n = s.length;
+	var d;
+	if (i >= n)
+		throw "Invalid duration";
+	d = s.charCodeAt(i) - 48;
+	if (d < 0 || d > 9)
+		throw "Invalid duration";
+	i++;
+	var r = d;
+	if (i < n) {
+		d = s.charCodeAt(i) - 48;
+		if (d >= 0 && d <= 9) {
+			i++;
+			r = 10 * r + d;
+		}
+		if (i < n && s.charCodeAt(i) == 58) {
+			i++;
+			if (i >= n)
+				throw "Invalid duration";
+			d = s.charCodeAt(i) - 48;
+			if (d < 0 || d > 5)
+				throw "Invalid duration";
+			i++;
+			r = (6 * r + d) * 10;
+			if (i >= n)
+				throw "Invalid duration";
+			d = s.charCodeAt(i) - 48;
+			if (d < 0 || d > 9)
+				throw "Invalid duration";
+			i++;
+			r += d;
+		}
+	}
+	r *= 1000;
+	if (i >= n)
+		return r;
+	if (s.charCodeAt(i) != 46)
+		throw "Invalid duration";
+	i++;
+	if (i >= n)
+		throw "Invalid duration";
+	d = s.charCodeAt(i) - 48;
+	if (d < 0 || d > 9)
+		throw "Invalid duration";
+	i++;
+	r += 100 * d;
+	if (i >= n)
+		return r;
+	d = s.charCodeAt(i) - 48;
+	if (d < 0 || d > 9)
+		throw "Invalid duration";
+	i++;
+	r += 10 * d;
+	if (i >= n)
+		return r;
+	d = s.charCodeAt(i) - 48;
+	if (d < 0 || d > 9)
+		throw "Invalid duration";
+	i++;
+	r += d;
+	return r;
+}
+
+ASAPInfo.parseHex = function(module, moduleIndex) {
+	if (module[moduleIndex] == 13)
+		throw "Missing number";
+	for (var r = 0;;) {
+		var c = module[moduleIndex++];
+		if (c == 13)
+			return r;
+		if (r > 4095)
+			throw "Number too big";
+		r <<= 4;
+		if (c >= 48 && c <= 57)
+			r += c - 48;
+		else if (c >= 65 && c <= 70)
+			r += c - 65 + 10;
+		else if (c >= 97 && c <= 102)
+			r += c - 97 + 10;
+		else
+			throw "Invalid number";
+	}
+}
+
+ASAPInfo.prototype.parseModule = function(module, moduleLen) {
+	if ((module[0] != 255 || module[1] != 255) && (module[0] != 0 || module[1] != 0))
+		throw "Invalid two leading bytes of the module";
+	this.music = ASAPInfo.getWord(module, 2);
+	var musicLastByte = ASAPInfo.getWord(module, 4);
+	if (this.music <= 55295 && musicLastByte >= 53248)
+		throw "Module address conflicts with hardware registers";
+	var blockLen = musicLastByte + 1 - this.music;
+	if (6 + blockLen != moduleLen) {
+		if (this.type != ASAPModuleType.RMT || 11 + blockLen > moduleLen)
+			throw "Module length doesn't match headers";
+		var infoAddr = ASAPInfo.getWord(module, 6 + blockLen);
+		if (infoAddr != this.music + blockLen)
+			throw "Invalid address of RMT info";
+		var infoLen = ASAPInfo.getWord(module, 8 + blockLen) + 1 - infoAddr;
+		if (10 + blockLen + infoLen != moduleLen)
+			throw "Invalid RMT info block";
+	}
+}
+
+ASAPInfo.prototype.parseMpt = function(module, moduleLen) {
+	if (moduleLen < 464)
+		throw "Module too short";
+	this.type = ASAPModuleType.MPT;
+	this.parseModule(module, moduleLen);
+	var track0Addr = ASAPInfo.getWord(module, 2) + 458;
+	if (module[454] + (module[458] << 8) != track0Addr)
+		throw "Invalid address of the first track";
+	var songLen = module[455] + (module[459] << 8) - track0Addr >> 1;
+	if (songLen > 254)
+		throw "Song too long";
+	var globalSeen = new Array(256);
+	Ci.clearArray(globalSeen, false);
+	this.songs = 0;
+	for (var pos = 0; pos < songLen && this.songs < 32; pos++) {
+		if (!globalSeen[pos]) {
+			this.songPos[this.songs] = pos;
+			this.parseMptSong(module, globalSeen, songLen, pos);
+		}
+	}
+	if (this.songs == 0)
+		throw "No songs found";
+}
+
+ASAPInfo.prototype.parseMptSong = function(module, globalSeen, songLen, pos) {
+	var addrToOffset = ASAPInfo.getWord(module, 2) - 6;
+	var tempo = module[463];
+	var playerCalls = 0;
+	var seen = new Array(256);
+	Ci.clearArray(seen, 0);
+	var patternOffset = new Array(4);
+	var blankRows = new Array(4);
+	Ci.clearArray(blankRows, 0);
+	var blankRowsCounter = new Array(4);
+	while (pos < songLen) {
+		if (seen[pos] != 0) {
+			if (seen[pos] != 1)
+				this.loops[this.songs] = true;
+			break;
+		}
+		seen[pos] = 1;
+		globalSeen[pos] = true;
+		var i = module[464 + pos * 2];
+		if (i == 255) {
+			pos = module[465 + pos * 2];
+			continue;
+		}
+		var ch;
+		for (ch = 3; ch >= 0; ch--) {
+			i = module[454 + ch] + (module[458 + ch] << 8) - addrToOffset;
+			i = module[i + pos * 2];
+			if (i >= 64)
+				break;
+			i <<= 1;
+			i = ASAPInfo.getWord(module, 70 + i);
+			patternOffset[ch] = i == 0 ? 0 : i - addrToOffset;
+			blankRowsCounter[ch] = 0;
+		}
+		if (ch >= 0)
+			break;
+		for (i = 0; i < songLen; i++)
+			if (seen[i] == 1)
+				seen[i] = 2;
+		for (var patternRows = module[462]; --patternRows >= 0;) {
+			for (ch = 3; ch >= 0; ch--) {
+				if (patternOffset[ch] == 0 || --blankRowsCounter[ch] >= 0)
+					continue;
+				for (;;) {
+					i = module[patternOffset[ch]++];
+					if (i < 64 || i == 254)
+						break;
+					if (i < 128)
+						continue;
+					if (i < 192) {
+						blankRows[ch] = i - 128;
+						continue;
+					}
+					if (i < 208)
+						continue;
+					if (i < 224) {
+						tempo = i - 207;
+						continue;
+					}
+					patternRows = 0;
+				}
+				blankRowsCounter[ch] = blankRows[ch];
+			}
+			playerCalls += tempo;
+		}
+		pos++;
+	}
+	if (playerCalls > 0)
+		this.addSong(playerCalls);
+}
+
+ASAPInfo.prototype.parseRmt = function(module, moduleLen) {
+	if (moduleLen < 48)
+		throw "Module too short";
+	if (module[6] != 82 || module[7] != 77 || module[8] != 84 || module[13] != 1)
+		throw "Invalid module header";
+	var posShift;
+	switch (module[9]) {
+		case 52:
+			posShift = 2;
+			break;
+		case 56:
+			this.channels = 2;
+			posShift = 3;
+			break;
+		default:
+			throw "Unsupported number of channels";
+	}
+	var perFrame = module[12];
+	if (perFrame < 1 || perFrame > 4)
+		throw "Unsupported player call rate";
+	this.type = ASAPModuleType.RMT;
+	this.parseModule(module, moduleLen);
+	var songLen = ASAPInfo.getWord(module, 4) + 1 - ASAPInfo.getWord(module, 20);
+	if (posShift == 3 && (songLen & 4) != 0 && module[6 + ASAPInfo.getWord(module, 4) - ASAPInfo.getWord(module, 2) - 3] == 254)
+		songLen += 4;
+	songLen >>= posShift;
+	if (songLen >= 256)
+		throw "Song too long";
+	var globalSeen = new Array(256);
+	Ci.clearArray(globalSeen, false);
+	this.songs = 0;
+	for (var pos = 0; pos < songLen && this.songs < 32; pos++) {
+		if (!globalSeen[pos]) {
+			this.songPos[this.songs] = pos;
+			this.parseRmtSong(module, globalSeen, songLen, posShift, pos);
+		}
+	}
+	this.fastplay = Math.floor(312 / perFrame);
+	this.player = 1536;
+	if (this.songs == 0)
+		throw "No songs found";
+}
+
+ASAPInfo.prototype.parseRmtSong = function(module, globalSeen, songLen, posShift, pos) {
+	var addrToOffset = ASAPInfo.getWord(module, 2) - 6;
+	var tempo = module[11];
+	var frames = 0;
+	var songOffset = ASAPInfo.getWord(module, 20) - addrToOffset;
+	var patternLoOffset = ASAPInfo.getWord(module, 16) - addrToOffset;
+	var patternHiOffset = ASAPInfo.getWord(module, 18) - addrToOffset;
+	var seen = new Array(256);
+	Ci.clearArray(seen, 0);
+	var patternBegin = new Array(8);
+	var patternOffset = new Array(8);
+	var blankRows = new Array(8);
+	var instrumentNo = new Array(8);
+	Ci.clearArray(instrumentNo, 0);
+	var instrumentFrame = new Array(8);
+	Ci.clearArray(instrumentFrame, 0);
+	var volumeValue = new Array(8);
+	Ci.clearArray(volumeValue, 0);
+	var volumeFrame = new Array(8);
+	Ci.clearArray(volumeFrame, 0);
+	while (pos < songLen) {
+		if (seen[pos] != 0) {
+			if (seen[pos] != 1)
+				this.loops[this.songs] = true;
+			break;
+		}
+		seen[pos] = 1;
+		globalSeen[pos] = true;
+		if (module[songOffset + (pos << posShift)] == 254) {
+			pos = module[songOffset + (pos << posShift) + 1];
+			continue;
+		}
+		for (var ch = 0; ch < 1 << posShift; ch++) {
+			var p = module[songOffset + (pos << posShift) + ch];
+			if (p == 255)
+				blankRows[ch] = 256;
+			else {
+				patternOffset[ch] = patternBegin[ch] = module[patternLoOffset + p] + (module[patternHiOffset + p] << 8) - addrToOffset;
+				blankRows[ch] = 0;
+			}
+		}
+		for (var i = 0; i < songLen; i++)
+			if (seen[i] == 1)
+				seen[i] = 2;
+		for (var patternRows = module[10]; --patternRows >= 0;) {
+			for (var ch = 0; ch < 1 << posShift; ch++) {
+				if (--blankRows[ch] > 0)
+					continue;
+				for (;;) {
+					var i = module[patternOffset[ch]++];
+					if ((i & 63) < 62) {
+						i += module[patternOffset[ch]++] << 8;
+						if ((i & 63) != 61) {
+							instrumentNo[ch] = i >> 10;
+							instrumentFrame[ch] = frames;
+						}
+						volumeValue[ch] = i >> 6 & 15;
+						volumeFrame[ch] = frames;
+						break;
+					}
+					if (i == 62) {
+						blankRows[ch] = module[patternOffset[ch]++];
+						break;
+					}
+					if ((i & 63) == 62) {
+						blankRows[ch] = i >> 6;
+						break;
+					}
+					if ((i & 191) == 63) {
+						tempo = module[patternOffset[ch]++];
+						continue;
+					}
+					if (i == 191) {
+						patternOffset[ch] = patternBegin[ch] + module[patternOffset[ch]];
+						continue;
+					}
+					patternRows = -1;
+					break;
+				}
+				if (patternRows < 0)
+					break;
+			}
+			if (patternRows >= 0)
+				frames += tempo;
+		}
+		pos++;
+	}
+	var instrumentFrames = 0;
+	for (var ch = 0; ch < 1 << posShift; ch++) {
+		var frame = instrumentFrame[ch];
+		frame += ASAPInfo.getRmtInstrumentFrames(module, instrumentNo[ch], volumeValue[ch], volumeFrame[ch] - frame, ch >= 4);
+		if (instrumentFrames < frame)
+			instrumentFrames = frame;
+	}
+	if (frames > instrumentFrames) {
+		if (frames - instrumentFrames > 100)
+			this.loops[this.songs] = false;
+		frames = instrumentFrames;
+	}
+	if (frames > 0)
+		this.addSong(frames);
+}
+
+ASAPInfo.prototype.parseSap = function(module, moduleLen) {
+	if (!ASAPInfo.hasStringAt(module, 0, "SAP\r\n"))
+		throw "Missing SAP header";
+	this.fastplay = -1;
+	var type = 0;
+	var moduleIndex = 5;
+	var durationIndex = 0;
+	while (module[moduleIndex] != 255) {
+		if (moduleIndex + 8 >= moduleLen)
+			throw "Missing binary part";
+		if (ASAPInfo.hasStringAt(module, moduleIndex, "AUTHOR ")) {
+			var len = ASAPInfo.parseText(module, moduleIndex + 7);
+			if (len > 0)
+				this.author = Ci.bytesToString(module, moduleIndex + 7 + 1, len);
+		}
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "NAME ")) {
+			var len = ASAPInfo.parseText(module, moduleIndex + 5);
+			if (len > 0)
+				this.name = Ci.bytesToString(module, moduleIndex + 5 + 1, len);
+		}
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "DATE ")) {
+			var len = ASAPInfo.parseText(module, moduleIndex + 5);
+			if (len > 0)
+				this.date = Ci.bytesToString(module, moduleIndex + 5 + 1, len);
+		}
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "SONGS ")) {
+			this.songs = ASAPInfo.parseDec(module, moduleIndex + 6, 32);
+			if (this.songs < 1)
+				throw "Number too small";
+		}
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "DEFSONG ")) {
+			this.defaultSong = ASAPInfo.parseDec(module, moduleIndex + 8, 31);
+			if (this.defaultSong < 0)
+				throw "Number too small";
+		}
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "STEREO\r"))
+			this.channels = 2;
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "NTSC\r"))
+			this.ntsc = true;
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "TIME ")) {
+			if (durationIndex >= 32)
+				throw "Too many TIME tags";
+			moduleIndex += 5;
+			var len;
+			for (len = 0; module[moduleIndex + len] != 13; len++) {
+			}
+			if (len > 5 && ASAPInfo.hasStringAt(module, moduleIndex + len - 5, " LOOP")) {
+				this.loops[durationIndex] = true;
+				len -= 5;
+			}
+			if (len > 9)
+				throw "Invalid TIME tag";
+			var s = Ci.bytesToString(module, moduleIndex, len);
+			var duration = ASAPInfo.parseDuration(s);
+			this.durations[durationIndex++] = duration;
+		}
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "TYPE "))
+			type = module[moduleIndex + 5];
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "FASTPLAY ")) {
+			this.fastplay = ASAPInfo.parseDec(module, moduleIndex + 9, 312);
+			if (this.fastplay < 1)
+				throw "Number too small";
+		}
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "MUSIC ")) {
+			this.music = ASAPInfo.parseHex(module, moduleIndex + 6);
+		}
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "INIT ")) {
+			this.init = ASAPInfo.parseHex(module, moduleIndex + 5);
+		}
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "PLAYER ")) {
+			this.player = ASAPInfo.parseHex(module, moduleIndex + 7);
+		}
+		else if (ASAPInfo.hasStringAt(module, moduleIndex, "COVOX ")) {
+			this.covoxAddr = ASAPInfo.parseHex(module, moduleIndex + 6);
+			if (this.covoxAddr != 54784)
+				throw "COVOX should be D600";
+			this.channels = 2;
+		}
+		while (module[moduleIndex++] != 13) {
+			if (moduleIndex >= moduleLen)
+				throw "Malformed SAP header";
+		}
+		if (module[moduleIndex++] != 10)
+			throw "Malformed SAP header";
+	}
+	if (this.defaultSong >= this.songs)
+		throw "DEFSONG too big";
+	switch (type) {
+		case 66:
+			if (this.player < 0)
+				throw "Missing PLAYER tag";
+			if (this.init < 0)
+				throw "Missing INIT tag";
+			this.type = ASAPModuleType.SAP_B;
+			break;
+		case 67:
+			if (this.player < 0)
+				throw "Missing PLAYER tag";
+			if (this.music < 0)
+				throw "Missing MUSIC tag";
+			this.type = ASAPModuleType.SAP_C;
+			break;
+		case 68:
+			if (this.init < 0)
+				throw "Missing INIT tag";
+			this.type = ASAPModuleType.SAP_D;
+			break;
+		case 83:
+			if (this.init < 0)
+				throw "Missing INIT tag";
+			this.type = ASAPModuleType.SAP_S;
+			this.fastplay = 78;
+			break;
+		default:
+			throw "Unsupported TYPE";
+	}
+	if (this.fastplay < 0)
+		this.fastplay = this.ntsc ? 262 : 312;
+	else if (this.ntsc && this.fastplay > 262)
+		throw "FASTPLAY too big";
+	if (module[moduleIndex + 1] != 255)
+		throw "Invalid binary header";
+	this.headerLen = moduleIndex;
+}
+
+ASAPInfo.parseText = function(module, moduleIndex) {
+	if (module[moduleIndex] != 34)
+		throw "Missing quote";
+	if (ASAPInfo.hasStringAt(module, moduleIndex + 1, "<?>\"\r"))
+		return 0;
+	for (var len = 0;; len++) {
+		var c = module[moduleIndex + 1 + len];
+		if (c == 34) {
+			if (module[moduleIndex + 2 + len] != 13)
+				throw "Invalid text tag";
+			return len;
+		}
+		if (c < 32 || c >= 127)
+			throw "Invalid character";
+	}
+}
+
+ASAPInfo.prototype.parseTm2 = function(module, moduleLen) {
+	if (moduleLen < 932)
+		throw "Module too short";
+	this.type = ASAPModuleType.TM2;
+	this.parseModule(module, moduleLen);
+	var i = module[37];
+	if (i < 1 || i > 4)
+		throw "Unsupported player call rate";
+	this.fastplay = Math.floor(312 / i);
+	this.player = 1280;
+	if (module[31] != 0)
+		this.channels = 2;
+	var lastPos = 65535;
+	for (i = 0; i < 128; i++) {
+		var instrAddr = module[134 + i] + (module[774 + i] << 8);
+		if (instrAddr != 0 && instrAddr < lastPos)
+			lastPos = instrAddr;
+	}
+	for (i = 0; i < 256; i++) {
+		var patternAddr = module[262 + i] + (module[518 + i] << 8);
+		if (patternAddr != 0 && patternAddr < lastPos)
+			lastPos = patternAddr;
+	}
+	lastPos -= ASAPInfo.getWord(module, 2) + 896;
+	if (902 + lastPos >= moduleLen)
+		throw "Module too short";
+	var c;
+	do {
+		if (lastPos <= 0)
+			throw "No songs found";
+		lastPos -= 17;
+		c = module[918 + lastPos];
+	}
+	while (c == 0 || c >= 128);
+	this.songs = 0;
+	this.parseTm2Song(module, 0);
+	for (i = 0; i < lastPos && this.songs < 32; i += 17) {
+		c = module[918 + i];
+		if (c == 0 || c >= 128)
+			this.parseTm2Song(module, i + 17);
+	}
+}
+
+ASAPInfo.prototype.parseTm2Song = function(module, pos) {
+	var addrToOffset = ASAPInfo.getWord(module, 2) - 6;
+	var tempo = module[36] + 1;
+	var playerCalls = 0;
+	var patternOffset = new Array(8);
+	var blankRows = new Array(8);
+	for (;;) {
+		var patternRows = module[918 + pos];
+		if (patternRows == 0)
+			break;
+		if (patternRows >= 128) {
+			this.loops[this.songs] = true;
+			break;
+		}
+		for (var ch = 7; ch >= 0; ch--) {
+			var pat = module[917 + pos - 2 * ch];
+			patternOffset[ch] = module[262 + pat] + (module[518 + pat] << 8) - addrToOffset;
+			blankRows[ch] = 0;
+		}
+		while (--patternRows >= 0) {
+			for (var ch = 7; ch >= 0; ch--) {
+				if (--blankRows[ch] >= 0)
+					continue;
+				for (;;) {
+					var i = module[patternOffset[ch]++];
+					if (i == 0) {
+						patternOffset[ch]++;
+						break;
+					}
+					if (i < 64) {
+						if (module[patternOffset[ch]++] >= 128)
+							patternOffset[ch]++;
+						break;
+					}
+					if (i < 128) {
+						patternOffset[ch]++;
+						break;
+					}
+					if (i == 128) {
+						blankRows[ch] = module[patternOffset[ch]++];
+						break;
+					}
+					if (i < 192)
+						break;
+					if (i < 208) {
+						tempo = i - 191;
+						continue;
+					}
+					if (i < 224) {
+						patternOffset[ch]++;
+						break;
+					}
+					if (i < 240) {
+						patternOffset[ch] += 2;
+						break;
+					}
+					if (i < 255) {
+						blankRows[ch] = i - 240;
+						break;
+					}
+					blankRows[ch] = 64;
+					break;
+				}
+			}
+			playerCalls += tempo;
+		}
+		pos += 17;
+	}
+	this.addSong(playerCalls);
+}
+
+ASAPInfo.prototype.parseTmc = function(module, moduleLen) {
+	if (moduleLen < 464)
+		throw "Module too short";
+	this.type = ASAPModuleType.TMC;
+	this.parseModule(module, moduleLen);
+	this.channels = 2;
+	var i = 0;
+	while (module[102 + i] == 0) {
+		if (++i >= 64)
+			throw "No instruments";
+	}
+	var lastPos = (module[102 + i] << 8) + module[38 + i] - ASAPInfo.getWord(module, 2) - 432;
+	if (437 + lastPos >= moduleLen)
+		throw "Module too short";
+	do {
+		if (lastPos <= 0)
+			throw "No songs found";
+		lastPos -= 16;
+	}
+	while (module[437 + lastPos] >= 128);
+	this.songs = 0;
+	this.parseTmcSong(module, 0);
+	for (i = 0; i < lastPos && this.songs < 32; i += 16)
+		if (module[437 + i] >= 128)
+			this.parseTmcSong(module, i + 16);
+	i = module[37];
+	if (i < 1 || i > 4)
+		throw "Unsupported player call rate";
+	this.fastplay = Math.floor(312 / i);
+}
+
+ASAPInfo.prototype.parseTmcSong = function(module, pos) {
+	var addrToOffset = ASAPInfo.getWord(module, 2) - 6;
+	var tempo = module[36] + 1;
+	var frames = 0;
+	var patternOffset = new Array(8);
+	var blankRows = new Array(8);
+	while (module[437 + pos] < 128) {
+		for (var ch = 7; ch >= 0; ch--) {
+			var pat = module[437 + pos - 2 * ch];
+			patternOffset[ch] = module[166 + pat] + (module[294 + pat] << 8) - addrToOffset;
+			blankRows[ch] = 0;
+		}
+		for (var patternRows = 64; --patternRows >= 0;) {
+			for (var ch = 7; ch >= 0; ch--) {
+				if (--blankRows[ch] >= 0)
+					continue;
+				for (;;) {
+					var i = module[patternOffset[ch]++];
+					if (i < 64) {
+						patternOffset[ch]++;
+						break;
+					}
+					if (i == 64) {
+						i = module[patternOffset[ch]++];
+						if ((i & 127) == 0)
+							patternRows = 0;
+						else
+							tempo = (i & 127) + 1;
+						if (i >= 128)
+							patternOffset[ch]++;
+						break;
+					}
+					if (i < 128) {
+						i = module[patternOffset[ch]++] & 127;
+						if (i == 0)
+							patternRows = 0;
+						else
+							tempo = i + 1;
+						patternOffset[ch]++;
+						break;
+					}
+					if (i < 192)
+						continue;
+					blankRows[ch] = i - 191;
+					break;
+				}
+			}
+			frames += tempo;
+		}
+		pos += 16;
+	}
+	if (module[436 + pos] < 128)
+		this.loops[this.songs] = true;
+	this.addSong(frames);
+}
+ASAPInfo.VERSION = "3.0.0";
+ASAPInfo.VERSION_MAJOR = 3;
+ASAPInfo.VERSION_MICRO = 0;
+ASAPInfo.VERSION_MINOR = 0;
+ASAPInfo.YEARS = "2005-2011";
+ASAPInfo.CI_CONST_ARRAY_1 = [ 16, 8, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 ];
 
 var ASAPModuleType = {
 	SAP_B : 0,
@@ -6095,7 +6328,7 @@ Pokey.prototype.initialize = function() {
 	this.delta2 = 0;
 	this.delta3 = 0;
 	this.delta4 = 0;
-	Ci.clearArray(this.deltaBuffer);
+	Ci.clearArray(this.deltaBuffer, 0);
 }
 
 Pokey.prototype.isSilent = function() {
@@ -6756,9 +6989,9 @@ PokeyPair.prototype.poke = function(addr, data, cycle) {
 }
 
 PokeyPair.prototype.startFrame = function() {
-	Ci.clearArray(this.basePokey.deltaBuffer);
+	Ci.clearArray(this.basePokey.deltaBuffer, 0);
 	if (this.extraPokeyMask != 0)
-		Ci.clearArray(this.extraPokey.deltaBuffer);
+		Ci.clearArray(this.extraPokey.deltaBuffer, 0);
 }
 var Ci = {
 	copyArray : function(sa, soffset, da, doffset, length) {
@@ -6771,8 +7004,8 @@ var Ci = {
 			s += String.fromCharCode(a[offset + i]);
 		return s;
 	},
-	clearArray : function(a) {
+	clearArray : function(a, value) {
 		for (var i = 0; i < a.length; i++)
-			a[i] = 0;
+			a[i] = value;
 	}
 };

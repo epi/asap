@@ -118,6 +118,41 @@ public final class ASAPInfo
 		return this.durations[song];
 	}
 
+	public static String getExtDescription(String ext) throws Exception
+	{
+		if (ext.length() != 3)
+			throw new Exception("Unknown extension");
+		switch (ext.charAt(0) + (ext.charAt(1) << 8) + (ext.charAt(2) << 16) | 2105376) {
+			case 7364979:
+				return "Slight Atari Player";
+			case 6516067:
+				return "Chaos Music Composer";
+			case 3370339:
+				return "CMC \"3/4\"";
+			case 7499107:
+				return "CMC \"Rzog\"";
+			case 7564643:
+				return "Stereo Double CMC";
+			case 6516068:
+				return "DoublePlay CMC";
+			case 7629924:
+				return "Delta Music Composer";
+			case 7630957:
+				return "Music ProTracker";
+			case 6582381:
+				return "MPT DoublePlay";
+			case 7630194:
+				return "Raster Music Tracker";
+			case 6516084:
+			case 3698036:
+				return "Theta Music Composer 1.x";
+			case 3304820:
+				return "Theta Music Composer 2.x";
+			default:
+				throw new Exception("Unknown extension");
+		}
+	}
+
 	/**
 	 * Returns information whether the specified song loops.
 	 * Returns:
@@ -140,6 +175,57 @@ public final class ASAPInfo
 		return this.getTwoDateDigits(n - 7);
 	}
 
+	public String getOriginalModuleExt(byte[] module, int moduleLen)
+	{
+		switch (this.type) {
+			case ASAPModuleType.SAP_B:
+				if ((this.init == 1019 || this.init == 1017) && this.player == 1283)
+					return "dlt";
+				if (this.init == 1267 || this.init == 62707 || this.init == 1263)
+					return this.fastplay == 156 ? "mpd" : "mpt";
+				if (this.init == 3200)
+					return "rmt";
+				if (this.init == 1269 || this.init == 62709 || this.init == 1266 || (this.init == 1255 || this.init == 62695 || this.init == 1252) && this.fastplay == 156 || (this.init == 1253 || this.init == 62693 || this.init == 1250) && (this.fastplay == 104 || this.fastplay == 78))
+					return "tmc";
+				if (this.init == 4224)
+					return "tm2";
+				return null;
+			case ASAPModuleType.SAP_C:
+				if ((this.player == 1280 || this.player == 62720) && moduleLen >= 1024) {
+					if (this.fastplay == 156)
+						return "dmc";
+					if (this.channels > 1)
+						return "cms";
+					if (module[moduleLen - 170] == 30)
+						return "cmr";
+					if (module[moduleLen - 909] == 48)
+						return "cm3";
+					return "cmc";
+				}
+				return null;
+			case ASAPModuleType.CMC:
+				return this.fastplay == 156 ? "dmc" : "cmc";
+			case ASAPModuleType.CM3:
+				return "cm3";
+			case ASAPModuleType.CMR:
+				return "cmr";
+			case ASAPModuleType.CMS:
+				return "cms";
+			case ASAPModuleType.DLT:
+				return "dlt";
+			case ASAPModuleType.MPT:
+				return this.fastplay == 156 ? "mpd" : "mpt";
+			case ASAPModuleType.RMT:
+				return "rmt";
+			case ASAPModuleType.TMC:
+				return "tmc";
+			case ASAPModuleType.TM2:
+				return "tm2";
+			default:
+				return null;
+		}
+	}
+
 	private static int getPackedExt(String filename)
 	{
 		int ext = 0;
@@ -156,11 +242,11 @@ public final class ASAPInfo
 
 	private static int getRmtInstrumentFrames(byte[] module, int instrument, int volume, int volumeFrame, boolean onExtraPokey)
 	{
-		int addrToOffset = getWord(module, 2) - 6;
-		instrument = getWord(module, 14) - addrToOffset + (instrument << 1);
+		int addrToOffset = ASAPInfo.getWord(module, 2) - 6;
+		instrument = ASAPInfo.getWord(module, 14) - addrToOffset + (instrument << 1);
 		if (module[instrument + 1] == 0)
 			return 0;
-		instrument = getWord(module, instrument) - addrToOffset;
+		instrument = ASAPInfo.getWord(module, instrument) - addrToOffset;
 		int perFrame = module[12] & 0xff;
 		int playerCall = volumeFrame * perFrame;
 		int playerCalls = playerCall;
@@ -178,7 +264,7 @@ public final class ASAPInfo
 				int vol = module[instrument + index] & 0xff;
 				if (onExtraPokey)
 					vol >>= 4;
-				if ((vol & 15) >= CI_CONST_ARRAY_2[volume])
+				if ((vol & 15) >= CI_CONST_ARRAY_1[volume])
 					playerCalls = playerCall + 1;
 				playerCall++;
 				index += 3;
@@ -199,7 +285,7 @@ public final class ASAPInfo
 			int vol = module[instrument + index] & 0xff;
 			if (onExtraPokey)
 				vol >>= 4;
-			if ((vol & 15) >= CI_CONST_ARRAY_2[volume]) {
+			if ((vol & 15) >= CI_CONST_ARRAY_1[volume]) {
 				playerCalls = playerCall + 1;
 				silentLoop = false;
 			}
@@ -246,7 +332,7 @@ public final class ASAPInfo
 		return (this.date.charAt(i) - 48) * 10 + this.date.charAt(i + 1) - 48;
 	}
 
-	private static int getWord(byte[] array, int i)
+	static int getWord(byte[] array, int i)
 	{
 		return (array[i] & 0xff) + ((array[i + 1] & 0xff) << 8);
 	}
@@ -267,7 +353,7 @@ public final class ASAPInfo
 				return false;
 		return true;
 	}
-	private int headerLen;
+	int headerLen;
 	int init;
 
 	private static boolean isDltPatternEnd(byte[] module, int pos, int i)
@@ -294,7 +380,7 @@ public final class ASAPInfo
 	 */
 	public static boolean isOurExt(String ext)
 	{
-		return ext.length() == 3 && isOurPackedExt(ext.charAt(0) + (ext.charAt(1) << 8) + (ext.charAt(2) << 16) | 2105376);
+		return ext.length() == 3 && ASAPInfo.isOurPackedExt(ext.charAt(0) + (ext.charAt(1) << 8) + (ext.charAt(2) << 16) | 2105376);
 	}
 
 	/**
@@ -303,7 +389,7 @@ public final class ASAPInfo
 	 */
 	public static boolean isOurFile(String filename)
 	{
-		return isOurPackedExt(getPackedExt(filename));
+		return ASAPInfo.isOurPackedExt(ASAPInfo.getPackedExt(filename));
 	}
 
 	private static boolean isOurPackedExt(int ext)
@@ -336,38 +422,83 @@ public final class ASAPInfo
 	 */
 	public void load(String filename, byte[] module, int moduleLen) throws Exception
 	{
-		this.parseFile(null, filename, module, moduleLen);
-	}
-
-	/**
-	 * Loads a native module (anything except SAP) and a 6502 player routine.
-	 */
-	private void loadNative(ASAP asap, byte[] module, int moduleLen, byte[] playerRoutine) throws Exception
-	{
-		if ((module[0] != -1 || module[1] != -1) && (module[0] != 0 || module[1] != 0))
-			throw new Exception("Invalid two leading bytes of the module");
-		this.music = getWord(module, 2);
-		this.player = getWord(playerRoutine, 2);
-		int playerLastByte = getWord(playerRoutine, 4);
-		if (this.music <= playerLastByte)
-			throw new Exception("Module address conflicts with the player routine");
-		int musicLastByte = getWord(module, 4);
-		if (this.music <= 55295 && musicLastByte >= 53248)
-			throw new Exception("Module address conflicts with hardware registers");
-		int blockLen = musicLastByte + 1 - this.music;
-		if (6 + blockLen != moduleLen) {
-			if (this.type != ASAPModuleType.RMT || 11 + blockLen > moduleLen)
-				throw new Exception("Module length doesn't match headers");
-			int infoAddr = getWord(module, 6 + blockLen);
-			if (infoAddr != this.music + blockLen)
-				throw new Exception("Invalid address of RMT info");
-			int infoLen = getWord(module, 8 + blockLen) + 1 - infoAddr;
-			if (10 + blockLen + infoLen != moduleLen)
-				throw new Exception("Invalid RMT info block");
+		int len = filename.length();
+		int basename = 0;
+		int ext = -1;
+		for (int i = len; --i >= 0;) {
+			int c = filename.charAt(i);
+			if (c == 47 || c == 92) {
+				basename = i + 1;
+				break;
+			}
+			if (c == 46)
+				ext = i;
 		}
-		if (asap != null) {
-			System.arraycopy(module, 6, asap.memory, this.music, blockLen);
-			System.arraycopy(playerRoutine, 6, asap.memory, this.player, playerLastByte + 1 - this.player);
+		if (ext < 0)
+			throw new Exception("Filename has no extension");
+		ext -= basename;
+		if (ext > 127)
+			ext = 127;
+		this.filename = filename.substring(basename, basename + ext);
+		this.author = "";
+		this.name = "";
+		this.date = "";
+		this.channels = 1;
+		this.songs = 1;
+		this.defaultSong = 0;
+		for (int i = 0; i < 32; i++) {
+			this.durations[i] = -1;
+			this.loops[i] = false;
+		}
+		this.ntsc = false;
+		this.fastplay = 312;
+		this.music = -1;
+		this.init = -1;
+		this.player = -1;
+		this.covoxAddr = -1;
+		switch (ASAPInfo.getPackedExt(filename)) {
+			case 7364979:
+				this.parseSap(module, moduleLen);
+				return;
+			case 6516067:
+				this.parseCmc(module, moduleLen, ASAPModuleType.CMC);
+				return;
+			case 3370339:
+				this.parseCmc(module, moduleLen, ASAPModuleType.CM3);
+				return;
+			case 7499107:
+				this.parseCmc(module, moduleLen, ASAPModuleType.CMR);
+				return;
+			case 7564643:
+				this.channels = 2;
+				this.parseCmc(module, moduleLen, ASAPModuleType.CMS);
+				return;
+			case 6516068:
+				this.fastplay = 156;
+				this.parseCmc(module, moduleLen, ASAPModuleType.CMC);
+				return;
+			case 7629924:
+				this.parseDlt(module, moduleLen);
+				return;
+			case 7630957:
+				this.parseMpt(module, moduleLen);
+				return;
+			case 6582381:
+				this.fastplay = 156;
+				this.parseMpt(module, moduleLen);
+				return;
+			case 7630194:
+				this.parseRmt(module, moduleLen);
+				return;
+			case 6516084:
+			case 3698036:
+				this.parseTmc(module, moduleLen);
+				return;
+			case 3304820:
+				this.parseTm2(module, moduleLen);
+				return;
+			default:
+				throw new Exception("Unknown filename extension");
 		}
 	}
 	private final boolean[] loops = new boolean[32];
@@ -388,15 +519,12 @@ public final class ASAPInfo
 	private String name;
 	boolean ntsc;
 
-	private void parseCmc(ASAP asap, byte[] module, int moduleLen, int type, byte[] playerRoutine) throws Exception
+	private void parseCmc(byte[] module, int moduleLen, int type) throws Exception
 	{
 		if (moduleLen < 774)
 			throw new Exception("Module too short");
 		this.type = type;
-		this.loadNative(asap, module, moduleLen, playerRoutine);
-		if (asap != null && type == ASAPModuleType.CMR) {
-			System.arraycopy(CI_CONST_ARRAY_1, 0, asap.memory, 3087, 37);
-		}
+		this.parseModule(module, moduleLen);
 		int lastPos = 84;
 		while (--lastPos >= 0) {
 			if ((module[518 + lastPos] & 0xff) < 176 || (module[603 + lastPos] & 0xff) < 64 || (module[688 + lastPos] & 0xff) < 64)
@@ -499,16 +627,12 @@ public final class ASAPInfo
 		}
 	}
 
-	private void parseDlt(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseDlt(byte[] module, int moduleLen) throws Exception
 	{
-		if (moduleLen == 11270) {
-			if (asap != null)
-				asap.memory[19456] = 0;
-		}
-		else if (moduleLen != 11271)
+		if (moduleLen != 11270 && moduleLen != 11271)
 			throw new Exception("Invalid module length");
 		this.type = ASAPModuleType.DLT;
-		this.loadNative(asap, module, moduleLen, getBinaryResource("dlt.obx", 2125));
+		this.parseModule(module, moduleLen);
 		if (this.music != 8192)
 			throw new Exception("Unsupported module address");
 		boolean[] seen = new boolean[128];
@@ -523,7 +647,7 @@ public final class ASAPInfo
 
 	private void parseDltSong(byte[] module, boolean[] seen, int pos)
 	{
-		while (pos < 128 && !seen[pos] && isDltTrackEmpty(module, pos))
+		while (pos < 128 && !seen[pos] && ASAPInfo.isDltTrackEmpty(module, pos))
 			seen[pos++] = true;
 		this.songPos[this.songs] = (byte) pos;
 		int playerCalls = 0;
@@ -536,14 +660,14 @@ public final class ASAPInfo
 			}
 			seen[pos] = true;
 			int p1 = module[8198 + pos] & 0xff;
-			if (p1 == 64 || isDltTrackEmpty(module, pos))
+			if (p1 == 64 || ASAPInfo.isDltTrackEmpty(module, pos))
 				break;
 			if (p1 == 65)
 				pos = module[8326 + pos] & 0xff;
 			else if (p1 == 66)
 				tempo = module[8326 + pos++] & 0xff;
 			else {
-				for (int i = 0; i < 64 && !isDltPatternEnd(module, pos, i); i++)
+				for (int i = 0; i < 64 && !ASAPInfo.isDltPatternEnd(module, pos, i); i++)
 					playerCalls += tempo;
 				pos++;
 			}
@@ -624,88 +748,6 @@ public final class ASAPInfo
 		return r;
 	}
 
-	void parseFile(ASAP asap, String filename, byte[] module, int moduleLen) throws Exception
-	{
-		int len = filename.length();
-		int basename = 0;
-		int ext = -1;
-		for (int i = len; --i >= 0;) {
-			int c = filename.charAt(i);
-			if (c == 47 || c == 92) {
-				basename = i + 1;
-				break;
-			}
-			if (c == 46)
-				ext = i;
-		}
-		if (ext < 0)
-			throw new Exception("Filename has no extension");
-		ext -= basename;
-		if (ext > 127)
-			ext = 127;
-		this.filename = filename.substring(basename, basename + ext);
-		this.author = "";
-		this.name = "";
-		this.date = "";
-		this.channels = 1;
-		this.songs = 1;
-		this.defaultSong = 0;
-		for (int i = 0; i < 32; i++) {
-			this.durations[i] = -1;
-			this.loops[i] = false;
-		}
-		this.ntsc = false;
-		this.fastplay = 312;
-		this.music = -1;
-		this.init = -1;
-		this.player = -1;
-		this.covoxAddr = -1;
-		switch (getPackedExt(filename)) {
-			case 7364979:
-				this.parseSap(asap, module, moduleLen);
-				return;
-			case 6516067:
-				this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMC, getBinaryResource("cmc.obx", 2019));
-				return;
-			case 3370339:
-				this.parseCmc(asap, module, moduleLen, ASAPModuleType.CM3, getBinaryResource("cm3.obx", 2022));
-				return;
-			case 7499107:
-				this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMR, getBinaryResource("cmc.obx", 2019));
-				return;
-			case 7564643:
-				this.channels = 2;
-				this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMS, getBinaryResource("cms.obx", 2753));
-				return;
-			case 6516068:
-				this.fastplay = 156;
-				this.parseCmc(asap, module, moduleLen, ASAPModuleType.CMC, getBinaryResource("cmc.obx", 2019));
-				return;
-			case 7629924:
-				this.parseDlt(asap, module, moduleLen);
-				return;
-			case 7630957:
-				this.parseMpt(asap, module, moduleLen);
-				return;
-			case 6582381:
-				this.fastplay = 156;
-				this.parseMpt(asap, module, moduleLen);
-				return;
-			case 7630194:
-				this.parseRmt(asap, module, moduleLen);
-				return;
-			case 6516084:
-			case 3698036:
-				this.parseTmc(asap, module, moduleLen);
-				return;
-			case 3304820:
-				this.parseTm2(asap, module, moduleLen);
-				return;
-			default:
-				throw new Exception("Unknown filename extension");
-		}
-	}
-
 	private static int parseHex(byte[] module, int moduleIndex) throws Exception
 	{
 		if (module[moduleIndex] == 13)
@@ -728,13 +770,34 @@ public final class ASAPInfo
 		}
 	}
 
-	private void parseMpt(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseModule(byte[] module, int moduleLen) throws Exception
+	{
+		if ((module[0] != -1 || module[1] != -1) && (module[0] != 0 || module[1] != 0))
+			throw new Exception("Invalid two leading bytes of the module");
+		this.music = ASAPInfo.getWord(module, 2);
+		int musicLastByte = ASAPInfo.getWord(module, 4);
+		if (this.music <= 55295 && musicLastByte >= 53248)
+			throw new Exception("Module address conflicts with hardware registers");
+		int blockLen = musicLastByte + 1 - this.music;
+		if (6 + blockLen != moduleLen) {
+			if (this.type != ASAPModuleType.RMT || 11 + blockLen > moduleLen)
+				throw new Exception("Module length doesn't match headers");
+			int infoAddr = ASAPInfo.getWord(module, 6 + blockLen);
+			if (infoAddr != this.music + blockLen)
+				throw new Exception("Invalid address of RMT info");
+			int infoLen = ASAPInfo.getWord(module, 8 + blockLen) + 1 - infoAddr;
+			if (10 + blockLen + infoLen != moduleLen)
+				throw new Exception("Invalid RMT info block");
+		}
+	}
+
+	private void parseMpt(byte[] module, int moduleLen) throws Exception
 	{
 		if (moduleLen < 464)
 			throw new Exception("Module too short");
 		this.type = ASAPModuleType.MPT;
-		this.loadNative(asap, module, moduleLen, getBinaryResource("mpt.obx", 2233));
-		int track0Addr = getWord(module, 2) + 458;
+		this.parseModule(module, moduleLen);
+		int track0Addr = ASAPInfo.getWord(module, 2) + 458;
 		if ((module[454] & 0xff) + ((module[458] & 0xff) << 8) != track0Addr)
 			throw new Exception("Invalid address of the first track");
 		int songLen = (module[455] & 0xff) + ((module[459] & 0xff) << 8) - track0Addr >> 1;
@@ -754,7 +817,7 @@ public final class ASAPInfo
 
 	private void parseMptSong(byte[] module, boolean[] globalSeen, int songLen, int pos)
 	{
-		int addrToOffset = getWord(module, 2) - 6;
+		int addrToOffset = ASAPInfo.getWord(module, 2) - 6;
 		int tempo = module[463] & 0xff;
 		int playerCalls = 0;
 		byte[] seen = new byte[256];
@@ -781,7 +844,7 @@ public final class ASAPInfo
 				if (i >= 64)
 					break;
 				i <<= 1;
-				i = getWord(module, 70 + i);
+				i = ASAPInfo.getWord(module, 70 + i);
 				patternOffset[ch] = i == 0 ? 0 : i - addrToOffset;
 				blankRowsCounter[ch] = 0;
 			}
@@ -822,7 +885,7 @@ public final class ASAPInfo
 			this.addSong(playerCalls);
 	}
 
-	private void parseRmt(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseRmt(byte[] module, int moduleLen) throws Exception
 	{
 		if (moduleLen < 48)
 			throw new Exception("Module too short");
@@ -844,9 +907,9 @@ public final class ASAPInfo
 		if (perFrame < 1 || perFrame > 4)
 			throw new Exception("Unsupported player call rate");
 		this.type = ASAPModuleType.RMT;
-		this.loadNative(asap, module, moduleLen, this.channels == 2 ? getBinaryResource("rmt8.obx", 2275) : getBinaryResource("rmt4.obx", 2007));
-		int songLen = getWord(module, 4) + 1 - getWord(module, 20);
-		if (posShift == 3 && (songLen & 4) != 0 && module[6 + getWord(module, 4) - getWord(module, 2) - 3] == -2)
+		this.parseModule(module, moduleLen);
+		int songLen = ASAPInfo.getWord(module, 4) + 1 - ASAPInfo.getWord(module, 20);
+		if (posShift == 3 && (songLen & 4) != 0 && module[6 + ASAPInfo.getWord(module, 4) - ASAPInfo.getWord(module, 2) - 3] == -2)
 			songLen += 4;
 		songLen >>= posShift;
 		if (songLen >= 256)
@@ -867,12 +930,12 @@ public final class ASAPInfo
 
 	private void parseRmtSong(byte[] module, boolean[] globalSeen, int songLen, int posShift, int pos)
 	{
-		int addrToOffset = getWord(module, 2) - 6;
+		int addrToOffset = ASAPInfo.getWord(module, 2) - 6;
 		int tempo = module[11] & 0xff;
 		int frames = 0;
-		int songOffset = getWord(module, 20) - addrToOffset;
-		int patternLoOffset = getWord(module, 16) - addrToOffset;
-		int patternHiOffset = getWord(module, 18) - addrToOffset;
+		int songOffset = ASAPInfo.getWord(module, 20) - addrToOffset;
+		int patternLoOffset = ASAPInfo.getWord(module, 16) - addrToOffset;
+		int patternHiOffset = ASAPInfo.getWord(module, 18) - addrToOffset;
 		byte[] seen = new byte[256];
 		int[] patternBegin = new int[8];
 		int[] patternOffset = new int[8];
@@ -951,7 +1014,7 @@ public final class ASAPInfo
 		int instrumentFrames = 0;
 		for (int ch = 0; ch < 1 << posShift; ch++) {
 			int frame = instrumentFrame[ch];
-			frame += getRmtInstrumentFrames(module, instrumentNo[ch], volumeValue[ch], volumeFrame[ch] - frame, ch >= 4);
+			frame += ASAPInfo.getRmtInstrumentFrames(module, instrumentNo[ch], volumeValue[ch], volumeFrame[ch] - frame, ch >= 4);
 			if (instrumentFrames < frame)
 				instrumentFrames = frame;
 		}
@@ -964,32 +1027,9 @@ public final class ASAPInfo
 			this.addSong(frames);
 	}
 
-	private void parseSap(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseSap(byte[] module, int moduleLen) throws Exception
 	{
-		this.parseSapHeader(module, moduleLen);
-		if (asap == null)
-			return;
-		clear(asap.memory);
-		int moduleIndex = this.headerLen + 2;
-		while (moduleIndex + 5 <= moduleLen) {
-			int start_addr = getWord(module, moduleIndex);
-			int block_len = getWord(module, moduleIndex + 2) + 1 - start_addr;
-			if (block_len <= 0 || moduleIndex + block_len > moduleLen)
-				throw new Exception("Invalid binary block");
-			moduleIndex += 4;
-			System.arraycopy(module, moduleIndex, asap.memory, start_addr, block_len);
-			moduleIndex += block_len;
-			if (moduleIndex == moduleLen)
-				return;
-			if (moduleIndex + 7 <= moduleLen && module[moduleIndex] == -1 && module[moduleIndex + 1] == -1)
-				moduleIndex += 2;
-		}
-		throw new Exception("Invalid binary block");
-	}
-
-	private void parseSapHeader(byte[] module, int moduleLen) throws Exception
-	{
-		if (!hasStringAt(module, 0, "SAP\r\n"))
+		if (!ASAPInfo.hasStringAt(module, 0, "SAP\r\n"))
 			throw new Exception("Missing SAP header");
 		this.fastplay = -1;
 		int type = 0;
@@ -998,70 +1038,70 @@ public final class ASAPInfo
 		while (module[moduleIndex] != -1) {
 			if (moduleIndex + 8 >= moduleLen)
 				throw new Exception("Missing binary part");
-			if (hasStringAt(module, moduleIndex, "AUTHOR ")) {
-				int len = parseText(module, moduleIndex + 7);
+			if (ASAPInfo.hasStringAt(module, moduleIndex, "AUTHOR ")) {
+				int len = ASAPInfo.parseText(module, moduleIndex + 7);
 				if (len > 0)
 					this.author = new String(module, moduleIndex + 7 + 1, len);
 			}
-			else if (hasStringAt(module, moduleIndex, "NAME ")) {
-				int len = parseText(module, moduleIndex + 5);
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "NAME ")) {
+				int len = ASAPInfo.parseText(module, moduleIndex + 5);
 				if (len > 0)
 					this.name = new String(module, moduleIndex + 5 + 1, len);
 			}
-			else if (hasStringAt(module, moduleIndex, "DATE ")) {
-				int len = parseText(module, moduleIndex + 5);
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "DATE ")) {
+				int len = ASAPInfo.parseText(module, moduleIndex + 5);
 				if (len > 0)
 					this.date = new String(module, moduleIndex + 5 + 1, len);
 			}
-			else if (hasStringAt(module, moduleIndex, "SONGS ")) {
-				this.songs = parseDec(module, moduleIndex + 6, 32);
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "SONGS ")) {
+				this.songs = ASAPInfo.parseDec(module, moduleIndex + 6, 32);
 				if (this.songs < 1)
 					throw new Exception("Number too small");
 			}
-			else if (hasStringAt(module, moduleIndex, "DEFSONG ")) {
-				this.defaultSong = parseDec(module, moduleIndex + 8, 31);
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "DEFSONG ")) {
+				this.defaultSong = ASAPInfo.parseDec(module, moduleIndex + 8, 31);
 				if (this.defaultSong < 0)
 					throw new Exception("Number too small");
 			}
-			else if (hasStringAt(module, moduleIndex, "STEREO\r"))
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "STEREO\r"))
 				this.channels = 2;
-			else if (hasStringAt(module, moduleIndex, "NTSC\r"))
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "NTSC\r"))
 				this.ntsc = true;
-			else if (hasStringAt(module, moduleIndex, "TIME ")) {
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "TIME ")) {
 				if (durationIndex >= 32)
 					throw new Exception("Too many TIME tags");
 				moduleIndex += 5;
 				int len;
 				for (len = 0; module[moduleIndex + len] != 13; len++) {
 				}
-				if (len > 5 && hasStringAt(module, moduleIndex + len - 5, " LOOP")) {
+				if (len > 5 && ASAPInfo.hasStringAt(module, moduleIndex + len - 5, " LOOP")) {
 					this.loops[durationIndex] = true;
 					len -= 5;
 				}
 				if (len > 9)
 					throw new Exception("Invalid TIME tag");
 				String s = new String(module, moduleIndex, len);
-				int duration = parseDuration(s);
+				int duration = ASAPInfo.parseDuration(s);
 				this.durations[durationIndex++] = duration;
 			}
-			else if (hasStringAt(module, moduleIndex, "TYPE "))
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "TYPE "))
 				type = module[moduleIndex + 5] & 0xff;
-			else if (hasStringAt(module, moduleIndex, "FASTPLAY ")) {
-				this.fastplay = parseDec(module, moduleIndex + 9, 312);
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "FASTPLAY ")) {
+				this.fastplay = ASAPInfo.parseDec(module, moduleIndex + 9, 312);
 				if (this.fastplay < 1)
 					throw new Exception("Number too small");
 			}
-			else if (hasStringAt(module, moduleIndex, "MUSIC ")) {
-				this.music = parseHex(module, moduleIndex + 6);
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "MUSIC ")) {
+				this.music = ASAPInfo.parseHex(module, moduleIndex + 6);
 			}
-			else if (hasStringAt(module, moduleIndex, "INIT ")) {
-				this.init = parseHex(module, moduleIndex + 5);
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "INIT ")) {
+				this.init = ASAPInfo.parseHex(module, moduleIndex + 5);
 			}
-			else if (hasStringAt(module, moduleIndex, "PLAYER ")) {
-				this.player = parseHex(module, moduleIndex + 7);
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "PLAYER ")) {
+				this.player = ASAPInfo.parseHex(module, moduleIndex + 7);
 			}
-			else if (hasStringAt(module, moduleIndex, "COVOX ")) {
-				this.covoxAddr = parseHex(module, moduleIndex + 6);
+			else if (ASAPInfo.hasStringAt(module, moduleIndex, "COVOX ")) {
+				this.covoxAddr = ASAPInfo.parseHex(module, moduleIndex + 6);
 				if (this.covoxAddr != 54784)
 					throw new Exception("COVOX should be D600");
 				this.channels = 2;
@@ -1117,7 +1157,7 @@ public final class ASAPInfo
 	{
 		if (module[moduleIndex] != 34)
 			throw new Exception("Missing quote");
-		if (hasStringAt(module, moduleIndex + 1, "<?>\"\r"))
+		if (ASAPInfo.hasStringAt(module, moduleIndex + 1, "<?>\"\r"))
 			return 0;
 		for (int len = 0;; len++) {
 			int c = module[moduleIndex + 1 + len] & 0xff;
@@ -1131,12 +1171,12 @@ public final class ASAPInfo
 		}
 	}
 
-	private void parseTm2(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseTm2(byte[] module, int moduleLen) throws Exception
 	{
 		if (moduleLen < 932)
 			throw new Exception("Module too short");
 		this.type = ASAPModuleType.TM2;
-		this.loadNative(asap, module, moduleLen, getBinaryResource("tm2.obx", 3698));
+		this.parseModule(module, moduleLen);
 		int i = module[37] & 0xff;
 		if (i < 1 || i > 4)
 			throw new Exception("Unsupported player call rate");
@@ -1155,7 +1195,7 @@ public final class ASAPInfo
 			if (patternAddr != 0 && patternAddr < lastPos)
 				lastPos = patternAddr;
 		}
-		lastPos -= getWord(module, 2) + 896;
+		lastPos -= ASAPInfo.getWord(module, 2) + 896;
 		if (902 + lastPos >= moduleLen)
 			throw new Exception("Module too short");
 		int c;
@@ -1177,7 +1217,7 @@ public final class ASAPInfo
 
 	private void parseTm2Song(byte[] module, int pos)
 	{
-		int addrToOffset = getWord(module, 2) - 6;
+		int addrToOffset = ASAPInfo.getWord(module, 2) - 6;
 		int tempo = (module[36] & 0xff) + 1;
 		int playerCalls = 0;
 		int[] patternOffset = new int[8];
@@ -1247,19 +1287,19 @@ public final class ASAPInfo
 		this.addSong(playerCalls);
 	}
 
-	private void parseTmc(ASAP asap, byte[] module, int moduleLen) throws Exception
+	private void parseTmc(byte[] module, int moduleLen) throws Exception
 	{
 		if (moduleLen < 464)
 			throw new Exception("Module too short");
 		this.type = ASAPModuleType.TMC;
-		this.loadNative(asap, module, moduleLen, getBinaryResource("tmc.obx", 2671));
+		this.parseModule(module, moduleLen);
 		this.channels = 2;
 		int i = 0;
 		while (module[102 + i] == 0) {
 			if (++i >= 64)
 				throw new Exception("No instruments");
 		}
-		int lastPos = ((module[102 + i] & 0xff) << 8) + (module[38 + i] & 0xff) - getWord(module, 2) - 432;
+		int lastPos = ((module[102 + i] & 0xff) << 8) + (module[38 + i] & 0xff) - ASAPInfo.getWord(module, 2) - 432;
 		if (437 + lastPos >= moduleLen)
 			throw new Exception("Module too short");
 		do {
@@ -1276,14 +1316,12 @@ public final class ASAPInfo
 		i = module[37] & 0xff;
 		if (i < 1 || i > 4)
 			throw new Exception("Unsupported player call rate");
-		if (asap != null)
-			asap.tmcPerFrame = i;
 		this.fastplay = 312 / i;
 	}
 
 	private void parseTmcSong(byte[] module, int pos)
 	{
-		int addrToOffset = getWord(module, 2) - 6;
+		int addrToOffset = ASAPInfo.getWord(module, 2) - 6;
 		int tempo = (module[36] & 0xff) + 1;
 		int frames = 0;
 		int[] patternOffset = new int[8];
@@ -1361,51 +1399,5 @@ public final class ASAPInfo
 	 * Years ASAP was created in.
 	 */
 	public static final String YEARS = "2005-2011";
-	private static void clear(byte[] array)
-	{
-		for (int i = 0; i < array.length; i++)
-			array[i] = 0;
-	}
-	/**
-	 * Reads bytes from the stream into the byte array
-	 * until end of stream or array is full.
-	 * @param is source stream
-	 * @param b output array
-	 * @return number of bytes read
-	 */
-	public static int readAndClose(java.io.InputStream is, byte[] b) throws java.io.IOException
-	{
-		int got = 0;
-		int need = b.length;
-		try {
-			while (need > 0) {
-				int i = is.read(b, got, need);
-				if (i <= 0)
-					break;
-				got += i;
-				need -= i;
-			}
-		}
-		finally {
-			is.close();
-		}
-		return got;
-	}
-
-	private static byte[] getBinaryResource(String name, int length)
-	{
-		java.io.InputStream is = ASAPInfo.class.getResourceAsStream(name);
-		try {
-			byte[] result = new byte[length];
-			readAndClose(is, result);
-			return result;
-		}
-		catch (java.io.IOException e) {
-			throw new RuntimeException();
-		}
-	}
-	private static final byte[] CI_CONST_ARRAY_1 = { 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, -120, 127, 121, 115, 108, 103,
-		96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52, 51, 48, 45, 42, 40,
-		37, 36, 33, 31, 30 };
-	private static final byte[] CI_CONST_ARRAY_2 = { 16, 8, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 };
+	private static final byte[] CI_CONST_ARRAY_1 = { 16, 8, 4, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1 };
 }

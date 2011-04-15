@@ -111,6 +111,31 @@ public class ASAPApplet extends Applet implements Runnable
 		repaint();
 	}
 
+	/**
+	 * Reads bytes from the stream into the byte array
+	 * until end of stream or array is full.
+	 * @param is source stream
+	 * @param b output array
+	 * @return number of bytes read
+	 */
+	private static int readAndClose(InputStream is, byte[] b) throws IOException
+	{
+		int got = 0;
+		int len = b.length;
+		try {
+			while (got < len) {
+				int i = is.read(b, got, len - got);
+				if (i <= 0)
+					break;
+				got += i;
+			}
+		}
+		finally {
+			is.close();
+		}
+		return got;
+	}
+
 	public void play(String filename, int song)
 	{
 		byte[] module;
@@ -118,7 +143,7 @@ public class ASAPApplet extends Applet implements Runnable
 		try {
 			InputStream is = new URL(getDocumentBase(), filename).openStream();
 			module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
-			moduleLen = ASAPInfo.readAndClose(is, module);
+			moduleLen = readAndClose(is, module);
 		} catch (IOException e) {
 			showStatus("ERROR LOADING " + filename);
 			return;

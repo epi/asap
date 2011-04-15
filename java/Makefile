@@ -6,7 +6,7 @@ JAR = jar
 JAR_OPTIMIZE = 7z a -mx=9 -tzip
 JAVADOC = javadoc
 
-COMMON_JAVA = ASAP.java ASAPInfo.java ASAPModuleType.java ASAPSampleFormat.java Cpu6502.java NmiStatus.java Pokey.java PokeyPair.java
+COMMON_JAVA = ASAP.java ASAP6502.java ASAPInfo.java ASAPModuleType.java ASAPSampleFormat.java Cpu6502.java NmiStatus.java Pokey.java PokeyPair.java
 PLAYERS_OBX_DIR = net/sf/asap
 
 all: asap2wav.jar asap_applet.jar j2me

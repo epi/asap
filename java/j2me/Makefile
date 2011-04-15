@@ -25,7 +25,7 @@ asap_midlet.jar: MANIFEST.MF preverified/ASAPMIDlet.class $(PLAYERS_OBX)
 	cd preverified && $(JAR_OPTIMIZE) ../$@ .
 
 preverified/ASAPMIDlet.class: ASAPMIDlet.class ../net/sf/asap/ASAP.class
-	$(PREVERIFY) -classpath "$(ME_CLASSES);.;.." -d preverified ASAPMIDlet FileList ASAPInputStream net.sf.asap.ASAP net.sf.asap.ASAPInfo net.sf.asap.ASAPModuleType net.sf.asap.ASAPSampleFormat net.sf.asap.Cpu6502 net.sf.asap.NmiStatus net.sf.asap.Pokey net.sf.asap.PokeyPair
+	$(PREVERIFY) -classpath "$(ME_CLASSES);.;.." -d preverified ASAPMIDlet FileList ASAPInputStream net.sf.asap.ASAP net.sf.asap.ASAP6502 net.sf.asap.ASAPInfo net.sf.asap.ASAPModuleType net.sf.asap.ASAPSampleFormat net.sf.asap.Cpu6502 net.sf.asap.NmiStatus net.sf.asap.Pokey net.sf.asap.PokeyPair
 
 ASAPMIDlet.class: ASAPMIDlet.java ../net/sf/asap/ASAP.class
 	$(JAVAC) -classpath ".;.." -bootclasspath "$(ME_CLASSES)" ASAPMIDlet.java

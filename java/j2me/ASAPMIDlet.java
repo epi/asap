@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.Vector;
@@ -264,6 +265,31 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 		displayFileList(new FileList("Select File", "", null, FileSystemRegistry.listRoots()));
 	}
 
+	/**
+	 * Reads bytes from the stream into the byte array
+	 * until end of stream or array is full.
+	 * @param is source stream
+	 * @param b output array
+	 * @return number of bytes read
+	 */
+	private static int readAndClose(InputStream is, byte[] b) throws IOException
+	{
+		int got = 0;
+		int len = b.length;
+		try {
+			while (got < len) {
+				int i = is.read(b, got, len - got);
+				if (i <= 0)
+					break;
+				got += i;
+			}
+		}
+		finally {
+			is.close();
+		}
+		return got;
+	}
+
 	public void commandAction(Command c, Displayable s)
 	{
 		if (c == selectCommand || c == List.SELECT_COMMAND) {
@@ -293,7 +319,7 @@ public class ASAPMIDlet extends MIDlet implements CommandListener, PlayerListene
 					return;
 				}
 				InputStream is = fc.openInputStream();
-				int moduleLen = ASAPInfo.readAndClose(is, module);
+				int moduleLen = readAndClose(is, module);
 				asap.load(filename, module, moduleLen);
 				ASAPInfo info = asap.getInfo();
 				int songs = info.getSongs();

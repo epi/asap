@@ -67,10 +67,13 @@ players.h: files2anylang.pl $(PLAYERS_OBX)
 	$(PERL) files2anylang.pl $(PLAYERS_OBX) >$@
 
 players/cmc.obx: players/cmc.asx
-	$(XASM) -d CM3=0 -o $@ players/cmc.asx
+	$(XASM) -d CM3=0 -d CMR=0 -o $@ players/cmc.asx
 
 players/cm3.obx: players/cmc.asx
-	$(XASM) -d CM3=1 -o $@ players/cmc.asx
+	$(XASM) -d CM3=1 -d CMR=0 -o $@ players/cmc.asx
+
+players/cmr.obx: players/cmc.asx
+	$(XASM) -d CM3=0 -d CMR=1 -o $@ players/cmc.asx
 
 players/cms.obx: players/cms.asx
 	$(XASM) -o $@ players/cms.asx

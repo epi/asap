@@ -1,4 +1,4 @@
-SOURCES = ../asap.ci ../asapinfo.ci ../cpu6502.ci ../pokey.ci
+SOURCES = ../asap.ci ../asap6502.ci ../asapinfo.ci ../cpu6502.ci ../pokey.ci
 
 all: asap.swf
 

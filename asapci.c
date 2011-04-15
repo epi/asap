@@ -73,25 +73,128 @@ static cibool ASAPInfo_HasStringAt(unsigned char const *module, int moduleIndex,
 static cibool ASAPInfo_IsDltPatternEnd(unsigned char const *module, int pos, int i);
 static cibool ASAPInfo_IsDltTrackEmpty(unsigned char const *module, int pos);
 static cibool ASAPInfo_IsOurPackedExt(int ext);
-static cibool ASAPInfo_LoadNative(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen, unsigned char const *playerRoutine);
-static cibool ASAPInfo_ParseCmc(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen, ASAPModuleType type, unsigned char const *playerRoutine);
+static cibool ASAPInfo_ParseCmc(ASAPInfo *self, unsigned char const *module, int moduleLen, ASAPModuleType type);
 static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, int pos);
 static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int maxVal);
-static cibool ASAPInfo_ParseDlt(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen);
+static cibool ASAPInfo_ParseDlt(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseDltSong(ASAPInfo *self, unsigned char const *module, cibool *seen, int pos);
-static cibool ASAPInfo_ParseFile(ASAPInfo *self, ASAP *asap, const char *filename, unsigned char const *module, int moduleLen);
 static int ASAPInfo_ParseHex(unsigned char const *module, int moduleIndex);
-static cibool ASAPInfo_ParseMpt(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen);
+static cibool ASAPInfo_ParseModule(ASAPInfo *self, unsigned char const *module, int moduleLen);
+static cibool ASAPInfo_ParseMpt(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseMptSong(ASAPInfo *self, unsigned char const *module, cibool *globalSeen, int songLen, int pos);
-static cibool ASAPInfo_ParseRmt(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen);
+static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseRmtSong(ASAPInfo *self, unsigned char const *module, cibool *globalSeen, int songLen, int posShift, int pos);
-static cibool ASAPInfo_ParseSap(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen);
-static cibool ASAPInfo_ParseSapHeader(ASAPInfo *self, unsigned char const *module, int moduleLen);
+static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static int ASAPInfo_ParseText(unsigned char const *module, int moduleIndex);
-static cibool ASAPInfo_ParseTm2(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen);
+static cibool ASAPInfo_ParseTm2(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseTm2Song(ASAPInfo *self, unsigned char const *module, int pos);
-static cibool ASAPInfo_ParseTmc(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen);
+static cibool ASAPInfo_ParseTmc(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseTmcSong(ASAPInfo *self, unsigned char const *module, int pos);
+
+struct Pokey {
+	int audc1;
+	int audc2;
+	int audc3;
+	int audc4;
+	int audctl;
+	int audf1;
+	int audf2;
+	int audf3;
+	int audf4;
+	int delta1;
+	int delta2;
+	int delta3;
+	int delta4;
+	int deltaBuffer[888];
+	int divCycles;
+	cibool init;
+	int mute1;
+	int mute2;
+	int mute3;
+	int mute4;
+	int out1;
+	int out2;
+	int out3;
+	int out4;
+	int periodCycles1;
+	int periodCycles2;
+	int periodCycles3;
+	int periodCycles4;
+	int polyIndex;
+	int reloadCycles1;
+	int reloadCycles3;
+	int skctl;
+	int tickCycle1;
+	int tickCycle2;
+	int tickCycle3;
+	int tickCycle4;
+};
+static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int delta);
+static void Pokey_EndFrame(Pokey *self, PokeyPair const *pokeys, int cycle);
+static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int cycleLimit);
+static void Pokey_Initialize(Pokey *self);
+static cibool Pokey_IsSilent(Pokey const *self);
+static void Pokey_Mute(Pokey *self, int mask);
+
+struct PokeyPair {
+	Pokey basePokey;
+	Pokey extraPokey;
+	int extraPokeyMask;
+	int iirAccLeft;
+	int iirAccRight;
+	int irqst;
+	int mainClock;
+	unsigned char poly17Lookup[16385];
+	unsigned char poly9Lookup[511];
+	int sampleIndex;
+	int sampleOffset;
+	int samples;
+	int timer1Cycle;
+	int timer2Cycle;
+	int timer4Cycle;
+};
+static void PokeyPair_Construct(PokeyPair *self);
+static int PokeyPair_EndFrame(PokeyPair *self, int cycle);
+static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int bufferOffset, int blocks, ASAPSampleFormat format);
+static int PokeyPair_GetRandom(PokeyPair const *self, int addr, int cycle);
+static void PokeyPair_Initialize(PokeyPair *self, int mainClock, cibool stereo);
+static cibool PokeyPair_IsSilent(PokeyPair const *self);
+static void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
+static void PokeyPair_StartFrame(PokeyPair *self);
+
+struct ASAP {
+	int blocksPlayed;
+	int consol;
+	unsigned char covox[4];
+	Cpu6502 cpu;
+	int currentDuration;
+	int currentSong;
+	int cycle;
+	unsigned char memory[65536];
+	ASAPInfo moduleInfo;
+	int nextEventCycle;
+	int nextPlayerCycle;
+	int nextScanlineCycle;
+	NmiStatus nmist;
+	PokeyPair pokeys;
+	int silenceCycles;
+	int silenceCyclesCounter;
+	int tmcPerFrameCounter;
+};
+static void ASAP_Construct(ASAP *self);
+static void ASAP_Call6502(ASAP *self, int addr);
+static void ASAP_Call6502Player(ASAP *self);
+static int ASAP_Do6502Frame(ASAP *self);
+static cibool ASAP_Do6502Init(ASAP *self, int pc, int a, int x, int y);
+static int ASAP_DoFrame(ASAP *self);
+static int ASAP_GenerateAt(ASAP *self, unsigned char *buffer, int bufferOffset, int bufferLen, ASAPSampleFormat format);
+static void ASAP_HandleEvent(ASAP *self);
+static int ASAP_MillisecondsToBlocks(int milliseconds);
+static int ASAP_PeekHardware(ASAP const *self, int addr);
+static void ASAP_PokeHardware(ASAP *self, int addr, int data);
+static void ASAP_PutLittleEndian(unsigned char *buffer, int offset, int value);
+
+static unsigned char const *ASAP6502_GetPlayerRoutine(ASAPInfo const *info);
 static const unsigned char CiBinaryResource_cm3_obx[2022] = { 255, 255, 0, 5, 223, 12, 76, 18, 11, 76, 120, 5, 76, 203, 7, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 160, 227, 237, 227, 160, 240, 236, 225,
 	249, 229, 242, 160, 246, 160, 178, 174, 177, 160, 0, 0, 0, 0, 0, 0,
@@ -335,6 +438,133 @@ static const unsigned char CiBinaryResource_cmc_obx[2019] = { 255, 255, 0, 5, 22
 	122, 113, 107, 101, 95, 0, 86, 80, 103, 96, 90, 85, 81, 76, 72, 67,
 	63, 61, 57, 52, 51, 57, 45, 42, 40, 37, 36, 33, 31, 30, 0, 0,
 	15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+	0, 56, 11, 140, 10, 0, 10, 106, 9, 232, 8, 106, 8, 239, 7, 128,
+	7, 8, 7, 174, 6, 70, 6, 230, 5, 149, 5, 65, 5, 246, 4, 176,
+	4, 110, 4, 48, 4, 246, 3, 187, 3, 132, 3, 82, 3, 34, 3, 244,
+	2, 200, 2, 160, 2, 122, 2, 85, 2, 52, 2, 20, 2, 245, 1, 216,
+	1, 189, 1, 164, 1, 141, 1, 119, 1, 96, 1, 78, 1, 56, 1, 39,
+	1, 21, 1, 6, 1, 247, 0, 232, 0, 219, 0, 207, 0, 195, 0, 184,
+	0, 172, 0, 162, 0, 154, 0, 144, 0, 136, 0, 127, 0, 120, 0, 112,
+	0, 106, 0, 100, 0, 94, 0, 87, 0, 82, 0, 50, 0, 10, 0, 0,
+	1, 2, 131, 0, 1, 2, 3, 1, 0, 2, 131, 1, 0, 2, 3, 1,
+	2, 128, 3, 128, 64, 32, 16, 8, 4, 2, 1, 3, 3, 3, 3, 7,
+	11, 15, 19 };
+static const unsigned char CiBinaryResource_cmr_obx[2019] = { 255, 255, 0, 5, 220, 12, 76, 15, 11, 76, 120, 5, 76, 203, 7, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 160, 227, 237, 227, 160, 240, 236, 225,
+	249, 229, 242, 160, 246, 160, 178, 174, 177, 160, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255,
+	255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 128, 128, 128, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 141, 110,
+	5, 142, 111, 5, 140, 112, 5, 41, 112, 74, 74, 74, 170, 189, 145, 11,
+	141, 169, 5, 189, 146, 11, 141, 170, 5, 169, 3, 141, 15, 210, 216, 165,
+	254, 72, 165, 255, 72, 172, 112, 5, 174, 111, 5, 173, 110, 5, 32, 178,
+	5, 104, 133, 255, 104, 133, 254, 96, 173, 118, 5, 133, 254, 173, 119, 5,
+	133, 255, 160, 0, 138, 240, 28, 177, 254, 201, 143, 240, 4, 201, 239, 208,
+	12, 202, 208, 9, 200, 192, 84, 176, 9, 152, 170, 16, 6, 200, 192, 84,
+	144, 229, 96, 142, 104, 5, 32, 123, 6, 169, 0, 162, 9, 157, 69, 5,
+	202, 16, 250, 141, 103, 5, 169, 1, 141, 113, 5, 169, 255, 141, 106, 5,
+	173, 114, 5, 133, 254, 173, 115, 5, 133, 255, 160, 19, 177, 254, 170, 173,
+	118, 5, 133, 254, 173, 119, 5, 133, 255, 172, 104, 5, 177, 254, 201, 207,
+	208, 13, 152, 24, 105, 85, 168, 177, 254, 48, 15, 170, 76, 52, 6, 201,
+	143, 240, 7, 201, 239, 240, 3, 136, 16, 226, 142, 108, 5, 142, 109, 5,
+	96, 41, 15, 240, 245, 142, 218, 10, 142, 240, 10, 142, 255, 10, 140, 219,
+	10, 140, 241, 10, 140, 0, 11, 96, 142, 114, 5, 134, 254, 140, 115, 5,
+	132, 255, 24, 138, 105, 20, 141, 116, 5, 152, 105, 0, 141, 117, 5, 142,
+	118, 5, 200, 200, 140, 119, 5, 160, 19, 177, 254, 141, 108, 5, 141, 109,
+	5, 162, 8, 169, 0, 141, 113, 5, 157, 0, 210, 224, 3, 176, 8, 157,
+	9, 5, 169, 255, 157, 57, 5, 202, 16, 233, 169, 128, 162, 3, 157, 75,
+	5, 202, 16, 250, 96, 169, 1, 141, 113, 5, 169, 0, 240, 238, 41, 3,
+	201, 3, 240, 240, 224, 64, 176, 236, 192, 26, 176, 232, 170, 169, 128, 157,
+	75, 5, 169, 0, 157, 57, 5, 157, 60, 5, 157, 63, 5, 173, 111, 5,
+	157, 12, 5, 173, 112, 5, 10, 10, 10, 133, 254, 24, 173, 114, 5, 105,
+	48, 72, 173, 115, 5, 105, 1, 168, 104, 24, 101, 254, 157, 97, 5, 152,
+	105, 0, 157, 100, 5, 24, 173, 114, 5, 105, 148, 133, 254, 173, 115, 5,
+	105, 0, 133, 255, 173, 112, 5, 10, 109, 112, 5, 10, 168, 177, 254, 157,
+	79, 5, 200, 177, 254, 157, 82, 5, 41, 7, 141, 110, 5, 200, 177, 254,
+	157, 85, 5, 200, 177, 254, 157, 88, 5, 200, 177, 254, 157, 91, 5, 200,
+	177, 254, 157, 94, 5, 160, 0, 173, 110, 5, 201, 3, 208, 2, 160, 2,
+	201, 7, 208, 2, 160, 4, 185, 175, 11, 133, 254, 185, 176, 11, 133, 255,
+	189, 85, 5, 74, 74, 74, 74, 24, 109, 111, 5, 141, 111, 5, 141, 194,
+	7, 168, 173, 110, 5, 201, 7, 208, 15, 152, 10, 168, 177, 254, 157, 45,
+	5, 200, 140, 111, 5, 76, 131, 7, 177, 254, 157, 45, 5, 189, 85, 5,
+	41, 15, 24, 109, 111, 5, 141, 111, 5, 172, 111, 5, 173, 110, 5, 201,
+	5, 8, 177, 254, 40, 240, 8, 221, 45, 5, 208, 3, 56, 233, 1, 157,
+	48, 5, 189, 79, 5, 72, 41, 3, 168, 185, 181, 11, 157, 54, 5, 104,
+	74, 74, 74, 74, 160, 62, 201, 15, 240, 16, 160, 55, 201, 14, 240, 10,
+	160, 48, 201, 13, 240, 4, 24, 105, 0, 168, 185, 185, 11, 157, 51, 5,
+	96, 216, 165, 252, 72, 165, 253, 72, 165, 254, 72, 165, 255, 72, 173, 113,
+	5, 208, 3, 76, 2, 11, 173, 78, 5, 240, 3, 76, 107, 9, 173, 108,
+	5, 205, 109, 5, 240, 3, 76, 88, 9, 173, 103, 5, 240, 3, 76, 220,
+	8, 162, 2, 188, 75, 5, 48, 3, 157, 75, 5, 157, 69, 5, 202, 16,
+	242, 173, 118, 5, 133, 252, 173, 119, 5, 133, 253, 172, 104, 5, 132, 254,
+	204, 106, 5, 208, 25, 173, 107, 5, 240, 20, 173, 104, 5, 172, 105, 5,
+	140, 104, 5, 206, 107, 5, 208, 232, 141, 104, 5, 168, 16, 226, 162, 0,
+	177, 252, 201, 254, 208, 14, 172, 104, 5, 200, 196, 254, 240, 67, 140, 104,
+	5, 76, 26, 8, 157, 66, 5, 24, 152, 105, 85, 168, 232, 224, 3, 144,
+	223, 172, 104, 5, 177, 252, 16, 122, 201, 255, 240, 118, 74, 74, 74, 41,
+	14, 170, 189, 161, 11, 141, 126, 8, 189, 162, 11, 141, 127, 8, 173, 67,
+	5, 133, 255, 32, 147, 8, 140, 104, 5, 192, 85, 176, 4, 196, 254, 208,
+	143, 164, 254, 140, 104, 5, 76, 2, 11, 32, 148, 6, 160, 255, 96, 48,
+	251, 168, 96, 48, 247, 56, 152, 229, 255, 168, 96, 48, 239, 24, 152, 101,
+	255, 168, 96, 48, 231, 141, 108, 5, 141, 109, 5, 200, 96, 48, 221, 173,
+	68, 5, 48, 216, 141, 107, 5, 200, 140, 105, 5, 24, 152, 101, 255, 141,
+	106, 5, 96, 136, 48, 10, 177, 252, 201, 143, 240, 4, 201, 239, 208, 243,
+	200, 96, 162, 2, 189, 72, 5, 240, 5, 222, 72, 5, 16, 99, 189, 75,
+	5, 208, 94, 188, 66, 5, 192, 64, 176, 87, 173, 116, 5, 133, 252, 173,
+	117, 5, 133, 253, 177, 252, 133, 254, 24, 152, 105, 64, 168, 177, 252, 133,
+	255, 37, 254, 201, 255, 240, 58, 188, 69, 5, 177, 254, 41, 192, 208, 12,
+	177, 254, 41, 63, 157, 15, 5, 254, 69, 5, 16, 235, 201, 64, 208, 19,
+	177, 254, 41, 63, 141, 111, 5, 189, 15, 5, 141, 112, 5, 32, 188, 6,
+	76, 72, 9, 201, 128, 208, 10, 177, 254, 41, 63, 157, 72, 5, 254, 69,
+	5, 202, 16, 144, 174, 103, 5, 232, 138, 41, 63, 141, 103, 5, 206, 109,
+	5, 208, 14, 173, 108, 5, 141, 109, 5, 173, 103, 5, 208, 3, 238, 104,
+	5, 172, 48, 5, 173, 82, 5, 41, 7, 201, 5, 240, 4, 201, 6, 208,
+	1, 136, 140, 39, 5, 160, 0, 201, 5, 240, 4, 201, 6, 208, 2, 160,
+	2, 201, 7, 208, 2, 160, 40, 140, 44, 5, 162, 2, 189, 82, 5, 41,
+	224, 157, 40, 5, 189, 97, 5, 133, 252, 189, 100, 5, 133, 253, 189, 57,
+	5, 201, 255, 240, 54, 201, 15, 208, 32, 189, 63, 5, 240, 45, 222, 63,
+	5, 189, 63, 5, 208, 37, 188, 9, 5, 240, 1, 136, 152, 157, 9, 5,
+	189, 88, 5, 157, 63, 5, 76, 229, 9, 189, 57, 5, 74, 168, 177, 252,
+	144, 4, 74, 74, 74, 74, 41, 15, 157, 9, 5, 188, 45, 5, 189, 82,
+	5, 41, 7, 201, 1, 208, 31, 136, 152, 200, 221, 48, 5, 8, 169, 1,
+	40, 208, 2, 10, 10, 61, 60, 5, 240, 12, 188, 48, 5, 192, 255, 208,
+	5, 169, 0, 157, 9, 5, 152, 157, 36, 5, 169, 1, 141, 110, 5, 189,
+	57, 5, 201, 15, 240, 56, 41, 7, 168, 185, 205, 12, 133, 254, 189, 57,
+	5, 41, 8, 8, 138, 40, 24, 240, 2, 105, 3, 168, 185, 91, 5, 37,
+	254, 240, 27, 189, 51, 5, 157, 36, 5, 142, 110, 5, 202, 16, 8, 141,
+	39, 5, 169, 0, 141, 44, 5, 232, 189, 54, 5, 157, 40, 5, 189, 57,
+	5, 41, 15, 201, 15, 240, 16, 254, 57, 5, 189, 57, 5, 201, 15, 208,
+	6, 189, 88, 5, 157, 63, 5, 189, 75, 5, 16, 10, 189, 9, 5, 208,
+	5, 169, 64, 157, 75, 5, 254, 60, 5, 160, 0, 189, 82, 5, 74, 74,
+	74, 74, 144, 1, 136, 74, 144, 1, 200, 24, 152, 125, 45, 5, 157, 45,
+	5, 189, 48, 5, 201, 255, 208, 2, 160, 0, 24, 152, 125, 48, 5, 157,
+	48, 5, 202, 48, 3, 76, 150, 9, 173, 40, 5, 141, 43, 5, 173, 82,
+	5, 41, 7, 170, 160, 3, 173, 110, 5, 240, 3, 188, 213, 12, 152, 72,
+	185, 185, 12, 8, 41, 127, 170, 152, 41, 3, 10, 168, 189, 36, 5, 153,
+	0, 210, 200, 189, 9, 5, 224, 3, 208, 3, 173, 9, 5, 29, 40, 5,
+	40, 16, 2, 169, 0, 153, 0, 210, 104, 168, 136, 41, 3, 208, 207, 160,
+	8, 173, 44, 5, 153, 0, 210, 24, 104, 133, 255, 104, 133, 254, 104, 133,
+	253, 104, 133, 252, 96, 104, 170, 240, 78, 201, 2, 240, 6, 104, 104, 202,
+	208, 251, 96, 165, 20, 197, 20, 240, 252, 173, 36, 2, 201, 134, 208, 7,
+	173, 37, 2, 201, 11, 240, 230, 173, 36, 2, 141, 143, 11, 173, 37, 2,
+	141, 144, 11, 169, 134, 141, 36, 2, 169, 11, 141, 37, 2, 104, 104, 240,
+	3, 56, 233, 1, 141, 93, 11, 104, 168, 104, 170, 169, 112, 32, 120, 5,
+	169, 0, 162, 0, 76, 120, 5, 165, 20, 197, 20, 240, 252, 173, 36, 2,
+	201, 134, 208, 174, 173, 37, 2, 201, 11, 208, 167, 173, 143, 11, 141, 36,
+	2, 173, 144, 11, 141, 37, 2, 169, 64, 76, 120, 5, 32, 203, 7, 144,
+	3, 32, 117, 11, 76, 255, 255, 178, 5, 221, 5, 168, 6, 59, 6, 123,
+	6, 148, 6, 159, 6, 82, 6, 147, 8, 153, 8, 157, 8, 165, 8, 173,
+	8, 183, 8, 205, 8, 185, 11, 250, 11, 59, 12, 128, 160, 32, 64, 255,
+	241, 228, 215, 203, 192, 181, 170, 161, 152, 143, 135, 127, 120, 114, 107, 101,
+	95, 90, 85, 80, 75, 71, 67, 63, 60, 56, 53, 50, 47, 44, 42, 39,
+	37, 35, 33, 31, 29, 28, 26, 24, 23, 22, 20, 19, 18, 17, 16, 15,
+	14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0,
+	0, 0, 0, 0, 242, 233, 218, 206, 191, 182, 170, 161, 152, 143, 137, 128,
+	122, 113, 107, 101, 95, 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, 136,
+	127, 121, 115, 108, 103, 96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52,
+	51, 48, 45, 42, 40, 37, 36, 33, 31, 30, 5, 4, 3, 2, 1, 0,
 	0, 56, 11, 140, 10, 0, 10, 106, 9, 232, 8, 106, 8, 239, 7, 128,
 	7, 8, 7, 174, 6, 70, 6, 230, 5, 149, 5, 65, 5, 246, 4, 176,
 	4, 110, 4, 48, 4, 246, 3, 187, 3, 132, 3, 82, 3, 34, 3, 244,
@@ -1461,110 +1691,6 @@ static const unsigned char CiBinaryResource_tmc_obx[2671] = { 255, 255, 0, 5, 10
 	7, 157, 34, 5, 168, 185, 60, 6, 157, 244, 7, 169, 0, 157, 44, 8,
 	157, 100, 8, 157, 108, 8, 157, 148, 8, 169, 1, 157, 188, 7, 96 };
 
-struct Pokey {
-	int audc1;
-	int audc2;
-	int audc3;
-	int audc4;
-	int audctl;
-	int audf1;
-	int audf2;
-	int audf3;
-	int audf4;
-	int delta1;
-	int delta2;
-	int delta3;
-	int delta4;
-	int deltaBuffer[888];
-	int divCycles;
-	cibool init;
-	int mute1;
-	int mute2;
-	int mute3;
-	int mute4;
-	int out1;
-	int out2;
-	int out3;
-	int out4;
-	int periodCycles1;
-	int periodCycles2;
-	int periodCycles3;
-	int periodCycles4;
-	int polyIndex;
-	int reloadCycles1;
-	int reloadCycles3;
-	int skctl;
-	int tickCycle1;
-	int tickCycle2;
-	int tickCycle3;
-	int tickCycle4;
-};
-static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int delta);
-static void Pokey_EndFrame(Pokey *self, PokeyPair const *pokeys, int cycle);
-static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int cycleLimit);
-static void Pokey_Initialize(Pokey *self);
-static cibool Pokey_IsSilent(Pokey const *self);
-static void Pokey_Mute(Pokey *self, int mask);
-
-struct PokeyPair {
-	Pokey basePokey;
-	Pokey extraPokey;
-	int extraPokeyMask;
-	int iirAccLeft;
-	int iirAccRight;
-	int irqst;
-	int mainClock;
-	unsigned char poly17Lookup[16385];
-	unsigned char poly9Lookup[511];
-	int sampleIndex;
-	int sampleOffset;
-	int samples;
-	int timer1Cycle;
-	int timer2Cycle;
-	int timer4Cycle;
-};
-static void PokeyPair_Construct(PokeyPair *self);
-static int PokeyPair_EndFrame(PokeyPair *self, int cycle);
-static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int bufferOffset, int blocks, ASAPSampleFormat format);
-static int PokeyPair_GetRandom(PokeyPair const *self, int addr, int cycle);
-static void PokeyPair_Initialize(PokeyPair *self, int mainClock, cibool stereo);
-static cibool PokeyPair_IsSilent(PokeyPair const *self);
-static void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
-static void PokeyPair_StartFrame(PokeyPair *self);
-
-struct ASAP {
-	int blocksPlayed;
-	int consol;
-	unsigned char covox[4];
-	Cpu6502 cpu;
-	int currentDuration;
-	int currentSong;
-	int cycle;
-	unsigned char memory[65536];
-	ASAPInfo moduleInfo;
-	int nextEventCycle;
-	int nextPlayerCycle;
-	int nextScanlineCycle;
-	NmiStatus nmist;
-	PokeyPair pokeys;
-	int silenceCycles;
-	int silenceCyclesCounter;
-	int tmcPerFrame;
-	int tmcPerFrameCounter;
-};
-static void ASAP_Construct(ASAP *self);
-static void ASAP_Call6502(ASAP *self, int addr);
-static void ASAP_Call6502Player(ASAP *self);
-static int ASAP_Do6502Frame(ASAP *self);
-static cibool ASAP_Do6502Init(ASAP *self, int pc, int a, int x, int y);
-static int ASAP_DoFrame(ASAP *self);
-static int ASAP_GenerateAt(ASAP *self, unsigned char *buffer, int bufferOffset, int bufferLen, ASAPSampleFormat format);
-static void ASAP_HandleEvent(ASAP *self);
-static int ASAP_MillisecondsToBlocks(int milliseconds);
-static int ASAP_PeekHardware(ASAP const *self, int addr);
-static void ASAP_PokeHardware(ASAP *self, int addr, int data);
-static void ASAP_PutLittleEndian(unsigned char *buffer, int offset, int value);
-
 static void ASAP_Construct(ASAP *self)
 {
 	PokeyPair_Construct(&self->pokeys);
@@ -1647,7 +1773,7 @@ static void ASAP_Call6502Player(ASAP *self)
 			break;
 		case ASAPModuleType_TMC:
 			if (--self->tmcPerFrameCounter <= 0) {
-				self->tmcPerFrameCounter = self->tmcPerFrame;
+				self->tmcPerFrameCounter = self->memory[self->moduleInfo.music + 31];
 				ASAP_Call6502(self, player + 3);
 			}
 			else
@@ -1867,8 +1993,40 @@ static void ASAP_HandleEvent(ASAP *self)
 
 cibool ASAP_Load(ASAP *self, const char *filename, unsigned char const *module, int moduleLen)
 {
+	unsigned char const *playerRoutine;
+	int moduleIndex;
 	self->silenceCycles = 0;
-	return ASAPInfo_ParseFile(&self->moduleInfo, self, filename, module, moduleLen);
+	if (!ASAPInfo_Load(&self->moduleInfo, filename, module, moduleLen))
+		return FALSE;
+	playerRoutine = ASAP6502_GetPlayerRoutine(&self->moduleInfo);
+	if (playerRoutine != NULL) {
+		int player = ASAPInfo_GetWord(playerRoutine, 2);
+		int playerLastByte = ASAPInfo_GetWord(playerRoutine, 4);
+		if (self->moduleInfo.music <= playerLastByte)
+			return FALSE;
+		self->memory[19456] = 0;
+		memcpy(self->memory + self->moduleInfo.music, module + 6, moduleLen - 6);
+		memcpy(self->memory + player, playerRoutine + 6, playerLastByte + 1 - player);
+		if (self->moduleInfo.player < 0)
+			self->moduleInfo.player = player;
+		return TRUE;
+	}
+	memset(self->memory, 0, sizeof(self->memory));
+	moduleIndex = self->moduleInfo.headerLen + 2;
+	while (moduleIndex + 5 <= moduleLen) {
+		int startAddr = ASAPInfo_GetWord(module, moduleIndex);
+		int blockLen = ASAPInfo_GetWord(module, moduleIndex + 2) + 1 - startAddr;
+		if (blockLen <= 0 || moduleIndex + blockLen > moduleLen)
+			return FALSE;
+		moduleIndex += 4;
+		memcpy(self->memory + startAddr, module + moduleIndex, blockLen);
+		moduleIndex += blockLen;
+		if (moduleIndex == moduleLen)
+			return TRUE;
+		if (moduleIndex + 7 <= moduleLen && module[moduleIndex] == 255 && module[moduleIndex + 1] == 255)
+			moduleIndex += 2;
+	}
+	return FALSE;
 }
 
 static int ASAP_MillisecondsToBlocks(int milliseconds)
@@ -2091,6 +2249,32 @@ cibool ASAP_Seek(ASAP *self, int position)
 	return TRUE;
 }
 
+static unsigned char const *ASAP6502_GetPlayerRoutine(ASAPInfo const *info)
+{
+	switch (info->type) {
+		case ASAPModuleType_CMC:
+			return CiBinaryResource_cmc_obx;
+		case ASAPModuleType_CM3:
+			return CiBinaryResource_cm3_obx;
+		case ASAPModuleType_CMR:
+			return CiBinaryResource_cmr_obx;
+		case ASAPModuleType_CMS:
+			return CiBinaryResource_cms_obx;
+		case ASAPModuleType_DLT:
+			return CiBinaryResource_dlt_obx;
+		case ASAPModuleType_MPT:
+			return CiBinaryResource_mpt_obx;
+		case ASAPModuleType_RMT:
+			return info->channels == 1 ? CiBinaryResource_rmt4_obx : CiBinaryResource_rmt8_obx;
+		case ASAPModuleType_TMC:
+			return CiBinaryResource_tmc_obx;
+		case ASAPModuleType_TM2:
+			return CiBinaryResource_tm2_obx;
+		default:
+			return NULL;
+	}
+}
+
 ASAPInfo *ASAPInfo_New(void)
 {
 	ASAPInfo *self = malloc(sizeof(ASAPInfo));
@@ -2166,6 +2350,41 @@ int ASAPInfo_GetDuration(ASAPInfo const *self, int song)
 	return self->durations[song];
 }
 
+const char *ASAPInfo_GetExtDescription(const char *ext)
+{
+	if (strlen(ext) != 3)
+		return NULL;
+	switch ((ext[0] + (ext[1] << 8) + (ext[2] << 16)) | 2105376) {
+		case 7364979:
+			return "Slight Atari Player";
+		case 6516067:
+			return "Chaos Music Composer";
+		case 3370339:
+			return "CMC \"3/4\"";
+		case 7499107:
+			return "CMC \"Rzog\"";
+		case 7564643:
+			return "Stereo Double CMC";
+		case 6516068:
+			return "DoublePlay CMC";
+		case 7629924:
+			return "Delta Music Composer";
+		case 7630957:
+			return "Music ProTracker";
+		case 6582381:
+			return "MPT DoublePlay";
+		case 7630194:
+			return "Raster Music Tracker";
+		case 6516084:
+		case 3698036:
+			return "Theta Music Composer 1.x";
+		case 3304820:
+			return "Theta Music Composer 2.x";
+		default:
+			return NULL;
+	}
+}
+
 cibool ASAPInfo_GetLoop(ASAPInfo const *self, int song)
 {
 	return self->loops[song];
@@ -2177,6 +2396,57 @@ int ASAPInfo_GetMonth(ASAPInfo const *self)
 	if (n < 7)
 		return -1;
 	return ASAPInfo_GetTwoDateDigits(self, n - 7);
+}
+
+const char *ASAPInfo_GetOriginalModuleExt(ASAPInfo const *self, unsigned char const *module, int moduleLen)
+{
+	switch (self->type) {
+		case ASAPModuleType_SAP_B:
+			if ((self->init == 1019 || self->init == 1017) && self->player == 1283)
+				return "dlt";
+			if (self->init == 1267 || self->init == 62707 || self->init == 1263)
+				return self->fastplay == 156 ? "mpd" : "mpt";
+			if (self->init == 3200)
+				return "rmt";
+			if (self->init == 1269 || self->init == 62709 || self->init == 1266 || ((self->init == 1255 || self->init == 62695 || self->init == 1252) && self->fastplay == 156) || ((self->init == 1253 || self->init == 62693 || self->init == 1250) && (self->fastplay == 104 || self->fastplay == 78)))
+				return "tmc";
+			if (self->init == 4224)
+				return "tm2";
+			return NULL;
+		case ASAPModuleType_SAP_C:
+			if ((self->player == 1280 || self->player == 62720) && moduleLen >= 1024) {
+				if (self->fastplay == 156)
+					return "dmc";
+				if (self->channels > 1)
+					return "cms";
+				if (module[moduleLen - 170] == 30)
+					return "cmr";
+				if (module[moduleLen - 909] == 48)
+					return "cm3";
+				return "cmc";
+			}
+			return NULL;
+		case ASAPModuleType_CMC:
+			return self->fastplay == 156 ? "dmc" : "cmc";
+		case ASAPModuleType_CM3:
+			return "cm3";
+		case ASAPModuleType_CMR:
+			return "cmr";
+		case ASAPModuleType_CMS:
+			return "cms";
+		case ASAPModuleType_DLT:
+			return "dlt";
+		case ASAPModuleType_MPT:
+			return self->fastplay == 156 ? "mpd" : "mpt";
+		case ASAPModuleType_RMT:
+			return "rmt";
+		case ASAPModuleType_TMC:
+			return "tmc";
+		case ASAPModuleType_TM2:
+			return "tm2";
+		default:
+			return NULL;
+	}
 }
 
 static int ASAPInfo_GetPackedExt(const char *filename)
@@ -2363,59 +2633,84 @@ static cibool ASAPInfo_IsOurPackedExt(int ext)
 
 cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *module, int moduleLen)
 {
-	return ASAPInfo_ParseFile(self, NULL, filename, module, moduleLen);
-}
-
-static cibool ASAPInfo_LoadNative(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen, unsigned char const *playerRoutine)
-{
-	int playerLastByte;
-	int musicLastByte;
-	int blockLen;
-	if ((module[0] != 255 || module[1] != 255) && (module[0] != 0 || module[1] != 0))
+	int len = strlen(filename);
+	int basename = 0;
+	int ext = -1;
+	int i;
+	for (i = len; --i >= 0;) {
+		int c = filename[i];
+		if (c == 47 || c == 92) {
+			basename = i + 1;
+			break;
+		}
+		if (c == 46)
+			ext = i;
+	}
+	if (ext < 0)
 		return FALSE;
-	self->music = ASAPInfo_GetWord(module, 2);
-	self->player = ASAPInfo_GetWord(playerRoutine, 2);
-	playerLastByte = ASAPInfo_GetWord(playerRoutine, 4);
-	if (self->music <= playerLastByte)
-		return FALSE;
-	musicLastByte = ASAPInfo_GetWord(module, 4);
-	if (self->music <= 55295 && musicLastByte >= 53248)
-		return FALSE;
-	blockLen = musicLastByte + 1 - self->music;
-	if (6 + blockLen != moduleLen) {
-		int infoAddr;
-		int infoLen;
-		if (self->type != ASAPModuleType_RMT || 11 + blockLen > moduleLen)
-			return FALSE;
-		infoAddr = ASAPInfo_GetWord(module, 6 + blockLen);
-		if (infoAddr != self->music + blockLen)
-			return FALSE;
-		infoLen = ASAPInfo_GetWord(module, 8 + blockLen) + 1 - infoAddr;
-		if (10 + blockLen + infoLen != moduleLen)
+	ext -= basename;
+	if (ext > 127)
+		ext = 127;
+	((char *) memcpy(self->filename, filename + basename, ext))[ext] = '\0';
+	self->author[0] = '\0';
+	self->name[0] = '\0';
+	self->date[0] = '\0';
+	self->channels = 1;
+	self->songs = 1;
+	self->defaultSong = 0;
+	for (i = 0; i < 32; i++) {
+		self->durations[i] = -1;
+		self->loops[i] = FALSE;
+	}
+	self->ntsc = FALSE;
+	self->fastplay = 312;
+	self->music = -1;
+	self->init = -1;
+	self->player = -1;
+	self->covoxAddr = -1;
+	switch (ASAPInfo_GetPackedExt(filename)) {
+		case 7364979:
+			return ASAPInfo_ParseSap(self, module, moduleLen);
+		case 6516067:
+			return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMC);
+		case 3370339:
+			return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CM3);
+		case 7499107:
+			return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMR);
+		case 7564643:
+			self->channels = 2;
+			return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMS);
+		case 6516068:
+			self->fastplay = 156;
+			return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMC);
+		case 7629924:
+			return ASAPInfo_ParseDlt(self, module, moduleLen);
+		case 7630957:
+			return ASAPInfo_ParseMpt(self, module, moduleLen);
+		case 6582381:
+			self->fastplay = 156;
+			return ASAPInfo_ParseMpt(self, module, moduleLen);
+		case 7630194:
+			return ASAPInfo_ParseRmt(self, module, moduleLen);
+		case 6516084:
+		case 3698036:
+			return ASAPInfo_ParseTmc(self, module, moduleLen);
+		case 3304820:
+			return ASAPInfo_ParseTm2(self, module, moduleLen);
+		default:
 			return FALSE;
 	}
-	if (asap != NULL) {
-		memcpy(asap->memory + self->music, module + 6, blockLen);
-		memcpy(asap->memory + self->player, playerRoutine + 6, playerLastByte + 1 - self->player);
-	}
-	return TRUE;
 }
 
-static cibool ASAPInfo_ParseCmc(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen, ASAPModuleType type, unsigned char const *playerRoutine)
+static cibool ASAPInfo_ParseCmc(ASAPInfo *self, unsigned char const *module, int moduleLen, ASAPModuleType type)
 {
 	int lastPos;
 	int pos;
 	if (moduleLen < 774)
 		return FALSE;
 	self->type = type;
-	if (!ASAPInfo_LoadNative(self, asap, module, moduleLen, playerRoutine))
+	if (!ASAPInfo_ParseModule(self, module, moduleLen))
 		return FALSE;
-	if (asap != NULL && type == ASAPModuleType_CMR) {
-		static const unsigned char cmrBassTable[37] = { 92, 86, 80, 77, 71, 68, 65, 62, 56, 53, 136, 127, 121, 115, 108, 103,
-			96, 90, 85, 81, 76, 72, 67, 63, 61, 57, 52, 51, 48, 45, 42, 40,
-			37, 36, 33, 31, 30 };
-		memcpy(asap->memory + 3087, cmrBassTable + 0, 37);
-	}
 	lastPos = 84;
 	while (--lastPos >= 0) {
 		if (module[518 + lastPos] < 176 || module[603 + lastPos] < 64 || module[688 + lastPos] < 64)
@@ -2525,18 +2820,14 @@ static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int m
 	}
 }
 
-static cibool ASAPInfo_ParseDlt(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen)
+static cibool ASAPInfo_ParseDlt(ASAPInfo *self, unsigned char const *module, int moduleLen)
 {
 	cibool seen[128];
 	int pos;
-	if (moduleLen == 11270) {
-		if (asap != NULL)
-			asap->memory[19456] = 0;
-	}
-	else if (moduleLen != 11271)
+	if (moduleLen != 11270 && moduleLen != 11271)
 		return FALSE;
 	self->type = ASAPModuleType_DLT;
-	if (!ASAPInfo_LoadNative(self, asap, module, moduleLen, CiBinaryResource_dlt_obx))
+	if (!ASAPInfo_ParseModule(self, module, moduleLen))
 		return FALSE;
 	if (self->music != 8192)
 		return FALSE;
@@ -2656,77 +2947,6 @@ int ASAPInfo_ParseDuration(const char *s)
 	return r;
 }
 
-static cibool ASAPInfo_ParseFile(ASAPInfo *self, ASAP *asap, const char *filename, unsigned char const *module, int moduleLen)
-{
-	int len = strlen(filename);
-	int basename = 0;
-	int ext = -1;
-	int i;
-	for (i = len; --i >= 0;) {
-		int c = filename[i];
-		if (c == 47 || c == 92) {
-			basename = i + 1;
-			break;
-		}
-		if (c == 46)
-			ext = i;
-	}
-	if (ext < 0)
-		return FALSE;
-	ext -= basename;
-	if (ext > 127)
-		ext = 127;
-	((char *) memcpy(self->filename, filename + basename, ext))[ext] = '\0';
-	self->author[0] = '\0';
-	self->name[0] = '\0';
-	self->date[0] = '\0';
-	self->channels = 1;
-	self->songs = 1;
-	self->defaultSong = 0;
-	for (i = 0; i < 32; i++) {
-		self->durations[i] = -1;
-		self->loops[i] = FALSE;
-	}
-	self->ntsc = FALSE;
-	self->fastplay = 312;
-	self->music = -1;
-	self->init = -1;
-	self->player = -1;
-	self->covoxAddr = -1;
-	switch (ASAPInfo_GetPackedExt(filename)) {
-		case 7364979:
-			return ASAPInfo_ParseSap(self, asap, module, moduleLen);
-		case 6516067:
-			return ASAPInfo_ParseCmc(self, asap, module, moduleLen, ASAPModuleType_CMC, CiBinaryResource_cmc_obx);
-		case 3370339:
-			return ASAPInfo_ParseCmc(self, asap, module, moduleLen, ASAPModuleType_CM3, CiBinaryResource_cm3_obx);
-		case 7499107:
-			return ASAPInfo_ParseCmc(self, asap, module, moduleLen, ASAPModuleType_CMR, CiBinaryResource_cmc_obx);
-		case 7564643:
-			self->channels = 2;
-			return ASAPInfo_ParseCmc(self, asap, module, moduleLen, ASAPModuleType_CMS, CiBinaryResource_cms_obx);
-		case 6516068:
-			self->fastplay = 156;
-			return ASAPInfo_ParseCmc(self, asap, module, moduleLen, ASAPModuleType_CMC, CiBinaryResource_cmc_obx);
-		case 7629924:
-			return ASAPInfo_ParseDlt(self, asap, module, moduleLen);
-		case 7630957:
-			return ASAPInfo_ParseMpt(self, asap, module, moduleLen);
-		case 6582381:
-			self->fastplay = 156;
-			return ASAPInfo_ParseMpt(self, asap, module, moduleLen);
-		case 7630194:
-			return ASAPInfo_ParseRmt(self, asap, module, moduleLen);
-		case 6516084:
-		case 3698036:
-			return ASAPInfo_ParseTmc(self, asap, module, moduleLen);
-		case 3304820:
-			return ASAPInfo_ParseTm2(self, asap, module, moduleLen);
-		default:
-			return FALSE;
-	}
-}
-
 static int ASAPInfo_ParseHex(unsigned char const *module, int moduleIndex)
 {
 	int r;
@@ -2750,7 +2970,33 @@ static int ASAPInfo_ParseHex(unsigned char const *module, int moduleIndex)
 	}
 }
 
-static cibool ASAPInfo_ParseMpt(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen)
+static cibool ASAPInfo_ParseModule(ASAPInfo *self, unsigned char const *module, int moduleLen)
+{
+	int musicLastByte;
+	int blockLen;
+	if ((module[0] != 255 || module[1] != 255) && (module[0] != 0 || module[1] != 0))
+		return FALSE;
+	self->music = ASAPInfo_GetWord(module, 2);
+	musicLastByte = ASAPInfo_GetWord(module, 4);
+	if (self->music <= 55295 && musicLastByte >= 53248)
+		return FALSE;
+	blockLen = musicLastByte + 1 - self->music;
+	if (6 + blockLen != moduleLen) {
+		int infoAddr;
+		int infoLen;
+		if (self->type != ASAPModuleType_RMT || 11 + blockLen > moduleLen)
+			return FALSE;
+		infoAddr = ASAPInfo_GetWord(module, 6 + blockLen);
+		if (infoAddr != self->music + blockLen)
+			return FALSE;
+		infoLen = ASAPInfo_GetWord(module, 8 + blockLen) + 1 - infoAddr;
+		if (10 + blockLen + infoLen != moduleLen)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static cibool ASAPInfo_ParseMpt(ASAPInfo *self, unsigned char const *module, int moduleLen)
 {
 	int track0Addr;
 	int songLen;
@@ -2759,7 +3005,7 @@ static cibool ASAPInfo_ParseMpt(ASAPInfo *self, ASAP *asap, unsigned char const 
 	if (moduleLen < 464)
 		return FALSE;
 	self->type = ASAPModuleType_MPT;
-	if (!ASAPInfo_LoadNative(self, asap, module, moduleLen, CiBinaryResource_mpt_obx))
+	if (!ASAPInfo_ParseModule(self, module, moduleLen))
 		return FALSE;
 	track0Addr = ASAPInfo_GetWord(module, 2) + 458;
 	if (module[454] + (module[458] << 8) != track0Addr)
@@ -2854,7 +3100,7 @@ static void ASAPInfo_ParseMptSong(ASAPInfo *self, unsigned char const *module, c
 		ASAPInfo_AddSong(self, playerCalls);
 }
 
-static cibool ASAPInfo_ParseRmt(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen)
+static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int moduleLen)
 {
 	int posShift;
 	int perFrame;
@@ -2880,7 +3126,7 @@ static cibool ASAPInfo_ParseRmt(ASAPInfo *self, ASAP *asap, unsigned char const 
 	if (perFrame < 1 || perFrame > 4)
 		return FALSE;
 	self->type = ASAPModuleType_RMT;
-	if (!ASAPInfo_LoadNative(self, asap, module, moduleLen, self->channels == 2 ? CiBinaryResource_rmt8_obx : CiBinaryResource_rmt4_obx))
+	if (!ASAPInfo_ParseModule(self, module, moduleLen))
 		return FALSE;
 	songLen = ASAPInfo_GetWord(module, 4) + 1 - ASAPInfo_GetWord(module, 20);
 	if (posShift == 3 && (songLen & 4) != 0 && module[6 + ASAPInfo_GetWord(module, 4) - ASAPInfo_GetWord(module, 2) - 3] == 254)
@@ -3013,32 +3259,7 @@ static void ASAPInfo_ParseRmtSong(ASAPInfo *self, unsigned char const *module, c
 		ASAPInfo_AddSong(self, frames);
 }
 
-static cibool ASAPInfo_ParseSap(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen)
-{
-	int moduleIndex;
-	if (!ASAPInfo_ParseSapHeader(self, module, moduleLen))
-		return FALSE;
-	if (asap == NULL)
-		return TRUE;
-	memset(asap->memory, 0, sizeof(asap->memory));
-	moduleIndex = self->headerLen + 2;
-	while (moduleIndex + 5 <= moduleLen) {
-		int start_addr = ASAPInfo_GetWord(module, moduleIndex);
-		int block_len = ASAPInfo_GetWord(module, moduleIndex + 2) + 1 - start_addr;
-		if (block_len <= 0 || moduleIndex + block_len > moduleLen)
-			return FALSE;
-		moduleIndex += 4;
-		memcpy(asap->memory + start_addr, module + moduleIndex, block_len);
-		moduleIndex += block_len;
-		if (moduleIndex == moduleLen)
-			return TRUE;
-		if (moduleIndex + 7 <= moduleLen && module[moduleIndex] == 255 && module[moduleIndex + 1] == 255)
-			moduleIndex += 2;
-	}
-	return FALSE;
-}
-
-static cibool ASAPInfo_ParseSapHeader(ASAPInfo *self, unsigned char const *module, int moduleLen)
+static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int moduleLen)
 {
 	int type;
 	int moduleIndex;
@@ -3203,7 +3424,7 @@ static int ASAPInfo_ParseText(unsigned char const *module, int moduleIndex)
 	}
 }
 
-static cibool ASAPInfo_ParseTm2(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen)
+static cibool ASAPInfo_ParseTm2(ASAPInfo *self, unsigned char const *module, int moduleLen)
 {
 	int i;
 	int lastPos;
@@ -3211,7 +3432,7 @@ static cibool ASAPInfo_ParseTm2(ASAPInfo *self, ASAP *asap, unsigned char const 
 	if (moduleLen < 932)
 		return FALSE;
 	self->type = ASAPModuleType_TM2;
-	if (!ASAPInfo_LoadNative(self, asap, module, moduleLen, CiBinaryResource_tm2_obx))
+	if (!ASAPInfo_ParseModule(self, module, moduleLen))
 		return FALSE;
 	i = module[37];
 	if (i < 1 || i > 4)
@@ -3325,14 +3546,14 @@ static void ASAPInfo_ParseTm2Song(ASAPInfo *self, unsigned char const *module, i
 	ASAPInfo_AddSong(self, playerCalls);
 }
 
-static cibool ASAPInfo_ParseTmc(ASAPInfo *self, ASAP *asap, unsigned char const *module, int moduleLen)
+static cibool ASAPInfo_ParseTmc(ASAPInfo *self, unsigned char const *module, int moduleLen)
 {
 	int i;
 	int lastPos;
 	if (moduleLen < 464)
 		return FALSE;
 	self->type = ASAPModuleType_TMC;
-	if (!ASAPInfo_LoadNative(self, asap, module, moduleLen, CiBinaryResource_tmc_obx))
+	if (!ASAPInfo_ParseModule(self, module, moduleLen))
 		return FALSE;
 	self->channels = 2;
 	i = 0;
@@ -3357,8 +3578,6 @@ static cibool ASAPInfo_ParseTmc(ASAPInfo *self, ASAP *asap, unsigned char const 
 	i = module[37];
 	if (i < 1 || i > 4)
 		return FALSE;
-	if (asap != NULL)
-		asap->tmcPerFrame = i;
 	self->fastplay = 312 / i;
 	return TRUE;
 }

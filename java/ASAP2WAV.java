@@ -23,6 +23,7 @@
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import net.sf.asap.ASAP;
@@ -79,11 +80,36 @@ public class ASAP2WAV
 		muteMask = mask;
 	}
 
+	/**
+	 * Reads bytes from the stream into the byte array
+	 * until end of stream or array is full.
+	 * @param is source stream
+	 * @param b output array
+	 * @return number of bytes read
+	 */
+	private static int readAndClose(InputStream is, byte[] b) throws IOException
+	{
+		int got = 0;
+		int len = b.length;
+		try {
+			while (got < len) {
+				int i = is.read(b, got, len - got);
+				if (i <= 0)
+					break;
+				got += i;
+			}
+		}
+		finally {
+			is.close();
+		}
+		return got;
+	}
+
 	private static void processFile(String inputFilename) throws Exception
 	{
 		InputStream is = new FileInputStream(inputFilename);
 		byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
-		int moduleLen = ASAPInfo.readAndClose(is, module);
+		int moduleLen = readAndClose(is, module);
 		ASAP asap = new ASAP();
 		asap.load(inputFilename, module, moduleLen);
 		ASAPInfo info = asap.getInfo();

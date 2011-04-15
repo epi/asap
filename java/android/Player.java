@@ -193,6 +193,31 @@ public class Player extends Activity implements Runnable
 		return response.getEntity().getContent();
 	}
 
+	/**
+	 * Reads bytes from the stream into the byte array
+	 * until end of stream or array is full.
+	 * @param is source stream
+	 * @param b output array
+	 * @return number of bytes read
+	 */
+	private static int readAndClose(InputStream is, byte[] b) throws IOException
+	{
+		int got = 0;
+		int len = b.length;
+		try {
+			while (got < len) {
+				int i = is.read(b, got, len - got);
+				if (i <= 0)
+					break;
+				got += i;
+			}
+		}
+		finally {
+			is.close();
+		}
+		return got;
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
@@ -213,7 +238,7 @@ public class Player extends Activity implements Runnable
 				else
 					throw ex;
 			}
-			moduleLen = ASAPInfo.readAndClose(is, module);
+			moduleLen = readAndClose(is, module);
 		}
 		catch (IOException ex) {
 			showError(R.string.error_reading_file);

@@ -5,7 +5,7 @@ MKDIRS ?= mkdir -p
 
 TOP_DIR ?= ..
 PLAYERS_OBX_DIR ?= $(TOP_DIR)/players
-PLAYERS = cmc cm3 cms dlt mpt rmt4 rmt8 tmc tm2
+PLAYERS = cmc cm3 cmr cms dlt mpt rmt4 rmt8 tmc tm2
 PLAYERS_OBX = $(PLAYERS:%=$(PLAYERS_OBX_DIR)/%.obx)
 
 $(TOP_DIR)/players.h: $(TOP_DIR)/files2anylang.pl $(PLAYERS_OBX)
@@ -15,10 +15,13 @@ $(PLAYERS_OBX_DIR):
 	$(MKDIRS) $@
 
 $(PLAYERS_OBX_DIR)/cmc.obx: $(TOP_DIR)/players/cmc.asx $(PLAYERS_OBX_DIR)
-	$(XASM) -d CM3=0 $<
+	$(XASM) -d CM3=0 -d CMR=0 $<
 
 $(PLAYERS_OBX_DIR)/cm3.obx: $(TOP_DIR)/players/cmc.asx $(PLAYERS_OBX_DIR)
-	$(XASM) -d CM3=1 $<
+	$(XASM) -d CM3=1 -d CMR=0 $<
+
+$(PLAYERS_OBX_DIR)/cmr.obx: $(TOP_DIR)/players/cmc.asx $(PLAYERS_OBX_DIR)
+	$(XASM) -d CM3=0 -d CMR=1 $<
 
 $(PLAYERS_OBX_DIR)/dlt.obx: $(TOP_DIR)/players/dlt.as8 $(PLAYERS_OBX_DIR)
 	$(MADS) -c $<

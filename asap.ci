@@ -55,7 +55,6 @@ public class ASAP
 
 	ASAPInfo() ModuleInfo;
 	int NextPlayerCycle;
-	int TmcPerFrame;
 	int TmcPerFrameCounter;
 	int CurrentSong;
 	int CurrentDuration;
@@ -228,7 +227,7 @@ public class ASAP
 			break;
 		case ASAPModuleType.Tmc:
 			if (--TmcPerFrameCounter <= 0) {
-				TmcPerFrameCounter = TmcPerFrame;
+				TmcPerFrameCounter = Memory[ModuleInfo.Music + 0x1f];
 				Call6502(player + 3);
 			}
 			else
@@ -302,7 +301,38 @@ public class ASAP
 		int moduleLen)
 	{
 		SilenceCycles = 0;
-		ModuleInfo.ParseFile(this, filename, module, moduleLen);
+		ModuleInfo.Load(filename, module, moduleLen);
+#if !ASAP_ONLY_SAP
+		byte[] playerRoutine = ASAP6502.GetPlayerRoutine(ModuleInfo);
+		if (playerRoutine != null) {
+			int player = ASAPInfo.GetWord(playerRoutine, 2);
+			int playerLastByte = ASAPInfo.GetWord(playerRoutine, 4);
+			if (ModuleInfo.Music <= playerLastByte)
+				throw "Module address conflicts with the player routine";
+			Memory[0x4c00] = 0; // for 11270-byte DLT
+			module.CopyTo(6, Memory, ModuleInfo.Music, moduleLen - 6);
+			playerRoutine.CopyTo(6, Memory, player, playerLastByte + 1 - player);
+			if (ModuleInfo.Player < 0)
+				ModuleInfo.Player = player;
+			return;
+		}
+#endif
+		Memory.Clear();
+		int moduleIndex = ModuleInfo.HeaderLen + 2;
+		while (moduleIndex + 5 <= moduleLen) {
+			int startAddr = ASAPInfo.GetWord(module, moduleIndex);
+			int blockLen = ASAPInfo.GetWord(module, moduleIndex + 2) + 1 - startAddr;
+			if (blockLen <= 0 || moduleIndex + blockLen > moduleLen)
+				throw "Invalid binary block";
+			moduleIndex += 4;
+			module.CopyTo(moduleIndex, Memory, startAddr, blockLen);
+			moduleIndex += blockLen;
+			if (moduleIndex == moduleLen)
+				return;
+			if (moduleIndex + 7 <= moduleLen && module[moduleIndex] == 0xff && module[moduleIndex + 1] == 0xff)
+				moduleIndex += 2;
+		}
+		throw "Invalid binary block";
 	}
 
 	/// Returns information about the loaded module.

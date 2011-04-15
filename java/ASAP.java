@@ -72,7 +72,7 @@ public final class ASAP
 				break;
 			case ASAPModuleType.TMC:
 				if (--this.tmcPerFrameCounter <= 0) {
-					this.tmcPerFrameCounter = this.tmcPerFrame;
+					this.tmcPerFrameCounter = this.memory[this.moduleInfo.music + 31] & 0xff;
 					this.call6502(player + 3);
 				}
 				else
@@ -161,7 +161,7 @@ public final class ASAP
 		int blockShift = this.moduleInfo.channels - 1 + (format != ASAPSampleFormat.U8 ? 1 : 0);
 		int bufferBlocks = bufferLen >> blockShift;
 		if (this.currentDuration > 0) {
-			int totalBlocks = millisecondsToBlocks(this.currentDuration);
+			int totalBlocks = ASAP.millisecondsToBlocks(this.currentDuration);
 			if (bufferBlocks > totalBlocks - this.blocksPlayed)
 				bufferBlocks = totalBlocks - this.blocksPlayed;
 		}
@@ -250,13 +250,13 @@ public final class ASAP
 		int use16bit = format != ASAPSampleFormat.U8 ? 1 : 0;
 		int blockSize = this.moduleInfo.channels << use16bit;
 		int bytesPerSecond = 44100 * blockSize;
-		int totalBlocks = millisecondsToBlocks(this.currentDuration);
+		int totalBlocks = ASAP.millisecondsToBlocks(this.currentDuration);
 		int nBytes = (totalBlocks - this.blocksPlayed) * blockSize;
 		buffer[0] = 82;
 		buffer[1] = 73;
 		buffer[2] = 70;
 		buffer[3] = 70;
-		putLittleEndian(buffer, 4, nBytes + 36);
+		ASAP.putLittleEndian(buffer, 4, nBytes + 36);
 		buffer[8] = 87;
 		buffer[9] = 65;
 		buffer[10] = 86;
@@ -273,8 +273,8 @@ public final class ASAP
 		buffer[21] = 0;
 		buffer[22] = (byte) this.moduleInfo.channels;
 		buffer[23] = 0;
-		putLittleEndian(buffer, 24, 44100);
-		putLittleEndian(buffer, 28, bytesPerSecond);
+		ASAP.putLittleEndian(buffer, 24, 44100);
+		ASAP.putLittleEndian(buffer, 28, bytesPerSecond);
 		buffer[32] = (byte) blockSize;
 		buffer[33] = 0;
 		buffer[34] = (byte) (8 << use16bit);
@@ -283,7 +283,7 @@ public final class ASAP
 		buffer[37] = 97;
 		buffer[38] = 116;
 		buffer[39] = 97;
-		putLittleEndian(buffer, 40, nBytes);
+		ASAP.putLittleEndian(buffer, 40, nBytes);
 	}
 
 	void handleEvent()
@@ -329,7 +329,36 @@ public final class ASAP
 	public void load(String filename, byte[] module, int moduleLen) throws Exception
 	{
 		this.silenceCycles = 0;
-		this.moduleInfo.parseFile(this, filename, module, moduleLen);
+		this.moduleInfo.load(filename, module, moduleLen);
+		byte[] playerRoutine = ASAP6502.getPlayerRoutine(this.moduleInfo);
+		if (playerRoutine != null) {
+			int player = ASAPInfo.getWord(playerRoutine, 2);
+			int playerLastByte = ASAPInfo.getWord(playerRoutine, 4);
+			if (this.moduleInfo.music <= playerLastByte)
+				throw new Exception("Module address conflicts with the player routine");
+			this.memory[19456] = 0;
+			System.arraycopy(module, 6, this.memory, this.moduleInfo.music, moduleLen - 6);
+			System.arraycopy(playerRoutine, 6, this.memory, player, playerLastByte + 1 - player);
+			if (this.moduleInfo.player < 0)
+				this.moduleInfo.player = player;
+			return;
+		}
+		clear(this.memory);
+		int moduleIndex = this.moduleInfo.headerLen + 2;
+		while (moduleIndex + 5 <= moduleLen) {
+			int startAddr = ASAPInfo.getWord(module, moduleIndex);
+			int blockLen = ASAPInfo.getWord(module, moduleIndex + 2) + 1 - startAddr;
+			if (blockLen <= 0 || moduleIndex + blockLen > moduleLen)
+				throw new Exception("Invalid binary block");
+			moduleIndex += 4;
+			System.arraycopy(module, moduleIndex, this.memory, startAddr, blockLen);
+			moduleIndex += blockLen;
+			if (moduleIndex == moduleLen)
+				return;
+			if (moduleIndex + 7 <= moduleLen && module[moduleIndex] == -1 && module[moduleIndex + 1] == -1)
+				moduleIndex += 2;
+		}
+		throw new Exception("Invalid binary block");
 	}
 	final byte[] memory = new byte[65536];
 
@@ -552,7 +581,7 @@ public final class ASAP
 	 */
 	public void seek(int position) throws Exception
 	{
-		int block = millisecondsToBlocks(position);
+		int block = ASAP.millisecondsToBlocks(position);
 		if (block < this.blocksPlayed)
 			this.playSong(this.currentSong, this.currentDuration);
 		while (this.blocksPlayed + this.pokeys.samples < block) {
@@ -564,10 +593,14 @@ public final class ASAP
 	}
 	private int silenceCycles;
 	private int silenceCyclesCounter;
-	int tmcPerFrame;
 	private int tmcPerFrameCounter;
 	/**
 	 * WAV file header length.
 	 */
 	public static final int WAV_HEADER_LENGTH = 44;
+	private static void clear(byte[] array)
+	{
+		for (int i = 0; i < array.length; i++)
+			array[i] = 0;
+	}
 }
