@@ -2089,6 +2089,19 @@ ASAPInfo.prototype.checkTwoDateDigits = function(i) {
 	var d2 = this.date.charCodeAt(i + 1);
 	return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
 }
+
+ASAPInfo.checkValidChar = function(c) {
+	if (c < 32 || c > 122 || c == 34 || c == 96)
+		throw "Invalid character";
+}
+
+ASAPInfo.checkValidText = function(s) {
+	var n = s.length;
+	if (n > 127)
+		throw "Text too long";
+	for (var i = 0; i < n; i++)
+		ASAPInfo.checkValidChar(s.charCodeAt(i));
+}
 ASAPInfo.COPYRIGHT = "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version.";
 ASAPInfo.CREDITS = "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n";
 
@@ -2336,6 +2349,10 @@ ASAPInfo.isDltPatternEnd = function(module, pos, i) {
 
 ASAPInfo.isDltTrackEmpty = function(module, pos) {
 	return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
+}
+
+ASAPInfo.prototype.isNtsc = function() {
+	return this.ntsc;
 }
 
 ASAPInfo.isOurExt = function(ext) {
@@ -3086,13 +3103,9 @@ ASAPInfo.parseText = function(module, moduleIndex) {
 		return 0;
 	for (var len = 0;; len++) {
 		var c = module[moduleIndex + 1 + len];
-		if (c == 34) {
-			if (module[moduleIndex + 2 + len] != 13)
-				throw "Invalid text tag";
+		if (c == 34 && module[moduleIndex + 2 + len] == 13)
 			return len;
-		}
-		if (c < 32 || c >= 127)
-			throw "Invalid character";
+		ASAPInfo.checkValidChar(c);
 	}
 }
 
@@ -3295,6 +3308,28 @@ ASAPInfo.prototype.parseTmcSong = function(module, pos) {
 	if (module[436 + pos] < 128)
 		this.loops[this.songs] = true;
 	this.addSong(frames);
+}
+
+ASAPInfo.prototype.setAuthor = function(value) {
+	ASAPInfo.checkValidText(value);
+	this.author = value;
+}
+
+ASAPInfo.prototype.setDate = function(value) {
+	ASAPInfo.checkValidText(value);
+	this.date = value;
+}
+
+ASAPInfo.prototype.setDurationAndLoop = function(song, duration, loop) {
+	if (song < 0 || song >= this.songs)
+		throw "Song out of range";
+	this.durations[song] = duration;
+	this.loops[song] = loop;
+}
+
+ASAPInfo.prototype.setTitle = function(value) {
+	ASAPInfo.checkValidText(value);
+	this.name = value;
 }
 ASAPInfo.VERSION = "3.0.0";
 ASAPInfo.VERSION_MAJOR = 3;

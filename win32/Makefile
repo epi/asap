@@ -204,18 +204,21 @@ asapscan.exe: ../asapscan.c ../asap-asapscan.c ../asap-asapscan.h
 
 # ASAPShellEx
 
-ASAPShellEx.dll: shellex/ASAPShellEx.cpp ../asap.c ASAPShellEx-res.o $(COMMON_H)
-	$(ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at -DASAP_ONLY_INFO shellex/ASAPShellEx.cpp ../asap.c ASAPShellEx-res.o -lole32 -loleaut32 -lshlwapi -luuid
+ASAPShellEx.dll: shellex/ASAPShellEx.cpp shellex/asap-infowriter.c ASAPShellEx-res.o shellex/asap-infowriter.h
+	$(ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at -DASAP_ONLY_INFO shellex/ASAPShellEx.cpp shellex/asap-infowriter.c ASAPShellEx-res.o -lole32 -loleaut32 -lshlwapi -luuid
 
 ASAPShellEx-res.o: gui.rc ../asap.h
 	$(WINDRES) -DSHELLEX gui.rc
 
-x64/ASAPShellEx.dll: shellex/ASAPShellEx.cpp ../asap.c x64/ASAPShellEx-res.o $(COMMON_H)
-	$(X64_ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at -DASAP_ONLY_INFO shellex/ASAPShellEx.cpp ../asap.c x64/ASAPShellEx-res.o -lole32 -loleaut32 -lshlwapi -luuid
+x64/ASAPShellEx.dll: shellex/ASAPShellEx.cpp shellex/asap-infowriter.c x64/ASAPShellEx-res.o shellex/asap-infowriter.h
+	$(X64_ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at -DASAP_ONLY_INFO shellex/ASAPShellEx.cpp shellex/asap-infowriter.c x64/ASAPShellEx-res.o -lole32 -loleaut32 -lshlwapi -luuid
 
 x64/ASAPShellEx-res.o: gui.rc ../asap.h
 	test -d x64 || mkdir x64
 	$(X64_WINDRES) -DSHELLEX gui.rc
+
+shellex/asap-infowriter.c: ../asapinfo.ci ../asap6502.ci ../asapwriter.ci
+	cito -I ../players -l c -o shellex/asap-infowriter.c $^
 
 # library
 

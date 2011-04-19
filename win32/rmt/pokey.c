@@ -424,7 +424,7 @@ static void PokeyPair_Construct(PokeyPair *self)
 
 PokeyPair *PokeyPair_New(void)
 {
-	PokeyPair *self = malloc(sizeof(PokeyPair));
+	PokeyPair *self = (PokeyPair *) malloc(sizeof(PokeyPair));
 	if (self != NULL)
 		PokeyPair_Construct(self);
 	return self;

@@ -2136,6 +2136,21 @@ namespace Sf.Asap
 			int d2 = this.Date[i + 1];
 			return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
 		}
+
+		static void CheckValidChar(int c)
+		{
+			if (c < 32 || c > 122 || c == 34 || c == 96)
+				throw new System.Exception("Invalid character");
+		}
+
+		static void CheckValidText(string s)
+		{
+			int n = s.Length;
+			if (n > 127)
+				throw new System.Exception("Text too long");
+			for (int i = 0; i < n; i++)
+				ASAPInfo.CheckValidChar(s[i]);
+		}
 		/// <summary>Short license notice.</summary>
 		/// <remarks>Display after the credits.</remarks>
 		public const string Copyright = "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version.";
@@ -2445,6 +2460,11 @@ namespace Sf.Asap
 		static bool IsDltTrackEmpty(byte[] module, int pos)
 		{
 			return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
+		}
+
+		public bool IsNtsc()
+		{
+			return this.Ntsc;
 		}
 
 		/// <summary>Checks whether the extension represents a module type supported by ASAP.</summary>
@@ -3220,13 +3240,9 @@ namespace Sf.Asap
 				return 0;
 			for (int len = 0;; len++) {
 				int c = module[moduleIndex + 1 + len];
-				if (c == 34) {
-					if (module[moduleIndex + 2 + len] != 13)
-						throw new System.Exception("Invalid text tag");
+				if (c == 34 && module[moduleIndex + 2 + len] == 13)
 					return len;
-				}
-				if (c < 32 || c >= 127)
-					throw new System.Exception("Invalid character");
+				ASAPInfo.CheckValidChar(c);
 			}
 		}
 
@@ -3435,6 +3451,47 @@ namespace Sf.Asap
 			this.AddSong(frames);
 		}
 		internal int Player;
+
+		/// <summary>Sets author's name.</summary>
+		/// <remarks>A nickname may be included in parentheses after the real name.
+		/// Multiple authors are separated with <c>" &amp; "</c>.
+		/// An empty string means the author is unknown.</remarks>
+		public void SetAuthor(string value)
+		{
+			ASAPInfo.CheckValidText(value);
+			this.Author = value;
+		}
+
+		/// <summary>Sets music creation date.</summary>
+		/// <remarks>Some of the possible formats are:
+		/// <list type="bullet">
+		/// <item>YYYY</item>
+		/// <item>MM/YYYY</item>
+		/// <item>DD/MM/YYYY</item>
+		/// <item>YYYY-YYYY</item>
+		/// </list>
+		/// An empty string means the date is unknown.</remarks>
+		public void SetDate(string value)
+		{
+			ASAPInfo.CheckValidText(value);
+			this.Date = value;
+		}
+
+		public void SetDurationAndLoop(int song, int duration, bool loop)
+		{
+			if (song < 0 || song >= this.Songs)
+				throw new System.Exception("Song out of range");
+			this.Durations[song] = duration;
+			this.Loops[song] = loop;
+		}
+
+		/// <summary>Sets music title.</summary>
+		/// <remarks>An empty string means the title is unknown.</remarks>
+		public void SetTitle(string value)
+		{
+			ASAPInfo.CheckValidText(value);
+			this.Name = value;
+		}
 		internal readonly byte[] SongPos = new byte[32];
 		internal int Songs;
 		internal ASAPModuleType Type;

@@ -11,7 +11,7 @@ public final class ASAPInfo
 	{
 		this.durations[this.songs++] = (int) ((long) (playerCalls * this.fastplay) * 114000 / 1773447);
 	}
-	private String author;
+	String author;
 	int channels;
 
 	private int checkDate()
@@ -41,6 +41,21 @@ public final class ASAPInfo
 		int d2 = this.date.charAt(i + 1);
 		return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
 	}
+
+	private static void checkValidChar(int c) throws Exception
+	{
+		if (c < 32 || c > 122 || c == 34 || c == 96)
+			throw new Exception("Invalid character");
+	}
+
+	private static void checkValidText(String s) throws Exception
+	{
+		int n = s.length();
+		if (n > 127)
+			throw new Exception("Text too long");
+		for (int i = 0; i < n; i++)
+			ASAPInfo.checkValidChar(s.charAt(i));
+	}
 	/**
 	 * Short license notice.
 	 * Display after the credits.
@@ -51,9 +66,9 @@ public final class ASAPInfo
 	 * Short credits for ASAP.
 	 */
 	public static final String CREDITS = "Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n";
-	private String date;
-	private int defaultSong;
-	private final int[] durations = new int[32];
+	String date;
+	int defaultSong;
+	final int[] durations = new int[32];
 	int fastplay;
 	private String filename;
 
@@ -226,7 +241,7 @@ public final class ASAPInfo
 		}
 	}
 
-	private static int getPackedExt(String filename)
+	static int getPackedExt(String filename)
 	{
 		int ext = 0;
 		for (int i = filename.length(); --i > 0;) {
@@ -374,6 +389,11 @@ public final class ASAPInfo
 		return (module[8198 + pos] & 0xff) >= 67 && (module[8454 + pos] & 0xff) >= 64 && (module[8710 + pos] & 0xff) >= 64 && (module[8966 + pos] & 0xff) >= 64;
 	}
 
+	public boolean isNtsc()
+	{
+		return this.ntsc;
+	}
+
 	/**
 	 * Checks whether the extension represents a module type supported by ASAP.
 	 * @param ext Filename extension without the leading dot.
@@ -501,7 +521,7 @@ public final class ASAPInfo
 				throw new Exception("Unknown filename extension");
 		}
 	}
-	private final boolean[] loops = new boolean[32];
+	final boolean[] loops = new boolean[32];
 	/**
 	 * Maximum length of a supported input file.
 	 * You may assume that files longer than this are not supported by ASAP.
@@ -516,7 +536,7 @@ public final class ASAPInfo
 	 */
 	public static final int MAX_TEXT_LENGTH = 127;
 	int music;
-	private String name;
+	String name;
 	boolean ntsc;
 
 	private void parseCmc(byte[] module, int moduleLen, int type) throws Exception
@@ -1161,13 +1181,9 @@ public final class ASAPInfo
 			return 0;
 		for (int len = 0;; len++) {
 			int c = module[moduleIndex + 1 + len] & 0xff;
-			if (c == 34) {
-				if (module[moduleIndex + 2 + len] != 13)
-					throw new Exception("Invalid text tag");
+			if (c == 34 && module[moduleIndex + 2 + len] == 13)
 				return len;
-			}
-			if (c < 32 || c >= 127)
-				throw new Exception("Invalid character");
+			ASAPInfo.checkValidChar(c);
 		}
 	}
 
@@ -1376,6 +1392,53 @@ public final class ASAPInfo
 		this.addSong(frames);
 	}
 	int player;
+
+	/**
+	 * Sets author's name.
+	 * A nickname may be included in parentheses after the real name.
+	 * Multiple authors are separated with <code>" &amp; "</code>.
+	 * An empty string means the author is unknown.
+	 */
+	public void setAuthor(String value) throws Exception
+	{
+		ASAPInfo.checkValidText(value);
+		this.author = value;
+	}
+
+	/**
+	 * Sets music creation date.
+	 * Some of the possible formats are:
+	 * <ul>
+	 * <li>YYYY</li>
+	 * <li>MM/YYYY</li>
+	 * <li>DD/MM/YYYY</li>
+	 * <li>YYYY-YYYY</li>
+	 * </ul>
+	 * An empty string means the date is unknown.
+	 */
+	public void setDate(String value) throws Exception
+	{
+		ASAPInfo.checkValidText(value);
+		this.date = value;
+	}
+
+	public void setDurationAndLoop(int song, int duration, boolean loop) throws Exception
+	{
+		if (song < 0 || song >= this.songs)
+			throw new Exception("Song out of range");
+		this.durations[song] = duration;
+		this.loops[song] = loop;
+	}
+
+	/**
+	 * Sets music title.
+	 * An empty string means the title is unknown.
+	 */
+	public void setTitle(String value) throws Exception
+	{
+		ASAPInfo.checkValidText(value);
+		this.name = value;
+	}
 	final byte[] songPos = new byte[32];
 	int songs;
 	int type;

@@ -65,6 +65,8 @@ struct ASAPInfo {
 static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls);
 static int ASAPInfo_CheckDate(ASAPInfo const *self);
 static cibool ASAPInfo_CheckTwoDateDigits(ASAPInfo const *self, int i);
+static cibool ASAPInfo_CheckValidChar(int c);
+static cibool ASAPInfo_CheckValidText(const char *s);
 static int ASAPInfo_GetPackedExt(const char *filename);
 static int ASAPInfo_GetRmtInstrumentFrames(unsigned char const *module, int instrument, int volume, int volumeFrame, cibool onExtraPokey);
 static int ASAPInfo_GetTwoDateDigits(ASAPInfo const *self, int i);
@@ -1698,7 +1700,7 @@ static void ASAP_Construct(ASAP *self)
 
 ASAP *ASAP_New(void)
 {
-	ASAP *self = malloc(sizeof(ASAP));
+	ASAP *self = (ASAP *) malloc(sizeof(ASAP));
 	if (self != NULL)
 		ASAP_Construct(self);
 	return self;
@@ -2277,7 +2279,7 @@ static unsigned char const *ASAP6502_GetPlayerRoutine(ASAPInfo const *info)
 
 ASAPInfo *ASAPInfo_New(void)
 {
-	ASAPInfo *self = malloc(sizeof(ASAPInfo));
+	ASAPInfo *self = (ASAPInfo *) malloc(sizeof(ASAPInfo));
 	return self;
 }
 
@@ -2315,6 +2317,25 @@ static cibool ASAPInfo_CheckTwoDateDigits(ASAPInfo const *self, int i)
 	int d1 = self->date[i];
 	int d2 = self->date[i + 1];
 	return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
+}
+
+static cibool ASAPInfo_CheckValidChar(int c)
+{
+	if (c < 32 || c > 122 || c == 34 || c == 96)
+		return FALSE;
+	return TRUE;
+}
+
+static cibool ASAPInfo_CheckValidText(const char *s)
+{
+	int n = strlen(s);
+	int i;
+	if (n > 127)
+		return FALSE;
+	for (i = 0; i < n; i++)
+		if (!ASAPInfo_CheckValidChar(s[i]))
+			return FALSE;
+	return TRUE;
 }
 
 const char *ASAPInfo_GetAuthor(ASAPInfo const *self)
@@ -2597,6 +2618,11 @@ static cibool ASAPInfo_IsDltPatternEnd(unsigned char const *module, int pos, int
 static cibool ASAPInfo_IsDltTrackEmpty(unsigned char const *module, int pos)
 {
 	return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
+}
+
+cibool ASAPInfo_IsNtsc(ASAPInfo const *self)
+{
+	return self->ntsc;
 }
 
 cibool ASAPInfo_IsOurExt(const char *ext)
@@ -3414,12 +3440,9 @@ static int ASAPInfo_ParseText(unsigned char const *module, int moduleIndex)
 		return 0;
 	for (len = 0;; len++) {
 		int c = module[moduleIndex + 1 + len];
-		if (c == 34) {
-			if (module[moduleIndex + 2 + len] != 13)
-				return -1;
+		if (c == 34 && module[moduleIndex + 2 + len] == 13)
 			return len;
-		}
-		if (c < 32 || c >= 127)
+		if (!ASAPInfo_CheckValidChar(c))
 			return -1;
 	}
 }
@@ -3640,6 +3663,39 @@ static void ASAPInfo_ParseTmcSong(ASAPInfo *self, unsigned char const *module, i
 	if (module[436 + pos] < 128)
 		self->loops[self->songs] = TRUE;
 	ASAPInfo_AddSong(self, frames);
+}
+
+cibool ASAPInfo_SetAuthor(ASAPInfo *self, const char *value)
+{
+	if (!ASAPInfo_CheckValidText(value))
+		return FALSE;
+	strcpy(self->author, value);
+	return TRUE;
+}
+
+cibool ASAPInfo_SetDate(ASAPInfo *self, const char *value)
+{
+	if (!ASAPInfo_CheckValidText(value))
+		return FALSE;
+	strcpy(self->date, value);
+	return TRUE;
+}
+
+cibool ASAPInfo_SetDurationAndLoop(ASAPInfo *self, int song, int duration, cibool loop)
+{
+	if (song < 0 || song >= self->songs)
+		return FALSE;
+	self->durations[song] = duration;
+	self->loops[song] = loop;
+	return TRUE;
+}
+
+cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value)
+{
+	if (!ASAPInfo_CheckValidText(value))
+		return FALSE;
+	strcpy(self->name, value);
+	return TRUE;
 }
 
 static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)

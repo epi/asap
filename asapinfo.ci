@@ -96,6 +96,21 @@ public class ASAPInfo
 	int HeaderLen;
 	byte[MaxSongs] SongPos;
 
+	static void CheckValidChar(int c)
+	{
+		if (c < ' ' || c > 'z' || c == '"' || c == '`')
+			throw "Invalid character";
+	}
+
+	static void CheckValidText(string s)
+	{
+		int n = s.Length;
+		if (n > MaxTextLength)
+			throw "Text too long";
+		for (int i = 0; i < n; i++)
+			CheckValidChar(s[i]);
+	}
+
 	/// Returns author's name.
 	/// A nickname may be included in parentheses after the real name.
 	/// Multiple authors are separated with `" & "`.
@@ -105,11 +120,29 @@ public class ASAPInfo
 		return Author;
 	}
 
+	/// Sets author's name.
+	/// A nickname may be included in parentheses after the real name.
+	/// Multiple authors are separated with `" & "`.
+	/// An empty string means the author is unknown.
+	public void SetAuthor(string value)
+	{
+		CheckValidText(value);
+		Author = value;
+	}
+
 	/// Returns music title.
 	/// An empty string means the title is unknown.
 	public string GetTitle()
 	{
 		return Name;
+	}
+
+	/// Sets music title.
+	/// An empty string means the title is unknown.
+	public void SetTitle(string value)
+	{
+		CheckValidText(value);
+		Name = value;
 	}
 
 	/// Returns music title or filename.
@@ -130,6 +163,20 @@ public class ASAPInfo
 	public string GetDate()
 	{
 		return Date;
+	}
+
+	/// Sets music creation date.
+	/// Some of the possible formats are:
+	/// * YYYY
+	/// * MM/YYYY
+	/// * DD/MM/YYYY
+	/// * YYYY-YYYY
+	///
+	/// An empty string means the date is unknown.
+	public void SetDate(string value)
+	{
+		CheckValidText(value);
+		Date = value;
 	}
 
 	bool CheckTwoDateDigits(int i)
@@ -222,6 +269,19 @@ public class ASAPInfo
 	public bool GetLoop(int song)
 	{
 		return Loops[song];
+	}
+
+	public void SetDurationAndLoop(int song, int duration, bool loop)
+	{
+		if (song < 0 || song >= Songs)
+			throw "Song out of range";
+		Durations[song] = duration;
+		Loops[song] = loop;
+	}
+
+	public bool IsNtsc()
+	{
+		return Ntsc;
 	}
 
 	static int GetWord(byte[] array, int i)
@@ -960,13 +1020,9 @@ public class ASAPInfo
 			return 0;
 		for (int len = 0; ; len++) {
 			int c = module[moduleIndex + 1 + len];
-			if (c == '"') {
-				if (module[moduleIndex + 2 + len] != '\r')
-					throw "Invalid text tag";
+			if (c == '"' && module[moduleIndex + 2 + len] == '\r')
 				return len;
-			}
-			if (c < 32 || c >= 127)
-				throw "Invalid character";
+			CheckValidChar(c);
 		}
 	}
 

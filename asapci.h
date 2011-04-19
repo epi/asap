@@ -53,6 +53,7 @@ int ASAPInfo_GetSongs(ASAPInfo const *self);
 const char *ASAPInfo_GetTitle(ASAPInfo const *self);
 const char *ASAPInfo_GetTitleOrFilename(ASAPInfo const *self);
 int ASAPInfo_GetYear(ASAPInfo const *self);
+cibool ASAPInfo_IsNtsc(ASAPInfo const *self);
 cibool ASAPInfo_IsOurExt(const char *ext);
 cibool ASAPInfo_IsOurFile(const char *filename);
 cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *module, int moduleLen);
@@ -60,6 +61,10 @@ cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *
 #define ASAPInfo_MAX_SONGS  32
 #define ASAPInfo_MAX_TEXT_LENGTH  127
 int ASAPInfo_ParseDuration(const char *s);
+cibool ASAPInfo_SetAuthor(ASAPInfo *self, const char *value);
+cibool ASAPInfo_SetDate(ASAPInfo *self, const char *value);
+cibool ASAPInfo_SetDurationAndLoop(ASAPInfo *self, int song, int duration, cibool loop);
+cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
 #define ASAPInfo_VERSION  "3.0.0"
 #define ASAPInfo_VERSION_MAJOR  3
 #define ASAPInfo_VERSION_MICRO  0

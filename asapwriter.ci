@@ -219,7 +219,7 @@ public class ASAPWriter
 		return player - codeForOneSong;
 	}
 
-	static void WriteExecutable(ByteWriter w, int[] initAndPlayer, ASAPInfo info, byte[] module, int moduleLen)
+	internal static void WriteExecutable(ByteWriter w, int[] initAndPlayer, ASAPInfo info, byte[] module, int moduleLen)
 	{
 		byte[] playerRoutine = ASAP6502.GetPlayerRoutine(info);
 		int player = -1;
