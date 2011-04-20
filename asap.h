@@ -1,7 +1,7 @@
 /*
  * asap.h - public interface of ASAP
  *
- * Copyright (C) 2005-2010  Piotr Fusik
+ * Copyright (C) 2005-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -29,15 +29,15 @@ extern "C" {
 #endif
 
 /* ASAP version. */
-#define ASAP_VERSION_MAJOR   2
-#define ASAP_VERSION_MINOR   1
-#define ASAP_VERSION_MICRO   2
-#define ASAP_VERSION         "2.1.2"
+#define ASAP_VERSION_MAJOR   3
+#define ASAP_VERSION_MINOR   0
+#define ASAP_VERSION_MICRO   0
+#define ASAP_VERSION         "3.0.0"
 
 /* Short credits of the ASAP engine. */
-#define ASAP_YEARS           "2005-2010"
+#define ASAP_YEARS           "2005-2011"
 #define ASAP_CREDITS \
-	"Another Slight Atari Player (C) 2005-2010 Piotr Fusik\n" \
+	"Another Slight Atari Player (C) 2005-2011 Piotr Fusik\n" \
 	"CMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\n" \
 	"RMT player (C) 2002-2005 Radek Sterba\n" \
 	"DLT player (C) 2009 Marek Konopka\n" \
@@ -205,9 +205,6 @@ abool ASAP_IsOurFile(const char *filename);
 
 /* Checks whether the filename extension is known to ASAP. */
 abool ASAP_IsOurExt(const char *ext);
-
-/* Changes the filename extension, returns true on success. */
-abool ASAP_ChangeExt(char *filename, const char *ext);
 
 /* Gets information about a module.
    "module_info" is the structure where the information is returned.

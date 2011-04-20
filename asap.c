@@ -1702,22 +1702,6 @@ abool ASAP_CanSetModuleInfo(const char *filename)
 	return ext == ASAP_EXT('S', 'A', 'P');
 }
 
-abool ASAP_ChangeExt(char *filename, const char *ext)
-{
-	char *dest = NULL;
-	while (*filename != '\0') {
-		if (*filename == '/' || *filename == '\\')
-			dest = NULL;
-		else if (*filename == '.')
-			dest = filename + 1;
-		filename++;
-	}
-	if (dest == NULL)
-		return FALSE;
-	strcpy(dest, ext);
-	return TRUE;
-}
-
 static byte *put_string(byte *dest, const char *str)
 {
 	while (*str != '\0')

@@ -1,7 +1,7 @@
 /*
  * asapconv.c - converter of ASAP-supported formats
  *
- * Copyright (C) 2005-2010  Piotr Fusik
+ * Copyright (C) 2005-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -173,7 +173,7 @@ static void load_module(ASAP_State *asap, const char *input_file, const byte *mo
 	ASAP_MutePokeyChannels(asap, mute_mask);
 }
 
-static int set_output_file(const char *pattern, int pattern_len, const ASAP_ModuleInfo *module_info)
+static int set_output_file_from_pattern(const char *pattern, int pattern_len, const ASAP_ModuleInfo *module_info)
 {
 	int pattern_index;
 	int output_file_len = 0;
@@ -230,17 +230,24 @@ static int set_output_file(const char *pattern, int pattern_len, const ASAP_Modu
 	return output_file_len;
 }
 
+static void set_output_file_from_elements(int path_len, const char *filename, const char *ext)
+{
+	/* assume ext is as long as in filename */
+	if (path_len + strlen(filename) >= sizeof(output_file))
+		fatal_error("filename too long");
+	sprintf(output_file + path_len, "%.*s%s", (int) (strrchr(filename, '.') - filename), filename, ext);
+}
+
 static FILE *open_output_file(const char *input_file, const ASAP_ModuleInfo *module_info)
 {
 	const char *output_ext = strrchr(output_arg, '.');
 	FILE *fp;
 	if (output_ext == output_arg) {
-		if (strlen(input_file) >= sizeof(output_file))
-			fatal_error("filename too long");
-		strcpy(output_file, input_file);
-		ASAP_ChangeExt(output_file, output_ext + 1);
+		/* .EXT */
+		set_output_file_from_elements(0, input_file, output_ext);
 	}
 	else if (output_ext == output_arg + 1 && output_arg[0] == '-') {
+		/* -.EXT */
 		strcpy(output_file, "stdout");
 #ifdef __WIN32
 		_setmode(_fileno(stdout), _O_BINARY);
@@ -248,19 +255,19 @@ static FILE *open_output_file(const char *input_file, const ASAP_ModuleInfo *mod
 		return stdout;
 	}
 	else if (output_ext[-1] == '/' || output_ext[-1] == '\\') {
-		int output_file_len = set_output_file(output_arg, output_ext - output_arg, module_info);
+		/* DIR/.EXT */
+		int path_len = set_output_file_from_pattern(output_arg, output_ext - output_arg, module_info);
 		const char *base_name = input_file;
 		const char *p;
 		for (p = input_file; *p != '\0'; p++)
 			if (*p == '/' || *p == '\\')
 				base_name = p + 1;
-		if (output_file_len + (p - base_name) >= sizeof(output_file))
-			fatal_error("filename too long");
-		strcpy(output_file + output_file_len, base_name);
-		ASAP_ChangeExt(output_file, output_ext + 1);
+		set_output_file_from_elements(path_len, base_name, output_ext);
 	}
-	else
-		set_output_file(output_arg, strlen(output_arg), module_info);
+	else {
+		/* FILE.EXT */
+		set_output_file_from_pattern(output_arg, strlen(output_arg), module_info);
+	}
 	fp = fopen(output_file, "wb");
 	if (fp == NULL)
 		fatal_error("cannot write %s", output_file);
