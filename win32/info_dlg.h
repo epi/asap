@@ -1,7 +1,7 @@
 /*
  * info_dlg.h - file information dialog box
  *
- * Copyright (C) 2007-2010  Piotr Fusik
+ * Copyright (C) 2007-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -40,6 +40,7 @@
 #define IDC_PROGRESS   501
 
 LPTSTR appendString(LPTSTR dest, LPCTSTR src);
+void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext);
 BOOL loadModule(LPCTSTR filename, byte *module, int *module_len);
 
 extern HWND infoDialog;

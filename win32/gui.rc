@@ -49,8 +49,8 @@ IDR_TRAYMENU MENU
 		MENUITEM "&Stop", IDM_STOP
 #ifndef _UNICODE /* TODO */
 		MENUITEM "File &information...", IDM_FILE_INFO
-		MENUITEM "Save as &WAV...", IDM_SAVE_WAV, GRAYED
 #endif
+		MENUITEM "Save as &WAV...", IDM_SAVE_WAV, GRAYED
 		MENUITEM "&About WASAP...", IDM_ABOUT
 		MENUITEM "&Exit", IDM_EXIT
 	}
@@ -182,11 +182,11 @@ FONT 8, "MS Sans Serif"
 
 #endif /* defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) || defined(XMPLAY) */
 
-#ifndef _UNICODE /* TODO */
-
 #if defined(WASAP) || defined(WINAMP) || defined(APOLLO) || defined(XMPLAY)
 
 #include "info_dlg.h"
+
+#ifndef _UNICODE /* TODO */
 
 #if defined(WINAMP) || defined(XMPLAY)
 #define INFO_Y  18
@@ -219,6 +219,8 @@ FONT 8, "MS Sans Serif"
 	PUSHBUTTON "Close", IDCANCEL, 242, 82+INFO_Y, 50, 14
 }
 
+#endif /* _UNICODE */
+
 #endif /* defined(WASAP) || defined(WINAMP) || defined(APOLLO) || defined(XMPLAY) */
 
 #if defined(WASAP) || defined(WINAMP)
@@ -239,8 +241,6 @@ FONT 8, "MS Sans Serif"
 }
 
 #endif /* defined(WASAP) || defined(WINAMP) */
-
-#endif /* _UNICODE */
 
 1 VERSIONINFO
 	FILEVERSION ASAP_VERSION_MAJOR, ASAP_VERSION_MINOR, ASAP_VERSION_MICRO, 0

@@ -1,7 +1,7 @@
 /*
  * info_dlg.c - file information dialog box
  *
- * Copyright (C) 2007-2010  Piotr Fusik
+ * Copyright (C) 2007-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -35,6 +35,13 @@ LPTSTR appendString(LPTSTR dest, LPCTSTR src)
 		*dest++ = *src++;
 	*dest = '\0';
 	return dest;
+}
+
+void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext)
+{
+	int filenameChars = _tcsrchr(filename, '.') + 1 - filename;
+	memcpy(dest, filename, filenameChars * sizeof(_TCHAR));
+	_tcscpy(dest + filenameChars, ext);
 }
 
 BOOL loadModule(LPCTSTR filename, byte *module, int *module_len)
@@ -394,8 +401,7 @@ void updateInfoDialog(LPCTSTR filename, int song)
 			convert_command[12 + i] = convert_ext[i] >= 'a' ? convert_ext[i] - 'a' + 'A' : convert_ext[i];
 		while (convert_ext[i++] != '\0');
 		SendDlgItemMessage(infoDialog, IDC_CONVERT, WM_SETTEXT, 0, (LPARAM) convert_command);
-		_tcscpy(convert_filename, filename);
-		ASAP_ChangeExt(convert_filename, convert_ext);
+		combineFilenameExt(convert_filename, filename, convert_ext);
 		EnableWindow(GetDlgItem(infoDialog, IDC_CONVERT), TRUE);
 	}
 	else {

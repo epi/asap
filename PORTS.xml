@@ -397,7 +397,7 @@
 		<interface>GUI</interface>
 		<since>2.1.2</since>
 		<status>stable</status>
-		<output>16-bit sound</output>
+		<output>16-bit, sound or WAV file</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info>
 		<edit-info>no</edit-info>

@@ -1,7 +1,7 @@
 /*
  * wasap.c - Another Slight Atari Player for Win32 systems
  *
- * Copyright (C) 2005-2010  Piotr Fusik
+ * Copyright (C) 2005-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -356,8 +356,6 @@ static void SelectAndLoadFile(void)
 	opening = FALSE;
 }
 
-#ifndef _UNICODE /* TODO */
-
 /* Defined so that the progress bar is responsive, but isn't updated too often and doesn't overflow (65535 limit) */
 #define WAV_PROGRESS_DURATION_SHIFT 10
 
@@ -450,8 +448,7 @@ static void SaveWav(void)
 		duration = 180000;
 	}
 	ASAP_PlaySong(&asap, current_song, duration);
-	_tcscpy(wav_filename, current_filename);
-	ASAP_ChangeExt(wav_filename, _T("wav"));
+	combineFilenameExt(wav_filename, current_filename, _T("wav"));
 	ofn.hwndOwner = hWnd;
 	if (!GetSaveFileName(&ofn))
 		return;
@@ -459,8 +456,6 @@ static void SaveWav(void)
 	if (!DoSaveWav(&asap))
 		ShowError(_T("Cannot save file"));
 }
-
-#endif /* _UNICODE */
 
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -480,10 +475,10 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		case IDM_FILE_INFO:
 			showInfoDialog(hInst, hWnd, current_filename, current_song);
 			break;
+#endif
 		case IDM_SAVE_WAV:
 			SaveWav();
 			break;
-#endif
 		case IDM_ABOUT:
 			ShowAbout();
 			break;
