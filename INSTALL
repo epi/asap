@@ -220,12 +220,10 @@ This should produce `wasap.exe`, `gspasap.dll` and `asap_dsf.dll`
 in the `win32/wince` directory.
 
 
-Building Java ASAP2WAV, applet and midlet
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building Java ASAP2WAV and applet
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You need Java Development Kit (JDK).
-To compile the midlet, you additionally need Perl and a Java ME SDK - I use
-Sun Java ME platform SDK.
 
 Edit the paths at the top of `java/Makefile` so they point to your installed tools.
 From the command prompt navigate to the `java` directory and run:
@@ -233,9 +231,21 @@ From the command prompt navigate to the `java` directory and run:
 make
 --------------------------------------------------------------------------------
 
-This should produce `asap2wav.jar`, `asap_applet.jar`, `asap_midlet.jar`
-and `asap_midlet.jad`.
+This should produce `asap2wav.jar` and `asap_applet.jar`.
 
+
+Building Java midlet
+~~~~~~~~~~~~~~~~~~~~
+
+You need Perl and a Java ME SDK - I use Sun Java ME platform SDK.
+
+Edit the paths at the top of `java/j2me/Makefile` so they point to your installed tools.
+From the command prompt navigate to the `java/j2me` directory and run:
+--------------------------------------------------------------------------------
+make
+--------------------------------------------------------------------------------
+
+This should produce `asap_midlet.jar` and `asap_midlet.jad`.
 
 Building AndroidASAP
 ~~~~~~~~~~~~~~~~~~~~
