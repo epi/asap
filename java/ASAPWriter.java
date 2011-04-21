@@ -208,7 +208,7 @@ public final class ASAPWriter
 				break;
 			case ASAPModuleType.RMT:
 				ASAPWriter.writeExecutableHeader(w, initAndPlayer, info, 66, 3200, 1539);
-				ASAPWriter.writeBytes(w, module, 0, moduleLen);
+				ASAPWriter.writeBytes(w, module, 0, ASAPInfo.getWord(module, 4) - info.music + 7);
 				ASAPWriter.writeWord(w, 3200);
 				if (info.songs != 1) {
 					ASAPWriter.writeWord(w, 3210 + info.songs);
@@ -229,7 +229,7 @@ public final class ASAPWriter
 				ASAPWriter.writeWord(w, 1536);
 				if (info.songs != 1)
 					ASAPWriter.writeBytes(w, info.songPos, 0, info.songs);
-				ASAPWriter.writeBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+				ASAPWriter.writeBytes(w, playerRoutine, 2, playerLastByte - player + 7);
 				break;
 			case ASAPModuleType.TMC:
 				int player2 = player + CI_CONST_ARRAY_1[(module[37] & 0xff) - 1];

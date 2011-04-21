@@ -305,7 +305,7 @@ public class ASAPWriter
 			break;
 		case ASAPModuleType.Rmt:
 			WriteExecutableHeader(w, initAndPlayer, info, 'B', ASAPInfo.RmtInit, 0x603);
-			WriteBytes(w, module, 0, moduleLen);
+			WriteBytes(w, module, 0, ASAPInfo.GetWord(module, 4) - info.Music + 7);
 			WriteWord(w, ASAPInfo.RmtInit);
 			if (info.Songs != 1) {
 				WriteWord(w, ASAPInfo.RmtInit + 10 + info.Songs);
@@ -321,7 +321,7 @@ public class ASAPWriter
 			w(0x4c); WriteWord(w, 0x600); // JMP PLAYER
 			if (info.Songs != 1)
 				WriteBytes(w, info.SongPos, 0, info.Songs);
-			WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+			WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
 			break;
 		case ASAPModuleType.Tmc:
 			const int[4] tmcPlayerOffset = { 3, -9, -10, -10 };
