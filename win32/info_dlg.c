@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <tchar.h>
+#define _WIN32_IE 0x400
+#include <commctrl.h>
 
 #include "asap.h"
 #include "info_dlg.h"
@@ -77,6 +79,7 @@ static int invalid_fields;
 #define INVALID_FIELD_DATE        4
 #define INVALID_FIELD_TIME        8
 #define INVALID_FIELD_TIME_SHOW  16
+static HWND monthcal = NULL;
 
 static void showSongTime(void)
 {
@@ -163,6 +166,35 @@ static void updateInfoString(HWND hDlg, int nID, int mask, char (*s)[ASAP_INFO_C
 		}
 	}
 	updateSaveAndConvertButtons(mask, ok);
+}
+
+static void toggleCalendar(HWND hDlg)
+{
+	if (monthcal == NULL) {
+		INITCOMMONCONTROLSEX icex;
+		icex.dwSize = sizeof(icex);
+		icex.dwICC = ICC_DATE_CLASSES;
+		InitCommonControlsEx(&icex);
+		monthcal = CreateWindowEx(0, MONTHCAL_CLASS, "", WS_BORDER | WS_POPUP, 0, 0, 0, 0, hDlg, NULL, NULL, NULL);
+	}
+	if (IsWindowVisible(monthcal))
+		ShowWindow(monthcal, SW_HIDE);
+	else {
+		RECT rc;
+		int x;
+		int y;
+//		SYSTEMTIME st;
+		GetWindowRect(GetDlgItem(hDlg, IDC_PICKDATE), &rc);
+		x = rc.left;
+		y = rc.bottom;
+		MonthCal_GetMinReqRect(monthcal, &rc);
+		SetWindowPos(monthcal, NULL, x, y, rc.right, rc.bottom, SWP_SHOWWINDOW | SWP_NOZORDER);
+//		st.wYear = 2007;
+//		st.wMonth = 1;
+//		st.wDay = 1;
+//		MonthCal_SetCurSel(monthcal, &st);
+		SetFocus(monthcal);
+	}
 }
 
 static BOOL saveFile(LPCTSTR filename, const byte *data, int len)
@@ -286,6 +318,9 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 		case MAKEWPARAM(IDC_DATE, EN_CHANGE):
 			updateInfoString(hDlg, IDC_DATE, INVALID_FIELD_DATE, &edited_module_info.date);
 			return TRUE;
+		case MAKEWPARAM(IDC_PICKDATE, BN_CLICKED):
+			toggleCalendar(hDlg);
+			return TRUE;
 		case MAKEWPARAM(IDC_TIME, EN_CHANGE):
 			{
 				char str[ASAP_DURATION_CHARS];
@@ -338,6 +373,28 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			return TRUE;
 		}
 		break;
+	case WM_MOVE:
+		/* FIXME: would be better to close the calendar
+		   as soon as it looses the focus - dunno how to do that */
+		if (monthcal != NULL && IsWindowVisible(monthcal))
+			ShowWindow(monthcal, SW_HIDE);
+		break;
+	case WM_NOTIFY: {
+			LPNMSELCHANGE psc = (LPNMSELCHANGE) lParam;
+			if (psc->nmhdr.hwndFrom == monthcal && psc->nmhdr.code == MCN_SELECT) {
+				ShowWindow(monthcal, SW_HIDE);
+				sprintf(edited_module_info.date, "%02d/%02d/%d", psc->stSelStart.wDay, psc->stSelStart.wMonth, psc->stSelStart.wYear);
+				SetDlgItemText(hDlg, IDC_DATE, edited_module_info.date);
+				updateSaveAndConvertButtons(INVALID_FIELD_DATE, TRUE);
+			}
+		}
+		break;
+	case WM_DESTROY:
+		if (monthcal != NULL) {
+			DestroyWindow(monthcal);
+			monthcal = NULL;
+		}
+		return 0;
 	default:
 		break;
 	}

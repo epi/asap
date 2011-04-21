@@ -30,11 +30,12 @@
 #define IDC_AUTHOR     303
 #define IDC_NAME       304
 #define IDC_DATE       305
-#define IDC_SONGNO     306
-#define IDC_TIME       307
-#define IDC_LOOP       308
-#define IDC_SAVE       309
-#define IDC_CONVERT    310
+#define IDC_PICKDATE   306
+#define IDC_SONGNO     307
+#define IDC_TIME       308
+#define IDC_LOOP       309
+#define IDC_SAVE       310
+#define IDC_CONVERT    311
 
 #define IDD_PROGRESS   500
 #define IDC_PROGRESS   501

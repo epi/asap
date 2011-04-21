@@ -85,7 +85,7 @@ x64/asapconv.exe: ../asapconv.c ../asapci.c ../asapci.h
 # WASAP
 
 wasap.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o $(COMMON_H) info_dlg.h wasap/wasap.h
-	$(ASAP_GCC) -Wl,-subsystem,windows -DWASAP wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o -lcomdlg32 -lwinmm
+	$(ASAP_GCC) -Wl,-subsystem,windows -DWASAP wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o -lcomctl32 -lcomdlg32 -lwinmm
 
 wasap/wasap-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
 	$(WINDRES) -DWASAP gui.rc
@@ -99,7 +99,7 @@ wince/wasap-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico was
 # Winamp
 
 in_asap.dll: winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o $(COMMON_H) info_dlg.h settings_dlg.h winamp/in2.h winamp/out.h winamp/ipc_pe.h winamp/wa_ipc.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DWINAMP winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o -lcomdlg32
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DWINAMP winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o -lcomctl32 -lcomdlg32
 
 winamp/in_asap-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
 	$(WINDRES) -DWINAMP gui.rc
@@ -163,7 +163,7 @@ wince/asap_dsf.res: gui.rc ../asap.h
 # Apollo
 
 ASAP_Apollo.dll: apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o $(COMMON_H) info_dlg.h settings_dlg.h apollo/InputPlugin.h
-	$(ASAP_GPP) -shared -Wl,-subsystem,windows -DAPOLLO apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o -lcomdlg32
+	$(ASAP_GPP) -shared -Wl,-subsystem,windows -DAPOLLO apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o -lcomctl32 -lcomdlg32
 
 ASAP_Apollo-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
 	$(WINDRES) -DAPOLLO gui.rc
@@ -181,7 +181,7 @@ xbmc_asap.dll: ../xbmc/xbmc_asap.c ../asapci.c ../xbmc/xbmc_asap.res ../asapci.h
 # XMPlay
 
 xmp-asap.dll: xmplay/xmp-asap.c $(COMMON_C) info_dlg.c settings_dlg.c xmp-asap-res.o $(COMMON_H) settings_dlg.h xmplay/xmpin.h xmplay/xmpfunc.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DXMPLAY xmplay/xmp-asap.c $(COMMON_C) info_dlg.c settings_dlg.c xmp-asap-res.o -lcomdlg32
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DXMPLAY xmplay/xmp-asap.c $(COMMON_C) info_dlg.c settings_dlg.c xmp-asap-res.o -lcomctl32 -lcomdlg32
 
 xmp-asap-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
 	$(WINDRES) -DXMPLAY gui.rc
