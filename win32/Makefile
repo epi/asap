@@ -34,6 +34,7 @@ X64_ASAP_GPP = x86_64-w64-mingw32-g++ -static -s -O2 -Wall -o $@ -I. -I..
 X64_WINDRES = x86_64-w64-mingw32-windres -o $@
 
 # common tools
+CITO = cito -o $@
 PERL = perl
 RM = rm -f
 CP = cp -f
@@ -49,6 +50,7 @@ CANDLE = candle -nologo -o $@
 LIGHT = light -nologo -o $@
 
 ACIDSAP = ../../Acid800/out/release/AcidSAP/standalone
+COMMON_CI = ../asap.ci ../asap6502.ci ../asapinfo.ci ../asapwriter.ci ../cpu6502.ci ../pokey.ci
 COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
 COMMON_H = ../asap.h ../asap_internal.h ../anylang.h ../players.h
 
@@ -64,18 +66,21 @@ include ../players/Makefile
 
 # asapconv
 
-asapconv.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_GCC) -DHAVE_LIBMP3LAME -DHAVE_LIBMP3LAME_DLL ../asapconv.c $(COMMON_C)
+asapconv.exe: ../asapconv.c ../asapci.c ../asapci.h
+	$(ASAP_GCC) -DHAVE_LIBMP3LAME -DHAVE_LIBMP3LAME_DLL ../asapconv.c ../asapci.c
 
-asapconv-static-lame.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_GCC) -DHAVE_LIBMP3LAME ../asapconv.c $(COMMON_C) -lmp3lame
+asapconv-static-lame.exe: ../asapconv.c ../asapci.c ../asapci.h
+	$(ASAP_GCC) -DHAVE_LIBMP3LAME ../asapconv.c ../asapci.c -lmp3lame
 
-asapconv-no-lame.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
-	$(ASAP_GCC) ../asapconv.c $(COMMON_C)
+asapconv-no-lame.exe: ../asapconv.c ../asapci.c ../asapci.h
+	$(ASAP_GCC) ../asapconv.c ../asapci.c
 
-x64/asapconv.exe: ../asapconv.c $(COMMON_C) $(COMMON_H)
+x64/asapconv.exe: ../asapconv.c ../asapci.c ../asapci.h
 	test -d x64 || mkdir x64
-	$(X64_ASAP_GCC) ../asapconv.c $(COMMON_C)
+	$(X64_ASAP_GCC) ../asapconv.c ../asapci.c
+
+../asapci.c: $(COMMON_CI) $(PLAYERS_OBX)
+	$(CITO) -I ../players -l c $(COMMON_CI)
 
 # WASAP
 
@@ -194,6 +199,9 @@ bass_asap-res.o: gui.rc ../asap.h
 apokeysnd.dll: rmt/apokeysnd_dll.c rmt/pokey.c rmt/apokeysnd-res.o rmt/pokey.h
 	$(ASAP_GCC) --std=c99 -shared -Wl,-subsystem,windows -DAPOKEYSND rmt/apokeysnd_dll.c rmt/pokey.c rmt/apokeysnd-res.o
 
+rmt/pokey.c: ../pokey.ci
+	$(CITO) -l c99 -D APOKEYSND ../pokey.ci
+
 rmt/apokeysnd-res.o: gui.rc ../asap.h
 	$(WINDRES) -DAPOKEYSND gui.rc
 
@@ -201,6 +209,9 @@ rmt/apokeysnd-res.o: gui.rc ../asap.h
 
 asapscan.exe: ../asapscan.c ../asap-asapscan.c ../asap-asapscan.h
 	$(ASAP_GCC) ../asapscan.c
+
+../asap-asapscan.c: ../asap.ci ../asap6502.ci ../asapinfo.ci ../cpu6502.ci ../pokey.ci $(PLAYERS_OBX)
+	$(CITO) -I ../players -l c -D ASAPSCAN ../asap.ci ../asap6502.ci ../asapinfo.ci ../cpu6502.ci ../pokey.ci
 
 # ASAPShellEx
 
@@ -217,8 +228,8 @@ x64/ASAPShellEx-res.o: gui.rc ../asap.h
 	test -d x64 || mkdir x64
 	$(X64_WINDRES) -DSHELLEX gui.rc
 
-shellex/asap-infowriter.c: ../asapinfo.ci ../asap6502.ci ../asapwriter.ci
-	cito -I ../players -l c -o shellex/asap-infowriter.c $^
+shellex/asap-infowriter.c: ../asapinfo.ci ../asap6502.ci ../asapwriter.ci $(PLAYERS_OBX)
+	$(CITO) -I ../players -l c -o $@ ../asapinfo.ci ../asap6502.ci ../asapwriter.ci
 
 # library
 

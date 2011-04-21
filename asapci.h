@@ -20,6 +20,18 @@ typedef enum {
 	ASAPSampleFormat_S16_B_E
 }
 ASAPSampleFormat;
+typedef struct 
+{
+	void *obj;
+	void (*func)(void *obj, int data);
+}
+ByteWriter;
+typedef struct 
+{
+	void *obj;
+	void (*func)(void *obj, const char *s);
+}
+StringConsumer;
 ASAP *ASAP_New(void);
 void ASAP_Delete(ASAP *self);
 void ASAP_DetectSilence(ASAP *self, int seconds);
@@ -70,6 +82,9 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
 #define ASAPInfo_VERSION_MICRO  0
 #define ASAPInfo_VERSION_MINOR  0
 #define ASAPInfo_YEARS  "2005-2011"
+void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsigned char const *module, int moduleLen);
+cibool ASAPWriter_Write(const char *filename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen);
+void ASAPWriter_WriteDuration(ByteWriter w, int value);
 #ifdef __cplusplus
 }
 #endif

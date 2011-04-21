@@ -2,7 +2,6 @@ PREFIX = /usr/local
 
 CC = gcc -s -O2 -Wall
 AR = ar rc
-PERL = perl
 XASM = xasm -q
 MADS = mads -s
 RM = rm -f
@@ -25,14 +24,12 @@ AUDACIOUS_INPUT_PLUGIN_DIR = /usr/lib/audacious/Input
 SDL_CFLAGS = `sdl-config --cflags`
 SDL_LIBS = `sdl-config --libs`
 
-COMMON_C = asap.c acpu.c apokeysnd.c
-COMMON_H = asap.h asap_internal.h anylang.h players.h
 PLAYERS_OBX = players/cmc.obx players/cm3.obx players/cms.obx players/dlt.obx players/mpt.obx players/rmt4.obx players/rmt8.obx players/tmc.obx players/tm2.obx
 
 all: asapconv libasap.a
 
-asapconv: asapconv.c $(COMMON_C) $(COMMON_H)
-	$(CC) -o $@ -I. asapconv.c $(COMMON_C)
+asapconv: asapconv.c asapci.c asapci.h
+	$(CC) -o $@ -I. asapconv.c asapci.c
 
 lib: libasap.a
 
@@ -62,9 +59,6 @@ asapplug.so: audacious/asapplug.c asapci.c asapci.h
 
 asap-sdl: asap-sdl.c asapci.c asapci.h
 	$(CC) $(SDL_CFLAGS) -o $@ -I. asap-sdl.c asapci.c $(SDL_LIBS)
-
-players.h: files2anylang.pl $(PLAYERS_OBX)
-	$(PERL) files2anylang.pl $(PLAYERS_OBX) >$@
 
 players/cmc.obx: players/cmc.asx
 	$(XASM) -d CM3=0 -d CMR=0 -o $@ players/cmc.asx

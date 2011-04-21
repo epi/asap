@@ -1693,6 +1693,22 @@ static const unsigned char CiBinaryResource_tmc_obx[2671] = { 255, 255, 0, 5, 10
 	7, 157, 34, 5, 168, 185, 60, 6, 157, 244, 7, 169, 0, 157, 44, 8,
 	157, 100, 8, 157, 108, 8, 157, 148, 8, 169, 1, 157, 188, 7, 96 };
 
+static void ASAPWriter_WriteBytes(ByteWriter w, unsigned char const *array, int startIndex, int endIndex);
+static void ASAPWriter_WriteCmcInit(ByteWriter w, int *initAndPlayer, ASAPInfo const *info);
+static void ASAPWriter_WriteDec(ByteWriter w, int value);
+static void ASAPWriter_WriteDecSapTag(ByteWriter w, const char *tag, int value);
+static cibool ASAPWriter_WriteExecutable(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, unsigned char const *module, int moduleLen);
+static void ASAPWriter_WriteExecutableFromSap(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int type, unsigned char const *module, int moduleLen);
+static void ASAPWriter_WriteExecutableHeader(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int type, int init, int player);
+static int ASAPWriter_WriteExecutableHeaderForSongPos(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int player, int codeForOneSong, int codeForManySongs, int playerOffset);
+static void ASAPWriter_WriteHexSapTag(ByteWriter w, const char *tag, int value);
+static void ASAPWriter_WritePlaTaxLda0(ByteWriter w);
+static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int type, int init, int player);
+static void ASAPWriter_WriteString(ByteWriter w, const char *s);
+static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value);
+static void ASAPWriter_WriteTwoDigits(ByteWriter w, int value);
+static void ASAPWriter_WriteWord(ByteWriter w, int value);
+
 static void ASAP_Construct(ASAP *self)
 {
 	PokeyPair_Construct(&self->pokeys);
@@ -3696,6 +3712,454 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value)
 		return FALSE;
 	strcpy(self->name, value);
 	return TRUE;
+}
+
+void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsigned char const *module, int moduleLen)
+{
+	switch (info->type) {
+		const char *ext;
+		case ASAPModuleType_SAP_B:
+		case ASAPModuleType_SAP_C:
+		case ASAPModuleType_SAP_D:
+		case ASAPModuleType_SAP_S:
+			output.func(output.obj, "sap");
+			ext = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
+			if (ext != NULL)
+				output.func(output.obj, ext);
+			break;
+		default:
+			output.func(output.obj, ASAPInfo_GetOriginalModuleExt(info, module, moduleLen));
+			output.func(output.obj, "sap");
+			break;
+	}
+}
+
+cibool ASAPWriter_Write(const char *filename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen)
+{
+	int destExt = ASAPInfo_GetPackedExt(filename);
+	const char *possibleExt;
+	if (destExt == 7364979) {
+		return ASAPWriter_WriteExecutable(w, NULL, info, module, moduleLen);
+	}
+	possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
+	if (possibleExt != NULL && destExt == ((possibleExt[0] + (possibleExt[1] << 8) + (possibleExt[2] << 16)) | 2105376)) {
+		switch (info->type) {
+			int blockLen;
+			case ASAPModuleType_SAP_B:
+			case ASAPModuleType_SAP_C:
+				blockLen = ASAPInfo_GetWord(module, info->headerLen + 4) - ASAPInfo_GetWord(module, info->headerLen + 2) + 7;
+				if (blockLen < 7 || info->headerLen + blockLen >= moduleLen)
+					return FALSE;
+				ASAPWriter_WriteBytes(w, module, info->headerLen, info->headerLen + blockLen);
+				break;
+			default:
+				ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+				break;
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static void ASAPWriter_WriteBytes(ByteWriter w, unsigned char const *array, int startIndex, int endIndex)
+{
+	while (startIndex < endIndex)
+		w.func(w.obj, array[startIndex++]);
+}
+
+static void ASAPWriter_WriteCmcInit(ByteWriter w, int *initAndPlayer, ASAPInfo const *info)
+{
+	if (initAndPlayer == NULL)
+		return;
+	ASAPWriter_WriteWord(w, 4064);
+	ASAPWriter_WriteWord(w, 4080);
+	w.func(w.obj, 72);
+	w.func(w.obj, 162);
+	w.func(w.obj, info->music & 255);
+	w.func(w.obj, 160);
+	w.func(w.obj, info->music >> 8);
+	w.func(w.obj, 169);
+	w.func(w.obj, 112);
+	w.func(w.obj, 32);
+	ASAPWriter_WriteWord(w, initAndPlayer[1] + 3);
+	ASAPWriter_WritePlaTaxLda0(w);
+	w.func(w.obj, 76);
+	ASAPWriter_WriteWord(w, initAndPlayer[1] + 3);
+	initAndPlayer[0] = 4064;
+	initAndPlayer[1] += 6;
+}
+
+static void ASAPWriter_WriteDec(ByteWriter w, int value)
+{
+	if (value >= 10) {
+		ASAPWriter_WriteDec(w, value / 10);
+		value %= 10;
+	}
+	w.func(w.obj, 48 + value);
+}
+
+static void ASAPWriter_WriteDecSapTag(ByteWriter w, const char *tag, int value)
+{
+	ASAPWriter_WriteString(w, tag);
+	ASAPWriter_WriteDec(w, value);
+	w.func(w.obj, 13);
+	w.func(w.obj, 10);
+}
+
+void ASAPWriter_WriteDuration(ByteWriter w, int value)
+{
+	int seconds;
+	if (value < 0 || value >= 6000000)
+		return;
+	seconds = value / 1000;
+	value %= 1000;
+	ASAPWriter_WriteTwoDigits(w, seconds / 60);
+	w.func(w.obj, 58);
+	ASAPWriter_WriteTwoDigits(w, seconds % 60);
+	if (value != 0) {
+		w.func(w.obj, 46);
+		ASAPWriter_WriteTwoDigits(w, value / 10);
+		value %= 10;
+		if (value != 0)
+			w.func(w.obj, 48 + value);
+	}
+}
+
+static cibool ASAPWriter_WriteExecutable(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, unsigned char const *module, int moduleLen)
+{
+	unsigned char const *playerRoutine = ASAP6502_GetPlayerRoutine(info);
+	int player = -1;
+	int playerLastByte = -1;
+	int startAddr;
+	if (playerRoutine != NULL) {
+		player = ASAPInfo_GetWord(playerRoutine, 2);
+		playerLastByte = ASAPInfo_GetWord(playerRoutine, 4);
+		if (info->music <= playerLastByte)
+			return FALSE;
+	}
+	switch (info->type) {
+		static const int tmcPlayerOffset[4] = { 3, -9, -10, -10 };
+		int player2;
+		static const int tmcInitOffset[4] = { -14, -16, -17, -17 };
+		case ASAPModuleType_SAP_B:
+			ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 66, module, moduleLen);
+			break;
+		case ASAPModuleType_SAP_C:
+			ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 67, module, moduleLen);
+			ASAPWriter_WriteCmcInit(w, initAndPlayer, info);
+			break;
+		case ASAPModuleType_SAP_D:
+			ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 68, module, moduleLen);
+			break;
+		case ASAPModuleType_SAP_S:
+			ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 83, module, moduleLen);
+			break;
+		case ASAPModuleType_CMC:
+		case ASAPModuleType_CM3:
+		case ASAPModuleType_CMR:
+		case ASAPModuleType_CMS:
+			ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 67, -1, player);
+			w.func(w.obj, 255);
+			w.func(w.obj, 255);
+			ASAPWriter_WriteBytes(w, module, 2, moduleLen);
+			ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
+			ASAPWriter_WriteCmcInit(w, initAndPlayer, info);
+			break;
+		case ASAPModuleType_DLT:
+			startAddr = ASAPWriter_WriteExecutableHeaderForSongPos(w, initAndPlayer, info, player, 5, 7, 259);
+			if (moduleLen == 11270) {
+				ASAPWriter_WriteBytes(w, module, 0, 4);
+				ASAPWriter_WriteWord(w, 19456);
+				ASAPWriter_WriteBytes(w, module, 6, moduleLen);
+				w.func(w.obj, 0);
+			}
+			else
+				ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+			ASAPWriter_WriteWord(w, startAddr);
+			ASAPWriter_WriteWord(w, playerLastByte);
+			if (info->songs != 1) {
+				ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
+				w.func(w.obj, 170);
+				w.func(w.obj, 188);
+				ASAPWriter_WriteWord(w, startAddr);
+			}
+			else {
+				w.func(w.obj, 160);
+				w.func(w.obj, 0);
+			}
+			w.func(w.obj, 76);
+			ASAPWriter_WriteWord(w, player + 256);
+			ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+			break;
+		case ASAPModuleType_MPT:
+			startAddr = ASAPWriter_WriteExecutableHeaderForSongPos(w, initAndPlayer, info, player, 13, 17, 3);
+			ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+			ASAPWriter_WriteWord(w, startAddr);
+			ASAPWriter_WriteWord(w, playerLastByte);
+			if (info->songs != 1) {
+				ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
+				w.func(w.obj, 72);
+			}
+			w.func(w.obj, 160);
+			w.func(w.obj, info->music & 255);
+			w.func(w.obj, 162);
+			w.func(w.obj, info->music >> 8);
+			w.func(w.obj, 169);
+			w.func(w.obj, 0);
+			w.func(w.obj, 32);
+			ASAPWriter_WriteWord(w, player);
+			if (info->songs != 1) {
+				w.func(w.obj, 104);
+				w.func(w.obj, 168);
+				w.func(w.obj, 190);
+				ASAPWriter_WriteWord(w, startAddr);
+			}
+			else {
+				w.func(w.obj, 162);
+				w.func(w.obj, 0);
+			}
+			w.func(w.obj, 169);
+			w.func(w.obj, 2);
+			ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+			break;
+		case ASAPModuleType_RMT:
+			ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, 3200, 1539);
+			ASAPWriter_WriteBytes(w, module, 0, ASAPInfo_GetWord(module, 4) - info->music + 7);
+			ASAPWriter_WriteWord(w, 3200);
+			if (info->songs != 1) {
+				ASAPWriter_WriteWord(w, 3210 + info->songs);
+				w.func(w.obj, 168);
+				w.func(w.obj, 185);
+				ASAPWriter_WriteWord(w, 3211);
+			}
+			else {
+				ASAPWriter_WriteWord(w, 3208);
+				w.func(w.obj, 169);
+				w.func(w.obj, 0);
+			}
+			w.func(w.obj, 162);
+			w.func(w.obj, info->music & 255);
+			w.func(w.obj, 160);
+			w.func(w.obj, info->music >> 8);
+			w.func(w.obj, 76);
+			ASAPWriter_WriteWord(w, 1536);
+			if (info->songs != 1)
+				ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
+			ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
+			break;
+		case ASAPModuleType_TMC:
+			player2 = player + tmcPlayerOffset[module[37] - 1];
+			startAddr = player2 + tmcInitOffset[module[37] - 1];
+			if (info->songs != 1)
+				startAddr -= 3;
+			ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, startAddr, player2);
+			ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+			ASAPWriter_WriteWord(w, startAddr);
+			ASAPWriter_WriteWord(w, playerLastByte);
+			if (info->songs != 1)
+				w.func(w.obj, 72);
+			w.func(w.obj, 160);
+			w.func(w.obj, info->music & 255);
+			w.func(w.obj, 162);
+			w.func(w.obj, info->music >> 8);
+			w.func(w.obj, 169);
+			w.func(w.obj, 112);
+			w.func(w.obj, 32);
+			ASAPWriter_WriteWord(w, player);
+			if (info->songs != 1)
+				ASAPWriter_WritePlaTaxLda0(w);
+			else {
+				w.func(w.obj, 169);
+				w.func(w.obj, 96);
+			}
+			switch (module[37]) {
+				case 2:
+					w.func(w.obj, 6);
+					w.func(w.obj, 0);
+					w.func(w.obj, 76);
+					ASAPWriter_WriteWord(w, player);
+					w.func(w.obj, 165);
+					w.func(w.obj, 0);
+					w.func(w.obj, 230);
+					w.func(w.obj, 0);
+					w.func(w.obj, 74);
+					w.func(w.obj, 144);
+					w.func(w.obj, 5);
+					w.func(w.obj, 176);
+					w.func(w.obj, 6);
+					break;
+				case 3:
+				case 4:
+					w.func(w.obj, 160);
+					w.func(w.obj, 1);
+					w.func(w.obj, 132);
+					w.func(w.obj, 0);
+					w.func(w.obj, 208);
+					w.func(w.obj, 10);
+					w.func(w.obj, 198);
+					w.func(w.obj, 0);
+					w.func(w.obj, 208);
+					w.func(w.obj, 12);
+					w.func(w.obj, 160);
+					w.func(w.obj, module[37]);
+					w.func(w.obj, 132);
+					w.func(w.obj, 0);
+					w.func(w.obj, 208);
+					w.func(w.obj, 3);
+					break;
+			}
+			ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+			break;
+		case ASAPModuleType_TM2:
+			ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, 4224, 1283);
+			ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+			ASAPWriter_WriteWord(w, 4224);
+			if (info->songs != 1) {
+				ASAPWriter_WriteWord(w, 4240);
+				w.func(w.obj, 72);
+			}
+			else
+				ASAPWriter_WriteWord(w, 4238);
+			w.func(w.obj, 160);
+			w.func(w.obj, info->music & 255);
+			w.func(w.obj, 162);
+			w.func(w.obj, info->music >> 8);
+			w.func(w.obj, 169);
+			w.func(w.obj, 112);
+			w.func(w.obj, 32);
+			ASAPWriter_WriteWord(w, 1280);
+			if (info->songs != 1)
+				ASAPWriter_WritePlaTaxLda0(w);
+			else {
+				w.func(w.obj, 169);
+				w.func(w.obj, 0);
+				w.func(w.obj, 170);
+			}
+			w.func(w.obj, 76);
+			ASAPWriter_WriteWord(w, 1280);
+			ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
+			break;
+	}
+	return TRUE;
+}
+
+static void ASAPWriter_WriteExecutableFromSap(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int type, unsigned char const *module, int moduleLen)
+{
+	ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, type, info->init, info->player);
+	ASAPWriter_WriteBytes(w, module, info->headerLen, moduleLen);
+}
+
+static void ASAPWriter_WriteExecutableHeader(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int type, int init, int player)
+{
+	if (initAndPlayer == NULL)
+		ASAPWriter_WriteSapHeader(w, info, type, init, player);
+	else {
+		initAndPlayer[0] = init;
+		initAndPlayer[1] = player;
+	}
+}
+
+static int ASAPWriter_WriteExecutableHeaderForSongPos(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int player, int codeForOneSong, int codeForManySongs, int playerOffset)
+{
+	if (info->songs != 1) {
+		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, player - codeForManySongs, player + playerOffset);
+		return player - codeForManySongs - info->songs;
+	}
+	ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, player - codeForOneSong, player + playerOffset);
+	return player - codeForOneSong;
+}
+
+static void ASAPWriter_WriteHexSapTag(ByteWriter w, const char *tag, int value)
+{
+	int i;
+	if (value < 0)
+		return;
+	ASAPWriter_WriteString(w, tag);
+	for (i = 12; i >= 0; i -= 4) {
+		int digit = (value >> i) & 15;
+		w.func(w.obj, digit + (digit < 10 ? 48 : 55));
+	}
+	w.func(w.obj, 13);
+	w.func(w.obj, 10);
+}
+
+static void ASAPWriter_WritePlaTaxLda0(ByteWriter w)
+{
+	w.func(w.obj, 104);
+	w.func(w.obj, 170);
+	w.func(w.obj, 169);
+	w.func(w.obj, 0);
+}
+
+static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int type, int init, int player)
+{
+	int song;
+	ASAPWriter_WriteString(w, "SAP\r\n");
+	ASAPWriter_WriteTextSapTag(w, "AUTHOR ", info->author);
+	ASAPWriter_WriteTextSapTag(w, "NAME ", info->name);
+	ASAPWriter_WriteTextSapTag(w, "DATE ", info->date);
+	if (info->songs > 1) {
+		ASAPWriter_WriteDecSapTag(w, "SONGS ", info->songs);
+		if (info->defaultSong > 0)
+			ASAPWriter_WriteDecSapTag(w, "DEFSONG ", info->defaultSong);
+	}
+	if (info->channels > 1)
+		ASAPWriter_WriteString(w, "STEREO\r\n");
+	if (info->ntsc)
+		ASAPWriter_WriteString(w, "NTSC\r\n");
+	ASAPWriter_WriteString(w, "TYPE ");
+	w.func(w.obj, type);
+	w.func(w.obj, 13);
+	w.func(w.obj, 10);
+	if (info->fastplay != 312)
+		ASAPWriter_WriteDecSapTag(w, "FASTPLAY ", info->fastplay);
+	if (type == 67)
+		ASAPWriter_WriteHexSapTag(w, "MUSIC ", info->music);
+	ASAPWriter_WriteHexSapTag(w, "INIT ", init);
+	ASAPWriter_WriteHexSapTag(w, "PLAYER ", player);
+	ASAPWriter_WriteHexSapTag(w, "COVOX ", info->covoxAddr);
+	for (song = 0; song < info->songs; song++) {
+		if (info->durations[song] < 0)
+			break;
+		ASAPWriter_WriteString(w, "TIME ");
+		ASAPWriter_WriteDuration(w, info->durations[song]);
+		if (info->loops[song])
+			ASAPWriter_WriteString(w, " LOOP");
+		w.func(w.obj, 13);
+		w.func(w.obj, 10);
+	}
+}
+
+static void ASAPWriter_WriteString(ByteWriter w, const char *s)
+{
+	int n = strlen(s);
+	int i;
+	for (i = 0; i < n; i++)
+		w.func(w.obj, s[i]);
+}
+
+static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value)
+{
+	ASAPWriter_WriteString(w, tag);
+	w.func(w.obj, 34);
+	if (strlen(value) == 0)
+		value = "<?>";
+	ASAPWriter_WriteString(w, value);
+	w.func(w.obj, 34);
+	w.func(w.obj, 13);
+	w.func(w.obj, 10);
+}
+
+static void ASAPWriter_WriteTwoDigits(ByteWriter w, int value)
+{
+	w.func(w.obj, 48 + value / 10);
+	w.func(w.obj, 48 + value % 10);
+}
+
+static void ASAPWriter_WriteWord(ByteWriter w, int value)
+{
+	w.func(w.obj, value & 255);
+	w.func(w.obj, value >> 8);
 }
 
 static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
