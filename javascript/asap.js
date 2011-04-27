@@ -2521,29 +2521,28 @@ ASAPInfo.prototype.parseCmcSong = function(module, pos) {
 		p1 >>= 4;
 		if (p1 == 8)
 			break;
-		if (p1 == 9) {
-			pos = p2;
-			continue;
-		}
-		if (p1 == 10) {
-			pos -= p2;
-			continue;
-		}
-		if (p1 == 11) {
-			pos += p2;
-			continue;
-		}
-		if (p1 == 12) {
-			tempo = p2;
-			pos++;
-			continue;
-		}
-		if (p1 == 13) {
-			pos++;
-			repStartPos = pos;
-			repEndPos = pos + p2;
-			repTimes = p3 - 1;
-			continue;
+		switch (p1) {
+			case 9:
+				pos = p2;
+				continue;
+			case 10:
+				pos -= p2;
+				continue;
+			case 11:
+				pos += p2;
+				continue;
+			case 12:
+				tempo = p2;
+				pos++;
+				continue;
+			case 13:
+				pos++;
+				repStartPos = pos;
+				repEndPos = pos + p2;
+				repTimes = p3 - 1;
+				continue;
+			default:
+				break;
 		}
 		if (p1 == 14) {
 			this.loops[this.songs] = true;
@@ -3082,7 +3081,8 @@ ASAPInfo.prototype.parseSap = function(module, moduleLen) {
 			if (this.init < 0)
 				throw "Missing INIT tag";
 			this.type = ASAPModuleType.SAP_S;
-			this.fastplay = 78;
+			if (this.fastplay < 0)
+				this.fastplay = 78;
 			break;
 		default:
 			throw "Unsupported TYPE";
@@ -3320,10 +3320,15 @@ ASAPInfo.prototype.setDate = function(value) {
 	this.date = value;
 }
 
-ASAPInfo.prototype.setDurationAndLoop = function(song, duration, loop) {
+ASAPInfo.prototype.setDuration = function(song, duration) {
 	if (song < 0 || song >= this.songs)
 		throw "Song out of range";
 	this.durations[song] = duration;
+}
+
+ASAPInfo.prototype.setLoop = function(song, loop) {
+	if (song < 0 || song >= this.songs)
+		throw "Song out of range";
 	this.loops[song] = loop;
 }
 

@@ -2807,29 +2807,28 @@ static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, i
 		p1 >>= 4;
 		if (p1 == 8)
 			break;
-		if (p1 == 9) {
-			pos = p2;
-			continue;
-		}
-		if (p1 == 10) {
-			pos -= p2;
-			continue;
-		}
-		if (p1 == 11) {
-			pos += p2;
-			continue;
-		}
-		if (p1 == 12) {
-			tempo = p2;
-			pos++;
-			continue;
-		}
-		if (p1 == 13) {
-			pos++;
-			repStartPos = pos;
-			repEndPos = pos + p2;
-			repTimes = p3 - 1;
-			continue;
+		switch (p1) {
+			case 9:
+				pos = p2;
+				continue;
+			case 10:
+				pos -= p2;
+				continue;
+			case 11:
+				pos += p2;
+				continue;
+			case 12:
+				tempo = p2;
+				pos++;
+				continue;
+			case 13:
+				pos++;
+				repStartPos = pos;
+				repEndPos = pos + p2;
+				repTimes = p3 - 1;
+				continue;
+			default:
+				break;
 		}
 		if (p1 == 14) {
 			self->loops[self->songs] = TRUE;
@@ -3432,7 +3431,8 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 			if (self->init < 0)
 				return FALSE;
 			self->type = ASAPModuleType_SAP_S;
-			self->fastplay = 78;
+			if (self->fastplay < 0)
+				self->fastplay = 78;
 			break;
 		default:
 			return FALSE;

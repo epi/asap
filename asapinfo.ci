@@ -325,8 +325,8 @@ public class ASAPInfo
 
 	// TODO: enum + 0
 	const int SeenThisCall = 1;
-	const int SeenBefore   = 2;
-	const int SeenRepeat   = 3;
+	const int SeenBefore = 2;
+	const int SeenRepeat = 3;
 
 	void ParseCmcSong(byte[] module, int pos)
 	{
@@ -360,29 +360,28 @@ public class ASAPInfo
 			p1 >>= 4;
 			if (p1 == 8)
 				break;
-			if (p1 == 9) {
+			switch (p1) {
+			case 9:
 				pos = p2;
 				continue;
-			}
-			if (p1 == 0xa) {
+			case 0xa:
 				pos -= p2;
 				continue;
-			}
-			if (p1 == 0xb) {
+			case 0xb:
 				pos += p2;
 				continue;
-			}
-			if (p1 == 0xc) {
+			case 0xc:
 				tempo = p2;
 				pos++;
 				continue;
-			}
-			if (p1 == 0xd) {
+			case 0xd:
 				pos++;
 				repStartPos = pos;
 				repEndPos = pos + p2;
 				repTimes = p3 - 1;
 				continue;
+			default:
+				break;
 			}
 			if (p1 == 0xe) {
 				Loops[Songs] = true;
@@ -1229,7 +1228,8 @@ public class ASAPInfo
 			if (Init < 0)
 				throw "Missing INIT tag";
 			Type = ASAPModuleType.SapS;
-			Fastplay = 78;
+			if (Fastplay < 0)
+				Fastplay = 78;
 			break;
 		default:
 			throw "Unsupported TYPE";

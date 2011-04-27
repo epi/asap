@@ -593,29 +593,28 @@ public final class ASAPInfo
 			p1 >>= 4;
 			if (p1 == 8)
 				break;
-			if (p1 == 9) {
-				pos = p2;
-				continue;
-			}
-			if (p1 == 10) {
-				pos -= p2;
-				continue;
-			}
-			if (p1 == 11) {
-				pos += p2;
-				continue;
-			}
-			if (p1 == 12) {
-				tempo = p2;
-				pos++;
-				continue;
-			}
-			if (p1 == 13) {
-				pos++;
-				repStartPos = pos;
-				repEndPos = pos + p2;
-				repTimes = p3 - 1;
-				continue;
+			switch (p1) {
+				case 9:
+					pos = p2;
+					continue;
+				case 10:
+					pos -= p2;
+					continue;
+				case 11:
+					pos += p2;
+					continue;
+				case 12:
+					tempo = p2;
+					pos++;
+					continue;
+				case 13:
+					pos++;
+					repStartPos = pos;
+					repEndPos = pos + p2;
+					repTimes = p3 - 1;
+					continue;
+				default:
+					break;
 			}
 			if (p1 == 14) {
 				this.loops[this.songs] = true;
@@ -1159,7 +1158,8 @@ public final class ASAPInfo
 				if (this.init < 0)
 					throw new Exception("Missing INIT tag");
 				this.type = ASAPModuleType.SAP_S;
-				this.fastplay = 78;
+				if (this.fastplay < 0)
+					this.fastplay = 78;
 				break;
 			default:
 				throw new Exception("Unsupported TYPE");
@@ -1422,11 +1422,17 @@ public final class ASAPInfo
 		this.date = value;
 	}
 
-	public void setDurationAndLoop(int song, int duration, boolean loop) throws Exception
+	public void setDuration(int song, int duration) throws Exception
 	{
 		if (song < 0 || song >= this.songs)
 			throw new Exception("Song out of range");
 		this.durations[song] = duration;
+	}
+
+	public void setLoop(int song, boolean loop) throws Exception
+	{
+		if (song < 0 || song >= this.songs)
+			throw new Exception("Song out of range");
 		this.loops[song] = loop;
 	}
 

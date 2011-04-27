@@ -2654,29 +2654,28 @@ namespace Sf.Asap
 				p1 >>= 4;
 				if (p1 == 8)
 					break;
-				if (p1 == 9) {
-					pos = p2;
-					continue;
-				}
-				if (p1 == 10) {
-					pos -= p2;
-					continue;
-				}
-				if (p1 == 11) {
-					pos += p2;
-					continue;
-				}
-				if (p1 == 12) {
-					tempo = p2;
-					pos++;
-					continue;
-				}
-				if (p1 == 13) {
-					pos++;
-					repStartPos = pos;
-					repEndPos = pos + p2;
-					repTimes = p3 - 1;
-					continue;
+				switch (p1) {
+					case 9:
+						pos = p2;
+						continue;
+					case 10:
+						pos -= p2;
+						continue;
+					case 11:
+						pos += p2;
+						continue;
+					case 12:
+						tempo = p2;
+						pos++;
+						continue;
+					case 13:
+						pos++;
+						repStartPos = pos;
+						repEndPos = pos + p2;
+						repTimes = p3 - 1;
+						continue;
+					default:
+						break;
 				}
 				if (p1 == 14) {
 					this.Loops[this.Songs] = true;
@@ -3218,7 +3217,8 @@ namespace Sf.Asap
 					if (this.Init < 0)
 						throw new System.Exception("Missing INIT tag");
 					this.Type = ASAPModuleType.SapS;
-					this.Fastplay = 78;
+					if (this.Fastplay < 0)
+						this.Fastplay = 78;
 					break;
 				default:
 					throw new System.Exception("Unsupported TYPE");
@@ -3477,11 +3477,17 @@ namespace Sf.Asap
 			this.Date = value;
 		}
 
-		public void SetDurationAndLoop(int song, int duration, bool loop)
+		public void SetDuration(int song, int duration)
 		{
 			if (song < 0 || song >= this.Songs)
 				throw new System.Exception("Song out of range");
 			this.Durations[song] = duration;
+		}
+
+		public void SetLoop(int song, bool loop)
+		{
+			if (song < 0 || song >= this.Songs)
+				throw new System.Exception("Song out of range");
 			this.Loops[song] = loop;
 		}
 

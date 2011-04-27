@@ -4,6 +4,26 @@ package net.sf.asap;
 public final class ASAPWriter
 {
 
+	public static int durationToString(byte[] result, int value)
+	{
+		if (value < 0 || value >= 6000000)
+			return 0;
+		int seconds = value / 1000;
+		value %= 1000;
+		ASAPWriter.twoDigitsToString(result, 0, seconds / 60);
+		result[2] = 58;
+		ASAPWriter.twoDigitsToString(result, 3, seconds % 60);
+		if (value == 0)
+			return 5;
+		result[5] = 46;
+		ASAPWriter.twoDigitsToString(result, 6, value / 10);
+		value %= 10;
+		if (value == 0)
+			return 8;
+		result[8] = (byte) (48 + value);
+		return 9;
+	}
+
 	public static void enumSaveExts(StringConsumer output, ASAPInfo info, byte[] module, int moduleLen)
 	{
 		switch (info.type) {
@@ -21,6 +41,13 @@ public final class ASAPWriter
 				output.run("sap");
 				break;
 		}
+	}
+	public static final int MAX_DURATION_LENGTH = 9;
+
+	private static void twoDigitsToString(byte[] result, int offset, int value)
+	{
+		result[offset] = (byte) (48 + value / 10);
+		result[offset + 1] = (byte) (48 + value % 10);
 	}
 
 	public static void write(String filename, ByteWriter w, ASAPInfo info, byte[] module, int moduleLen) throws Exception
@@ -92,24 +119,6 @@ public final class ASAPWriter
 		ASAPWriter.writeDec(w, value);
 		w.run(13);
 		w.run(10);
-	}
-
-	public static void writeDuration(ByteWriter w, int value)
-	{
-		if (value < 0 || value >= 6000000)
-			return;
-		int seconds = value / 1000;
-		value %= 1000;
-		ASAPWriter.writeTwoDigits(w, seconds / 60);
-		w.run(58);
-		ASAPWriter.writeTwoDigits(w, seconds % 60);
-		if (value != 0) {
-			w.run(46);
-			ASAPWriter.writeTwoDigits(w, value / 10);
-			value %= 10;
-			if (value != 0)
-				w.run(48 + value);
-		}
 	}
 
 	static void writeExecutable(ByteWriter w, int[] initAndPlayer, ASAPInfo info, byte[] module, int moduleLen) throws Exception
@@ -403,7 +412,8 @@ public final class ASAPWriter
 			if (info.durations[song] < 0)
 				break;
 			ASAPWriter.writeString(w, "TIME ");
-			ASAPWriter.writeDuration(w, info.durations[song]);
+			byte[] s = new byte[9];
+			ASAPWriter.writeBytes(w, s, 0, ASAPWriter.durationToString(s, info.durations[song]));
 			if (info.loops[song])
 				ASAPWriter.writeString(w, " LOOP");
 			w.run(13);
@@ -428,12 +438,6 @@ public final class ASAPWriter
 		w.run(34);
 		w.run(13);
 		w.run(10);
-	}
-
-	private static void writeTwoDigits(ByteWriter w, int value)
-	{
-		w.run(48 + value / 10);
-		w.run(48 + value % 10);
 	}
 
 	private static void writeWord(ByteWriter w, int value)
