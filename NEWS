@@ -1,6 +1,36 @@
 History
 -------
 
+ASAP 3.0.0 (2011-05-??)::
+
+New ports;;
+- Created a desktop player for the Adobe AIR platform.
+- Ported the Windows Media Player plugin to Windows CE.
+- Created a setup package with the Windows Explorer plugin for 64-bit Windows.
+- JavaScript ASAP2WAV now runs in DMDScript and JScript.NET.
+
+Emulation accuracy;;
+- Corrected ANTIC and POKEY timings.
+- Implemented STIMER, NMIST and NMIRES hardware registers.
+- Fixed and optimized undocumented 6502 instructions.
+
+Usability improvements;;
+- Implemented subsongs, seek bar and pause in the Android port.
+- Added a date picker in the WASAP/Winamp/Apollo/XMPlay file information dialogs.
+- Made "Save as WAV" available in WASAP on Windows CE.
+- Browser JavaScript player works on `file:///` URLs.
+- `asapscan` uses a much faster length detection algorithm.
+
+Bug fixes;;
+- Many important fixes in the Audacious plugin.
+- Many fixes in the Android port.
+
+Cleanup;;
+- Rewritten ASAP core to the http://cito.sourceforge.net[Ć programming language].
+- Removed `defaultPlaybackTime` and `loopPlaybackTime` parameters
+from applet, Flash Player and Silverlight interfaces.
+
+
 ASAP 2.1.2 (2010-11-03)::
 
 There are new ports: Android, Audacious plugin, Silverlight and a simple
