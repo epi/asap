@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000
  *
- * Copyright (C) 2006-2010  Piotr Fusik
+ * Copyright (C) 2006-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,7 +26,7 @@
 
 #include "foobar2000/SDK/foobar2000.h"
 
-#include "asap.h"
+#include "asapci.h"
 #include "settings_dlg.h"
 
 #define BITS_PER_SAMPLE    16
@@ -59,34 +59,46 @@ class input_asap
 	input_asap *prev;
 	input_asap *next;
 	service_ptr_t<file> m_file;
-	char filename[MAX_PATH];
-	byte module[ASAP_MODULE_MAX];
+	char *filename;
+	BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
-	ASAP_State asap;
-	ASAP_ModuleInfo module_info;
+	ASAP *asap;
+	abort_callback *p_abort;
 
-	int get_song_duration(int song, ASAP_State *ast)
+	int get_song_duration(int song, bool play)
 	{
-		int duration = module_info.durations[song];
+		const ASAPInfo *info = ASAP_GetInfo(asap);
+		int duration = ASAPInfo_GetDuration(info, song);
 		if (duration < 0) {
-			if (silence_seconds > 0)
-				ASAP_DetectSilence(ast, silence_seconds);
+			if (play && silence_seconds > 0)
+				ASAP_DetectSilence(asap, silence_seconds);
 			return 1000 * song_length;
 		}
-		if (play_loops && module_info.loops[song])
+		if (play_loops && ASAPInfo_GetLoop(info, song))
 			return 1000 * song_length;
 		return duration;
 	}
 
-	static void copy_info(char *dest, const file_info &p_info, const char *p_name)
+	static void meta_set(file_info &p_info, const char *p_name, const char *p_value)
 	{
-		const char *src;
-		int i = 0;
-		src = p_info.meta_get(p_name, 0);
-		if (src != NULL)
-			for (; i < ASAP_INFO_CHARS - 1 && src[i] != '\0'; i++)
-				dest[i] = src[i];
-		dest[i] = '\0';
+		if (p_value[0] != '\0')
+			p_info.meta_set(p_name, p_value);
+	}
+
+	static const char *empty_if_null(const char *s)
+	{
+		return s != NULL ? s : "";
+	}
+
+	void write(int data)
+	{
+		BYTE b = (BYTE) data;
+		m_file->write(&b, 1, *p_abort);
+	}
+
+	static void static_write(void *obj, int data)
+	{
+		((input_asap *) obj)->write(data);
 	}
 
 public:
@@ -95,7 +107,7 @@ public:
 	{
 		input_asap *p;
 		for (p = head; p != NULL; p = p->next)
-			ASAP_MutePokeyChannels(&p->asap, mask);
+			ASAP_MutePokeyChannels(p->asap, mask);
 	}
 
 	static bool g_is_our_content_type(const char *p_content_type)
@@ -105,7 +117,7 @@ public:
 
 	static bool g_is_our_path(const char *p_path, const char *p_extension)
 	{
-		return ASAP_IsOurFile(p_path) != 0;
+		return ASAPInfo_IsOurFile(p_path) != 0;
 	}
 
 	input_asap()
@@ -115,10 +127,16 @@ public:
 		prev = NULL;
 		next = head;
 		head = this;
+		filename = NULL;
+		asap = ASAP_New();
 	}
 
 	~input_asap()
 	{
+		if (asap != NULL)
+			ASAP_Delete(asap);
+		if (filename != NULL)
+			free(filename);
 		if (prev != NULL)
 			prev->next = next;
 		if (next != NULL)
@@ -131,24 +149,21 @@ public:
 	{
 		if (p_reason == input_open_info_write) {
 			int len = strlen(p_path);
-			if (len >= MAX_PATH || !ASAP_CanSetModuleInfo(p_path))
+			if (len < 4 || _stricmp(p_path + len - 4, ".sap") != 0)
 				throw exception_io_unsupported_format();
-			memcpy(filename, p_path, len + 1);
+			filename = strdup(p_path);
 		}
 		if (p_filehint.is_empty())
 			filesystem::g_open(p_filehint, p_path, filesystem::open_mode_read, p_abort);
 		m_file = p_filehint;
 		module_len = m_file->read(module, sizeof(module), p_abort);
-		if (!ASAP_GetModuleInfo(&module_info, p_path, module, module_len))
+		if (!ASAP_Load(asap, p_path, module, module_len))
 			throw exception_io_unsupported_format();
-		if (p_reason == input_open_decode)
-			if (!ASAP_Load(&asap, p_path, module, module_len))
-				throw exception_io_unsupported_format();
 	}
 
 	t_uint32 get_subsong_count()
 	{
-		return module_info.songs;
+		return ASAPInfo_GetSongs(ASAP_GetInfo(asap));
 	}
 
 	t_uint32 get_subsong(t_uint32 p_index)
@@ -158,16 +173,15 @@ public:
 
 	void get_info(t_uint32 p_subsong, file_info &p_info, abort_callback &p_abort)
 	{
-		int duration = get_song_duration(p_subsong, NULL);
+		int duration = get_song_duration(p_subsong, false);
 		if (duration >= 0)
 			p_info.set_length(duration / 1000.0);
-		p_info.info_set_int("channels", module_info.channels);
-		p_info.info_set_int("subsongs", module_info.songs);
-		if (module_info.author[0] != '\0')
-			p_info.meta_set("composer", module_info.author);
-		p_info.meta_set("title", module_info.name);
-		if (module_info.date[0] != '\0')
-			p_info.meta_set("date", module_info.date);
+		const ASAPInfo *info = ASAP_GetInfo(asap);
+		p_info.info_set_int("channels", ASAPInfo_GetChannels(info));
+		p_info.info_set_int("subsongs", ASAPInfo_GetSongs(info));
+		meta_set(p_info, "composer", ASAPInfo_GetAuthor(info));
+		meta_set(p_info, "title", ASAPInfo_GetTitle(info));
+		meta_set(p_info, "date", ASAPInfo_GetDate(info));
 	}
 
 	t_filestats get_file_stats(abort_callback &p_abort)
@@ -177,25 +191,19 @@ public:
 
 	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort)
 	{
-		int duration = get_song_duration(p_subsong, &asap);
-		ASAP_PlaySong(&asap, p_subsong, duration);
-		ASAP_MutePokeyChannels(&asap, mute_mask);
+		int duration = get_song_duration(p_subsong, true);
+		ASAP_PlaySong(asap, p_subsong, duration);
+		ASAP_MutePokeyChannels(asap, mute_mask);
 	}
 
 	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort)
 	{
-		int channels = module_info.channels;
+		int channels = ASAPInfo_GetChannels(ASAP_GetInfo(asap));
 		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
-		static
-#if BITS_PER_SAMPLE == 8
-			byte
-#else
-			short
-#endif
-			buffer[BUFFERED_BLOCKS * 2];
+		static BYTE buffer[BUFFERED_BLOCKS * 2 * (BITS_PER_SAMPLE / 8)];
 
-		buffered_bytes = ASAP_Generate(&asap, buffer, buffered_bytes,
-			(ASAP_SampleFormat) BITS_PER_SAMPLE);
+		buffered_bytes = ASAP_Generate(asap, buffer, buffered_bytes,
+			BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 		if (buffered_bytes == 0)
 			return false;
 		p_chunk.set_data_fixedpoint(buffer, buffered_bytes, ASAP_SAMPLE_RATE,
@@ -206,7 +214,7 @@ public:
 
 	void decode_seek(double p_seconds, abort_callback &p_abort)
 	{
-		ASAP_Seek(&asap, (int) (p_seconds * 1000));
+		ASAP_Seek(asap, (int) (p_seconds * 1000));
 	}
 
 	bool decode_can_seek()
@@ -231,20 +239,20 @@ public:
 
 	void retag_set_info(t_uint32 p_subsong, const file_info &p_info, abort_callback &p_abort)
 	{
-		copy_info(module_info.author, p_info, "composer");
-		copy_info(module_info.name, p_info, "title");
-		copy_info(module_info.date, p_info, "date");
+		ASAPInfo *info = const_cast<ASAPInfo *>(ASAP_GetInfo(asap));
+		ASAPInfo_SetAuthor(info, empty_if_null(p_info.meta_get("composer", 0)));
+		ASAPInfo_SetTitle(info, empty_if_null(p_info.meta_get("title", 0)));
+		ASAPInfo_SetDate(info, empty_if_null(p_info.meta_get("date", 0)));
 	}
 
 	void retag_commit(abort_callback &p_abort)
 	{
-		byte out_module[ASAP_MODULE_MAX];
-		int out_len = ASAP_SetModuleInfo(&module_info, module, module_len, out_module);
-		if (out_len <= 0)
-			throw exception_io_unsupported_format();
 		m_file.release();
 		filesystem::g_open(m_file, filename, filesystem::open_mode_write_new, p_abort);
-		m_file->write(out_module, out_len, p_abort);
+		this->p_abort = &p_abort;
+		ByteWriter bw = { this, static_write };
+		if (!ASAPWriter_Write(filename, bw, ASAP_GetInfo(asap), module, module_len))
+			throw exception_io_unsupported_format();
 	}
 };
 
@@ -469,4 +477,4 @@ public:
 
 static service_factory_single_t<input_file_type_asap> g_input_file_type_asap_factory;
 
-DECLARE_COMPONENT_VERSION("ASAP", ASAP_VERSION, ASAP_CREDITS "\n" ASAP_COPYRIGHT);
+DECLARE_COMPONENT_VERSION("ASAP", ASAPInfo_VERSION, ASAPInfo_CREDITS "\n" ASAPInfo_COPYRIGHT);

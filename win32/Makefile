@@ -50,9 +50,6 @@ CANDLE = candle -nologo -o $@
 LIGHT = light -nologo -o $@
 
 ACIDSAP = ../../Acid800/out/release/AcidSAP/standalone
-COMMON_CI = ../asap.ci ../asap6502.ci ../asapinfo.ci ../asapwriter.ci ../cpu6502.ci ../pokey.ci
-COMMON_C = ../asap.c ../acpu.c ../apokeysnd.c
-COMMON_H = ../asap.h ../asap_internal.h ../anylang.h ../players.h
 
 all: mingw dsf foo asap.lib asapconv-static-lame.exe asap-sdl.exe
 
@@ -79,29 +76,29 @@ x64/asapconv.exe: ../asapconv.c ../asapci.c ../asapci.h
 	test -d x64 || mkdir x64
 	$(X64_ASAP_GCC) ../asapconv.c ../asapci.c
 
-../asapci.c: $(COMMON_CI) $(PLAYERS_OBX)
-	$(CITO) -I ../players -l c $(COMMON_CI)
+../asapci.c: ../asap.ci ../asap6502.ci ../asapinfo.ci ../asapwriter.ci ../cpu6502.ci ../pokey.ci $(PLAYERS_OBX)
+	$(CITO) -I ../players -l c ../asap.ci ../asap6502.ci ../asapinfo.ci ../asapwriter.ci ../cpu6502.ci ../pokey.ci
 
 # WASAP
 
-wasap.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o $(COMMON_H) info_dlg.h wasap/wasap.h
-	$(ASAP_GCC) -Wl,-subsystem,windows -DWASAP wasap/wasap.c $(COMMON_C) info_dlg.c wasap/wasap-res.o -lcomctl32 -lcomdlg32 -lwinmm
+wasap.exe: wasap/wasap.c ../asapci.c info_dlg.c wasap/wasap-res.o ../asapci.h info_dlg.h wasap/wasap.h
+	$(ASAP_GCC) -Wl,-subsystem,windows -DWASAP wasap/wasap.c ../asapci.c info_dlg.c wasap/wasap-res.o -lcomctl32 -lcomdlg32 -lwinmm
 
-wasap/wasap-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
+wasap/wasap-res.o: gui.rc ../asapci.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
 	$(WINDRES) -DWASAP gui.rc
 
-wince/wasap.exe: wasap/wasap.c $(COMMON_C) info_dlg.c wince/wasap-res.o $(COMMON_H) info_dlg.h wasap/wasap.h
-	$(WINCE_GCC) -DWASAP wasap/wasap.c $(COMMON_C) info_dlg.c wince/wasap-res.o
+wince/wasap.exe: wasap/wasap.c ../asapci.c info_dlg.c wince/wasap-res.o ../asapci.h info_dlg.h wasap/wasap.h
+	$(WINCE_GCC) -DWASAP wasap/wasap.c ../asapci.c info_dlg.c wince/wasap-res.o
 
-wince/wasap-res.o: gui.rc ../asap.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
+wince/wasap-res.o: gui.rc ../asapci.h info_dlg.h wasap/wasap.h wasap/wasap.ico wasap/play.ico wasap/stop.ico
 	$(WINCE_WINDRES) -DWASAP gui.rc
 
 # Winamp
 
-in_asap.dll: winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o $(COMMON_H) info_dlg.h settings_dlg.h winamp/in2.h winamp/out.h winamp/ipc_pe.h winamp/wa_ipc.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DWINAMP winamp/in_asap.c $(COMMON_C) info_dlg.c settings_dlg.c winamp/in_asap-res.o -lcomctl32 -lcomdlg32
+in_asap.dll: winamp/in_asap.c ../asapci.c info_dlg.c settings_dlg.c winamp/in_asap-res.o ../asapci.h info_dlg.h settings_dlg.h winamp/in2.h winamp/out.h winamp/ipc_pe.h winamp/wa_ipc.h
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -DWINAMP winamp/in_asap.c ../asapci.c info_dlg.c settings_dlg.c winamp/in_asap-res.o -lcomctl32 -lcomdlg32
 
-winamp/in_asap-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
+winamp/in_asap-res.o: gui.rc ../asapci.h info_dlg.h settings_dlg.h
 	$(WINDRES) -DWINAMP gui.rc
 
 # foobar2000
@@ -110,8 +107,8 @@ foo: foo_asap.dll
 
 FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp foobar2000/foobar2000_SDK.lib foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
 
-foo_asap.dll: foobar2000/foo_asap.cpp $(COMMON_C) settings_dlg.c foobar2000/foo_asap.res $(COMMON_H) settings_dlg.h $(FOOBAR2000_RUNTIME)
-	$(ASAP_CL) -Fofoobar2000/ -DFOOBAR2000 -LD -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) foobar2000/foo_asap.cpp $(COMMON_C) settings_dlg.c foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
+foo_asap.dll: foobar2000/foo_asap.cpp ../asapci.c settings_dlg.c foobar2000/foo_asap.res ../asapci.h settings_dlg.h $(FOOBAR2000_RUNTIME)
+	$(ASAP_CL) -Fofoobar2000/ -DFOOBAR2000 -LD -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) foobar2000/foo_asap.cpp ../asapci.c settings_dlg.c foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME) user32.lib $(LINKOPT)
 
 foobar2000/foobar2000_SDK.lib: foobar2000/abort_callback.obj foobar2000/audio_chunk.obj foobar2000/audio_chunk_channel_config.obj foobar2000/console.obj foobar2000/file_info.obj foobar2000/filesystem.obj foobar2000/guids.obj foobar2000/mem_block_container.obj foobar2000/playable_location.obj foobar2000/preferences_page.obj foobar2000/replaygain_info.obj foobar2000/service.obj
 	$(MKLIB) $^
@@ -125,21 +122,21 @@ foobar2000/pfc.lib: foobar2000/cfg_var.obj foobar2000/guid.obj foobar2000/other.
 foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/pfc/%.cpp
 	$(CL) -c -Fo$@ -DWIN32 -DUNICODE -EHsc $<
 
-foobar2000/foo_asap.res: gui.rc ../asap.h settings_dlg.h
+foobar2000/foo_asap.res: gui.rc ../asapci.h settings_dlg.h
 	$(WINDRES) -DFOOBAR2000 gui.rc
 
 # GSPlayer
 
-gspasap.dll: gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o $(COMMON_H) settings_dlg.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DGSPLAYER gsplayer/gspasap.c $(COMMON_C) settings_dlg.c gspasap-res.o
+gspasap.dll: gsplayer/gspasap.c ../asapci.c settings_dlg.c gspasap-res.o ../asapci.h settings_dlg.h
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DGSPLAYER gsplayer/gspasap.c ../asapci.c settings_dlg.c gspasap-res.o
 
-gspasap-res.o: gui.rc ../asap.h settings_dlg.h
+gspasap-res.o: gui.rc ../asapci.h settings_dlg.h
 	$(WINDRES) -DGSPLAYER gui.rc
 
-wince/gspasap.dll: gsplayer/gspasap.c $(COMMON_C) settings_dlg.c wince/gspasap-res.o $(COMMON_H) settings_dlg.h
-	$(WINCE_GCC) -shared -DGSPLAYER gsplayer/gspasap.c $(COMMON_C) settings_dlg.c wince/gspasap-res.o
+wince/gspasap.dll: gsplayer/gspasap.c ../asapci.c settings_dlg.c wince/gspasap-res.o ../asapci.h settings_dlg.h
+	$(WINCE_GCC) -shared -DGSPLAYER gsplayer/gspasap.c ../asapci.c settings_dlg.c wince/gspasap-res.o
 
-wince/gspasap-res.o: gui.rc ../asap.h settings_dlg.h
+wince/gspasap-res.o: gui.rc ../asapci.h settings_dlg.h
 	$(WINCE_WINDRES) -DGSPLAYER gui.rc
 
 # DirectShow
@@ -151,21 +148,21 @@ DSHOW_BASECLASSES = $(DSHOW_BASECLASSES_DIR)/amfilter.cpp $(DSHOW_BASECLASSES_DI
 asap_dsf.dll: dshow/asap_dsf.cpp ../asapci.c dshow/asap_dsf.res dshow/asap_dsf.def ../asapci.h
 	$(ASAP_CL) -Fodshow/ -DDSHOW -LD -I$(DSHOW_BASECLASSES_DIR) dshow/asap_dsf.cpp ../asapci.c $(DSHOW_BASECLASSES) dshow/asap_dsf.res dshow/asap_dsf.def advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(LINKOPT)
 
-dshow/asap_dsf.res: gui.rc ../asap.h
+dshow/asap_dsf.res: gui.rc ../asapci.h
 	$(WINDRES) -DDSHOW gui.rc
 
 wince/asap_dsf.dll: dshow/asap_dsf.cpp ../asapci.c wince/asap_dsf.res dshow/asap_dsf.def ../asapci.h
 	$(WINCE_CL) -LD -Zc:wchar_t- -I. -I.. -I$(WINCE_SDK)/Include/Armv4i dshow/asap_dsf.cpp ../asapci.c wince/asap_dsf.res dshow/asap_dsf.def ole32.lib strmbase.lib strmiids.lib uuid.lib -link -subsystem:windowsce,4.02 -release -libpath:$(WINCE_VC)/lib/armv4i -libpath:$(WINCE_SDK)/Lib/ARMV4I
 
-wince/asap_dsf.res: gui.rc ../asap.h
+wince/asap_dsf.res: gui.rc ../asapci.h
 	$(WINCE_WINDRES) -DDSHOW gui.rc
 
 # Apollo
 
-ASAP_Apollo.dll: apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o $(COMMON_H) info_dlg.h settings_dlg.h apollo/InputPlugin.h
-	$(ASAP_GPP) -shared -Wl,-subsystem,windows -DAPOLLO apollo/ASAP_Apollo.cpp $(COMMON_C) info_dlg.c settings_dlg.c ASAP_Apollo-res.o -lcomctl32 -lcomdlg32
+ASAP_Apollo.dll: apollo/ASAP_Apollo.cpp ../asapci.c info_dlg.c settings_dlg.c ASAP_Apollo-res.o ../asapci.h info_dlg.h settings_dlg.h apollo/InputPlugin.h
+	$(ASAP_GPP) -shared -Wl,-subsystem,windows -DAPOLLO apollo/ASAP_Apollo.cpp ../asapci.c info_dlg.c settings_dlg.c ASAP_Apollo-res.o -lcomctl32 -lcomdlg32
 
-ASAP_Apollo-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
+ASAP_Apollo-res.o: gui.rc ../asapci.h info_dlg.h settings_dlg.h
 	$(WINDRES) -DAPOLLO gui.rc
 
 # XBMC
@@ -175,15 +172,15 @@ xbmc: xbmc_asap.dll
 xbmc_asap.dll: ../xbmc/xbmc_asap.c ../asapci.c ../xbmc/xbmc_asap.res ../asapci.h
 	$(ASAP_CL71) -Fo../xbmc/ -LD -MD ../xbmc/xbmc_asap.c ../asapci.c ../xbmc/xbmc_asap.res $(LINKOPT)
 
-../xbmc/xbmc_asap.res: gui.rc ../asap.h
+../xbmc/xbmc_asap.res: gui.rc ../asapci.h
 	$(WINDRES) -DXBMC gui.rc
 
 # XMPlay
 
-xmp-asap.dll: xmplay/xmp-asap.c $(COMMON_C) info_dlg.c settings_dlg.c xmp-asap-res.o $(COMMON_H) settings_dlg.h xmplay/xmpin.h xmplay/xmpfunc.h
-	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DXMPLAY xmplay/xmp-asap.c $(COMMON_C) info_dlg.c settings_dlg.c xmp-asap-res.o -lcomctl32 -lcomdlg32
+xmp-asap.dll: xmplay/xmp-asap.c ../asapci.c info_dlg.c settings_dlg.c xmp-asap-res.o ../asapci.h settings_dlg.h xmplay/xmpin.h xmplay/xmpfunc.h
+	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DXMPLAY xmplay/xmp-asap.c ../asapci.c info_dlg.c settings_dlg.c xmp-asap-res.o -lcomctl32 -lcomdlg32
 
-xmp-asap-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
+xmp-asap-res.o: gui.rc ../asapci.h info_dlg.h settings_dlg.h
 	$(WINDRES) -DXMPLAY gui.rc
 
 # BASS
@@ -191,7 +188,7 @@ xmp-asap-res.o: gui.rc ../asap.h info_dlg.h settings_dlg.h
 bass_asap.dll: bass/bass_asap.c ../asapci.c bass_asap-res.o ../asapci.h bass/bass-addon.h bass/bass.h bass/bass.lib
 	$(ASAP_GCC) -shared -Wl,-subsystem,windows -Wl,--kill-at -DBASS bass/bass_asap.c ../asapci.c bass_asap-res.o bass/bass.lib
 
-bass_asap-res.o: gui.rc ../asap.h
+bass_asap-res.o: gui.rc ../asapci.h
 	$(WINDRES) -DBASS gui.rc
 
 # Raster Music Tracker
@@ -202,7 +199,7 @@ apokeysnd.dll: rmt/apokeysnd_dll.c rmt/pokey.c rmt/apokeysnd-res.o rmt/pokey.h
 rmt/pokey.c: ../pokey.ci
 	$(CITO) -l c99 -D APOKEYSND ../pokey.ci
 
-rmt/apokeysnd-res.o: gui.rc ../asap.h
+rmt/apokeysnd-res.o: gui.rc ../asapci.h
 	$(WINDRES) -DAPOKEYSND gui.rc
 
 # asapscan
@@ -218,13 +215,13 @@ asapscan.exe: ../asapscan.c ../asap-asapscan.c ../asap-asapscan.h
 ASAPShellEx.dll: shellex/ASAPShellEx.cpp shellex/asap-infowriter.c ASAPShellEx-res.o shellex/asap-infowriter.h
 	$(ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at -DASAP_ONLY_INFO shellex/ASAPShellEx.cpp shellex/asap-infowriter.c ASAPShellEx-res.o -lole32 -loleaut32 -lshlwapi -luuid
 
-ASAPShellEx-res.o: gui.rc ../asap.h
+ASAPShellEx-res.o: gui.rc ../asapci.h
 	$(WINDRES) -DSHELLEX gui.rc
 
 x64/ASAPShellEx.dll: shellex/ASAPShellEx.cpp shellex/asap-infowriter.c x64/ASAPShellEx-res.o shellex/asap-infowriter.h
 	$(X64_ASAP_GPP) -shared -Wl,-subsystem,windows -Wl,--kill-at -DASAP_ONLY_INFO shellex/ASAPShellEx.cpp shellex/asap-infowriter.c x64/ASAPShellEx-res.o -lole32 -loleaut32 -lshlwapi -luuid
 
-x64/ASAPShellEx-res.o: gui.rc ../asap.h
+x64/ASAPShellEx-res.o: gui.rc ../asapci.h
 	test -d x64 || mkdir x64
 	$(X64_WINDRES) -DSHELLEX gui.rc
 
@@ -248,17 +245,17 @@ java:
 
 # C#
 
-csharp: ../players.h
+csharp:
 	$(MAKE) -C ../csharp
 
 # JavaScript
 
-javascript: ../players.h
+javascript:
 	$(MAKE) -C ../javascript
 
 # Flash
 
-flash: ../players.h
+flash:
 	$(MAKE) -C ../flash
 
 # SDL
@@ -300,7 +297,7 @@ clean:
 	$(RM) wince/wasap-res.o wince/wasap.exe wince/gspasap-res.o wince/gspasap.dll wince/asap_dsf.res wince/asap_dsf.dll wince/asap_dsf.exp wince/asap_dsf.lib
 	$(RM) rmt/apokeysnd-res.o
 	$(RM) install_dsf.bat uninstall_dsf.bat
-	$(RM) ../players/*.obx ../players.h ../README.html
+	$(RM) ../players/*.obx ../README.html
 	$(RM) -rf x64
 	$(MAKE) -C ../csharp clean
 	$(MAKE) -C ../flash clean
@@ -394,7 +391,6 @@ dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-set
 	$(SEVENZIP) -tzip ../../asap-$(VERSION)-wince-arm.zip \
 		COPYING.txt README_WindowsCE.html ./wince/wasap.exe ./wince/gspasap.dll
 	$(GREP) -m 1 ^ASAP ../NEWS
-	$(GREP) ASAP_VERSION ../asap.h
 	$(GREP) Version ../asapinfo.ci
 	$(GREP) "*name" rmt/apokeysnd_dll.c
 	$(GREP) android:versionName ../java/android/AndroidManifest.xml

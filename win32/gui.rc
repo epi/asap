@@ -26,7 +26,7 @@
 #define IDC_STATIC  -1
 #endif
 
-#include "../asap.h"
+#include "../asapci.h"
 
 #ifdef WASAP
 
@@ -61,7 +61,7 @@ IDR_TRAYMENU MENU
 {
 	"<?xml version=""1.0""?>"
 	"<assembly xmlns=""urn:schemas-microsoft-com:asm.v1"" manifestVersion=""1.0"">"
-	"<assemblyIdentity version=""" ASAP_VERSION ".0"" "
+	"<assemblyIdentity version=""" ASAPInfo_VERSION ".0"" "
 		"processorArchitecture=""X86"" name=""WASAP"" type=""win32"" />"
 	"<dependency><dependentAssembly>"
 	"<assemblyIdentity type=""win32"" name=""Microsoft.Windows.Common-Controls"" "
@@ -216,7 +216,7 @@ FONT 8, "MS Sans Serif"
 	EDITTEXT IDC_TIME, 108, 64+INFO_Y, 40, 12
 	AUTOCHECKBOX "&Loop", IDC_LOOP, 156, 64+INFO_Y, 40, 12
 	DEFPUSHBUTTON "&Save", IDC_SAVE, 106, 82+INFO_Y, 50, 14
-	PUSHBUTTON "&Convert", IDC_CONVERT, 164, 82+INFO_Y, 70, 14
+	PUSHBUTTON "Save as...", IDC_SAVEAS, 164, 82+INFO_Y, 70, 14
 	PUSHBUTTON "Close", IDCANCEL, 242, 82+INFO_Y, 50, 14
 }
 
@@ -244,8 +244,8 @@ FONT 8, "MS Sans Serif"
 #endif /* defined(WASAP) || defined(WINAMP) */
 
 1 VERSIONINFO
-	FILEVERSION ASAP_VERSION_MAJOR, ASAP_VERSION_MINOR, ASAP_VERSION_MICRO, 0
-	PRODUCTVERSION ASAP_VERSION_MAJOR, ASAP_VERSION_MINOR, ASAP_VERSION_MICRO, 0
+	FILEVERSION ASAPInfo_VERSION_MAJOR, ASAPInfo_VERSION_MINOR, ASAPInfo_VERSION_MICRO, 0
+	PRODUCTVERSION ASAPInfo_VERSION_MAJOR, ASAPInfo_VERSION_MINOR, ASAPInfo_VERSION_MICRO, 0
 	FILEFLAGSMASK 0x3fL
 	FILEFLAGS 0x0L
 	FILEOS 0x40004L
@@ -258,12 +258,12 @@ FONT 8, "MS Sans Serif"
 		{
 			VALUE "CompanyName", "Piotr Fusik\0"
 			VALUE "FileDescription", FILE_DESCRIPTION "\0"
-			VALUE "FileVersion", ASAP_VERSION "\0"
+			VALUE "FileVersion", ASAPInfo_VERSION "\0"
 			VALUE "InternalName", INTERNAL_NAME "\0"
-			VALUE "LegalCopyright", "Copyleft " ASAP_YEARS "\0"
+			VALUE "LegalCopyright", "Copyleft " ASAPInfo_YEARS "\0"
 			VALUE "OriginalFilename", ORIGINAL_FILENAME "\0"
 			VALUE "ProductName", "ASAP\0"
-			VALUE "ProductVersion", ASAP_VERSION "\0"
+			VALUE "ProductVersion", ASAPInfo_VERSION "\0"
 		}
 	}
 	BLOCK "VarFileInfo"

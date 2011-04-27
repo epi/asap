@@ -75,16 +75,18 @@ cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *
 int ASAPInfo_ParseDuration(const char *s);
 cibool ASAPInfo_SetAuthor(ASAPInfo *self, const char *value);
 cibool ASAPInfo_SetDate(ASAPInfo *self, const char *value);
-cibool ASAPInfo_SetDurationAndLoop(ASAPInfo *self, int song, int duration, cibool loop);
+cibool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration);
+cibool ASAPInfo_SetLoop(ASAPInfo *self, int song, cibool loop);
 cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
 #define ASAPInfo_VERSION  "3.0.0"
 #define ASAPInfo_VERSION_MAJOR  3
 #define ASAPInfo_VERSION_MICRO  0
 #define ASAPInfo_VERSION_MINOR  0
 #define ASAPInfo_YEARS  "2005-2011"
+int ASAPWriter_DurationToString(unsigned char *result, int value);
 void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsigned char const *module, int moduleLen);
+#define ASAPWriter_MAX_DURATION_LENGTH  9
 cibool ASAPWriter_Write(const char *filename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen);
-void ASAPWriter_WriteDuration(ByteWriter w, int value);
 #ifdef __cplusplus
 }
 #endif

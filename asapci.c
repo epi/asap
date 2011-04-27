@@ -1693,6 +1693,7 @@ static const unsigned char CiBinaryResource_tmc_obx[2671] = { 255, 255, 0, 5, 10
 	7, 157, 34, 5, 168, 185, 60, 6, 157, 244, 7, 169, 0, 157, 44, 8,
 	157, 100, 8, 157, 108, 8, 157, 148, 8, 169, 1, 157, 188, 7, 96 };
 
+static void ASAPWriter_TwoDigitsToString(unsigned char *result, int offset, int value);
 static void ASAPWriter_WriteBytes(ByteWriter w, unsigned char const *array, int startIndex, int endIndex);
 static void ASAPWriter_WriteCmcInit(ByteWriter w, int *initAndPlayer, ASAPInfo const *info);
 static void ASAPWriter_WriteDec(ByteWriter w, int value);
@@ -1706,7 +1707,6 @@ static void ASAPWriter_WritePlaTaxLda0(ByteWriter w);
 static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int type, int init, int player);
 static void ASAPWriter_WriteString(ByteWriter w, const char *s);
 static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value);
-static void ASAPWriter_WriteTwoDigits(ByteWriter w, int value);
 static void ASAPWriter_WriteWord(ByteWriter w, int value);
 
 static void ASAP_Construct(ASAP *self)
@@ -3697,11 +3697,18 @@ cibool ASAPInfo_SetDate(ASAPInfo *self, const char *value)
 	return TRUE;
 }
 
-cibool ASAPInfo_SetDurationAndLoop(ASAPInfo *self, int song, int duration, cibool loop)
+cibool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration)
 {
 	if (song < 0 || song >= self->songs)
 		return FALSE;
 	self->durations[song] = duration;
+	return TRUE;
+}
+
+cibool ASAPInfo_SetLoop(ASAPInfo *self, int song, cibool loop)
+{
+	if (song < 0 || song >= self->songs)
+		return FALSE;
 	self->loops[song] = loop;
 	return TRUE;
 }
@@ -3712,6 +3719,27 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value)
 		return FALSE;
 	strcpy(self->name, value);
 	return TRUE;
+}
+
+int ASAPWriter_DurationToString(unsigned char *result, int value)
+{
+	int seconds;
+	if (value < 0 || value >= 6000000)
+		return 0;
+	seconds = value / 1000;
+	value %= 1000;
+	ASAPWriter_TwoDigitsToString(result, 0, seconds / 60);
+	result[2] = 58;
+	ASAPWriter_TwoDigitsToString(result, 3, seconds % 60);
+	if (value == 0)
+		return 5;
+	result[5] = 46;
+	ASAPWriter_TwoDigitsToString(result, 6, value / 10);
+	value %= 10;
+	if (value == 0)
+		return 8;
+	result[8] = 48 + value;
+	return 9;
 }
 
 void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsigned char const *module, int moduleLen)
@@ -3732,6 +3760,12 @@ void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsign
 			output.func(output.obj, "sap");
 			break;
 	}
+}
+
+static void ASAPWriter_TwoDigitsToString(unsigned char *result, int offset, int value)
+{
+	result[offset] = 48 + value / 10;
+	result[offset + 1] = 48 + value % 10;
 }
 
 cibool ASAPWriter_Write(const char *filename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen)
@@ -3804,25 +3838,6 @@ static void ASAPWriter_WriteDecSapTag(ByteWriter w, const char *tag, int value)
 	ASAPWriter_WriteDec(w, value);
 	w.func(w.obj, 13);
 	w.func(w.obj, 10);
-}
-
-void ASAPWriter_WriteDuration(ByteWriter w, int value)
-{
-	int seconds;
-	if (value < 0 || value >= 6000000)
-		return;
-	seconds = value / 1000;
-	value %= 1000;
-	ASAPWriter_WriteTwoDigits(w, seconds / 60);
-	w.func(w.obj, 58);
-	ASAPWriter_WriteTwoDigits(w, seconds % 60);
-	if (value != 0) {
-		w.func(w.obj, 46);
-		ASAPWriter_WriteTwoDigits(w, value / 10);
-		value %= 10;
-		if (value != 0)
-			w.func(w.obj, 48 + value);
-	}
 }
 
 static cibool ASAPWriter_WriteExecutable(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, unsigned char const *module, int moduleLen)
@@ -4119,10 +4134,11 @@ static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int ty
 	ASAPWriter_WriteHexSapTag(w, "PLAYER ", player);
 	ASAPWriter_WriteHexSapTag(w, "COVOX ", info->covoxAddr);
 	for (song = 0; song < info->songs; song++) {
+		unsigned char s[9];
 		if (info->durations[song] < 0)
 			break;
 		ASAPWriter_WriteString(w, "TIME ");
-		ASAPWriter_WriteDuration(w, info->durations[song]);
+		ASAPWriter_WriteBytes(w, s, 0, ASAPWriter_DurationToString(s, info->durations[song]));
 		if (info->loops[song])
 			ASAPWriter_WriteString(w, " LOOP");
 		w.func(w.obj, 13);
@@ -4148,12 +4164,6 @@ static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char
 	w.func(w.obj, 34);
 	w.func(w.obj, 13);
 	w.func(w.obj, 10);
-}
-
-static void ASAPWriter_WriteTwoDigits(ByteWriter w, int value)
-{
-	w.func(w.obj, 48 + value / 10);
-	w.func(w.obj, 48 + value % 10);
 }
 
 static void ASAPWriter_WriteWord(ByteWriter w, int value)

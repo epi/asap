@@ -1,7 +1,7 @@
 /*
  * gspasap.c - ASAP plugin for GSPlayer
  *
- * Copyright (C) 2007-2010  Piotr Fusik
+ * Copyright (C) 2007-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,7 +26,7 @@
 
 #include "mapplugin.h"
 
-#include "asap.h"
+#include "asapci.h"
 #include "settings_dlg.h"
 
 #define BITS_PER_SAMPLE  16
@@ -35,9 +35,9 @@
 
 static HINSTANCE hInstance;
 
-static byte module[ASAP_MODULE_MAX];
+static BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 static DWORD module_len;
-ASAP_State asap;
+ASAP *asap;
 
 #ifdef _UNICODE
 
@@ -69,6 +69,7 @@ static void WINAPI asapInit()
 	HKEY hKey;
 	DWORD type;
 	DWORD size;
+	asap = ASAP_New();
 	if (RegOpenKeyEx(HKEY_CURRENT_USER, REG_KEY, 0, KEY_QUERY_VALUE, &hKey) != ERROR_SUCCESS)
 		return;
 	size = sizeof(int);
@@ -81,6 +82,7 @@ static void WINAPI asapInit()
 
 static void WINAPI asapQuit()
 {
+	ASAP_Delete(asap);
 }
 
 static DWORD WINAPI asapGetFunc()
@@ -147,14 +149,14 @@ static BOOL WINAPI asapGetFileExt(int nIndex, LPTSTR pszExt, LPTSTR pszExtDesc)
 static BOOL WINAPI asapIsValidFile(LPCTSTR pszFile)
 {
 	CONVERT_FILENAME;
-	return ASAP_IsOurFile(ANSI_FILENAME);
+	return ASAPInfo_IsOurFile(ANSI_FILENAME);
 }
 
 static BOOL loadFile(LPCTSTR pszFile)
 {
 	HANDLE fh;
 	CONVERT_FILENAME;
-	if (!ASAP_IsOurFile(ANSI_FILENAME))
+	if (!ASAPInfo_IsOurFile(ANSI_FILENAME))
 		return FALSE;
 	fh = CreateFile(pszFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
@@ -169,34 +171,35 @@ static BOOL loadFile(LPCTSTR pszFile)
 
 static BOOL WINAPI asapOpenFile(LPCTSTR pszFile, MAP_PLUGIN_FILE_INFO *pInfo)
 {
+	const ASAPInfo *info = ASAP_GetInfo(asap);
 	CONVERT_FILENAME;
 	if (!loadFile(pszFile))
 		return FALSE;
-	if (!ASAP_Load(&asap, ANSI_FILENAME, module, module_len))
+	if (!ASAP_Load(asap, ANSI_FILENAME, module, module_len))
 		return FALSE;
-	pInfo->nChannels = asap.module_info.channels;
+	pInfo->nChannels = ASAPInfo_GetChannels(info);
 	pInfo->nSampleRate = ASAP_SAMPLE_RATE;
 	pInfo->nBitsPerSample = BITS_PER_SAMPLE;
 	pInfo->nAvgBitrate = 8;
-	pInfo->nDuration = getSongDuration(&asap.module_info, asap.module_info.default_song);
+	pInfo->nDuration = getSongDuration(info, ASAPInfo_GetDefaultSong(info));
 	return TRUE;
 }
 
 static long WINAPI asapSeekFile(long lTime)
 {
-	ASAP_Seek(&asap, (int) lTime);
+	ASAP_Seek(asap, (int) lTime);
 	return lTime;
 }
 
 static BOOL WINAPI asapStartDecodeFile()
 {
-	playSong(asap.module_info.default_song);
+	playSong(ASAPInfo_GetDefaultSong(ASAP_GetInfo(asap)));
 	return TRUE;
 }
 
 static int WINAPI asapDecodeFile(WAVEHDR *pHdr)
 {
-	int len = ASAP_Generate(&asap, pHdr->lpData, pHdr->dwBufferLength, BITS_PER_SAMPLE);
+	int len = ASAP_Generate(asap, (PBYTE) pHdr->lpData, pHdr->dwBufferLength, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 	pHdr->dwBytesRecorded = len;
 	return len < (int) pHdr->dwBufferLength ? PLUGIN_RET_EOF : PLUGIN_RET_SUCCESS;
 }
@@ -209,28 +212,34 @@ static void WINAPI asapCloseFile()
 {
 }
 
-static void getTag(const ASAP_ModuleInfo *module_info, MAP_PLUGIN_FILETAG *pTag)
+static void getTag(const ASAPInfo *info, MAP_PLUGIN_FILETAG *pTag)
 {
 	ZeroMemory(pTag, sizeof(MAP_PLUGIN_FILETAG));
-	CHAR_TO_TCHAR(pTag->szTrack, module_info->name, MAX_PLUGIN_TAG_STR);
-	CHAR_TO_TCHAR(pTag->szArtist, module_info->author, MAX_PLUGIN_TAG_STR);
+	CHAR_TO_TCHAR(pTag->szTrack, ASAPInfo_GetTitle(info), MAX_PLUGIN_TAG_STR);
+	CHAR_TO_TCHAR(pTag->szArtist, ASAPInfo_GetAuthor(info), MAX_PLUGIN_TAG_STR);
 }
 
 static BOOL WINAPI asapGetTag(MAP_PLUGIN_FILETAG *pTag)
 {
-	getTag(&asap.module_info, pTag);
+	getTag(ASAP_GetInfo(asap), pTag);
 	return TRUE;
 }
 
 static BOOL WINAPI asapGetFileTag(LPCTSTR pszFile, MAP_PLUGIN_FILETAG *pTag)
 {
-	ASAP_ModuleInfo module_info;
+	ASAPInfo *info;
 	CONVERT_FILENAME;
 	if (!loadFile(pszFile))
 		return FALSE;
-	if (!ASAP_GetModuleInfo(&module_info, ANSI_FILENAME, module, module_len))
+	info = ASAPInfo_New();
+	if (info == NULL)
 		return FALSE;
-	getTag(&module_info, pTag);
+	if (!ASAPInfo_Load(info, ANSI_FILENAME, module, module_len)) {
+		ASAPInfo_Delete(info);
+		return FALSE;
+	}
+	getTag(info, pTag);
+	ASAPInfo_Delete(info);
 	return TRUE;
 }
 

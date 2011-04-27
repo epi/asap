@@ -1,7 +1,7 @@
 /*
  * settings_dlg.h - settings dialog box
  *
- * Copyright (C) 2007-2010  Piotr Fusik
+ * Copyright (C) 2007-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -46,13 +46,13 @@ void enableTimeInput(HWND hDlg, BOOL enable);
 void setFocusAndSelect(HWND hDlg, int nID);
 void settingsDialogSet(HWND hDlg, int song_length, int silence_seconds, BOOL play_loops, int mute_mask);
 #else
-extern ASAP_State asap;
+extern ASAP *asap;
 extern int song_length;
 extern int silence_seconds;
 extern BOOL play_loops;
 extern int mute_mask;
 BOOL settingsDialog(HINSTANCE hInstance, HWND hwndParent);
-int getSongDurationInternal(const ASAP_ModuleInfo *module_info, int song, ASAP_State *ast);
+int getSongDurationInternal(const ASAPInfo *module_info, int song, ASAP *asap);
 #define getSongDuration(module_info, song)  getSongDurationInternal(module_info, song, NULL)
 int playSong(int song);
 #endif

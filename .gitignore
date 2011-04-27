@@ -6,6 +6,5 @@
 *.res
 asap-asapscan.c
 asap-asapscan.h
-players.h
 MANIFEST
 README.html

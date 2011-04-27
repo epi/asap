@@ -35,7 +35,7 @@
 BOOL WINAPI Shell_NotifyIcon(DWORD,PNOTIFYICONDATAW);
 #endif
 
-#include "asap.h"
+#include "asapci.h"
 #include "info_dlg.h"
 #include "wasap.h"
 
@@ -45,7 +45,7 @@ BOOL WINAPI Shell_NotifyIcon(DWORD,PNOTIFYICONDATAW);
 #define BITS_PER_SAMPLE  16
 #define BUFFERED_BLOCKS  4096
 
-static ASAP_State asap;
+static ASAP *asap;
 static int songs = 0;
 static _TCHAR current_filename[MAX_PATH] = _T("");
 static int current_song;
@@ -75,7 +75,7 @@ static void WaveOut_Stop(void)
 static void WaveOut_Write(LPWAVEHDR pwh)
 {
 	if (playing) {
-		int len = ASAP_Generate(&asap, pwh->lpData, pwh->dwBufferLength, BITS_PER_SAMPLE);
+		int len = ASAP_Generate(asap, (PBYTE) pwh->lpData, pwh->dwBufferLength, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 		if (len < (int) pwh->dwBufferLength
 		 || waveOutWrite(hwo, pwh, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) {
 			/* calling StopPlayback() here causes a deadlock */
@@ -197,19 +197,19 @@ static void ShowAbout(void)
 {
 #ifdef _WIN32_WCE
 	MessageBox(hWnd,
-		_T(ASAP_CREDITS
+		_T(ASAPInfo_CREDITS
 		"WASAP icons (C) 2005 Lukasz Sychowicz"),
-		APP_TITLE " " ASAP_VERSION,
+		APP_TITLE " " ASAPInfo_VERSION,
 		MB_OK);
 #else
 	MSGBOXPARAMS mbp = {
 		sizeof(MSGBOXPARAMS),
 		hWnd,
 		hInst,
-		_T(ASAP_CREDITS
+		_T(ASAPInfo_CREDITS
 		"WASAP icons (C) 2005 Lukasz Sychowicz\n\n"
-		ASAP_COPYRIGHT),
-		APP_TITLE " " ASAP_VERSION,
+		ASAPInfo_COPYRIGHT),
+		APP_TITLE " " ASAPInfo_VERSION,
 		MB_OK | MB_USERICON,
 		MAKEINTRESOURCE(IDI_APP),
 		0,
@@ -247,7 +247,7 @@ static void StopPlayback(void)
 	Tray_Modify(hStopIcon);
 }
 
-static BOOL DoLoad(ASAP_State *asap, byte module[], int module_len)
+static BOOL DoLoad(ASAP *asap, BYTE *module, int module_len)
 {
 #ifdef _UNICODE
 	static char ansi_filename[MAX_PATH];
@@ -267,8 +267,9 @@ static BOOL DoLoad(ASAP_State *asap, byte module[], int module_len)
 
 static void LoadAndPlay(int song)
 {
-	byte module[ASAP_MODULE_MAX];
+	BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
+	const ASAPInfo *info;
 	int duration;
 	if (!loadModule(current_filename, module, &module_len))
 		return;
@@ -278,15 +279,16 @@ static void LoadAndPlay(int song)
 		StopPlayback();
 		EnableMenuItem(hTrayMenu, IDM_SAVE_WAV, MF_BYCOMMAND | MF_GRAYED);
 	}
-	if (!DoLoad(&asap, module, module_len))
+	if (!DoLoad(asap, module, module_len))
 		return;
-	if (!WaveOut_Open(asap.module_info.channels)) {
+	info = ASAP_GetInfo(asap);
+	if (!WaveOut_Open(ASAPInfo_GetChannels(info))) {
 		ShowError(_T("Error initalizing WaveOut"));
 		return;
 	}
 	if (song < 0)
-		song = asap.module_info.default_song;
-	songs = asap.module_info.songs;
+		song = ASAPInfo_GetDefaultSong(info);
+	songs = ASAPInfo_GetSongs(info);
 	EnableMenuItem(hTrayMenu, IDM_SAVE_WAV, MF_BYCOMMAND | MF_ENABLED);
 #ifndef _UNICODE /* TODO */
 	updateInfoDialog(current_filename, song);
@@ -294,10 +296,11 @@ static void LoadAndPlay(int song)
 	SetSongsMenu(songs);
 	CheckMenuRadioItem(hSongMenu, 0, songs - 1, song, MF_BYPOSITION);
 	current_song = song;
-	duration = asap.module_info.durations[song];
-	if (asap.module_info.loops[song])
+	if (ASAPInfo_GetLoop(info, song))
 		duration = -1;
-	ASAP_PlaySong(&asap, song, duration);
+	else
+		duration = ASAPInfo_GetDuration(info, song);
+	ASAP_PlaySong(asap, song, duration);
 	Tray_Modify(hPlayIcon);
 	WaveOut_Start();
 }
@@ -369,10 +372,10 @@ static INT_PTR CALLBACK WavProgressDialogProc(HWND hDlg, UINT uMsg, WPARAM wPara
 	return FALSE;
 }
 
-static BOOL DoSaveWav(ASAP_State *asap)
+static BOOL DoSaveWav(ASAP *asap)
 {
 	HANDLE fh;
-	byte buffer[8192];
+	BYTE buffer[8192];
 	DWORD len;
 	HWND progressWnd;
 	int progressPos;
@@ -382,8 +385,8 @@ static BOOL DoSaveWav(ASAP_State *asap)
 		return FALSE;
 	progressWnd = CreateDialog(hInst, MAKEINTRESOURCE(IDD_PROGRESS), hWnd, WavProgressDialogProc);
 	progressPos = 0;
-	ASAP_GetWavHeader(asap, buffer, BITS_PER_SAMPLE);
-	len = ASAP_WAV_HEADER_BYTES;
+	ASAP_GetWavHeader(asap, buffer, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
+	len = ASAP_WAV_HEADER_LENGTH;
 	while (len > 0) {
 		if (!WriteFile(fh, buffer, len, &len, NULL)) {
 			CloseHandle(fh);
@@ -395,7 +398,7 @@ static BOOL DoSaveWav(ASAP_State *asap)
 			progressPos = newProgressPos;
 			SendDlgItemMessage(progressWnd, IDC_PROGRESS, PBM_SETPOS, progressPos, 0);
 		}
-		len = ASAP_Generate(asap, buffer, sizeof(buffer), BITS_PER_SAMPLE);
+		len = ASAP_Generate(asap, buffer, sizeof(buffer), BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 	}
 	CloseHandle(fh);
 	DestroyWindow(progressWnd);
@@ -404,9 +407,9 @@ static BOOL DoSaveWav(ASAP_State *asap)
 
 static void SaveWav(void)
 {
-	byte module[ASAP_MODULE_MAX];
+	BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
-	ASAP_State asap;
+	ASAP *asap;
 	int duration;
 	static OPENFILENAME ofn = {
 		sizeof(OPENFILENAME),
@@ -435,9 +438,12 @@ static void SaveWav(void)
 	};
 	if (!loadModule(current_filename, module, &module_len))
 		return;
-	if (!DoLoad(&asap, module, module_len))
+	asap = ASAP_New();
+	if (asap == NULL)
 		return;
-	duration = asap.module_info.durations[current_song];
+	if (!DoLoad(asap, module, module_len))
+		return;
+	duration = ASAPInfo_GetDuration(ASAP_GetInfo(asap), current_song);
 	if (duration < 0) {
 		if (MessageBox(hWnd,
 			_T("This song has unknown duration.\n"
@@ -447,13 +453,13 @@ static void SaveWav(void)
 			return;
 		duration = 180000;
 	}
-	ASAP_PlaySong(&asap, current_song, duration);
+	ASAP_PlaySong(asap, current_song, duration);
 	combineFilenameExt(wav_filename, current_filename, _T("wav"));
 	ofn.hwndOwner = hWnd;
 	if (!GetSaveFileName(&ofn))
 		return;
 	wav_progressLimit = duration >> WAV_PROGRESS_DURATION_SHIFT;
-	if (!DoSaveWav(&asap))
+	if (!DoSaveWav(asap))
 		ShowError(_T("Cannot save file"));
 }
 
@@ -579,6 +585,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLin
 		}
 		return 0;
 	}
+
+	asap = ASAP_New();
+	if (asap == NULL)
+		return 1;
 
 	hInst = hInstance;
 

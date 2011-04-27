@@ -1,4 +1,3 @@
-PERL ?= perl
 XASM ?= xasm -q -o $@
 MADS ?= mads -s -o:$@
 MKDIRS ?= mkdir -p
@@ -8,8 +7,7 @@ PLAYERS_OBX_DIR ?= $(TOP_DIR)/players
 PLAYERS = cmc cm3 cmr cms dlt mpt rmt4 rmt8 tmc tm2
 PLAYERS_OBX = $(PLAYERS:%=$(PLAYERS_OBX_DIR)/%.obx)
 
-$(TOP_DIR)/players.h: $(TOP_DIR)/files2anylang.pl $(PLAYERS_OBX)
-	$(PERL) $^ >$@
+all: $(PLAYERS_OBX)
 
 $(PLAYERS_OBX_DIR):
 	$(MKDIRS) $@

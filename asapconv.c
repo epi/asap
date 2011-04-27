@@ -455,7 +455,7 @@ static void convert_to_module(const char *input_file, const unsigned char *modul
 		fatal_error("%s: unsupported file", input_file);
 	apply_tags(input_file, info);
 	if (duration >= 0)
-		ASAPInfo_SetDurationAndLoop(info, song, duration, ASAPInfo_GetLoop(info, song));
+		ASAPInfo_SetDuration(info, song, duration);
 
 	fp = open_output_file(input_file, info);
 	bw.obj = fp;

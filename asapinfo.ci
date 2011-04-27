@@ -271,11 +271,17 @@ public class ASAPInfo
 		return Loops[song];
 	}
 
-	public void SetDurationAndLoop(int song, int duration, bool loop)
+	public void SetDuration(int song, int duration)
 	{
 		if (song < 0 || song >= Songs)
 			throw "Song out of range";
 		Durations[song] = duration;
+	}
+
+	public void SetLoop(int song, bool loop)
+	{
+		if (song < 0 || song >= Songs)
+			throw "Song out of range";
 		Loops[song] = loop;
 	}
 

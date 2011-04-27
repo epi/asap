@@ -1,7 +1,7 @@
 /*
  * settings_dlg.c - settings dialog box
  *
- * Copyright (C) 2007-2010  Piotr Fusik
+ * Copyright (C) 2007-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -24,7 +24,7 @@
 #include <windows.h>
 #include <tchar.h>
 
-#include "asap.h"
+#include "asapci.h"
 #include "settings_dlg.h"
 
 void enableTimeInput(HWND hDlg, BOOL enable)
@@ -132,7 +132,7 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 					mute_mask |= mask;
 				else
 					mute_mask &= ~mask;
-				ASAP_MutePokeyChannels(&asap, mute_mask);
+				ASAP_MutePokeyChannels(asap, mute_mask);
 				return TRUE;
 			}
 			case IDOK:
@@ -159,7 +159,7 @@ static INT_PTR CALLBACK settingsDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 			}
 			case IDCANCEL:
 				mute_mask = saved_mute_mask;
-				ASAP_MutePokeyChannels(&asap, mute_mask);
+				ASAP_MutePokeyChannels(asap, mute_mask);
 				EndDialog(hDlg, IDCANCEL);
 				return TRUE;
 			}
@@ -176,24 +176,24 @@ BOOL settingsDialog(HINSTANCE hInstance, HWND hwndParent)
 	return DialogBox(hInstance, MAKEINTRESOURCE(IDD_SETTINGS), hwndParent, settingsDialogProc) == IDOK;
 }
 
-int getSongDurationInternal(const ASAP_ModuleInfo *module_info, int song, ASAP_State *ast)
+int getSongDurationInternal(const ASAPInfo *info, int song, ASAP *asap)
 {
-	int duration = module_info->durations[song];
+	int duration = ASAPInfo_GetDuration(info, song);
 	if (duration < 0) {
-		if (ast != NULL && silence_seconds > 0)
-			ASAP_DetectSilence(ast, silence_seconds);
+		if (asap != NULL && silence_seconds > 0)
+			ASAP_DetectSilence(asap, silence_seconds);
 		return 1000 * song_length;
 	}
-	if (play_loops && module_info->loops[song])
+	if (play_loops && ASAPInfo_GetLoop(info, song))
 		return 1000 * song_length;
 	return duration;
 }
 
 int playSong(int song)
 {
-	int duration = getSongDurationInternal(&asap.module_info, song, &asap);
-	ASAP_PlaySong(&asap, song, duration);
-	ASAP_MutePokeyChannels(&asap, mute_mask);
+	int duration = getSongDurationInternal(ASAP_GetInfo(asap), song, asap);
+	ASAP_PlaySong(asap, song, duration);
+	ASAP_MutePokeyChannels(asap, mute_mask);
 	return duration;
 }
 

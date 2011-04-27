@@ -35,7 +35,7 @@
 #define IDC_TIME       308
 #define IDC_LOOP       309
 #define IDC_SAVE       310
-#define IDC_CONVERT    311
+#define IDC_SAVEAS     311
 
 #define IDD_PROGRESS   500
 #define IDC_PROGRESS   501

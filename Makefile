@@ -144,7 +144,7 @@ uninstall-sdl:
 	$(RM) $(DESTDIR)$(PREFIX)/bin/asap-sdl
 
 clean:
-	$(RM) asapconv libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so asapplug.so players.h
+	$(RM) asapconv libasap.a asap.o acpu.o apokeysnd.o libasap-xmms.so libasap_decoder.so xbmc_asap-i486-linux.so asapplug.so
 
 README.html: README INSTALL NEWS CREDITS
 	$(ASCIIDOC_START) -a asapsrc -a asapports README $(ASCIIDOC_END)

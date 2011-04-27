@@ -1,7 +1,7 @@
 /*
  * ASAP_Apollo.cpp - ASAP plugin for Apollo
  *
- * Copyright (C) 2008-2010  Piotr Fusik
+ * Copyright (C) 2008-2011  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -25,29 +25,29 @@
 
 #include "InputPlugin.h"
 
-#include "asap.h"
+#include "asapci.h"
 #include "info_dlg.h"
 #include "settings_dlg.h"
 
 #define BITS_PER_SAMPLE    16
 
-ASAP_State asap;
+ASAP *asap;
 
 class CASAPDecoder : public CInputDecoder
 {
-	byte buf[8192];
+	BYTE buf[8192];
 
 public:
 
 	int __cdecl GetNextAudioChunk(void **buffer)
 	{
 		*buffer = buf;
-		return ASAP_Generate(&asap, buf, sizeof(buf), (ASAP_SampleFormat) BITS_PER_SAMPLE);
+		return ASAP_Generate(asap, buf, sizeof(buf), BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 	}
 
 	int __cdecl SetPosition(int newPosition)
 	{
-		ASAP_Seek(&asap, newPosition);
+		ASAP_Seek(asap, newPosition);
 		return newPosition;
 	}
 
@@ -73,45 +73,52 @@ public:
 
 	CASAPPlugin(HINSTANCE hInst) : hInstance(hInst)
 	{
+		if (asap == NULL)
+			asap = ASAP_New();
 	}
 
 	char * __cdecl GetDescription()
 	{
-		return const_cast<char *> ("Apollo ASAP Decoder version " ASAP_VERSION);
+		return const_cast<char *> ("Apollo ASAP Decoder version " ASAPInfo_VERSION);
 	}
 
 	CInputDecoder * __cdecl Open(char *filename, int audioDataOffset)
 	{
-		byte module[ASAP_MODULE_MAX];
+		BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 		int module_len;
 		if (!loadModule(filename, module, &module_len))
 			return NULL;
-		if (!ASAP_Load(&asap, filename, module, module_len))
+		if (!ASAP_Load(asap, filename, module, module_len))
 			return NULL;
-		playSong(asap.module_info.default_song);
+		playSong(ASAPInfo_GetDefaultSong(ASAP_GetInfo(asap)));
 		return new CASAPDecoder();
 	}
 
 	BOOL __cdecl GetInfo(char *filename, int audioDataOffset, TrackInfo *trackInfo)
 	{
-		byte module[ASAP_MODULE_MAX];
+		BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 		int module_len;
-		ASAP_ModuleInfo module_info;
 		if (!loadModule(filename, module, &module_len))
 			return FALSE;
-		if (!ASAP_GetModuleInfo(&module_info, filename, module, module_len))
+		ASAPInfo *info = ASAPInfo_New();
+		if (info == NULL)
 			return FALSE;
-		strcpy(trackInfo->suggestedTitle, module_info.name);
+		if (!ASAPInfo_Load(info, filename, module, module_len)) {
+			ASAPInfo_Delete(info);
+			return FALSE;
+		}
+		strcpy(trackInfo->suggestedTitle, ASAPInfo_GetTitle(info));
 		trackInfo->fileSize = module_len;
 		trackInfo->seekable = TRUE;
 		trackInfo->hasEqualizer = FALSE;
-		int duration = getSongDuration(&module_info, module_info.default_song);
+		int duration = getSongDuration(info, ASAPInfo_GetDefaultSong(info));
 		trackInfo->playingTime = duration >= 0 ? duration : -1;
 		trackInfo->bitRate = 0;
 		trackInfo->sampleRate = ASAP_SAMPLE_RATE;
-		trackInfo->numChannels = module_info.channels;
+		trackInfo->numChannels = ASAPInfo_GetChannels(info);
 		trackInfo->bitResolution = BITS_PER_SAMPLE;
 		strcpy(trackInfo->fileTypeDescription, "8-bit Atari music");
+		ASAPInfo_Delete(info);
 		return TRUE;
 	}
 
@@ -122,7 +129,7 @@ public:
 
 	BOOL __cdecl IsSuitableFile(char *filename, int audioDataOffset)
 	{
-		return ASAP_IsOurFile(filename);
+		return ASAPInfo_IsOurFile(filename);
 	}
 
 	char * __cdecl GetExtensions()
@@ -145,8 +152,8 @@ public:
 
 	void __cdecl About()
 	{
-		MessageBox(GetActiveWindow(), ASAP_CREDITS "\n" ASAP_COPYRIGHT,
-			"About ASAP plugin " ASAP_VERSION, MB_OK);
+		MessageBox(GetActiveWindow(), ASAPInfo_CREDITS "\n" ASAPInfo_COPYRIGHT,
+			"About ASAP plugin " ASAPInfo_VERSION, MB_OK);
 	}
 
 	void __cdecl Close()
