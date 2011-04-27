@@ -2,9 +2,9 @@ CITO = cito -o $@
 ADL = adl.exe
 ADT = adt.bat
 
-COMMON_CI = ../asap.ci ../asap6502.ci ../asapinfo.ci ../cpu6502.ci ../pokey.ci
+COMMON_CI = ../../asap.ci ../../asap6502.ci ../../asapinfo.ci ../../cpu6502.ci ../../pokey.ci
 
-run: airasap.js
+run: asap.js
 	$(ADL) AIRASAP-app.xml
 
 TOP_DIR = ../..
