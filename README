@@ -102,6 +102,7 @@ TM8 means it's stereo (8-channel) music while TMC can be either mono or stereo.
 TM2 (http://jaskier.atari8.info/[Theta Music Composer] 2.x)::
 Modern Atari music editor.
 
+You can find some example files in http://asap.sourceforge.net/examples.zip[examples.zip].
 
 ifdef::asapsrc[]
 include::INSTALL[]
