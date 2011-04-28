@@ -1722,6 +1722,15 @@ static const unsigned char CiBinaryResource_xexb_obx[209] = { 255, 255, 0, 187, 
 	181, 187, 176, 193, 238, 179, 187, 64, 0, 0, 0, 125, 0, 156, 131, 76,
 	0, 0, 76, 0, 0, 0, 0, 0, 0, 0, 0, 224, 2, 225, 2, 18,
 	187 };
+static const unsigned char CiBinaryResource_xexd_obx[132] = { 255, 255, 0, 187, 119, 187, 65, 83, 65, 80, 32, 51, 46, 48, 46, 48,
+	32, 84, 89, 80, 69, 32, 68, 0, 120, 169, 0, 141, 14, 212, 141, 14,
+	210, 173, 11, 212, 208, 251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16,
+	250, 162, 8, 157, 16, 210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31,
+	210, 141, 0, 210, 169, 254, 141, 1, 211, 173, 117, 187, 45, 118, 187, 201,
+	255, 240, 15, 169, 99, 141, 250, 255, 169, 187, 141, 251, 255, 169, 64, 141,
+	14, 212, 173, 119, 187, 88, 76, 113, 187, 72, 138, 72, 152, 72, 32, 116,
+	187, 104, 168, 104, 170, 104, 64, 76, 0, 0, 76, 0, 0, 0, 224, 2,
+	225, 2, 18, 187 };
 
 static void ASAP_Construct(ASAP *self)
 {
@@ -3771,6 +3780,10 @@ void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsign
 			output.func(output.obj, "xex");
 			break;
 		case ASAPModuleType_SAP_D:
+			output.func(output.obj, "sap");
+			if (info->fastplay == 312)
+				output.func(output.obj, "xex");
+			break;
 		case ASAPModuleType_SAP_S:
 			output.func(output.obj, "sap");
 			break;
@@ -3799,18 +3812,33 @@ cibool ASAPWriter_Write(const char *filename, ByteWriter w, ASAPInfo const *info
 		case 7890296:
 			if (!ASAPWriter_WriteExecutable(w, initAndPlayer, info, module, moduleLen))
 				return FALSE;
-			ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 0, 192);
-			ASAPWriter_WriteWord(w, initAndPlayer[0]);
-			w.func(w.obj, 76);
-			ASAPWriter_WriteWord(w, initAndPlayer[1]);
-			w.func(w.obj, info->defaultSong);
-			w.func(w.obj, info->fastplay & 1);
-			w.func(w.obj, (info->fastplay >> 1) % 156);
-			w.func(w.obj, (info->fastplay >> 1) % 131);
-			w.func(w.obj, info->fastplay / 312);
-			w.func(w.obj, info->fastplay / 262);
-			ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 203, 209);
-			return TRUE;
+			switch (info->type) {
+				case ASAPModuleType_SAP_D:
+					if (info->fastplay != 312)
+						return FALSE;
+					ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 0, 120);
+					ASAPWriter_WriteWord(w, initAndPlayer[0]);
+					w.func(w.obj, 76);
+					ASAPWriter_WriteWord(w, initAndPlayer[1]);
+					w.func(w.obj, info->defaultSong);
+					ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 126, 132);
+					return TRUE;
+				case ASAPModuleType_SAP_S:
+					return FALSE;
+				default:
+					ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 0, 192);
+					ASAPWriter_WriteWord(w, initAndPlayer[0]);
+					w.func(w.obj, 76);
+					ASAPWriter_WriteWord(w, initAndPlayer[1]);
+					w.func(w.obj, info->defaultSong);
+					w.func(w.obj, info->fastplay & 1);
+					w.func(w.obj, (info->fastplay >> 1) % 156);
+					w.func(w.obj, (info->fastplay >> 1) % 131);
+					w.func(w.obj, info->fastplay / 312);
+					w.func(w.obj, info->fastplay / 262);
+					ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 203, 209);
+					return TRUE;
+			}
 		default:
 			possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
 			if (possibleExt != NULL && destExt == ((possibleExt[0] + (possibleExt[1] << 8) + (possibleExt[2] << 16)) | 2105376)) {
@@ -4207,7 +4235,7 @@ static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char
 static void ASAPWriter_WriteWord(ByteWriter w, int value)
 {
 	w.func(w.obj, value & 255);
-	w.func(w.obj, value >> 8);
+	w.func(w.obj, (value >> 8) & 255);
 }
 
 static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)

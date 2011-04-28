@@ -59,7 +59,7 @@ static void print_help(void)
 		"Usage: asapconv [OPTIONS] INPUTFILE...\n"
 		"Each INPUTFILE must be in a supported format:\n"
 		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2.\n"
-		"Output EXT must be one of the above or " SAMPLE_FORMATS ".\n"
+		"Output EXT must be one of the above or XEX, " SAMPLE_FORMATS ".\n"
 		"In FILE and DIR you can use the following placeholders:\n"
 		"%%a (author), %%n (music name) and %%d (music creation date).\n"
 		"Options:\n"

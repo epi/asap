@@ -37,6 +37,10 @@ public class ASAPWriter
 			output("xex");
 			break;
 		case ASAPModuleType.SapD:
+			output("sap");
+			if (info.Fastplay == 312)
+				output("xex");
+			break;
 		case ASAPModuleType.SapS:
 			output("sap");
 			break;
@@ -79,7 +83,7 @@ public class ASAPWriter
 	static void WriteWord(ByteWriter w, int value)
 	{
 		w(value & 0xff);
-		w(value >> 8);
+		w((value >> 8) & 0xff);
 	}
 
 	static void WriteBytes(ByteWriter w, byte[] array, int startIndex, int endIndex)
@@ -416,19 +420,35 @@ public class ASAPWriter
 		case ASAP_EXT("XEX"):
 			int[2] initAndPlayer;
 			WriteExecutable(w, initAndPlayer, info, module, moduleLen);
-			const int obxLen = BinaryResource("xexb.obx").Length;
-			WriteBytes(w, BinaryResource("xexb.obx"), 0, obxLen - 17);
-			WriteWord(w, initAndPlayer[0]);
-			w(0x4c); // JMP
-			WriteWord(w, initAndPlayer[1]);
-			w(info.DefaultSong);
-			w(info.Fastplay & 1);
-			w((info.Fastplay >> 1) % 156);
-			w((info.Fastplay >> 1) % 131);
-			w(info.Fastplay / 312);
-			w(info.Fastplay / 262);
-			WriteBytes(w, BinaryResource("xexb.obx"), obxLen - 6, obxLen);
-			return;
+			switch (info.Type) {
+			case ASAPModuleType.SapD:
+				if (info.Fastplay != 312)
+					throw "Impossible conversion";
+				const int dObxLen = BinaryResource("xexd.obx").Length;
+				WriteBytes(w, BinaryResource("xexd.obx"), 0, dObxLen - 12);
+				WriteWord(w, initAndPlayer[0]);
+				w(0x4c); // JMP
+				WriteWord(w, initAndPlayer[1]); // possibly -1 writen as 0xff, 0xff
+				w(info.DefaultSong);
+				WriteBytes(w, BinaryResource("xexd.obx"), dObxLen - 6, dObxLen);
+				return;
+			case ASAPModuleType.SapS:
+				throw "Impossible conversion";
+			default:
+				const int bObxLen = BinaryResource("xexb.obx").Length;
+				WriteBytes(w, BinaryResource("xexb.obx"), 0, bObxLen - 17);
+				WriteWord(w, initAndPlayer[0]);
+				w(0x4c); // JMP
+				WriteWord(w, initAndPlayer[1]);
+				w(info.DefaultSong);
+				w(info.Fastplay & 1);
+				w((info.Fastplay >> 1) % 156);
+				w((info.Fastplay >> 1) % 131);
+				w(info.Fastplay / 312);
+				w(info.Fastplay / 262);
+				WriteBytes(w, BinaryResource("xexb.obx"), bObxLen - 6, bObxLen);
+				return;
+			}
 		default:
 			string possibleExt = info.GetOriginalModuleExt(module, moduleLen);
 			if (possibleExt != null && destExt == ASAP_EXT(possibleExt)) {

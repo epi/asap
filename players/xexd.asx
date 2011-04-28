@@ -1,0 +1,47 @@
+	org	$bb00
+	dta	c'ASAP 3.0.0 TYPE D',0
+main
+	sei
+	mva	#0	^4e
+	sta	^2e
+	lda:rne	^4b
+	sta	^40
+	ldx	#29
+	sta:rpl	^00,x-
+	ldx	#8
+init_pokey_1
+	sta	$d210,x
+	sta	$d200,x
+	dex:bpl	init_pokey_1
+	lda	#3
+	sta	$d21f
+	sta	$d200
+
+; TODO: support 400/800/600XL
+	mva	#$fe	^31
+	lda	player+1
+	and	player+2
+	cmp	#$ff
+	beq	no_player
+	mwa	#nmi	$fffa
+	mva	#$40	^4e
+no_player
+	lda	song
+	cli
+	jmp	init
+
+nmi
+	pha
+	txa:pha
+	tya:pha
+	jsr	player
+	pla:tay
+	pla:tax
+	pla:rti
+
+init	jmp	0
+player	jmp	0
+song	dta	0
+
+	run	main
+	end
