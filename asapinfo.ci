@@ -1410,6 +1410,7 @@ public class ASAPInfo
 		case ASAP_EXT("TMC"):
 		case ASAP_EXT("TM8"): return "Theta Music Composer 1.x";
 		case ASAP_EXT("TM2"): return "Theta Music Composer 2.x";
+		case ASAP_EXT("XEX"): return "Atari 8-bit executable";
 		default: throw "Unknown extension";
 		}
 	}

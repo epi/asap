@@ -29,16 +29,20 @@ public final class ASAPWriter
 		switch (info.type) {
 			case ASAPModuleType.SAP_B:
 			case ASAPModuleType.SAP_C:
-			case ASAPModuleType.SAP_D:
-			case ASAPModuleType.SAP_S:
 				output.run("sap");
 				String ext = info.getOriginalModuleExt(module, moduleLen);
 				if (ext != null)
 					output.run(ext);
+				output.run("xex");
+				break;
+			case ASAPModuleType.SAP_D:
+			case ASAPModuleType.SAP_S:
+				output.run("sap");
 				break;
 			default:
 				output.run(info.getOriginalModuleExt(module, moduleLen));
 				output.run("sap");
+				output.run("xex");
 				break;
 		}
 	}
@@ -53,27 +57,43 @@ public final class ASAPWriter
 	public static void write(String filename, ByteWriter w, ASAPInfo info, byte[] module, int moduleLen) throws Exception
 	{
 		int destExt = ASAPInfo.getPackedExt(filename);
-		if (destExt == 7364979) {
-			ASAPWriter.writeExecutable(w, null, info, module, moduleLen);
-			return;
+		switch (destExt) {
+			case 7364979:
+				ASAPWriter.writeExecutable(w, null, info, module, moduleLen);
+				return;
+			case 7890296:
+				int[] initAndPlayer = new int[2];
+				ASAPWriter.writeExecutable(w, initAndPlayer, info, module, moduleLen);
+				ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 205), 0, 189);
+				ASAPWriter.writeWord(w, initAndPlayer[0]);
+				w.run(76);
+				ASAPWriter.writeWord(w, initAndPlayer[1]);
+				w.run(info.fastplay & 1);
+				w.run((info.fastplay >> 1) % 156);
+				w.run((info.fastplay >> 1) % 131);
+				w.run(info.fastplay / 312);
+				w.run(info.fastplay / 262);
+				ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 205), 199, 205);
+				return;
+			default:
+				String possibleExt = info.getOriginalModuleExt(module, moduleLen);
+				if (possibleExt != null && destExt == (possibleExt.charAt(0) + (possibleExt.charAt(1) << 8) + (possibleExt.charAt(2) << 16) | 2105376)) {
+					switch (info.type) {
+						case ASAPModuleType.SAP_B:
+						case ASAPModuleType.SAP_C:
+							int blockLen = ASAPInfo.getWord(module, info.headerLen + 4) - ASAPInfo.getWord(module, info.headerLen + 2) + 7;
+							if (blockLen < 7 || info.headerLen + blockLen >= moduleLen)
+								throw new Exception("Cannot extract module from SAP");
+							ASAPWriter.writeBytes(w, module, info.headerLen, info.headerLen + blockLen);
+							break;
+						default:
+							ASAPWriter.writeBytes(w, module, 0, moduleLen);
+							break;
+					}
+					return;
+				}
+				throw new Exception("Impossible conversion");
 		}
-		String possibleExt = info.getOriginalModuleExt(module, moduleLen);
-		if (possibleExt != null && destExt == (possibleExt.charAt(0) + (possibleExt.charAt(1) << 8) + (possibleExt.charAt(2) << 16) | 2105376)) {
-			switch (info.type) {
-				case ASAPModuleType.SAP_B:
-				case ASAPModuleType.SAP_C:
-					int blockLen = ASAPInfo.getWord(module, info.headerLen + 4) - ASAPInfo.getWord(module, info.headerLen + 2) + 7;
-					if (blockLen < 7 || info.headerLen + blockLen >= moduleLen)
-						throw new Exception("Cannot extract module from SAP");
-					ASAPWriter.writeBytes(w, module, info.headerLen, info.headerLen + blockLen);
-					break;
-				default:
-					ASAPWriter.writeBytes(w, module, 0, moduleLen);
-					break;
-			}
-			return;
-		}
-		throw new Exception("Impossible conversion");
 	}
 
 	private static void writeBytes(ByteWriter w, byte[] array, int startIndex, int endIndex)
@@ -444,6 +464,24 @@ public final class ASAPWriter
 	{
 		w.run(value & 255);
 		w.run(value >> 8);
+	}
+
+	private static byte[] getBinaryResource(String name, int length)
+	{
+		java.io.DataInputStream dis = new java.io.DataInputStream(ASAPWriter.class.getResourceAsStream(name));
+		byte[] result = new byte[length];
+		try {
+			try {
+				dis.readFully(result);
+			}
+			finally {
+				dis.close();
+			}
+		}
+		catch (java.io.IOException e) {
+			throw new RuntimeException();
+		}
+		return result;
 	}
 	private static final int[] CI_CONST_ARRAY_1 = { 3, -9, -10, -10 };
 	private static final int[] CI_CONST_ARRAY_2 = { -14, -16, -17, -17 };

@@ -163,6 +163,8 @@ public final class ASAPInfo
 				return "Theta Music Composer 1.x";
 			case 3304820:
 				return "Theta Music Composer 2.x";
+			case 7890296:
+				return "Atari 8-bit executable";
 			default:
 				throw new Exception("Unknown extension");
 		}

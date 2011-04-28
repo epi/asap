@@ -9,6 +9,9 @@ PLAYERS_OBX = $(PLAYERS:%=$(PLAYERS_OBX_DIR)/%.obx)
 
 all: $(PLAYERS_OBX)
 
+$(PLAYERS_OBX_DIR)/xexb.obx: $(TOP_DIR)/players/xexb.asx
+	$(XASM) $<
+
 $(PLAYERS_OBX_DIR):
 	$(MKDIRS) $@
 

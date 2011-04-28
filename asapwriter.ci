@@ -30,16 +30,20 @@ public class ASAPWriter
 		switch (info.Type) {
 		case ASAPModuleType.SapB:
 		case ASAPModuleType.SapC:
-		case ASAPModuleType.SapD:
-		case ASAPModuleType.SapS:
 			output("sap");
 			string ext = info.GetOriginalModuleExt(module, moduleLen);
 			if (ext != null)
 				output(ext);
+			output("xex");
+			break;
+		case ASAPModuleType.SapD:
+		case ASAPModuleType.SapS:
+			output("sap");
 			break;
 		default:
 			output(info.GetOriginalModuleExt(module, moduleLen));
 			output("sap");
+			output("xex");
 			break;
 		}
 	}
@@ -404,29 +408,46 @@ public class ASAPWriter
 	{
 		macro ASAP_EXT(s) ( s[0] + (s[1] << 8) + (s[2] << 16) | 0x202020 )
 		int destExt = ASAPInfo.GetPackedExt(filename);
-		if (destExt == ASAP_EXT("SAP")) {
+		switch (destExt) {
+		case ASAP_EXT("SAP"):
 			// * -> SAP
 			WriteExecutable(w, null, info, module, moduleLen);
 			return;
-		}
-		string possibleExt = info.GetOriginalModuleExt(module, moduleLen);
-		if (possibleExt != null && destExt == ASAP_EXT(possibleExt)) {
-			switch (info.Type) {
-			case ASAPModuleType.SapB:
-			case ASAPModuleType.SapC:
-				// SAP -> native
-				int blockLen = ASAPInfo.GetWord(module, info.HeaderLen + 4) - ASAPInfo.GetWord(module, info.HeaderLen + 2) + 7;
-				if (blockLen < 7 || info.HeaderLen + blockLen >= moduleLen)
-					throw "Cannot extract module from SAP";
-				WriteBytes(w, module, info.HeaderLen, info.HeaderLen + blockLen);
-				break;
-			default:
-				// native -> native
-				WriteBytes(w, module, 0, moduleLen);
-				break;
-			}
+		case ASAP_EXT("XEX"):
+			int[2] initAndPlayer;
+			WriteExecutable(w, initAndPlayer, info, module, moduleLen);
+			const int obxLen = BinaryResource("xexb.obx").Length;
+			WriteBytes(w, BinaryResource("xexb.obx"), 0, obxLen - 16);
+			WriteWord(w, initAndPlayer[0]);
+			w(0x4c); // JMP
+			WriteWord(w, initAndPlayer[1]);
+			w(info.Fastplay & 1);
+			w((info.Fastplay >> 1) % 156);
+			w((info.Fastplay >> 1) % 131);
+			w(info.Fastplay / 312);
+			w(info.Fastplay / 262);
+			WriteBytes(w, BinaryResource("xexb.obx"), obxLen - 6, obxLen);
 			return;
+		default:
+			string possibleExt = info.GetOriginalModuleExt(module, moduleLen);
+			if (possibleExt != null && destExt == ASAP_EXT(possibleExt)) {
+				switch (info.Type) {
+				case ASAPModuleType.SapB:
+				case ASAPModuleType.SapC:
+					// SAP -> native
+					int blockLen = ASAPInfo.GetWord(module, info.HeaderLen + 4) - ASAPInfo.GetWord(module, info.HeaderLen + 2) + 7;
+					if (blockLen < 7 || info.HeaderLen + blockLen >= moduleLen)
+						throw "Cannot extract module from SAP";
+					WriteBytes(w, module, info.HeaderLen, info.HeaderLen + blockLen);
+					break;
+				default:
+					// native -> native
+					WriteBytes(w, module, 0, moduleLen);
+					break;
+				}
+				return;
+			}
+			throw "Impossible conversion";
 		}
-		throw "Impossible conversion";
 	}
 }
