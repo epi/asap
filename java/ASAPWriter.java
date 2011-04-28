@@ -36,6 +36,10 @@ public final class ASAPWriter
 				output.run("xex");
 				break;
 			case ASAPModuleType.SAP_D:
+				output.run("sap");
+				if (info.fastplay == 312)
+					output.run("xex");
+				break;
 			case ASAPModuleType.SAP_S:
 				output.run("sap");
 				break;
@@ -64,18 +68,33 @@ public final class ASAPWriter
 			case 7890296:
 				int[] initAndPlayer = new int[2];
 				ASAPWriter.writeExecutable(w, initAndPlayer, info, module, moduleLen);
-				ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 209), 0, 192);
-				ASAPWriter.writeWord(w, initAndPlayer[0]);
-				w.run(76);
-				ASAPWriter.writeWord(w, initAndPlayer[1]);
-				w.run(info.defaultSong);
-				w.run(info.fastplay & 1);
-				w.run((info.fastplay >> 1) % 156);
-				w.run((info.fastplay >> 1) % 131);
-				w.run(info.fastplay / 312);
-				w.run(info.fastplay / 262);
-				ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 209), 203, 209);
-				return;
+				switch (info.type) {
+					case ASAPModuleType.SAP_D:
+						if (info.fastplay != 312)
+							throw new Exception("Impossible conversion");
+						ASAPWriter.writeBytes(w, getBinaryResource("xexd.obx", 132), 0, 120);
+						ASAPWriter.writeWord(w, initAndPlayer[0]);
+						w.run(76);
+						ASAPWriter.writeWord(w, initAndPlayer[1]);
+						w.run(info.defaultSong);
+						ASAPWriter.writeBytes(w, getBinaryResource("xexd.obx", 132), 126, 132);
+						return;
+					case ASAPModuleType.SAP_S:
+						throw new Exception("Impossible conversion");
+					default:
+						ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 209), 0, 192);
+						ASAPWriter.writeWord(w, initAndPlayer[0]);
+						w.run(76);
+						ASAPWriter.writeWord(w, initAndPlayer[1]);
+						w.run(info.defaultSong);
+						w.run(info.fastplay & 1);
+						w.run((info.fastplay >> 1) % 156);
+						w.run((info.fastplay >> 1) % 131);
+						w.run(info.fastplay / 312);
+						w.run(info.fastplay / 262);
+						ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 209), 203, 209);
+						return;
+				}
 			default:
 				String possibleExt = info.getOriginalModuleExt(module, moduleLen);
 				if (possibleExt != null && destExt == (possibleExt.charAt(0) + (possibleExt.charAt(1) << 8) + (possibleExt.charAt(2) << 16) | 2105376)) {
@@ -464,7 +483,7 @@ public final class ASAPWriter
 	private static void writeWord(ByteWriter w, int value)
 	{
 		w.run(value & 255);
-		w.run(value >> 8);
+		w.run(value >> 8 & 255);
 	}
 
 	private static byte[] getBinaryResource(String name, int length)

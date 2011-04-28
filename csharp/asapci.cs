@@ -41,7 +41,7 @@ namespace Sf.Asap
 						this.Memory[53761] = 72;
 						this.Memory[53762] = 138;
 						this.Memory[53763] = 72;
-						this.Memory[53764] = 138;
+						this.Memory[53764] = 152;
 						this.Memory[53765] = 72;
 						this.Memory[53766] = 32;
 						this.Memory[53767] = (byte) player;

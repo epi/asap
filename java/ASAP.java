@@ -42,7 +42,7 @@ public final class ASAP
 					this.memory[53761] = 72;
 					this.memory[53762] = -118;
 					this.memory[53763] = 72;
-					this.memory[53764] = -118;
+					this.memory[53764] = -104;
 					this.memory[53765] = 72;
 					this.memory[53766] = 32;
 					this.memory[53767] = (byte) player;

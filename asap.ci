@@ -196,7 +196,7 @@ public class ASAP
 				Memory[codeAddr + 1] = 0x48; // PHA
 				Memory[codeAddr + 2] = 0x8a; // TXA
 				Memory[codeAddr + 3] = 0x48; // PHA
-				Memory[codeAddr + 4] = 0x8a; // TYA
+				Memory[codeAddr + 4] = 0x98; // TYA
 				Memory[codeAddr + 5]= 0x48; // PHA
 				Memory[codeAddr + 6] = 0x20; // JSR
 				Memory[codeAddr + 7] = player.LowByte;

@@ -1784,7 +1784,7 @@ static void ASAP_Call6502Player(ASAP *self)
 				self->memory[53761] = 72;
 				self->memory[53762] = 138;
 				self->memory[53763] = 72;
-				self->memory[53764] = 138;
+				self->memory[53764] = 152;
 				self->memory[53765] = 72;
 				self->memory[53766] = 32;
 				self->memory[53767] = (unsigned char) player;
