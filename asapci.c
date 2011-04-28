@@ -1708,19 +1708,20 @@ static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int ty
 static void ASAPWriter_WriteString(ByteWriter w, const char *s);
 static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value);
 static void ASAPWriter_WriteWord(ByteWriter w, int value);
-static const unsigned char CiBinaryResource_xexb_obx[205] = { 255, 255, 0, 187, 192, 187, 65, 83, 65, 80, 32, 51, 46, 48, 46, 48,
+static const unsigned char CiBinaryResource_xexb_obx[209] = { 255, 255, 0, 187, 196, 187, 65, 83, 65, 80, 32, 51, 46, 48, 46, 48,
 	32, 84, 89, 80, 69, 32, 66, 0, 120, 169, 0, 141, 14, 212, 173, 11,
 	212, 208, 251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 162, 8,
 	157, 16, 210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31, 210, 141, 0,
 	210, 169, 130, 205, 11, 212, 208, 251, 141, 10, 212, 141, 10, 212, 141, 10,
-	212, 173, 11, 212, 208, 3, 238, 175, 187, 32, 182, 187, 169, 254, 141, 1,
-	211, 169, 171, 141, 250, 255, 169, 187, 141, 251, 255, 169, 64, 141, 14, 212,
-	169, 125, 205, 11, 212, 208, 251, 32, 185, 187, 174, 175, 187, 173, 188, 187,
-	74, 144, 7, 173, 177, 187, 238, 177, 187, 74, 189, 189, 187, 109, 178, 187,
-	176, 5, 221, 180, 187, 144, 4, 253, 180, 187, 56, 141, 178, 187, 189, 191,
-	187, 109, 179, 187, 141, 179, 187, 205, 176, 187, 208, 251, 173, 178, 187, 176,
-	193, 238, 176, 187, 64, 0, 0, 0, 125, 0, 156, 131, 76, 0, 0, 76,
-	0, 0, 0, 0, 0, 0, 0, 224, 2, 225, 2, 18, 187 };
+	212, 173, 11, 212, 208, 3, 238, 178, 187, 173, 191, 187, 32, 185, 187, 169,
+	254, 141, 1, 211, 169, 174, 141, 250, 255, 169, 187, 141, 251, 255, 169, 64,
+	141, 14, 212, 169, 125, 205, 11, 212, 208, 251, 32, 188, 187, 174, 178, 187,
+	173, 192, 187, 74, 144, 7, 173, 180, 187, 238, 180, 187, 74, 189, 193, 187,
+	109, 181, 187, 176, 5, 221, 183, 187, 144, 4, 253, 183, 187, 56, 141, 181,
+	187, 189, 195, 187, 109, 182, 187, 141, 182, 187, 205, 179, 187, 208, 251, 173,
+	181, 187, 176, 193, 238, 179, 187, 64, 0, 0, 0, 125, 0, 156, 131, 76,
+	0, 0, 76, 0, 0, 0, 0, 0, 0, 0, 0, 224, 2, 225, 2, 18,
+	187 };
 
 static void ASAP_Construct(ASAP *self)
 {
@@ -3798,16 +3799,17 @@ cibool ASAPWriter_Write(const char *filename, ByteWriter w, ASAPInfo const *info
 		case 7890296:
 			if (!ASAPWriter_WriteExecutable(w, initAndPlayer, info, module, moduleLen))
 				return FALSE;
-			ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 0, 189);
+			ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 0, 192);
 			ASAPWriter_WriteWord(w, initAndPlayer[0]);
 			w.func(w.obj, 76);
 			ASAPWriter_WriteWord(w, initAndPlayer[1]);
+			w.func(w.obj, info->defaultSong);
 			w.func(w.obj, info->fastplay & 1);
 			w.func(w.obj, (info->fastplay >> 1) % 156);
 			w.func(w.obj, (info->fastplay >> 1) % 131);
 			w.func(w.obj, info->fastplay / 312);
 			w.func(w.obj, info->fastplay / 262);
-			ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 199, 205);
+			ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 203, 209);
 			return TRUE;
 		default:
 			possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);

@@ -24,6 +24,7 @@ init_pokey_1
 	lda	^4b
 	sne:inc	ntsc
 
+	lda	song
 	jsr	init
 
 ; TODO: support 400/800/600XL
@@ -71,6 +72,7 @@ expected_frame	dta	0
 vcount_wrap	dta	156,131
 init	jmp	0
 player	jmp	0
+song	dta	0
 fastplay_low_bit	dta	0
 vcount_period	dta	0,0
 frame_period	dta	0,0

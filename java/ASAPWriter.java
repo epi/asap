@@ -64,16 +64,17 @@ public final class ASAPWriter
 			case 7890296:
 				int[] initAndPlayer = new int[2];
 				ASAPWriter.writeExecutable(w, initAndPlayer, info, module, moduleLen);
-				ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 205), 0, 189);
+				ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 209), 0, 192);
 				ASAPWriter.writeWord(w, initAndPlayer[0]);
 				w.run(76);
 				ASAPWriter.writeWord(w, initAndPlayer[1]);
+				w.run(info.defaultSong);
 				w.run(info.fastplay & 1);
 				w.run((info.fastplay >> 1) % 156);
 				w.run((info.fastplay >> 1) % 131);
 				w.run(info.fastplay / 312);
 				w.run(info.fastplay / 262);
-				ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 205), 199, 205);
+				ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 209), 203, 209);
 				return;
 			default:
 				String possibleExt = info.getOriginalModuleExt(module, moduleLen);

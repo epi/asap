@@ -417,10 +417,11 @@ public class ASAPWriter
 			int[2] initAndPlayer;
 			WriteExecutable(w, initAndPlayer, info, module, moduleLen);
 			const int obxLen = BinaryResource("xexb.obx").Length;
-			WriteBytes(w, BinaryResource("xexb.obx"), 0, obxLen - 16);
+			WriteBytes(w, BinaryResource("xexb.obx"), 0, obxLen - 17);
 			WriteWord(w, initAndPlayer[0]);
 			w(0x4c); // JMP
 			WriteWord(w, initAndPlayer[1]);
+			w(info.DefaultSong);
 			w(info.Fastplay & 1);
 			w((info.Fastplay >> 1) % 156);
 			w((info.Fastplay >> 1) % 131);
