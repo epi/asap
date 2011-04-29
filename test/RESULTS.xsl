@@ -19,9 +19,10 @@
 				<table>
 					<tr>
 						<th>Test</th>
+						<th>Atari800 2.2.1</th>
 						<th>Altirra 1.8</th>
 						<th>ASAP 2.1.2</th>
-						<th>ASAP 2.1.3</th>
+						<th>ASAP 3.0.0</th>
 					</tr>
 					<xsl:apply-templates />
 				</table>
@@ -32,9 +33,10 @@
 	<xsl:template match="test">
 		<tr>
 			<td class="name"><xsl:value-of select="@name" /></td>
+			<xsl:apply-templates select="*[@on='Atari800 2.2.1']" />
 			<xsl:apply-templates select="*[@on='Altirra 1.8']" />
 			<xsl:apply-templates select="*[@on='ASAP 2.1.2']" />
-			<xsl:apply-templates select="*[@on='ASAP 2.1.3']" />
+			<xsl:apply-templates select="*[@on='ASAP 3.0.0']" />
 		</tr>
 	</xsl:template>
 
