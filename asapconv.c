@@ -172,7 +172,8 @@ static ASAP *load_module(const char *input_file, const unsigned char *module, in
 		if (duration < 0)
 			duration = 180 * 1000;
 	}
-	ASAP_PlaySong(asap, song, duration);
+	if (!ASAP_PlaySong(asap, song, duration))
+		fatal_error("%s: PlaySong failed", input_file);
 	ASAP_MutePokeyChannels(asap, mute_mask);
 	return asap;
 }

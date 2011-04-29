@@ -174,7 +174,8 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 		song = ASAPInfo_GetDefaultSong(info);
 	if (stop_time < 0)
 		stop_time = ASAPInfo_GetDuration(info, song);
-	ASAP_PlaySong(asap, song, stop_time);
+	if (!ASAP_PlaySong(asap, song, stop_time))
+		return FALSE;
 	if (start_time > 0)
 		ASAP_Seek(asap, start_time);
 

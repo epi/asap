@@ -101,7 +101,8 @@ static void process_file(const char *input_file)
 	info = ASAP_GetInfo(asap);
 	if (song < 0)
 		song = ASAPInfo_GetDefaultSong(info);
-	ASAP_PlaySong(asap, song, -1);
+	if (!ASAP_PlaySong(asap, song, -1))
+		fatal_error("%s: PlaySong failed", input_file);
 	print_header("Name", ASAPInfo_GetTitle(info));
 	print_header("Author", ASAPInfo_GetAuthor(info));
 	print_header("Date", ASAPInfo_GetDate(info));

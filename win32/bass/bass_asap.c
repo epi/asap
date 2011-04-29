@@ -193,7 +193,10 @@ static HSTREAM WINAPI StreamCreateProc(BASSFILE file, DWORD flags)
 	else
 		duration = ASAPInfo_GetDuration(info, song);
 	stream->duration = duration;
-	ASAP_PlaySong(stream->asap, song, duration);
+	if (!ASAP_PlaySong(stream->asap, song, duration)) {
+		free(stream);
+		error(BASS_ERROR_FILEFORM);
+	}
 	handle = bassfunc->CreateStream(ASAP_SAMPLE_RATE, ASAPInfo_GetChannels(info), flags, &StreamProc, stream, &ASAPfuncs);
 	if (handle == 0) {
 		free(stream);

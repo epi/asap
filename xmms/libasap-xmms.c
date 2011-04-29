@@ -210,7 +210,8 @@ static void asap_play_file(char *filename)
 	info = ASAP_GetInfo(asap);
 	song = ASAPInfo_GetDefaultSong(info);
 	duration = ASAPInfo_GetDuration(info, song);
-	ASAP_PlaySong(asap, song, duration);
+	if (!ASAP_PlaySong(asap, song, duration))
+		return;
 	channels = ASAPInfo_GetChannels(info);
 	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_LE, ASAP_SAMPLE_RATE, channels))
 		return;

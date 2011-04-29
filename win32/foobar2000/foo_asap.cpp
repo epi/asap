@@ -192,7 +192,8 @@ public:
 	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort)
 	{
 		int duration = get_song_duration(p_subsong, true);
-		ASAP_PlaySong(asap, p_subsong, duration);
+		if (!ASAP_PlaySong(asap, p_subsong, duration))
+			throw exception_io_unsupported_format();
 		ASAP_MutePokeyChannels(asap, mute_mask);
 	}
 

@@ -111,7 +111,10 @@ public:
 		channels = ASAPInfo_GetChannels(info);
 		int song = ASAPInfo_GetDefaultSong(info);
 		duration = ASAPInfo_GetDuration(info, song);
-		ASAP_PlaySong(asap, song, duration);
+		if (!ASAP_PlaySong(asap, song, duration)) {
+			loaded = FALSE;
+			return E_FAIL;
+		}
 		blocks = 0;
 		return S_OK;
 	}

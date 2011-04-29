@@ -192,7 +192,7 @@ int getSongDurationInternal(const ASAPInfo *info, int song, ASAP *asap)
 int playSong(int song)
 {
 	int duration = getSongDurationInternal(ASAP_GetInfo(asap), song, asap);
-	ASAP_PlaySong(asap, song, duration);
+	ASAP_PlaySong(asap, song, duration); /* FIXME: check errors */
 	ASAP_MutePokeyChannels(asap, mute_mask);
 	return duration;
 }

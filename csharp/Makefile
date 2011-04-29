@@ -6,7 +6,7 @@ SL = "C:/Program Files (x86)/Reference Assemblies/Microsoft/Framework/Silverligh
 
 COMMON_CI =  ../asap.ci ../asap6502.ci ../asapinfo.ci ../cpu6502.ci ../pokey.ci
 
-all: asap2wav.exe asapplay.exe SilverASAP.xap
+all: asap2wav.exe asapplay.exe SilverASAP.xap chksap.exe
 
 include ../players/Makefile
 

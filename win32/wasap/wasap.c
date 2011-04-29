@@ -300,7 +300,10 @@ static void LoadAndPlay(int song)
 		duration = -1;
 	else
 		duration = ASAPInfo_GetDuration(info, song);
-	ASAP_PlaySong(asap, song, duration);
+	if (!ASAP_PlaySong(asap, song, duration)) {
+		ShowError(_T("This file is a bad rip!"));
+		return;
+	}
 	Tray_Modify(hPlayIcon);
 	WaveOut_Start();
 }

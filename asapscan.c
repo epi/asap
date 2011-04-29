@@ -280,7 +280,10 @@ static void scan_song(int song)
 	int silence_run = 0;
 	int running_hash = 0;
 	int i;
-	ASAP_PlaySong(asap, song, -1);
+	if (!ASAP_PlaySong(asap, song, -1)) {
+		fprintf(stderr, "asapscan: PlaySong failed\n");
+		return;
+	}
 	if (acid)
 		scan_frames = seconds_to_frames(ASAPInfo_GetDuration(&asap->moduleInfo, song) / 1000);
 	for (i = 0; i < 1 << HASH_BITS; i++)
