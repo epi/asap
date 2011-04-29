@@ -22,6 +22,9 @@ SilverASAP.xap: SilverASAP.dll AppManifest.xaml
 SilverASAP.dll: SilverASAP.cs asapci.cs
 	$(CSC) -t:library SilverASAP.cs asapci.cs -nostdlib -noconfig -r:$(SL)/mscorlib.dll -r:$(SL)/system.dll -r:$(SL)/System.Net.dll -r:$(SL)/System.Windows.dll -r:$(SL)/System.Windows.Browser.dll
 
+chksap.exe: chksap.cs asapci.cs
+	$(CSC) chksap.cs asapci.cs
+
 asapci.cs: $(COMMON_CI) $(PLAYERS_OBX)
 	$(CITO) -I ../players -l cs -n Sf.Asap $(COMMON_CI)
 
