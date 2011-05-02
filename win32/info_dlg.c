@@ -317,6 +317,7 @@ static BOOL saveInfoAs(void)
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
 	ofn.hwndOwner = infoDialog;
 	setSaveFilters(filter);
+	ofn.nFilterIndex = 1;
 	ofn.lpstrDefExt = _tcsrchr(filename, '.') + 1;
 	if (!GetSaveFileName(&ofn))
 		return FALSE;
