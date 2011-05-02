@@ -34,6 +34,10 @@ enum ASAPModuleType
 	Rmt,
 	Tmc,
 	Tm2
+#if EXPERIMENTAL_XEX
+	// actually it works, but without VBLKI it's practically useless
+	, Xex
+#endif
 }
 
 /// Information about a music file.
@@ -1276,6 +1280,9 @@ public class ASAPInfo
 		case ASAP_EXT("TMC"):
 		case ASAP_EXT("TM8"):
 		case ASAP_EXT("TM2"):
+#if EXPERIMENTAL_XEX
+		case ASAP_EXT("XEX"):
+#endif
 #endif
 			return true;
 		default:
@@ -1384,6 +1391,14 @@ public class ASAPInfo
 		case ASAP_EXT("TM2"):
 			ParseTm2(module, moduleLen);
 			return;
+#if EXPERIMENTAL_XEX
+		case ASAP_EXT("XEX"):
+			if (moduleLen < 7 || module[0] != 0xff || module[1] != 0xff)
+				throw "Missing 0xff,0xff header";
+			Type = ASAPModuleType.Xex;
+			HeaderLen = 0;
+			return;
+#endif
 #endif
 		default:
 			throw "Unknown filename extension";

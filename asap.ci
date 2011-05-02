@@ -233,6 +233,10 @@ public class ASAP
 			else
 				Call6502(player + 6);
 			break;
+#if EXPERIMENTAL_XEX
+		case ASAPModuleType.Xex:
+			break;
+#endif
 #endif
 		}
 	}
@@ -445,6 +449,15 @@ public class ASAP
 			Do6502Init(ModuleInfo.Player, 0x00, song, 0);
 			TmcPerFrameCounter = 1;
 			break;
+#if EXPERIMENTAL_XEX
+		case ASAPModuleType.Xex:
+			Cpu.Pc = ASAPInfo.GetWord(Memory, 0x2e0);
+			Cpu.A = song;
+			Cpu.X = 0x00;
+			Cpu.Y = 0x00;
+			Cpu.S = 0xff;
+			break;
+#endif
 #endif
 		}
 		MutePokeyChannels(0);
