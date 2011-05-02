@@ -397,7 +397,7 @@
 		<interface>GUI</interface>
 		<since>2.1.2</since>
 		<status>stable</status>
-		<output>16-bit, sound or WAV file</output>
+		<output>16-bit sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info>
 		<edit-info>no</edit-info>
@@ -435,5 +435,35 @@
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<lang>JavaScript</lang>
+	</port>
+	<port name="ASAP2WAV (D)">
+		<bin></bin>
+		<platform>desktop operating systems</platform>
+		<interface>command line</interface>
+		<since>3.0.0</since>
+		<status>stable</status>
+		<output>8 or 16-bit, WAV or raw file</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>yes</mute-pokey>
+		<lang>D</lang>
+	</port>
+	<port name="asapplay (D)">
+		<bin></bin>
+		<platform>Windows</platform>
+		<interface>command line</interface>
+		<since>3.0.0</since>
+		<status>stable</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>AUTHOR, NAME, TIME</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>no</mute-pokey>
+		<lang>D</lang>
 	</port>
 </ports>

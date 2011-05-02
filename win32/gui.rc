@@ -50,7 +50,9 @@ IDR_TRAYMENU MENU
 #ifndef _UNICODE /* TODO */
 		MENUITEM "File &information...", IDM_FILE_INFO
 #endif
+#ifndef _WIN32_WCE /* disabled just because of limited computing power */
 		MENUITEM "Save as &WAV...", IDM_SAVE_WAV, GRAYED
+#endif
 		MENUITEM "&About WASAP...", IDM_ABOUT
 		MENUITEM "&Exit", IDM_EXIT
 	}
@@ -225,6 +227,7 @@ FONT 8, "MS Sans Serif"
 #endif /* defined(WASAP) || defined(WINAMP) || defined(APOLLO) || defined(XMPLAY) */
 
 #if defined(WASAP) || defined(WINAMP)
+#ifndef _WIN32_WCE /* disabled just because of limited computing power */
 
 #include <commctrl.h>
 
@@ -241,6 +244,7 @@ FONT 8, "MS Sans Serif"
 	CONTROL "", IDC_PROGRESS, PROGRESS_CLASS, 0, 8, 24, 144, 12
 }
 
+#endif /* _WIN32_WCE */
 #endif /* defined(WASAP) || defined(WINAMP) */
 
 1 VERSIONINFO

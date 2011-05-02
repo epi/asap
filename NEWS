@@ -7,6 +7,7 @@ New ports;;
 - Created a desktop player for the Adobe AIR platform.
 - Ported the Windows Media Player plugin to Windows CE.
 - Created a setup package with the Windows Explorer plugin for 64-bit Windows.
+- Created ASAP2WAV and a simple player in the D programming language.
 - JavaScript ASAP2WAV now runs in DMDScript and JScript.NET.
 
 Emulation accuracy;;
@@ -16,9 +17,9 @@ Emulation accuracy;;
 
 Usability improvements;;
 - Experimental conversion to Atari executables (XEX format, also known as COM).
+- RMT files can be extracted from SAP files created in Raster Music Tracker.
 - Implemented subsongs, seek bar and pause in the Android port.
 - Added a date picker in the WASAP/Winamp/Apollo/XMPlay file information dialogs.
-- Made "Save as WAV" available in WASAP on Windows CE.
 - Browser JavaScript player works on `file:///` URLs.
 - `asapscan` uses a much faster length detection algorithm.
 

@@ -362,6 +362,8 @@ static void SelectAndLoadFile(void)
 	popupShown = FALSE;
 }
 
+#ifndef _WIN32_WCE /* disabled just because of limited computing power */
+
 /* Defined so that the progress bar is responsive, but isn't updated too often and doesn't overflow (65535 limit) */
 #define WAV_PROGRESS_DURATION_SHIFT 10
 
@@ -468,6 +470,8 @@ static void SaveWav(void)
 	popupShown = FALSE;
 }
 
+#endif /* _WIN32_WCE */
+
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	int idc;
@@ -487,9 +491,11 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 			showInfoDialog(hInst, hWnd, current_filename, current_song);
 			break;
 #endif
+#ifndef _WIN32_WCE /* disabled just because of limited computing power */
 		case IDM_SAVE_WAV:
 			SaveWav();
 			break;
+#endif
 		case IDM_ABOUT:
 			ShowAbout();
 			break;
