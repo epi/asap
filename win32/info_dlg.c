@@ -294,7 +294,7 @@ static BOOL saveInfoAs(void)
 	_TCHAR filter[1024];
 	OPENFILENAME ofn = {
 		sizeof(OPENFILENAME),
-		hwndOwner,
+		infoDialog,
 		0,
 		filter,
 		NULL,
@@ -317,10 +317,11 @@ static BOOL saveInfoAs(void)
 	LPTSTR ext;
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
 	ext = _tcsrchr(filename, '.');
-	if (ext != NULL)
+	if (ext != NULL) {
 		*ext = '\0';
+		ofn.lpstrDefExt = ext + 1;
+	}
 	setSaveFilters(filter);
-	ofn.lpstrDefExt = filter + _tcslen(filter) + 3; /* select first extension from the type filter - skip over description and "\0*." */
 	if (!GetSaveFileName(&ofn))
 		return FALSE;
 	return saveFile(filename);
