@@ -352,7 +352,7 @@ static BOOL saveInfoAs(void)
 	ofn.hwndOwner = infoDialog;
 	setSaveFilters(filter);
 	ofn.nFilterIndex = 1;
-	ofn.lpstrDefExt = _tcsrchr(filename, '.') + 1;
+	ofn.lpstrDefExt = filter + _tcslen(filter) + 3; /* select first extension from the type filter - skip over description and "\0*." */
 	if (!GetSaveFileName(&ofn))
 		return FALSE;
 	return saveFile(filename);
