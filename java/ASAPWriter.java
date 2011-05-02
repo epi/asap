@@ -101,16 +101,22 @@ public final class ASAPWriter
 					switch (info.type) {
 						case ASAPModuleType.SAP_B:
 						case ASAPModuleType.SAP_C:
+							int offset = info.getRmtSapOffset(module, moduleLen);
+							if (offset > 0) {
+								w.run(255);
+								w.run(255);
+								ASAPWriter.writeBytes(w, module, offset, moduleLen);
+								return;
+							}
 							int blockLen = ASAPInfo.getWord(module, info.headerLen + 4) - ASAPInfo.getWord(module, info.headerLen + 2) + 7;
 							if (blockLen < 7 || info.headerLen + blockLen >= moduleLen)
 								throw new Exception("Cannot extract module from SAP");
 							ASAPWriter.writeBytes(w, module, info.headerLen, info.headerLen + blockLen);
-							break;
+							return;
 						default:
 							ASAPWriter.writeBytes(w, module, 0, moduleLen);
-							break;
+							return;
 					}
-					return;
 				}
 				throw new Exception("Impossible conversion");
 		}

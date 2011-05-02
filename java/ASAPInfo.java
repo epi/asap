@@ -200,7 +200,7 @@ public final class ASAPInfo
 					return "dlt";
 				if (this.init == 1267 || this.init == 62707 || this.init == 1263)
 					return this.fastplay == 156 ? "mpd" : "mpt";
-				if (this.init == 3200)
+				if (this.init == 3200 || this.getRmtSapOffset(module, moduleLen) > 0)
 					return "rmt";
 				if (this.init == 1269 || this.init == 62709 || this.init == 1266 || (this.init == 1255 || this.init == 62695 || this.init == 1252) && this.fastplay == 156 || (this.init == 1253 || this.init == 62693 || this.init == 1250) && (this.fastplay == 104 || this.fastplay == 78))
 					return "tmc";
@@ -316,6 +316,16 @@ public final class ASAPInfo
 			}
 		}
 		return playerCalls / perFrame;
+	}
+
+	int getRmtSapOffset(byte[] module, int moduleLen)
+	{
+		if (this.player != 13315)
+			return -1;
+		int offset = this.headerLen + ASAPInfo.getWord(module, this.headerLen + 4) - ASAPInfo.getWord(module, this.headerLen + 2) + 7;
+		if (offset + 6 >= moduleLen || module[offset + 4] != 82 || module[offset + 5] != 77 || module[offset + 6] != 84)
+			return -1;
+		return offset;
 	}
 
 	/**

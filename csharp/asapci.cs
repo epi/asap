@@ -2279,7 +2279,7 @@ namespace Sf.Asap
 						return "dlt";
 					if (this.Init == 1267 || this.Init == 62707 || this.Init == 1263)
 						return this.Fastplay == 156 ? "mpd" : "mpt";
-					if (this.Init == 3200)
+					if (this.Init == 3200 || this.GetRmtSapOffset(module, moduleLen) > 0)
 						return "rmt";
 					if (this.Init == 1269 || this.Init == 62709 || this.Init == 1266 || (this.Init == 1255 || this.Init == 62695 || this.Init == 1252) && this.Fastplay == 156 || (this.Init == 1253 || this.Init == 62693 || this.Init == 1250) && (this.Fastplay == 104 || this.Fastplay == 78))
 						return "tmc";
@@ -2395,6 +2395,16 @@ namespace Sf.Asap
 				}
 			}
 			return playerCalls / perFrame;
+		}
+
+		int GetRmtSapOffset(byte[] module, int moduleLen)
+		{
+			if (this.Player != 13315)
+				return -1;
+			int offset = this.HeaderLen + ASAPInfo.GetWord(module, this.HeaderLen + 4) - ASAPInfo.GetWord(module, this.HeaderLen + 2) + 7;
+			if (offset + 6 >= moduleLen || module[offset + 4] != 82 || module[offset + 5] != 77 || module[offset + 6] != 84)
+				return -1;
+			return offset;
 		}
 
 		/// <summary>Returns number of songs in the file.</summary>
