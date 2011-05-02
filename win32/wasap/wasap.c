@@ -320,20 +320,18 @@ static void SelectAndLoadFile(void)
 		0,
 		_T("All supported\0"
 		"*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2\0"
-		"Slight Atari Player (*.sap)\0"
-		"*.sap\0"
-		"Chaos Music Composer (*.cmc;*.cm3;*.cmr;*.cms;*.dmc)\0"
-		"*.cmc;*.cm3;*.cmr;*.cms;*.dmc\0"
-		"Delta Music Composer (*.dlt)\0"
-		"*.dlt\0"
-		"Music ProTracker (*.mpt;*.mpd)\0"
-		"*.mpt;*.mpd\0"
-		"Raster Music Tracker (*.rmt)\0"
-		"*.rmt\0"
-		"Theta Music Composer 1.x (*.tmc;*.tm8)\0"
-		"*.tmc;*.tm8\0"
-		"Theta Music Composer 2.x (*.tm2)\0"
-		"*.tm2\0"
+#ifdef _WIN32_WCE
+#define ASAP_FILTER(description, masks) description "\0" masks "\0"
+#else
+#define ASAP_FILTER(description, masks) description " (" masks ")\0" masks "\0"
+#endif
+		ASAP_FILTER("Slight Atari Player", "*.sap")
+		ASAP_FILTER("Chaos Music Composer", "*.cmc;*.cm3;*.cmr;*.cms;*.dmc")
+		ASAP_FILTER("Delta Music Composer", "*.dlt")
+		ASAP_FILTER("Music ProTracker", "*.mpt;*.mpd")
+		ASAP_FILTER("Raster Music Tracker", "*.rmt")
+		ASAP_FILTER("Theta Music Composer 1.x", "*.tmc;*.tm8")
+		ASAP_FILTER("Theta Music Composer 2.x", "*.tm2")
 		"\0"),
 		NULL,
 		0,
