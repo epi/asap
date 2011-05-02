@@ -69,6 +69,7 @@ static cibool ASAPInfo_CheckValidChar(int c);
 static cibool ASAPInfo_CheckValidText(const char *s);
 static int ASAPInfo_GetPackedExt(const char *filename);
 static int ASAPInfo_GetRmtInstrumentFrames(unsigned char const *module, int instrument, int volume, int volumeFrame, cibool onExtraPokey);
+static int ASAPInfo_GetRmtSapOffset(ASAPInfo const *self, unsigned char const *module, int moduleLen);
 static int ASAPInfo_GetTwoDateDigits(ASAPInfo const *self, int i);
 static int ASAPInfo_GetWord(unsigned char const *array, int i);
 static cibool ASAPInfo_HasStringAt(unsigned char const *module, int moduleIndex, const char *s);
@@ -2468,7 +2469,7 @@ const char *ASAPInfo_GetOriginalModuleExt(ASAPInfo const *self, unsigned char co
 				return "dlt";
 			if (self->init == 1267 || self->init == 62707 || self->init == 1263)
 				return self->fastplay == 156 ? "mpd" : "mpt";
-			if (self->init == 3200)
+			if (self->init == 3200 || ASAPInfo_GetRmtSapOffset(self, module, moduleLen) > 0)
 				return "rmt";
 			if (self->init == 1269 || self->init == 62709 || self->init == 1266 || ((self->init == 1255 || self->init == 62695 || self->init == 1252) && self->fastplay == 156) || ((self->init == 1253 || self->init == 62693 || self->init == 1250) && (self->fastplay == 104 || self->fastplay == 78)))
 				return "tmc";
@@ -2597,6 +2598,17 @@ static int ASAPInfo_GetRmtInstrumentFrames(unsigned char const *module, int inst
 		}
 	}
 	return playerCalls / perFrame;
+}
+
+static int ASAPInfo_GetRmtSapOffset(ASAPInfo const *self, unsigned char const *module, int moduleLen)
+{
+	int offset;
+	if (self->player != 13315)
+		return -1;
+	offset = self->headerLen + ASAPInfo_GetWord(module, self->headerLen + 4) - ASAPInfo_GetWord(module, self->headerLen + 2) + 7;
+	if (offset + 6 >= moduleLen || module[offset + 4] != 82 || module[offset + 5] != 77 || module[offset + 6] != 84)
+		return -1;
+	return offset;
 }
 
 int ASAPInfo_GetSongs(ASAPInfo const *self)
@@ -3843,19 +3855,26 @@ cibool ASAPWriter_Write(const char *filename, ByteWriter w, ASAPInfo const *info
 			possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
 			if (possibleExt != NULL && destExt == ((possibleExt[0] + (possibleExt[1] << 8) + (possibleExt[2] << 16)) | 2105376)) {
 				switch (info->type) {
+					int offset;
 					int blockLen;
 					case ASAPModuleType_SAP_B:
 					case ASAPModuleType_SAP_C:
+						offset = ASAPInfo_GetRmtSapOffset(info, module, moduleLen);
+						if (offset > 0) {
+							w.func(w.obj, 255);
+							w.func(w.obj, 255);
+							ASAPWriter_WriteBytes(w, module, offset, moduleLen);
+							return TRUE;
+						}
 						blockLen = ASAPInfo_GetWord(module, info->headerLen + 4) - ASAPInfo_GetWord(module, info->headerLen + 2) + 7;
 						if (blockLen < 7 || info->headerLen + blockLen >= moduleLen)
 							return FALSE;
 						ASAPWriter_WriteBytes(w, module, info->headerLen, info->headerLen + blockLen);
-						break;
+						return TRUE;
 					default:
 						ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-						break;
+						return TRUE;
 				}
-				return TRUE;
 			}
 			return FALSE;
 	}

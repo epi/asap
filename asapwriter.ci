@@ -456,17 +456,23 @@ public class ASAPWriter
 				case ASAPModuleType.SapB:
 				case ASAPModuleType.SapC:
 					// SAP -> native
+					int offset = info.GetRmtSapOffset(module, moduleLen);
+					if (offset > 0) {
+						w(0xff);
+						w(0xff);
+						WriteBytes(w, module, offset, moduleLen);
+						return;
+					}
 					int blockLen = ASAPInfo.GetWord(module, info.HeaderLen + 4) - ASAPInfo.GetWord(module, info.HeaderLen + 2) + 7;
 					if (blockLen < 7 || info.HeaderLen + blockLen >= moduleLen)
 						throw "Cannot extract module from SAP";
 					WriteBytes(w, module, info.HeaderLen, info.HeaderLen + blockLen);
-					break;
+					return;
 				default:
 					// native -> native
 					WriteBytes(w, module, 0, moduleLen);
-					break;
+					return;
 				}
-				return;
 			}
 			throw "Impossible conversion";
 		}

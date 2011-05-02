@@ -1433,6 +1433,16 @@ public class ASAPInfo
 	const int RmtInit = 0xc80;
 	const int Tm2Init = 0x1080;
 
+	int GetRmtSapOffset(byte[] module, int moduleLen)
+	{
+		if (Player != 0x3403)
+			return -1;
+		int offset = HeaderLen + GetWord(module, HeaderLen + 4) - GetWord(module, HeaderLen + 2) + 7;
+		if (offset + 6 >= moduleLen || module[offset + 4] != 'R' || module[offset + 5] != 'M' || module[offset + 6] != 'T')
+			return -1;
+		return offset;
+	}
+
 	public string GetOriginalModuleExt(byte[] module, int moduleLen)
 	{
 		switch (Type) {
@@ -1441,7 +1451,7 @@ public class ASAPInfo
 				return "dlt";
 			if (Init == 0x4f3 || Init == 0xf4f3 || Init == 0x4ef)
 				return Fastplay == 156 ? "mpd" : "mpt";
-			if (Init == RmtInit)
+			if (Init == RmtInit || GetRmtSapOffset(module, moduleLen) > 0)
 				return "rmt";
 			if ((Init == 0x4f5 || Init == 0xf4f5 || Init == 0x4f2)
 			 || ((Init == 0x4e7 || Init == 0xf4e7 || Init == 0x4e4) && Fastplay == 156)
