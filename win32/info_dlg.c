@@ -288,6 +288,33 @@ static void setSaveFilters(LPTSTR p)
 	ASAPWriter_EnumSaveExts(sc, edited_info, saved_module, saved_module_len);
 }
 
+#define WINXP_DEFEXT_FIX
+
+#ifdef WINXP_DEFEXT_FIX
+static UINT_PTR CALLBACK defExtHook(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	if (msg == WM_NOTIFY) {
+		LPOFNOTIFY lpOfNotify = (LPOFNOTIFY) lParam;
+		if (lpOfNotify->hdr.code == CDN_TYPECHANGE) {
+			int n = lpOfNotify->lpOFN->nFilterIndex;
+			if (n > 0) {
+				LPCTSTR p = lpOfNotify->lpOFN->lpstrFilter;
+				do {
+					p += _tcslen(p) + 3; /* skip over description and "\0*." */
+					if (--n == 0) {
+						SendMessage(hDlg, CDM_SETDEFEXT, 0, (LPARAM) p);
+						break;
+					}
+					p += _tcslen(p) + 1; /* skip over extension */
+				} while (*p != '\0');
+				/* should be unreachable */
+			}
+		}
+	}
+	return 0;
+}
+#endif
+
 static BOOL saveInfoAs(void)
 {
 	static _TCHAR filename[MAX_PATH];
@@ -306,12 +333,19 @@ static BOOL saveInfoAs(void)
 		0,
 		NULL,
 		_T("Select output file"),
+#ifdef WINXP_DEFEXT_FIX
+		OFN_ENABLEHOOK |
+#endif
 		OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT,
 		0,
 		0,
 		NULL,
 		0,
+#ifdef WINXP_DEFEXT_FIX
+		defExtHook,
+#else
 		NULL,
+#endif
 		NULL
 	};
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
