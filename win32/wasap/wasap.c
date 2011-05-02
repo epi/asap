@@ -199,8 +199,8 @@ static void ShowAbout(void)
 #ifdef _WIN32_WCE
 	popupShown = TRUE;
 	MessageBox(hWnd,
-		_T(ASAPInfo_CREDITS
-		"WASAP icons (C) 2005 Lukasz Sychowicz"),
+		_T("Another Slight Atari Player (C) " ASAPInfo_YEARS " Piotr Fusik\n"
+		"This program is free software, see GNU General Public License."),
 		APP_TITLE " " ASAPInfo_VERSION,
 		MB_OK);
 #else
