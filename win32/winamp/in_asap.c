@@ -186,9 +186,10 @@ static void quit(void)
 
 static void getTitle(char *title)
 {
-	char *p = appendString(title, ASAPInfo_GetTitleOrFilename(title_info));
 	if (ASAPInfo_GetSongs(title_info) > 1)
-		sprintf(p, " (song %d)", title_song + 1);
+		sprintf(title, "%s (song %d)", ASAPInfo_GetTitleOrFilename(title_info), title_song + 1);
+	else
+		strcpy(title, ASAPInfo_GetTitleOrFilename(title_info));
 }
 
 static char *tagFunc(char *tag, void *p)

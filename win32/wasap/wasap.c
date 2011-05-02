@@ -146,33 +146,25 @@ static UINT taskbarCreatedMessage;
 
 static void Tray_Modify(HICON hIcon)
 {
-	LPTSTR p;
 	nid.hIcon = hIcon;
-	/* we need to be careful because szTip is only 64 characters */
-	/* 5 */
-	p = appendString(nid.szTip, APP_TITLE);
 	if (songs > 0) {
 		LPCTSTR pb;
 		LPCTSTR pe;
+		int len;
 		for (pb = pe = current_filename; *pe != '\0'; pe++) {
 			if (*pe == '\\' || *pe == '/')
 				pb = pe + 1;
 		}
-		/* 2 */
-		*p++ = ':';
-		*p++ = ' ';
-		/* max 33 */
-		if (pe - pb <= 33)
-			p = appendString(p, pb);
-		else {
-			memcpy(p, pb, 30);
-			p = appendString(p + 30, _T("..."));
-		}
+		/* we need to be careful because szTip is only 64 characters */
+		/* 5 + 2 + max 33 */
+		len = _stprintf(nid.szTip, pe - pb <= 33 ? APP_TITLE ": %s" : APP_TITLE ": %.30s...", pb);
 		if (songs > 1) {
 			/* 7 + max 3 + 4 + max 3 + 1*/
-			_stprintf(p, _T(" (song %d of %d)"), current_song + 1, songs);
+			_stprintf(nid.szTip + len, _T(" (song %d of %d)"), current_song + 1, songs);
 		}
 	}
+	else
+		_tcscpy(nid.szTip, APP_TITLE);
 	Shell_NotifyIcon(NIM_MODIFY, &nid);
 }
 

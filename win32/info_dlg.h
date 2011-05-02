@@ -40,7 +40,6 @@
 #define IDD_PROGRESS   500
 #define IDC_PROGRESS   501
 
-LPTSTR appendString(LPTSTR dest, LPCTSTR src);
 void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext);
 BOOL loadModule(LPCTSTR filename, byte *module, int *module_len);
 

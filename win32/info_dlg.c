@@ -31,14 +31,6 @@
 #include "asapci.h"
 #include "info_dlg.h"
 
-LPTSTR appendString(LPTSTR dest, LPCTSTR src)
-{
-	while (*src != '\0')
-		*dest++ = *src++;
-	*dest = '\0';
-	return dest;
-}
-
 void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext)
 {
 	int filenameChars = _tcsrchr(filename, '.') + 1 - filename;
@@ -270,15 +262,9 @@ static BOOL saveInfo(void)
 static void addFilterExt(void *obj, const char *ext)
 {
 	LPTSTR p = *(LPTSTR *) obj;
-	p = appendString(p, ASAPInfo_GetExtDescription(ext));
-	p = appendString(p, _T(" (*."));
-	p = appendString(p, ext);
-	*p++ = ')';
-	*p++ = '\0';
-	*p++ = '*';
-	*p++ = '.';
-	p = appendString(p, ext);
-	*++p = '\0';
+	p += _stprintf(p, _T("%s (*.%s)"), ASAPInfo_GetExtDescription(ext), ext) + 1;
+	p += _stprintf(p, _T("*.%s"), ext) + 1;
+	*p = '\0';
 	*(LPTSTR *) obj = p;
 }
 
@@ -322,9 +308,7 @@ static BOOL saveInfoAs(void)
 		ofn.lpstrDefExt = ext + 1;
 	}
 	setSaveFilters(filter);
-	if (!GetSaveFileName(&ofn))
-		return FALSE;
-	return saveFile(filename);
+	return GetSaveFileName(&ofn) && saveFile(filename);
 }
 
 static void closeInfoDialog(void)
