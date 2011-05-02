@@ -179,6 +179,7 @@ static void Tray_Modify(HICON hIcon)
 
 /* GUI -------------------------------------------------------------------- */
 
+static int popupShown = FALSE;
 static BOOL errorShown = FALSE;
 static HINSTANCE hInst;
 static HICON hStopIcon;
@@ -196,6 +197,7 @@ static void ShowError(LPCTSTR message)
 static void ShowAbout(void)
 {
 #ifdef _WIN32_WCE
+	popupShown = TRUE;
 	MessageBox(hWnd,
 		_T(ASAPInfo_CREDITS
 		"WASAP icons (C) 2005 Lukasz Sychowicz"),
@@ -216,8 +218,10 @@ static void ShowAbout(void)
 		NULL,
 		LANG_NEUTRAL
 	};
+	popupShown = TRUE;
 	MessageBoxIndirect(&mbp);
 #endif
+	popupShown = FALSE;
 }
 
 static void SetSongsMenu(int n)
@@ -308,8 +312,6 @@ static void LoadAndPlay(int song)
 	WaveOut_Start();
 }
 
-static int opening = FALSE;
-
 static void SelectAndLoadFile(void)
 {
 	static OPENFILENAME ofn = {
@@ -353,13 +355,13 @@ static void SelectAndLoadFile(void)
 		NULL,
 		NULL
 	};
-	opening = TRUE;
+	popupShown = TRUE;
 #ifndef _WIN32_WCE
 	ofn.hwndOwner = hWnd;
 #endif
 	if (GetOpenFileName(&ofn))
 		LoadAndPlay(-1);
-	opening = FALSE;
+	popupShown = FALSE;
 }
 
 /* Defined so that the progress bar is responsive, but isn't updated too often and doesn't overflow (65535 limit) */
@@ -458,12 +460,14 @@ static void SaveWav(void)
 	}
 	ASAP_PlaySong(asap, current_song, duration);
 	combineFilenameExt(wav_filename, current_filename, _T("wav"));
+	popupShown = TRUE;
 	ofn.hwndOwner = hWnd;
-	if (!GetSaveFileName(&ofn))
-		return;
-	wav_progressLimit = duration >> WAV_PROGRESS_DURATION_SHIFT;
-	if (!DoSaveWav(asap))
-		ShowError(_T("Cannot save file"));
+	if (GetSaveFileName(&ofn)) {
+		wav_progressLimit = duration >> WAV_PROGRESS_DURATION_SHIFT;
+		if (!DoSaveWav(asap))
+			ShowError(_T("Cannot save file"));
+	}
+	popupShown = FALSE;
 }
 
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -504,7 +508,7 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		PostQuitMessage(0);
 		break;
 	case MYWM_NOTIFYICON:
-		if (opening) {
+		if (popupShown) {
 			SetForegroundWindow(hWnd);
 			break;
 		}
