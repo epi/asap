@@ -64,14 +64,6 @@ static WAVEHDR wh[2] = {
 };
 static BOOL playing = FALSE;
 
-static void WaveOut_Stop(void)
-{
-	if (playing) {
-		playing = FALSE;
-		waveOutReset(hwo);
-	}
-}
-
 static void WaveOut_Write(LPWAVEHDR pwh)
 {
 	if (playing) {
@@ -90,6 +82,22 @@ static void CALLBACK WaveOut_Proc(HWAVEOUT hwo2, UINT uMsg, DWORD dwInstance, DW
 		WaveOut_Write((LPWAVEHDR) dwParam1);
 }
 
+static void WaveOut_Close(void)
+{
+	if (hwo == INVALID_HANDLE_VALUE)
+		return;
+	if (playing) {
+		playing = FALSE;
+		waveOutReset(hwo);
+	}
+	if (wh[0].dwFlags & WHDR_PREPARED)
+		waveOutUnprepareHeader(hwo, &wh[0], sizeof(wh[0]));
+	if (wh[1].dwFlags & WHDR_PREPARED)
+		waveOutUnprepareHeader(hwo, &wh[1], sizeof(wh[1]));
+	waveOutClose(hwo);
+	hwo = INVALID_HANDLE_VALUE;
+}
+
 static int WaveOut_Open(int channels)
 {
 	WAVEFORMATEX wfx;
@@ -104,29 +112,14 @@ static int WaveOut_Open(int channels)
 		return FALSE;
 	wh[1].dwBufferLength = wh[0].dwBufferLength = BUFFERED_BLOCKS * wfx.nBlockAlign;
 	if (waveOutPrepareHeader(hwo, &wh[0], sizeof(wh[0])) != MMSYSERR_NOERROR
-	 || waveOutPrepareHeader(hwo, &wh[1], sizeof(wh[1])) != MMSYSERR_NOERROR)
+	 || waveOutPrepareHeader(hwo, &wh[1], sizeof(wh[1])) != MMSYSERR_NOERROR) {
+		WaveOut_Close();
 		return FALSE;
-	return TRUE;
-}
-
-static void WaveOut_Start(void)
-{
+	}
 	playing = TRUE;
 	WaveOut_Write(&wh[0]);
 	WaveOut_Write(&wh[1]);
-}
-
-static void WaveOut_Close(void)
-{
-	if (hwo == INVALID_HANDLE_VALUE)
-		return;
-	WaveOut_Stop();
-	if (wh[0].dwFlags & WHDR_PREPARED)
-		waveOutUnprepareHeader(hwo, &wh[0], sizeof(wh[0]));
-	if (wh[1].dwFlags & WHDR_PREPARED)
-		waveOutUnprepareHeader(hwo, &wh[1], sizeof(wh[1]));
-	waveOutClose(hwo);
-	hwo = INVALID_HANDLE_VALUE;
+	return TRUE;
 }
 
 
@@ -239,7 +232,7 @@ static void OpenMenu(HWND hWnd, HMENU hMenu)
 
 static void StopPlayback(void)
 {
-	WaveOut_Stop();
+	WaveOut_Close();
 	Tray_Modify(hStopIcon);
 }
 
@@ -278,10 +271,6 @@ static void LoadAndPlay(int song)
 	if (!DoLoad(asap, module, module_len))
 		return;
 	info = ASAP_GetInfo(asap);
-	if (!WaveOut_Open(ASAPInfo_GetChannels(info))) {
-		ShowError(_T("Error initalizing WaveOut"));
-		return;
-	}
 	if (song < 0)
 		song = ASAPInfo_GetDefaultSong(info);
 	songs = ASAPInfo_GetSongs(info);
@@ -300,8 +289,11 @@ static void LoadAndPlay(int song)
 		ShowError(_T("This file is a bad rip!"));
 		return;
 	}
+	if (!WaveOut_Open(ASAPInfo_GetChannels(info))) {
+		ShowError(_T("Error initalizing WaveOut"));
+		return;
+	}
 	Tray_Modify(hPlayIcon);
-	WaveOut_Start();
 }
 
 static void SelectAndLoadFile(void)
