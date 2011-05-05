@@ -78,7 +78,9 @@
 			<Dialog Id="MyLicenseAgreementDlg" Width="370" Height="270" Title="!(loc.LicenseAgreementDlg_Title)">
 				<!-- removed the checkbox and replaced the "Next" button with "I Accept" -->
 				<Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="I &amp;Accept">
+					<!-- sf bug #3294936
 					<Publish Event="SpawnWaitDialog" Value="WaitForCostingDlg">CostingComplete = 1</Publish>
+					-->
 				</Control>
 				<Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
 				<Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
