@@ -185,6 +185,10 @@ static LRESULT CALLBACK MonthCalWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_KILLFOCUS:
 		ShowWindow(hWnd, SW_HIDE);
 		break;
+	case WM_KEYDOWN:
+		if (wParam == VK_ESCAPE)
+			ShowWindow(hWnd, SW_HIDE);
+		break;
 	case WM_DESTROY:
 		SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) monthcalOriginalWndProc);
 		break;
