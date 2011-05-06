@@ -6,6 +6,10 @@ namespace Sf.Asap
 	/// <remarks>This class performs no I/O operations - all music data must be passed in byte arrays.</remarks>
 	public class ASAP
 	{
+		public ASAP()
+		{
+			this.SilenceCycles = 0;
+		}
 		int BlocksPlayed;
 
 		void Call6502(int addr)
@@ -87,12 +91,11 @@ namespace Sf.Asap
 		internal int Cycle;
 
 		/// <summary>Enables silence detection.</summary>
-		/// <remarks>Causes playback to stop after the specified period of silence.
-		/// Must be called after each call of <c>Load</c>.</remarks>
-		/// <param name="seconds">Length of silence which ends playback.</param>
+		/// <remarks>Causes playback to stop after the specified period of silence.</remarks>
+		/// <param name="seconds">Length of silence which ends playback. Zero disables silence detection.</param>
 		public void DetectSilence(int seconds)
 		{
-			this.SilenceCycles = seconds * this.Pokeys.MainClock;
+			this.SilenceCyclesCounter = this.SilenceCycles = seconds * this.Pokeys.MainClock;
 		}
 
 		int Do6502Frame()
@@ -311,7 +314,6 @@ namespace Sf.Asap
 		/// <param name="moduleLen">Length of the file.</param>
 		public void Load(string filename, byte[] module, int moduleLen)
 		{
-			this.SilenceCycles = 0;
 			this.ModuleInfo.Load(filename, module, moduleLen);
 			byte[] playerRoutine = ASAP6502.GetPlayerRoutine(this.ModuleInfo);
 			if (playerRoutine != null) {

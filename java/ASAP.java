@@ -7,6 +7,10 @@ package net.sf.asap;
  */
 public final class ASAP
 {
+	public ASAP()
+	{
+		this.silenceCycles = 0;
+	}
 	private int blocksPlayed;
 
 	private void call6502(int addr)
@@ -90,12 +94,11 @@ public final class ASAP
 	/**
 	 * Enables silence detection.
 	 * Causes playback to stop after the specified period of silence.
-	 * Must be called after each call of <code>Load</code>.
-	 * @param seconds Length of silence which ends playback.
+	 * @param seconds Length of silence which ends playback. Zero disables silence detection.
 	 */
 	public void detectSilence(int seconds)
 	{
-		this.silenceCycles = seconds * this.pokeys.mainClock;
+		this.silenceCyclesCounter = this.silenceCycles = seconds * this.pokeys.mainClock;
 	}
 
 	private int do6502Frame()
@@ -328,7 +331,6 @@ public final class ASAP
 	 */
 	public void load(String filename, byte[] module, int moduleLen) throws Exception
 	{
-		this.silenceCycles = 0;
 		this.moduleInfo.load(filename, module, moduleLen);
 		byte[] playerRoutine = ASAP6502.getPlayerRoutine(this.moduleInfo);
 		if (playerRoutine != null) {

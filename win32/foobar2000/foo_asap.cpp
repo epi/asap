@@ -70,10 +70,12 @@ class input_asap
 		const ASAPInfo *info = ASAP_GetInfo(asap);
 		int duration = ASAPInfo_GetDuration(info, song);
 		if (duration < 0) {
-			if (play && silence_seconds > 0)
+			if (play)
 				ASAP_DetectSilence(asap, silence_seconds);
 			return 1000 * song_length;
 		}
+		if (play)
+			ASAP_DetectSilence(asap, 0);
 		if (play_loops && ASAPInfo_GetLoop(info, song))
 			return 1000 * song_length;
 		return duration;

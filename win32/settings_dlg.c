@@ -180,10 +180,12 @@ int getSongDurationInternal(const ASAPInfo *info, int song, ASAP *asap)
 {
 	int duration = ASAPInfo_GetDuration(info, song);
 	if (duration < 0) {
-		if (asap != NULL && silence_seconds > 0)
+		if (asap != NULL)
 			ASAP_DetectSilence(asap, silence_seconds);
 		return 1000 * song_length;
 	}
+	if (asap != NULL)
+		ASAP_DetectSilence(asap, 0);
 	if (play_loops && ASAPInfo_GetLoop(info, song))
 		return 1000 * song_length;
 	return duration;

@@ -62,6 +62,20 @@ public class ASAP
 	int SilenceCycles;
 	int SilenceCyclesCounter;
 
+	public ASAP()
+	{
+		SilenceCycles = 0;
+	}
+
+	/// Enables silence detection.
+	/// Causes playback to stop after the specified period of silence.
+	public void DetectSilence(
+		/// Length of silence which ends playback. Zero disables silence detection.
+		int seconds)
+	{
+		SilenceCyclesCounter = SilenceCycles = seconds * Pokeys.MainClock;
+	}
+
 	int PeekHardware(int addr)
 	{
 		switch (addr & 0xff1f) {
@@ -304,7 +318,6 @@ public class ASAP
 		/// Length of the file.
 		int moduleLen)
 	{
-		SilenceCycles = 0;
 		ModuleInfo.Load(filename, module, moduleLen);
 #if !ASAP_ONLY_SAP
 		byte[] playerRoutine = ASAP6502.GetPlayerRoutine(ModuleInfo);
@@ -343,16 +356,6 @@ public class ASAP
 	public ASAPInfo GetInfo()
 	{
 		return ModuleInfo;
-	}
-
-	/// Enables silence detection.
-	/// Causes playback to stop after the specified period of silence.
-	/// Must be called after each call of `Load`.
-	public void DetectSilence(
-		/// Length of silence which ends playback.
-		int seconds)
-	{
-		SilenceCycles = seconds * Pokeys.MainClock;
 	}
 
 	void Do6502Init(int pc, int a, int x, int y)

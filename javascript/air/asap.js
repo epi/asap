@@ -19,6 +19,7 @@ function ASAP()
 	this.silenceCycles = 0;
 	this.silenceCyclesCounter = 0;
 	this.tmcPerFrameCounter = 0;
+	this.silenceCycles = 0;
 }
 
 ASAP.prototype.call6502 = function(addr) {
@@ -92,7 +93,7 @@ ASAP.prototype.call6502Player = function() {
 }
 
 ASAP.prototype.detectSilence = function(seconds) {
-	this.silenceCycles = seconds * this.pokeys.mainClock;
+	this.silenceCyclesCounter = this.silenceCycles = seconds * this.pokeys.mainClock;
 }
 
 ASAP.prototype.do6502Frame = function() {
@@ -281,7 +282,6 @@ ASAP.prototype.handleEvent = function() {
 }
 
 ASAP.prototype.load = function(filename, module, moduleLen) {
-	this.silenceCycles = 0;
 	this.moduleInfo.load(filename, module, moduleLen);
 	var playerRoutine = ASAP6502.getPlayerRoutine(this.moduleInfo);
 	if (playerRoutine != null) {

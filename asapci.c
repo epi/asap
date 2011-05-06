@@ -1736,6 +1736,7 @@ static const unsigned char CiBinaryResource_xexd_obx[132] = { 255, 255, 0, 187, 
 static void ASAP_Construct(ASAP *self)
 {
 	PokeyPair_Construct(&self->pokeys);
+	self->silenceCycles = 0;
 }
 
 ASAP *ASAP_New(void)
@@ -1826,7 +1827,7 @@ static void ASAP_Call6502Player(ASAP *self)
 
 void ASAP_DetectSilence(ASAP *self, int seconds)
 {
-	self->silenceCycles = seconds * self->pokeys.mainClock;
+	self->silenceCyclesCounter = self->silenceCycles = seconds * self->pokeys.mainClock;
 }
 
 static int ASAP_Do6502Frame(ASAP *self)
@@ -2037,7 +2038,6 @@ cibool ASAP_Load(ASAP *self, const char *filename, unsigned char const *module, 
 {
 	unsigned char const *playerRoutine;
 	int moduleIndex;
-	self->silenceCycles = 0;
 	if (!ASAPInfo_Load(&self->moduleInfo, filename, module, moduleLen))
 		return FALSE;
 	playerRoutine = ASAP6502_GetPlayerRoutine(&self->moduleInfo);
