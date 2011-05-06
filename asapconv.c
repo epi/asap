@@ -287,6 +287,14 @@ static void write_output_file(FILE *fp, unsigned char *buffer, int n_bytes)
 	}
 }
 
+static void close_output_file(FILE *fp)
+{
+	if (fp != stdout) {
+		if (fclose(fp) != 0)
+			fatal_error("error closing %s", output_file);
+	}
+}
+
 static void convert_to_wav(const char *input_file, const unsigned char *module, int module_len, cibool output_header)
 {
 	ASAP *asap = load_module(input_file, module, module_len);
@@ -302,8 +310,7 @@ static void convert_to_wav(const char *input_file, const unsigned char *module, 
 		n_bytes = ASAP_Generate(asap, buffer, sizeof(buffer), sample_format);
 		write_output_file(fp, buffer, n_bytes);
 	} while (n_bytes == sizeof(buffer));
-	if (fp != stdout)
-		fclose(fp);
+	close_output_file(fp);
 }
 
 #ifdef HAVE_LIBMP3LAME
@@ -427,8 +434,7 @@ static void convert_to_mp3(const char *input_file, const unsigned char *module, 
 		fatal_error("lame_encode_flush failed");
 	write_output_file(fp, mp3buf, mp3_bytes);
 	lame_close(lame);
-	if (fp != stdout)
-		fclose(fp);
+	close_output_file(fp);
 }
 
 #endif /* HAVE_LIBMP3LAME */
@@ -464,8 +470,7 @@ static void convert_to_module(const char *input_file, const unsigned char *modul
 	/* FIXME: stdout */
 	if (!ASAPWriter_Write(output_file, bw, info, module, module_len))
 		fatal_error("%s: conversion error", input_file);
-	if (fp != stdout)
-		fclose(fp);
+	close_output_file(fp);
 }
 
 static void process_file(const char *input_file)
