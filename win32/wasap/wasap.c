@@ -378,8 +378,8 @@ static BOOL DoSaveWav(ASAP *asap)
 	len = ASAP_WAV_HEADER_LENGTH;
 	while (len > 0) {
 		if (!WriteFile(fh, buffer, len, &len, NULL)) {
-			CloseHandle(fh);
 			DestroyWindow(progressWnd);
+			CloseHandle(fh);
 			return FALSE;
 		}
 		newProgressPos = ASAP_GetPosition(asap) >> WAV_PROGRESS_DURATION_SHIFT;
@@ -389,9 +389,8 @@ static BOOL DoSaveWav(ASAP *asap)
 		}
 		len = ASAP_Generate(asap, buffer, sizeof(buffer), BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 	}
-	CloseHandle(fh);
 	DestroyWindow(progressWnd);
-	return TRUE;
+	return CloseHandle(fh);
 }
 
 static void SaveWav(void)
