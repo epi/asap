@@ -107,6 +107,10 @@ public final class ASAPInfo
 		return this.date;
 	}
 
+	/**
+	 * Returns day of month of the music creation date.
+	 * -1 means the day is unknown.
+	 */
 	public int getDayOfMonth()
 	{
 		int n = this.checkDate();
@@ -126,13 +130,17 @@ public final class ASAPInfo
 
 	/**
 	 * Returns length of the specified song.
-	 * The result is in milliseconds. -1 means the length is indeterminate.
+	 * The length is specified in milliseconds. -1 means the length is indeterminate.
 	 */
 	public int getDuration(int song)
 	{
 		return this.durations[song];
 	}
 
+	/**
+	 * Returns human-readable description of the filename extension.
+	 * @param ext Filename extension without the leading dot.
+	 */
 	public static String getExtDescription(String ext) throws Exception
 	{
 		if (ext.length() != 3)
@@ -184,6 +192,10 @@ public final class ASAPInfo
 		return this.loops[song];
 	}
 
+	/**
+	 * Returns music creation month (1-12).
+	 * -1 means the month is unknown.
+	 */
 	public int getMonth()
 	{
 		int n = this.checkDate();
@@ -192,6 +204,13 @@ public final class ASAPInfo
 		return this.getTwoDateDigits(n - 7);
 	}
 
+	/**
+	 * Returns the extension of the original module format.
+	 * For native modules it simply returns their extension.
+	 * For the SAP format it attempts to detect the original module format.
+	 * @param module Contents of the file.
+	 * @param moduleLen Length of the file.
+	 */
 	public String getOriginalModuleExt(byte[] module, int moduleLen)
 	{
 		switch (this.type) {
@@ -364,6 +383,10 @@ public final class ASAPInfo
 		return (array[i] & 0xff) + ((array[i + 1] & 0xff) << 8);
 	}
 
+	/**
+	 * Returns music creation year.
+	 * -1 means the year is unknown.
+	 */
 	public int getYear()
 	{
 		int n = this.checkDate();
@@ -401,13 +424,17 @@ public final class ASAPInfo
 		return (module[8198 + pos] & 0xff) >= 67 && (module[8454 + pos] & 0xff) >= 64 && (module[8710 + pos] & 0xff) >= 64 && (module[8966 + pos] & 0xff) >= 64;
 	}
 
+	/**
+	 * Returns <code>true</code> for NTSC song and <code>false</code> for PAL song.
+	 */
 	public boolean isNtsc()
 	{
 		return this.ntsc;
 	}
 
 	/**
-	 * Checks whether the extension represents a module type supported by ASAP.
+	 * Checks whether the filename extension represents a module type supported by ASAP.
+	 * Returns <code>true</code> if the filename extension is supported by ASAP.
 	 * @param ext Filename extension without the leading dot.
 	 */
 	public static boolean isOurExt(String ext)
@@ -417,6 +444,7 @@ public final class ASAPInfo
 
 	/**
 	 * Checks whether the filename represents a module type supported by ASAP.
+	 * Returns <code>true</code> if the filename is supported by ASAP.
 	 * @param filename Filename to check the extension of.
 	 */
 	public static boolean isOurFile(String filename)
@@ -710,7 +738,7 @@ public final class ASAPInfo
 	}
 
 	/**
-	 * Parses a string and returns the number of milliseconds it represents.
+	 * Returns the number of milliseconds represented by the given string.
 	 * @param s Time in the <code>"mm:ss.xxx"</code> format.
 	 */
 	public static int parseDuration(String s) throws Exception
@@ -1434,6 +1462,10 @@ public final class ASAPInfo
 		this.date = value;
 	}
 
+	/**
+	 * Sets length of the specified song.
+	 * The length is specified in milliseconds. -1 means the length is indeterminate.
+	 */
 	public void setDuration(int song, int duration) throws Exception
 	{
 		if (song < 0 || song >= this.songs)
@@ -1441,6 +1473,15 @@ public final class ASAPInfo
 		this.durations[song] = duration;
 	}
 
+	/**
+	 * Sets information whether the specified song loops.
+	 * Use:
+	 * <ul>
+	 * <li><code>true</code> if the song loops</li>
+	 * <li><code>false</code> if the song stops</li>
+	 * </ul>
+	 * 
+	 */
 	public void setLoop(int song, boolean loop) throws Exception
 	{
 		if (song < 0 || song >= this.songs)

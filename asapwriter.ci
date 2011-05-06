@@ -25,7 +25,16 @@ public delegate void ByteWriter(int data);
 
 public class ASAPWriter
 {
-	public static void EnumSaveExts(StringConsumer output, ASAPInfo info, byte[] module, int moduleLen)
+	/// Enumerates possible file types the given module can be written as.
+	public static void EnumSaveExts(
+		/// Receives filename extensions without the leading dot.
+		StringConsumer output,
+		/// File information.
+		ASAPInfo info,
+		/// Contents of the file.
+		byte[] module,
+		/// Length of the file.
+		int moduleLen)
 	{
 		switch (info.Type) {
 		case ASAPModuleType.SapB:
@@ -58,9 +67,17 @@ public class ASAPWriter
 		result[offset + 1] = '0' + value % 10;
 	}
 
-	public const int MaxDurationLength = 9; // "mm:ss.xxx"
+	/// Maximum length of text representation of a duration.
+	/// Corresponds to the longest format which is `"mm:ss.xxx"`.
+	public const int MaxDurationLength = 9;
 
-	public static int DurationToString(byte[] result, int value)
+	/// Writes text representation of the given duration.
+	/// Returns the number of bytes written to `result`.
+	public static int DurationToString(
+		/// The output buffer.
+		byte[] result,
+		/// Number of milliseconds.
+		int value)
 	{
 		if (value < 0 || value >= 100 * 60 * 1000)
 			return 0;
@@ -408,10 +425,21 @@ public class ASAPWriter
 		}
 	}
 
-	public static void Write(string filename, ByteWriter w, ASAPInfo info, byte[] module, int moduleLen)
+	/// Writes the given module in a possibly different file format.
+	public static void Write(
+		/// Output filename, used to determine the format.
+		string targetFilename,
+		/// Receives output file contents.
+		ByteWriter w,
+		/// File information got from the source file with data updated for the output file.
+		ASAPInfo info,
+		/// Contents of the source file.
+		byte[] module,
+		/// Length of the source file.
+		int moduleLen)
 	{
 		macro ASAP_EXT(s) ( s[0] + (s[1] << 8) + (s[2] << 16) | 0x202020 )
-		int destExt = ASAPInfo.GetPackedExt(filename);
+		int destExt = ASAPInfo.GetPackedExt(targetFilename);
 		switch (destExt) {
 		case ASAP_EXT("SAP"):
 			// * -> SAP

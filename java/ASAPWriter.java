@@ -4,6 +4,12 @@ package net.sf.asap;
 public final class ASAPWriter
 {
 
+	/**
+	 * Writes text representation of the given duration.
+	 * Returns the number of bytes written to <code>result</code>.
+	 * @param result The output buffer.
+	 * @param value Number of milliseconds.
+	 */
 	public static int durationToString(byte[] result, int value)
 	{
 		if (value < 0 || value >= 6000000)
@@ -24,6 +30,13 @@ public final class ASAPWriter
 		return 9;
 	}
 
+	/**
+	 * Enumerates possible file types the given module can be written as.
+	 * @param output Receives filename extensions without the leading dot.
+	 * @param info File information.
+	 * @param module Contents of the file.
+	 * @param moduleLen Length of the file.
+	 */
 	public static void enumSaveExts(StringConsumer output, ASAPInfo info, byte[] module, int moduleLen)
 	{
 		switch (info.type) {
@@ -50,6 +63,10 @@ public final class ASAPWriter
 				break;
 		}
 	}
+	/**
+	 * Maximum length of text representation of a duration.
+	 * Corresponds to the longest format which is <code>"mm:ss.xxx"</code>.
+	 */
 	public static final int MAX_DURATION_LENGTH = 9;
 
 	private static void twoDigitsToString(byte[] result, int offset, int value)
@@ -58,9 +75,17 @@ public final class ASAPWriter
 		result[offset + 1] = (byte) (48 + value % 10);
 	}
 
-	public static void write(String filename, ByteWriter w, ASAPInfo info, byte[] module, int moduleLen) throws Exception
+	/**
+	 * Writes the given module in a possibly different file format.
+	 * @param targetFilename Output filename, used to determine the format.
+	 * @param w Receives output file contents.
+	 * @param info File information got from the source file with data updated for the output file.
+	 * @param module Contents of the source file.
+	 * @param moduleLen Length of the source file.
+	 */
+	public static void write(String targetFilename, ByteWriter w, ASAPInfo info, byte[] module, int moduleLen) throws Exception
 	{
-		int destExt = ASAPInfo.getPackedExt(filename);
+		int destExt = ASAPInfo.getPackedExt(targetFilename);
 		switch (destExt) {
 			case 7364979:
 				ASAPWriter.writeExecutable(w, null, info, module, moduleLen);

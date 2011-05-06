@@ -194,7 +194,7 @@ namespace Sf.Asap
 			return this.ModuleInfo;
 		}
 
-		/// <summary>Returns POKEY channel volume.</summary>
+		/// <summary>Returns POKEY channel volume - an integer between 0 and 15.</summary>
 		/// <param name="channel">POKEY channel number (from 0 to 7).</param>
 		public int GetPokeyChannelVolume(int channel)
 		{
@@ -2192,6 +2192,8 @@ namespace Sf.Asap
 			return this.Date;
 		}
 
+		/// <summary>Returns day of month of the music creation date.</summary>
+		/// <remarks>-1 means the day is unknown.</remarks>
 		public int GetDayOfMonth()
 		{
 			int n = this.CheckDate();
@@ -2208,12 +2210,14 @@ namespace Sf.Asap
 		}
 
 		/// <summary>Returns length of the specified song.</summary>
-		/// <remarks>The result is in milliseconds. -1 means the length is indeterminate.</remarks>
+		/// <remarks>The length is specified in milliseconds. -1 means the length is indeterminate.</remarks>
 		public int GetDuration(int song)
 		{
 			return this.Durations[song];
 		}
 
+		/// <summary>Returns human-readable description of the filename extension.</summary>
+		/// <param name="ext">Filename extension without the leading dot.</param>
 		public static string GetExtDescription(string ext)
 		{
 			if (ext.Length != 3)
@@ -2263,6 +2267,8 @@ namespace Sf.Asap
 			return this.Loops[song];
 		}
 
+		/// <summary>Returns music creation month (1-12).</summary>
+		/// <remarks>-1 means the month is unknown.</remarks>
 		public int GetMonth()
 		{
 			int n = this.CheckDate();
@@ -2271,6 +2277,11 @@ namespace Sf.Asap
 			return this.GetTwoDateDigits(n - 7);
 		}
 
+		/// <summary>Returns the extension of the original module format.</summary>
+		/// <remarks>For native modules it simply returns their extension.
+		/// For the SAP format it attempts to detect the original module format.</remarks>
+		/// <param name="module">Contents of the file.</param>
+		/// <param name="moduleLen">Length of the file.</param>
 		public string GetOriginalModuleExt(byte[] module, int moduleLen)
 		{
 			switch (this.Type) {
@@ -2437,6 +2448,8 @@ namespace Sf.Asap
 			return array[i] + (array[i + 1] << 8);
 		}
 
+		/// <summary>Returns music creation year.</summary>
+		/// <remarks>-1 means the year is unknown.</remarks>
 		public int GetYear()
 		{
 			int n = this.CheckDate();
@@ -2474,12 +2487,14 @@ namespace Sf.Asap
 			return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
 		}
 
+		/// <summary>Returns <see langword="true" /> for NTSC song and <see langword="false" /> for PAL song.</summary>
 		public bool IsNtsc()
 		{
 			return this.Ntsc;
 		}
 
-		/// <summary>Checks whether the extension represents a module type supported by ASAP.</summary>
+		/// <summary>Checks whether the filename extension represents a module type supported by ASAP.</summary>
+		/// <remarks>Returns <see langword="true" /> if the filename extension is supported by ASAP.</remarks>
 		/// <param name="ext">Filename extension without the leading dot.</param>
 		public static bool IsOurExt(string ext)
 		{
@@ -2487,6 +2502,7 @@ namespace Sf.Asap
 		}
 
 		/// <summary>Checks whether the filename represents a module type supported by ASAP.</summary>
+		/// <remarks>Returns <see langword="true" /> if the filename is supported by ASAP.</remarks>
 		/// <param name="filename">Filename to check the extension of.</param>
 		public static bool IsOurFile(string filename)
 		{
@@ -2770,7 +2786,7 @@ namespace Sf.Asap
 			}
 		}
 
-		/// <summary>Parses a string and returns the number of milliseconds it represents.</summary>
+		/// <summary>Returns the number of milliseconds represented by the given string.</summary>
 		/// <param name="s">Time in the <c>"mm:ss.xxx"</c> format.</param>
 		public static int ParseDuration(string s)
 		{
@@ -3489,6 +3505,8 @@ namespace Sf.Asap
 			this.Date = value;
 		}
 
+		/// <summary>Sets length of the specified song.</summary>
+		/// <remarks>The length is specified in milliseconds. -1 means the length is indeterminate.</remarks>
 		public void SetDuration(int song, int duration)
 		{
 			if (song < 0 || song >= this.Songs)
@@ -3496,6 +3514,13 @@ namespace Sf.Asap
 			this.Durations[song] = duration;
 		}
 
+		/// <summary>Sets information whether the specified song loops.</summary>
+		/// <remarks>Use:
+		/// <list type="bullet">
+		/// <item><see langword="true" /> if the song loops</item>
+		/// <item><see langword="false" /> if the song stops</item>
+		/// </list>
+		/// </remarks>
 		public void SetLoop(int song, bool loop)
 		{
 			if (song < 0 || song >= this.Songs)

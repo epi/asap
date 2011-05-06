@@ -216,6 +216,8 @@ public class ASAPInfo
 		return (Date[i] - '0') * 10 + Date[i + 1] - '0';
 	}
 
+	/// Returns music creation year.
+	/// -1 means the year is unknown.
 	public int GetYear()
 	{
 		int n = CheckDate();
@@ -224,6 +226,8 @@ public class ASAPInfo
 		return GetTwoDateDigits(n - 4) * 100 + GetTwoDateDigits(n - 2);
 	}
 
+	/// Returns music creation month (1-12).
+	/// -1 means the month is unknown.
 	public int GetMonth()
 	{
 		int n = CheckDate();
@@ -232,6 +236,8 @@ public class ASAPInfo
 		return GetTwoDateDigits(n - 7);
 	}
 
+	/// Returns day of month of the music creation date.
+	/// -1 means the day is unknown.
 	public int GetDayOfMonth()
 	{
 		int n = CheckDate();
@@ -260,10 +266,19 @@ public class ASAPInfo
 	}
 
 	/// Returns length of the specified song.
-	/// The result is in milliseconds. -1 means the length is indeterminate.
+	/// The length is specified in milliseconds. -1 means the length is indeterminate.
 	public int GetDuration(int song)
 	{
 		return Durations[song];
+	}
+
+	/// Sets length of the specified song.
+	/// The length is specified in milliseconds. -1 means the length is indeterminate.
+	public void SetDuration(int song, int duration)
+	{
+		if (song < 0 || song >= Songs)
+			throw "Song out of range";
+		Durations[song] = duration;
 	}
 
 	/// Returns information whether the specified song loops.
@@ -275,13 +290,10 @@ public class ASAPInfo
 		return Loops[song];
 	}
 
-	public void SetDuration(int song, int duration)
-	{
-		if (song < 0 || song >= Songs)
-			throw "Song out of range";
-		Durations[song] = duration;
-	}
-
+	/// Sets information whether the specified song loops.
+	/// Use:
+	/// * `true` if the song loops
+	/// * `false` if the song stops
 	public void SetLoop(int song, bool loop)
 	{
 		if (song < 0 || song >= Songs)
@@ -289,6 +301,7 @@ public class ASAPInfo
 		Loops[song] = loop;
 	}
 
+	/// Returns `true` for NTSC song and `false` for PAL song.
 	public bool IsNtsc()
 	{
 		return Ntsc;
@@ -1073,8 +1086,7 @@ public class ASAPInfo
 		}
 	}
 
-	/// Parses a string and returns the number of milliseconds it represents.
-	// TODO: <returns>Number of milliseconds represented by the string.</returns>
+	/// Returns the number of milliseconds represented by the given string.
 	public static int ParseDuration(
 		/// Time in the `"mm:ss.xxx"` format.
 		string s)
@@ -1291,6 +1303,7 @@ public class ASAPInfo
 	}
 
 	/// Checks whether the filename represents a module type supported by ASAP.
+	/// Returns `true` if the filename is supported by ASAP.
 	public static bool IsOurFile(
 		/// Filename to check the extension of.
 		string filename)
@@ -1298,7 +1311,8 @@ public class ASAPInfo
 		return IsOurPackedExt(GetPackedExt(filename));
 	}
 
-	/// Checks whether the extension represents a module type supported by ASAP.
+	/// Checks whether the filename extension represents a module type supported by ASAP.
+	/// Returns `true` if the filename extension is supported by ASAP.
 	public static bool IsOurExt(
 		/// Filename extension without the leading dot.
 		string ext)
@@ -1407,7 +1421,10 @@ public class ASAPInfo
 
 #if !ASAP_ONLY_SAP
 
-	public static string GetExtDescription(string ext)
+	/// Returns human-readable description of the filename extension.
+	public static string GetExtDescription(
+		/// Filename extension without the leading dot.
+		string ext)
 	{
 		if (ext.Length != 3)
 			throw "Unknown extension";
@@ -1443,7 +1460,14 @@ public class ASAPInfo
 		return offset;
 	}
 
-	public string GetOriginalModuleExt(byte[] module, int moduleLen)
+	/// Returns the extension of the original module format.
+	/// For native modules it simply returns their extension.
+	/// For the SAP format it attempts to detect the original module format.
+	public string GetOriginalModuleExt(
+		/// Contents of the file.
+		byte[] module,
+		/// Length of the file.
+		int moduleLen)
 	{
 		switch (Type) {
 		case ASAPModuleType.SapB:

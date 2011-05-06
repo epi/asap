@@ -86,7 +86,7 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
 int ASAPWriter_DurationToString(unsigned char *result, int value);
 void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsigned char const *module, int moduleLen);
 #define ASAPWriter_MAX_DURATION_LENGTH  9
-cibool ASAPWriter_Write(const char *filename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen);
+cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen);
 #ifdef __cplusplus
 }
 #endif

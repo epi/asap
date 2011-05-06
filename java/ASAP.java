@@ -204,7 +204,7 @@ public final class ASAP
 	}
 
 	/**
-	 * Returns POKEY channel volume.
+	 * Returns POKEY channel volume - an integer between 0 and 15.
 	 * @param channel POKEY channel number (from 0 to 7).
 	 */
 	public int getPokeyChannelVolume(int channel)

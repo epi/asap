@@ -607,7 +607,7 @@ public class ASAP
 		return GenerateAt(buffer, 0, bufferLen, format);
 	}
 
-	/// Returns POKEY channel volume.
+	/// Returns POKEY channel volume - an integer between 0 and 15.
 	public int GetPokeyChannelVolume(
 		/// POKEY channel number (from 0 to 7).
 		int channel)

@@ -3813,9 +3813,9 @@ static void ASAPWriter_TwoDigitsToString(unsigned char *result, int offset, int 
 	result[offset + 1] = 48 + value % 10;
 }
 
-cibool ASAPWriter_Write(const char *filename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen)
+cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen)
 {
-	int destExt = ASAPInfo_GetPackedExt(filename);
+	int destExt = ASAPInfo_GetPackedExt(targetFilename);
 	switch (destExt) {
 		int initAndPlayer[2];
 		const char *possibleExt;
