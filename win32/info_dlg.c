@@ -74,6 +74,7 @@ static int invalid_fields;
 #define INVALID_FIELD_TIME        8
 #define INVALID_FIELD_TIME_SHOW  16
 static HWND monthcal = NULL;
+static WNDPROC monthcalOriginalWndProc;
 
 static void showSongTime(void)
 {
@@ -178,6 +179,21 @@ static WORD positiveOrOne(int i)
 	return i > 0 ? i : 1;
 }
 
+static LRESULT CALLBACK MonthCalWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg) {
+	case WM_KILLFOCUS:
+		ShowWindow(hWnd, SW_HIDE);
+		break;
+	case WM_DESTROY:
+		SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) monthcalOriginalWndProc);
+		break;
+	default:
+		break;
+	}
+	return CallWindowProc(monthcalOriginalWndProc, hWnd, uMsg, wParam, lParam);
+}
+
 static void toggleCalendar(HWND hDlg)
 {
 	if (monthcal == NULL) {
@@ -186,6 +202,8 @@ static void toggleCalendar(HWND hDlg)
 		icex.dwICC = ICC_DATE_CLASSES;
 		InitCommonControlsEx(&icex);
 		monthcal = CreateWindowEx(0, MONTHCAL_CLASS, _T(""), WS_BORDER | WS_POPUP, 0, 0, 0, 0, hDlg, NULL, NULL, NULL);
+		/* subclass month calendar, so that it hides when looses focus */
+		monthcalOriginalWndProc = (WNDPROC) SetWindowLongPtr(monthcal, GWLP_WNDPROC, (LONG_PTR) MonthCalWndProc);
 	}
 	if (IsWindowVisible(monthcal))
 		ShowWindow(monthcal, SW_HIDE);
@@ -398,12 +416,6 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			closeInfoDialog();
 			return TRUE;
 		}
-		break;
-	case WM_MOVE:
-		/* FIXME: would be better to close the calendar
-		   as soon as it looses the focus - dunno how to do that */
-		if (monthcal != NULL && IsWindowVisible(monthcal))
-			ShowWindow(monthcal, SW_HIDE);
 		break;
 	case WM_NOTIFY: {
 			LPNMSELCHANGE psc = (LPNMSELCHANGE) lParam;
