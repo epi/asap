@@ -46,9 +46,13 @@ IDR_TRAYMENU MENU
 	POPUP "WASAP"
 	{
 		MENUITEM "&Open...", IDM_OPEN
-		MENUITEM "&Stop", IDM_STOP
+		POPUP "So&ng", GRAYED
+		{
+			MENUITEM "&1", IDM_SONG1
+		}
+		MENUITEM "&Stop", IDM_STOP, GRAYED
 #ifndef _UNICODE /* TODO */
-		MENUITEM "File &information...", IDM_FILE_INFO
+		MENUITEM "File &information...", IDM_FILE_INFO, GRAYED
 #endif
 #ifndef _WIN32_WCE /* disabled just because of limited computing power */
 		MENUITEM "Save as &WAV...", IDM_SAVE_WAV, GRAYED

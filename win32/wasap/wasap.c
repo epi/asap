@@ -211,8 +211,12 @@ static void ShowAbout(void)
 
 static void SetSongsMenu(int n)
 {
-	int i;
-	for (i = 1; i <= n; i++) {
+	static int count = 1; /* GetMenuItemCount unavailable on wince */
+	int i = count;
+	count = n;
+	while (i > n)
+		DeleteMenu(hSongMenu, --i, MF_BYPOSITION);
+	while (++i <= n) {
 		_TCHAR str[3];
 		str[0] = i <= 9 ? '&' : '0' + i / 10;
 		str[1] = '0' + i % 10;
@@ -234,6 +238,7 @@ static void StopPlayback(void)
 {
 	WaveOut_Close();
 	Tray_Modify(hStopIcon);
+	EnableMenuItem(hTrayMenu, IDM_STOP, MF_BYCOMMAND | MF_GRAYED);
 }
 
 static BOOL DoLoad(ASAP *asap, BYTE *module, int module_len)
@@ -263,9 +268,10 @@ static void LoadAndPlay(int song)
 	if (!loadModule(current_filename, module, &module_len))
 		return;
 	if (songs > 0) {
-		while (--songs >= 0)
-			DeleteMenu(hSongMenu, songs, MF_BYPOSITION);
+		songs = 0;
 		StopPlayback();
+		EnableMenuItem(hTrayMenu, 1, MF_BYPOSITION | MF_GRAYED); /* songs */
+		EnableMenuItem(hTrayMenu, IDM_FILE_INFO, MF_BYCOMMAND | MF_GRAYED);
 		EnableMenuItem(hTrayMenu, IDM_SAVE_WAV, MF_BYCOMMAND | MF_GRAYED);
 	}
 	if (!DoLoad(asap, module, module_len))
@@ -274,6 +280,8 @@ static void LoadAndPlay(int song)
 	if (song < 0)
 		song = ASAPInfo_GetDefaultSong(info);
 	songs = ASAPInfo_GetSongs(info);
+	EnableMenuItem(hTrayMenu, 1, MF_BYPOSITION | MF_ENABLED); /* songs */
+	EnableMenuItem(hTrayMenu, IDM_FILE_INFO, MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(hTrayMenu, IDM_SAVE_WAV, MF_BYCOMMAND | MF_ENABLED);
 #ifndef _UNICODE /* TODO */
 	updateInfoDialog(current_filename, song);
@@ -293,6 +301,7 @@ static void LoadAndPlay(int song)
 		ShowError(_T("Error initalizing WaveOut"));
 		return;
 	}
+	EnableMenuItem(hTrayMenu, IDM_STOP, MF_BYCOMMAND | MF_ENABLED);
 	Tray_Modify(hPlayIcon);
 }
 
@@ -615,9 +624,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLin
 	hPlayIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PLAY));
 	hMainMenu = LoadMenu(hInstance, MAKEINTRESOURCE(IDR_TRAYMENU));
 	hTrayMenu = GetSubMenu(hMainMenu, 0);
-	hSongMenu = CreatePopupMenu();
-	InsertMenu(hTrayMenu, 1, MF_BYPOSITION | MF_ENABLED | MF_STRING | MF_POPUP,
-		(UINT_PTR) hSongMenu, _T("So&ng"));
+	hSongMenu = GetSubMenu(hTrayMenu, 1);
 	SetMenuDefaultItem(hTrayMenu, 0, TRUE);
 	nid.hWnd = hWnd;
 	nid.hIcon = hStopIcon;
