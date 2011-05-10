@@ -13,6 +13,7 @@ New ports;;
 Emulation accuracy;;
 - Corrected ANTIC and POKEY timings.
 - Implemented STIMER, NMIST and NMIRES hardware registers.
+- Made the CONSOL register readable.
 - Fixed and optimized undocumented 6502 instructions.
 
 Usability improvements;;

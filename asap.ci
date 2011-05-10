@@ -81,6 +81,8 @@ public class ASAP
 		switch (addr & 0xff1f) {
 		case 0xd014:
 			return ModuleInfo.Ntsc ? 0xf : 1;
+		case 0xd01f:
+			return ~Consol & 0xf;
 		case 0xd20a:
 		case 0xd21a:
 			return Pokeys.GetRandom(addr, Cycle);
@@ -162,10 +164,9 @@ public class ASAP
 			Covox[addr] = data;
 		}
 		else if ((addr & 0xff1f) == 0xd01f) {
-			data &= 8;
 			const int DeltaShiftGTIA = 20;
-			// NOT data - ast.consol; reverse to the POKEY sound
-			int delta = (Consol - data) << DeltaShiftGTIA;
+			// NOT data - Consol; reverse to the POKEY sound
+			int delta = ((Consol & 8) - (data & 8)) << DeltaShiftGTIA;
 			Pokeys.BasePokey.AddDelta(Pokeys, Cycle, delta);
 			Pokeys.ExtraPokey.AddDelta(Pokeys, Cycle, delta);
 			Consol = data;

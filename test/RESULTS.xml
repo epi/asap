@@ -48,4 +48,10 @@
 		<fail on="ASAP 2.1.2" />
 		<pass on="ASAP 3.0.0" />
 	</test>
+	<test name="gtia_consol">
+		<pass on="Atari800 2.2.1" />
+		<pass on="Altirra 1.8" />
+		<fail on="ASAP 2.1.2" />
+		<pass on="ASAP 3.0.0" />
+	</test>
 </tests>
