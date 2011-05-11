@@ -20,7 +20,7 @@ Java applet
 To embed the applet in a web page, use the following HTML syntax:
 
 ---------------------------------------------------------------------------
-<applet width="40" height="45" code="ASAPApplet" archive="asap_applet.jar">
+<applet width="40" height="45" archive="asap_applet.jar" code="ASAPApplet">
     <param name="file" value="File.sap" />
 </applet>
 ---------------------------------------------------------------------------
@@ -28,14 +28,14 @@ To embed the applet in a web page, use the following HTML syntax:
 or the following XHTML:
 
 ---------------------------------------------------------------------------
-<object width="40" height="45" type="application/x-java-applet" classid="java:ASAPApplet.class">
+<object width="40" height="45" type="application/x-java-applet">
     <param name="archive" value="asap_applet.jar" />
     <param name="code" value="ASAPApplet" />
     <param name="file" value="File.sap" />
 </object>
 ---------------------------------------------------------------------------
 
-(tested with Internet Explorer 8, Firefox 3.5 and Chrome 3.0).
+(tested with Internet Explorer 6 and 9, Firefox 3.6 and Chrome 11).
 
 The applet will play the specified file and display POKEY channel volume
 meters scaled to the applet area (you can specify a different size).
