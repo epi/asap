@@ -28,6 +28,15 @@
 #define _WIN32_IE 0x400
 #include <commctrl.h>
 
+#ifndef MCM_SETCURRENTVIEW
+/* missing in MinGW */
+#define MCMV_MONTH      0
+#define MCMV_YEAR       1
+#define MCMV_DECADE     2
+#define MCM_SETCURRENTVIEW 0x1020
+#define MonthCal_SetCurrentView(hmc, dwNewView)  (BOOL) SNDMSG(hmc, MCM_SETCURRENTVIEW, 0, (LPARAM)(dwNewView))
+#endif
+
 #include "asapci.h"
 #include "info_dlg.h"
 
@@ -174,11 +183,6 @@ static void updateInfoString(HWND hDlg, int nID, int mask, cibool (*func)(ASAPIn
 		showEditTip(nID, _T("Invalid characters"), _T("Avoid national characters and quotation marks"));
 }
 
-static WORD positiveOrOne(int i)
-{
-	return i > 0 ? i : 1;
-}
-
 static LRESULT CALLBACK MonthCalWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
@@ -223,10 +227,28 @@ static void toggleCalendar(HWND hDlg)
 		SetWindowPos(monthcal, NULL, x, y, rc.right, rc.bottom, SWP_SHOWWINDOW | SWP_NOZORDER);
 		y = ASAPInfo_GetYear(edited_info);
 		if (y > 0) {
+			DWORD view;
+			int month = ASAPInfo_GetMonth(edited_info);
 			st.wYear = y;
-			st.wMonth = positiveOrOne(ASAPInfo_GetMonth(edited_info));
-			st.wDay = positiveOrOne(ASAPInfo_GetDayOfMonth(edited_info));
+			if (month > 0) {
+				int day = ASAPInfo_GetDayOfMonth(edited_info);
+				st.wMonth = month;
+				if (day > 0) {
+					st.wDay = day;
+					view = MCMV_MONTH;
+				}
+				else {
+					st.wDay = 1;
+					view = MCMV_YEAR;
+				}
+			}
+			else {
+				st.wMonth = 1;
+				st.wDay = 1;
+				view = MCMV_DECADE;
+			}
 			MonthCal_SetCurSel(monthcal, &st);
+			MonthCal_SetCurrentView(monthcal, view);
 		}
 		SetFocus(monthcal);
 	}
