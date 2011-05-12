@@ -401,30 +401,39 @@ dist: srcdist win32 wince java csharp javascript flash setup x64-setup wince-set
 	$(GREP) Version: ../asap.spec
 	$(GREP) "<since>" ../PORTS.xml | sort -ru | head -1
 
-www: ../../www/index.html ../../www/apokeysnd.dll ../../www/asap.swf ../../www/asap_applet.jar ../../www/SilverASAP.xap ../../www/favicon.ico ../../www/PORTS.xml ../../www/PORTS.xsl
+www: ../www/index.html ../www/applet.html ../www/flash.html ../www/silverlight.html ../www/apokeysnd.dll ../www/asap.swf ../www/asap_applet.jar ../www/SilverASAP.xap ../www/favicon.ico ../www/PORTS.xml ../www/PORTS.xsl
 
-../../www/index.html: ../README ../NEWS ../CREDITS
+../www/index.html: ../README ../NEWS ../CREDITS
 	$(ASCIIDOC_START) -a asapwww -a asapports ../README $(ASCIIDOC_END)
 
-../../www/apokeysnd.dll: apokeysnd.dll
+../www/applet.html: ../www/applet.txt
+	$(ASCIIDOC_START) $< $(ASCIIDOC_END)
+
+../www/flash.html: ../www/flash.txt
+	$(ASCIIDOC_START) $< $(ASCIIDOC_END)
+
+../www/silverlight.html: ../www/silverlight.txt
+	$(ASCIIDOC_START) $< $(ASCIIDOC_END)
+
+../www/apokeysnd.dll: apokeysnd.dll
 	$(CP) $< $@
 
-../../www/asap.swf: ../flash/asap.swf
+../www/asap.swf: ../flash/asap.swf
 	$(CP) $< $@
 
-../../www/asap_applet.jar: ../java/asap_applet.jar
+../www/asap_applet.jar: ../java/asap_applet.jar
 	$(CP) $< $@
 
-../../www/SilverASAP.xap: ../csharp/SilverASAP.xap
+../www/SilverASAP.xap: ../csharp/SilverASAP.xap
 	$(CP) $< $@
 
-../../www/favicon.ico: wasap/wasap.ico
+../www/favicon.ico: wasap/wasap.ico
 	$(CP) $< $@
 
-../../www/PORTS.xml: ../PORTS.xml
+../www/PORTS.xml: ../PORTS.xml
 	$(CP) $< $@
 
-../../www/PORTS.xsl: ../PORTS.xsl
+../www/PORTS.xsl: ../PORTS.xsl
 	$(CP) $< $@
 
 .PHONY: all win32 mingw foo wince dsf xbmc java csharp javascript flash clean setup x64-setup ../MANIFEST srcdist dist www

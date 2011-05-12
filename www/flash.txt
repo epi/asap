@@ -1,0 +1,20 @@
+ASAP - Another Slight Atari Player
+==================================
+
+http://sourceforge.net/projects/asap/files/asap/[Download] |
+http://asap.git.sourceforge.net/git/gitweb.cgi?p=asap/asap;a=summary[Browse source code (Git)] |
+http://sourceforge.net/scm/?type=git&group_id=154391[Get latest source code (Git)] |
+http://sourceforge.net/projects/asap/[SourceForge project page]
+
+This page contains a pure-ActionScript player of Atari music.
+You need http://get.adobe.com/flashplayer/[Adobe Flash Player] installed and enabled in your browser.
+
++++
+<object width="0" height="0" type="application/x-shockwave-flash" data="asap.swf" id="asap">
+	<param name="movie" value="asap.swf" />
+	<param name="FlashVars" value="file=X_Ray_2.sap" />
+</object>
+<input type="button" value="Stop" onclick="document.getElementById('asap').asapStop()" />
++++
+
+image::http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get ASAP - Another Slight Atari Player at SourceForge.net. Fast, secure and Free Open Source software downloads",width=120,height=30,link="http://sourceforge.net/projects/asap/"]
