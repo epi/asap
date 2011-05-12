@@ -269,9 +269,14 @@ static BOOL doSaveFile(LPCTSTR filename)
 	bw.func = saveByte;
 	if (!ASAPWriter_Write(filename, bw, edited_info, saved_module, saved_module_len)) {
 		fclose(fp);
+		DeleteFile(filename);
 		return FALSE;
 	}
-	return fclose(fp) == 0;
+	if (fclose(fp) != 0) {
+		DeleteFile(filename);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static BOOL saveFile(LPCTSTR filename)
