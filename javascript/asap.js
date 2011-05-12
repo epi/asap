@@ -327,6 +327,8 @@ ASAP.prototype.peekHardware = function(addr) {
 	switch (addr & 65311) {
 		case 53268:
 			return this.moduleInfo.ntsc ? 15 : 1;
+		case 53279:
+			return ~this.consol & 15;
 		case 53770:
 		case 53786:
 			return this.pokeys.getRandom(addr, this.cycle);
@@ -485,8 +487,7 @@ ASAP.prototype.pokeHardware = function(addr, data) {
 		this.covox[addr] = data;
 	}
 	else if ((addr & 65311) == 53279) {
-		data &= 8;
-		var delta = this.consol - data << 20;
+		var delta = (this.consol & 8) - (data & 8) << 20;
 		this.pokeys.basePokey.addDelta(this.pokeys, this.cycle, delta);
 		this.pokeys.extraPokey.addDelta(this.pokeys, this.cycle, delta);
 		this.consol = data;

@@ -370,6 +370,8 @@ namespace Sf.Asap
 			switch (addr & 65311) {
 				case 53268:
 					return this.ModuleInfo.Ntsc ? 15 : 1;
+				case 53279:
+					return ~this.Consol & 15;
 				case 53770:
 				case 53786:
 					return this.Pokeys.GetRandom(addr, this.Cycle);
@@ -533,8 +535,7 @@ namespace Sf.Asap
 				this.Covox[addr] = (byte) data;
 			}
 			else if ((addr & 65311) == 53279) {
-				data &= 8;
-				int delta = this.Consol - data << 20;
+				int delta = (this.Consol & 8) - (data & 8) << 20;
 				this.Pokeys.BasePokey.AddDelta(this.Pokeys, this.Cycle, delta);
 				this.Pokeys.ExtraPokey.AddDelta(this.Pokeys, this.Cycle, delta);
 				this.Consol = data;
