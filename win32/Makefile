@@ -76,8 +76,8 @@ x64/asapconv.exe: ../asapconv.c ../asapci.c ../asapci.h
 	test -d x64 || mkdir x64
 	$(X64_ASAP_GCC) ../asapconv.c ../asapci.c
 
-../asapci.c: ../asap.ci ../asap6502.ci ../asapinfo.ci ../asapwriter.ci ../cpu6502.ci ../pokey.ci $(PLAYERS_OBX) ../players/xexb.obx ../players/xexd.obx
-	$(CITO) -I ../players -l c ../asap.ci ../asap6502.ci ../asapinfo.ci ../asapwriter.ci ../cpu6502.ci ../pokey.ci
+../asapci.c: ../asap.ci ../asap6502.ci ../asapinfo.ci ../asapwriter.ci ../cpu6502.ci ../flashpack.ci ../pokey.ci $(PLAYERS_OBX) ../players/xexb.obx ../players/xexd.obx
+	$(CITO) -I ../players -l c -D FLASHPACK ../asap.ci ../asap6502.ci ../asapinfo.ci ../asapwriter.ci ../cpu6502.ci ../flashpack.ci ../pokey.ci
 
 # WASAP
 

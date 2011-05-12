@@ -446,35 +446,50 @@ public class ASAPWriter
 			WriteExecutable(w, null, info, module, moduleLen);
 			return;
 		case ASAP_EXT("XEX"):
-			int[2] initAndPlayer;
-			WriteExecutable(w, initAndPlayer, info, module, moduleLen);
-			switch (info.Type) {
-			case ASAPModuleType.SapD:
-				if (info.Fastplay != 312)
+			// * -> XEX
+			{
+#if FLASHPACK
+				FlashPack() flashPack;
+				ByteWriter resultWriter = w;
+				native {
+					w.obj = &flashPack;
+					w.func = (void (*)(void *, int)) FlashPack_LoadByte;
+				}
+#endif
+				int[2] initAndPlayer;
+				WriteExecutable(w, initAndPlayer, info, module, moduleLen);
+				switch (info.Type) {
+				case ASAPModuleType.SapD:
+					if (info.Fastplay != 312)
+						throw "Impossible conversion";
+					const int dObxLen = BinaryResource("xexd.obx").Length;
+					WriteBytes(w, BinaryResource("xexd.obx"), 0, dObxLen - 12);
+					WriteWord(w, initAndPlayer[0]);
+					w(0x4c); // JMP
+					WriteWord(w, initAndPlayer[1]); // possibly -1 writen as 0xff, 0xff
+					w(info.DefaultSong);
+					WriteBytes(w, BinaryResource("xexd.obx"), dObxLen - 6, dObxLen);
+					break;
+				case ASAPModuleType.SapS:
 					throw "Impossible conversion";
-				const int dObxLen = BinaryResource("xexd.obx").Length;
-				WriteBytes(w, BinaryResource("xexd.obx"), 0, dObxLen - 12);
-				WriteWord(w, initAndPlayer[0]);
-				w(0x4c); // JMP
-				WriteWord(w, initAndPlayer[1]); // possibly -1 writen as 0xff, 0xff
-				w(info.DefaultSong);
-				WriteBytes(w, BinaryResource("xexd.obx"), dObxLen - 6, dObxLen);
-				return;
-			case ASAPModuleType.SapS:
-				throw "Impossible conversion";
-			default:
-				const int bObxLen = BinaryResource("xexb.obx").Length;
-				WriteBytes(w, BinaryResource("xexb.obx"), 0, bObxLen - 17);
-				WriteWord(w, initAndPlayer[0]);
-				w(0x4c); // JMP
-				WriteWord(w, initAndPlayer[1]);
-				w(info.DefaultSong);
-				w(info.Fastplay & 1);
-				w((info.Fastplay >> 1) % 156);
-				w((info.Fastplay >> 1) % 131);
-				w(info.Fastplay / 312);
-				w(info.Fastplay / 262);
-				WriteBytes(w, BinaryResource("xexb.obx"), bObxLen - 6, bObxLen);
+				default:
+					const int bObxLen = BinaryResource("xexb.obx").Length;
+					WriteBytes(w, BinaryResource("xexb.obx"), 0, bObxLen - 17);
+					WriteWord(w, initAndPlayer[0]);
+					w(0x4c); // JMP
+					WriteWord(w, initAndPlayer[1]);
+					w(info.DefaultSong);
+					w(info.Fastplay & 1);
+					w((info.Fastplay >> 1) % 156);
+					w((info.Fastplay >> 1) % 131);
+					w(info.Fastplay / 312);
+					w(info.Fastplay / 262);
+					WriteBytes(w, BinaryResource("xexb.obx"), bObxLen - 6, bObxLen);
+					break;
+				}
+#if FLASHPACK
+				flashPack.Compress(resultWriter);
+#endif
 				return;
 			}
 		default:

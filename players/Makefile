@@ -30,5 +30,8 @@ $(PLAYERS_OBX_DIR)/rmt4.obx: $(TOP_DIR)/players/rmt.asx $(PLAYERS_OBX_DIR)
 $(PLAYERS_OBX_DIR)/rmt8.obx: $(TOP_DIR)/players/rmt.asx $(PLAYERS_OBX_DIR)
 	$(XASM) -d STEREOMODE=1 $<
 
+$(PLAYERS_OBX_DIR)/fp3depk.obx: $(TOP_DIR)/players/fp3depk.asx $(PLAYERS_OBX_DIR)
+	$(XASM) -l $(PLAYERS_OBX_DIR)/fp3depk.lst $<
+
 $(PLAYERS_OBX_DIR)/%.obx: $(TOP_DIR)/players/%.asx $(PLAYERS_OBX_DIR)
 	$(XASM) $<

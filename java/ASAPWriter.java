@@ -91,34 +91,37 @@ public final class ASAPWriter
 				ASAPWriter.writeExecutable(w, null, info, module, moduleLen);
 				return;
 			case 7890296:
-				int[] initAndPlayer = new int[2];
-				ASAPWriter.writeExecutable(w, initAndPlayer, info, module, moduleLen);
-				switch (info.type) {
-					case ASAPModuleType.SAP_D:
-						if (info.fastplay != 312)
+				{
+					int[] initAndPlayer = new int[2];
+					ASAPWriter.writeExecutable(w, initAndPlayer, info, module, moduleLen);
+					switch (info.type) {
+						case ASAPModuleType.SAP_D:
+							if (info.fastplay != 312)
+								throw new Exception("Impossible conversion");
+							ASAPWriter.writeBytes(w, getBinaryResource("xexd.obx", 132), 0, 120);
+							ASAPWriter.writeWord(w, initAndPlayer[0]);
+							w.run(76);
+							ASAPWriter.writeWord(w, initAndPlayer[1]);
+							w.run(info.defaultSong);
+							ASAPWriter.writeBytes(w, getBinaryResource("xexd.obx", 132), 126, 132);
+							break;
+						case ASAPModuleType.SAP_S:
 							throw new Exception("Impossible conversion");
-						ASAPWriter.writeBytes(w, getBinaryResource("xexd.obx", 132), 0, 120);
-						ASAPWriter.writeWord(w, initAndPlayer[0]);
-						w.run(76);
-						ASAPWriter.writeWord(w, initAndPlayer[1]);
-						w.run(info.defaultSong);
-						ASAPWriter.writeBytes(w, getBinaryResource("xexd.obx", 132), 126, 132);
-						return;
-					case ASAPModuleType.SAP_S:
-						throw new Exception("Impossible conversion");
-					default:
-						ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 209), 0, 192);
-						ASAPWriter.writeWord(w, initAndPlayer[0]);
-						w.run(76);
-						ASAPWriter.writeWord(w, initAndPlayer[1]);
-						w.run(info.defaultSong);
-						w.run(info.fastplay & 1);
-						w.run((info.fastplay >> 1) % 156);
-						w.run((info.fastplay >> 1) % 131);
-						w.run(info.fastplay / 312);
-						w.run(info.fastplay / 262);
-						ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 209), 203, 209);
-						return;
+						default:
+							ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 209), 0, 192);
+							ASAPWriter.writeWord(w, initAndPlayer[0]);
+							w.run(76);
+							ASAPWriter.writeWord(w, initAndPlayer[1]);
+							w.run(info.defaultSong);
+							w.run(info.fastplay & 1);
+							w.run((info.fastplay >> 1) % 156);
+							w.run((info.fastplay >> 1) % 131);
+							w.run(info.fastplay / 312);
+							w.run(info.fastplay / 262);
+							ASAPWriter.writeBytes(w, getBinaryResource("xexb.obx", 209), 203, 209);
+							break;
+					}
+					return;
 				}
 			default:
 				String possibleExt = info.getOriginalModuleExt(module, moduleLen);

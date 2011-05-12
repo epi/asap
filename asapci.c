@@ -20,6 +20,27 @@ typedef enum {
 }
 ASAPModuleType;
 typedef struct Cpu6502 Cpu6502;
+typedef struct FlashPack FlashPack;
+typedef struct FlashPackItem FlashPackItem;
+
+typedef enum {
+	FlashPackItemType_LITERAL,
+	FlashPackItemType_COPY_TWO_BYTES,
+	FlashPackItemType_COPY_THREE_BYTES,
+	FlashPackItemType_COPY_MANY_BYTES,
+	FlashPackItemType_SET_ADDRESS,
+	FlashPackItemType_END_OF_STREAM
+}
+FlashPackItemType;
+
+typedef enum {
+	FlashPackLoadState_START_LOW_BYTE,
+	FlashPackLoadState_START_HIGH_BYTE,
+	FlashPackLoadState_END_LOW_BYTE,
+	FlashPackLoadState_END_HIGH_BYTE,
+	FlashPackLoadState_CONTENT
+}
+FlashPackLoadState;
 
 typedef enum {
 	NmiStatus_RESET,
@@ -1733,6 +1754,33 @@ static const unsigned char CiBinaryResource_xexd_obx[132] = { 255, 255, 0, 187, 
 	187, 104, 168, 104, 170, 104, 64, 76, 0, 0, 76, 0, 0, 0, 224, 2,
 	225, 2, 18, 187 };
 
+struct FlashPackItem {
+	FlashPackItemType type;
+	int value;
+};
+static int FlashPackItem_WriteValueTo(FlashPackItem const *self, unsigned char *buffer, int index);
+
+struct FlashPack {
+	unsigned char compressed[65536];
+	int compressedLength;
+	FlashPackItem items[64];
+	int itemsCount;
+	int loadAddress;
+	int loadEndAddress;
+	FlashPackLoadState loadState;
+	int memory[65536];
+};
+static void FlashPack_Construct(FlashPack *self);
+static cibool FlashPack_Compress(FlashPack *self, ByteWriter w);
+static void FlashPack_CompressMemoryArea(FlashPack *self, int startAddress, int endAddress);
+static int FlashPack_FindHole(FlashPack const *self);
+static int FlashPack_GetInnerFlags(FlashPack const *self, int index);
+static cibool FlashPack_IsLiteralPreferred(FlashPack const *self);
+static void FlashPack_LoadByte(FlashPack *self, int data);
+static void FlashPack_PutItem(FlashPack *self, FlashPackItemType type, int value);
+static void FlashPack_PutItems(FlashPack *self);
+static void FlashPack_PutPoke(FlashPack *self, int address, int value);
+
 static void ASAP_Construct(ASAP *self)
 {
 	PokeyPair_Construct(&self->pokeys);
@@ -2087,6 +2135,8 @@ static int ASAP_PeekHardware(ASAP const *self, int addr)
 	switch (addr & 65311) {
 		case 53268:
 			return self->moduleInfo.ntsc ? 15 : 1;
+		case 53279:
+			return ~self->consol & 15;
 		case 53770:
 		case 53786:
 			return PokeyPair_GetRandom(&self->pokeys, addr, self->cycle);
@@ -2257,9 +2307,7 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 		self->covox[addr] = data;
 	}
 	else if ((addr & 65311) == 53279) {
-		int delta;
-		data &= 8;
-		delta = (self->consol - data) << 20;
+		int delta = ((self->consol & 8) - (data & 8)) << 20;
 		Pokey_AddDelta(&self->pokeys.basePokey, &self->pokeys, self->cycle, delta);
 		Pokey_AddDelta(&self->pokeys.extraPokey, &self->pokeys, self->cycle, delta);
 		self->consol = data;
@@ -3817,39 +3865,50 @@ cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const
 {
 	int destExt = ASAPInfo_GetPackedExt(targetFilename);
 	switch (destExt) {
-		int initAndPlayer[2];
 		const char *possibleExt;
 		case 7364979:
 			return ASAPWriter_WriteExecutable(w, NULL, info, module, moduleLen);
 		case 7890296:
-			if (!ASAPWriter_WriteExecutable(w, initAndPlayer, info, module, moduleLen))
-				return FALSE;
-			switch (info->type) {
-				case ASAPModuleType_SAP_D:
-					if (info->fastplay != 312)
-						return FALSE;
-					ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 0, 120);
-					ASAPWriter_WriteWord(w, initAndPlayer[0]);
-					w.func(w.obj, 76);
-					ASAPWriter_WriteWord(w, initAndPlayer[1]);
-					w.func(w.obj, info->defaultSong);
-					ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 126, 132);
-					return TRUE;
-				case ASAPModuleType_SAP_S:
+			{
+				FlashPack flashPack;
+				ByteWriter resultWriter;
+				int initAndPlayer[2];
+				FlashPack_Construct(&flashPack);
+				resultWriter = w;
+				
+					w.obj = &flashPack;
+					w.func = (void (*)(void *, int)) FlashPack_LoadByte;
+				;
+				if (!ASAPWriter_WriteExecutable(w, initAndPlayer, info, module, moduleLen))
 					return FALSE;
-				default:
-					ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 0, 192);
-					ASAPWriter_WriteWord(w, initAndPlayer[0]);
-					w.func(w.obj, 76);
-					ASAPWriter_WriteWord(w, initAndPlayer[1]);
-					w.func(w.obj, info->defaultSong);
-					w.func(w.obj, info->fastplay & 1);
-					w.func(w.obj, (info->fastplay >> 1) % 156);
-					w.func(w.obj, (info->fastplay >> 1) % 131);
-					w.func(w.obj, info->fastplay / 312);
-					w.func(w.obj, info->fastplay / 262);
-					ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 203, 209);
-					return TRUE;
+				switch (info->type) {
+					case ASAPModuleType_SAP_D:
+						if (info->fastplay != 312)
+							return FALSE;
+						ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 0, 120);
+						ASAPWriter_WriteWord(w, initAndPlayer[0]);
+						w.func(w.obj, 76);
+						ASAPWriter_WriteWord(w, initAndPlayer[1]);
+						w.func(w.obj, info->defaultSong);
+						ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 126, 132);
+						break;
+					case ASAPModuleType_SAP_S:
+						return FALSE;
+					default:
+						ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 0, 192);
+						ASAPWriter_WriteWord(w, initAndPlayer[0]);
+						w.func(w.obj, 76);
+						ASAPWriter_WriteWord(w, initAndPlayer[1]);
+						w.func(w.obj, info->defaultSong);
+						w.func(w.obj, info->fastplay & 1);
+						w.func(w.obj, (info->fastplay >> 1) % 156);
+						w.func(w.obj, (info->fastplay >> 1) % 131);
+						w.func(w.obj, info->fastplay / 312);
+						w.func(w.obj, info->fastplay / 262);
+						ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 203, 209);
+						break;
+				}
+				return FlashPack_Compress(&flashPack, resultWriter);
 			}
 		default:
 			possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
@@ -6875,6 +6934,363 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 	self->c = c;
 	self->s = s;
 	self->vdi = vdi;
+}
+
+static void FlashPack_Construct(FlashPack *self)
+{
+	int i;
+	for (i = 0; i < 65536; i++)
+		self->memory[i] = -1;
+	self->loadState = FlashPackLoadState_START_LOW_BYTE;
+}
+
+static cibool FlashPack_Compress(FlashPack *self, ByteWriter w)
+{
+	int runAddress = self->memory[736] + (self->memory[737] << 8);
+	int depackerEndAddress;
+	int depackerStartAddress;
+	int compressedStartAddress;
+	self->memory[736] = self->memory[737] = -1;
+	if ((depackerEndAddress = FlashPack_FindHole(self)) == -1)
+		return FALSE;
+	self->compressedLength = 0;
+	self->itemsCount = 0;
+	FlashPack_PutPoke(self, 54286, 0);
+	FlashPack_PutPoke(self, 53774, 0);
+	FlashPack_PutPoke(self, 54272, 0);
+	FlashPack_PutPoke(self, 54017, 254);
+	FlashPack_PutPoke(self, 580, 255);
+	FlashPack_CompressMemoryArea(self, depackerEndAddress, 65535);
+	FlashPack_CompressMemoryArea(self, 0, depackerEndAddress);
+	FlashPack_PutItem(self, FlashPackItemType_END_OF_STREAM, 0);
+	FlashPack_PutItems(self);
+	depackerStartAddress = depackerEndAddress - 87;
+	compressedStartAddress = depackerStartAddress - self->compressedLength;
+	if (compressedStartAddress < 8192)
+		return FALSE;
+	w.func(w.obj, 255);
+	w.func(w.obj, 255);
+	ASAPWriter_WriteWord(w, compressedStartAddress);
+	ASAPWriter_WriteWord(w, depackerEndAddress);
+	ASAPWriter_WriteBytes(w, self->compressed, 0, self->compressedLength);
+	w.func(w.obj, 173);
+	ASAPWriter_WriteWord(w, compressedStartAddress);
+	w.func(w.obj, 238);
+	ASAPWriter_WriteWord(w, depackerStartAddress + 1);
+	w.func(w.obj, 208);
+	w.func(w.obj, 3);
+	w.func(w.obj, 238);
+	ASAPWriter_WriteWord(w, depackerStartAddress + 2);
+	w.func(w.obj, 96);
+	w.func(w.obj, 76);
+	ASAPWriter_WriteWord(w, runAddress);
+	w.func(w.obj, 133);
+	w.func(w.obj, 254);
+	w.func(w.obj, 138);
+	w.func(w.obj, 42);
+	w.func(w.obj, 170);
+	w.func(w.obj, 240);
+	w.func(w.obj, 246);
+	w.func(w.obj, 177);
+	w.func(w.obj, 254);
+	w.func(w.obj, 153);
+	w.func(w.obj, 128);
+	w.func(w.obj, 128);
+	w.func(w.obj, 200);
+	w.func(w.obj, 208);
+	w.func(w.obj, 9);
+	w.func(w.obj, 152);
+	w.func(w.obj, 56);
+	w.func(w.obj, 101);
+	w.func(w.obj, 255);
+	w.func(w.obj, 133);
+	w.func(w.obj, 255);
+	w.func(w.obj, 141);
+	ASAPWriter_WriteWord(w, depackerStartAddress + 26);
+	w.func(w.obj, 202);
+	w.func(w.obj, 208);
+	w.func(w.obj, 236);
+	w.func(w.obj, 6);
+	w.func(w.obj, 253);
+	w.func(w.obj, 208);
+	w.func(w.obj, 21);
+	w.func(w.obj, 6);
+	w.func(w.obj, 252);
+	w.func(w.obj, 208);
+	w.func(w.obj, 7);
+	w.func(w.obj, 56);
+	w.func(w.obj, 32);
+	ASAPWriter_WriteWord(w, depackerStartAddress);
+	w.func(w.obj, 42);
+	w.func(w.obj, 133);
+	w.func(w.obj, 252);
+	w.func(w.obj, 169);
+	w.func(w.obj, 1);
+	w.func(w.obj, 144);
+	w.func(w.obj, 4);
+	w.func(w.obj, 32);
+	ASAPWriter_WriteWord(w, depackerStartAddress);
+	w.func(w.obj, 42);
+	w.func(w.obj, 133);
+	w.func(w.obj, 253);
+	w.func(w.obj, 32);
+	ASAPWriter_WriteWord(w, depackerStartAddress);
+	w.func(w.obj, 162);
+	w.func(w.obj, 1);
+	w.func(w.obj, 144);
+	w.func(w.obj, 206);
+	w.func(w.obj, 74);
+	w.func(w.obj, 208);
+	w.func(w.obj, 194);
+	w.func(w.obj, 32);
+	ASAPWriter_WriteWord(w, depackerStartAddress);
+	w.func(w.obj, 176);
+	w.func(w.obj, 193);
+	w.func(w.obj, 168);
+	w.func(w.obj, 32);
+	ASAPWriter_WriteWord(w, depackerStartAddress);
+	w.func(w.obj, 144);
+	w.func(w.obj, 202);
+	ASAPWriter_WriteWord(w, 736);
+	ASAPWriter_WriteWord(w, 737);
+	ASAPWriter_WriteWord(w, depackerStartAddress + 50);
+	return TRUE;
+}
+
+static void FlashPack_CompressMemoryArea(FlashPack *self, int startAddress, int endAddress)
+{
+	int lastDistance = -1;
+	int address;
+	for (address = startAddress; address <= endAddress;) {
+		while (self->memory[address] < 0)
+			if (++address > endAddress)
+				return;
+		FlashPack_PutItem(self, FlashPackItemType_SET_ADDRESS, address);
+		while (address <= endAddress && self->memory[address] >= 0) {
+			int bestMatch = 0;
+			int bestDistance = -1;
+			int backAddress;
+			for (backAddress = address - 1; backAddress >= startAddress && address - backAddress < 128; backAddress--) {
+				int match;
+				for (match = 0; address + match <= endAddress; match++) {
+					int data = self->memory[address + match];
+					if (data < 0 || data != self->memory[backAddress + match])
+						break;
+				}
+				if (bestMatch < match) {
+					bestMatch = match;
+					bestDistance = address - backAddress;
+				}
+				else if (bestMatch == match && address - backAddress == lastDistance)
+					bestDistance = lastDistance;
+			}
+			switch (bestMatch) {
+				int length;
+				case 0:
+				case 1:
+					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address++]);
+					continue;
+				case 2:
+					FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
+					break;
+				case 3:
+					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+					break;
+				case 4:
+					if (bestDistance == lastDistance)
+						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 4);
+					else if (FlashPack_IsLiteralPreferred(self)) {
+						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+					}
+					else {
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address + 3]);
+					}
+					break;
+				case 5:
+					if (bestDistance == lastDistance)
+						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 5);
+					else {
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+						FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
+					}
+					break;
+				case 6:
+					if (bestDistance == lastDistance)
+						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 6);
+					else {
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+					}
+					break;
+				default:
+					length = bestMatch;
+					if (bestDistance != lastDistance) {
+						if (FlashPack_IsLiteralPreferred(self) && length % 255 == 4) {
+							FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
+							length--;
+						}
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+						length -= 3;
+					}
+					else if (FlashPack_IsLiteralPreferred(self) && length % 255 == 1) {
+						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
+						length--;
+					}
+					for (; length > 255; length -= 255)
+						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 255);
+					switch (length) {
+						case 0:
+							break;
+						case 1:
+							FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address + bestMatch - 1]);
+							break;
+						case 2:
+							FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
+							break;
+						case 3:
+							FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+							break;
+						default:
+							FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, length);
+							break;
+					}
+					break;
+			}
+			address += bestMatch;
+			lastDistance = bestDistance;
+		}
+	}
+}
+
+static int FlashPack_FindHole(FlashPack const *self)
+{
+	int end = 48159;
+	for (;;) {
+		int start;
+		while (self->memory[end] >= 0)
+			if (--end < 9216)
+				return -1;
+		start = end;
+		while (self->memory[--start] < 0)
+			if (end - start >= 1023)
+				return end;
+		end = start;
+	}
+}
+
+static int FlashPack_GetInnerFlags(FlashPack const *self, int index)
+{
+	int flags = 1;
+	do {
+		flags <<= 1;
+		if (index < self->itemsCount && self->items[index++].type != FlashPackItemType_LITERAL)
+			flags++;
+	}
+	while (flags < 256);
+	return flags & 255;
+}
+
+static cibool FlashPack_IsLiteralPreferred(FlashPack const *self)
+{
+	return (self->itemsCount & 7) == 7 && FlashPack_GetInnerFlags(self, self->itemsCount - 7) == 0;
+}
+
+static void FlashPack_LoadByte(FlashPack *self, int data)
+{
+	switch (self->loadState) {
+		case FlashPackLoadState_START_LOW_BYTE:
+			self->loadAddress = data;
+			self->loadState = FlashPackLoadState_START_HIGH_BYTE;
+			break;
+		case FlashPackLoadState_START_HIGH_BYTE:
+			self->loadAddress += data << 8;
+			self->loadState = self->loadAddress == 65535 ? FlashPackLoadState_START_LOW_BYTE : FlashPackLoadState_END_LOW_BYTE;
+			break;
+		case FlashPackLoadState_END_LOW_BYTE:
+			self->loadEndAddress = data;
+			self->loadState = FlashPackLoadState_END_HIGH_BYTE;
+			break;
+		case FlashPackLoadState_END_HIGH_BYTE:
+			self->loadEndAddress += data << 8;
+			self->loadState = FlashPackLoadState_CONTENT;
+			break;
+		case FlashPackLoadState_CONTENT:
+			self->memory[self->loadAddress] = data;
+			if (self->loadAddress == self->loadEndAddress)
+				self->loadState = FlashPackLoadState_START_LOW_BYTE;
+			else
+				self->loadAddress = (self->loadAddress + 1) & 65535;
+			break;
+	}
+}
+
+static void FlashPack_PutItem(FlashPack *self, FlashPackItemType type, int value)
+{
+	if (self->itemsCount >= 64) {
+		FlashPack_PutItems(self);
+		self->itemsCount = 0;
+	}
+	self->items[self->itemsCount].type = type;
+	self->items[self->itemsCount].value = value;
+	self->itemsCount++;
+}
+
+static void FlashPack_PutItems(FlashPack *self)
+{
+	int outerFlags = 0;
+	int i;
+	for (i = 0; i < self->itemsCount; i += 8) {
+		if (FlashPack_GetInnerFlags(self, i) != 0)
+			outerFlags |= 128 >> (i >> 3);
+	}
+	self->compressed[self->compressedLength++] = outerFlags;
+	for (i = 0; i < self->itemsCount; i++) {
+		if ((i & 7) == 0) {
+			int flags = FlashPack_GetInnerFlags(self, i);
+			if (flags != 0)
+				self->compressed[self->compressedLength++] = flags;
+		}
+		self->compressedLength += FlashPackItem_WriteValueTo(&self->items[i], self->compressed, self->compressedLength);
+	}
+}
+
+static void FlashPack_PutPoke(FlashPack *self, int address, int value)
+{
+	FlashPack_PutItem(self, FlashPackItemType_SET_ADDRESS, address);
+	FlashPack_PutItem(self, FlashPackItemType_LITERAL, value);
+}
+
+static int FlashPackItem_WriteValueTo(FlashPackItem const *self, unsigned char *buffer, int index)
+{
+	switch (self->type) {
+		int value;
+		default:
+		case FlashPackItemType_LITERAL:
+			buffer[index] = self->value;
+			return 1;
+		case FlashPackItemType_COPY_TWO_BYTES:
+			buffer[index] = (128 - self->value) << 1;
+			return 1;
+		case FlashPackItemType_COPY_THREE_BYTES:
+			buffer[index] = ((128 - self->value) << 1) + 1;
+			return 1;
+		case FlashPackItemType_COPY_MANY_BYTES:
+			buffer[index] = 1;
+			buffer[index + 1] = self->value;
+			return 2;
+		case FlashPackItemType_SET_ADDRESS:
+			value = self->value - 128;
+			buffer[index] = 0;
+			buffer[index + 1] = (unsigned char) value;
+			buffer[index + 2] = value >> 8;
+			return 3;
+		case FlashPackItemType_END_OF_STREAM:
+			buffer[index] = 1;
+			buffer[index + 1] = 0;
+			return 2;
+	}
 }
 
 static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int delta)
