@@ -104,7 +104,7 @@ static const char cpu_mnemonics[256][10] = {
 #define CPU_OPCODE_UNOFFICIAL  1
 #define CPU_OPCODE_USED        2
 static char cpu_opcodes[256] = {
-	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1,
+	1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1,
 	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1,
 	0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
 	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1,
@@ -195,7 +195,7 @@ static void print_help(void)
 		"-f  List POKEY features used\n"
 		"-t  Detect silence and loops\n"
 		"-c  Dump 6502 trace\n"
-		"-u  List unofficial 6502 instructions used\n"
+		"-u  List used unofficial 6502 instructions and BRK\n"
 		"-a  Run Acid800 test\n"
 		"-v  Display version information\n"
 		"Options:\n"
