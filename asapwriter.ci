@@ -400,26 +400,27 @@ public class ASAPWriter
 			WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
 			break;
 		case ASAPModuleType.Tm2:
-			WriteExecutableHeader(w, initAndPlayer, info, 'B', ASAPInfo.Tm2Init, 0x503);
+			const int tm2Init = 0x1380;
+			WriteExecutableHeader(w, initAndPlayer, info, 'B', tm2Init, 0x803);
 			WriteBytes(w, module, 0, moduleLen);
-			WriteWord(w, ASAPInfo.Tm2Init);
+			WriteWord(w, tm2Init);
 			if (info.Songs != 1) {
-				WriteWord(w, ASAPInfo.Tm2Init + 16);
+				WriteWord(w, tm2Init + 16);
 				w(0x48); // PHA
 			}
 			else
-				WriteWord(w, ASAPInfo.Tm2Init + 14);
+				WriteWord(w, tm2Init + 14);
 			w(0xa0); w(info.Music & 0xff); // LDY #<MUSIC
 			w(0xa2); w(info.Music >> 8); // LDX #>MUSIC
 			w(0xa9); w(0x70); // LDA #$70
-			w(0x20); WriteWord(w, 0x500); // JSR PLAYER
+			w(0x20); WriteWord(w, 0x800); // JSR PLAYER
 			if (info.Songs != 1)
 				WritePlaTaxLda0(w); // PLA; TAX; LDA #0
 			else {
 				w(0xa9); w(0); // LDA #0
 				w(0xaa); // TAX
 			}
-			w(0x4c); WriteWord(w, 0x500); // JMP PLAYER
+			w(0x4c); WriteWord(w, 0x800); // JMP PLAYER
 			WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
 			break;
 		}

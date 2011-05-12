@@ -2,7 +2,7 @@
 ;  TMC 2.00 Player
 ;------------------
 
-player equ $200
+player equ $500
 normal equ 1 ; change to 0 for short version
 
        org player

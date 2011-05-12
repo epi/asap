@@ -991,7 +991,7 @@ public class ASAPInfo
 		if (i < 1 || i > 4)
 			throw "Unsupported player call rate";
 		Fastplay = 312 / i;
-		Player = 0x500;
+		Player = 0x800;
 		if (module[0x1f] != 0)
 			Channels = 2;
 		int lastPos = 0xffff;
@@ -1448,7 +1448,6 @@ public class ASAPInfo
 	}
 
 	const int RmtInit = 0xc80;
-	const int Tm2Init = 0x1080;
 
 	int GetRmtSapOffset(byte[] module, int moduleLen)
 	{
@@ -1481,7 +1480,7 @@ public class ASAPInfo
 			 || ((Init == 0x4e7 || Init == 0xf4e7 || Init == 0x4e4) && Fastplay == 156)
 			 || ((Init == 0x4e5 || Init == 0xf4e5 || Init == 0x4e2) && (Fastplay == 104 || Fastplay == 78)))
 				return "tmc";
-			if (Init == Tm2Init)
+			if ((Init == 0x1080 && Player == 0x503) || (Init == 0x1380 && Player == 0x803))
 				return "tm2";
 			return null;
 		case ASAPModuleType.SapC:

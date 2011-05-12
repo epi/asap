@@ -378,15 +378,15 @@ public final class ASAPWriter
 				ASAPWriter.writeBytes(w, playerRoutine, 6, playerLastByte - player + 7);
 				break;
 			case ASAPModuleType.TM2:
-				ASAPWriter.writeExecutableHeader(w, initAndPlayer, info, 66, 4224, 1283);
+				ASAPWriter.writeExecutableHeader(w, initAndPlayer, info, 66, 4992, 2051);
 				ASAPWriter.writeBytes(w, module, 0, moduleLen);
-				ASAPWriter.writeWord(w, 4224);
+				ASAPWriter.writeWord(w, 4992);
 				if (info.songs != 1) {
-					ASAPWriter.writeWord(w, 4240);
+					ASAPWriter.writeWord(w, 5008);
 					w.run(72);
 				}
 				else
-					ASAPWriter.writeWord(w, 4238);
+					ASAPWriter.writeWord(w, 5006);
 				w.run(160);
 				w.run(info.music & 255);
 				w.run(162);
@@ -394,7 +394,7 @@ public final class ASAPWriter
 				w.run(169);
 				w.run(112);
 				w.run(32);
-				ASAPWriter.writeWord(w, 1280);
+				ASAPWriter.writeWord(w, 2048);
 				if (info.songs != 1)
 					ASAPWriter.writePlaTaxLda0(w);
 				else {
@@ -403,7 +403,7 @@ public final class ASAPWriter
 					w.run(170);
 				}
 				w.run(76);
-				ASAPWriter.writeWord(w, 1280);
+				ASAPWriter.writeWord(w, 2048);
 				ASAPWriter.writeBytes(w, playerRoutine, 2, playerLastByte - player + 7);
 				break;
 		}

@@ -223,7 +223,7 @@ public final class ASAPInfo
 					return "rmt";
 				if (this.init == 1269 || this.init == 62709 || this.init == 1266 || (this.init == 1255 || this.init == 62695 || this.init == 1252) && this.fastplay == 156 || (this.init == 1253 || this.init == 62693 || this.init == 1250) && (this.fastplay == 104 || this.fastplay == 78))
 					return "tmc";
-				if (this.init == 4224)
+				if (this.init == 4224 && this.player == 1283 || this.init == 4992 && this.player == 2051)
 					return "tm2";
 				return null;
 			case ASAPModuleType.SAP_C:
@@ -1237,7 +1237,7 @@ public final class ASAPInfo
 		if (i < 1 || i > 4)
 			throw new Exception("Unsupported player call rate");
 		this.fastplay = 312 / i;
-		this.player = 1280;
+		this.player = 2048;
 		if (module[31] != 0)
 			this.channels = 2;
 		int lastPos = 65535;
