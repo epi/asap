@@ -304,6 +304,8 @@ class FlashPack
 	{
 		//assert LoadState == FlashPackLoadState.StartLowByte, "Invalid data to compress";
 		//assert Memory[0x2e0] >= 0 && Memory[0x2e1] >= 0, "Missing run address";
+		if (Memory[0xfc] >= 0 || Memory[0xfd] >= 0 || Memory[0xfe] >= 0 || Memory[0xff] >= 0)
+			throw "Conflict with decompressor variables";
 		int runAddress = Memory[0x2e0] + (Memory[0x2e1] << 8);
 		Memory[0x2e0] = Memory[0x2e1] = -1;
 

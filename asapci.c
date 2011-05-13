@@ -6946,10 +6946,13 @@ static void FlashPack_Construct(FlashPack *self)
 
 static cibool FlashPack_Compress(FlashPack *self, ByteWriter w)
 {
-	int runAddress = self->memory[736] + (self->memory[737] << 8);
+	int runAddress;
 	int depackerEndAddress;
 	int depackerStartAddress;
 	int compressedStartAddress;
+	if (self->memory[252] >= 0 || self->memory[253] >= 0 || self->memory[254] >= 0 || self->memory[255] >= 0)
+		return FALSE;
+	runAddress = self->memory[736] + (self->memory[737] << 8);
 	self->memory[736] = self->memory[737] = -1;
 	if ((depackerEndAddress = FlashPack_FindHole(self)) == -1)
 		return FALSE;
