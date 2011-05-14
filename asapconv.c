@@ -468,8 +468,13 @@ static void convert_to_module(const char *input_file, const unsigned char *modul
 	bw.obj = fp;
 	bw.func = write_byte;
 	/* FIXME: stdout */
-	if (!ASAPWriter_Write(output_file, bw, info, module, module_len))
+	if (!ASAPWriter_Write(output_file, bw, info, module, module_len)) {
+		if (fp != stdout) {
+			fclose(fp);
+			remove(output_file); /* "unlink" is less portable */
+		}
 		fatal_error("%s: conversion error", input_file);
+	}
 	close_output_file(fp);
 }
 
