@@ -1,4 +1,4 @@
-	org	$bb00
+	org	$100
 	dta	c'ASAP 3.0.0 TYPE B',0
 main
 	sei
