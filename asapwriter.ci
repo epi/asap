@@ -23,6 +23,7 @@ public delegate void StringConsumer(string s);
 
 public delegate void ByteWriter(int data);
 
+/// Static methods for writing modules in different formats.
 public class ASAPWriter
 {
 	/// Enumerates possible file types the given module can be written as.

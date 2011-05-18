@@ -118,7 +118,7 @@ public class ASAPMusicRoutine
 
 	/**
 	 * Returns the rate at which the player routine should be called.
-	 * The value is expressed as an interval in scanlines (1 scanline equals 114 cycles).
+	 * The value is expressed as an interval in scanlines (one scanline equals 114 cycles).
 	 * Typical value is 312, which means that on a PAL Atari you should
 	 * call the player routine once per frame (usually on a vertical blank interrupt).
 	 */

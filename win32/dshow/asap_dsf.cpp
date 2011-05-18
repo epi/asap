@@ -25,7 +25,7 @@
 #include <streams.h>
 #include <tchar.h>
 
-#include "asapci.h"
+#include "asap.h"
 
 static const TCHAR extensions[][5] =
 	{ _T(".sap"), _T(".cmc"), _T(".cm3"), _T(".cmr"), _T(".cms"), _T(".dmc"), _T(".dlt"),

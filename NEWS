@@ -17,7 +17,7 @@ Emulation accuracy;;
 - Fixed and optimized undocumented 6502 instructions.
 
 Usability improvements;;
-- Experimental conversion to Atari executables (XEX format, also known as COM).
+- Conversion to Atari executables (XEX format, also known as COM).
 - RMT files can be extracted from SAP files created in Raster Music Tracker.
 - Implemented subsongs, seek bar and pause in the Android port.
 - Added a date picker in the WASAP/Winamp/Apollo/XMPlay file information dialogs.

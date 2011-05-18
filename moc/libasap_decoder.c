@@ -25,7 +25,7 @@
 #include "decoder.h"
 #include "files.h"
 
-#include "asapci.h"
+#include "asap.h"
 
 #define BITS_PER_SAMPLE      16
 #define DEFAULT_SONG_LENGTH  -1

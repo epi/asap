@@ -30,7 +30,7 @@
 #include "ipc_pe.h"
 #include "wa_ipc.h"
 
-#include "asapci.h"
+#include "asap.h"
 #include "info_dlg.h"
 #include "settings_dlg.h"
 

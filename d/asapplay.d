@@ -28,7 +28,7 @@ import std.conv;
 import std.string;
 
 import waveout;
-import asapci;
+import asap;
 
 int song = -1;
 int duration = -1;

@@ -26,7 +26,7 @@
 #define IDC_STATIC  -1
 #endif
 
-#include "../asapci.h"
+#include "../asap.h"
 
 #ifdef WASAP
 

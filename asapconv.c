@@ -38,7 +38,7 @@
 #define SAMPLE_FORMATS "WAV or RAW"
 #endif
 
-#include "asapci.h"
+#include "asap.h"
 
 static const char *output_arg = NULL;
 static int song = -1;

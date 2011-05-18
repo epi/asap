@@ -32,7 +32,7 @@
 
 #define BASS_CTYPE_MUSIC_ASAP  0x1f100
 
-#include "asapci.h"
+#include "asap.h"
 
 static const BASS_PLUGINFORM pluginform = {
 	BASS_CTYPE_MUSIC_ASAP, "ASAP", "*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2"

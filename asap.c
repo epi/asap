@@ -1,7 +1,7 @@
 /* Generated automatically with "cito". Do not edit. */
 #include <stdlib.h>
 #include <string.h>
-#include "asapci.h"
+#include "asap.h"
 
 typedef enum {
 	ASAPModuleType_SAP_B,

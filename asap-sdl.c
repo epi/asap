@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <SDL.h>
 
-#include "asapci.h"
+#include "asap.h"
 
 static int song = -1;
 

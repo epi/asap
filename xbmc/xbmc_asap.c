@@ -28,7 +28,7 @@
 #define __declspec(x)
 #endif
 
-#include "asapci.h"
+#include "asap.h"
 
 typedef struct {
 	char author[ASAPInfo_MAX_TEXT_LENGTH + 1];

@@ -1,9 +1,9 @@
 all: asap.s asap64.s asap.html asap.jasm asap.abc
 
-asap.s: ../../asapci.c ../../asapci.h
+asap.s: ../../asap.c ../../asap.h
 	gcc -S -O2 -Wall -o $@ $<
 
-asap64.s: ../../asapci.c ../../asapci.h
+asap64.s: ../../asap.c ../../asap.h
 	x86_64-w64-mingw32-gcc -S -O2 -Wall -o $@ $<
 
 asap.html: ../../csharp/asap2wav.exe
@@ -16,6 +16,8 @@ asap.abc: ../../flash/asap.swf
 	swfdump -abc $< > $@
 
 clean:
-	rm -f asap.s asap64.s asap.html asap.jasm asap.abc
+	$(RM) asap.s asap64.s asap.html asap.jasm asap.abc
+
+.PHONY: all clean
 
 .DELETE_ON_ERROR:

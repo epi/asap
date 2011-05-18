@@ -1,4 +1,6 @@
-*.class
+*.jad
 *.jar
+classes
 doc
-net
+obx
+src

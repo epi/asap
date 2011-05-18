@@ -26,7 +26,7 @@
 
 #include "mapplugin.h"
 
-#include "asapci.h"
+#include "asap.h"
 #include "settings_dlg.h"
 
 #define BITS_PER_SAMPLE  16

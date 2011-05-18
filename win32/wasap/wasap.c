@@ -35,7 +35,7 @@
 BOOL WINAPI Shell_NotifyIcon(DWORD,PNOTIFYICONDATAW);
 #endif
 
-#include "asapci.h"
+#include "asap.h"
 #include "info_dlg.h"
 #include "wasap.h"
 

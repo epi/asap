@@ -1,6 +1,6 @@
 /* Generated automatically with "cito". Do not edit. */
-#ifndef _ASAPCI_H_
-#define _ASAPCI_H_
+#ifndef _ASAP_H_
+#define _ASAP_H_
 typedef int cibool;
 #ifndef TRUE
 #define TRUE 1

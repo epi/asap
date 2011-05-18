@@ -37,7 +37,7 @@
 #define MonthCal_SetCurrentView(hmc, dwNewView)  (BOOL) SNDMSG(hmc, MCM_SETCURRENTVIEW, 0, (LPARAM)(dwNewView))
 #endif
 
-#include "asapci.h"
+#include "asap.h"
 #include "info_dlg.h"
 
 void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext)

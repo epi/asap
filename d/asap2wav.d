@@ -26,7 +26,7 @@ import std.conv;
 import std.file;
 import std.string;
 
-import asapci;
+import asap;
 
 string outputFilename;
 bool outputHeader = true;

@@ -34,7 +34,7 @@
 #include <xmms/titlestring.h>
 #include <xmms/util.h>
 
-#include "asapci.h"
+#include "asap.h"
 
 #define BITS_PER_SAMPLE  16
 #define BUFFERED_BLOCKS  512

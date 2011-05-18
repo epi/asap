@@ -24,7 +24,7 @@
 #include <windows.h>
 #include <tchar.h>
 
-#include "asapci.h"
+#include "asap.h"
 #include "settings_dlg.h"
 
 void enableTimeInput(HWND hDlg, BOOL enable)

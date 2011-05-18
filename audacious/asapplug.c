@@ -25,7 +25,7 @@
 #include <audacious/plugin.h>
 #include <libaudcore/audstrings.h>
 
-#include "asapci.h"
+#include "asap.h"
 
 #define BITS_PER_SAMPLE  16
 
