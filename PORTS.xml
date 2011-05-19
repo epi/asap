@@ -32,7 +32,7 @@
 		<a href="http://www.winamp.com/">Winamp</a>
 	</port>
 	<port name="XMMS plugin">
-		<bin></bin>
+		<bin>asap-xmms-*.rpm</bin>
 		<platform>Linux, Unix</platform>
 		<interface>player plugin</interface>
 		<since>0.2.0</since>
@@ -376,7 +376,7 @@
 		<a href="http://www.libsdl.org/">SDL</a>
 	</port>
 	<port name="Audacious plugin">
-		<bin></bin>
+		<bin>asap-audacious-*.rpm</bin>
 		<platform>Linux, Unix</platform>
 		<interface>player plugin</interface>
 		<since>2.1.2</since>

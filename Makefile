@@ -9,7 +9,7 @@ INSTALL_DATA = mkdir -p $(DESTDIR)$(2) && $(INSTALL) -m 644 $(1) $(DESTDIR)$(2)/
 ASCIIDOC = $(DO)asciidoc -o - $(1) $< | sed -e "s/527bbd;/c02020;/" | xmllint --valid --nonet -o $@ -
 SDL_CFLAGS = `sdl-config --cflags`
 SDL_LIBS = `sdl-config --libs`
-SEVENZIP = 7z a -mx=9
+SEVENZIP = 7z a -mx=9 -bd
 COPY = $(DO)cp $< $@
 ACIDSAP = ../Acid800/out/Release/AcidSAP/standalone
 

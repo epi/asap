@@ -7,8 +7,8 @@ ifndef DO
 $(error Use "Makefile" instead of "audacious.mk")
 endif
 
-audacious: asapplug.so
-.PHONY: audacious
+asap-audacious: asapplug.so
+.PHONY: asap-audacious
 
 asapplug.so: $(call src,audacious/asapplug.c asap.[ch])
 	$(CC) $(AUDACIOUS_CFLAGS)
