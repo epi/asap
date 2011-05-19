@@ -108,14 +108,14 @@ $(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu650
 # Acid800
 
 check: asapscan $(ACIDSAP)
-	export passed=0 total=0; \
+	@export passed=0 total=0; \
 		for name in $(ACIDSAP)/*.sap; do \
 			echo -n \*\ ; ./asapscan -a "$$name"; \
 			passed=$$(($$passed+!$$?)); total=$$(($$total+1)); \
 		done; \
 		echo PASSED $$passed of $$total tests
-	$(MAKE) -C test
-	export passed=0 total=0; \
+	@$(MAKE) -C test
+	@export passed=0 total=0; \
 		for name in test/*.sap; do \
 			echo -n \*\ ; ./asapscan -a "$$name"; \
 			passed=$$(($$passed+!$$?)); total=$$(($$total+1)); \

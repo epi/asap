@@ -21,6 +21,13 @@
 		<fail on="ASAP 2.1.2" />
 		<pass on="ASAP 3.0.0" />
 	</test>
+	<test name="antic_wsync">
+		<fail on="Atari800 2.2.1" />
+		<fail on="Atari++ 1.60" />
+		<pass on="Altirra 1.9" />
+		<fail on="ASAP 2.1.2" />
+		<fail on="ASAP 3.0.0" />
+	</test>
 	<test name="cpu_ane">
 		<pass on="Atari800 2.2.1" />
 		<crash on="Altirra 1.9" />
@@ -62,5 +69,12 @@
 		<pass on="Altirra 1.9" />
 		<fail on="ASAP 2.1.2" />
 		<pass on="ASAP 3.0.0" />
+	</test>
+	<test name="pokey_random">
+		<fail on="Atari800 2.2.1" />
+		<fail on="Atari++ 1.60" />
+		<pass on="Altirra 1.9" />
+		<fail on="ASAP 2.1.2" />
+		<fail on="ASAP 3.0.0" />
 	</test>
 </tests>

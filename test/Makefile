@@ -1,6 +1,6 @@
 XASM = xasm -q -o $@ $<
 
-TESTS = antic_nmires antic_nmist cpu_ane cpu_anx cpu_decimal cpu_las cpu_shx gtia_consol
+TESTS = antic_nmires antic_nmist antic_wsync cpu_ane cpu_anx cpu_decimal cpu_las cpu_shx gtia_consol pokey_random
 
 all: antic_vcount_ntsc.sap antic_vcount_pal.sap $(TESTS:%=%.sap) antic_vcount.xex $(TESTS:%=%.xex)
 
