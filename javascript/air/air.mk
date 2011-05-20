@@ -12,7 +12,7 @@ run-air: $(srcdir)javascript/air/AIRASAP-app.xml javascript/air/asap.js
 .PHONY: run-air
 
 release/asap-$(VERSION)-air.air: $(addprefix $(srcdir)javascript/air/,AIRASAP-app.xml airasap.html airasap.js asap16x16.png asap32x32.png) javascript/air/asap.js
-#	$(ADT) -C $(srcdir)javascript/air AIRASAP-app.xml airasap.html airasap.js asap16x16.png asap32x32.png -C javascript/air asap.js
+	$(ADT) $< -C $(srcdir)javascript/air airasap.html airasap.js asap16x16.png asap32x32.png -C javascript/air asap.js
 
 javascript/air/asap.js: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(NATIVE_ROUTINES_OBX)
 	$(CITO) -D FLASH
