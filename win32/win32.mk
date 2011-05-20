@@ -300,5 +300,5 @@ CLEAN += win32/x64/asap.wixobj
 
 release/asap-$(VERSION)-wince-arm.cab: $(srcdir)win32/wince/asap.inf \
 	$(addprefix win32/wince/,wasap.exe gspasap.dll asap_dsf.dll)
-	$(DO)cd win32/wince && $(WINCE_CABWIZ) asap.inf /cpu ARM
+	$(DO)cd win32/wince && $(WINCE_CABWIZ) '$(shell cygpath -wa $<)' /cpu ARM
 	@mv win32/wince/asap.ARM.CAB $@
