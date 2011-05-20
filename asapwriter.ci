@@ -178,7 +178,7 @@ public class ASAPWriter
 		w(type);
 		w('\r');
 		w('\n');
-		if (info.Fastplay != 312)
+		if (info.Fastplay != 312 || info.Ntsc)
 			WriteDecSapTag(w, "FASTPLAY ", info.Fastplay);
 		if (type == 'C')
 			WriteHexSapTag(w, "MUSIC ", info.Music);

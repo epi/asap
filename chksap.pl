@@ -237,7 +237,7 @@ The currently defined types are: B, C, D, S.
 
 =item B<invalid argument of FASTPLAY>
 
-The argument of FASTPLAY must be an integer within the range 1-311.
+The argument of FASTPLAY must be an integer within the range 1-32767.
 
 =item B<INIT is meaningless with TYPE C>
 
@@ -403,7 +403,7 @@ sub process($$) {
 				++$stat{'SONGS'}{$arg};
 				exists($tags{'DATE'})
 					or $fixed{'non-standard order of tags'} = 1;
-				if ($arg !~ /^[1-9]\d{0,2}$/s || $arg > 255) {
+				if ($arg !~ /^[1-9]\d*$/s || $arg > 255) {
 					$fatal{'invalid argument of SONGS'} = 1;
 				}
 				elsif ($arg eq '1') {
@@ -418,7 +418,7 @@ sub process($$) {
 					$fixed{'DEFSONG 0 is superfluous'} = 1;
 					next;
 				}
-				if ($arg !~ /^[1-9]\d{0,2}$/s) {
+				if ($arg !~ /^[1-9]\d*$/s) {
 					$fatal{'invalid argument of DEFSONG'} = 1;
 				}
 			}
@@ -433,7 +433,7 @@ sub process($$) {
 				++$stat{'FASTPLAY'}{$arg};
 				exists($tags{'DATE'})
 					or $fixed{'non-standard order of tags'} = 1;
-				if ($arg !~ /^[1-9]\d{0,2}$/s || $arg > 311) {
+				if ($arg !~ /^[1-9]\d*$/s || $arg > 32767) {
 					$fatal{'invalid argument of FASTPLAY'} = 1;
 				}
 			}

@@ -337,7 +337,7 @@ public class ASAPInfo
 
 	void AddSong(int playerCalls)
 	{
-		Durations[Songs++] = (playerCalls * Fastplay).MulDiv(114000, 1773447);
+		Durations[Songs++] = (playerCalls * Fastplay).MulDiv(114000 / 3, 1773447 / 3);
 	}
 
 	// TODO: enum + 0
@@ -1193,7 +1193,7 @@ public class ASAPInfo
 			else if (TAG_IS("TYPE "))
 				type = module[moduleIndex + 5];
 			else if (TAG_IS("FASTPLAY ")) {
-				SET_DEC(Fastplay, 9, 1, 312);
+				SET_DEC(Fastplay, 9, 1, 32767);
 			}
 			else if (TAG_IS("MUSIC ")) {
 				SET_HEX(Music, 6);
@@ -1252,8 +1252,6 @@ public class ASAPInfo
 		}
 		if (Fastplay < 0)
 			Fastplay = Ntsc ? 262 : 312;
-		else if (Ntsc && Fastplay > 262)
-			throw "FASTPLAY too big";
 		if (module[moduleIndex + 1] != 0xff)
 			throw "Invalid binary header";
 		HeaderLen = moduleIndex;
@@ -1472,7 +1470,7 @@ public class ASAPInfo
 		case ASAPModuleType.SapB:
 			if ((Init == 0x3fb || Init == 0x3f9) && Player == 0x503)
 				return "dlt";
-			if (Init == 0x4f3 || Init == 0xf4f3 || Init == 0x4ef)
+			if (((Init == 0x4f3 || Init == 0x4ef) && Player == 0x503) || (Init == 0xf4f3 && Player == 0xf503))
 				return Fastplay == 156 ? "mpd" : "mpt";
 			if (Init == RmtInit || GetRmtSapOffset(module, moduleLen) > 0)
 				return "rmt";

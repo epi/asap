@@ -2378,7 +2378,7 @@ void ASAPInfo_Delete(ASAPInfo *self)
 
 static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls)
 {
-	self->durations[self->songs++] = (int) ((double) (playerCalls * self->fastplay) * 114000 / 1773447);
+	self->durations[self->songs++] = (int) ((double) (playerCalls * self->fastplay) * 38000 / 591149);
 }
 
 static int ASAPInfo_CheckDate(ASAPInfo const *self)
@@ -2515,7 +2515,7 @@ const char *ASAPInfo_GetOriginalModuleExt(ASAPInfo const *self, unsigned char co
 		case ASAPModuleType_SAP_B:
 			if ((self->init == 1019 || self->init == 1017) && self->player == 1283)
 				return "dlt";
-			if (self->init == 1267 || self->init == 62707 || self->init == 1263)
+			if (((self->init == 1267 || self->init == 1263) && self->player == 1283) || (self->init == 62707 && self->player == 62723))
 				return self->fastplay == 156 ? "mpd" : "mpt";
 			if (self->init == 3200 || ASAPInfo_GetRmtSapOffset(self, module, moduleLen) > 0)
 				return "rmt";
@@ -3459,7 +3459,7 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "TYPE "))
 			type = module[moduleIndex + 5];
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "FASTPLAY ")) {
-			if ((self->fastplay = ASAPInfo_ParseDec(module, moduleIndex + 9, 312)) == -1)
+			if ((self->fastplay = ASAPInfo_ParseDec(module, moduleIndex + 9, 32767)) == -1)
 				return FALSE;
 			if (self->fastplay < 1)
 				return FALSE;
@@ -3524,8 +3524,6 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 	}
 	if (self->fastplay < 0)
 		self->fastplay = self->ntsc ? 262 : 312;
-	else if (self->ntsc && self->fastplay > 262)
-		return FALSE;
 	if (module[moduleIndex + 1] != 255)
 		return FALSE;
 	self->headerLen = moduleIndex;
@@ -4270,7 +4268,7 @@ static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int ty
 	w.func(w.obj, type);
 	w.func(w.obj, 13);
 	w.func(w.obj, 10);
-	if (info->fastplay != 312)
+	if (info->fastplay != 312 || info->ntsc)
 		ASAPWriter_WriteDecSapTag(w, "FASTPLAY ", info->fastplay);
 	if (type == 67)
 		ASAPWriter_WriteHexSapTag(w, "MUSIC ", info->music);
