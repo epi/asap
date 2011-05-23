@@ -32,10 +32,28 @@
 static GMutex *control_mutex;
 static ASAP *asap;
 
-static void plugin_init(void)
+#if defined(_AUD_PLUGIN_VERSION) && !defined(__AUDACIOUS_PLUGIN_API__)
+#define __AUDACIOUS_PLUGIN_API__ _AUD_PLUGIN_VERSION
+#endif
+#if __AUDACIOUS_PLUGIN_API__ >= 18
+static gboolean playing;
+#else
+#define playing playback->playing
+#endif
+
+static
+#if __AUDACIOUS_PLUGIN_API__ >= 18
+	gboolean
+#else
+	void
+#endif
+	plugin_init(void)
 {
 	control_mutex = g_mutex_new();
 	asap = ASAP_New();
+#if __AUDACIOUS_PLUGIN_API__ >= 18
+	return asap != NULL;
+#endif
 }
 
 static void plugin_cleanup(void)
@@ -138,10 +156,12 @@ static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 	return tuple;
 }
 
+#if __AUDACIOUS_PLUGIN_API__ < 18
 static Tuple *get_song_tuple(const gchar *filename)
 {
 	return probe_for_tuple(filename, NULL);
 }
+#endif
 
 static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFile *file, gint start_time, gint stop_time, gboolean pause)
 {
@@ -181,24 +201,30 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 
 	if (!playback->output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_LE, ASAP_SAMPLE_RATE, channels))
 		return FALSE;
-	playback->set_params(playback, NULL, 0, 0, ASAP_SAMPLE_RATE, channels);
+	playback->set_params(playback,
+#if __AUDACIOUS_PLUGIN_API__ < 18
+		NULL, 0,
+#endif
+		0, ASAP_SAMPLE_RATE, channels);
 	if (pause)
 		playback->output->pause(TRUE);
-	playback->playing = TRUE;
+	playing = TRUE;
 	playback->set_pb_ready(playback);
 
 	for (;;) {
 		static unsigned char buffer[4096];
 		int len;
 		g_mutex_lock(control_mutex);
-		if (!playback->playing) {
+		if (!playing) {
 			g_mutex_unlock(control_mutex);
 			break;
 		}
 		len = ASAP_Generate(asap, buffer, sizeof(buffer), BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 		g_mutex_unlock(control_mutex);
 		if (len <= 0) {
+#if __AUDACIOUS_PLUGIN_API__ < 18
 			playback->eof = TRUE;
+#endif
 			break;
 		}
 #if __AUDACIOUS_PLUGIN_API__ >= 14
@@ -208,32 +234,46 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 #endif
 	}
 
-	while (playback->playing && playback->output->buffer_playing())
+	while (playing && playback->output->buffer_playing())
 		g_usleep(10000);
 	g_mutex_lock(control_mutex);
-	playback->playing = FALSE;
+	playing = FALSE;
 	g_mutex_unlock(control_mutex);
 	playback->output->close_audio();
 	return TRUE;
 }
 
+#if __AUDACIOUS_PLUGIN_API__ < 18
 static void play_file(InputPlayback *playback)
 {
 	play_start(playback, playback->filename, NULL, 0, -1, FALSE);
 }
+#endif
 
-static void play_pause(InputPlayback *playback, gshort pause)
+static void play_pause(InputPlayback *playback,
+#if __AUDACIOUS_PLUGIN_API__ >= 18
+	gboolean
+#else
+	gshort
+#endif
+	pause)
 {
 	g_mutex_lock(control_mutex);
-	if (playback->playing)
+	if (playing)
 		playback->output->pause(pause);
 	g_mutex_unlock(control_mutex);
 }
 
-static void play_mseek(InputPlayback *playback, gulong time)
+static void play_mseek(InputPlayback *playback,
+#if __AUDACIOUS_PLUGIN_API__ >= 18
+	gint
+#else
+	gulong
+#endif
+	time)
 {
 	g_mutex_lock(control_mutex);
-	if (playback->playing) {
+	if (playing) {
 		ASAP_Seek(asap, time);
 #if __AUDACIOUS_PLUGIN_API__ >= 15
 		playback->output->abort_write();
@@ -245,11 +285,11 @@ static void play_mseek(InputPlayback *playback, gulong time)
 static void play_stop(InputPlayback *playback)
 {
 	g_mutex_lock(control_mutex);
-	if (playback->playing) {
+	if (playing) {
 #if __AUDACIOUS_PLUGIN_API__ >= 15
 		playback->output->abort_write();
 #endif
-		playback->playing = FALSE;
+		playing = FALSE;
 	}
 	g_mutex_unlock(control_mutex);
 }
@@ -272,8 +312,10 @@ static InputPlugin asap_ip = {
 	.probe_for_tuple = probe_for_tuple,
 	.play = play_start,
 #endif
+#if __AUDACIOUS_PLUGIN_API__ < 18
 	.get_song_tuple = get_song_tuple,
 	.play_file = play_file,
+#endif
 	.pause = play_pause,
 	.mseek = play_mseek,
 	.stop = play_stop,
