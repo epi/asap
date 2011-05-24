@@ -6,7 +6,7 @@ ifndef DO
 $(error Use "Makefile" instead of "javascript.mk")
 endif
 
-javascript: asap2wav.js
+javascript: javascript/asap2wav.js
 .PHONY: javascript
 
 javascript/asap2wav.exe: javascript/asap2wav.js

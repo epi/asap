@@ -1,70 +1,73 @@
-ASAP - Another Slight Atari Player
+﻿ASAP - Another Slight Atari Player
 ==================================
 
 // This file is in AsciiDoc format. It is converted to README.html.
 :Compact-Option:
 
-ifdef::asapwww[]
-http://sourceforge.net/projects/asap/files/asap/[Download] |
-http://asap.git.sourceforge.net/git/gitweb.cgi?p=asap/asap;a=summary[Browse source code (Git)] |
-http://sourceforge.net/scm/?type=git&group_id=154391[Get latest source code (Git)] |
-http://sourceforge.net/projects/asap/[SourceForge project page]
-endif::asapwww[]
-
 ASAP is a player of http://en.wikipedia.org/wiki/Atari_8-bit_family[8-bit Atari]
-music for modern computers.
+music for modern computers and mobile devices.
 It emulates the http://en.wikipedia.org/wiki/POKEY[POKEY sound chip]
 and the http://en.wikipedia.org/wiki/6502[6502 processor].
 The project was initially based on the routines from the
 http://atari800.sourceforge.net/[Atari800 emulator],
 but the current version has a completely new original emulation core.
 
-ASAP includes the following programs:
+ifdef::asapwww[]
 
-- asapconv - portable command-line converter {asapwin=}
-- WASAP - tiny player for Windows {asapwin=}{asapwince=}
-- plugin for http://koti.welho.com/hylinen/apollo/[Apollo] {asapwin=}
-- plugin for http://audacious-media-player.org/[Audacious]
-- plugin for http://foobar2000.org/[foobar2000] {asapwin=}
-- plugin for http://hp.vector.co.jp/authors/VA032810/[GSPlayer] {asapwin=}{asapwince=}
-- plugin for http://moc.daper.net/[MOC]
-- plugin for http://www.winamp.com/[Winamp] {asapwin=}
-- plugin for http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player] {asapwin=}
-- plugin for http://xbmc.org/[XBMC] {asapwin=}
-- plugin for http://xmms.org/[XMMS]
-- plugin for http://www.un4seen.com/xmplay.html[XMPlay] {asapwin=}
-- add-on for http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players]) {asapwin=}
-- POKEY sound emulation DLL for http://raster.infos.cz/atari/rmt/rmt.htm[Raster Music Tracker] {asapwin=}
-- Windows Explorer extension - shows metadata {asapwin=}
-- Java version of ASAP2WAV - command-line converter to WAV files {asapjava=}
-- Java applet - for web pages {asapjava=}{asapwww?(see link:applet.html[online demo])}
-- Java midlet - for mobile devices {asapjava=}
-- C# version of ASAP2WAV
-- JavaScript version of ASAP2WAV running in http://en.wikipedia.org/wiki/Windows_Script_Host[Windows Script Host], https://developer.mozilla.org/en/Rhino_Shell[Rhino Shell], http://code.google.com/p/v8/[V8 Shell], http://en.wikipedia.org/wiki/JScript_.NET[JScript .NET], http://en.wikipedia.org/wiki/JaegerMonkey[JaegerMonkey] and http://www.digitalmars.com/dscript/[DMDScript] {asapjavascript=}
-- experimental JavaScript version of ASAP2WAV running in Firefox {asapjavascript=}
-- Flash player - for web pages {asapflash=}{asapwww?(see link:flash.html[online demo])}
-- asapplay - simple command-line player in C#
-- http://www.silverlight.net/[Silverlight] player - for web pages {asapwww?(see link:silverlight.html[online demo])}
-- AndroidASAP - for mobile devices
-- AIRASAP - simple desktop player in the Adobe AIR technology {asapjavascript=}
-- http://www.digitalmars.com/d/[D] version of ASAP2WAV
-- command-line player in D for Windows
+Download
+--------
 
-{asapports}The summary of the differences between the above versions is in link:PORTS.xml[this table].
+[horizontal]
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-3.0.0-win32.msi/download[asap-3.0.0-win32.msi]::
+Installer for all versions of desktop Windows (32-bit and 64-bit).
 
-There are other projects which use ASAP:
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-3.0.0-android.apk/download[asap-3.0.0-android.apk]::
+Android application.
 
-- http://mmsap.sourceforge.net/[mmSAP 2] - standalone player for GNU/Linux with GTK+ user interface
-- http://www.rockbox.org/[Rockbox] - open source firmware for MP3 players
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-3.0.0-wince-arm.cab/download[asap-3.0.0-wince-arm.cab]::
+WASAP, Windows Media Player and GSPlayer plugins for Windows Mobile.
 
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-3.0.0-flash.zip/download[asap-3.0.0-flash.zip]::
+For webmasters.
 
-Input file formats
-------------------
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-3.0.0-java.zip/download[asap-3.0.0-java.zip]::
+Java applet for web pages and Java midlet for mobile phones.
 
-ASAP supports the following file formats (determined by the filename extension):
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-3.0.0-air.air/download[asap-3.0.0-air.air]::
+Desktop player in JavaScript (requires http://www.adobe.com/products/air/[Adobe AIR]).
+
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-shellex-3.0.0-win64.msi/download[asap-shellex-3.0.0-win64.msi]::
+View and edit SAP file tags in your 64-bit Windows Explorer.
+
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-3.0.0-win32.zip/download[asap-3.0.0-win32.zip]::
+For Windows people allergic to installers.
+
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-3.0.0-wince-arm.zip/download[asap-3.0.0-wince-arm.zip]::
+For Windows Mobile people allergic to installers.
+
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-3.0.0-1.i386.rpm/download[asap-3.0.0-1.i386.rpm]::
+Linux binary of asapconv.
+
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-xmms-3.0.0-1.i386.rpm/download[asap-xmms-3.0.0-1.i386.rpm]::
+Linux binary of the XMMS plugin.
+
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-devel-3.0.0-1.i386.rpm/download[asap-devel-3.0.0-1.i386.rpm]::
+Linux library for linking ASAP with other applications.
+
+http://sourceforge.net/projects/asap/files/asap/3.0.0/asap-asap-3.0.0.tar.gz/download[asap-3.0.0.tar.gz]::
+Full source code (use for the Audacious plugin on Linux).
+
+All released files are available http://sourceforge.net/projects/asap/files/asap/[here].
+
+endif::asapwww[]
+
+Input formats
+-------------
+
+ASAP supports the following file formats:
 
 SAP (Slight Atari Player)::
-The format designed for playing 8-bit Atari music on modern computers.
+Designed for playing 8-bit Atari music on PCs.
 All other formats can be converted to SAP.
 http://asma.atari.org/[Atari SAP Music Archive (ASMA)]
 is a single big collection of SAP files.
@@ -105,6 +108,51 @@ TM2 (http://jaskier.atari8.info/[Theta Music Composer] 2.x)::
 Modern Atari music editor.
 
 You can find some example files in http://asap.sourceforge.net/examples.zip[examples.zip].
+
+Ports
+-----
+
+ASAP runs on Windows, Linux, in web browsers and mobile devices.
+This remarkable portability is possible thanks to the http://cito.sourceforge.net[Ć programming language].
+
+ASAP includes the following programs:
+
+- asapconv - portable command-line converter {asapwin=}
+- WASAP - tiny player for Windows {asapwin=}{asapwince=}
+- plugin for http://koti.welho.com/hylinen/apollo/[Apollo] {asapwin=}
+- plugin for http://audacious-media-player.org/[Audacious]
+- plugin for http://foobar2000.org/[foobar2000] {asapwin=}
+- plugin for http://hp.vector.co.jp/authors/VA032810/[GSPlayer] {asapwin=}{asapwince=}
+- plugin for http://moc.daper.net/[MOC]
+- plugin for http://www.winamp.com/[Winamp] {asapwin=}
+- plugin for http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player] {asapwin=}
+- plugin for http://xbmc.org/[XBMC] {asapwin=}
+- plugin for http://xmms.org/[XMMS]
+- plugin for http://www.un4seen.com/xmplay.html[XMPlay] {asapwin=}
+- add-on for http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players]) {asapwin=}
+- POKEY sound emulation DLL for http://raster.infos.cz/atari/rmt/rmt.htm[Raster Music Tracker] {asapwin=}
+- Windows Explorer extension - shows metadata {asapwin=}
+- Java version of ASAP2WAV - command-line converter to WAV files {asapjava=}
+- Java applet - for web pages {asapjava=}{asapwww?(see link:applet.html[online demo])}
+- Java midlet - for mobile devices {asapjava=}
+- C# version of ASAP2WAV
+- JavaScript version of ASAP2WAV running in http://en.wikipedia.org/wiki/Windows_Script_Host[Windows Script Host], https://developer.mozilla.org/en/Rhino_Shell[Rhino Shell], http://code.google.com/p/v8/[V8 Shell], http://en.wikipedia.org/wiki/JScript_.NET[JScript .NET], http://en.wikipedia.org/wiki/JaegerMonkey[JaegerMonkey] and http://www.digitalmars.com/dscript/[DMDScript] {asapjavascript=}
+- experimental JavaScript version of ASAP2WAV running in Firefox {asapjavascript=}
+- Flash player - for web pages {asapflash=}{asapwww?(see link:flash.html[online demo])}
+- asapplay - simple command-line player in C#
+- http://www.silverlight.net/[Silverlight] player - for web pages {asapwww?(see link:silverlight.html[online demo])}
+- AndroidASAP - for mobile devices
+- AIRASAP - simple desktop player in the http://www.adobe.com/products/air/[Adobe AIR] technology {asapjavascript=}
+- http://www.digitalmars.com/d/[D] version of ASAP2WAV
+- command-line player in D for Windows
+
+{asapports}link:PORTS.xml[This table] summarizes the differences between the above versions.
+
+There are other projects which use ASAP:
+
+- http://mmsap.sourceforge.net/[mmSAP 2] - standalone player for GNU/Linux with GTK+ user interface
+- http://www.rockbox.org/[Rockbox] - open source firmware for MP3 players
+
 
 ifdef::asapsrc[]
 include::INSTALL[]
@@ -148,5 +196,8 @@ Use http://sourceforge.net/tracker/?group_id=154391[tracker]
 to submit bug reports, feature requests and small code patches.
 
 ifdef::asapwww[]
-image::http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get ASAP - Another Slight Atari Player at SourceForge.net. Fast, secure and Free Open Source software downloads",width=120,height=30,link="http://sourceforge.net/projects/asap/"]
+image:http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get ASAP - Another Slight Atari Player at SourceForge.net. Fast, secure and Free Open Source software downloads",width=120,height=30,link="http://sourceforge.net/projects/asap/"]
+http://asap.git.sourceforge.net/git/gitweb.cgi?p=asap/asap;a=summary[Browse source code (Git)] |
+http://sourceforge.net/scm/?type=git&group_id=154391[Get latest source code (Git)] |
+http://sourceforge.net/projects/asap/[SourceForge project page]
 endif::asapwww[]

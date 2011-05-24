@@ -1,12 +1,14 @@
-History
+﻿History
 -------
 
-ASAP 3.0.0 (2011-05-??)::
+ASAP 3.0.0 (2011-05-24)::
 
 New ports;;
-- Created a desktop player for the Adobe AIR platform.
+- Created a desktop player for the http://www.adobe.com/products/air/[Adobe AIR] platform.
 - Ported the Windows Media Player plugin to Windows CE.
 - Created a setup package with the Windows Explorer plugin for 64-bit Windows.
+- The Audacious plugin supports Audacious 2.5.
+- Created RPM packages with asapconv, ASAP C library and the XMMS plugin.
 - Created ASAP2WAV and a simple player in the D programming language.
 - JavaScript ASAP2WAV now runs in DMDScript and JScript.NET.
 

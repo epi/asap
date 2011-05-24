@@ -2,7 +2,7 @@ prefix := /usr/local
 srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
 CC = $(DO)gcc -s -O2 -Wall -o $@ $(if $(filter %.so,$@),-shared -fPIC) $(INCLUDEOPTS) $(filter %.c,$^)
 AR = $(DO)ar rc $@ $^
-CITO = $(DO)cito -o $@ $(patsubst %,-I %,$(sort $(dir $(filter-out %.ci,$^)))) $(filter %.ci,$^)
+CITO = $(DO)cito.exe -o $@ $(patsubst %,-I %,$(sort $(dir $(filter-out %.ci,$^)))) $(filter %.ci,$^)
 INSTALL = install
 INSTALL_PROGRAM = mkdir -p $(DESTDIR)$(2) && $(INSTALL) $(1) $(DESTDIR)$(2)/$(1)
 INSTALL_DATA = mkdir -p $(DESTDIR)$(2) && $(INSTALL) -m 644 $(1) $(DESTDIR)$(2)/$(1)
@@ -10,6 +10,7 @@ ASCIIDOC = $(DO)asciidoc -o - $(1) $< | sed -e "s/527bbd;/c02020;/" | xmllint --
 SDL_CFLAGS = `sdl-config --cflags`
 SDL_LIBS = `sdl-config --libs`
 SEVENZIP = 7z a -mx=9 -bd
+MAKEZIP = $(DO)$(RM) $@ && $(SEVENZIP) -tzip $@ $(^:%=./%) # "./" makes 7z don't store paths in the archive
 COPY = $(DO)cp $< $@
 ACIDSAP = ../Acid800/out/Release/AcidSAP/standalone
 
@@ -126,7 +127,7 @@ check: asapscan $(ACIDSAP)
 # other
 
 $(srcdir)README.html: $(call src,README INSTALL NEWS CREDITS)
-	$(call ASCIIDOC,-a asapsrc -a asapports)
+	$(call ASCIIDOC,-a toc -a asapsrc -a asapports)
 
 clean:
 	$(RM) $(CLEAN)

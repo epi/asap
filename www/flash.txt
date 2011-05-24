@@ -1,11 +1,6 @@
 ASAP - Another Slight Atari Player
 ==================================
 
-http://sourceforge.net/projects/asap/files/asap/[Download] |
-http://asap.git.sourceforge.net/git/gitweb.cgi?p=asap/asap;a=summary[Browse source code (Git)] |
-http://sourceforge.net/scm/?type=git&group_id=154391[Get latest source code (Git)] |
-http://sourceforge.net/projects/asap/[SourceForge project page]
-
 This page contains a pure-ActionScript player of Atari music.
 You need http://get.adobe.com/flashplayer/[Adobe Flash Player] installed and enabled in your browser.
 

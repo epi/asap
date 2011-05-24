@@ -2,7 +2,6 @@ GIT = git
 TAR = tar
 UNIX2DOS = $(DO)unix2dos <$< >$@
 GREP = @grep -H
-MAKEZIP = $(DO)$(RM) $@ && $(SEVENZIP) -tzip $@ $(^:%=./%) # "./" makes 7z don't store paths in the archive
 
 # no user-configurable paths below this line
 
@@ -19,11 +18,10 @@ dist: \
 	release/asap-$(VERSION)-java.zip \
 	release/asap-$(VERSION)-win32.msi \
 	release/asap-$(VERSION)-win32.zip \
-	release/asap-$(VERSION)-win64.msi \
+	release/asap-shellex-$(VERSION)-win64.msi \
 	release/asap-$(VERSION)-wince-arm.cab \
 	release/asap-$(VERSION)-wince-arm.zip \
-	srcdist \
-	version
+	srcdist
 .PHONY: dist
 
 srcdist: $(srcdir)MANIFEST $(srcdir)README.html $(srcdir)asap.c $(srcdir)asap.h $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx

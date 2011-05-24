@@ -42,6 +42,12 @@ comma = ,
 WIN32_CARGS = -s -O2 -Wall -Wl,--nxcompat -o $@ $(if $(filter %.dll,$@),-shared -Wl$(comma)-subsystem$(comma)windows) $(INCLUDEOPTS) $(filter-out %.h,$^)
 WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@) $(if $(filter %.dll,$@),-LD) $(INCLUDEOPTS) $(filter-out %.h,$^)
 
+mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe ASAP_Apollo.dll bass_asap.dll gspasap.dll in_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
+.PHONY: mingw
+
+wince: $(addprefix win32/wince/,wasap.exe gspasap.dll asap_dsf.dll)
+.PHONY: wince
+
 # asapconv
 
 win32/asapconv.exe: $(call src,asapconv.c asap.[ch])
@@ -289,7 +295,7 @@ release/README_WindowsSetup.html: $(call src,README win32/USAGE NEWS CREDITS)
 	$(call ASCIIDOC,-a asapwin="(included in this binary package)" -a asapsetup)
 CLEAN += release/README_WindowsSetup.html
 
-release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
+release/asap-shellex-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/shellex/ASAPShellEx.propdesc) \
 	win32/x64/ASAPShellEx.dll
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b $(srcdir)/win32/setup -b $(srcdir)win32 $<

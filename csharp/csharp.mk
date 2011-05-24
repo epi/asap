@@ -20,7 +20,7 @@ csharp/asapplay.exe: $(srcdir)csharp/asapplay.cs csharp/asap.cs
 CLEAN += csharp/asapplay.exe
 
 csharp/SilverASAP.xap: csharp/SilverASAP.dll $(srcdir)csharp/AppManifest.xaml
-	$(SEVENZIP) -tzip $@ $^
+	$(MAKEZIP)
 CLEAN += csharp/SilverASAP.xap
 
 csharp/SilverASAP.dll: $(srcdir)csharp/SilverASAP.cs csharp/asap.cs

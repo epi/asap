@@ -267,7 +267,7 @@
 		<a href="http://asap.sourceforge.net/flash.html">online demo</a>
 	</port>
 	<port name="asapconv">
-		<bin>Windows</bin>
+		<bin>Windows, asap-*.rpm</bin>
 		<platform>desktop operating systems</platform>
 		<interface>command line</interface>
 		<since>2.1.0</since>
@@ -376,7 +376,7 @@
 		<a href="http://www.libsdl.org/">SDL</a>
 	</port>
 	<port name="Audacious plugin">
-		<bin>asap-audacious-*.rpm</bin>
+		<bin></bin>
 		<platform>Linux, Unix</platform>
 		<interface>player plugin</interface>
 		<since>2.1.2</since>
