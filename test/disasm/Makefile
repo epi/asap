@@ -15,8 +15,11 @@ asap.jasm: ../../java/net/sf/asap/ASAP.class
 asap.abc: ../../flash/asap.swf
 	swfdump -abc $< > $@
 
+asap.dexdump:
+	java -jar "c:/bin/android-sdk-windows/platforms/android-8//tools/lib/dx.jar" --dex --dump-to=$@ ../../java/android/classes/
+
 clean:
-	$(RM) asap.s asap64.s asap.html asap.jasm asap.abc
+	$(RM) asap.s asap64.s asap.html asap.jasm asap.abc asap.dexdump
 
 .PHONY: all clean
 
