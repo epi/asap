@@ -3569,6 +3569,8 @@ static cibool ASAPInfo_ParseTm2(ASAPInfo *self, unsigned char const *module, int
 	int i;
 	int lastPos;
 	int c;
+	unsigned char title[127];
+	int titleLen;
 	if (moduleLen < 932)
 		return FALSE;
 	self->type = ASAPModuleType_TM2;
@@ -3609,6 +3611,10 @@ static cibool ASAPInfo_ParseTm2(ASAPInfo *self, unsigned char const *module, int
 		if (c == 0 || c >= 128)
 			ASAPInfo_ParseTm2Song(self, module, i + 17);
 	}
+	titleLen = ASAPInfo_ParseTmcTitle(title, 0, module, 39);
+	titleLen = ASAPInfo_ParseTmcTitle(title, titleLen, module, 71);
+	titleLen = ASAPInfo_ParseTmcTitle(title, titleLen, module, 103);
+	((char *) memcpy(self->name, title + 0, titleLen))[titleLen] = '\0';
 	return TRUE;
 }
 
@@ -3792,6 +3798,11 @@ static int ASAPInfo_ParseTmcTitle(unsigned char *title, int titleLen, unsigned c
 	while (module[lastOffset] == 32) {
 		if (--lastOffset < moduleOffset)
 			return titleLen;
+	}
+	if (titleLen > 0) {
+		title[titleLen++] = 32;
+		title[titleLen++] = 124;
+		title[titleLen++] = 32;
 	}
 	while (moduleOffset <= lastOffset) {
 		int c = module[moduleOffset++] & 127;

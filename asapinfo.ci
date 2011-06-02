@@ -898,6 +898,11 @@ public class ASAPInfo
 			if (--lastOffset < moduleOffset)
 				return titleLen;
 		}
+		if (titleLen > 0) {
+			title[titleLen++] = ' ';
+			title[titleLen++] = '|';
+			title[titleLen++] = ' ';
+		}
 		while (moduleOffset <= lastOffset) {
 			int c = module[moduleOffset++] & 0x7f;
 			switch (c) {
@@ -1080,6 +1085,11 @@ public class ASAPInfo
 			if (c == 0 || c >= 0x80)
 				ParseTm2Song(module, i + 17);
 		}
+		byte[MaxTextLength] title;
+		int titleLen = ParseTmcTitle(title, 0, module, 0x27);
+		titleLen = ParseTmcTitle(title, titleLen, module, 0x47);
+		titleLen = ParseTmcTitle(title, titleLen, module, 0x67);
+		Name = title.ToString(0, titleLen);
 	}
 
 	static bool HasStringAt(byte[] module, int moduleIndex, string s)
