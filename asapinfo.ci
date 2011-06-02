@@ -102,7 +102,7 @@ public class ASAPInfo
 
 	static void CheckValidChar(int c)
 	{
-		if (c < ' ' || c > 'z' || c == '"' || c == '`')
+		if (c < ' ' || c > '|' || c == '`' || c == '{')
 			throw "Invalid character";
 	}
 

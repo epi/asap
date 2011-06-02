@@ -2409,7 +2409,7 @@ static cibool ASAPInfo_CheckTwoDateDigits(ASAPInfo const *self, int i)
 
 static cibool ASAPInfo_CheckValidChar(int c)
 {
-	if (c < 32 || c > 122 || c == 34 || c == 96)
+	if (c < 32 || c > 124 || c == 96 || c == 123)
 		return FALSE;
 	return TRUE;
 }

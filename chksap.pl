@@ -367,7 +367,7 @@ sub process($$) {
 			}
 			elsif ($tag eq 'AUTHOR') {
 				++$stat{'AUTHOR'}{$arg};
-				if ($arg !~ /^"[ !#-_a-z]{0,120}"$/s) {
+				if ($arg !~ /^"[ -_a-z|]{0,120}"$/s) {
 					$fatal{'invalid argument of AUTHOR'} = 1;
 				}
 				elsif ($arg =~ /^"\?*"$/s) {
@@ -379,7 +379,7 @@ sub process($$) {
 				++$stat{'NAME'}{$arg};
 				exists($tags{'AUTHOR'})
 					or $fixed{'non-standard order of tags'} = 1;
-				if ($arg !~ /^"[ !#-_a-z]{0,120}"$/s) {
+				if ($arg !~ /^"[ -_a-z|]{0,120}"$/s) {
 					$fatal{'invalid argument of NAME'} = 1;
 				}
 				elsif ($arg =~ /^"\?*"$/s) {
@@ -391,7 +391,7 @@ sub process($$) {
 				++$stat{'DATE'}{$arg};
 				exists($tags{'NAME'})
 					or $fixed{'non-standard order of tags'} = 1;
-				if ($arg !~ /^"[ !#-_a-z]{0,120}"$/s) {
+				if ($arg !~ /^"[ -_a-z|]{0,120}"$/s) {
 					$fatal{'invalid argument of DATE'} = 1;
 				}
 				elsif ($arg =~ /^"\?*"$/s) {
