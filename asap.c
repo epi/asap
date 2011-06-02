@@ -97,6 +97,7 @@ static cibool ASAPInfo_HasStringAt(unsigned char const *module, int moduleIndex,
 static cibool ASAPInfo_IsDltPatternEnd(unsigned char const *module, int pos, int i);
 static cibool ASAPInfo_IsDltTrackEmpty(unsigned char const *module, int pos);
 static cibool ASAPInfo_IsOurPackedExt(int ext);
+static cibool ASAPInfo_IsValidChar(int c);
 static cibool ASAPInfo_ParseCmc(ASAPInfo *self, unsigned char const *module, int moduleLen, ASAPModuleType type);
 static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, int pos);
 static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int maxVal);
@@ -2409,7 +2410,7 @@ static cibool ASAPInfo_CheckTwoDateDigits(ASAPInfo const *self, int i)
 
 static cibool ASAPInfo_CheckValidChar(int c)
 {
-	if (c < 32 || c > 124 || c == 96 || c == 123)
+	if (!ASAPInfo_IsValidChar(c))
 		return FALSE;
 	return TRUE;
 }
@@ -2756,6 +2757,11 @@ static cibool ASAPInfo_IsOurPackedExt(int ext)
 		default:
 			return FALSE;
 	}
+}
+
+static cibool ASAPInfo_IsValidChar(int c)
+{
+	return c >= 32 && c <= 124 && c != 96 && c != 123;
 }
 
 cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *module, int moduleLen)
@@ -3230,9 +3236,12 @@ static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int
 {
 	int posShift;
 	int perFrame;
+	int blockLen;
 	int songLen;
 	cibool globalSeen[256];
 	int pos;
+	unsigned char title[127];
+	int titleLen;
 	if (moduleLen < 48)
 		return FALSE;
 	if (module[6] != 82 || module[7] != 77 || module[8] != 84 || module[13] != 1)
@@ -3254,8 +3263,9 @@ static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int
 	self->type = ASAPModuleType_RMT;
 	if (!ASAPInfo_ParseModule(self, module, moduleLen))
 		return FALSE;
+	blockLen = ASAPInfo_GetWord(module, 4) + 1 - self->music;
 	songLen = ASAPInfo_GetWord(module, 4) + 1 - ASAPInfo_GetWord(module, 20);
-	if (posShift == 3 && (songLen & 4) != 0 && module[6 + ASAPInfo_GetWord(module, 4) - ASAPInfo_GetWord(module, 2) - 3] == 254)
+	if (posShift == 3 && (songLen & 4) != 0 && module[6 + blockLen - 4] == 254)
 		songLen += 4;
 	songLen >>= posShift;
 	if (songLen >= 256)
@@ -3272,6 +3282,13 @@ static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int
 	self->player = 1536;
 	if (self->songs == 0)
 		return FALSE;
+	for (titleLen = 0; titleLen < 127 && 10 + blockLen + titleLen < moduleLen; titleLen++) {
+		unsigned char c = module[10 + blockLen + titleLen];
+		if (c == 0)
+			break;
+		title[titleLen] = ASAPInfo_IsValidChar(c) ? c : 32;
+	}
+	((char *) memcpy(self->name, title + 0, titleLen))[titleLen] = '\0';
 	return TRUE;
 }
 

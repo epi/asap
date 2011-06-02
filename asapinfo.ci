@@ -100,9 +100,14 @@ public class ASAPInfo
 	int HeaderLen;
 	byte[MaxSongs] SongPos;
 
+	static bool IsValidChar(int c)
+	{
+		return c >= ' ' && c <= '|' && c != '`' && c != '{';
+	}
+
 	static void CheckValidChar(int c)
 	{
-		if (c < ' ' || c > '|' || c == '`' || c == '{')
+		if (!IsValidChar(c))
 			throw "Invalid character";
 	}
 
@@ -797,8 +802,9 @@ public class ASAPInfo
 			throw "Unsupported player call rate";
 		Type = ASAPModuleType.Rmt;
 		ParseModule(module, moduleLen);
+		int blockLen = GetWord(module, 4) + 1 - Music;
 		int songLen = GetWord(module, 4) + 1 - GetWord(module, 0x14);
-		if (posShift == 3 && (songLen & 4) != 0 && module[6 + GetWord(module, 4) - GetWord(module, 2) - 3] == 0xfe)
+		if (posShift == 3 && (songLen & 4) != 0 && module[6 + blockLen - 4] == 0xfe)
 			songLen += 4;
 		songLen >>= posShift;
 		if (songLen >= 0x100)
@@ -816,6 +822,16 @@ public class ASAPInfo
 		Player = 0x600;
 		if (Songs == 0)
 			throw "No songs found";
+		byte[MaxTextLength] title;
+		int titleLen;
+		for (titleLen = 0; titleLen < MaxTextLength && 10 + blockLen + titleLen < moduleLen; titleLen++) {
+			byte c = module[10 + blockLen + titleLen];
+			if (c == 0)
+				break;
+			// RMT only allows entering characters we consider valid, but let's check just in case
+			title[titleLen] = IsValidChar(c) ? c : ' ';
+		}
+		Name = title.ToString(0, titleLen);
 	}
 
 	void ParseTmcSong(byte[] module, int pos)
