@@ -115,6 +115,7 @@ static cibool ASAPInfo_ParseTm2(ASAPInfo *self, unsigned char const *module, int
 static void ASAPInfo_ParseTm2Song(ASAPInfo *self, unsigned char const *module, int pos);
 static cibool ASAPInfo_ParseTmc(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseTmcSong(ASAPInfo *self, unsigned char const *module, int pos);
+static int ASAPInfo_ParseTmcTitle(unsigned char *title, int titleLen, unsigned char const *module, int moduleOffset);
 
 struct Pokey {
 	int audc1;
@@ -3689,6 +3690,8 @@ static cibool ASAPInfo_ParseTmc(ASAPInfo *self, unsigned char const *module, int
 {
 	int i;
 	int lastPos;
+	unsigned char title[127];
+	int titleLen;
 	if (moduleLen < 464)
 		return FALSE;
 	self->type = ASAPModuleType_TMC;
@@ -3718,6 +3721,8 @@ static cibool ASAPInfo_ParseTmc(ASAPInfo *self, unsigned char const *module, int
 	if (i < 1 || i > 4)
 		return FALSE;
 	self->fastplay = 312 / i;
+	titleLen = ASAPInfo_ParseTmcTitle(title, 0, module, 6);
+	((char *) memcpy(self->name, title + 0, titleLen))[titleLen] = '\0';
 	return TRUE;
 }
 
@@ -3779,6 +3784,42 @@ static void ASAPInfo_ParseTmcSong(ASAPInfo *self, unsigned char const *module, i
 	if (module[436 + pos] < 128)
 		self->loops[self->songs] = TRUE;
 	ASAPInfo_AddSong(self, frames);
+}
+
+static int ASAPInfo_ParseTmcTitle(unsigned char *title, int titleLen, unsigned char const *module, int moduleOffset)
+{
+	int lastOffset = moduleOffset + 29;
+	while (module[lastOffset] == 32) {
+		if (--lastOffset < moduleOffset)
+			return titleLen;
+	}
+	while (moduleOffset <= lastOffset) {
+		int c = module[moduleOffset++] & 127;
+		switch (c) {
+			case 20:
+				c = 42;
+				break;
+			case 1:
+			case 3:
+			case 5:
+			case 12:
+			case 14:
+			case 15:
+			case 19:
+				c += 96;
+				break;
+			case 24:
+			case 26:
+				c = 122;
+				break;
+			default:
+				if (!ASAPInfo_IsValidChar(c))
+					c = 32;
+				break;
+		}
+		title[titleLen++] = c;
+	}
+	return titleLen;
 }
 
 cibool ASAPInfo_SetAuthor(ASAPInfo *self, const char *value)

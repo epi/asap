@@ -891,6 +891,44 @@ public class ASAPInfo
 		AddSong(frames);
 	}
 
+	static int ParseTmcTitle(byte[] title, int titleLen, byte[] module, int moduleOffset)
+	{
+		int lastOffset = moduleOffset + 29;
+		while (module[lastOffset] == ' ') {
+			if (--lastOffset < moduleOffset)
+				return titleLen;
+		}
+		while (moduleOffset <= lastOffset) {
+			int c = module[moduleOffset++] & 0x7f;
+			switch (c) {
+			case 't' - 96:
+				c = '*';
+				break;
+			// Replace Polish letters with their English equivalents.
+			// This is common practice when Polish letters are unavailable.
+			case 'a' - 96:
+			case 'c' - 96:
+			case 'e' - 96:
+			case 'l' - 96:
+			case 'n' - 96:
+			case 'o' - 96:
+			case 's' - 96:
+				c += 96;
+				break;
+			case 'x' - 96:
+			case 'z' - 96:
+				c = 'z';
+				break;
+			default:
+				if (!IsValidChar(c))
+					c = ' ';
+				break;
+			}
+			title[titleLen++] = c;
+		}
+		return titleLen;
+	}
+
 	void ParseTmc(byte[] module, int moduleLen)
 	{
 		if (moduleLen < 0x1d0)
@@ -923,6 +961,9 @@ public class ASAPInfo
 		if (i < 1 || i > 4)
 			throw "Unsupported player call rate";
 		Fastplay = 312 / i;
+		byte[MaxTextLength] title;
+		int titleLen = ParseTmcTitle(title, 0, module, 6);
+		Name = title.ToString(0, titleLen);
 	}
 
 	void ParseTm2Song(byte[] module, int pos)
