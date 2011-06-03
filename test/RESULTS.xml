@@ -28,13 +28,6 @@
 		<fail on="ASAP 2.1.2" />
 		<fail on="ASAP 3.0.0" />
 	</test>
-	<test name="cpu_ane">
-		<pass on="Atari800 2.2.1" />
-		<crash on="Altirra 1.9" />
-		<fail on="Altirra 1.9" />
-		<pass on="ASAP 2.1.2" />
-		<pass on="ASAP 3.0.0" />
-	</test>
 	<test name="cpu_anx">
 		<pass on="Atari800 2.2.1" />
 		<fail on="Atari++ 1.60" />
