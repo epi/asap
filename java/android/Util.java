@@ -1,5 +1,5 @@
 /*
- * MainMenu.java - ASAP for Android
+ * Util.java - ASAP for Android
  *
  * Copyright (C) 2010  Piotr Fusik
  *
@@ -28,8 +28,10 @@ import android.app.AlertDialog;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import java.io.IOException;
+import java.util.zip.ZipFile;
 
-class MainMenu
+class Util
 {
 	static boolean onCreateOptionsMenu(Activity activity, Menu menu)
 	{
@@ -51,6 +53,24 @@ class MainMenu
 			return true;
 		default:
 			return false;
+		}
+	}
+
+	static boolean isZip(String filename)
+	{
+		int n = filename.length();
+		return n >= 4 && filename.regionMatches(true, n - 4, ".zip", 0, 4);
+	}
+
+	static void close(ZipFile zip)
+	{
+		if (zip != null) {
+			try {
+				zip.close();
+			}
+			catch (IOException ex) {
+				// not expecting any errors closing a read-only ZIP
+			}
 		}
 	}
 }

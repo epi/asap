@@ -42,6 +42,7 @@ import android.widget.TextView;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
+import java.util.zip.ZipFile;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
@@ -225,24 +226,35 @@ public class Player extends Activity implements Runnable
 
 		Uri uri = getIntent().getData();
 		filename = uri.getLastPathSegment();
+		ZipFile zip = null;
 		final byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 		int moduleLen;
 		try {
 			InputStream is;
-			try {
-				is = getContentResolver().openInputStream(uri);
+			if (Util.isZip(filename)) {
+				zip = new ZipFile(uri.getPath());
+				filename = uri.getFragment();
+				is = zip.getInputStream(zip.getEntry(filename));
 			}
-			catch (FileNotFoundException ex) {
-				if (uri.getScheme().equals("http"))
-					is = httpGet(uri);
-				else
-					throw ex;
+			else {
+				try {
+					is = getContentResolver().openInputStream(uri);
+				}
+				catch (FileNotFoundException ex) {
+					if (uri.getScheme().equals("http"))
+						is = httpGet(uri);
+					else
+						throw ex;
+				}
 			}
 			moduleLen = readAndClose(is, module);
 		}
 		catch (IOException ex) {
 			showError(R.string.error_reading_file);
 			return;
+		}
+		finally {
+			Util.close(zip);
 		}
 		try {
 			asap.load(filename, module, moduleLen);
@@ -330,12 +342,12 @@ public class Player extends Activity implements Runnable
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
-		return MainMenu.onCreateOptionsMenu(this, menu);
+		return Util.onCreateOptionsMenu(this, menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
-		return MainMenu.onOptionsItemSelected(this, item);
+		return Util.onOptionsItemSelected(this, item);
 	}
 }
