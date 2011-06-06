@@ -7366,7 +7366,10 @@ static int FlashPackItem_WriteValueTo(FlashPackItem const *self, unsigned char *
 static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int delta)
 {
 	int i = cycle * pokeys->sampleFactor + pokeys->sampleOffset;
-	self->deltaBuffer[i >> 20] += delta;
+	int delta2 = (delta >> 16) * ((i >> 4) & 65535);
+	i >>= 20;
+	self->deltaBuffer[i] += delta - delta2;
+	self->deltaBuffer[i + 1] += delta2;
 }
 
 static void Pokey_EndFrame(Pokey *self, PokeyPair const *pokeys, int cycle)
@@ -7835,8 +7838,8 @@ static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int buffer
 		}
 	}
 	if (i == self->readySamplesEnd) {
-		accLeft += self->basePokey.deltaBuffer[i];
-		accRight += self->extraPokey.deltaBuffer[i];
+		accLeft += self->basePokey.deltaBuffer[i] + self->basePokey.deltaBuffer[i + 1];
+		accRight += self->extraPokey.deltaBuffer[i] + self->extraPokey.deltaBuffer[i + 1];
 	}
 	self->readySamplesStart = i;
 	self->iirAccLeft = accLeft;

@@ -127,7 +127,13 @@ class Pokey
 	void AddDelta(PokeyPair pokeys, int cycle, int delta)
 	{
 		int i = cycle * pokeys.SampleFactor + pokeys.SampleOffset;
-		DeltaBuffer[i >> PokeyPair.SampleFactorShift] += delta;
+		// too large value reduces the resolution of delta (if bigger than DeltaShiftCOVOX, DeltaShiftPOKEY)
+		// too small value reduces the resolution of interpolation
+		const int interpolationShift = 16;
+		int delta2 = (delta >> interpolationShift) * (i >> (PokeyPair.SampleFactorShift - interpolationShift) & ((1 << interpolationShift) - 1));
+		i >>= PokeyPair.SampleFactorShift;
+		DeltaBuffer[i] += delta - delta2;
+		DeltaBuffer[i + 1] += delta2;
 	}
 
 	/// Fills `DeltaBuffer` up to `cycleLimit` basing on current Audf/Audc/AudcTL values.
@@ -677,8 +683,8 @@ class PokeyPair
 #endif // FLASH
 		}
 		if (i == ReadySamplesEnd) {
-			accLeft += BasePokey.DeltaBuffer[i];
-			accRight += ExtraPokey.DeltaBuffer[i];
+			accLeft += BasePokey.DeltaBuffer[i] + BasePokey.DeltaBuffer[i + 1];
+			accRight += ExtraPokey.DeltaBuffer[i] + ExtraPokey.DeltaBuffer[i + 1];
 		}
 		ReadySamplesStart = i;
 		IirAccLeft = accLeft;
