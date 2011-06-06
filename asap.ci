@@ -73,7 +73,8 @@ public class ASAP
 		/// Length of silence which ends playback. Zero disables silence detection.
 		int seconds)
 	{
-		SilenceCyclesCounter = SilenceCycles = seconds * Pokeys.MainClock;
+		// for simplicity ignore PAL/NTSC difference - this doesn't need to be precise
+		SilenceCyclesCounter = SilenceCycles = seconds * 1773447;
 	}
 
 	int PeekHardware(int addr)
@@ -412,7 +413,7 @@ public class ASAP
 		Covox[1] = 0x80;
 		Covox[2] = 0x80;
 		Covox[3] = 0x80;
-		Pokeys.Initialize(ModuleInfo.Ntsc ? 1789772 : 1773447, ModuleInfo.Channels > 1);
+		Pokeys.Initialize(ModuleInfo.Ntsc, ModuleInfo.Channels > 1);
 		MutePokeyChannels(0xff);
 		switch (ModuleInfo.Type) {
 		case ASAPModuleType.SapB:

@@ -31,7 +31,7 @@ __declspec(dllexport) void APokeySound_Initialize(bool stereo)
 	if (pokeys != NULL)
 		PokeyPair_Delete(pokeys);
 	pokeys = PokeyPair_New();
-	PokeyPair_Initialize(pokeys, 1773447, stereo);
+	PokeyPair_Initialize(pokeys, false, stereo);
 	PokeyPair_StartFrame(pokeys);
 }
 

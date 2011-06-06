@@ -82,7 +82,7 @@ class Pokey
 	int Delta3;
 	int Delta4;
 	const int SampleRate = 44100;
-	int[888] DeltaBuffer;
+	int[888] DeltaBuffer; // enough for one PAL frame == 312 * 114 cycles =~ 885 samples
 
 	void Initialize()
 	{
@@ -126,7 +126,8 @@ class Pokey
 
 	void AddDelta(PokeyPair pokeys, int cycle, int delta)
 	{
-		DeltaBuffer[(cycle * SampleRate + pokeys.SampleOffset) / pokeys.MainClock] += delta;
+		int i = cycle * pokeys.SampleFactor + pokeys.SampleOffset;
+		DeltaBuffer[i >> PokeyPair.SampleFactorShift] += delta;
 	}
 
 	/// Fills `DeltaBuffer` up to `cycleLimit` basing on current Audf/Audc/AudcTL values.
@@ -295,7 +296,6 @@ class PokeyPair
 {
 	byte[511] Poly9Lookup;
 	byte[16385] Poly17Lookup;
-	int MainClock;
 	int ExtraPokeyMask;
 	int Timer1Cycle;
 	int Timer2Cycle;
@@ -303,9 +303,16 @@ class PokeyPair
 	int Irqst;
 	Pokey() BasePokey;
 	Pokey() ExtraPokey;
+
+	// 885 << SampleFactorShift shouldn't overflow int
+	// SampleFactorShift could be 21, but it wouldn't improve accuracy because SampleFactor would be even
+	const int SampleFactorShift = 20;
+	int SampleFactor;
 	int SampleOffset;
+
 	int ReadySamplesStart;
 	int ReadySamplesEnd;
+
 	int IirAccLeft;
 	int IirAccRight;
 
@@ -329,9 +336,8 @@ class PokeyPair
 #if APOKEYSND
 	public
 #endif
-	void Initialize(int mainClock, bool stereo)
+	void Initialize(bool ntsc, bool stereo)
 	{
-		MainClock = mainClock;
 		ExtraPokeyMask = stereo ? 0x10 : 0;
 		Timer1Cycle = Pokey.NeverCycle;
 		Timer2Cycle = Pokey.NeverCycle;
@@ -339,6 +345,9 @@ class PokeyPair
 		Irqst = 0xff;
 		BasePokey.Initialize();
 		ExtraPokey.Initialize();
+		// 25837 = (SampleRate << SampleFactorShift) / 1789772.5, rounded to the nearest (i.e. up)
+		// 26075 = (SampleRate << SampleFactorShift) / 1773447, rounded to the nearest (i.e. up)
+		SampleFactor = ntsc ? 25837 : 26075;
 		SampleOffset = 0;
 		ReadySamplesStart = 0;
 		ReadySamplesEnd = 0;
@@ -601,10 +610,10 @@ class PokeyPair
 		BasePokey.EndFrame(this, cycle);
 		if (ExtraPokeyMask != 0)
 			ExtraPokey.EndFrame(this, cycle);
-		SampleOffset += cycle * Pokey.SampleRate;
+		SampleOffset += cycle * SampleFactor;
 		ReadySamplesStart = 0;
-		ReadySamplesEnd = SampleOffset / MainClock;
-		SampleOffset %= MainClock;
+		ReadySamplesEnd = SampleOffset >> SampleFactorShift;
+		SampleOffset &= (1 << SampleFactorShift) - 1;
 		return ReadySamplesEnd;
 	}
 

@@ -169,11 +169,11 @@ struct PokeyPair {
 	int iirAccLeft;
 	int iirAccRight;
 	int irqst;
-	int mainClock;
 	unsigned char poly17Lookup[16385];
 	unsigned char poly9Lookup[511];
 	int readySamplesEnd;
 	int readySamplesStart;
+	int sampleFactor;
 	int sampleOffset;
 	int timer1Cycle;
 	int timer2Cycle;
@@ -183,7 +183,7 @@ static void PokeyPair_Construct(PokeyPair *self);
 static int PokeyPair_EndFrame(PokeyPair *self, int cycle);
 static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int bufferOffset, int blocks, ASAPSampleFormat format);
 static int PokeyPair_GetRandom(PokeyPair const *self, int addr, int cycle);
-static void PokeyPair_Initialize(PokeyPair *self, int mainClock, cibool stereo);
+static void PokeyPair_Initialize(PokeyPair *self, cibool ntsc, cibool stereo);
 static cibool PokeyPair_IsSilent(PokeyPair const *self);
 static void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
 static void PokeyPair_StartFrame(PokeyPair *self);
@@ -1877,7 +1877,7 @@ static void ASAP_Call6502Player(ASAP *self)
 
 void ASAP_DetectSilence(ASAP *self, int seconds)
 {
-	self->silenceCyclesCounter = self->silenceCycles = seconds * self->pokeys.mainClock;
+	self->silenceCyclesCounter = self->silenceCycles = seconds * 1773447;
 }
 
 static int ASAP_Do6502Frame(ASAP *self)
@@ -2193,7 +2193,7 @@ cibool ASAP_PlaySong(ASAP *self, int song, int duration)
 	self->covox[1] = 128;
 	self->covox[2] = 128;
 	self->covox[3] = 128;
-	PokeyPair_Initialize(&self->pokeys, self->moduleInfo.ntsc ? 1789772 : 1773447, self->moduleInfo.channels > 1);
+	PokeyPair_Initialize(&self->pokeys, self->moduleInfo.ntsc, self->moduleInfo.channels > 1);
 	ASAP_MutePokeyChannels(self, 255);
 	switch (self->moduleInfo.type) {
 	case ASAPModuleType_SAP_B:
@@ -7365,7 +7365,8 @@ static int FlashPackItem_WriteValueTo(FlashPackItem const *self, unsigned char *
 
 static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int delta)
 {
-	self->deltaBuffer[(cycle * 44100 + pokeys->sampleOffset) / pokeys->mainClock] += delta;
+	int i = cycle * pokeys->sampleFactor + pokeys->sampleOffset;
+	self->deltaBuffer[i >> 20] += delta;
 }
 
 static void Pokey_EndFrame(Pokey *self, PokeyPair const *pokeys, int cycle)
@@ -7771,10 +7772,10 @@ static int PokeyPair_EndFrame(PokeyPair *self, int cycle)
 	Pokey_EndFrame(&self->basePokey, self, cycle);
 	if (self->extraPokeyMask != 0)
 		Pokey_EndFrame(&self->extraPokey, self, cycle);
-	self->sampleOffset += cycle * 44100;
+	self->sampleOffset += cycle * self->sampleFactor;
 	self->readySamplesStart = 0;
-	self->readySamplesEnd = self->sampleOffset / self->mainClock;
-	self->sampleOffset %= self->mainClock;
+	self->readySamplesEnd = self->sampleOffset >> 20;
+	self->sampleOffset &= 1048575;
 	return self->readySamplesEnd;
 }
 
@@ -7859,9 +7860,8 @@ static int PokeyPair_GetRandom(PokeyPair const *self, int addr, int cycle)
 	return ((self->poly17Lookup[j] >> i) + (self->poly17Lookup[j + 1] << (8 - i))) & 255;
 }
 
-static void PokeyPair_Initialize(PokeyPair *self, int mainClock, cibool stereo)
+static void PokeyPair_Initialize(PokeyPair *self, cibool ntsc, cibool stereo)
 {
-	self->mainClock = mainClock;
 	self->extraPokeyMask = stereo ? 16 : 0;
 	self->timer1Cycle = 8388608;
 	self->timer2Cycle = 8388608;
@@ -7869,6 +7869,7 @@ static void PokeyPair_Initialize(PokeyPair *self, int mainClock, cibool stereo)
 	self->irqst = 255;
 	Pokey_Initialize(&self->basePokey);
 	Pokey_Initialize(&self->extraPokey);
+	self->sampleFactor = ntsc ? 25837 : 26075;
 	self->sampleOffset = 0;
 	self->readySamplesStart = 0;
 	self->readySamplesEnd = 0;
