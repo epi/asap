@@ -172,9 +172,9 @@ struct PokeyPair {
 	int mainClock;
 	unsigned char poly17Lookup[16385];
 	unsigned char poly9Lookup[511];
-	int sampleIndex;
+	int readySamplesEnd;
+	int readySamplesStart;
 	int sampleOffset;
-	int samples;
 	int timer1Cycle;
 	int timer2Cycle;
 	int timer4Cycle;
@@ -1816,62 +1816,62 @@ static void ASAP_Call6502Player(ASAP *self)
 	int player = self->moduleInfo.player;
 	switch (self->moduleInfo.type) {
 		int i;
-		case ASAPModuleType_SAP_B:
-			ASAP_Call6502(self, player);
-			break;
-		case ASAPModuleType_SAP_C:
-		case ASAPModuleType_CMC:
-		case ASAPModuleType_CM3:
-		case ASAPModuleType_CMR:
-		case ASAPModuleType_CMS:
-			ASAP_Call6502(self, player + 6);
-			break;
-		case ASAPModuleType_SAP_D:
-			if (player >= 0) {
-				self->memory[256 + self->cpu.s] = self->cpu.pc >> 8;
-				self->cpu.s = (self->cpu.s - 1) & 255;
-				self->memory[256 + self->cpu.s] = (unsigned char) self->cpu.pc;
-				self->cpu.s = (self->cpu.s - 1) & 255;
-				self->memory[53760] = 8;
-				self->memory[53761] = 72;
-				self->memory[53762] = 138;
-				self->memory[53763] = 72;
-				self->memory[53764] = 152;
-				self->memory[53765] = 72;
-				self->memory[53766] = 32;
-				self->memory[53767] = (unsigned char) player;
-				self->memory[53768] = player >> 8;
-				self->memory[53769] = 104;
-				self->memory[53770] = 168;
-				self->memory[53771] = 104;
-				self->memory[53772] = 170;
-				self->memory[53773] = 104;
-				self->memory[53774] = 64;
-				self->cpu.pc = 53760;
-			}
-			break;
-		case ASAPModuleType_SAP_S:
-			i = self->memory[69] - 1;
-			self->memory[69] = (unsigned char) i;
-			if (i == 0)
-				self->memory[45179] = (unsigned char) (self->memory[45179] + 1);
-			break;
-		case ASAPModuleType_DLT:
-			ASAP_Call6502(self, player + 259);
-			break;
-		case ASAPModuleType_MPT:
-		case ASAPModuleType_RMT:
-		case ASAPModuleType_TM2:
+	case ASAPModuleType_SAP_B:
+		ASAP_Call6502(self, player);
+		break;
+	case ASAPModuleType_SAP_C:
+	case ASAPModuleType_CMC:
+	case ASAPModuleType_CM3:
+	case ASAPModuleType_CMR:
+	case ASAPModuleType_CMS:
+		ASAP_Call6502(self, player + 6);
+		break;
+	case ASAPModuleType_SAP_D:
+		if (player >= 0) {
+			self->memory[256 + self->cpu.s] = self->cpu.pc >> 8;
+			self->cpu.s = (self->cpu.s - 1) & 255;
+			self->memory[256 + self->cpu.s] = (unsigned char) self->cpu.pc;
+			self->cpu.s = (self->cpu.s - 1) & 255;
+			self->memory[53760] = 8;
+			self->memory[53761] = 72;
+			self->memory[53762] = 138;
+			self->memory[53763] = 72;
+			self->memory[53764] = 152;
+			self->memory[53765] = 72;
+			self->memory[53766] = 32;
+			self->memory[53767] = (unsigned char) player;
+			self->memory[53768] = player >> 8;
+			self->memory[53769] = 104;
+			self->memory[53770] = 168;
+			self->memory[53771] = 104;
+			self->memory[53772] = 170;
+			self->memory[53773] = 104;
+			self->memory[53774] = 64;
+			self->cpu.pc = 53760;
+		}
+		break;
+	case ASAPModuleType_SAP_S:
+		i = self->memory[69] - 1;
+		self->memory[69] = (unsigned char) i;
+		if (i == 0)
+			self->memory[45179] = (unsigned char) (self->memory[45179] + 1);
+		break;
+	case ASAPModuleType_DLT:
+		ASAP_Call6502(self, player + 259);
+		break;
+	case ASAPModuleType_MPT:
+	case ASAPModuleType_RMT:
+	case ASAPModuleType_TM2:
+		ASAP_Call6502(self, player + 3);
+		break;
+	case ASAPModuleType_TMC:
+		if (--self->tmcPerFrameCounter <= 0) {
+			self->tmcPerFrameCounter = self->memory[self->moduleInfo.music + 31];
 			ASAP_Call6502(self, player + 3);
-			break;
-		case ASAPModuleType_TMC:
-			if (--self->tmcPerFrameCounter <= 0) {
-				self->tmcPerFrameCounter = self->memory[self->moduleInfo.music + 31];
-				ASAP_Call6502(self, player + 3);
-			}
-			else
-				ASAP_Call6502(self, player + 6);
-			break;
+		}
+		else
+			ASAP_Call6502(self, player + 6);
+		break;
 	}
 }
 
@@ -1982,24 +1982,24 @@ ASAPInfo const *ASAP_GetInfo(ASAP const *self)
 int ASAP_GetPokeyChannelVolume(ASAP const *self, int channel)
 {
 	switch (channel) {
-		case 0:
-			return self->pokeys.basePokey.audc1 & 15;
-		case 1:
-			return self->pokeys.basePokey.audc2 & 15;
-		case 2:
-			return self->pokeys.basePokey.audc3 & 15;
-		case 3:
-			return self->pokeys.basePokey.audc4 & 15;
-		case 4:
-			return self->pokeys.extraPokey.audc1 & 15;
-		case 5:
-			return self->pokeys.extraPokey.audc2 & 15;
-		case 6:
-			return self->pokeys.extraPokey.audc3 & 15;
-		case 7:
-			return self->pokeys.extraPokey.audc4 & 15;
-		default:
-			return 0;
+	case 0:
+		return self->pokeys.basePokey.audc1 & 15;
+	case 1:
+		return self->pokeys.basePokey.audc2 & 15;
+	case 2:
+		return self->pokeys.basePokey.audc3 & 15;
+	case 3:
+		return self->pokeys.basePokey.audc4 & 15;
+	case 4:
+		return self->pokeys.extraPokey.audc1 & 15;
+	case 5:
+		return self->pokeys.extraPokey.audc2 & 15;
+	case 6:
+		return self->pokeys.extraPokey.audc3 & 15;
+	case 7:
+		return self->pokeys.extraPokey.audc4 & 15;
+	default:
+		return 0;
 	}
 }
 
@@ -2135,42 +2135,42 @@ void ASAP_MutePokeyChannels(ASAP *self, int mask)
 static int ASAP_PeekHardware(ASAP const *self, int addr)
 {
 	switch (addr & 65311) {
-		case 53268:
-			return self->moduleInfo.ntsc ? 15 : 1;
-		case 53279:
-			return ~self->consol & 15;
-		case 53770:
-		case 53786:
-			return PokeyPair_GetRandom(&self->pokeys, addr, self->cycle);
-		case 53774:
-			return self->pokeys.irqst;
-		case 53790:
-			if (self->pokeys.extraPokeyMask != 0) {
-				return 255;
-			}
-			return self->pokeys.irqst;
-		case 53772:
-		case 53788:
-		case 53775:
-		case 53791:
+	case 53268:
+		return self->moduleInfo.ntsc ? 15 : 1;
+	case 53279:
+		return ~self->consol & 15;
+	case 53770:
+	case 53786:
+		return PokeyPair_GetRandom(&self->pokeys, addr, self->cycle);
+	case 53774:
+		return self->pokeys.irqst;
+	case 53790:
+		if (self->pokeys.extraPokeyMask != 0) {
 			return 255;
-		case 54283:
-		case 54299:
-			if (self->cycle > (self->moduleInfo.ntsc ? 29868 : 35568))
-				return 0;
-			return self->cycle / 228;
-		case 54287:
-			switch (self->nmist) {
-				case NmiStatus_RESET:
-					return 31;
-				case NmiStatus_WAS_V_BLANK:
-					return 95;
-				case NmiStatus_ON_V_BLANK:
-				default:
-					return self->cycle < 28291 ? 31 : 95;
-			}
+		}
+		return self->pokeys.irqst;
+	case 53772:
+	case 53788:
+	case 53775:
+	case 53791:
+		return 255;
+	case 54283:
+	case 54299:
+		if (self->cycle > (self->moduleInfo.ntsc ? 29868 : 35568))
+			return 0;
+		return self->cycle / 228;
+	case 54287:
+		switch (self->nmist) {
+		case NmiStatus_RESET:
+			return 31;
+		case NmiStatus_WAS_V_BLANK:
+			return 95;
+		case NmiStatus_ON_V_BLANK:
 		default:
-			return self->memory[addr];
+			return self->cycle < 28291 ? 31 : 95;
+		}
+	default:
+		return self->memory[addr];
 	}
 }
 
@@ -2196,50 +2196,50 @@ cibool ASAP_PlaySong(ASAP *self, int song, int duration)
 	PokeyPair_Initialize(&self->pokeys, self->moduleInfo.ntsc ? 1789772 : 1773447, self->moduleInfo.channels > 1);
 	ASAP_MutePokeyChannels(self, 255);
 	switch (self->moduleInfo.type) {
-		case ASAPModuleType_SAP_B:
-			if (!ASAP_Do6502Init(self, self->moduleInfo.init, song, 0, 0))
-				return FALSE;
-			break;
-		case ASAPModuleType_SAP_C:
-		case ASAPModuleType_CMC:
-		case ASAPModuleType_CM3:
-		case ASAPModuleType_CMR:
-		case ASAPModuleType_CMS:
-			if (!ASAP_Do6502Init(self, self->moduleInfo.player + 3, 112, self->moduleInfo.music, self->moduleInfo.music >> 8))
-				return FALSE;
-			if (!ASAP_Do6502Init(self, self->moduleInfo.player + 3, 0, song, 0))
-				return FALSE;
-			break;
-		case ASAPModuleType_SAP_D:
-		case ASAPModuleType_SAP_S:
-			self->cpu.pc = self->moduleInfo.init;
-			self->cpu.a = song;
-			self->cpu.x = 0;
-			self->cpu.y = 0;
-			self->cpu.s = 255;
-			break;
-		case ASAPModuleType_DLT:
-			if (!ASAP_Do6502Init(self, self->moduleInfo.player + 256, 0, 0, self->moduleInfo.songPos[song]))
-				return FALSE;
-			break;
-		case ASAPModuleType_MPT:
-			if (!ASAP_Do6502Init(self, self->moduleInfo.player, 0, self->moduleInfo.music >> 8, self->moduleInfo.music))
-				return FALSE;
-			if (!ASAP_Do6502Init(self, self->moduleInfo.player, 2, self->moduleInfo.songPos[song], 0))
-				return FALSE;
-			break;
-		case ASAPModuleType_RMT:
-			if (!ASAP_Do6502Init(self, self->moduleInfo.player, self->moduleInfo.songPos[song], self->moduleInfo.music, self->moduleInfo.music >> 8))
-				return FALSE;
-			break;
-		case ASAPModuleType_TMC:
-		case ASAPModuleType_TM2:
-			if (!ASAP_Do6502Init(self, self->moduleInfo.player, 112, self->moduleInfo.music >> 8, self->moduleInfo.music))
-				return FALSE;
-			if (!ASAP_Do6502Init(self, self->moduleInfo.player, 0, song, 0))
-				return FALSE;
-			self->tmcPerFrameCounter = 1;
-			break;
+	case ASAPModuleType_SAP_B:
+		if (!ASAP_Do6502Init(self, self->moduleInfo.init, song, 0, 0))
+			return FALSE;
+		break;
+	case ASAPModuleType_SAP_C:
+	case ASAPModuleType_CMC:
+	case ASAPModuleType_CM3:
+	case ASAPModuleType_CMR:
+	case ASAPModuleType_CMS:
+		if (!ASAP_Do6502Init(self, self->moduleInfo.player + 3, 112, self->moduleInfo.music, self->moduleInfo.music >> 8))
+			return FALSE;
+		if (!ASAP_Do6502Init(self, self->moduleInfo.player + 3, 0, song, 0))
+			return FALSE;
+		break;
+	case ASAPModuleType_SAP_D:
+	case ASAPModuleType_SAP_S:
+		self->cpu.pc = self->moduleInfo.init;
+		self->cpu.a = song;
+		self->cpu.x = 0;
+		self->cpu.y = 0;
+		self->cpu.s = 255;
+		break;
+	case ASAPModuleType_DLT:
+		if (!ASAP_Do6502Init(self, self->moduleInfo.player + 256, 0, 0, self->moduleInfo.songPos[song]))
+			return FALSE;
+		break;
+	case ASAPModuleType_MPT:
+		if (!ASAP_Do6502Init(self, self->moduleInfo.player, 0, self->moduleInfo.music >> 8, self->moduleInfo.music))
+			return FALSE;
+		if (!ASAP_Do6502Init(self, self->moduleInfo.player, 2, self->moduleInfo.songPos[song], 0))
+			return FALSE;
+		break;
+	case ASAPModuleType_RMT:
+		if (!ASAP_Do6502Init(self, self->moduleInfo.player, self->moduleInfo.songPos[song], self->moduleInfo.music, self->moduleInfo.music >> 8))
+			return FALSE;
+		break;
+	case ASAPModuleType_TMC:
+	case ASAPModuleType_TM2:
+		if (!ASAP_Do6502Init(self, self->moduleInfo.player, 112, self->moduleInfo.music >> 8, self->moduleInfo.music))
+			return FALSE;
+		if (!ASAP_Do6502Init(self, self->moduleInfo.player, 0, song, 0))
+			return FALSE;
+		self->tmcPerFrameCounter = 1;
+		break;
 	}
 	ASAP_MutePokeyChannels(self, 0);
 	self->nextPlayerCycle = 0;
@@ -2332,11 +2332,11 @@ cibool ASAP_Seek(ASAP *self, int position)
 	if (block < self->blocksPlayed)
 		if (!ASAP_PlaySong(self, self->currentSong, self->currentDuration))
 			return FALSE;
-	while (self->blocksPlayed + self->pokeys.samples < block) {
-		self->blocksPlayed += self->pokeys.samples;
+	while (self->blocksPlayed + self->pokeys.readySamplesEnd < block) {
+		self->blocksPlayed += self->pokeys.readySamplesEnd;
 		ASAP_DoFrame(self);
 	}
-	self->pokeys.sampleIndex = block - self->blocksPlayed;
+	self->pokeys.readySamplesStart = block - self->blocksPlayed;
 	self->blocksPlayed = block;
 	return TRUE;
 }
@@ -2344,26 +2344,26 @@ cibool ASAP_Seek(ASAP *self, int position)
 static unsigned char const *ASAP6502_GetPlayerRoutine(ASAPInfo const *info)
 {
 	switch (info->type) {
-		case ASAPModuleType_CMC:
-			return CiBinaryResource_cmc_obx;
-		case ASAPModuleType_CM3:
-			return CiBinaryResource_cm3_obx;
-		case ASAPModuleType_CMR:
-			return CiBinaryResource_cmr_obx;
-		case ASAPModuleType_CMS:
-			return CiBinaryResource_cms_obx;
-		case ASAPModuleType_DLT:
-			return CiBinaryResource_dlt_obx;
-		case ASAPModuleType_MPT:
-			return CiBinaryResource_mpt_obx;
-		case ASAPModuleType_RMT:
-			return info->channels == 1 ? CiBinaryResource_rmt4_obx : CiBinaryResource_rmt8_obx;
-		case ASAPModuleType_TMC:
-			return CiBinaryResource_tmc_obx;
-		case ASAPModuleType_TM2:
-			return CiBinaryResource_tm2_obx;
-		default:
-			return NULL;
+	case ASAPModuleType_CMC:
+		return CiBinaryResource_cmc_obx;
+	case ASAPModuleType_CM3:
+		return CiBinaryResource_cm3_obx;
+	case ASAPModuleType_CMR:
+		return CiBinaryResource_cmr_obx;
+	case ASAPModuleType_CMS:
+		return CiBinaryResource_cms_obx;
+	case ASAPModuleType_DLT:
+		return CiBinaryResource_dlt_obx;
+	case ASAPModuleType_MPT:
+		return CiBinaryResource_mpt_obx;
+	case ASAPModuleType_RMT:
+		return info->channels == 1 ? CiBinaryResource_rmt4_obx : CiBinaryResource_rmt8_obx;
+	case ASAPModuleType_TMC:
+		return CiBinaryResource_tmc_obx;
+	case ASAPModuleType_TM2:
+		return CiBinaryResource_tm2_obx;
+	default:
+		return NULL;
 	}
 }
 
@@ -2387,18 +2387,18 @@ static int ASAPInfo_CheckDate(ASAPInfo const *self)
 {
 	int n = strlen(self->date);
 	switch (n) {
-		case 10:
-			if (!ASAPInfo_CheckTwoDateDigits(self, 0) || self->date[2] != 47)
-				return -1;
-		case 7:
-			if (!ASAPInfo_CheckTwoDateDigits(self, n - 7) || self->date[n - 5] != 47)
-				return -1;
-		case 4:
-			if (!ASAPInfo_CheckTwoDateDigits(self, n - 4) || !ASAPInfo_CheckTwoDateDigits(self, n - 2))
-				return -1;
-			return n;
-		default:
+	case 10:
+		if (!ASAPInfo_CheckTwoDateDigits(self, 0) || self->date[2] != 47)
 			return -1;
+	case 7:
+		if (!ASAPInfo_CheckTwoDateDigits(self, n - 7) || self->date[n - 5] != 47)
+			return -1;
+	case 4:
+		if (!ASAPInfo_CheckTwoDateDigits(self, n - 4) || !ASAPInfo_CheckTwoDateDigits(self, n - 2))
+			return -1;
+		return n;
+	default:
+		return -1;
 	}
 }
 
@@ -2466,35 +2466,35 @@ const char *ASAPInfo_GetExtDescription(const char *ext)
 	if (strlen(ext) != 3)
 		return NULL;
 	switch ((ext[0] + (ext[1] << 8) + (ext[2] << 16)) | 2105376) {
-		case 7364979:
-			return "Slight Atari Player";
-		case 6516067:
-			return "Chaos Music Composer";
-		case 3370339:
-			return "CMC \"3/4\"";
-		case 7499107:
-			return "CMC \"Rzog\"";
-		case 7564643:
-			return "Stereo Double CMC";
-		case 6516068:
-			return "DoublePlay CMC";
-		case 7629924:
-			return "Delta Music Composer";
-		case 7630957:
-			return "Music ProTracker";
-		case 6582381:
-			return "MPT DoublePlay";
-		case 7630194:
-			return "Raster Music Tracker";
-		case 6516084:
-		case 3698036:
-			return "Theta Music Composer 1.x";
-		case 3304820:
-			return "Theta Music Composer 2.x";
-		case 7890296:
-			return "Atari 8-bit executable";
-		default:
-			return NULL;
+	case 7364979:
+		return "Slight Atari Player";
+	case 6516067:
+		return "Chaos Music Composer";
+	case 3370339:
+		return "CMC \"3/4\"";
+	case 7499107:
+		return "CMC \"Rzog\"";
+	case 7564643:
+		return "Stereo Double CMC";
+	case 6516068:
+		return "DoublePlay CMC";
+	case 7629924:
+		return "Delta Music Composer";
+	case 7630957:
+		return "Music ProTracker";
+	case 6582381:
+		return "MPT DoublePlay";
+	case 7630194:
+		return "Raster Music Tracker";
+	case 6516084:
+	case 3698036:
+		return "Theta Music Composer 1.x";
+	case 3304820:
+		return "Theta Music Composer 2.x";
+	case 7890296:
+		return "Atari 8-bit executable";
+	default:
+		return NULL;
 	}
 }
 
@@ -2514,51 +2514,51 @@ int ASAPInfo_GetMonth(ASAPInfo const *self)
 const char *ASAPInfo_GetOriginalModuleExt(ASAPInfo const *self, unsigned char const *module, int moduleLen)
 {
 	switch (self->type) {
-		case ASAPModuleType_SAP_B:
-			if ((self->init == 1019 || self->init == 1017) && self->player == 1283)
-				return "dlt";
-			if (((self->init == 1267 || self->init == 1263) && self->player == 1283) || (self->init == 62707 && self->player == 62723))
-				return self->fastplay == 156 ? "mpd" : "mpt";
-			if (self->init == 3200 || ASAPInfo_GetRmtSapOffset(self, module, moduleLen) > 0)
-				return "rmt";
-			if (self->init == 1269 || self->init == 62709 || self->init == 1266 || ((self->init == 1255 || self->init == 62695 || self->init == 1252) && self->fastplay == 156) || ((self->init == 1253 || self->init == 62693 || self->init == 1250) && (self->fastplay == 104 || self->fastplay == 78)))
-				return "tmc";
-			if ((self->init == 4224 && self->player == 1283) || (self->init == 4992 && self->player == 2051))
-				return "tm2";
-			return NULL;
-		case ASAPModuleType_SAP_C:
-			if ((self->player == 1280 || self->player == 62720) && moduleLen >= 1024) {
-				if (self->fastplay == 156)
-					return "dmc";
-				if (self->channels > 1)
-					return "cms";
-				if (module[moduleLen - 170] == 30)
-					return "cmr";
-				if (module[moduleLen - 909] == 48)
-					return "cm3";
-				return "cmc";
-			}
-			return NULL;
-		case ASAPModuleType_CMC:
-			return self->fastplay == 156 ? "dmc" : "cmc";
-		case ASAPModuleType_CM3:
-			return "cm3";
-		case ASAPModuleType_CMR:
-			return "cmr";
-		case ASAPModuleType_CMS:
-			return "cms";
-		case ASAPModuleType_DLT:
+	case ASAPModuleType_SAP_B:
+		if ((self->init == 1019 || self->init == 1017) && self->player == 1283)
 			return "dlt";
-		case ASAPModuleType_MPT:
+		if (((self->init == 1267 || self->init == 1263) && self->player == 1283) || (self->init == 62707 && self->player == 62723))
 			return self->fastplay == 156 ? "mpd" : "mpt";
-		case ASAPModuleType_RMT:
+		if (self->init == 3200 || ASAPInfo_GetRmtSapOffset(self, module, moduleLen) > 0)
 			return "rmt";
-		case ASAPModuleType_TMC:
+		if (self->init == 1269 || self->init == 62709 || self->init == 1266 || ((self->init == 1255 || self->init == 62695 || self->init == 1252) && self->fastplay == 156) || ((self->init == 1253 || self->init == 62693 || self->init == 1250) && (self->fastplay == 104 || self->fastplay == 78)))
 			return "tmc";
-		case ASAPModuleType_TM2:
+		if ((self->init == 4224 && self->player == 1283) || (self->init == 4992 && self->player == 2051))
 			return "tm2";
-		default:
-			return NULL;
+		return NULL;
+	case ASAPModuleType_SAP_C:
+		if ((self->player == 1280 || self->player == 62720) && moduleLen >= 1024) {
+			if (self->fastplay == 156)
+				return "dmc";
+			if (self->channels > 1)
+				return "cms";
+			if (module[moduleLen - 170] == 30)
+				return "cmr";
+			if (module[moduleLen - 909] == 48)
+				return "cm3";
+			return "cmc";
+		}
+		return NULL;
+	case ASAPModuleType_CMC:
+		return self->fastplay == 156 ? "dmc" : "cmc";
+	case ASAPModuleType_CM3:
+		return "cm3";
+	case ASAPModuleType_CMR:
+		return "cmr";
+	case ASAPModuleType_CMS:
+		return "cms";
+	case ASAPModuleType_DLT:
+		return "dlt";
+	case ASAPModuleType_MPT:
+		return self->fastplay == 156 ? "mpd" : "mpt";
+	case ASAPModuleType_RMT:
+		return "rmt";
+	case ASAPModuleType_TMC:
+		return "tmc";
+	case ASAPModuleType_TM2:
+		return "tm2";
+	default:
+		return NULL;
 	}
 }
 
@@ -2741,22 +2741,22 @@ cibool ASAPInfo_IsOurFile(const char *filename)
 static cibool ASAPInfo_IsOurPackedExt(int ext)
 {
 	switch (ext) {
-		case 7364979:
-		case 6516067:
-		case 3370339:
-		case 7499107:
-		case 7564643:
-		case 6516068:
-		case 7629924:
-		case 7630957:
-		case 6582381:
-		case 7630194:
-		case 6516084:
-		case 3698036:
-		case 3304820:
-			return TRUE;
-		default:
-			return FALSE;
+	case 7364979:
+	case 6516067:
+	case 3370339:
+	case 7499107:
+	case 7564643:
+	case 6516068:
+	case 7629924:
+	case 7630957:
+	case 6582381:
+	case 7630194:
+	case 6516084:
+	case 3698036:
+	case 3304820:
+		return TRUE;
+	default:
+		return FALSE;
 	}
 }
 
@@ -2803,36 +2803,36 @@ cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *
 	self->player = -1;
 	self->covoxAddr = -1;
 	switch (ASAPInfo_GetPackedExt(filename)) {
-		case 7364979:
-			return ASAPInfo_ParseSap(self, module, moduleLen);
-		case 6516067:
-			return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMC);
-		case 3370339:
-			return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CM3);
-		case 7499107:
-			return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMR);
-		case 7564643:
-			self->channels = 2;
-			return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMS);
-		case 6516068:
-			self->fastplay = 156;
-			return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMC);
-		case 7629924:
-			return ASAPInfo_ParseDlt(self, module, moduleLen);
-		case 7630957:
-			return ASAPInfo_ParseMpt(self, module, moduleLen);
-		case 6582381:
-			self->fastplay = 156;
-			return ASAPInfo_ParseMpt(self, module, moduleLen);
-		case 7630194:
-			return ASAPInfo_ParseRmt(self, module, moduleLen);
-		case 6516084:
-		case 3698036:
-			return ASAPInfo_ParseTmc(self, module, moduleLen);
-		case 3304820:
-			return ASAPInfo_ParseTm2(self, module, moduleLen);
-		default:
-			return FALSE;
+	case 7364979:
+		return ASAPInfo_ParseSap(self, module, moduleLen);
+	case 6516067:
+		return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMC);
+	case 3370339:
+		return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CM3);
+	case 7499107:
+		return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMR);
+	case 7564643:
+		self->channels = 2;
+		return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMS);
+	case 6516068:
+		self->fastplay = 156;
+		return ASAPInfo_ParseCmc(self, module, moduleLen, ASAPModuleType_CMC);
+	case 7629924:
+		return ASAPInfo_ParseDlt(self, module, moduleLen);
+	case 7630957:
+		return ASAPInfo_ParseMpt(self, module, moduleLen);
+	case 6582381:
+		self->fastplay = 156;
+		return ASAPInfo_ParseMpt(self, module, moduleLen);
+	case 7630194:
+		return ASAPInfo_ParseRmt(self, module, moduleLen);
+	case 6516084:
+	case 3698036:
+		return ASAPInfo_ParseTmc(self, module, moduleLen);
+	case 3304820:
+		return ASAPInfo_ParseTm2(self, module, moduleLen);
+	default:
+		return FALSE;
 	}
 }
 
@@ -2900,27 +2900,27 @@ static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, i
 		if (p1 == 8)
 			break;
 		switch (p1) {
-			case 9:
-				pos = p2;
-				continue;
-			case 10:
-				pos -= p2;
-				continue;
-			case 11:
-				pos += p2;
-				continue;
-			case 12:
-				tempo = p2;
-				pos++;
-				continue;
-			case 13:
-				pos++;
-				repStartPos = pos;
-				repEndPos = pos + p2;
-				repTimes = p3 - 1;
-				continue;
-			default:
-				break;
+		case 9:
+			pos = p2;
+			continue;
+		case 10:
+			pos -= p2;
+			continue;
+		case 11:
+			pos += p2;
+			continue;
+		case 12:
+			tempo = p2;
+			pos++;
+			continue;
+		case 13:
+			pos++;
+			repStartPos = pos;
+			repEndPos = pos + p2;
+			repTimes = p3 - 1;
+			continue;
+		default:
+			break;
 		}
 		if (p1 == 14) {
 			self->loops[self->songs] = TRUE;
@@ -3248,15 +3248,15 @@ static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int
 	if (module[6] != 82 || module[7] != 77 || module[8] != 84 || module[13] != 1)
 		return FALSE;
 	switch (module[9]) {
-		case 52:
-			posShift = 2;
-			break;
-		case 56:
-			self->channels = 2;
-			posShift = 3;
-			break;
-		default:
-			return FALSE;
+	case 52:
+		posShift = 2;
+		break;
+	case 56:
+		self->channels = 2;
+		posShift = 3;
+		break;
+	default:
+		return FALSE;
 	}
 	perFrame = module[12];
 	if (perFrame < 1 || perFrame > 4)
@@ -3511,34 +3511,34 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 	if (self->defaultSong >= self->songs)
 		return FALSE;
 	switch (type) {
-		case 66:
-			if (self->player < 0)
-				return FALSE;
-			if (self->init < 0)
-				return FALSE;
-			self->type = ASAPModuleType_SAP_B;
-			break;
-		case 67:
-			if (self->player < 0)
-				return FALSE;
-			if (self->music < 0)
-				return FALSE;
-			self->type = ASAPModuleType_SAP_C;
-			break;
-		case 68:
-			if (self->init < 0)
-				return FALSE;
-			self->type = ASAPModuleType_SAP_D;
-			break;
-		case 83:
-			if (self->init < 0)
-				return FALSE;
-			self->type = ASAPModuleType_SAP_S;
-			if (self->fastplay < 0)
-				self->fastplay = 78;
-			break;
-		default:
+	case 66:
+		if (self->player < 0)
 			return FALSE;
+		if (self->init < 0)
+			return FALSE;
+		self->type = ASAPModuleType_SAP_B;
+		break;
+	case 67:
+		if (self->player < 0)
+			return FALSE;
+		if (self->music < 0)
+			return FALSE;
+		self->type = ASAPModuleType_SAP_C;
+		break;
+	case 68:
+		if (self->init < 0)
+			return FALSE;
+		self->type = ASAPModuleType_SAP_D;
+		break;
+	case 83:
+		if (self->init < 0)
+			return FALSE;
+		self->type = ASAPModuleType_SAP_S;
+		if (self->fastplay < 0)
+			self->fastplay = 78;
+		break;
+	default:
+		return FALSE;
 	}
 	if (self->fastplay < 0)
 		self->fastplay = self->ntsc ? 262 : 312;
@@ -3807,26 +3807,26 @@ static int ASAPInfo_ParseTmcTitle(unsigned char *title, int titleLen, unsigned c
 	while (moduleOffset <= lastOffset) {
 		int c = module[moduleOffset++] & 127;
 		switch (c) {
-			case 20:
-				c = 42;
-				break;
-			case 1:
-			case 3:
-			case 5:
-			case 12:
-			case 14:
-			case 15:
-			case 19:
-				c += 96;
-				break;
-			case 24:
-			case 26:
-				c = 122;
-				break;
-			default:
-				if (!ASAPInfo_IsValidChar(c))
-					c = 32;
-				break;
+		case 20:
+			c = 42;
+			break;
+		case 1:
+		case 3:
+		case 5:
+		case 12:
+		case 14:
+		case 15:
+		case 19:
+			c += 96;
+			break;
+		case 24:
+		case 26:
+			c = 122;
+			break;
+		default:
+			if (!ASAPInfo_IsValidChar(c))
+				c = 32;
+			break;
 		}
 		title[titleLen++] = c;
 	}
@@ -3898,27 +3898,27 @@ void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsign
 {
 	switch (info->type) {
 		const char *ext;
-		case ASAPModuleType_SAP_B:
-		case ASAPModuleType_SAP_C:
-			output.func(output.obj, "sap");
-			ext = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
-			if (ext != NULL)
-				output.func(output.obj, ext);
+	case ASAPModuleType_SAP_B:
+	case ASAPModuleType_SAP_C:
+		output.func(output.obj, "sap");
+		ext = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
+		if (ext != NULL)
+			output.func(output.obj, ext);
+		output.func(output.obj, "xex");
+		break;
+	case ASAPModuleType_SAP_D:
+		output.func(output.obj, "sap");
+		if (info->fastplay == 312)
 			output.func(output.obj, "xex");
-			break;
-		case ASAPModuleType_SAP_D:
-			output.func(output.obj, "sap");
-			if (info->fastplay == 312)
-				output.func(output.obj, "xex");
-			break;
-		case ASAPModuleType_SAP_S:
-			output.func(output.obj, "sap");
-			break;
-		default:
-			output.func(output.obj, ASAPInfo_GetOriginalModuleExt(info, module, moduleLen));
-			output.func(output.obj, "sap");
-			output.func(output.obj, "xex");
-			break;
+		break;
+	case ASAPModuleType_SAP_S:
+		output.func(output.obj, "sap");
+		break;
+	default:
+		output.func(output.obj, ASAPInfo_GetOriginalModuleExt(info, module, moduleLen));
+		output.func(output.obj, "sap");
+		output.func(output.obj, "xex");
+		break;
 	}
 }
 
@@ -3933,76 +3933,76 @@ cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const
 	int destExt = ASAPInfo_GetPackedExt(targetFilename);
 	switch (destExt) {
 		const char *possibleExt;
-		case 7364979:
-			return ASAPWriter_WriteExecutable(w, NULL, info, module, moduleLen);
-		case 7890296:
-			{
-				FlashPack flashPack;
-				ByteWriter resultWriter;
-				int initAndPlayer[2];
-				FlashPack_Construct(&flashPack);
-				resultWriter = w;
-				
+	case 7364979:
+		return ASAPWriter_WriteExecutable(w, NULL, info, module, moduleLen);
+	case 7890296:
+		{
+			FlashPack flashPack;
+			ByteWriter resultWriter;
+			int initAndPlayer[2];
+			FlashPack_Construct(&flashPack);
+			resultWriter = w;
+			
 					w.obj = &flashPack;
 					w.func = (void (*)(void *, int)) FlashPack_LoadByte;
 				;
-				if (!ASAPWriter_WriteExecutable(w, initAndPlayer, info, module, moduleLen))
+			if (!ASAPWriter_WriteExecutable(w, initAndPlayer, info, module, moduleLen))
+				return FALSE;
+			switch (info->type) {
+			case ASAPModuleType_SAP_D:
+				if (info->fastplay != 312)
 					return FALSE;
-				switch (info->type) {
-					case ASAPModuleType_SAP_D:
-						if (info->fastplay != 312)
-							return FALSE;
-						ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 0, 120);
-						ASAPWriter_WriteWord(w, initAndPlayer[0]);
-						w.func(w.obj, 76);
-						ASAPWriter_WriteWord(w, initAndPlayer[1]);
-						w.func(w.obj, info->defaultSong);
-						ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 126, 132);
-						break;
-					case ASAPModuleType_SAP_S:
-						return FALSE;
-					default:
-						ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 0, 192);
-						ASAPWriter_WriteWord(w, initAndPlayer[0]);
-						w.func(w.obj, 76);
-						ASAPWriter_WriteWord(w, initAndPlayer[1]);
-						w.func(w.obj, info->defaultSong);
-						w.func(w.obj, info->fastplay & 1);
-						w.func(w.obj, (info->fastplay >> 1) % 156);
-						w.func(w.obj, (info->fastplay >> 1) % 131);
-						w.func(w.obj, info->fastplay / 312);
-						w.func(w.obj, info->fastplay / 262);
-						ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 203, 209);
-						break;
-				}
-				return FlashPack_Compress(&flashPack, resultWriter);
+				ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 0, 120);
+				ASAPWriter_WriteWord(w, initAndPlayer[0]);
+				w.func(w.obj, 76);
+				ASAPWriter_WriteWord(w, initAndPlayer[1]);
+				w.func(w.obj, info->defaultSong);
+				ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 126, 132);
+				break;
+			case ASAPModuleType_SAP_S:
+				return FALSE;
+			default:
+				ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 0, 192);
+				ASAPWriter_WriteWord(w, initAndPlayer[0]);
+				w.func(w.obj, 76);
+				ASAPWriter_WriteWord(w, initAndPlayer[1]);
+				w.func(w.obj, info->defaultSong);
+				w.func(w.obj, info->fastplay & 1);
+				w.func(w.obj, (info->fastplay >> 1) % 156);
+				w.func(w.obj, (info->fastplay >> 1) % 131);
+				w.func(w.obj, info->fastplay / 312);
+				w.func(w.obj, info->fastplay / 262);
+				ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 203, 209);
+				break;
 			}
-		default:
-			possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
-			if (possibleExt != NULL && destExt == ((possibleExt[0] + (possibleExt[1] << 8) + (possibleExt[2] << 16)) | 2105376)) {
-				switch (info->type) {
-					int offset;
-					int blockLen;
-					case ASAPModuleType_SAP_B:
-					case ASAPModuleType_SAP_C:
-						offset = ASAPInfo_GetRmtSapOffset(info, module, moduleLen);
-						if (offset > 0) {
-							w.func(w.obj, 255);
-							w.func(w.obj, 255);
-							ASAPWriter_WriteBytes(w, module, offset, moduleLen);
-							return TRUE;
-						}
-						blockLen = ASAPInfo_GetWord(module, info->headerLen + 4) - ASAPInfo_GetWord(module, info->headerLen + 2) + 7;
-						if (blockLen < 7 || info->headerLen + blockLen >= moduleLen)
-							return FALSE;
-						ASAPWriter_WriteBytes(w, module, info->headerLen, info->headerLen + blockLen);
-						return TRUE;
-					default:
-						ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-						return TRUE;
+			return FlashPack_Compress(&flashPack, resultWriter);
+		}
+	default:
+		possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
+		if (possibleExt != NULL && destExt == ((possibleExt[0] + (possibleExt[1] << 8) + (possibleExt[2] << 16)) | 2105376)) {
+			switch (info->type) {
+				int offset;
+				int blockLen;
+			case ASAPModuleType_SAP_B:
+			case ASAPModuleType_SAP_C:
+				offset = ASAPInfo_GetRmtSapOffset(info, module, moduleLen);
+				if (offset > 0) {
+					w.func(w.obj, 255);
+					w.func(w.obj, 255);
+					ASAPWriter_WriteBytes(w, module, offset, moduleLen);
+					return TRUE;
 				}
+				blockLen = ASAPInfo_GetWord(module, info->headerLen + 4) - ASAPInfo_GetWord(module, info->headerLen + 2) + 7;
+				if (blockLen < 7 || info->headerLen + blockLen >= moduleLen)
+					return FALSE;
+				ASAPWriter_WriteBytes(w, module, info->headerLen, info->headerLen + blockLen);
+				return TRUE;
+			default:
+				ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+				return TRUE;
 			}
-			return FALSE;
+		}
+		return FALSE;
 	}
 }
 
@@ -4067,204 +4067,204 @@ static cibool ASAPWriter_WriteExecutable(ByteWriter w, int *initAndPlayer, ASAPI
 		static const int tmcPlayerOffset[4] = { 3, -9, -10, -10 };
 		int player2;
 		static const int tmcInitOffset[4] = { -14, -16, -17, -17 };
-		case ASAPModuleType_SAP_B:
-			ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 66, module, moduleLen);
-			break;
-		case ASAPModuleType_SAP_C:
-			ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 67, module, moduleLen);
-			ASAPWriter_WriteCmcInit(w, initAndPlayer, info);
-			break;
-		case ASAPModuleType_SAP_D:
-			ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 68, module, moduleLen);
-			break;
-		case ASAPModuleType_SAP_S:
-			ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 83, module, moduleLen);
-			break;
-		case ASAPModuleType_CMC:
-		case ASAPModuleType_CM3:
-		case ASAPModuleType_CMR:
-		case ASAPModuleType_CMS:
-			ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 67, -1, player);
-			w.func(w.obj, 255);
-			w.func(w.obj, 255);
-			ASAPWriter_WriteBytes(w, module, 2, moduleLen);
-			ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
-			ASAPWriter_WriteCmcInit(w, initAndPlayer, info);
-			break;
-		case ASAPModuleType_DLT:
-			startAddr = ASAPWriter_WriteExecutableHeaderForSongPos(w, initAndPlayer, info, player, 5, 7, 259);
-			if (moduleLen == 11270) {
-				ASAPWriter_WriteBytes(w, module, 0, 4);
-				ASAPWriter_WriteWord(w, 19456);
-				ASAPWriter_WriteBytes(w, module, 6, moduleLen);
-				w.func(w.obj, 0);
-			}
-			else
-				ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-			ASAPWriter_WriteWord(w, startAddr);
-			ASAPWriter_WriteWord(w, playerLastByte);
-			if (info->songs != 1) {
-				ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
-				w.func(w.obj, 170);
-				w.func(w.obj, 188);
-				ASAPWriter_WriteWord(w, startAddr);
-			}
-			else {
-				w.func(w.obj, 160);
-				w.func(w.obj, 0);
-			}
-			w.func(w.obj, 76);
-			ASAPWriter_WriteWord(w, player + 256);
-			ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
-			break;
-		case ASAPModuleType_MPT:
-			startAddr = ASAPWriter_WriteExecutableHeaderForSongPos(w, initAndPlayer, info, player, 13, 17, 3);
+	case ASAPModuleType_SAP_B:
+		ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 66, module, moduleLen);
+		break;
+	case ASAPModuleType_SAP_C:
+		ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 67, module, moduleLen);
+		ASAPWriter_WriteCmcInit(w, initAndPlayer, info);
+		break;
+	case ASAPModuleType_SAP_D:
+		ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 68, module, moduleLen);
+		break;
+	case ASAPModuleType_SAP_S:
+		ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 83, module, moduleLen);
+		break;
+	case ASAPModuleType_CMC:
+	case ASAPModuleType_CM3:
+	case ASAPModuleType_CMR:
+	case ASAPModuleType_CMS:
+		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 67, -1, player);
+		w.func(w.obj, 255);
+		w.func(w.obj, 255);
+		ASAPWriter_WriteBytes(w, module, 2, moduleLen);
+		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
+		ASAPWriter_WriteCmcInit(w, initAndPlayer, info);
+		break;
+	case ASAPModuleType_DLT:
+		startAddr = ASAPWriter_WriteExecutableHeaderForSongPos(w, initAndPlayer, info, player, 5, 7, 259);
+		if (moduleLen == 11270) {
+			ASAPWriter_WriteBytes(w, module, 0, 4);
+			ASAPWriter_WriteWord(w, 19456);
+			ASAPWriter_WriteBytes(w, module, 6, moduleLen);
+			w.func(w.obj, 0);
+		}
+		else
 			ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+		ASAPWriter_WriteWord(w, startAddr);
+		ASAPWriter_WriteWord(w, playerLastByte);
+		if (info->songs != 1) {
+			ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
+			w.func(w.obj, 170);
+			w.func(w.obj, 188);
 			ASAPWriter_WriteWord(w, startAddr);
-			ASAPWriter_WriteWord(w, playerLastByte);
-			if (info->songs != 1) {
-				ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
-				w.func(w.obj, 72);
-			}
+		}
+		else {
 			w.func(w.obj, 160);
-			w.func(w.obj, info->music & 255);
+			w.func(w.obj, 0);
+		}
+		w.func(w.obj, 76);
+		ASAPWriter_WriteWord(w, player + 256);
+		ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+		break;
+	case ASAPModuleType_MPT:
+		startAddr = ASAPWriter_WriteExecutableHeaderForSongPos(w, initAndPlayer, info, player, 13, 17, 3);
+		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+		ASAPWriter_WriteWord(w, startAddr);
+		ASAPWriter_WriteWord(w, playerLastByte);
+		if (info->songs != 1) {
+			ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
+			w.func(w.obj, 72);
+		}
+		w.func(w.obj, 160);
+		w.func(w.obj, info->music & 255);
+		w.func(w.obj, 162);
+		w.func(w.obj, info->music >> 8);
+		w.func(w.obj, 169);
+		w.func(w.obj, 0);
+		w.func(w.obj, 32);
+		ASAPWriter_WriteWord(w, player);
+		if (info->songs != 1) {
+			w.func(w.obj, 104);
+			w.func(w.obj, 168);
+			w.func(w.obj, 190);
+			ASAPWriter_WriteWord(w, startAddr);
+		}
+		else {
 			w.func(w.obj, 162);
-			w.func(w.obj, info->music >> 8);
+			w.func(w.obj, 0);
+		}
+		w.func(w.obj, 169);
+		w.func(w.obj, 2);
+		ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+		break;
+	case ASAPModuleType_RMT:
+		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, 3200, 1539);
+		ASAPWriter_WriteBytes(w, module, 0, ASAPInfo_GetWord(module, 4) - info->music + 7);
+		ASAPWriter_WriteWord(w, 3200);
+		if (info->songs != 1) {
+			ASAPWriter_WriteWord(w, 3210 + info->songs);
+			w.func(w.obj, 168);
+			w.func(w.obj, 185);
+			ASAPWriter_WriteWord(w, 3211);
+		}
+		else {
+			ASAPWriter_WriteWord(w, 3208);
 			w.func(w.obj, 169);
 			w.func(w.obj, 0);
-			w.func(w.obj, 32);
-			ASAPWriter_WriteWord(w, player);
-			if (info->songs != 1) {
-				w.func(w.obj, 104);
-				w.func(w.obj, 168);
-				w.func(w.obj, 190);
-				ASAPWriter_WriteWord(w, startAddr);
-			}
-			else {
-				w.func(w.obj, 162);
-				w.func(w.obj, 0);
-			}
+		}
+		w.func(w.obj, 162);
+		w.func(w.obj, info->music & 255);
+		w.func(w.obj, 160);
+		w.func(w.obj, info->music >> 8);
+		w.func(w.obj, 76);
+		ASAPWriter_WriteWord(w, 1536);
+		if (info->songs != 1)
+			ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
+		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
+		break;
+	case ASAPModuleType_TMC:
+		player2 = player + tmcPlayerOffset[module[37] - 1];
+		startAddr = player2 + tmcInitOffset[module[37] - 1];
+		if (info->songs != 1)
+			startAddr -= 3;
+		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, startAddr, player2);
+		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+		ASAPWriter_WriteWord(w, startAddr);
+		ASAPWriter_WriteWord(w, playerLastByte);
+		if (info->songs != 1)
+			w.func(w.obj, 72);
+		w.func(w.obj, 160);
+		w.func(w.obj, info->music & 255);
+		w.func(w.obj, 162);
+		w.func(w.obj, info->music >> 8);
+		w.func(w.obj, 169);
+		w.func(w.obj, 112);
+		w.func(w.obj, 32);
+		ASAPWriter_WriteWord(w, player);
+		if (info->songs != 1)
+			ASAPWriter_WritePlaTaxLda0(w);
+		else {
 			w.func(w.obj, 169);
-			w.func(w.obj, 2);
-			ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
-			break;
-		case ASAPModuleType_RMT:
-			ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, 3200, 1539);
-			ASAPWriter_WriteBytes(w, module, 0, ASAPInfo_GetWord(module, 4) - info->music + 7);
-			ASAPWriter_WriteWord(w, 3200);
-			if (info->songs != 1) {
-				ASAPWriter_WriteWord(w, 3210 + info->songs);
-				w.func(w.obj, 168);
-				w.func(w.obj, 185);
-				ASAPWriter_WriteWord(w, 3211);
-			}
-			else {
-				ASAPWriter_WriteWord(w, 3208);
-				w.func(w.obj, 169);
-				w.func(w.obj, 0);
-			}
-			w.func(w.obj, 162);
-			w.func(w.obj, info->music & 255);
-			w.func(w.obj, 160);
-			w.func(w.obj, info->music >> 8);
+			w.func(w.obj, 96);
+		}
+		switch (module[37]) {
+		case 2:
+			w.func(w.obj, 6);
+			w.func(w.obj, 0);
 			w.func(w.obj, 76);
-			ASAPWriter_WriteWord(w, 1536);
-			if (info->songs != 1)
-				ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
-			ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
-			break;
-		case ASAPModuleType_TMC:
-			player2 = player + tmcPlayerOffset[module[37] - 1];
-			startAddr = player2 + tmcInitOffset[module[37] - 1];
-			if (info->songs != 1)
-				startAddr -= 3;
-			ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, startAddr, player2);
-			ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-			ASAPWriter_WriteWord(w, startAddr);
-			ASAPWriter_WriteWord(w, playerLastByte);
-			if (info->songs != 1)
-				w.func(w.obj, 72);
-			w.func(w.obj, 160);
-			w.func(w.obj, info->music & 255);
-			w.func(w.obj, 162);
-			w.func(w.obj, info->music >> 8);
-			w.func(w.obj, 169);
-			w.func(w.obj, 112);
-			w.func(w.obj, 32);
 			ASAPWriter_WriteWord(w, player);
-			if (info->songs != 1)
-				ASAPWriter_WritePlaTaxLda0(w);
-			else {
-				w.func(w.obj, 169);
-				w.func(w.obj, 96);
-			}
-			switch (module[37]) {
-				case 2:
-					w.func(w.obj, 6);
-					w.func(w.obj, 0);
-					w.func(w.obj, 76);
-					ASAPWriter_WriteWord(w, player);
-					w.func(w.obj, 165);
-					w.func(w.obj, 0);
-					w.func(w.obj, 230);
-					w.func(w.obj, 0);
-					w.func(w.obj, 74);
-					w.func(w.obj, 144);
-					w.func(w.obj, 5);
-					w.func(w.obj, 176);
-					w.func(w.obj, 6);
-					break;
-				case 3:
-				case 4:
-					w.func(w.obj, 160);
-					w.func(w.obj, 1);
-					w.func(w.obj, 132);
-					w.func(w.obj, 0);
-					w.func(w.obj, 208);
-					w.func(w.obj, 10);
-					w.func(w.obj, 198);
-					w.func(w.obj, 0);
-					w.func(w.obj, 208);
-					w.func(w.obj, 12);
-					w.func(w.obj, 160);
-					w.func(w.obj, module[37]);
-					w.func(w.obj, 132);
-					w.func(w.obj, 0);
-					w.func(w.obj, 208);
-					w.func(w.obj, 3);
-					break;
-			}
-			ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+			w.func(w.obj, 165);
+			w.func(w.obj, 0);
+			w.func(w.obj, 230);
+			w.func(w.obj, 0);
+			w.func(w.obj, 74);
+			w.func(w.obj, 144);
+			w.func(w.obj, 5);
+			w.func(w.obj, 176);
+			w.func(w.obj, 6);
 			break;
-		case ASAPModuleType_TM2:
-			ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, 4992, 2051);
-			ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-			ASAPWriter_WriteWord(w, 4992);
-			if (info->songs != 1) {
-				ASAPWriter_WriteWord(w, 5008);
-				w.func(w.obj, 72);
-			}
-			else
-				ASAPWriter_WriteWord(w, 5006);
+		case 3:
+		case 4:
 			w.func(w.obj, 160);
-			w.func(w.obj, info->music & 255);
-			w.func(w.obj, 162);
-			w.func(w.obj, info->music >> 8);
-			w.func(w.obj, 169);
-			w.func(w.obj, 112);
-			w.func(w.obj, 32);
-			ASAPWriter_WriteWord(w, 2048);
-			if (info->songs != 1)
-				ASAPWriter_WritePlaTaxLda0(w);
-			else {
-				w.func(w.obj, 169);
-				w.func(w.obj, 0);
-				w.func(w.obj, 170);
-			}
-			w.func(w.obj, 76);
-			ASAPWriter_WriteWord(w, 2048);
-			ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
+			w.func(w.obj, 1);
+			w.func(w.obj, 132);
+			w.func(w.obj, 0);
+			w.func(w.obj, 208);
+			w.func(w.obj, 10);
+			w.func(w.obj, 198);
+			w.func(w.obj, 0);
+			w.func(w.obj, 208);
+			w.func(w.obj, 12);
+			w.func(w.obj, 160);
+			w.func(w.obj, module[37]);
+			w.func(w.obj, 132);
+			w.func(w.obj, 0);
+			w.func(w.obj, 208);
+			w.func(w.obj, 3);
 			break;
+		}
+		ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+		break;
+	case ASAPModuleType_TM2:
+		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, 4992, 2051);
+		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+		ASAPWriter_WriteWord(w, 4992);
+		if (info->songs != 1) {
+			ASAPWriter_WriteWord(w, 5008);
+			w.func(w.obj, 72);
+		}
+		else
+			ASAPWriter_WriteWord(w, 5006);
+		w.func(w.obj, 160);
+		w.func(w.obj, info->music & 255);
+		w.func(w.obj, 162);
+		w.func(w.obj, info->music >> 8);
+		w.func(w.obj, 169);
+		w.func(w.obj, 112);
+		w.func(w.obj, 32);
+		ASAPWriter_WriteWord(w, 2048);
+		if (info->songs != 1)
+			ASAPWriter_WritePlaTaxLda0(w);
+		else {
+			w.func(w.obj, 169);
+			w.func(w.obj, 0);
+			w.func(w.obj, 170);
+		}
+		w.func(w.obj, 76);
+		ASAPWriter_WriteWord(w, 2048);
+		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
+		break;
 	}
 	return TRUE;
 }
@@ -4433,2564 +4433,2564 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		data = asap->memory[pc++];
 		asap->cycle += opcodeCycles[data];
 		switch (data) {
-			case 0:
+		case 0:
+			pc++;
+			asap->memory[256 + s] = pc >> 8;
+			s = (s - 1) & 255;
+			asap->memory[256 + s] = (unsigned char) pc;
+			s = (s - 1) & 255;
+			asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 48;
+			s = (s - 1) & 255;
+			vdi |= 4;
+			pc = asap->memory[65534] + (asap->memory[65535] << 8);
+			break;
+		case 1:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 2:
+		case 18:
+		case 34:
+		case 50:
+		case 66:
+		case 82:
+		case 98:
+		case 114:
+		case 146:
+		case 178:
+		case 210:
+		case 242:
+			pc--;
+			asap->cycle = asap->nextEventCycle;
+			break;
+		case 5:
+			addr = asap->memory[pc++];
+			nz = a |= asap->memory[addr];
+			break;
+		case 6:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			asap->memory[addr] = nz;
+			break;
+		case 8:
+			asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 48;
+			s = (s - 1) & 255;
+			break;
+		case 9:
+			nz = a |= asap->memory[pc++];
+			break;
+		case 10:
+			c = a >> 7;
+			nz = a = (a << 1) & 255;
+			break;
+		case 13:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 14:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			break;
+		case 16:
+			if (nz < 128) {
+				addr = (signed char) asap->memory[pc];
 				pc++;
+				addr += pc;
+				if ((addr ^ pc) >> 8 != 0)
+					asap->cycle++;
+				asap->cycle++;
+				pc = addr;
+				break;
+			}
+			pc++;
+			break;
+		case 17:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 21:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = a |= asap->memory[addr];
+			break;
+		case 22:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			asap->memory[addr] = nz;
+			break;
+		case 24:
+			c = 0;
+			break;
+		case 25:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 29:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if ((addr & 255) < x)
+				asap->cycle++;
+			nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 30:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			break;
+		case 32:
+			addr = asap->memory[pc++];
+			asap->memory[256 + s] = pc >> 8;
+			s = (s - 1) & 255;
+			asap->memory[256 + s] = (unsigned char) pc;
+			s = (s - 1) & 255;
+			pc = addr + (asap->memory[pc] << 8);
+			break;
+		case 33:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 36:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			vdi = (vdi & 12) + (nz & 64);
+			nz = ((nz & 128) << 1) + (nz & a);
+			break;
+		case 37:
+			addr = asap->memory[pc++];
+			nz = a &= asap->memory[addr];
+			break;
+		case 38:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			asap->memory[addr] = nz;
+			break;
+		case 40:
+			s = (s + 1) & 255;
+			vdi = asap->memory[256 + s];
+			nz = ((vdi & 128) << 1) + (~vdi & 2);
+			c = vdi & 1;
+			vdi &= 76;
+			if ((vdi & 4) == 0 && asap->pokeys.irqst != 255) {
 				asap->memory[256 + s] = pc >> 8;
 				s = (s - 1) & 255;
 				asap->memory[256 + s] = (unsigned char) pc;
 				s = (s - 1) & 255;
-				asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 48;
+				asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32;
 				s = (s - 1) & 255;
 				vdi |= 4;
 				pc = asap->memory[65534] + (asap->memory[65535] << 8);
-				break;
-			case 1:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 2:
-			case 18:
-			case 34:
-			case 50:
-			case 66:
-			case 82:
-			case 98:
-			case 114:
-			case 146:
-			case 178:
-			case 210:
-			case 242:
-				pc--;
-				asap->cycle = asap->nextEventCycle;
-				break;
-			case 5:
-				addr = asap->memory[pc++];
-				nz = a |= asap->memory[addr];
-				break;
-			case 6:
-				addr = asap->memory[pc++];
+				asap->cycle += 7;
+			}
+			break;
+		case 41:
+			nz = a &= asap->memory[pc++];
+			break;
+		case 42:
+			a = (a << 1) + c;
+			c = a >> 8;
+			nz = a &= 255;
+			break;
+		case 44:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			vdi = (vdi & 12) + (nz & 64);
+			nz = ((nz & 128) << 1) + (nz & a);
+			break;
+		case 45:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 46:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
 				nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
 				asap->memory[addr] = nz;
-				break;
-			case 8:
-				asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 48;
-				s = (s - 1) & 255;
-				break;
-			case 9:
-				nz = a |= asap->memory[pc++];
-				break;
-			case 10:
-				c = a >> 7;
-				nz = a = (a << 1) & 255;
-				break;
-			case 13:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 14:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 16:
-				if (nz < 128) {
-					addr = (signed char) asap->memory[pc];
-					pc++;
-					addr += pc;
-					if ((addr ^ pc) >> 8 != 0)
-						asap->cycle++;
-					asap->cycle++;
-					pc = addr;
-					break;
-				}
+			break;
+		case 48:
+			if (nz >= 128) {
+				addr = (signed char) asap->memory[pc];
 				pc++;
-				break;
-			case 17:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if ((addr & 255) < y)
+				addr += pc;
+				if ((addr ^ pc) >> 8 != 0)
 					asap->cycle++;
-				nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+				asap->cycle++;
+				pc = addr;
 				break;
-			case 21:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = a |= asap->memory[addr];
-				break;
-			case 22:
-				addr = (asap->memory[pc++] + x) & 255;
+			}
+			pc++;
+			break;
+		case 49:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 53:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = a &= asap->memory[addr];
+			break;
+		case 54:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			asap->memory[addr] = nz;
+			break;
+		case 56:
+			c = 1;
+			break;
+		case 57:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 61:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if ((addr & 255) < x)
+				asap->cycle++;
+			nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 62:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
 				nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
 				asap->memory[addr] = nz;
-				break;
-			case 24:
-				c = 0;
-				break;
-			case 25:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 29:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if ((addr & 255) < x)
-					asap->cycle++;
-				nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 30:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 32:
-				addr = asap->memory[pc++];
+			break;
+		case 64:
+			s = (s + 1) & 255;
+			vdi = asap->memory[256 + s];
+			nz = ((vdi & 128) << 1) + (~vdi & 2);
+			c = vdi & 1;
+			vdi &= 76;
+			s = (s + 1) & 255;
+			pc = asap->memory[256 + s];
+			s = (s + 1) & 255;
+			addr = asap->memory[256 + s];
+			pc += addr << 8;
+			if ((vdi & 4) == 0 && asap->pokeys.irqst != 255) {
 				asap->memory[256 + s] = pc >> 8;
 				s = (s - 1) & 255;
 				asap->memory[256 + s] = (unsigned char) pc;
 				s = (s - 1) & 255;
-				pc = addr + (asap->memory[pc] << 8);
-				break;
-			case 33:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 36:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr];
-				vdi = (vdi & 12) + (nz & 64);
-				nz = ((nz & 128) << 1) + (nz & a);
-				break;
-			case 37:
-				addr = asap->memory[pc++];
-				nz = a &= asap->memory[addr];
-				break;
-			case 38:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				asap->memory[addr] = nz;
-				break;
-			case 40:
-				s = (s + 1) & 255;
-				vdi = asap->memory[256 + s];
-				nz = ((vdi & 128) << 1) + (~vdi & 2);
-				c = vdi & 1;
-				vdi &= 76;
-				if ((vdi & 4) == 0 && asap->pokeys.irqst != 255) {
-					asap->memory[256 + s] = pc >> 8;
-					s = (s - 1) & 255;
-					asap->memory[256 + s] = (unsigned char) pc;
-					s = (s - 1) & 255;
-					asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32;
-					s = (s - 1) & 255;
-					vdi |= 4;
-					pc = asap->memory[65534] + (asap->memory[65535] << 8);
-					asap->cycle += 7;
-				}
-				break;
-			case 41:
-				nz = a &= asap->memory[pc++];
-				break;
-			case 42:
-				a = (a << 1) + c;
-				c = a >> 8;
-				nz = a &= 255;
-				break;
-			case 44:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				vdi = (vdi & 12) + (nz & 64);
-				nz = ((nz & 128) << 1) + (nz & a);
-				break;
-			case 45:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 46:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 48:
-				if (nz >= 128) {
-					addr = (signed char) asap->memory[pc];
-					pc++;
-					addr += pc;
-					if ((addr ^ pc) >> 8 != 0)
-						asap->cycle++;
-					asap->cycle++;
-					pc = addr;
-					break;
-				}
-				pc++;
-				break;
-			case 49:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 53:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = a &= asap->memory[addr];
-				break;
-			case 54:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				asap->memory[addr] = nz;
-				break;
-			case 56:
-				c = 1;
-				break;
-			case 57:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 61:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if ((addr & 255) < x)
-					asap->cycle++;
-				nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 62:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 64:
-				s = (s + 1) & 255;
-				vdi = asap->memory[256 + s];
-				nz = ((vdi & 128) << 1) + (~vdi & 2);
-				c = vdi & 1;
-				vdi &= 76;
-				s = (s + 1) & 255;
-				pc = asap->memory[256 + s];
-				s = (s + 1) & 255;
-				addr = asap->memory[256 + s];
-				pc += addr << 8;
-				if ((vdi & 4) == 0 && asap->pokeys.irqst != 255) {
-					asap->memory[256 + s] = pc >> 8;
-					s = (s - 1) & 255;
-					asap->memory[256 + s] = (unsigned char) pc;
-					s = (s - 1) & 255;
-					asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32;
-					s = (s - 1) & 255;
-					vdi |= 4;
-					pc = asap->memory[65534] + (asap->memory[65535] << 8);
-					asap->cycle += 7;
-				}
-				break;
-			case 65:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 69:
-				addr = asap->memory[pc++];
-				nz = a ^= asap->memory[addr];
-				break;
-			case 70:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				asap->memory[addr] = nz;
-				break;
-			case 72:
-				asap->memory[256 + s] = a;
+				asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32;
 				s = (s - 1) & 255;
-				break;
-			case 73:
-				nz = a ^= asap->memory[pc++];
-				break;
-			case 74:
-				c = a & 1;
-				nz = a >>= 1;
-				break;
-			case 76:
-				addr = asap->memory[pc++];
-				pc = addr + (asap->memory[pc] << 8);
-				break;
-			case 77:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 78:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 80:
-				if ((vdi & 64) == 0) {
-					addr = (signed char) asap->memory[pc];
-					pc++;
-					addr += pc;
-					if ((addr ^ pc) >> 8 != 0)
-						asap->cycle++;
-					asap->cycle++;
-					pc = addr;
-					break;
-				}
-				pc++;
-				break;
-			case 81:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 85:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = a ^= asap->memory[addr];
-				break;
-			case 86:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				asap->memory[addr] = nz;
-				break;
-			case 88:
-				vdi &= 72;
-				if ((vdi & 4) == 0 && asap->pokeys.irqst != 255) {
-					asap->memory[256 + s] = pc >> 8;
-					s = (s - 1) & 255;
-					asap->memory[256 + s] = (unsigned char) pc;
-					s = (s - 1) & 255;
-					asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32;
-					s = (s - 1) & 255;
-					vdi |= 4;
-					pc = asap->memory[65534] + (asap->memory[65535] << 8);
-					asap->cycle += 7;
-				}
-				break;
-			case 89:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 93:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if ((addr & 255) < x)
-					asap->cycle++;
-				nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 94:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 96:
-				s = (s + 1) & 255;
-				pc = asap->memory[256 + s];
-				s = (s + 1) & 255;
-				addr = asap->memory[256 + s];
-				pc += (addr << 8) + 1;
-				break;
-			case 97:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 101:
-				addr = asap->memory[pc++];
-				data = asap->memory[addr];
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 102:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr] + (c << 8);
-				c = nz & 1;
-				nz >>= 1;
-				asap->memory[addr] = nz;
-				break;
-			case 104:
-				s = (s + 1) & 255;
-				a = asap->memory[256 + s];
-				nz = a;
-				break;
-			case 105:
-				data = asap->memory[pc++];
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 106:
-				nz = (c << 7) + (a >> 1);
-				c = a & 1;
-				a = nz;
-				break;
-			case 108:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if ((addr & 255) == 255)
-					pc = asap->memory[addr] + (asap->memory[addr - 255] << 8);
-				else
-					pc = asap->memory[addr] + (asap->memory[addr + 1] << 8);
-				break;
-			case 109:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 110:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz += c << 8;
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 112:
-				if ((vdi & 64) != 0) {
-					addr = (signed char) asap->memory[pc];
-					pc++;
-					addr += pc;
-					if ((addr ^ pc) >> 8 != 0)
-						asap->cycle++;
-					asap->cycle++;
-					pc = addr;
-					break;
-				}
-				pc++;
-				break;
-			case 113:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 117:
-				addr = (asap->memory[pc++] + x) & 255;
-				data = asap->memory[addr];
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 118:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = asap->memory[addr] + (c << 8);
-				c = nz & 1;
-				nz >>= 1;
-				asap->memory[addr] = nz;
-				break;
-			case 120:
 				vdi |= 4;
-				break;
-			case 121:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 125:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if ((addr & 255) < x)
-					asap->cycle++;
-				data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 126:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz += c << 8;
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 129:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, a);
-				else
-					asap->memory[addr] = a;
-				break;
-			case 132:
-				addr = asap->memory[pc++];
-				asap->memory[addr] = y;
-				break;
-			case 133:
-				addr = asap->memory[pc++];
-				asap->memory[addr] = a;
-				break;
-			case 134:
-				addr = asap->memory[pc++];
-				asap->memory[addr] = x;
-				break;
-			case 136:
-				nz = y = (y - 1) & 255;
-				break;
-			case 138:
-				nz = a = x;
-				break;
-			case 140:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, y);
-				else
-					asap->memory[addr] = y;
-				break;
-			case 141:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, a);
-				else
-					asap->memory[addr] = a;
-				break;
-			case 142:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, x);
-				else
-					asap->memory[addr] = x;
-				break;
-			case 144:
-				if (c == 0) {
-					addr = (signed char) asap->memory[pc];
-					pc++;
-					addr += pc;
-					if ((addr ^ pc) >> 8 != 0)
-						asap->cycle++;
-					asap->cycle++;
-					pc = addr;
-					break;
-				}
+				pc = asap->memory[65534] + (asap->memory[65535] << 8);
+				asap->cycle += 7;
+			}
+			break;
+		case 65:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 69:
+			addr = asap->memory[pc++];
+			nz = a ^= asap->memory[addr];
+			break;
+		case 70:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			c = nz & 1;
+			nz >>= 1;
+			asap->memory[addr] = nz;
+			break;
+		case 72:
+			asap->memory[256 + s] = a;
+			s = (s - 1) & 255;
+			break;
+		case 73:
+			nz = a ^= asap->memory[pc++];
+			break;
+		case 74:
+			c = a & 1;
+			nz = a >>= 1;
+			break;
+		case 76:
+			addr = asap->memory[pc++];
+			pc = addr + (asap->memory[pc] << 8);
+			break;
+		case 77:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 78:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			break;
+		case 80:
+			if ((vdi & 64) == 0) {
+				addr = (signed char) asap->memory[pc];
 				pc++;
-				break;
-			case 145:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, a);
-				else
-					asap->memory[addr] = a;
-				break;
-			case 148:
-				addr = (asap->memory[pc++] + x) & 255;
-				asap->memory[addr] = y;
-				break;
-			case 149:
-				addr = (asap->memory[pc++] + x) & 255;
-				asap->memory[addr] = a;
-				break;
-			case 150:
-				addr = (asap->memory[pc++] + y) & 255;
-				asap->memory[addr] = x;
-				break;
-			case 152:
-				nz = a = y;
-				break;
-			case 153:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, a);
-				else
-					asap->memory[addr] = a;
-				break;
-			case 154:
-				s = x;
-				break;
-			case 157:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, a);
-				else
-					asap->memory[addr] = a;
-				break;
-			case 160:
-				nz = y = asap->memory[pc++];
-				break;
-			case 161:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 162:
-				nz = x = asap->memory[pc++];
-				break;
-			case 164:
-				addr = asap->memory[pc++];
-				nz = y = asap->memory[addr];
-				break;
-			case 165:
-				addr = asap->memory[pc++];
-				nz = a = asap->memory[addr];
-				break;
-			case 166:
-				addr = asap->memory[pc++];
-				nz = x = asap->memory[addr];
-				break;
-			case 168:
-				nz = y = a;
-				break;
-			case 169:
-				nz = a = asap->memory[pc++];
-				break;
-			case 170:
-				nz = x = a;
-				break;
-			case 172:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = y = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 173:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 174:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = x = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 176:
-				if (c != 0) {
-					addr = (signed char) asap->memory[pc];
-					pc++;
-					addr += pc;
-					if ((addr ^ pc) >> 8 != 0)
-						asap->cycle++;
+				addr += pc;
+				if ((addr ^ pc) >> 8 != 0)
 					asap->cycle++;
-					pc = addr;
-					break;
-				}
-				pc++;
+				asap->cycle++;
+				pc = addr;
 				break;
-			case 177:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 180:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = y = asap->memory[addr];
-				break;
-			case 181:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = a = asap->memory[addr];
-				break;
-			case 182:
-				addr = (asap->memory[pc++] + y) & 255;
-				nz = x = asap->memory[addr];
-				break;
-			case 184:
-				vdi &= 12;
-				break;
-			case 185:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 186:
-				nz = x = s;
-				break;
-			case 188:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if ((addr & 255) < x)
-					asap->cycle++;
-				nz = y = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 189:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if ((addr & 255) < x)
-					asap->cycle++;
-				nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 190:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = x = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 192:
-				nz = asap->memory[pc++];
-				c = y >= nz ? 1 : 0;
-				nz = (y - nz) & 255;
-				break;
-			case 193:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 196:
-				addr = asap->memory[pc++];
+			}
+			pc++;
+			break;
+		case 81:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 85:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = a ^= asap->memory[addr];
+			break;
+		case 86:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			c = nz & 1;
+			nz >>= 1;
+			asap->memory[addr] = nz;
+			break;
+		case 88:
+			vdi &= 72;
+			if ((vdi & 4) == 0 && asap->pokeys.irqst != 255) {
+				asap->memory[256 + s] = pc >> 8;
+				s = (s - 1) & 255;
+				asap->memory[256 + s] = (unsigned char) pc;
+				s = (s - 1) & 255;
+				asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32;
+				s = (s - 1) & 255;
+				vdi |= 4;
+				pc = asap->memory[65534] + (asap->memory[65535] << 8);
+				asap->cycle += 7;
+			}
+			break;
+		case 89:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 93:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if ((addr & 255) < x)
+				asap->cycle++;
+			nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 94:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
 				nz = asap->memory[addr];
-				c = y >= nz ? 1 : 0;
-				nz = (y - nz) & 255;
-				break;
-			case 197:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr];
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 198:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
 				asap->memory[addr] = nz;
-				break;
-			case 200:
-				nz = y = (y + 1) & 255;
-				break;
-			case 201:
-				nz = asap->memory[pc++];
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 202:
-				nz = x = (x - 1) & 255;
-				break;
-			case 204:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				c = y >= nz ? 1 : 0;
-				nz = (y - nz) & 255;
-				break;
-			case 205:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 206:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
+			break;
+		case 96:
+			s = (s + 1) & 255;
+			pc = asap->memory[256 + s];
+			s = (s + 1) & 255;
+			addr = asap->memory[256 + s];
+			pc += (addr << 8) + 1;
+			break;
+		case 97:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
 				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 208:
-				if ((nz & 255) != 0) {
-					addr = (signed char) asap->memory[pc];
-					pc++;
-					addr += pc;
-					if ((addr ^ pc) >> 8 != 0)
-						asap->cycle++;
-					asap->cycle++;
-					pc = addr;
-					break;
-				}
-				pc++;
-				break;
-			case 209:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 213:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = asap->memory[addr];
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 214:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
-				asap->memory[addr] = nz;
-				break;
-			case 216:
-				vdi &= 68;
-				break;
-			case 217:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 221:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if ((addr & 255) < x)
-					asap->cycle++;
-				nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 222:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 224:
-				nz = asap->memory[pc++];
-				c = x >= nz ? 1 : 0;
-				nz = (x - nz) & 255;
-				break;
-			case 225:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 228:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr];
-				c = x >= nz ? 1 : 0;
-				nz = (x - nz) & 255;
-				break;
-			case 229:
-				addr = asap->memory[pc++];
-				data = asap->memory[addr];
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 230:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
-				asap->memory[addr] = nz;
-				break;
-			case 232:
-				nz = x = (x + 1) & 255;
-				break;
-			case 233:
-			case 235:
-				data = asap->memory[pc++];
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 234:
-			case 26:
-			case 58:
-			case 90:
-			case 122:
-			case 218:
-			case 250:
-				break;
-			case 236:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				c = x >= nz ? 1 : 0;
-				nz = (x - nz) & 255;
-				break;
-			case 237:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 238:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 240:
-				if ((nz & 255) == 0) {
-					addr = (signed char) asap->memory[pc];
-					pc++;
-					addr += pc;
-					if ((addr ^ pc) >> 8 != 0)
-						asap->cycle++;
-					asap->cycle++;
-					pc = addr;
-					break;
-				}
-				pc++;
-				break;
-			case 241:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 245:
-				addr = (asap->memory[pc++] + x) & 255;
-				data = asap->memory[addr];
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 246:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
-				asap->memory[addr] = nz;
-				break;
-			case 248:
-				vdi |= 8;
-				break;
-			case 249:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 253:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if ((addr & 255) < x)
-					asap->cycle++;
-				data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 254:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				break;
-			case 3:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a |= nz;
-				break;
-			case 4:
-			case 68:
-			case 100:
-			case 20:
-			case 52:
-			case 84:
-			case 116:
-			case 212:
-			case 244:
-			case 128:
-			case 130:
-			case 137:
-			case 194:
-			case 226:
-				pc++;
-				break;
-			case 7:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
-				asap->memory[addr] = nz;
-				nz = a |= nz;
-				break;
-			case 11:
-			case 43:
-				nz = a &= asap->memory[pc++];
-				c = nz >> 7;
-				break;
-			case 12:
-				pc += 2;
-				break;
-			case 15:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a |= nz;
-				break;
-			case 19:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a |= nz;
-				break;
-			case 23:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
-				asap->memory[addr] = nz;
-				nz = a |= nz;
-				break;
-			case 27:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a |= nz;
-				break;
-			case 28:
-			case 60:
-			case 92:
-			case 124:
-			case 220:
-			case 252:
-				if (asap->memory[pc++] + x >= 256)
-					asap->cycle++;
-				pc++;
-				break;
-			case 31:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz >> 7;
-				nz = (nz << 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a |= nz;
-				break;
-			case 35:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a &= nz;
-				break;
-			case 39:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				asap->memory[addr] = nz;
-				nz = a &= nz;
-				break;
-			case 47:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a &= nz;
-				break;
-			case 51:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a &= nz;
-				break;
-			case 55:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				asap->memory[addr] = nz;
-				nz = a &= nz;
-				break;
-			case 59:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a &= nz;
-				break;
-			case 63:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz << 1) + c;
-				c = nz >> 8;
-				nz &= 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a &= nz;
-				break;
-			case 67:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a ^= nz;
-				break;
-			case 71:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				asap->memory[addr] = nz;
-				nz = a ^= nz;
-				break;
-			case 75:
-				a &= asap->memory[pc++];
-				c = a & 1;
-				nz = a >>= 1;
-				break;
-			case 79:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a ^= nz;
-				break;
-			case 83:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a ^= nz;
-				break;
-			case 87:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				asap->memory[addr] = nz;
-				nz = a ^= nz;
-				break;
-			case 91:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a ^= nz;
-				break;
-			case 95:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				nz = a ^= nz;
-				break;
-			case 99:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz += c << 8;
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 103:
-				addr = asap->memory[pc++];
-				nz = asap->memory[addr] + (c << 8);
-				c = nz & 1;
-				nz >>= 1;
-				asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 107:
-				data = a & asap->memory[pc++];
-				nz = a = (data >> 1) + (c << 7);
-				vdi = (vdi & 12) + ((a ^ data) & 64);
-				if ((vdi & 8) == 0)
-					c = data >> 7;
 				else {
-					if ((data & 15) >= 5)
-						a = (a & 240) + ((a + 6) & 15);
-					if (data >= 80) {
-						a = (a + 96) & 255;
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
 						c = 1;
+						a = (tmp + 96) & 255;
 					}
-					else
+					else {
 						c = 0;
+						a = tmp;
+					}
 				}
-				break;
-			case 111:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
+			}
+			break;
+		case 101:
+			addr = asap->memory[pc++];
+			data = asap->memory[addr];
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
 				}
-				else
-					nz = asap->memory[addr];
-				nz += c << 8;
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
 					}
 					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
+						c = 0;
+						a = tmp;
 					}
 				}
-				break;
-			case 115:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
+			}
+			break;
+		case 102:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr] + (c << 8);
+			c = nz & 1;
+			nz >>= 1;
+			asap->memory[addr] = nz;
+			break;
+		case 104:
+			s = (s + 1) & 255;
+			a = asap->memory[256 + s];
+			nz = a;
+			break;
+		case 105:
+			data = asap->memory[pc++];
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
 				}
-				else
-					nz = asap->memory[addr];
-				nz += c << 8;
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
 					}
 					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
+						c = 0;
+						a = tmp;
 					}
 				}
-				break;
-			case 119:
-				addr = (asap->memory[pc++] + x) & 255;
-				nz = asap->memory[addr] + (c << 8);
-				c = nz & 1;
-				nz >>= 1;
+			}
+			break;
+		case 106:
+			nz = (c << 7) + (a >> 1);
+			c = a & 1;
+			a = nz;
+			break;
+		case 108:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if ((addr & 255) == 255)
+				pc = asap->memory[addr] + (asap->memory[addr - 255] << 8);
+			else
+				pc = asap->memory[addr] + (asap->memory[addr + 1] << 8);
+			break;
+		case 109:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
+					}
+					else {
+						c = 0;
+						a = tmp;
+					}
+				}
+			}
+			break;
+		case 110:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz += c << 8;
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
 				asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
-					}
-					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
-					}
-				}
-				break;
-			case 123:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
+			break;
+		case 112:
+			if ((vdi & 64) != 0) {
+				addr = (signed char) asap->memory[pc];
+				pc++;
+				addr += pc;
+				if ((addr ^ pc) >> 8 != 0)
 					asap->cycle++;
+				asap->cycle++;
+				pc = addr;
+				break;
+			}
+			pc++;
+			break;
+		case 113:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
 				}
-				else
-					nz = asap->memory[addr];
-				nz += c << 8;
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
 					}
 					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
+						c = 0;
+						a = tmp;
 					}
 				}
-				break;
-			case 127:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
+			}
+			break;
+		case 117:
+			addr = (asap->memory[pc++] + x) & 255;
+			data = asap->memory[addr];
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
+					}
+					else {
+						c = 0;
+						a = tmp;
+					}
+				}
+			}
+			break;
+		case 118:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr] + (c << 8);
+			c = nz & 1;
+			nz >>= 1;
+			asap->memory[addr] = nz;
+			break;
+		case 120:
+			vdi |= 4;
+			break;
+		case 121:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
+					}
+					else {
+						c = 0;
+						a = tmp;
+					}
+				}
+			}
+			break;
+		case 125:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if ((addr & 255) < x)
+				asap->cycle++;
+			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
+					}
+					else {
+						c = 0;
+						a = tmp;
+					}
+				}
+			}
+			break;
+		case 126:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz += c << 8;
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			break;
+		case 129:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, a);
+			else
+				asap->memory[addr] = a;
+			break;
+		case 132:
+			addr = asap->memory[pc++];
+			asap->memory[addr] = y;
+			break;
+		case 133:
+			addr = asap->memory[pc++];
+			asap->memory[addr] = a;
+			break;
+		case 134:
+			addr = asap->memory[pc++];
+			asap->memory[addr] = x;
+			break;
+		case 136:
+			nz = y = (y - 1) & 255;
+			break;
+		case 138:
+			nz = a = x;
+			break;
+		case 140:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, y);
+			else
+				asap->memory[addr] = y;
+			break;
+		case 141:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, a);
+			else
+				asap->memory[addr] = a;
+			break;
+		case 142:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, x);
+			else
+				asap->memory[addr] = x;
+			break;
+		case 144:
+			if (c == 0) {
+				addr = (signed char) asap->memory[pc];
+				pc++;
+				addr += pc;
+				if ((addr ^ pc) >> 8 != 0)
 					asap->cycle++;
+				asap->cycle++;
+				pc = addr;
+				break;
+			}
+			pc++;
+			break;
+		case 145:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, a);
+			else
+				asap->memory[addr] = a;
+			break;
+		case 148:
+			addr = (asap->memory[pc++] + x) & 255;
+			asap->memory[addr] = y;
+			break;
+		case 149:
+			addr = (asap->memory[pc++] + x) & 255;
+			asap->memory[addr] = a;
+			break;
+		case 150:
+			addr = (asap->memory[pc++] + y) & 255;
+			asap->memory[addr] = x;
+			break;
+		case 152:
+			nz = a = y;
+			break;
+		case 153:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, a);
+			else
+				asap->memory[addr] = a;
+			break;
+		case 154:
+			s = x;
+			break;
+		case 157:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, a);
+			else
+				asap->memory[addr] = a;
+			break;
+		case 160:
+			nz = y = asap->memory[pc++];
+			break;
+		case 161:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 162:
+			nz = x = asap->memory[pc++];
+			break;
+		case 164:
+			addr = asap->memory[pc++];
+			nz = y = asap->memory[addr];
+			break;
+		case 165:
+			addr = asap->memory[pc++];
+			nz = a = asap->memory[addr];
+			break;
+		case 166:
+			addr = asap->memory[pc++];
+			nz = x = asap->memory[addr];
+			break;
+		case 168:
+			nz = y = a;
+			break;
+		case 169:
+			nz = a = asap->memory[pc++];
+			break;
+		case 170:
+			nz = x = a;
+			break;
+		case 172:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = y = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 173:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 174:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = x = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 176:
+			if (c != 0) {
+				addr = (signed char) asap->memory[pc];
+				pc++;
+				addr += pc;
+				if ((addr ^ pc) >> 8 != 0)
+					asap->cycle++;
+				asap->cycle++;
+				pc = addr;
+				break;
+			}
+			pc++;
+			break;
+		case 177:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 180:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = y = asap->memory[addr];
+			break;
+		case 181:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = a = asap->memory[addr];
+			break;
+		case 182:
+			addr = (asap->memory[pc++] + y) & 255;
+			nz = x = asap->memory[addr];
+			break;
+		case 184:
+			vdi &= 12;
+			break;
+		case 185:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 186:
+			nz = x = s;
+			break;
+		case 188:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if ((addr & 255) < x)
+				asap->cycle++;
+			nz = y = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 189:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if ((addr & 255) < x)
+				asap->cycle++;
+			nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 190:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = x = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 192:
+			nz = asap->memory[pc++];
+			c = y >= nz ? 1 : 0;
+			nz = (y - nz) & 255;
+			break;
+		case 193:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 196:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			c = y >= nz ? 1 : 0;
+			nz = (y - nz) & 255;
+			break;
+		case 197:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 198:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			nz = (nz - 1) & 255;
+			asap->memory[addr] = nz;
+			break;
+		case 200:
+			nz = y = (y + 1) & 255;
+			break;
+		case 201:
+			nz = asap->memory[pc++];
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 202:
+			nz = x = (x - 1) & 255;
+			break;
+		case 204:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			c = y >= nz ? 1 : 0;
+			nz = (y - nz) & 255;
+			break;
+		case 205:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 206:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz - 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			break;
+		case 208:
+			if ((nz & 255) != 0) {
+				addr = (signed char) asap->memory[pc];
+				pc++;
+				addr += pc;
+				if ((addr ^ pc) >> 8 != 0)
+					asap->cycle++;
+				asap->cycle++;
+				pc = addr;
+				break;
+			}
+			pc++;
+			break;
+		case 209:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 213:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 214:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			nz = (nz - 1) & 255;
+			asap->memory[addr] = nz;
+			break;
+		case 216:
+			vdi &= 68;
+			break;
+		case 217:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 221:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if ((addr & 255) < x)
+				asap->cycle++;
+			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 222:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz - 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			break;
+		case 224:
+			nz = asap->memory[pc++];
+			c = x >= nz ? 1 : 0;
+			nz = (x - nz) & 255;
+			break;
+		case 225:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
 				}
-				else
-					nz = asap->memory[addr];
-				nz += c << 8;
-				c = nz & 1;
-				nz >>= 1;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a + data + c;
-					nz = tmp & 255;
-					if ((vdi & 8) == 0) {
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						c = tmp >> 8;
-						a = nz;
+			}
+			break;
+		case 228:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			c = x >= nz ? 1 : 0;
+			nz = (x - nz) & 255;
+			break;
+		case 229:
+			addr = asap->memory[pc++];
+			data = asap->memory[addr];
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
+				}
+			}
+			break;
+		case 230:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			asap->memory[addr] = nz;
+			break;
+		case 232:
+			nz = x = (x + 1) & 255;
+			break;
+		case 233:
+		case 235:
+			data = asap->memory[pc++];
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
+				}
+			}
+			break;
+		case 234:
+		case 26:
+		case 58:
+		case 90:
+		case 122:
+		case 218:
+		case 250:
+			break;
+		case 236:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			c = x >= nz ? 1 : 0;
+			nz = (x - nz) & 255;
+			break;
+		case 237:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
+				}
+			}
+			break;
+		case 238:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			break;
+		case 240:
+			if ((nz & 255) == 0) {
+				addr = (signed char) asap->memory[pc];
+				pc++;
+				addr += pc;
+				if ((addr ^ pc) >> 8 != 0)
+					asap->cycle++;
+				asap->cycle++;
+				pc = addr;
+				break;
+			}
+			pc++;
+			break;
+		case 241:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
+				}
+			}
+			break;
+		case 245:
+			addr = (asap->memory[pc++] + x) & 255;
+			data = asap->memory[addr];
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
+				}
+			}
+			break;
+		case 246:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			asap->memory[addr] = nz;
+			break;
+		case 248:
+			vdi |= 8;
+			break;
+		case 249:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
+				}
+			}
+			break;
+		case 253:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if ((addr & 255) < x)
+				asap->cycle++;
+			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
+				}
+			}
+			break;
+		case 254:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			break;
+		case 3:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a |= nz;
+			break;
+		case 4:
+		case 68:
+		case 100:
+		case 20:
+		case 52:
+		case 84:
+		case 116:
+		case 212:
+		case 244:
+		case 128:
+		case 130:
+		case 137:
+		case 194:
+		case 226:
+			pc++;
+			break;
+		case 7:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			asap->memory[addr] = nz;
+			nz = a |= nz;
+			break;
+		case 11:
+		case 43:
+			nz = a &= asap->memory[pc++];
+			c = nz >> 7;
+			break;
+		case 12:
+			pc += 2;
+			break;
+		case 15:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a |= nz;
+			break;
+		case 19:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a |= nz;
+			break;
+		case 23:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			asap->memory[addr] = nz;
+			nz = a |= nz;
+			break;
+		case 27:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a |= nz;
+			break;
+		case 28:
+		case 60:
+		case 92:
+		case 124:
+		case 220:
+		case 252:
+			if (asap->memory[pc++] + x >= 256)
+				asap->cycle++;
+			pc++;
+			break;
+		case 31:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz >> 7;
+			nz = (nz << 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a |= nz;
+			break;
+		case 35:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a &= nz;
+			break;
+		case 39:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			asap->memory[addr] = nz;
+			nz = a &= nz;
+			break;
+		case 47:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a &= nz;
+			break;
+		case 51:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a &= nz;
+			break;
+		case 55:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			asap->memory[addr] = nz;
+			nz = a &= nz;
+			break;
+		case 59:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a &= nz;
+			break;
+		case 63:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz << 1) + c;
+			c = nz >> 8;
+			nz &= 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a &= nz;
+			break;
+		case 67:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a ^= nz;
+			break;
+		case 71:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			c = nz & 1;
+			nz >>= 1;
+			asap->memory[addr] = nz;
+			nz = a ^= nz;
+			break;
+		case 75:
+			a &= asap->memory[pc++];
+			c = a & 1;
+			nz = a >>= 1;
+			break;
+		case 79:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a ^= nz;
+			break;
+		case 83:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a ^= nz;
+			break;
+		case 87:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			c = nz & 1;
+			nz >>= 1;
+			asap->memory[addr] = nz;
+			nz = a ^= nz;
+			break;
+		case 91:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a ^= nz;
+			break;
+		case 95:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			nz = a ^= nz;
+			break;
+		case 99:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz += c << 8;
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
 					}
 					else {
-						int al = (a & 15) + (data & 15) + c;
-						if (al >= 10) {
-							tmp += al < 26 ? 6 : -10;
-							if (nz != 0)
-								nz = (tmp & 128) + 1;
-						}
-						vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-						if (tmp >= 160) {
-							c = 1;
-							a = (tmp + 96) & 255;
-						}
-						else {
-							c = 0;
-							a = tmp;
-						}
+						c = 0;
+						a = tmp;
 					}
 				}
-				break;
-			case 131:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				data = a & x;
+			}
+			break;
+		case 103:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr] + (c << 8);
+			c = nz & 1;
+			nz >>= 1;
+			asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
+					}
+					else {
+						c = 0;
+						a = tmp;
+					}
+				}
+			}
+			break;
+		case 107:
+			data = a & asap->memory[pc++];
+			nz = a = (data >> 1) + (c << 7);
+			vdi = (vdi & 12) + ((a ^ data) & 64);
+			if ((vdi & 8) == 0)
+				c = data >> 7;
+			else {
+				if ((data & 15) >= 5)
+					a = (a & 240) + ((a + 6) & 15);
+				if (data >= 80) {
+					a = (a + 96) & 255;
+					c = 1;
+				}
+				else
+					c = 0;
+			}
+			break;
+		case 111:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz += c << 8;
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
+					}
+					else {
+						c = 0;
+						a = tmp;
+					}
+				}
+			}
+			break;
+		case 115:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz += c << 8;
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
+					}
+					else {
+						c = 0;
+						a = tmp;
+					}
+				}
+			}
+			break;
+		case 119:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr] + (c << 8);
+			c = nz & 1;
+			nz >>= 1;
+			asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
+					}
+					else {
+						c = 0;
+						a = tmp;
+					}
+				}
+			}
+			break;
+		case 123:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz += c << 8;
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
+					}
+					else {
+						c = 0;
+						a = tmp;
+					}
+				}
+			}
+			break;
+		case 127:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz += c << 8;
+			c = nz & 1;
+			nz >>= 1;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a + data + c;
+				nz = tmp & 255;
+				if ((vdi & 8) == 0) {
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					c = tmp >> 8;
+					a = nz;
+				}
+				else {
+					int al = (a & 15) + (data & 15) + c;
+					if (al >= 10) {
+						tmp += al < 26 ? 6 : -10;
+						if (nz != 0)
+							nz = (tmp & 128) + 1;
+					}
+					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+					if (tmp >= 160) {
+						c = 1;
+						a = (tmp + 96) & 255;
+					}
+					else {
+						c = 0;
+						a = tmp;
+					}
+				}
+			}
+			break;
+		case 131:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			data = a & x;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, data);
+			else
+				asap->memory[addr] = data;
+			break;
+		case 135:
+			addr = asap->memory[pc++];
+			data = a & x;
+			asap->memory[addr] = data;
+			break;
+		case 139:
+			data = asap->memory[pc++];
+			a &= (data | 239) & x;
+			nz = a & data;
+			break;
+		case 143:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			data = a & x;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, data);
+			else
+				asap->memory[addr] = data;
+			break;
+		case 147:
+			{
+				int hi;
+				addr = asap->memory[pc++];
+				hi = asap->memory[(addr + 1) & 255];
+				addr = asap->memory[addr];
+				data = (hi + 1) & a & x;
+				addr += y;
+				if (addr >= 256)
+					hi = data - 1;
+				addr += hi << 8;
 				if ((addr & 63744) == 53248)
 					ASAP_PokeHardware(asap, addr, data);
 				else
 					asap->memory[addr] = data;
-				break;
-			case 135:
+			}
+			break;
+		case 151:
+			addr = (asap->memory[pc++] + y) & 255;
+			data = a & x;
+			asap->memory[addr] = data;
+			break;
+		case 155:
+			s = a & x;
+			{
+				int hi;
 				addr = asap->memory[pc++];
-				data = a & x;
-				asap->memory[addr] = data;
-				break;
-			case 139:
-				data = asap->memory[pc++];
-				a &= (data | 239) & x;
-				nz = a & data;
-				break;
-			case 143:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				data = a & x;
+				hi = asap->memory[pc++];
+				data = (hi + 1) & s;
+				addr += y;
+				if (addr >= 256)
+					hi = data - 1;
+				addr += hi << 8;
 				if ((addr & 63744) == 53248)
 					ASAP_PokeHardware(asap, addr, data);
 				else
 					asap->memory[addr] = data;
-				break;
-			case 147:
-				{
-					int hi;
-					addr = asap->memory[pc++];
-					hi = asap->memory[(addr + 1) & 255];
-					addr = asap->memory[addr];
-					data = (hi + 1) & a & x;
-					addr += y;
-					if (addr >= 256)
-						hi = data - 1;
-					addr += hi << 8;
-					if ((addr & 63744) == 53248)
-						ASAP_PokeHardware(asap, addr, data);
-					else
-						asap->memory[addr] = data;
-				}
-				break;
-			case 151:
-				addr = (asap->memory[pc++] + y) & 255;
-				data = a & x;
-				asap->memory[addr] = data;
-				break;
-			case 155:
-				s = a & x;
-				{
-					int hi;
-					addr = asap->memory[pc++];
-					hi = asap->memory[pc++];
-					data = (hi + 1) & s;
-					addr += y;
-					if (addr >= 256)
-						hi = data - 1;
-					addr += hi << 8;
-					if ((addr & 63744) == 53248)
-						ASAP_PokeHardware(asap, addr, data);
-					else
-						asap->memory[addr] = data;
-				}
-				break;
-			case 156:
-				{
-					int hi;
-					addr = asap->memory[pc++];
-					hi = asap->memory[pc++];
-					data = (hi + 1) & y;
-					addr += x;
-					if (addr >= 256)
-						hi = data - 1;
-					addr += hi << 8;
-					if ((addr & 63744) == 53248)
-						ASAP_PokeHardware(asap, addr, data);
-					else
-						asap->memory[addr] = data;
-				}
-				break;
-			case 158:
-				{
-					int hi;
-					addr = asap->memory[pc++];
-					hi = asap->memory[pc++];
-					data = (hi + 1) & x;
-					addr += y;
-					if (addr >= 256)
-						hi = data - 1;
-					addr += hi << 8;
-					if ((addr & 63744) == 53248)
-						ASAP_PokeHardware(asap, addr, data);
-					else
-						asap->memory[addr] = data;
-				}
-				break;
-			case 159:
-				{
-					int hi;
-					addr = asap->memory[pc++];
-					hi = asap->memory[pc++];
-					data = (hi + 1) & a & x;
-					addr += y;
-					if (addr >= 256)
-						hi = data - 1;
-					addr += hi << 8;
-					if ((addr & 63744) == 53248)
-						ASAP_PokeHardware(asap, addr, data);
-					else
-						asap->memory[addr] = data;
-				}
-				break;
-			case 163:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				nz = x = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 167:
+			}
+			break;
+		case 156:
+			{
+				int hi;
 				addr = asap->memory[pc++];
-				nz = x = a = asap->memory[addr];
-				break;
-			case 171:
-				nz = x = a &= asap->memory[pc++];
-				break;
-			case 175:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				nz = x = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 179:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = x = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 183:
-				addr = (asap->memory[pc++] + y) & 255;
-				nz = x = a = asap->memory[addr];
-				break;
-			case 187:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = x = a = s &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 191:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if ((addr & 255) < y)
-					asap->cycle++;
-				nz = x = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-				break;
-			case 195:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
+				hi = asap->memory[pc++];
+				data = (hi + 1) & y;
+				addr += x;
+				if (addr >= 256)
+					hi = data - 1;
+				addr += hi << 8;
 				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
+					ASAP_PokeHardware(asap, addr, data);
 				else
-					asap->memory[addr] = nz;
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 199:
+					asap->memory[addr] = data;
+			}
+			break;
+		case 158:
+			{
+				int hi;
 				addr = asap->memory[pc++];
+				hi = asap->memory[pc++];
+				data = (hi + 1) & x;
+				addr += y;
+				if (addr >= 256)
+					hi = data - 1;
+				addr += hi << 8;
+				if ((addr & 63744) == 53248)
+					ASAP_PokeHardware(asap, addr, data);
+				else
+					asap->memory[addr] = data;
+			}
+			break;
+		case 159:
+			{
+				int hi;
+				addr = asap->memory[pc++];
+				hi = asap->memory[pc++];
+				data = (hi + 1) & a & x;
+				addr += y;
+				if (addr >= 256)
+					hi = data - 1;
+				addr += hi << 8;
+				if ((addr & 63744) == 53248)
+					ASAP_PokeHardware(asap, addr, data);
+				else
+					asap->memory[addr] = data;
+			}
+			break;
+		case 163:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			nz = x = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 167:
+			addr = asap->memory[pc++];
+			nz = x = a = asap->memory[addr];
+			break;
+		case 171:
+			nz = x = a &= asap->memory[pc++];
+			break;
+		case 175:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			nz = x = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 179:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = x = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 183:
+			addr = (asap->memory[pc++] + y) & 255;
+			nz = x = a = asap->memory[addr];
+			break;
+		case 187:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = x = a = s &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 191:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if ((addr & 255) < y)
+				asap->cycle++;
+			nz = x = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			break;
+		case 195:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
 				nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
+			nz = (nz - 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
 				asap->memory[addr] = nz;
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 203:
-				nz = asap->memory[pc++];
-				x &= a;
-				c = x >= nz ? 1 : 0;
-				nz = x = (x - nz) & 255;
-				break;
-			case 207:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 211:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 215:
-				addr = (asap->memory[pc++] + x) & 255;
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 199:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			nz = (nz - 1) & 255;
+			asap->memory[addr] = nz;
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 203:
+			nz = asap->memory[pc++];
+			x &= a;
+			c = x >= nz ? 1 : 0;
+			nz = x = (x - nz) & 255;
+			break;
+		case 207:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
 				nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
+			nz = (nz - 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
 				asap->memory[addr] = nz;
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 219:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 223:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz - 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				c = a >= nz ? 1 : 0;
-				nz = (a - nz) & 255;
-				break;
-			case 227:
-				addr = (asap->memory[pc++] + x) & 255;
-				addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 231:
-				addr = asap->memory[pc++];
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 211:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
 				nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
+			nz = (nz - 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
 				asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 239:
-				addr = asap->memory[pc++];
-				addr += asap->memory[pc++] << 8;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 243:
-				addr = asap->memory[pc++];
-				addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
-				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
-				}
-				break;
-			case 247:
-				addr = (asap->memory[pc++] + x) & 255;
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 215:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			nz = (nz - 1) & 255;
+			asap->memory[addr] = nz;
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 219:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
 				nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
+			nz = (nz - 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
 				asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 223:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz - 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			c = a >= nz ? 1 : 0;
+			nz = (a - nz) & 255;
+			break;
+		case 227:
+			addr = (asap->memory[pc++] + x) & 255;
+			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
 				}
-				break;
-			case 251:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
+			}
+			break;
+		case 231:
+			addr = asap->memory[pc++];
+			nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
 				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
+			}
+			break;
+		case 239:
+			addr = asap->memory[pc++];
+			addr += asap->memory[pc++] << 8;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
 				}
-				break;
-			case 255:
-				addr = asap->memory[pc++];
-				addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-				if (addr >> 8 == 210) {
-					asap->cycle--;
-					nz = ASAP_PeekHardware(asap, addr);
-					ASAP_PokeHardware(asap, addr, nz);
-					asap->cycle++;
+			}
+			break;
+		case 243:
+			addr = asap->memory[pc++];
+			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
 				}
-				else
-					nz = asap->memory[addr];
-				nz = (nz + 1) & 255;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, nz);
-				else
-					asap->memory[addr] = nz;
-				data = nz;
-				{
-					int tmp = a - data - 1 + c;
-					int al = (a & 15) - (data & 15) - 1 + c;
-					vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >= 0 ? 1 : 0;
-					nz = a = tmp & 255;
-					if ((vdi & 8) != 0) {
-						if (al < 0)
-							a += al < -10 ? 10 : -6;
-						if (c == 0)
-							a = (a - 96) & 255;
-					}
+			}
+			break;
+		case 247:
+			addr = (asap->memory[pc++] + x) & 255;
+			nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
 				}
-				break;
+			}
+			break;
+		case 251:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
+				}
+			}
+			break;
+		case 255:
+			addr = asap->memory[pc++];
+			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			if (addr >> 8 == 210) {
+				asap->cycle--;
+				nz = ASAP_PeekHardware(asap, addr);
+				ASAP_PokeHardware(asap, addr, nz);
+				asap->cycle++;
+			}
+			else
+				nz = asap->memory[addr];
+			nz = (nz + 1) & 255;
+			if ((addr & 63744) == 53248)
+				ASAP_PokeHardware(asap, addr, nz);
+			else
+				asap->memory[addr] = nz;
+			data = nz;
+			{
+				int tmp = a - data - 1 + c;
+				int al = (a & 15) - (data & 15) - 1 + c;
+				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+				c = tmp >= 0 ? 1 : 0;
+				nz = a = tmp & 255;
+				if ((vdi & 8) != 0) {
+					if (al < 0)
+						a += al < -10 ? 10 : -6;
+					if (c == 0)
+						a = (a - 96) & 255;
+				}
+			}
+			break;
 		}
 	}
 	self->pc = pc;
@@ -7156,77 +7156,77 @@ static void FlashPack_CompressMemoryArea(FlashPack *self, int startAddress, int 
 			}
 			switch (bestMatch) {
 				int length;
+			case 0:
+			case 1:
+				FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address++]);
+				continue;
+			case 2:
+				FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
+				break;
+			case 3:
+				FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+				break;
+			case 4:
+				if (bestDistance == lastDistance)
+					FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 4);
+				else if (FlashPack_IsLiteralPreferred(self)) {
+					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
+					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+				}
+				else {
+					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address + 3]);
+				}
+				break;
+			case 5:
+				if (bestDistance == lastDistance)
+					FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 5);
+				else {
+					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+					FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
+				}
+				break;
+			case 6:
+				if (bestDistance == lastDistance)
+					FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 6);
+				else {
+					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+				}
+				break;
+			default:
+				length = bestMatch;
+				if (bestDistance != lastDistance) {
+					if (FlashPack_IsLiteralPreferred(self) && length % 255 == 4) {
+						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
+						length--;
+					}
+					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+					length -= 3;
+				}
+				else if (FlashPack_IsLiteralPreferred(self) && length % 255 == 1) {
+					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
+					length--;
+				}
+				for (; length > 255; length -= 255)
+					FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 255);
+				switch (length) {
 				case 0:
+					break;
 				case 1:
-					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address++]);
-					continue;
+					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address + bestMatch - 1]);
+					break;
 				case 2:
 					FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
 					break;
 				case 3:
 					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
 					break;
-				case 4:
-					if (bestDistance == lastDistance)
-						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 4);
-					else if (FlashPack_IsLiteralPreferred(self)) {
-						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
-						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-					}
-					else {
-						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address + 3]);
-					}
-					break;
-				case 5:
-					if (bestDistance == lastDistance)
-						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 5);
-					else {
-						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-						FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
-					}
-					break;
-				case 6:
-					if (bestDistance == lastDistance)
-						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 6);
-					else {
-						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-					}
-					break;
 				default:
-					length = bestMatch;
-					if (bestDistance != lastDistance) {
-						if (FlashPack_IsLiteralPreferred(self) && length % 255 == 4) {
-							FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
-							length--;
-						}
-						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-						length -= 3;
-					}
-					else if (FlashPack_IsLiteralPreferred(self) && length % 255 == 1) {
-						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
-						length--;
-					}
-					for (; length > 255; length -= 255)
-						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 255);
-					switch (length) {
-						case 0:
-							break;
-						case 1:
-							FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address + bestMatch - 1]);
-							break;
-						case 2:
-							FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
-							break;
-						case 3:
-							FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-							break;
-						default:
-							FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, length);
-							break;
-					}
+					FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, length);
 					break;
+				}
+				break;
 			}
 			address += bestMatch;
 			lastDistance = bestDistance;
@@ -7270,29 +7270,29 @@ static cibool FlashPack_IsLiteralPreferred(FlashPack const *self)
 static void FlashPack_LoadByte(FlashPack *self, int data)
 {
 	switch (self->loadState) {
-		case FlashPackLoadState_START_LOW_BYTE:
-			self->loadAddress = data;
-			self->loadState = FlashPackLoadState_START_HIGH_BYTE;
-			break;
-		case FlashPackLoadState_START_HIGH_BYTE:
-			self->loadAddress += data << 8;
-			self->loadState = self->loadAddress == 65535 ? FlashPackLoadState_START_LOW_BYTE : FlashPackLoadState_END_LOW_BYTE;
-			break;
-		case FlashPackLoadState_END_LOW_BYTE:
-			self->loadEndAddress = data;
-			self->loadState = FlashPackLoadState_END_HIGH_BYTE;
-			break;
-		case FlashPackLoadState_END_HIGH_BYTE:
-			self->loadEndAddress += data << 8;
-			self->loadState = FlashPackLoadState_CONTENT;
-			break;
-		case FlashPackLoadState_CONTENT:
-			self->memory[self->loadAddress] = data;
-			if (self->loadAddress == self->loadEndAddress)
-				self->loadState = FlashPackLoadState_START_LOW_BYTE;
-			else
-				self->loadAddress = (self->loadAddress + 1) & 65535;
-			break;
+	case FlashPackLoadState_START_LOW_BYTE:
+		self->loadAddress = data;
+		self->loadState = FlashPackLoadState_START_HIGH_BYTE;
+		break;
+	case FlashPackLoadState_START_HIGH_BYTE:
+		self->loadAddress += data << 8;
+		self->loadState = self->loadAddress == 65535 ? FlashPackLoadState_START_LOW_BYTE : FlashPackLoadState_END_LOW_BYTE;
+		break;
+	case FlashPackLoadState_END_LOW_BYTE:
+		self->loadEndAddress = data;
+		self->loadState = FlashPackLoadState_END_HIGH_BYTE;
+		break;
+	case FlashPackLoadState_END_HIGH_BYTE:
+		self->loadEndAddress += data << 8;
+		self->loadState = FlashPackLoadState_CONTENT;
+		break;
+	case FlashPackLoadState_CONTENT:
+		self->memory[self->loadAddress] = data;
+		if (self->loadAddress == self->loadEndAddress)
+			self->loadState = FlashPackLoadState_START_LOW_BYTE;
+		else
+			self->loadAddress = (self->loadAddress + 1) & 65535;
+		break;
 	}
 }
 
@@ -7336,30 +7336,30 @@ static int FlashPackItem_WriteValueTo(FlashPackItem const *self, unsigned char *
 {
 	switch (self->type) {
 		int value;
-		default:
-		case FlashPackItemType_LITERAL:
-			buffer[index] = self->value;
-			return 1;
-		case FlashPackItemType_COPY_TWO_BYTES:
-			buffer[index] = (128 - self->value) << 1;
-			return 1;
-		case FlashPackItemType_COPY_THREE_BYTES:
-			buffer[index] = ((128 - self->value) << 1) + 1;
-			return 1;
-		case FlashPackItemType_COPY_MANY_BYTES:
-			buffer[index] = 1;
-			buffer[index + 1] = self->value;
-			return 2;
-		case FlashPackItemType_SET_ADDRESS:
-			value = self->value - 128;
-			buffer[index] = 0;
-			buffer[index + 1] = (unsigned char) value;
-			buffer[index + 2] = value >> 8;
-			return 3;
-		case FlashPackItemType_END_OF_STREAM:
-			buffer[index] = 1;
-			buffer[index + 1] = 0;
-			return 2;
+	default:
+	case FlashPackItemType_LITERAL:
+		buffer[index] = self->value;
+		return 1;
+	case FlashPackItemType_COPY_TWO_BYTES:
+		buffer[index] = (128 - self->value) << 1;
+		return 1;
+	case FlashPackItemType_COPY_THREE_BYTES:
+		buffer[index] = ((128 - self->value) << 1) + 1;
+		return 1;
+	case FlashPackItemType_COPY_MANY_BYTES:
+		buffer[index] = 1;
+		buffer[index + 1] = self->value;
+		return 2;
+	case FlashPackItemType_SET_ADDRESS:
+		value = self->value - 128;
+		buffer[index] = 0;
+		buffer[index + 1] = (unsigned char) value;
+		buffer[index + 2] = value >> 8;
+		return 3;
+	case FlashPackItemType_END_OF_STREAM:
+		buffer[index] = 1;
+		buffer[index + 1] = 0;
+		return 2;
 	}
 }
 
@@ -7411,55 +7411,55 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 			}
 			if (self->init) {
 				switch (self->audc3 >> 4) {
-					case 10:
-					case 14:
-						self->out3 ^= 1;
-						self->delta3 = -self->delta3;
-						Pokey_AddDelta(self, pokeys, cycle, self->delta3);
-						break;
-					default:
-						break;
+				case 10:
+				case 14:
+					self->out3 ^= 1;
+					self->delta3 = -self->delta3;
+					Pokey_AddDelta(self, pokeys, cycle, self->delta3);
+					break;
+				default:
+					break;
 				}
 			}
 			else {
 				int poly = cycle + self->polyIndex - 2;
 				int newOut = self->out3;
 				switch (self->audc3 >> 4) {
-					case 0:
-						if (poly5Lookup[poly % 31] != 0) {
-							if ((self->audctl & 128) != 0)
-								newOut = pokeys->poly9Lookup[poly % 511] & 1;
-							else {
-								poly %= 131071;
-								newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-							}
-						}
-						break;
-					case 2:
-					case 6:
-						newOut ^= poly5Lookup[poly % 31];
-						break;
-					case 4:
-						if (poly5Lookup[poly % 31] != 0)
-							newOut = poly4Lookup[poly % 15];
-						break;
-					case 8:
+				case 0:
+					if (poly5Lookup[poly % 31] != 0) {
 						if ((self->audctl & 128) != 0)
 							newOut = pokeys->poly9Lookup[poly % 511] & 1;
 						else {
 							poly %= 131071;
 							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 						}
-						break;
-					case 10:
-					case 14:
-						newOut ^= 1;
-						break;
-					case 12:
+					}
+					break;
+				case 2:
+				case 6:
+					newOut ^= poly5Lookup[poly % 31];
+					break;
+				case 4:
+					if (poly5Lookup[poly % 31] != 0)
 						newOut = poly4Lookup[poly % 15];
-						break;
-					default:
-						break;
+					break;
+				case 8:
+					if ((self->audctl & 128) != 0)
+						newOut = pokeys->poly9Lookup[poly % 511] & 1;
+					else {
+						poly %= 131071;
+						newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
+					}
+					break;
+				case 10:
+				case 14:
+					newOut ^= 1;
+					break;
+				case 12:
+					newOut = poly4Lookup[poly % 15];
+					break;
+				default:
+					break;
 				}
 				if (newOut != self->out3) {
 					self->out3 = newOut;
@@ -7478,55 +7478,55 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 			}
 			if (self->init) {
 				switch (self->audc4 >> 4) {
-					case 10:
-					case 14:
-						self->out4 ^= 1;
-						self->delta4 = -self->delta4;
-						Pokey_AddDelta(self, pokeys, cycle, self->delta4);
-						break;
-					default:
-						break;
+				case 10:
+				case 14:
+					self->out4 ^= 1;
+					self->delta4 = -self->delta4;
+					Pokey_AddDelta(self, pokeys, cycle, self->delta4);
+					break;
+				default:
+					break;
 				}
 			}
 			else {
 				int poly = cycle + self->polyIndex - 3;
 				int newOut = self->out4;
 				switch (self->audc4 >> 4) {
-					case 0:
-						if (poly5Lookup[poly % 31] != 0) {
-							if ((self->audctl & 128) != 0)
-								newOut = pokeys->poly9Lookup[poly % 511] & 1;
-							else {
-								poly %= 131071;
-								newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-							}
-						}
-						break;
-					case 2:
-					case 6:
-						newOut ^= poly5Lookup[poly % 31];
-						break;
-					case 4:
-						if (poly5Lookup[poly % 31] != 0)
-							newOut = poly4Lookup[poly % 15];
-						break;
-					case 8:
+				case 0:
+					if (poly5Lookup[poly % 31] != 0) {
 						if ((self->audctl & 128) != 0)
 							newOut = pokeys->poly9Lookup[poly % 511] & 1;
 						else {
 							poly %= 131071;
 							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 						}
-						break;
-					case 10:
-					case 14:
-						newOut ^= 1;
-						break;
-					case 12:
+					}
+					break;
+				case 2:
+				case 6:
+					newOut ^= poly5Lookup[poly % 31];
+					break;
+				case 4:
+					if (poly5Lookup[poly % 31] != 0)
 						newOut = poly4Lookup[poly % 15];
-						break;
-					default:
-						break;
+					break;
+				case 8:
+					if ((self->audctl & 128) != 0)
+						newOut = pokeys->poly9Lookup[poly % 511] & 1;
+					else {
+						poly %= 131071;
+						newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
+					}
+					break;
+				case 10:
+				case 14:
+					newOut ^= 1;
+					break;
+				case 12:
+					newOut = poly4Lookup[poly % 15];
+					break;
+				default:
+					break;
 				}
 				if (newOut != self->out4) {
 					self->out4 = newOut;
@@ -7541,55 +7541,55 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 				self->tickCycle2 = cycle + self->periodCycles2;
 			if (self->init) {
 				switch (self->audc1 >> 4) {
-					case 10:
-					case 14:
-						self->out1 ^= 1;
-						self->delta1 = -self->delta1;
-						Pokey_AddDelta(self, pokeys, cycle, self->delta1);
-						break;
-					default:
-						break;
+				case 10:
+				case 14:
+					self->out1 ^= 1;
+					self->delta1 = -self->delta1;
+					Pokey_AddDelta(self, pokeys, cycle, self->delta1);
+					break;
+				default:
+					break;
 				}
 			}
 			else {
 				int poly = cycle + self->polyIndex - 0;
 				int newOut = self->out1;
 				switch (self->audc1 >> 4) {
-					case 0:
-						if (poly5Lookup[poly % 31] != 0) {
-							if ((self->audctl & 128) != 0)
-								newOut = pokeys->poly9Lookup[poly % 511] & 1;
-							else {
-								poly %= 131071;
-								newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-							}
-						}
-						break;
-					case 2:
-					case 6:
-						newOut ^= poly5Lookup[poly % 31];
-						break;
-					case 4:
-						if (poly5Lookup[poly % 31] != 0)
-							newOut = poly4Lookup[poly % 15];
-						break;
-					case 8:
+				case 0:
+					if (poly5Lookup[poly % 31] != 0) {
 						if ((self->audctl & 128) != 0)
 							newOut = pokeys->poly9Lookup[poly % 511] & 1;
 						else {
 							poly %= 131071;
 							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 						}
-						break;
-					case 10:
-					case 14:
-						newOut ^= 1;
-						break;
-					case 12:
+					}
+					break;
+				case 2:
+				case 6:
+					newOut ^= poly5Lookup[poly % 31];
+					break;
+				case 4:
+					if (poly5Lookup[poly % 31] != 0)
 						newOut = poly4Lookup[poly % 15];
-						break;
-					default:
-						break;
+					break;
+				case 8:
+					if ((self->audctl & 128) != 0)
+						newOut = pokeys->poly9Lookup[poly % 511] & 1;
+					else {
+						poly %= 131071;
+						newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
+					}
+					break;
+				case 10:
+				case 14:
+					newOut ^= 1;
+					break;
+				case 12:
+					newOut = poly4Lookup[poly % 15];
+					break;
+				default:
+					break;
 				}
 				if (newOut != self->out1) {
 					self->out1 = newOut;
@@ -7606,55 +7606,55 @@ static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int c
 				self->tickCycle1 = cycle + self->periodCycles1;
 			if (self->init) {
 				switch (self->audc2 >> 4) {
-					case 10:
-					case 14:
-						self->out2 ^= 1;
-						self->delta2 = -self->delta2;
-						Pokey_AddDelta(self, pokeys, cycle, self->delta2);
-						break;
-					default:
-						break;
+				case 10:
+				case 14:
+					self->out2 ^= 1;
+					self->delta2 = -self->delta2;
+					Pokey_AddDelta(self, pokeys, cycle, self->delta2);
+					break;
+				default:
+					break;
 				}
 			}
 			else {
 				int poly = cycle + self->polyIndex - 1;
 				int newOut = self->out2;
 				switch (self->audc2 >> 4) {
-					case 0:
-						if (poly5Lookup[poly % 31] != 0) {
-							if ((self->audctl & 128) != 0)
-								newOut = pokeys->poly9Lookup[poly % 511] & 1;
-							else {
-								poly %= 131071;
-								newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-							}
-						}
-						break;
-					case 2:
-					case 6:
-						newOut ^= poly5Lookup[poly % 31];
-						break;
-					case 4:
-						if (poly5Lookup[poly % 31] != 0)
-							newOut = poly4Lookup[poly % 15];
-						break;
-					case 8:
+				case 0:
+					if (poly5Lookup[poly % 31] != 0) {
 						if ((self->audctl & 128) != 0)
 							newOut = pokeys->poly9Lookup[poly % 511] & 1;
 						else {
 							poly %= 131071;
 							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
 						}
-						break;
-					case 10:
-					case 14:
-						newOut ^= 1;
-						break;
-					case 12:
+					}
+					break;
+				case 2:
+				case 6:
+					newOut ^= poly5Lookup[poly % 31];
+					break;
+				case 4:
+					if (poly5Lookup[poly % 31] != 0)
 						newOut = poly4Lookup[poly % 15];
-						break;
-					default:
-						break;
+					break;
+				case 8:
+					if ((self->audctl & 128) != 0)
+						newOut = pokeys->poly9Lookup[poly % 511] & 1;
+					else {
+						poly %= 131071;
+						newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
+					}
+					break;
+				case 10:
+				case 14:
+					newOut ^= 1;
+					break;
+				case 12:
+					newOut = poly4Lookup[poly % 15];
+					break;
+				default:
+					break;
 				}
 				if (newOut != self->out2) {
 					self->out2 = newOut;
@@ -7772,23 +7772,25 @@ static int PokeyPair_EndFrame(PokeyPair *self, int cycle)
 	if (self->extraPokeyMask != 0)
 		Pokey_EndFrame(&self->extraPokey, self, cycle);
 	self->sampleOffset += cycle * 44100;
-	self->sampleIndex = 0;
-	self->samples = self->sampleOffset / self->mainClock;
+	self->readySamplesStart = 0;
+	self->readySamplesEnd = self->sampleOffset / self->mainClock;
 	self->sampleOffset %= self->mainClock;
-	return self->samples;
+	return self->readySamplesEnd;
 }
 
 static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int bufferOffset, int blocks, ASAPSampleFormat format)
 {
-	int i = self->sampleIndex;
-	int samples = self->samples;
-	int accLeft = self->iirAccLeft;
-	int accRight = self->iirAccRight;
-	if (blocks < samples - i)
-		samples = i + blocks;
+	int i = self->readySamplesStart;
+	int samplesEnd = self->readySamplesEnd;
+	int accLeft;
+	int accRight;
+	if (blocks < samplesEnd - i)
+		samplesEnd = i + blocks;
 	else
-		blocks = samples - i;
-	for (; i < samples; i++) {
+		blocks = samplesEnd - i;
+	accLeft = self->iirAccLeft;
+	accRight = self->iirAccRight;
+	for (; i < samplesEnd; i++) {
 		int sample;
 		accLeft += self->basePokey.deltaBuffer[i] - (accLeft * 3 >> 10);
 		sample = accLeft >> 10;
@@ -7797,6 +7799,26 @@ static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int buffer
 		else if (sample > 32767)
 			sample = 32767;
 		switch (format) {
+		case ASAPSampleFormat_U8:
+			buffer[bufferOffset++] = (sample >> 8) + 128;
+			break;
+		case ASAPSampleFormat_S16_L_E:
+			buffer[bufferOffset++] = (unsigned char) sample;
+			buffer[bufferOffset++] = (unsigned char) (sample >> 8);
+			break;
+		case ASAPSampleFormat_S16_B_E:
+			buffer[bufferOffset++] = (unsigned char) (sample >> 8);
+			buffer[bufferOffset++] = (unsigned char) sample;
+			break;
+		}
+		if (self->extraPokeyMask != 0) {
+			accRight += self->extraPokey.deltaBuffer[i] - (accRight * 3 >> 10);
+			sample = accRight >> 10;
+			if (sample < -32767)
+				sample = -32767;
+			else if (sample > 32767)
+				sample = 32767;
+			switch (format) {
 			case ASAPSampleFormat_U8:
 				buffer[bufferOffset++] = (sample >> 8) + 128;
 				break;
@@ -7808,34 +7830,14 @@ static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int buffer
 				buffer[bufferOffset++] = (unsigned char) (sample >> 8);
 				buffer[bufferOffset++] = (unsigned char) sample;
 				break;
-		}
-		if (self->extraPokeyMask != 0) {
-			accRight += self->extraPokey.deltaBuffer[i] - (accRight * 3 >> 10);
-			sample = accRight >> 10;
-			if (sample < -32767)
-				sample = -32767;
-			else if (sample > 32767)
-				sample = 32767;
-			switch (format) {
-				case ASAPSampleFormat_U8:
-					buffer[bufferOffset++] = (sample >> 8) + 128;
-					break;
-				case ASAPSampleFormat_S16_L_E:
-					buffer[bufferOffset++] = (unsigned char) sample;
-					buffer[bufferOffset++] = (unsigned char) (sample >> 8);
-					break;
-				case ASAPSampleFormat_S16_B_E:
-					buffer[bufferOffset++] = (unsigned char) (sample >> 8);
-					buffer[bufferOffset++] = (unsigned char) sample;
-					break;
 			}
 		}
 	}
-	if (i == self->samples) {
+	if (i == self->readySamplesEnd) {
 		accLeft += self->basePokey.deltaBuffer[i];
 		accRight += self->extraPokey.deltaBuffer[i];
 	}
-	self->sampleIndex = i;
+	self->readySamplesStart = i;
 	self->iirAccLeft = accLeft;
 	self->iirAccRight = accRight;
 	return blocks;
@@ -7868,8 +7870,8 @@ static void PokeyPair_Initialize(PokeyPair *self, int mainClock, cibool stereo)
 	Pokey_Initialize(&self->basePokey);
 	Pokey_Initialize(&self->extraPokey);
 	self->sampleOffset = 0;
-	self->sampleIndex = 0;
-	self->samples = 0;
+	self->readySamplesStart = 0;
+	self->readySamplesEnd = 0;
 	self->iirAccLeft = 0;
 	self->iirAccRight = 0;
 }
@@ -7884,45 +7886,68 @@ static void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle)
 	Pokey *pokey = (addr & self->extraPokeyMask) != 0 ? &self->extraPokey : &self->basePokey;
 	switch (addr & 15) {
 		cibool init;
+	case 0:
+		if (data == pokey->audf1)
+			break;
+		Pokey_GenerateUntilCycle(pokey, self, cycle);
+		pokey->audf1 = data;
+		switch (pokey->audctl & 80) {
 		case 0:
-			if (data == pokey->audf1)
-				break;
-			Pokey_GenerateUntilCycle(pokey, self, cycle);
-			pokey->audf1 = data;
-			switch (pokey->audctl & 80) {
-				case 0:
-					pokey->periodCycles1 = pokey->divCycles * (data + 1);
-					break;
-				case 16:
-					pokey->periodCycles2 = pokey->divCycles * (data + (pokey->audf2 << 8) + 1);
-					pokey->reloadCycles1 = pokey->divCycles * (data + 1);
-					if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
-						pokey->mute2 |= 1;
-						pokey->tickCycle2 = 8388608;
-					}
-					else {
-						pokey->mute2 &= ~1;
-						if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-							pokey->tickCycle2 = cycle;
-					}
-					break;
-				case 64:
-					pokey->periodCycles1 = data + 4;
-					break;
-				case 80:
-					pokey->periodCycles2 = data + (pokey->audf2 << 8) + 7;
-					pokey->reloadCycles1 = data + 4;
-					if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
-						pokey->mute2 |= 1;
-						pokey->tickCycle2 = 8388608;
-					}
-					else {
-						pokey->mute2 &= ~1;
-						if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-							pokey->tickCycle2 = cycle;
-					}
-					break;
+			pokey->periodCycles1 = pokey->divCycles * (data + 1);
+			break;
+		case 16:
+			pokey->periodCycles2 = pokey->divCycles * (data + (pokey->audf2 << 8) + 1);
+			pokey->reloadCycles1 = pokey->divCycles * (data + 1);
+			if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
+				pokey->mute2 |= 1;
+				pokey->tickCycle2 = 8388608;
 			}
+			else {
+				pokey->mute2 &= ~1;
+				if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
+					pokey->tickCycle2 = cycle;
+			}
+			break;
+		case 64:
+			pokey->periodCycles1 = data + 4;
+			break;
+		case 80:
+			pokey->periodCycles2 = data + (pokey->audf2 << 8) + 7;
+			pokey->reloadCycles1 = data + 4;
+			if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
+				pokey->mute2 |= 1;
+				pokey->tickCycle2 = 8388608;
+			}
+			else {
+				pokey->mute2 &= ~1;
+				if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
+					pokey->tickCycle2 = cycle;
+			}
+			break;
+		}
+		if (pokey->periodCycles1 <= 112 && (pokey->audc1 >> 4 == 10 || pokey->audc1 >> 4 == 14)) {
+			pokey->mute1 |= 1;
+			pokey->tickCycle1 = 8388608;
+		}
+		else {
+			pokey->mute1 &= ~1;
+			if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
+				pokey->tickCycle1 = cycle;
+		}
+		break;
+	case 1:
+		if (data == pokey->audc1)
+			break;
+		Pokey_GenerateUntilCycle(pokey, self, cycle);
+		pokey->audc1 = data;
+		if ((data & 16) != 0) {
+			data = (data & 15) << 20;
+			if ((pokey->mute1 & 4) == 0)
+				Pokey_AddDelta(pokey, self, cycle, pokey->delta1 > 0 ? data - pokey->delta1 : data);
+			pokey->delta1 = data;
+		}
+		else {
+			data = (data & 15) << 20;
 			if (pokey->periodCycles1 <= 112 && (pokey->audc1 >> 4 == 10 || pokey->audc1 >> 4 == 14)) {
 				pokey->mute1 |= 1;
 				pokey->tickCycle1 = 8388608;
@@ -7932,55 +7957,55 @@ static void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle)
 				if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
 					pokey->tickCycle1 = cycle;
 			}
-			break;
-		case 1:
-			if (data == pokey->audc1)
-				break;
-			Pokey_GenerateUntilCycle(pokey, self, cycle);
-			pokey->audc1 = data;
-			if ((data & 16) != 0) {
-				data = (data & 15) << 20;
+			if (pokey->delta1 > 0) {
 				if ((pokey->mute1 & 4) == 0)
-					Pokey_AddDelta(pokey, self, cycle, pokey->delta1 > 0 ? data - pokey->delta1 : data);
+					Pokey_AddDelta(pokey, self, cycle, data - pokey->delta1);
 				pokey->delta1 = data;
 			}
-			else {
-				data = (data & 15) << 20;
-				if (pokey->periodCycles1 <= 112 && (pokey->audc1 >> 4 == 10 || pokey->audc1 >> 4 == 14)) {
-					pokey->mute1 |= 1;
-					pokey->tickCycle1 = 8388608;
-				}
-				else {
-					pokey->mute1 &= ~1;
-					if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
-						pokey->tickCycle1 = cycle;
-				}
-				if (pokey->delta1 > 0) {
-					if ((pokey->mute1 & 4) == 0)
-						Pokey_AddDelta(pokey, self, cycle, data - pokey->delta1);
-					pokey->delta1 = data;
-				}
-				else
-					pokey->delta1 = -data;
-			}
+			else
+				pokey->delta1 = -data;
+		}
+		break;
+	case 2:
+		if (data == pokey->audf2)
 			break;
-		case 2:
-			if (data == pokey->audf2)
-				break;
-			Pokey_GenerateUntilCycle(pokey, self, cycle);
-			pokey->audf2 = data;
-			switch (pokey->audctl & 80) {
-				case 0:
-				case 64:
-					pokey->periodCycles2 = pokey->divCycles * (data + 1);
-					break;
-				case 16:
-					pokey->periodCycles2 = pokey->divCycles * (pokey->audf1 + (data << 8) + 1);
-					break;
-				case 80:
-					pokey->periodCycles2 = pokey->audf1 + (data << 8) + 7;
-					break;
-			}
+		Pokey_GenerateUntilCycle(pokey, self, cycle);
+		pokey->audf2 = data;
+		switch (pokey->audctl & 80) {
+		case 0:
+		case 64:
+			pokey->periodCycles2 = pokey->divCycles * (data + 1);
+			break;
+		case 16:
+			pokey->periodCycles2 = pokey->divCycles * (pokey->audf1 + (data << 8) + 1);
+			break;
+		case 80:
+			pokey->periodCycles2 = pokey->audf1 + (data << 8) + 7;
+			break;
+		}
+		if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
+			pokey->mute2 |= 1;
+			pokey->tickCycle2 = 8388608;
+		}
+		else {
+			pokey->mute2 &= ~1;
+			if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
+				pokey->tickCycle2 = cycle;
+		}
+		break;
+	case 3:
+		if (data == pokey->audc2)
+			break;
+		Pokey_GenerateUntilCycle(pokey, self, cycle);
+		pokey->audc2 = data;
+		if ((data & 16) != 0) {
+			data = (data & 15) << 20;
+			if ((pokey->mute2 & 4) == 0)
+				Pokey_AddDelta(pokey, self, cycle, pokey->delta2 > 0 ? data - pokey->delta2 : data);
+			pokey->delta2 = data;
+		}
+		else {
+			data = (data & 15) << 20;
 			if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
 				pokey->mute2 |= 1;
 				pokey->tickCycle2 = 8388608;
@@ -7990,249 +8015,27 @@ static void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle)
 				if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
 					pokey->tickCycle2 = cycle;
 			}
-			break;
-		case 3:
-			if (data == pokey->audc2)
-				break;
-			Pokey_GenerateUntilCycle(pokey, self, cycle);
-			pokey->audc2 = data;
-			if ((data & 16) != 0) {
-				data = (data & 15) << 20;
+			if (pokey->delta2 > 0) {
 				if ((pokey->mute2 & 4) == 0)
-					Pokey_AddDelta(pokey, self, cycle, pokey->delta2 > 0 ? data - pokey->delta2 : data);
+					Pokey_AddDelta(pokey, self, cycle, data - pokey->delta2);
 				pokey->delta2 = data;
 			}
-			else {
-				data = (data & 15) << 20;
-				if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
-					pokey->mute2 |= 1;
-					pokey->tickCycle2 = 8388608;
-				}
-				else {
-					pokey->mute2 &= ~1;
-					if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-						pokey->tickCycle2 = cycle;
-				}
-				if (pokey->delta2 > 0) {
-					if ((pokey->mute2 & 4) == 0)
-						Pokey_AddDelta(pokey, self, cycle, data - pokey->delta2);
-					pokey->delta2 = data;
-				}
-				else
-					pokey->delta2 = -data;
-			}
+			else
+				pokey->delta2 = -data;
+		}
+		break;
+	case 4:
+		if (data == pokey->audf3)
 			break;
-		case 4:
-			if (data == pokey->audf3)
-				break;
-			Pokey_GenerateUntilCycle(pokey, self, cycle);
-			pokey->audf3 = data;
-			switch (pokey->audctl & 40) {
-				case 0:
-					pokey->periodCycles3 = pokey->divCycles * (data + 1);
-					break;
-				case 8:
-					pokey->periodCycles4 = pokey->divCycles * (data + (pokey->audf4 << 8) + 1);
-					pokey->reloadCycles3 = pokey->divCycles * (data + 1);
-					if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
-						pokey->mute4 |= 1;
-						pokey->tickCycle4 = 8388608;
-					}
-					else {
-						pokey->mute4 &= ~1;
-						if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-							pokey->tickCycle4 = cycle;
-					}
-					break;
-				case 32:
-					pokey->periodCycles3 = data + 4;
-					break;
-				case 40:
-					pokey->periodCycles4 = data + (pokey->audf4 << 8) + 7;
-					pokey->reloadCycles3 = data + 4;
-					if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
-						pokey->mute4 |= 1;
-						pokey->tickCycle4 = 8388608;
-					}
-					else {
-						pokey->mute4 &= ~1;
-						if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-							pokey->tickCycle4 = cycle;
-					}
-					break;
-			}
-			if (pokey->periodCycles3 <= 112 && (pokey->audc3 >> 4 == 10 || pokey->audc3 >> 4 == 14)) {
-				pokey->mute3 |= 1;
-				pokey->tickCycle3 = 8388608;
-			}
-			else {
-				pokey->mute3 &= ~1;
-				if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-					pokey->tickCycle3 = cycle;
-			}
-			break;
-		case 5:
-			if (data == pokey->audc3)
-				break;
-			Pokey_GenerateUntilCycle(pokey, self, cycle);
-			pokey->audc3 = data;
-			if ((data & 16) != 0) {
-				data = (data & 15) << 20;
-				if ((pokey->mute3 & 4) == 0)
-					Pokey_AddDelta(pokey, self, cycle, pokey->delta3 > 0 ? data - pokey->delta3 : data);
-				pokey->delta3 = data;
-			}
-			else {
-				data = (data & 15) << 20;
-				if (pokey->periodCycles3 <= 112 && (pokey->audc3 >> 4 == 10 || pokey->audc3 >> 4 == 14)) {
-					pokey->mute3 |= 1;
-					pokey->tickCycle3 = 8388608;
-				}
-				else {
-					pokey->mute3 &= ~1;
-					if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-						pokey->tickCycle3 = cycle;
-				}
-				if (pokey->delta3 > 0) {
-					if ((pokey->mute3 & 4) == 0)
-						Pokey_AddDelta(pokey, self, cycle, data - pokey->delta3);
-					pokey->delta3 = data;
-				}
-				else
-					pokey->delta3 = -data;
-			}
-			break;
-		case 6:
-			if (data == pokey->audf4)
-				break;
-			Pokey_GenerateUntilCycle(pokey, self, cycle);
-			pokey->audf4 = data;
-			switch (pokey->audctl & 40) {
-				case 0:
-				case 32:
-					pokey->periodCycles4 = pokey->divCycles * (data + 1);
-					break;
-				case 8:
-					pokey->periodCycles4 = pokey->divCycles * (pokey->audf3 + (data << 8) + 1);
-					break;
-				case 40:
-					pokey->periodCycles4 = pokey->audf3 + (data << 8) + 7;
-					break;
-			}
-			if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
-				pokey->mute4 |= 1;
-				pokey->tickCycle4 = 8388608;
-			}
-			else {
-				pokey->mute4 &= ~1;
-				if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-					pokey->tickCycle4 = cycle;
-			}
-			break;
-		case 7:
-			if (data == pokey->audc4)
-				break;
-			Pokey_GenerateUntilCycle(pokey, self, cycle);
-			pokey->audc4 = data;
-			if ((data & 16) != 0) {
-				data = (data & 15) << 20;
-				if ((pokey->mute4 & 4) == 0)
-					Pokey_AddDelta(pokey, self, cycle, pokey->delta4 > 0 ? data - pokey->delta4 : data);
-				pokey->delta4 = data;
-			}
-			else {
-				data = (data & 15) << 20;
-				if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
-					pokey->mute4 |= 1;
-					pokey->tickCycle4 = 8388608;
-				}
-				else {
-					pokey->mute4 &= ~1;
-					if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-						pokey->tickCycle4 = cycle;
-				}
-				if (pokey->delta4 > 0) {
-					if ((pokey->mute4 & 4) == 0)
-						Pokey_AddDelta(pokey, self, cycle, data - pokey->delta4);
-					pokey->delta4 = data;
-				}
-				else
-					pokey->delta4 = -data;
-			}
+		Pokey_GenerateUntilCycle(pokey, self, cycle);
+		pokey->audf3 = data;
+		switch (pokey->audctl & 40) {
+		case 0:
+			pokey->periodCycles3 = pokey->divCycles * (data + 1);
 			break;
 		case 8:
-			if (data == pokey->audctl)
-				break;
-			Pokey_GenerateUntilCycle(pokey, self, cycle);
-			pokey->audctl = data;
-			pokey->divCycles = (data & 1) != 0 ? 114 : 28;
-			switch (data & 80) {
-				case 0:
-					pokey->periodCycles1 = pokey->divCycles * (pokey->audf1 + 1);
-					pokey->periodCycles2 = pokey->divCycles * (pokey->audf2 + 1);
-					break;
-				case 16:
-					pokey->periodCycles1 = pokey->divCycles << 8;
-					pokey->periodCycles2 = pokey->divCycles * (pokey->audf1 + (pokey->audf2 << 8) + 1);
-					pokey->reloadCycles1 = pokey->divCycles * (pokey->audf1 + 1);
-					break;
-				case 64:
-					pokey->periodCycles1 = pokey->audf1 + 4;
-					pokey->periodCycles2 = pokey->divCycles * (pokey->audf2 + 1);
-					break;
-				case 80:
-					pokey->periodCycles1 = 256;
-					pokey->periodCycles2 = pokey->audf1 + (pokey->audf2 << 8) + 7;
-					pokey->reloadCycles1 = pokey->audf1 + 4;
-					break;
-			}
-			if (pokey->periodCycles1 <= 112 && (pokey->audc1 >> 4 == 10 || pokey->audc1 >> 4 == 14)) {
-				pokey->mute1 |= 1;
-				pokey->tickCycle1 = 8388608;
-			}
-			else {
-				pokey->mute1 &= ~1;
-				if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
-					pokey->tickCycle1 = cycle;
-			}
-			if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
-				pokey->mute2 |= 1;
-				pokey->tickCycle2 = 8388608;
-			}
-			else {
-				pokey->mute2 &= ~1;
-				if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-					pokey->tickCycle2 = cycle;
-			}
-			switch (data & 40) {
-				case 0:
-					pokey->periodCycles3 = pokey->divCycles * (pokey->audf3 + 1);
-					pokey->periodCycles4 = pokey->divCycles * (pokey->audf4 + 1);
-					break;
-				case 8:
-					pokey->periodCycles3 = pokey->divCycles << 8;
-					pokey->periodCycles4 = pokey->divCycles * (pokey->audf3 + (pokey->audf4 << 8) + 1);
-					pokey->reloadCycles3 = pokey->divCycles * (pokey->audf3 + 1);
-					break;
-				case 32:
-					pokey->periodCycles3 = pokey->audf3 + 4;
-					pokey->periodCycles4 = pokey->divCycles * (pokey->audf4 + 1);
-					break;
-				case 40:
-					pokey->periodCycles3 = 256;
-					pokey->periodCycles4 = pokey->audf3 + (pokey->audf4 << 8) + 7;
-					pokey->reloadCycles3 = pokey->audf3 + 4;
-					break;
-			}
-			if (pokey->periodCycles3 <= 112 && (pokey->audc3 >> 4 == 10 || pokey->audc3 >> 4 == 14)) {
-				pokey->mute3 |= 1;
-				pokey->tickCycle3 = 8388608;
-			}
-			else {
-				pokey->mute3 &= ~1;
-				if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-					pokey->tickCycle3 = cycle;
-			}
+			pokey->periodCycles4 = pokey->divCycles * (data + (pokey->audf4 << 8) + 1);
+			pokey->reloadCycles3 = pokey->divCycles * (data + 1);
 			if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
 				pokey->mute4 |= 1;
 				pokey->tickCycle4 = 8388608;
@@ -8242,119 +8045,318 @@ static void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle)
 				if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
 					pokey->tickCycle4 = cycle;
 			}
-			if (pokey->init && (data & 64) == 0) {
-				pokey->mute1 |= 2;
-				pokey->tickCycle1 = 8388608;
-			}
-			else {
-				pokey->mute1 &= ~2;
-				if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
-					pokey->tickCycle1 = cycle;
-			}
-			if (pokey->init && (data & 80) != 80) {
-				pokey->mute2 |= 2;
-				pokey->tickCycle2 = 8388608;
-			}
-			else {
-				pokey->mute2 &= ~2;
-				if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-					pokey->tickCycle2 = cycle;
-			}
-			if (pokey->init && (data & 32) == 0) {
-				pokey->mute3 |= 2;
-				pokey->tickCycle3 = 8388608;
-			}
-			else {
-				pokey->mute3 &= ~2;
-				if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-					pokey->tickCycle3 = cycle;
-			}
-			if (pokey->init && (data & 40) != 40) {
-				pokey->mute4 |= 2;
+			break;
+		case 32:
+			pokey->periodCycles3 = data + 4;
+			break;
+		case 40:
+			pokey->periodCycles4 = data + (pokey->audf4 << 8) + 7;
+			pokey->reloadCycles3 = data + 4;
+			if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
+				pokey->mute4 |= 1;
 				pokey->tickCycle4 = 8388608;
 			}
 			else {
-				pokey->mute4 &= ~2;
+				pokey->mute4 &= ~1;
 				if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
 					pokey->tickCycle4 = cycle;
 			}
 			break;
-		case 9:
-			if (pokey->tickCycle1 != 8388608)
-				pokey->tickCycle1 = cycle + pokey->periodCycles1;
-			if (pokey->tickCycle2 != 8388608)
-				pokey->tickCycle2 = cycle + pokey->periodCycles2;
-			if (pokey->tickCycle3 != 8388608)
-				pokey->tickCycle3 = cycle + pokey->periodCycles3;
-			if (pokey->tickCycle4 != 8388608)
-				pokey->tickCycle4 = cycle + pokey->periodCycles4;
+		}
+		if (pokey->periodCycles3 <= 112 && (pokey->audc3 >> 4 == 10 || pokey->audc3 >> 4 == 14)) {
+			pokey->mute3 |= 1;
+			pokey->tickCycle3 = 8388608;
+		}
+		else {
+			pokey->mute3 &= ~1;
+			if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
+				pokey->tickCycle3 = cycle;
+		}
+		break;
+	case 5:
+		if (data == pokey->audc3)
 			break;
-		case 15:
-			if (data == pokey->skctl)
-				break;
-			Pokey_GenerateUntilCycle(pokey, self, cycle);
-			pokey->skctl = data;
-			init = (data & 3) == 0;
-			if (pokey->init && !init)
-				pokey->polyIndex = ((pokey->audctl & 128) != 0 ? 237614 : 60948014) - cycle;
-			pokey->init = init;
-			if (pokey->init && (pokey->audctl & 64) == 0) {
-				pokey->mute1 |= 2;
-				pokey->tickCycle1 = 8388608;
-			}
-			else {
-				pokey->mute1 &= ~2;
-				if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
-					pokey->tickCycle1 = cycle;
-			}
-			if (pokey->init && (pokey->audctl & 80) != 80) {
-				pokey->mute2 |= 2;
-				pokey->tickCycle2 = 8388608;
-			}
-			else {
-				pokey->mute2 &= ~2;
-				if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-					pokey->tickCycle2 = cycle;
-			}
-			if (pokey->init && (pokey->audctl & 32) == 0) {
-				pokey->mute3 |= 2;
+		Pokey_GenerateUntilCycle(pokey, self, cycle);
+		pokey->audc3 = data;
+		if ((data & 16) != 0) {
+			data = (data & 15) << 20;
+			if ((pokey->mute3 & 4) == 0)
+				Pokey_AddDelta(pokey, self, cycle, pokey->delta3 > 0 ? data - pokey->delta3 : data);
+			pokey->delta3 = data;
+		}
+		else {
+			data = (data & 15) << 20;
+			if (pokey->periodCycles3 <= 112 && (pokey->audc3 >> 4 == 10 || pokey->audc3 >> 4 == 14)) {
+				pokey->mute3 |= 1;
 				pokey->tickCycle3 = 8388608;
 			}
 			else {
-				pokey->mute3 &= ~2;
+				pokey->mute3 &= ~1;
 				if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
 					pokey->tickCycle3 = cycle;
 			}
-			if (pokey->init && (pokey->audctl & 40) != 40) {
-				pokey->mute4 |= 2;
+			if (pokey->delta3 > 0) {
+				if ((pokey->mute3 & 4) == 0)
+					Pokey_AddDelta(pokey, self, cycle, data - pokey->delta3);
+				pokey->delta3 = data;
+			}
+			else
+				pokey->delta3 = -data;
+		}
+		break;
+	case 6:
+		if (data == pokey->audf4)
+			break;
+		Pokey_GenerateUntilCycle(pokey, self, cycle);
+		pokey->audf4 = data;
+		switch (pokey->audctl & 40) {
+		case 0:
+		case 32:
+			pokey->periodCycles4 = pokey->divCycles * (data + 1);
+			break;
+		case 8:
+			pokey->periodCycles4 = pokey->divCycles * (pokey->audf3 + (data << 8) + 1);
+			break;
+		case 40:
+			pokey->periodCycles4 = pokey->audf3 + (data << 8) + 7;
+			break;
+		}
+		if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
+			pokey->mute4 |= 1;
+			pokey->tickCycle4 = 8388608;
+		}
+		else {
+			pokey->mute4 &= ~1;
+			if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
+				pokey->tickCycle4 = cycle;
+		}
+		break;
+	case 7:
+		if (data == pokey->audc4)
+			break;
+		Pokey_GenerateUntilCycle(pokey, self, cycle);
+		pokey->audc4 = data;
+		if ((data & 16) != 0) {
+			data = (data & 15) << 20;
+			if ((pokey->mute4 & 4) == 0)
+				Pokey_AddDelta(pokey, self, cycle, pokey->delta4 > 0 ? data - pokey->delta4 : data);
+			pokey->delta4 = data;
+		}
+		else {
+			data = (data & 15) << 20;
+			if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
+				pokey->mute4 |= 1;
 				pokey->tickCycle4 = 8388608;
 			}
 			else {
-				pokey->mute4 &= ~2;
+				pokey->mute4 &= ~1;
 				if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
 					pokey->tickCycle4 = cycle;
 			}
-			if ((data & 16) != 0) {
-				pokey->mute3 |= 8;
-				pokey->tickCycle3 = 8388608;
+			if (pokey->delta4 > 0) {
+				if ((pokey->mute4 & 4) == 0)
+					Pokey_AddDelta(pokey, self, cycle, data - pokey->delta4);
+				pokey->delta4 = data;
 			}
-			else {
-				pokey->mute3 &= ~8;
-				if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-					pokey->tickCycle3 = cycle;
-			}
-			if ((data & 16) != 0) {
-				pokey->mute4 |= 8;
-				pokey->tickCycle4 = 8388608;
-			}
-			else {
-				pokey->mute4 &= ~8;
-				if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-					pokey->tickCycle4 = cycle;
-			}
+			else
+				pokey->delta4 = -data;
+		}
+		break;
+	case 8:
+		if (data == pokey->audctl)
 			break;
-		default:
+		Pokey_GenerateUntilCycle(pokey, self, cycle);
+		pokey->audctl = data;
+		pokey->divCycles = (data & 1) != 0 ? 114 : 28;
+		switch (data & 80) {
+		case 0:
+			pokey->periodCycles1 = pokey->divCycles * (pokey->audf1 + 1);
+			pokey->periodCycles2 = pokey->divCycles * (pokey->audf2 + 1);
 			break;
+		case 16:
+			pokey->periodCycles1 = pokey->divCycles << 8;
+			pokey->periodCycles2 = pokey->divCycles * (pokey->audf1 + (pokey->audf2 << 8) + 1);
+			pokey->reloadCycles1 = pokey->divCycles * (pokey->audf1 + 1);
+			break;
+		case 64:
+			pokey->periodCycles1 = pokey->audf1 + 4;
+			pokey->periodCycles2 = pokey->divCycles * (pokey->audf2 + 1);
+			break;
+		case 80:
+			pokey->periodCycles1 = 256;
+			pokey->periodCycles2 = pokey->audf1 + (pokey->audf2 << 8) + 7;
+			pokey->reloadCycles1 = pokey->audf1 + 4;
+			break;
+		}
+		if (pokey->periodCycles1 <= 112 && (pokey->audc1 >> 4 == 10 || pokey->audc1 >> 4 == 14)) {
+			pokey->mute1 |= 1;
+			pokey->tickCycle1 = 8388608;
+		}
+		else {
+			pokey->mute1 &= ~1;
+			if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
+				pokey->tickCycle1 = cycle;
+		}
+		if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
+			pokey->mute2 |= 1;
+			pokey->tickCycle2 = 8388608;
+		}
+		else {
+			pokey->mute2 &= ~1;
+			if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
+				pokey->tickCycle2 = cycle;
+		}
+		switch (data & 40) {
+		case 0:
+			pokey->periodCycles3 = pokey->divCycles * (pokey->audf3 + 1);
+			pokey->periodCycles4 = pokey->divCycles * (pokey->audf4 + 1);
+			break;
+		case 8:
+			pokey->periodCycles3 = pokey->divCycles << 8;
+			pokey->periodCycles4 = pokey->divCycles * (pokey->audf3 + (pokey->audf4 << 8) + 1);
+			pokey->reloadCycles3 = pokey->divCycles * (pokey->audf3 + 1);
+			break;
+		case 32:
+			pokey->periodCycles3 = pokey->audf3 + 4;
+			pokey->periodCycles4 = pokey->divCycles * (pokey->audf4 + 1);
+			break;
+		case 40:
+			pokey->periodCycles3 = 256;
+			pokey->periodCycles4 = pokey->audf3 + (pokey->audf4 << 8) + 7;
+			pokey->reloadCycles3 = pokey->audf3 + 4;
+			break;
+		}
+		if (pokey->periodCycles3 <= 112 && (pokey->audc3 >> 4 == 10 || pokey->audc3 >> 4 == 14)) {
+			pokey->mute3 |= 1;
+			pokey->tickCycle3 = 8388608;
+		}
+		else {
+			pokey->mute3 &= ~1;
+			if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
+				pokey->tickCycle3 = cycle;
+		}
+		if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
+			pokey->mute4 |= 1;
+			pokey->tickCycle4 = 8388608;
+		}
+		else {
+			pokey->mute4 &= ~1;
+			if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
+				pokey->tickCycle4 = cycle;
+		}
+		if (pokey->init && (data & 64) == 0) {
+			pokey->mute1 |= 2;
+			pokey->tickCycle1 = 8388608;
+		}
+		else {
+			pokey->mute1 &= ~2;
+			if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
+				pokey->tickCycle1 = cycle;
+		}
+		if (pokey->init && (data & 80) != 80) {
+			pokey->mute2 |= 2;
+			pokey->tickCycle2 = 8388608;
+		}
+		else {
+			pokey->mute2 &= ~2;
+			if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
+				pokey->tickCycle2 = cycle;
+		}
+		if (pokey->init && (data & 32) == 0) {
+			pokey->mute3 |= 2;
+			pokey->tickCycle3 = 8388608;
+		}
+		else {
+			pokey->mute3 &= ~2;
+			if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
+				pokey->tickCycle3 = cycle;
+		}
+		if (pokey->init && (data & 40) != 40) {
+			pokey->mute4 |= 2;
+			pokey->tickCycle4 = 8388608;
+		}
+		else {
+			pokey->mute4 &= ~2;
+			if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
+				pokey->tickCycle4 = cycle;
+		}
+		break;
+	case 9:
+		if (pokey->tickCycle1 != 8388608)
+			pokey->tickCycle1 = cycle + pokey->periodCycles1;
+		if (pokey->tickCycle2 != 8388608)
+			pokey->tickCycle2 = cycle + pokey->periodCycles2;
+		if (pokey->tickCycle3 != 8388608)
+			pokey->tickCycle3 = cycle + pokey->periodCycles3;
+		if (pokey->tickCycle4 != 8388608)
+			pokey->tickCycle4 = cycle + pokey->periodCycles4;
+		break;
+	case 15:
+		if (data == pokey->skctl)
+			break;
+		Pokey_GenerateUntilCycle(pokey, self, cycle);
+		pokey->skctl = data;
+		init = (data & 3) == 0;
+		if (pokey->init && !init)
+			pokey->polyIndex = ((pokey->audctl & 128) != 0 ? 237614 : 60948014) - cycle;
+		pokey->init = init;
+		if (pokey->init && (pokey->audctl & 64) == 0) {
+			pokey->mute1 |= 2;
+			pokey->tickCycle1 = 8388608;
+		}
+		else {
+			pokey->mute1 &= ~2;
+			if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
+				pokey->tickCycle1 = cycle;
+		}
+		if (pokey->init && (pokey->audctl & 80) != 80) {
+			pokey->mute2 |= 2;
+			pokey->tickCycle2 = 8388608;
+		}
+		else {
+			pokey->mute2 &= ~2;
+			if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
+				pokey->tickCycle2 = cycle;
+		}
+		if (pokey->init && (pokey->audctl & 32) == 0) {
+			pokey->mute3 |= 2;
+			pokey->tickCycle3 = 8388608;
+		}
+		else {
+			pokey->mute3 &= ~2;
+			if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
+				pokey->tickCycle3 = cycle;
+		}
+		if (pokey->init && (pokey->audctl & 40) != 40) {
+			pokey->mute4 |= 2;
+			pokey->tickCycle4 = 8388608;
+		}
+		else {
+			pokey->mute4 &= ~2;
+			if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
+				pokey->tickCycle4 = cycle;
+		}
+		if ((data & 16) != 0) {
+			pokey->mute3 |= 8;
+			pokey->tickCycle3 = 8388608;
+		}
+		else {
+			pokey->mute3 &= ~8;
+			if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
+				pokey->tickCycle3 = cycle;
+		}
+		if ((data & 16) != 0) {
+			pokey->mute4 |= 8;
+			pokey->tickCycle4 = 8388608;
+		}
+		else {
+			pokey->mute4 &= ~8;
+			if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
+				pokey->tickCycle4 = cycle;
+		}
+		break;
+	default:
+		break;
 	}
 }
 

@@ -494,11 +494,11 @@ public class ASAP
 		int block = MillisecondsToBlocks(position);
 		if (block < BlocksPlayed)
 			PlaySong(CurrentSong, CurrentDuration);
-		while (BlocksPlayed + Pokeys.Samples < block) {
-			BlocksPlayed += Pokeys.Samples;
+		while (BlocksPlayed + Pokeys.ReadySamplesEnd < block) {
+			BlocksPlayed += Pokeys.ReadySamplesEnd;
 			DoFrame();
 		}
-		Pokeys.SampleIndex = block - BlocksPlayed;
+		Pokeys.ReadySamplesStart = block - BlocksPlayed;
 		BlocksPlayed = block;
 	}
 

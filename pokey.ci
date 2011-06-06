@@ -304,8 +304,8 @@ class PokeyPair
 	Pokey() BasePokey;
 	Pokey() ExtraPokey;
 	int SampleOffset;
-	int SampleIndex;
-	int Samples;
+	int ReadySamplesStart;
+	int ReadySamplesEnd;
 	int IirAccLeft;
 	int IirAccRight;
 
@@ -340,8 +340,8 @@ class PokeyPair
 		BasePokey.Initialize();
 		ExtraPokey.Initialize();
 		SampleOffset = 0;
-		SampleIndex = 0;
-		Samples = 0;
+		ReadySamplesStart = 0;
+		ReadySamplesEnd = 0;
 		IirAccLeft = 0;
 		IirAccRight = 0;
 	}
@@ -602,10 +602,10 @@ class PokeyPair
 		if (ExtraPokeyMask != 0)
 			ExtraPokey.EndFrame(this, cycle);
 		SampleOffset += cycle * Pokey.SampleRate;
-		SampleIndex = 0;
-		Samples = SampleOffset / MainClock;
+		ReadySamplesStart = 0;
+		ReadySamplesEnd = SampleOffset / MainClock;
 		SampleOffset %= MainClock;
-		return Samples;
+		return ReadySamplesEnd;
 	}
 
 	/// Fills buffer with samples from `DeltaBuffer`.
@@ -614,15 +614,15 @@ class PokeyPair
 #endif
 	int Generate(byte[] buffer, int bufferOffset, int blocks, ASAPSampleFormat format)
 	{
-		int i = SampleIndex;
-		int samples = Samples;
+		int i = ReadySamplesStart;
+		int samplesEnd = ReadySamplesEnd;
+		if (blocks < samplesEnd - i)
+			samplesEnd = i + blocks;
+		else
+			blocks = samplesEnd - i;
 		int accLeft = IirAccLeft;
 		int accRight = IirAccRight;
-		if (blocks < samples - i)
-			samples = i + blocks;
-		else
-			blocks = samples - i;
-		for (; i < samples; i++) {
+		for (; i < samplesEnd; i++) {
 			accLeft += BasePokey.DeltaBuffer[i] - (accLeft * 3 >> 10);
 #if FLASH
 			native {
@@ -667,11 +667,11 @@ class PokeyPair
 			}
 #endif // FLASH
 		}
-		if (i == Samples) {
+		if (i == ReadySamplesEnd) {
 			accLeft += BasePokey.DeltaBuffer[i];
 			accRight += ExtraPokey.DeltaBuffer[i];
 		}
-		SampleIndex = i;
+		ReadySamplesStart = i;
 		IirAccLeft = accLeft;
 		IirAccRight = accRight;
 #if APOKEYSND
