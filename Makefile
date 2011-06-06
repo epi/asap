@@ -36,6 +36,7 @@ install: install-asapconv install-lib
 include $(srcdir)6502/6502.mk
 include $(srcdir)www/www.mk
 include $(srcdir)release/release.mk
+include $(srcdir)test/benchmark/benchmark.mk
 
 # asapconv
 

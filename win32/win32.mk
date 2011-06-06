@@ -63,6 +63,10 @@ win32/asapconv-no-lame.exe: $(call src,asapconv.c asap.[ch])
 	$(WIN32_CC)
 CLEAN += win32/asapconv-no-lame.exe
 
+win32/msvc/asapconv.exe: $(call src,asapconv.c asap.[ch])
+	$(WIN32_CC) -Fowin32/msvc/ -DHAVE_LIBMP3LAME -DHAVE_LIBMP3LAME_DLL
+CLEAN += win32/msvc/asapconv.exe
+
 win32/x64/asapconv.exe: $(call src,asapconv.c asap.[ch])
 	$(WIN64_CC)
 CLEAN += win32/x64/asapconv.exe
