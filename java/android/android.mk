@@ -1,7 +1,9 @@
 ANDROID_SDK = C:/bin/android-sdk-windows
 ANDROID_PLATFORM = $(ANDROID_SDK)/platforms/android-8
+PROGUARD_JAR = C:/bin/proguard4.6/lib/proguard.jar
 
 AAPT = $(ANDROID_PLATFORM)/tools/aapt
+PROGUARD = $(DO)java -jar $(PROGUARD_JAR)
 DX = $(DO)java -jar "$(ANDROID_PLATFORM)/tools/lib/dx.jar" --no-strict
 APKBUILDER = $(DO)java -classpath "$(ANDROID_SDK)/tools/lib/sdklib.jar" com.android.sdklib.build.ApkBuilderMain $@
 JARSIGNER = $(DO)jarsigner
@@ -78,6 +80,12 @@ CLEAN += java/android/AndroidASAP-debug.apk
 java/android/classes.dex: java/android/classes/net/sf/asap/Player.class
 	$(DX) --dex --output=$@ java/android/classes
 CLEAN += java/android/classes.dex
+
+#java/android/classes.dex: java/android/classes.jar
+#	$(DX) --dex --output=$@ $<
+
+java/android/classes.jar: $(srcdir)java/android/proguard.cfg java/android/classes/net/sf/asap/Player.class
+	$(PROGUARD) -injars java/android/classes -outjars $@ -libraryjars "$(ANDROID_PLATFORM)/android.jar" @$<
 
 java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,FileSelector.java Player.java Util.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
 	$(JAVAC) -d java/android/classes -bootclasspath "$(ANDROID_PLATFORM)/android.jar" $(addprefix $(srcdir)java/android/,FileSelector.java Player.java Util.java) java/android/src/net/sf/asap/R.java java/src/net/sf/asap/*.java
