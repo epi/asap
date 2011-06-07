@@ -1,4 +1,3 @@
-XASM = $(DO)xasm -q -o $@ $<
 MADS = $(DO)mads -s -o:$@ $<
 
 # no user-configurable paths below this line

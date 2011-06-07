@@ -12,7 +12,7 @@ SDL_LIBS = `sdl-config --libs`
 SEVENZIP = 7z a -mx=9 -bd
 MAKEZIP = $(DO)$(RM) $@ && $(SEVENZIP) -tzip $@ $(^:%=./%) # "./" makes 7z don't store paths in the archive
 COPY = $(DO)cp $< $@
-ACIDSAP = ../Acid800/out/Release/AcidSAP/standalone
+XASM = $(DO)xasm -q -o $@ $<
 
 # no user-configurable paths below this line
 
@@ -36,8 +36,7 @@ install: install-asapconv install-lib
 include $(srcdir)6502/6502.mk
 include $(srcdir)www/www.mk
 include $(srcdir)release/release.mk
-include $(srcdir)test/benchmark/benchmark.mk
-include $(srcdir)test/disasm/disasm.mk
+include $(srcdir)test/test.mk
 
 # asapconv
 
@@ -93,7 +92,7 @@ uninstall-sdl:
 
 asapscan: $(srcdir)asapscan.c asap-asapscan.h
 	$(CC)
-CLEAN += win32/asapscan.exe
+CLEAN += asapscan asapscan.exe
 
 asap-asapscan.h: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(NATIVE_ROUTINES_OBX) | asap-asapscan.c
 
@@ -107,24 +106,6 @@ $(srcdir)asap.h: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu650
 
 $(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx
 	$(CITO) -D FLASHPACK
-
-# Acid800
-
-check: asapscan $(ACIDSAP)
-	@export passed=0 total=0; \
-		for name in $(ACIDSAP)/*.sap; do \
-			echo -n \*\ ; ./asapscan -a "$$name"; \
-			passed=$$(($$passed+!$$?)); total=$$(($$total+1)); \
-		done; \
-		echo PASSED $$passed of $$total tests
-	@$(MAKE) -C test
-	@export passed=0 total=0; \
-		for name in test/*.sap; do \
-			echo -n \*\ ; ./asapscan -a "$$name"; \
-			passed=$$(($$passed+!$$?)); total=$$(($$total+1)); \
-		done; \
-		echo PASSED $$passed of $$total tests
-.PHONY: check
 
 # other
 
