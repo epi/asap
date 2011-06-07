@@ -106,6 +106,7 @@ public class ASAP
 				return 0;
 			return Cycle / 228;
 		case 0xd40f:
+		case 0xd41f:
 			switch (Nmist) {
 			case NmiStatus.Reset:
 				return 0x1f;

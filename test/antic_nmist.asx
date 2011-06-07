@@ -3,7 +3,7 @@
 	dta	c'SAP',13,10
 	dta	c'AUTHOR "Piotr Fusik (0xF)"',13,10
 	dta	c'NAME "ANTIC NMIST Test"',13,10
-	dta	c'DATE "16/12/2010"',13,10
+	dta	c'DATE "07/06/2011"',13,10
 	dta	c'TYPE D',13,10
 	dta	c'INIT 3000',13,10
 	dta	c'TIME 00:10',13,10
@@ -21,31 +21,33 @@ main
 	jsr	print
 
 :!SAP	sei:inc	^4e
+	ldx	#0
+test_loop
 	lda:rne ^4b
-	sta	^4f
+	sta	^4f,x
 	lda	#123
 	cmp:rne	^4b
 	sta:sta	^4a
 	cmp	(0,x)
 	cmp	0,x
 	cmp	0,x
-	lda	^4f
+	lda	^4f,x
 	cmp	#$5f
 	bne	error
 
 	lda:rne	^4b
-	lda	^4f
+	lda	^4f,x
 	cmp	#$5f
 	bne	error
 
 	lda	#64
 	cmp:rne	^4b
-	lda	^4f
+	lda	^4f,x
 	cmp	#$5f
 	bne	error
 
-	sta	^4f
-	lda	^4f
+	sta	^4f,x
+	lda	^4f,x
 	cmp	#$1f
 	bne	error
 
@@ -55,9 +57,14 @@ main
 	cmp	(0,x)
 	cmp	0,x
 	cmp	0
-	lda	^4f
+	lda	^4f,x
 	cmp	#$1f
 	bne	error
+
+	txa
+	add	#$10
+	tax
+	bcc	test_loop
 
 	lda	<pass
 	ldx	>pass
