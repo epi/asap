@@ -34,6 +34,7 @@ nmi
 	pha
 	txa:pha
 	tya:pha
+	cli
 	jsr	player
 	pla:tay
 	pla:tax

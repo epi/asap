@@ -1746,15 +1746,15 @@ static const unsigned char CiBinaryResource_xexb_obx[209] = { 255, 255, 0, 1, 19
 	181, 1, 176, 193, 238, 179, 1, 64, 0, 0, 0, 125, 0, 156, 131, 76,
 	0, 0, 76, 0, 0, 0, 0, 0, 0, 0, 0, 224, 2, 225, 2, 18,
 	1 };
-static const unsigned char CiBinaryResource_xexd_obx[132] = { 255, 255, 0, 1, 119, 1, 65, 83, 65, 80, 32, 51, 46, 48, 46, 48,
+static const unsigned char CiBinaryResource_xexd_obx[133] = { 255, 255, 0, 1, 120, 1, 65, 83, 65, 80, 32, 51, 46, 48, 46, 48,
 	32, 84, 89, 80, 69, 32, 68, 0, 120, 169, 0, 141, 14, 212, 141, 14,
 	210, 173, 11, 212, 208, 251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16,
 	250, 162, 8, 157, 16, 210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31,
-	210, 141, 0, 210, 169, 254, 141, 1, 211, 173, 117, 1, 45, 118, 1, 201,
+	210, 141, 0, 210, 169, 254, 141, 1, 211, 173, 118, 1, 45, 119, 1, 201,
 	255, 240, 15, 169, 99, 141, 250, 255, 169, 1, 141, 251, 255, 169, 64, 141,
-	14, 212, 173, 119, 1, 88, 76, 113, 1, 72, 138, 72, 152, 72, 32, 116,
-	1, 104, 168, 104, 170, 104, 64, 76, 0, 0, 76, 0, 0, 0, 224, 2,
-	225, 2, 18, 1 };
+	14, 212, 173, 120, 1, 88, 76, 114, 1, 72, 138, 72, 152, 72, 88, 32,
+	117, 1, 104, 168, 104, 170, 104, 64, 76, 0, 0, 76, 0, 0, 0, 224,
+	2, 225, 2, 18, 1 };
 
 struct FlashPackItem {
 	FlashPackItemType type;
@@ -2160,6 +2160,7 @@ static int ASAP_PeekHardware(ASAP const *self, int addr)
 			return 0;
 		return self->cycle / 228;
 	case 54287:
+	case 54303:
 		switch (self->nmist) {
 		case NmiStatus_RESET:
 			return 31;
@@ -3952,12 +3953,12 @@ cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const
 			case ASAPModuleType_SAP_D:
 				if (info->fastplay != 312)
 					return FALSE;
-				ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 0, 120);
+				ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 0, 121);
 				ASAPWriter_WriteWord(w, initAndPlayer[0]);
 				w.func(w.obj, 76);
 				ASAPWriter_WriteWord(w, initAndPlayer[1]);
 				w.func(w.obj, info->defaultSong);
-				ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 126, 132);
+				ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 127, 133);
 				break;
 			case ASAPModuleType_SAP_S:
 				return FALSE;
