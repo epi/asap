@@ -31,10 +31,10 @@ no_player
 	jmp	init
 
 nmi
+	cli
 	pha
 	txa:pha
 	tya:pha
-	cli
 	jsr	player
 	pla:tay
 	pla:tax
