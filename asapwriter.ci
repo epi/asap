@@ -466,6 +466,102 @@ public class ASAPWriter
 		}
 	}
 
+	static void WriteNative(ByteWriter w, ASAPInfo info, byte[] module, int moduleLen)
+	{
+		int diff;
+		switch (info.Type) {
+		case ASAPModuleType.SapB:
+		case ASAPModuleType.SapC:
+			// SAP -> native
+			int offset = info.GetRmtSapOffset(module, moduleLen);
+			if (offset > 0) {
+				w(0xff);
+				w(0xff);
+				WriteBytes(w, module, offset, moduleLen);
+				break;
+			}
+			int blockLen = ASAPInfo.GetWord(module, info.HeaderLen + 4) - ASAPInfo.GetWord(module, info.HeaderLen + 2) + 7;
+			if (blockLen < 7 || info.HeaderLen + blockLen >= moduleLen)
+				throw "Cannot extract module from SAP";
+			WriteBytes(w, module, info.HeaderLen, info.HeaderLen + blockLen);
+			break;
+		case ASAPModuleType.Cmc:
+		case ASAPModuleType.Cm3:
+		case ASAPModuleType.Cmr:
+		case ASAPModuleType.Cms:
+			// CMC -> CMC
+			diff = WriteNativeHeader(w, info, module);
+			WriteBytes(w, module, 6, 6 + 0x14);
+			WriteRelocatedLowHigh(w, diff, module, 6 + 0x14, 64);
+			WriteBytes(w, module, 6 + 0x14 + 128, moduleLen);
+			break;
+		case ASAPModuleType.Dlt:
+			// DLT -> DLT
+			diff = WriteNativeHeader(w, info, module);
+			WriteBytes(w, module, 6, moduleLen);
+			break;
+		case ASAPModuleType.Mpt:
+			// MPT -> MPT
+			diff = WriteNativeHeader(w, info, module);
+			WriteRelocatedWords(w, diff, module, 6, 64 + 128);
+			WriteBytes(w, module, 6 + 64 + 128, 6 + 64 + 128 + 256);
+			WriteRelocatedLowHigh(w, diff, module, 6 + 64 + 128 + 256, 4);
+			WriteBytes(w, module, 6 + 64 + 128 + 256 + 8, moduleLen);
+			break;
+		case ASAPModuleType.Rmt:
+			// RMT -> RMT
+			diff = WriteNativeHeader(w, info, module);
+			WriteBytes(w, module, 6, 6 + 8);
+			int music = ASAPInfo.GetWord(module, 2);
+			int patternLowAddress = ASAPInfo.GetWord(module, 0x10);
+			int pointersAndInstrumentsLen = patternLowAddress - music - 8;
+			WriteRelocatedWords(w, diff, module, 6 + 8, pointersAndInstrumentsLen);
+			int patterns = ASAPInfo.GetWord(module, 0x12) - patternLowAddress;
+			WriteRelocatedLowHigh(w, diff, module, 6 + 8 + pointersAndInstrumentsLen, patterns);
+			int songOffset = 6 + ASAPInfo.GetWord(module, 0x14) - music;
+			WriteBytes(w, module, 6 + 8 + pointersAndInstrumentsLen + (patterns << 1), songOffset);
+			int songEnd = 7 + ASAPInfo.GetWord(module, 4) - music;
+			while (songOffset + 3 < songEnd) {
+				int nextSongOffset = songOffset + module[9] - '0';
+				if (module[songOffset] == 0xfe) {
+					w(0xfe);
+					w(module[songOffset + 1]);
+					WriteWord(w, ASAPInfo.GetWord(module, songOffset + 2) + diff);
+					songOffset += 4;
+				}
+				if (nextSongOffset > songEnd)
+					nextSongOffset = songEnd;
+				WriteBytes(w, module, songOffset, nextSongOffset);
+				songOffset = nextSongOffset;
+			}
+			WriteBytes(w, module, songOffset, songEnd);
+			if (moduleLen >= songEnd + 5) {
+				WriteRelocatedWords(w, diff, module, songEnd, 4);
+				WriteBytes(w, module, songEnd + 4, moduleLen);
+			}
+			break;
+		case ASAPModuleType.Tmc:
+			// TMC -> TMC
+			diff = WriteNativeHeader(w, info, module);
+			WriteBytes(w, module, 6, 6 + 32);
+			WriteRelocatedLowHigh(w, diff, module, 6 + 32, 64);
+			WriteRelocatedLowHigh(w, diff, module, 6 + 32 + 128, 128);
+			WriteBytes(w, module, 6 + 32 + 128 + 256, moduleLen);
+			break;
+		case ASAPModuleType.Tm2:
+			// TM2 -> TM2
+			diff = WriteNativeHeader(w, info, module);
+			WriteBytes(w, module, 6, 6 + 128);
+			WriteRelocatedBytes(w, diff, module, 6 + 128, 6 + 128 + 128 + 512, 128, 0);
+			WriteRelocatedLowHigh(w, diff, module, 6 + 128 + 128, 256);
+			WriteRelocatedBytes(w, diff, module, 6 + 128, 6 + 128 + 128 + 512, 128, 8);
+			WriteBytes(w, module, 6 + 128 + 128 + 512 + 128, moduleLen);
+			break;
+		default:
+			throw "Impossible conversion";
+		}
+	}
+
 	/// Writes the given module in a possibly different file format.
 	public static void Write(
 		/// Output filename, used to determine the format.
@@ -535,99 +631,12 @@ public class ASAPWriter
 			}
 		default:
 			string possibleExt = info.GetOriginalModuleExt(module, moduleLen);
-			if (possibleExt != null && destExt == ASAP_EXT(possibleExt)) {
-				int diff;
-				switch (info.Type) {
-				case ASAPModuleType.SapB:
-				case ASAPModuleType.SapC:
-					// SAP -> native
-					int offset = info.GetRmtSapOffset(module, moduleLen);
-					if (offset > 0) {
-						w(0xff);
-						w(0xff);
-						WriteBytes(w, module, offset, moduleLen);
-						return;
-					}
-					int blockLen = ASAPInfo.GetWord(module, info.HeaderLen + 4) - ASAPInfo.GetWord(module, info.HeaderLen + 2) + 7;
-					if (blockLen < 7 || info.HeaderLen + blockLen >= moduleLen)
-						throw "Cannot extract module from SAP";
-					WriteBytes(w, module, info.HeaderLen, info.HeaderLen + blockLen);
-					return;
-				case ASAPModuleType.Cmc:
-				case ASAPModuleType.Cm3:
-				case ASAPModuleType.Cmr:
-				case ASAPModuleType.Cms:
-					// CMC -> CMC
-					diff = WriteNativeHeader(w, info, module);
-					WriteBytes(w, module, 6, 6 + 0x14);
-					WriteRelocatedLowHigh(w, diff, module, 6 + 0x14, 64);
-					WriteBytes(w, module, 6 + 0x14 + 128, moduleLen);
-					return;
-				case ASAPModuleType.Dlt:
-					// DLT -> DLT
-					diff = WriteNativeHeader(w, info, module);
-					WriteBytes(w, module, 6, moduleLen);
-					return;
-				case ASAPModuleType.Mpt:
-					// MPT -> MPT
-					diff = WriteNativeHeader(w, info, module);
-					WriteRelocatedWords(w, diff, module, 6, 64 + 128);
-					WriteBytes(w, module, 6 + 64 + 128, 6 + 64 + 128 + 256);
-					WriteRelocatedLowHigh(w, diff, module, 6 + 64 + 128 + 256, 4);
-					WriteBytes(w, module, 6 + 64 + 128 + 256 + 8, moduleLen);
-					return;
-				case ASAPModuleType.Rmt:
-					// RMT -> RMT
-					diff = WriteNativeHeader(w, info, module);
-					WriteBytes(w, module, 6, 6 + 8);
-					int music = ASAPInfo.GetWord(module, 2);
-					int patternLowAddress = ASAPInfo.GetWord(module, 0x10);
-					int pointersAndInstrumentsLen = patternLowAddress - music - 8;
-					WriteRelocatedWords(w, diff, module, 6 + 8, pointersAndInstrumentsLen);
-					int patterns = ASAPInfo.GetWord(module, 0x12) - patternLowAddress;
-					WriteRelocatedLowHigh(w, diff, module, 6 + 8 + pointersAndInstrumentsLen, patterns);
-					int songOffset = 6 + ASAPInfo.GetWord(module, 0x14) - music;
-					WriteBytes(w, module, 6 + 8 + pointersAndInstrumentsLen + (patterns << 1), songOffset);
-					int songEnd = 7 + ASAPInfo.GetWord(module, 4) - music;
-					while (songOffset + 3 < songEnd) {
-						int nextSongOffset = songOffset + module[9] - '0';
-						if (module[songOffset] == 0xfe) {
-							w(0xfe);
-							w(module[songOffset + 1]);
-							WriteWord(w, ASAPInfo.GetWord(module, songOffset + 2) + diff);
-							songOffset += 4;
-						}
-						if (nextSongOffset > songEnd)
-							nextSongOffset = songEnd;
-						WriteBytes(w, module, songOffset, nextSongOffset);
-						songOffset = nextSongOffset;
-					}
-					WriteBytes(w, module, songOffset, songEnd);
-					if (moduleLen >= songEnd + 5) {
-						WriteRelocatedWords(w, diff, module, songEnd, 4);
-						WriteBytes(w, module, songEnd + 4, moduleLen);
-					}
-					return;
-				case ASAPModuleType.Tmc:
-					// TMC -> TMC
-					diff = WriteNativeHeader(w, info, module);
-					WriteBytes(w, module, 6, 6 + 32);
-					WriteRelocatedLowHigh(w, diff, module, 6 + 32, 64);
-					WriteRelocatedLowHigh(w, diff, module, 6 + 32 + 128, 128);
-					WriteBytes(w, module, 6 + 32 + 128 + 256, moduleLen);
-					return;
-				case ASAPModuleType.Tm2:
-					// TM2 -> TM2
-					diff = WriteNativeHeader(w, info, module);
-					WriteBytes(w, module, 6, 6 + 128);
-					WriteRelocatedBytes(w, diff, module, 6 + 128, 6 + 128 + 128 + 512, 128, 0);
-					WriteRelocatedLowHigh(w, diff, module, 6 + 128 + 128, 256);
-					WriteRelocatedBytes(w, diff, module, 6 + 128, 6 + 128 + 128 + 512, 128, 8);
-					WriteBytes(w, module, 6 + 128 + 128 + 512 + 128, moduleLen);
-					return;
-				default:
-					// native -> native
-					WriteBytes(w, module, 0, moduleLen);
+			if (possibleExt != null) {
+				int packedPossibleExt = ASAP_EXT(possibleExt);
+				if (destExt == packedPossibleExt
+				 || (destExt == ASAP_EXT("tm8") && packedPossibleExt == ASAP_EXT("tmc"))) {
+					// * -> native
+					WriteNative(w, info, module, moduleLen);
 					return;
 				}
 			}

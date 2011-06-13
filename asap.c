@@ -1727,6 +1727,7 @@ static void ASAPWriter_WriteExecutableFromSap(ByteWriter w, int *initAndPlayer, 
 static void ASAPWriter_WriteExecutableHeader(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int type, int init, int player);
 static int ASAPWriter_WriteExecutableHeaderForSongPos(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int player, int codeForOneSong, int codeForManySongs, int playerOffset);
 static void ASAPWriter_WriteHexSapTag(ByteWriter w, const char *tag, int value);
+static cibool ASAPWriter_WriteNative(ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen);
 static int ASAPWriter_WriteNativeHeader(ByteWriter w, ASAPInfo const *info, unsigned char const *module);
 static void ASAPWriter_WritePlaTaxLda0(ByteWriter w);
 static void ASAPWriter_WriteRelocatedBytes(ByteWriter w, int diff, unsigned char const *module, int lowOffset, int highOffset, int len, int shift);
@@ -3992,106 +3993,10 @@ cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const
 		}
 	default:
 		possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
-		if (possibleExt != NULL && destExt == ((possibleExt[0] + (possibleExt[1] << 8) + (possibleExt[2] << 16)) | 2105376)) {
-			int diff;
-			switch (info->type) {
-				int offset;
-				int blockLen;
-				int music;
-				int patternLowAddress;
-				int pointersAndInstrumentsLen;
-				int patterns;
-				int songOffset;
-				int songEnd;
-			case ASAPModuleType_SAP_B:
-			case ASAPModuleType_SAP_C:
-				offset = ASAPInfo_GetRmtSapOffset(info, module, moduleLen);
-				if (offset > 0) {
-					w.func(w.obj, 255);
-					w.func(w.obj, 255);
-					ASAPWriter_WriteBytes(w, module, offset, moduleLen);
-					return TRUE;
-				}
-				blockLen = ASAPInfo_GetWord(module, info->headerLen + 4) - ASAPInfo_GetWord(module, info->headerLen + 2) + 7;
-				if (blockLen < 7 || info->headerLen + blockLen >= moduleLen)
-					return FALSE;
-				ASAPWriter_WriteBytes(w, module, info->headerLen, info->headerLen + blockLen);
-				return TRUE;
-			case ASAPModuleType_CMC:
-			case ASAPModuleType_CM3:
-			case ASAPModuleType_CMR:
-			case ASAPModuleType_CMS:
-				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
-					return FALSE;
-				ASAPWriter_WriteBytes(w, module, 6, 26);
-				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 26, 64);
-				ASAPWriter_WriteBytes(w, module, 154, moduleLen);
-				return TRUE;
-			case ASAPModuleType_DLT:
-				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
-					return FALSE;
-				ASAPWriter_WriteBytes(w, module, 6, moduleLen);
-				return TRUE;
-			case ASAPModuleType_MPT:
-				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
-					return FALSE;
-				ASAPWriter_WriteRelocatedWords(w, diff, module, 6, 192);
-				ASAPWriter_WriteBytes(w, module, 198, 454);
-				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 454, 4);
-				ASAPWriter_WriteBytes(w, module, 462, moduleLen);
-				return TRUE;
-			case ASAPModuleType_RMT:
-				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
-					return FALSE;
-				ASAPWriter_WriteBytes(w, module, 6, 14);
-				music = ASAPInfo_GetWord(module, 2);
-				patternLowAddress = ASAPInfo_GetWord(module, 16);
-				pointersAndInstrumentsLen = patternLowAddress - music - 8;
-				ASAPWriter_WriteRelocatedWords(w, diff, module, 14, pointersAndInstrumentsLen);
-				patterns = ASAPInfo_GetWord(module, 18) - patternLowAddress;
-				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 14 + pointersAndInstrumentsLen, patterns);
-				songOffset = 6 + ASAPInfo_GetWord(module, 20) - music;
-				ASAPWriter_WriteBytes(w, module, 14 + pointersAndInstrumentsLen + (patterns << 1), songOffset);
-				songEnd = 7 + ASAPInfo_GetWord(module, 4) - music;
-				while (songOffset + 3 < songEnd) {
-					int nextSongOffset = songOffset + module[9] - 48;
-					if (module[songOffset] == 254) {
-						w.func(w.obj, 254);
-						w.func(w.obj, module[songOffset + 1]);
-						ASAPWriter_WriteWord(w, ASAPInfo_GetWord(module, songOffset + 2) + diff);
-						songOffset += 4;
-					}
-					if (nextSongOffset > songEnd)
-						nextSongOffset = songEnd;
-					ASAPWriter_WriteBytes(w, module, songOffset, nextSongOffset);
-					songOffset = nextSongOffset;
-				}
-				ASAPWriter_WriteBytes(w, module, songOffset, songEnd);
-				if (moduleLen >= songEnd + 5) {
-					ASAPWriter_WriteRelocatedWords(w, diff, module, songEnd, 4);
-					ASAPWriter_WriteBytes(w, module, songEnd + 4, moduleLen);
-				}
-				return TRUE;
-			case ASAPModuleType_TMC:
-				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
-					return FALSE;
-				ASAPWriter_WriteBytes(w, module, 6, 38);
-				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 38, 64);
-				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 166, 128);
-				ASAPWriter_WriteBytes(w, module, 422, moduleLen);
-				return TRUE;
-			case ASAPModuleType_TM2:
-				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
-					return FALSE;
-				ASAPWriter_WriteBytes(w, module, 6, 134);
-				ASAPWriter_WriteRelocatedBytes(w, diff, module, 134, 774, 128, 0);
-				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 262, 256);
-				ASAPWriter_WriteRelocatedBytes(w, diff, module, 134, 774, 128, 8);
-				ASAPWriter_WriteBytes(w, module, 902, moduleLen);
-				return TRUE;
-			default:
-				ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-				return TRUE;
+		if (possibleExt != NULL) {
+			int packedPossibleExt = (possibleExt[0] + (possibleExt[1] << 8) + (possibleExt[2] << 16)) | 2105376;
+			if (destExt == packedPossibleExt || (destExt == 3698036 && packedPossibleExt == 6516084)) {
+				return ASAPWriter_WriteNative(w, info, module, moduleLen);
 			}
 		}
 		return FALSE;
@@ -4399,6 +4304,110 @@ static void ASAPWriter_WriteHexSapTag(ByteWriter w, const char *tag, int value)
 	}
 	w.func(w.obj, 13);
 	w.func(w.obj, 10);
+}
+
+static cibool ASAPWriter_WriteNative(ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen)
+{
+	int diff;
+	switch (info->type) {
+		int offset;
+		int blockLen;
+		int music;
+		int patternLowAddress;
+		int pointersAndInstrumentsLen;
+		int patterns;
+		int songOffset;
+		int songEnd;
+	case ASAPModuleType_SAP_B:
+	case ASAPModuleType_SAP_C:
+		offset = ASAPInfo_GetRmtSapOffset(info, module, moduleLen);
+		if (offset > 0) {
+			w.func(w.obj, 255);
+			w.func(w.obj, 255);
+			ASAPWriter_WriteBytes(w, module, offset, moduleLen);
+			break;
+		}
+		blockLen = ASAPInfo_GetWord(module, info->headerLen + 4) - ASAPInfo_GetWord(module, info->headerLen + 2) + 7;
+		if (blockLen < 7 || info->headerLen + blockLen >= moduleLen)
+			return FALSE;
+		ASAPWriter_WriteBytes(w, module, info->headerLen, info->headerLen + blockLen);
+		break;
+	case ASAPModuleType_CMC:
+	case ASAPModuleType_CM3:
+	case ASAPModuleType_CMR:
+	case ASAPModuleType_CMS:
+		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+			return FALSE;
+		ASAPWriter_WriteBytes(w, module, 6, 26);
+		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 26, 64);
+		ASAPWriter_WriteBytes(w, module, 154, moduleLen);
+		break;
+	case ASAPModuleType_DLT:
+		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+			return FALSE;
+		ASAPWriter_WriteBytes(w, module, 6, moduleLen);
+		break;
+	case ASAPModuleType_MPT:
+		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+			return FALSE;
+		ASAPWriter_WriteRelocatedWords(w, diff, module, 6, 192);
+		ASAPWriter_WriteBytes(w, module, 198, 454);
+		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 454, 4);
+		ASAPWriter_WriteBytes(w, module, 462, moduleLen);
+		break;
+	case ASAPModuleType_RMT:
+		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+			return FALSE;
+		ASAPWriter_WriteBytes(w, module, 6, 14);
+		music = ASAPInfo_GetWord(module, 2);
+		patternLowAddress = ASAPInfo_GetWord(module, 16);
+		pointersAndInstrumentsLen = patternLowAddress - music - 8;
+		ASAPWriter_WriteRelocatedWords(w, diff, module, 14, pointersAndInstrumentsLen);
+		patterns = ASAPInfo_GetWord(module, 18) - patternLowAddress;
+		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 14 + pointersAndInstrumentsLen, patterns);
+		songOffset = 6 + ASAPInfo_GetWord(module, 20) - music;
+		ASAPWriter_WriteBytes(w, module, 14 + pointersAndInstrumentsLen + (patterns << 1), songOffset);
+		songEnd = 7 + ASAPInfo_GetWord(module, 4) - music;
+		while (songOffset + 3 < songEnd) {
+			int nextSongOffset = songOffset + module[9] - 48;
+			if (module[songOffset] == 254) {
+				w.func(w.obj, 254);
+				w.func(w.obj, module[songOffset + 1]);
+				ASAPWriter_WriteWord(w, ASAPInfo_GetWord(module, songOffset + 2) + diff);
+				songOffset += 4;
+			}
+			if (nextSongOffset > songEnd)
+				nextSongOffset = songEnd;
+			ASAPWriter_WriteBytes(w, module, songOffset, nextSongOffset);
+			songOffset = nextSongOffset;
+		}
+		ASAPWriter_WriteBytes(w, module, songOffset, songEnd);
+		if (moduleLen >= songEnd + 5) {
+			ASAPWriter_WriteRelocatedWords(w, diff, module, songEnd, 4);
+			ASAPWriter_WriteBytes(w, module, songEnd + 4, moduleLen);
+		}
+		break;
+	case ASAPModuleType_TMC:
+		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+			return FALSE;
+		ASAPWriter_WriteBytes(w, module, 6, 38);
+		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 38, 64);
+		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 166, 128);
+		ASAPWriter_WriteBytes(w, module, 422, moduleLen);
+		break;
+	case ASAPModuleType_TM2:
+		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+			return FALSE;
+		ASAPWriter_WriteBytes(w, module, 6, 134);
+		ASAPWriter_WriteRelocatedBytes(w, diff, module, 134, 774, 128, 0);
+		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 262, 256);
+		ASAPWriter_WriteRelocatedBytes(w, diff, module, 134, 774, 128, 8);
+		ASAPWriter_WriteBytes(w, module, 902, moduleLen);
+		break;
+	default:
+		return FALSE;
+	}
+	return TRUE;
 }
 
 static int ASAPWriter_WriteNativeHeader(ByteWriter w, ASAPInfo const *info, unsigned char const *module)
