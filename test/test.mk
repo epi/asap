@@ -34,5 +34,9 @@ test/%.xex: $(srcdir)test/%.asx
 
 CLEAN += test/*.sap test/*.xex
 
+test/timevsnative: $(call src,test/timevsnative.c asap.[ch])
+	$(CC)
+CLEAN += test/timevsnative
+
 include $(srcdir)test/benchmark/benchmark.mk
 include $(srcdir)test/disasm/disasm.mk
