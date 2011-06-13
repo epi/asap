@@ -312,6 +312,15 @@ public class ASAPInfo
 		return Ntsc;
 	}
 
+	/// Causes music to be relocated.
+	/// Use only with `ASAPWriter.Write`.
+	public void SetMusicAddress(int address)
+	{
+		if (address < 0 || address >= 0xffff)
+			throw "Invalid music address";
+		Music = address;
+	}
+
 	static int GetWord(byte[] array, int i)
 	{
 		return array[i] + (array[i + 1] << 8);

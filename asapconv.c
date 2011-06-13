@@ -51,6 +51,7 @@ static const char *tag_date = NULL;
 #ifdef HAVE_LIBMP3LAME
 static cibool tag = FALSE;
 #endif
+static int music_address = -1;
 static char output_file[FILENAME_MAX];
 
 static void print_help(void)
@@ -88,6 +89,8 @@ static void print_help(void)
 		"Options for SAP output:\n"
 		"-s SONG     --song=SONG        Select subsong to set length of\n"
 		"-t TIME     --time=TIME        Set subsong length (MM:SS format)\n"
+		"Options for other formats (output format same as input format):\n"
+		"            --address=HEXNUM   Relocate music to the given address\n"
 	);
 }
 
@@ -130,6 +133,30 @@ static void set_mute_mask(const char *s)
 		s++;
 	}
 	mute_mask = mask;
+}
+
+static void set_music_address(const char *s)
+{
+	int address = 0;
+	if (s[0] == '0' && s[1] == 'x')
+		s += 2;
+	else if (s[0] == '$')
+		s++;
+	do {
+		int digit = *s++;
+		if (digit >= '0' && digit <= '9')
+			digit -= '0';
+		else if (digit >= 'A' && digit <= 'F')
+			digit -= 'A' - 10;
+		else if (digit >= 'a' && digit <= 'f')
+			digit -= 'a' - 10;
+		else
+			fatal_error("invalid hex number");
+		address = (address << 4) + digit;
+		if (address > 0xffff)
+			fatal_error("address must be 16-bit");
+	} while (*s != '\0');
+	music_address = address;
 }
 
 static void apply_tags(const char *input_file, ASAPInfo *info)
@@ -463,6 +490,8 @@ static void convert_to_module(const char *input_file, const unsigned char *modul
 	apply_tags(input_file, info);
 	if (duration >= 0)
 		ASAPInfo_SetDuration(info, song, duration);
+	if (music_address >= 0)
+		ASAPInfo_SetMusicAddress(info, music_address);
 
 	fp = open_output_file(input_file, info);
 	bw.obj = fp;
@@ -564,6 +593,8 @@ int main(int argc, char *argv[])
 		else if (strcmp(arg, "--tag") == 0)
 			tag = TRUE;
 #endif
+		else if (strncmp(arg, "--address=", 10) == 0)
+			set_music_address(arg + 10);
 		else if (is_opt('h') || strcmp(arg, "--help") == 0) {
 			print_help();
 			options_error = NULL;

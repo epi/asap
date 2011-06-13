@@ -333,6 +333,12 @@ cibool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration);
 cibool ASAPInfo_SetLoop(ASAPInfo *self, int song, cibool loop);
 
 /**
+ * Causes music to be relocated.
+ * Use only with <code>ASAPWriter.Write</code>.
+ */
+cibool ASAPInfo_SetMusicAddress(ASAPInfo *self, int address);
+
+/**
  * Sets music title.
  * An empty string means the title is unknown.
  */

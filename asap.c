@@ -1727,7 +1727,11 @@ static void ASAPWriter_WriteExecutableFromSap(ByteWriter w, int *initAndPlayer, 
 static void ASAPWriter_WriteExecutableHeader(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int type, int init, int player);
 static int ASAPWriter_WriteExecutableHeaderForSongPos(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int player, int codeForOneSong, int codeForManySongs, int playerOffset);
 static void ASAPWriter_WriteHexSapTag(ByteWriter w, const char *tag, int value);
+static int ASAPWriter_WriteNativeHeader(ByteWriter w, ASAPInfo const *info, unsigned char const *module);
 static void ASAPWriter_WritePlaTaxLda0(ByteWriter w);
+static void ASAPWriter_WriteRelocatedBytes(ByteWriter w, int diff, unsigned char const *module, int lowOffset, int highOffset, int len, int shift);
+static void ASAPWriter_WriteRelocatedLowHigh(ByteWriter w, int diff, unsigned char const *module, int lowOffset, int len);
+static void ASAPWriter_WriteRelocatedWords(ByteWriter w, int diff, unsigned char const *module, int offset, int len);
 static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int type, int init, int player);
 static void ASAPWriter_WriteString(ByteWriter w, const char *s);
 static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value);
@@ -1752,7 +1756,7 @@ static const unsigned char CiBinaryResource_xexd_obx[133] = { 255, 255, 0, 1, 12
 	250, 162, 8, 157, 16, 210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31,
 	210, 141, 0, 210, 169, 254, 141, 1, 211, 173, 118, 1, 45, 119, 1, 201,
 	255, 240, 15, 169, 99, 141, 250, 255, 169, 1, 141, 251, 255, 169, 64, 141,
-	14, 212, 173, 120, 1, 88, 76, 114, 1, 72, 138, 72, 152, 72, 88, 32,
+	14, 212, 173, 120, 1, 88, 76, 114, 1, 88, 72, 138, 72, 152, 72, 32,
 	117, 1, 104, 168, 104, 170, 104, 64, 76, 0, 0, 76, 0, 0, 0, 224,
 	2, 225, 2, 18, 1 };
 
@@ -3866,6 +3870,14 @@ cibool ASAPInfo_SetLoop(ASAPInfo *self, int song, cibool loop)
 	return TRUE;
 }
 
+cibool ASAPInfo_SetMusicAddress(ASAPInfo *self, int address)
+{
+	if (address < 0 || address >= 65535)
+		return FALSE;
+	self->music = address;
+	return TRUE;
+}
+
 cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value)
 {
 	if (!ASAPInfo_CheckValidText(value))
@@ -3981,9 +3993,16 @@ cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const
 	default:
 		possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
 		if (possibleExt != NULL && destExt == ((possibleExt[0] + (possibleExt[1] << 8) + (possibleExt[2] << 16)) | 2105376)) {
+			int diff;
 			switch (info->type) {
 				int offset;
 				int blockLen;
+				int music;
+				int patternLowAddress;
+				int pointersAndInstrumentsLen;
+				int patterns;
+				int songOffset;
+				int songEnd;
 			case ASAPModuleType_SAP_B:
 			case ASAPModuleType_SAP_C:
 				offset = ASAPInfo_GetRmtSapOffset(info, module, moduleLen);
@@ -3997,6 +4016,78 @@ cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const
 				if (blockLen < 7 || info->headerLen + blockLen >= moduleLen)
 					return FALSE;
 				ASAPWriter_WriteBytes(w, module, info->headerLen, info->headerLen + blockLen);
+				return TRUE;
+			case ASAPModuleType_CMC:
+			case ASAPModuleType_CM3:
+			case ASAPModuleType_CMR:
+			case ASAPModuleType_CMS:
+				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+					return FALSE;
+				ASAPWriter_WriteBytes(w, module, 6, 26);
+				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 26, 64);
+				ASAPWriter_WriteBytes(w, module, 154, moduleLen);
+				return TRUE;
+			case ASAPModuleType_DLT:
+				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+					return FALSE;
+				ASAPWriter_WriteBytes(w, module, 6, moduleLen);
+				return TRUE;
+			case ASAPModuleType_MPT:
+				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+					return FALSE;
+				ASAPWriter_WriteRelocatedWords(w, diff, module, 6, 192);
+				ASAPWriter_WriteBytes(w, module, 198, 454);
+				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 454, 4);
+				ASAPWriter_WriteBytes(w, module, 462, moduleLen);
+				return TRUE;
+			case ASAPModuleType_RMT:
+				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+					return FALSE;
+				ASAPWriter_WriteBytes(w, module, 6, 14);
+				music = ASAPInfo_GetWord(module, 2);
+				patternLowAddress = ASAPInfo_GetWord(module, 16);
+				pointersAndInstrumentsLen = patternLowAddress - music - 8;
+				ASAPWriter_WriteRelocatedWords(w, diff, module, 14, pointersAndInstrumentsLen);
+				patterns = ASAPInfo_GetWord(module, 18) - patternLowAddress;
+				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 14 + pointersAndInstrumentsLen, patterns);
+				songOffset = 6 + ASAPInfo_GetWord(module, 20) - music;
+				ASAPWriter_WriteBytes(w, module, 14 + pointersAndInstrumentsLen + (patterns << 1), songOffset);
+				songEnd = 7 + ASAPInfo_GetWord(module, 4) - music;
+				while (songOffset + 3 < songEnd) {
+					int nextSongOffset = songOffset + module[9] - 48;
+					if (module[songOffset] == 254) {
+						w.func(w.obj, 254);
+						w.func(w.obj, module[songOffset + 1]);
+						ASAPWriter_WriteWord(w, ASAPInfo_GetWord(module, songOffset + 2) + diff);
+						songOffset += 4;
+					}
+					if (nextSongOffset > songEnd)
+						nextSongOffset = songEnd;
+					ASAPWriter_WriteBytes(w, module, songOffset, nextSongOffset);
+					songOffset = nextSongOffset;
+				}
+				ASAPWriter_WriteBytes(w, module, songOffset, songEnd);
+				if (moduleLen >= songEnd + 5) {
+					ASAPWriter_WriteRelocatedWords(w, diff, module, songEnd, 4);
+					ASAPWriter_WriteBytes(w, module, songEnd + 4, moduleLen);
+				}
+				return TRUE;
+			case ASAPModuleType_TMC:
+				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+					return FALSE;
+				ASAPWriter_WriteBytes(w, module, 6, 38);
+				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 38, 64);
+				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 166, 128);
+				ASAPWriter_WriteBytes(w, module, 422, moduleLen);
+				return TRUE;
+			case ASAPModuleType_TM2:
+				if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+					return FALSE;
+				ASAPWriter_WriteBytes(w, module, 6, 134);
+				ASAPWriter_WriteRelocatedBytes(w, diff, module, 134, 774, 128, 0);
+				ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 262, 256);
+				ASAPWriter_WriteRelocatedBytes(w, diff, module, 134, 774, 128, 8);
+				ASAPWriter_WriteBytes(w, module, 902, moduleLen);
 				return TRUE;
 			default:
 				ASAPWriter_WriteBytes(w, module, 0, moduleLen);
@@ -4310,12 +4401,53 @@ static void ASAPWriter_WriteHexSapTag(ByteWriter w, const char *tag, int value)
 	w.func(w.obj, 10);
 }
 
+static int ASAPWriter_WriteNativeHeader(ByteWriter w, ASAPInfo const *info, unsigned char const *module)
+{
+	int diff = info->music - ASAPInfo_GetWord(module, 2);
+	int last = ASAPInfo_GetWord(module, 4) + diff;
+	if (last > 65535)
+		return -1;
+	w.func(w.obj, 255);
+	w.func(w.obj, 255);
+	ASAPWriter_WriteWord(w, info->music);
+	ASAPWriter_WriteWord(w, last);
+	return diff;
+}
+
 static void ASAPWriter_WritePlaTaxLda0(ByteWriter w)
 {
 	w.func(w.obj, 104);
 	w.func(w.obj, 170);
 	w.func(w.obj, 169);
 	w.func(w.obj, 0);
+}
+
+static void ASAPWriter_WriteRelocatedBytes(ByteWriter w, int diff, unsigned char const *module, int lowOffset, int highOffset, int len, int shift)
+{
+	int i;
+	for (i = 0; i < len; i++) {
+		int address = module[lowOffset + i] + (module[highOffset + i] << 8);
+		if (address != 0 && address != 65535)
+			address += diff;
+		w.func(w.obj, (address >> shift) & 255);
+	}
+}
+
+static void ASAPWriter_WriteRelocatedLowHigh(ByteWriter w, int diff, unsigned char const *module, int lowOffset, int len)
+{
+	ASAPWriter_WriteRelocatedBytes(w, diff, module, lowOffset, lowOffset + len, len, 0);
+	ASAPWriter_WriteRelocatedBytes(w, diff, module, lowOffset, lowOffset + len, len, 8);
+}
+
+static void ASAPWriter_WriteRelocatedWords(ByteWriter w, int diff, unsigned char const *module, int offset, int len)
+{
+	int i;
+	for (i = 0; i < len; i += 2) {
+		int address = module[offset + i] + (module[offset + i + 1] << 8);
+		if (address != 0 && address != 65535)
+			address += diff;
+		ASAPWriter_WriteWord(w, address);
+	}
 }
 
 static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int type, int init, int player)
