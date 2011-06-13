@@ -153,6 +153,7 @@ There are other projects which use ASAP:
 - http://mmsap.sourceforge.net/[mmSAP 2] - standalone player for GNU/Linux with GTK+ user interface
 - http://www.rockbox.org/[Rockbox] - open source firmware for MP3 players
 - http://bzrplayer.blazer.nu[BZR Player] - player for Windows
+- Game Music Gear MX - player for PlayStation Portable
 
 
 ifdef::asapsrc[]
