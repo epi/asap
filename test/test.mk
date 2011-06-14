@@ -2,7 +2,7 @@ ACIDSAP = ../Acid800/out/Release/AcidSAP/standalone
 
 # no user-configurable paths below this line
 
-TESTS = antic_nmires antic_nmist antic_vcount_ntsc antic_vcount_pal antic_wsync cpu_anx cpu_decimal cpu_las cpu_shx gtia_consol pokey_irqst pokey_random pokey_timerirq
+TESTS = antic_nmires antic_nmist antic_vcount_ntsc antic_vcount_pal antic_wsync cpu_anx cpu_decimal cpu_las cpu_shx gtia_consol pokey_irqst pokey_pot pokey_potst pokey_random pokey_timerirq
 TESTS_SAP = $(TESTS:%=test/%.sap)
 
 check: asapscan $(ACIDSAP) $(TESTS_SAP)
