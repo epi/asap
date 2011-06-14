@@ -82,8 +82,7 @@ function ASAP2WAVURL(url, song, duration, format)
 	}
 
 	var buffer = new Array(8193); // must be multiple of 3
-	asap.getWavHeader(buffer, format);
-	var got = ASAP.WAV_HEADER_LENGTH;
+	var got = asap.getWavHeader(buffer, format, false);
 	for (;;) {
 		got += asap.generateAt(buffer, got, buffer.length - got, format);
 		appendBase64(buffer, got);

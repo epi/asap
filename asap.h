@@ -89,11 +89,12 @@ int ASAP_GetPosition(ASAP const *self);
 
 /**
  * Fills leading bytes of the specified buffer with WAV file header.
- * The number of changed bytes is <code>WavHeaderLength</code>.
+ * Returns the number of changed bytes.
  * @param buffer The destination buffer.
  * @param format Format of samples.
+ * @param metadata Include metadata (title, author, date).
  */
-void ASAP_GetWavHeader(ASAP const *self, unsigned char *buffer, ASAPSampleFormat format);
+int ASAP_GetWavHeader(ASAP const *self, unsigned char *buffer, ASAPSampleFormat format, cibool metadata);
 
 /**
  * Loads music data ("module").
@@ -126,11 +127,6 @@ cibool ASAP_PlaySong(ASAP *self, int song, int duration);
  * @param position The requested absolute position in milliseconds.
  */
 cibool ASAP_Seek(ASAP *self, int position);
-
-/**
- * WAV file header length.
- */
-#define ASAP_WAV_HEADER_LENGTH  44
 
 ASAPInfo *ASAPInfo_New(void);
 void ASAPInfo_Delete(ASAPInfo *self);

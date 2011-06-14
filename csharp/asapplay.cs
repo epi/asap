@@ -50,8 +50,7 @@ public class ASAPWavStream : Stream
 				duration = 180 * 1000;
 		}
 		Asap.PlaySong(song, duration);
-		Asap.GetWavHeader(Buffer, ASAPSampleFormat.S16LE);
-		BufferLen = ASAP.WavHeaderLength;
+		BufferLen = Asap.GetWavHeader(Buffer, ASAPSampleFormat.S16LE, false);
 	}
 
 	public override int Read(byte[] outputBuffer, int offset, int count)

@@ -121,7 +121,7 @@ class ASAPInputStream extends InputStream
 	private final ASAP asap;
 	private final ASAPMIDlet midlet;
 	private final byte[] buffer = new byte[16384];
-	private int bufferLen = ASAP.WAV_HEADER_LENGTH;
+	private int bufferLen;
 	private int bufferOffset = 0;
 
 	private static final int FORMAT = ASAPSampleFormat.U8;
@@ -130,7 +130,7 @@ class ASAPInputStream extends InputStream
 	{
 		this.asap = asap;
 		this.midlet = midlet;
-		asap.getWavHeader(buffer, FORMAT);
+		this.bufferLen = asap.getWavHeader(buffer, FORMAT, false);
 	}
 
 	public int read()

@@ -96,8 +96,8 @@ void processFile(string inputFilename)
 	auto s = File(outputFilename, "wb");
 	auto buffer = new ubyte[8192];
 	if (outputHeader) {
-		asap.GetWavHeader(buffer, format);
-		s.rawWrite(buffer[0 .. ASAP.WavHeaderLength]);
+		int len = asap.GetWavHeader(buffer, format, false);
+		s.rawWrite(buffer[0 .. len]);
 	}
 	while ((buffer.length = asap.Generate(buffer, buffer.length, format)) > 0)
 		s.rawWrite(buffer);

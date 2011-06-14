@@ -48,9 +48,7 @@ static int mute_mask = 0;
 static const char *tag_author = NULL;
 static const char *tag_name = NULL;
 static const char *tag_date = NULL;
-#ifdef HAVE_LIBMP3LAME
 static cibool tag = FALSE;
-#endif
 static int music_address = -1;
 static char output_file[FILENAME_MAX];
 
@@ -82,14 +80,16 @@ static void print_help(void)
 #endif
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
+		"Options for WAV "
 #ifdef HAVE_LIBMP3LAME
-		"Options for MP3 output:\n"
-		"            --tag              Output ID3 tag\n"
+		                "or MP3 "
 #endif
+		                       "output:\n"
+		"            --tag              Include metadata in the output file\n"
 		"Options for SAP output:\n"
 		"-s SONG     --song=SONG        Select subsong to set length of\n"
 		"-t TIME     --time=TIME        Set subsong length (MM:SS format)\n"
-		"Options for other formats (output format same as input format):\n"
+		"Options for native modules (output format same as input format):\n"
 		"            --address=HEXNUM   Relocate music to the given address\n"
 	);
 }
@@ -330,8 +330,8 @@ static void convert_to_wav(const char *input_file, const unsigned char *module, 
 	static unsigned char buffer[8192];
 
 	if (output_header) {
-		ASAP_GetWavHeader(asap, buffer, sample_format);
-		fwrite(buffer, 1, ASAP_WAV_HEADER_LENGTH, fp);
+		n_bytes = ASAP_GetWavHeader(asap, buffer, sample_format, tag);
+		fwrite(buffer, 1, n_bytes, fp);
 	}
 	do {
 		n_bytes = ASAP_Generate(asap, buffer, sizeof(buffer), sample_format);
@@ -589,10 +589,8 @@ int main(int argc, char *argv[])
 			tag_date = argv[++i];
 		else if (strncmp(arg, "--date=", 7) == 0)
 			tag_date = arg + 7;
-#ifdef HAVE_LIBMP3LAME
 		else if (strcmp(arg, "--tag") == 0)
 			tag = TRUE;
-#endif
 		else if (strncmp(arg, "--address=", 10) == 0)
 			set_music_address(arg + 10);
 		else if (is_opt('h') || strcmp(arg, "--help") == 0) {

@@ -132,11 +132,11 @@ public class ASAP2WAV
 		else
 			os = new FileOutputStream(outputFilename);
 		byte[] buffer = new byte[8192];
-		if (outputHeader) {
-			asap.getWavHeader(buffer, format);
-			os.write(buffer, 0, ASAP.WAV_HEADER_LENGTH);
-		}
 		int nBytes;
+		if (outputHeader) {
+			nBytes = asap.getWavHeader(buffer, format, false);
+			os.write(buffer, 0, nBytes);
+		}
 		do {
 			nBytes = asap.generate(buffer, buffer.length, format);
 			os.write(buffer, 0, nBytes);

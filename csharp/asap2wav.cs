@@ -98,11 +98,11 @@ public class Asap2Wav
 		}
 		s = File.Create(OutputFilename);
 		byte[] buffer = new byte[8192];
-		if (OutputHeader) {
-			asap.GetWavHeader(buffer, Format);
-			s.Write(buffer, 0, ASAP.WavHeaderLength);
-		}
 		int nBytes;
+		if (OutputHeader) {
+			nBytes = asap.GetWavHeader(buffer, Format, false);
+			s.Write(buffer, 0, nBytes);
+		}
 		do {
 			nBytes = asap.Generate(buffer, buffer.Length, Format);
 			s.Write(buffer, 0, nBytes);

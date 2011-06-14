@@ -383,8 +383,7 @@ static BOOL DoSaveWav(ASAP *asap)
 		return FALSE;
 	progressWnd = CreateDialog(hInst, MAKEINTRESOURCE(IDD_PROGRESS), hWnd, WavProgressDialogProc);
 	progressPos = 0;
-	ASAP_GetWavHeader(asap, buffer, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
-	len = ASAP_WAV_HEADER_LENGTH;
+	len = ASAP_GetWavHeader(asap, buffer, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E, FALSE);
 	while (len > 0) {
 		if (!WriteFile(fh, buffer, len, &len, NULL)) {
 			DestroyWindow(progressWnd);

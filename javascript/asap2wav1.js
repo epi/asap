@@ -319,11 +319,11 @@ function processFile(inputFilename)
 	}
 	var of = new BinaryFileOutput(outputFilename);
 	var buffer = new Array(8192);
-	if (outputHeader) {
-		asap.getWavHeader(buffer, format);
-		of.write(buffer, ASAP.WAV_HEADER_LENGTH);
-	}
 	var nBytes;
+	if (outputHeader) {
+		nBytes = asap.getWavHeader(buffer, format, false);
+		of.write(buffer, nBytes);
+	}
 	do {
 		nBytes = asap.generate(buffer, 8192, format);
 		of.write(buffer, nBytes);

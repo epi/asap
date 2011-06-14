@@ -163,7 +163,7 @@ public class ASAPWriter
 	{
 		WriteString(w, "SAP\r\n");
 		WriteTextSapTag(w, "AUTHOR ", info.Author);
-		WriteTextSapTag(w, "NAME ", info.Name);
+		WriteTextSapTag(w, "NAME ", info.Title);
 		WriteTextSapTag(w, "DATE ", info.Date);
 		if (info.Songs > 1) {
 			WriteDecSapTag(w, "SONGS ", info.Songs);

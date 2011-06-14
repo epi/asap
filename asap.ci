@@ -512,56 +512,79 @@ public class ASAP
 		buffer[offset + 3] = (value >> 24).LowByte;
 	}
 
-	/// WAV file header length.
-	// TODO: <seealso cref="GetWavHeader" />
-	public const int WavHeaderLength = 44;
+	macro FOUR_CC(s) ( s[0] + (s[1] << 8) + (s[2] << 16) + (s[3] << 24) )
+
+	static void PutLittleEndians(byte[] buffer, int offset, int value1, int value2)
+	{
+		PutLittleEndian(buffer, offset, value1);
+		PutLittleEndian(buffer, offset + 4, value2);
+	}
+
+	static int PutWavMetadata(byte[] buffer, int offset, int fourCC, string value)
+	{
+		int len = value.Length;
+		if (len > 0) {
+			// include terminator and round up to the nearest word
+			PutLittleEndians(buffer, offset, fourCC, (len | 1) + 1);
+			offset += 8;
+			for (int i = 0; i < len; i++)
+				buffer[offset++] = value[i];
+			buffer[offset++] = 0;
+			if ((len & 1) == 0)
+				buffer[offset++] = 0;
+		}
+		return offset;
+	}
 
 	/// Fills leading bytes of the specified buffer with WAV file header.
-	/// The number of changed bytes is `WavHeaderLength`.
-	// TODO: <see cref="WavHeaderLength" />
-	public void GetWavHeader(
+	/// Returns the number of changed bytes.
+	public int GetWavHeader(
 		/// The destination buffer.
 		byte[] buffer,
 		/// Format of samples.
-		ASAPSampleFormat format)
+		ASAPSampleFormat format,
+		/// Include metadata (title, author, date).
+		bool metadata)
 	{
 		int use16bit = format != ASAPSampleFormat.U8 ? 1 : 0;
 		int blockSize = ModuleInfo.Channels << use16bit;
 		int bytesPerSecond = SampleRate * blockSize;
 		int totalBlocks = MillisecondsToBlocks(CurrentDuration);
 		int nBytes = (totalBlocks - BlocksPlayed) * blockSize;
-		buffer[0] = 'R';
-		buffer[1] = 'I';
-		buffer[2] = 'F';
-		buffer[3] = 'F';
-		PutLittleEndian(buffer, 4, nBytes + 36);
-		buffer[8] = 'W';
-		buffer[9] = 'A';
-		buffer[10] = 'V';
-		buffer[11] = 'E';
-		buffer[12] = 'f';
-		buffer[13] = 'm';
-		buffer[14] = 't';
-		buffer[15] = ' ';
-		buffer[16] = 16;
-		buffer[17] = 0;
-		buffer[18] = 0;
-		buffer[19] = 0;
+		PutLittleEndian(buffer, 8, FOUR_CC("WAVE"));
+		PutLittleEndians(buffer, 12, FOUR_CC("fmt "), 16);
 		buffer[20] = 1;
 		buffer[21] = 0;
 		buffer[22] = ModuleInfo.Channels;
 		buffer[23] = 0;
-		PutLittleEndian(buffer, 24, SampleRate);
-		PutLittleEndian(buffer, 28, bytesPerSecond);
+		PutLittleEndians(buffer, 24, SampleRate, bytesPerSecond);
 		buffer[32] = blockSize;
 		buffer[33] = 0;
 		buffer[34] = 8 << use16bit;
 		buffer[35] = 0;
-		buffer[36] = 'd';
-		buffer[37] = 'a';
-		buffer[38] = 't';
-		buffer[39] = 'a';
-		PutLittleEndian(buffer, 40, nBytes);
+		int i = 36;
+		if (metadata) {
+			int year = ModuleInfo.GetYear();
+			if (ModuleInfo.Title.Length > 0 || ModuleInfo.Author.Length > 0 || year > 0) {
+				PutLittleEndian(buffer, 44, FOUR_CC("INFO"));
+				i = PutWavMetadata(buffer, 48, FOUR_CC("INAM"), ModuleInfo.Title);
+				i = PutWavMetadata(buffer, i, FOUR_CC("IART"), ModuleInfo.Author);
+				if (year > 0) {
+					PutLittleEndians(buffer, i, FOUR_CC("ICRD"), 6);
+					for (int j = 3; j >= 0; j--) {
+						buffer[i + 8 + j] = '0' + year % 10;
+						year /= 10;
+					}
+					buffer[i + 12] =  0;
+					buffer[i + 13] =  0;
+					i += 14;
+				}
+				PutLittleEndians(buffer, 36, FOUR_CC("LIST"), i - 44);
+			}
+		}
+		PutLittleEndians(buffer, 0, FOUR_CC("RIFF"), i + nBytes);
+		PutLittleEndians(buffer, i, FOUR_CC("data"), nBytes);
+		return i + 8;
 	}
 
 	int GenerateAt(byte[] buffer, int bufferOffset, int bufferLen, ASAPSampleFormat format)

@@ -76,11 +76,11 @@ struct ASAPInfo {
 	int init;
 	cibool loops[32];
 	int music;
-	char name[128];
 	cibool ntsc;
 	int player;
 	unsigned char songPos[32];
 	int songs;
+	char title[128];
 	ASAPModuleType type;
 };
 static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls);
@@ -219,6 +219,8 @@ static int ASAP_MillisecondsToBlocks(int milliseconds);
 static int ASAP_PeekHardware(ASAP const *self, int addr);
 static void ASAP_PokeHardware(ASAP *self, int addr, int data);
 static void ASAP_PutLittleEndian(unsigned char *buffer, int offset, int value);
+static void ASAP_PutLittleEndians(unsigned char *buffer, int offset, int value1, int value2);
+static int ASAP_PutWavMetadata(unsigned char *buffer, int offset, int fourCC, const char *value);
 
 static unsigned char const *ASAP6502_GetPlayerRoutine(ASAPInfo const *info);
 static const unsigned char CiBinaryResource_cm3_obx[2022] = { 255, 255, 0, 5, 223, 12, 76, 18, 11, 76, 120, 5, 76, 203, 7, 0,
@@ -2013,45 +2015,49 @@ int ASAP_GetPosition(ASAP const *self)
 	return self->blocksPlayed * 10 / 441;
 }
 
-void ASAP_GetWavHeader(ASAP const *self, unsigned char *buffer, ASAPSampleFormat format)
+int ASAP_GetWavHeader(ASAP const *self, unsigned char *buffer, ASAPSampleFormat format, cibool metadata)
 {
 	int use16bit = format != ASAPSampleFormat_U8 ? 1 : 0;
 	int blockSize = self->moduleInfo.channels << use16bit;
 	int bytesPerSecond = 44100 * blockSize;
 	int totalBlocks = ASAP_MillisecondsToBlocks(self->currentDuration);
 	int nBytes = (totalBlocks - self->blocksPlayed) * blockSize;
-	buffer[0] = 82;
-	buffer[1] = 73;
-	buffer[2] = 70;
-	buffer[3] = 70;
-	ASAP_PutLittleEndian(buffer, 4, nBytes + 36);
-	buffer[8] = 87;
-	buffer[9] = 65;
-	buffer[10] = 86;
-	buffer[11] = 69;
-	buffer[12] = 102;
-	buffer[13] = 109;
-	buffer[14] = 116;
-	buffer[15] = 32;
-	buffer[16] = 16;
-	buffer[17] = 0;
-	buffer[18] = 0;
-	buffer[19] = 0;
+	int i;
+	ASAP_PutLittleEndian(buffer, 8, 1163280727);
+	ASAP_PutLittleEndians(buffer, 12, 544501094, 16);
 	buffer[20] = 1;
 	buffer[21] = 0;
 	buffer[22] = self->moduleInfo.channels;
 	buffer[23] = 0;
-	ASAP_PutLittleEndian(buffer, 24, 44100);
-	ASAP_PutLittleEndian(buffer, 28, bytesPerSecond);
+	ASAP_PutLittleEndians(buffer, 24, 44100, bytesPerSecond);
 	buffer[32] = blockSize;
 	buffer[33] = 0;
 	buffer[34] = 8 << use16bit;
 	buffer[35] = 0;
-	buffer[36] = 100;
-	buffer[37] = 97;
-	buffer[38] = 116;
-	buffer[39] = 97;
-	ASAP_PutLittleEndian(buffer, 40, nBytes);
+	i = 36;
+	if (metadata) {
+		int year = ASAPInfo_GetYear(&self->moduleInfo);
+		if (strlen(self->moduleInfo.title) > 0 || strlen(self->moduleInfo.author) > 0 || year > 0) {
+			ASAP_PutLittleEndian(buffer, 44, 1330007625);
+			i = ASAP_PutWavMetadata(buffer, 48, 1296125513, self->moduleInfo.title);
+			i = ASAP_PutWavMetadata(buffer, i, 1414676809, self->moduleInfo.author);
+			if (year > 0) {
+				int j;
+				ASAP_PutLittleEndians(buffer, i, 1146241865, 6);
+				for (j = 3; j >= 0; j--) {
+					buffer[i + 8 + j] = 48 + year % 10;
+					year /= 10;
+				}
+				buffer[i + 12] = 0;
+				buffer[i + 13] = 0;
+				i += 14;
+			}
+			ASAP_PutLittleEndians(buffer, 36, 1414744396, i - 44);
+		}
+	}
+	ASAP_PutLittleEndians(buffer, 0, 1179011410, i + nBytes);
+	ASAP_PutLittleEndians(buffer, i, 1635017060, nBytes);
+	return i + 8;
 }
 
 static void ASAP_HandleEvent(ASAP *self)
@@ -2330,6 +2336,28 @@ static void ASAP_PutLittleEndian(unsigned char *buffer, int offset, int value)
 	buffer[offset + 1] = (unsigned char) (value >> 8);
 	buffer[offset + 2] = (unsigned char) (value >> 16);
 	buffer[offset + 3] = (unsigned char) (value >> 24);
+}
+
+static void ASAP_PutLittleEndians(unsigned char *buffer, int offset, int value1, int value2)
+{
+	ASAP_PutLittleEndian(buffer, offset, value1);
+	ASAP_PutLittleEndian(buffer, offset + 4, value2);
+}
+
+static int ASAP_PutWavMetadata(unsigned char *buffer, int offset, int fourCC, const char *value)
+{
+	int len = strlen(value);
+	if (len > 0) {
+		int i;
+		ASAP_PutLittleEndians(buffer, offset, fourCC, (len | 1) + 1);
+		offset += 8;
+		for (i = 0; i < len; i++)
+			buffer[offset++] = value[i];
+		buffer[offset++] = 0;
+		if ((len & 1) == 0)
+			buffer[offset++] = 0;
+	}
+	return offset;
 }
 
 cibool ASAP_Seek(ASAP *self, int position)
@@ -2674,12 +2702,12 @@ int ASAPInfo_GetSongs(ASAPInfo const *self)
 
 const char *ASAPInfo_GetTitle(ASAPInfo const *self)
 {
-	return self->name;
+	return self->title;
 }
 
 const char *ASAPInfo_GetTitleOrFilename(ASAPInfo const *self)
 {
-	return strlen(self->name) > 0 ? self->name : self->filename;
+	return strlen(self->title) > 0 ? self->title : self->filename;
 }
 
 static int ASAPInfo_GetTwoDateDigits(ASAPInfo const *self, int i)
@@ -2793,7 +2821,7 @@ cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *
 		ext = 127;
 	((char *) memcpy(self->filename, filename + basename, ext))[ext] = '\0';
 	self->author[0] = '\0';
-	self->name[0] = '\0';
+	self->title[0] = '\0';
 	self->date[0] = '\0';
 	self->channels = 1;
 	self->songs = 1;
@@ -3295,7 +3323,7 @@ static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int
 			break;
 		title[titleLen] = ASAPInfo_IsValidChar(c) ? c : 32;
 	}
-	((char *) memcpy(self->name, title + 0, titleLen))[titleLen] = '\0';
+	((char *) memcpy(self->title, title + 0, titleLen))[titleLen] = '\0';
 	return TRUE;
 }
 
@@ -3435,7 +3463,7 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 			if ((len = ASAPInfo_ParseText(module, moduleIndex + 5)) == -1)
 				return FALSE;
 			if (len > 0)
-				((char *) memcpy(self->name, module + moduleIndex + 5 + 1, len))[len] = '\0';
+				((char *) memcpy(self->title, module + moduleIndex + 5 + 1, len))[len] = '\0';
 		}
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "DATE ")) {
 			int len;
@@ -3620,7 +3648,7 @@ static cibool ASAPInfo_ParseTm2(ASAPInfo *self, unsigned char const *module, int
 	titleLen = ASAPInfo_ParseTmcTitle(title, 0, module, 39);
 	titleLen = ASAPInfo_ParseTmcTitle(title, titleLen, module, 71);
 	titleLen = ASAPInfo_ParseTmcTitle(title, titleLen, module, 103);
-	((char *) memcpy(self->name, title + 0, titleLen))[titleLen] = '\0';
+	((char *) memcpy(self->title, title + 0, titleLen))[titleLen] = '\0';
 	return TRUE;
 }
 
@@ -3734,7 +3762,7 @@ static cibool ASAPInfo_ParseTmc(ASAPInfo *self, unsigned char const *module, int
 		return FALSE;
 	self->fastplay = 312 / i;
 	titleLen = ASAPInfo_ParseTmcTitle(title, 0, module, 6);
-	((char *) memcpy(self->name, title + 0, titleLen))[titleLen] = '\0';
+	((char *) memcpy(self->title, title + 0, titleLen))[titleLen] = '\0';
 	return TRUE;
 }
 
@@ -3883,7 +3911,7 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value)
 {
 	if (!ASAPInfo_CheckValidText(value))
 		return FALSE;
-	strcpy(self->name, value);
+	strcpy(self->title, value);
 	return TRUE;
 }
 
@@ -4464,7 +4492,7 @@ static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int ty
 	int song;
 	ASAPWriter_WriteString(w, "SAP\r\n");
 	ASAPWriter_WriteTextSapTag(w, "AUTHOR ", info->author);
-	ASAPWriter_WriteTextSapTag(w, "NAME ", info->name);
+	ASAPWriter_WriteTextSapTag(w, "NAME ", info->title);
 	ASAPWriter_WriteTextSapTag(w, "DATE ", info->date);
 	if (info->songs > 1) {
 		ASAPWriter_WriteDecSapTag(w, "SONGS ", info->songs);
