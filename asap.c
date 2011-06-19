@@ -2037,7 +2037,7 @@ int ASAP_GetWavHeader(ASAP const *self, unsigned char *buffer, ASAPSampleFormat 
 	i = 36;
 	if (metadata) {
 		int year = ASAPInfo_GetYear(&self->moduleInfo);
-		if (strlen(self->moduleInfo.title) > 0 || strlen(self->moduleInfo.author) > 0 || year > 0) {
+		if (self->moduleInfo.title[0] != '\0' || self->moduleInfo.author[0] != '\0' || year > 0) {
 			ASAP_PutLittleEndian(buffer, 44, 1330007625);
 			i = ASAP_PutWavMetadata(buffer, 48, 1296125513, self->moduleInfo.title);
 			i = ASAP_PutWavMetadata(buffer, i, 1414676809, self->moduleInfo.author);
@@ -2707,7 +2707,7 @@ const char *ASAPInfo_GetTitle(ASAPInfo const *self)
 
 const char *ASAPInfo_GetTitleOrFilename(ASAPInfo const *self)
 {
-	return strlen(self->title) > 0 ? self->title : self->filename;
+	return self->title[0] != '\0' ? self->title : self->filename;
 }
 
 static int ASAPInfo_GetTwoDateDigits(ASAPInfo const *self, int i)
@@ -4539,7 +4539,7 @@ static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char
 {
 	ASAPWriter_WriteString(w, tag);
 	w.func(w.obj, 34);
-	if (strlen(value) == 0)
+	if (value[0] == '\0')
 		value = "<?>";
 	ASAPWriter_WriteString(w, value);
 	w.func(w.obj, 34);
@@ -7209,6 +7209,9 @@ static cibool FlashPack_Compress(FlashPack *self, ByteWriter w)
 	if (compressedStartAddress < 8192)
 		return FALSE;
 	w.func(w.obj, 255);
+	w.func(w.obj, 255);
+	ASAPWriter_WriteWord(w, 54017);
+	ASAPWriter_WriteWord(w, 54017);
 	w.func(w.obj, 255);
 	ASAPWriter_WriteWord(w, compressedStartAddress);
 	ASAPWriter_WriteWord(w, depackerEndAddress);

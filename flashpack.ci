@@ -328,6 +328,11 @@ class FlashPack
 			throw "Too much compressed data";
 		w(0xff);
 		w(0xff);
+		// turn off the built-in BASIC
+		ASAPWriter.WriteWord(w, 0xd301);
+		ASAPWriter.WriteWord(w, 0xd301);
+		w(0xff);
+
 		ASAPWriter.WriteWord(w, compressedStartAddress);
 		ASAPWriter.WriteWord(w, depackerEndAddress);
 		ASAPWriter.WriteBytes(w, Compressed, 0, CompressedLength);
@@ -377,7 +382,7 @@ class FlashPack
 		w(0xa8); // TAY
 		w(0x20); ASAPWriter.WriteWord(w, depackerStartAddress); // JSR getByte
 		w(0x90); w(0xca); // BCC setPage
-   
+
 		ASAPWriter.WriteWord(w, 0x2e0);
 		ASAPWriter.WriteWord(w, 0x2e1);
 		ASAPWriter.WriteWord(w, depackerStartAddress + 0x32);
