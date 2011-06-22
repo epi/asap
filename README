@@ -154,6 +154,7 @@ There are other projects which use ASAP:
 - http://www.rockbox.org/[Rockbox] - open source firmware for MP3 players
 - http://bzrplayer.blazer.nu[BZR Player] - player for Windows
 - Game Music Gear MX - player for PlayStation Portable
+- http://yoyofr.blogspot.com/p/modizer.html[Modizer] - player for iPhone, iPod and iPad
 
 
 ifdef::asapsrc[]
