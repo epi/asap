@@ -205,15 +205,50 @@ static ASAP *load_module(const char *input_file, const unsigned char *module, in
 	return asap;
 }
 
-static int set_output_file_from_pattern(const char *pattern, int pattern_len, const ASAPInfo *info)
+static FILE *open_output_file(const char *input_file, const ASAPInfo *info)
 {
-	int pattern_index;
-	int output_file_len = 0;
-	for (pattern_index = 0; pattern_index < pattern_len; pattern_index++) {
-		char c = pattern[pattern_index];
+	const char *output_ext = strrchr(output_arg, '.');
+	const char *pattern_ptr;
+	char *output_ptr;
+	FILE *fp;
+	if (output_ext == output_arg) {
+		/* .EXT */
+	}
+	else if (output_ext == output_arg + 1 && output_arg[0] == '-') {
+		/* -.EXT */
+		strcpy(output_file, "stdout");
+#ifdef __WIN32
+		_setmode(_fileno(stdout), _O_BINARY);
+#endif
+		return stdout;
+	}
+	else if (output_ext[-1] == '/' || output_ext[-1] == '\\') {
+		/* DIR/.EXT */
+		const char *p;
+		for (p = input_file; *p != '\0'; p++)
+			if (*p == '/' || *p == '\\')
+				input_file = p + 1;
+	}
+	else {
+		/* FILE.EXT */
+		output_ext = NULL; /* don't insert input_file */
+	}
+
+	output_ptr = output_file;
+	for (pattern_ptr = output_arg; *pattern_ptr != '\0'; pattern_ptr++) {
+		char c;
+		if (pattern_ptr == output_ext) {
+			/* insert input_file without the extension */
+			size_t len = strrchr(input_file, '.') - input_file;
+			if (output_ptr + len >= output_file + sizeof(output_file))
+				fatal_error("filename too long");
+			memcpy(output_ptr, input_file, len);
+			output_ptr += len;
+		}
+		c = *pattern_ptr;
 		if (c == '%') {
 			const char *tag;
-			c = pattern[++pattern_index];
+			c = *++pattern_ptr;
 			switch (c) {
 			case 'a':
 				tag = ASAPInfo_GetAuthor(info);
@@ -232,7 +267,7 @@ static int set_output_file_from_pattern(const char *pattern, int pattern_len, co
 				return 0;
 			}
 			while (*tag != '\0') {
-				if (output_file_len >= sizeof(output_file) - 1)
+				if (output_ptr >= output_file + sizeof(output_file) - 1)
 					fatal_error("filename too long");
 				c = *tag++;
 				switch (c) {
@@ -249,57 +284,17 @@ static int set_output_file_from_pattern(const char *pattern, int pattern_len, co
 				default:
 					break;
 				}
-				output_file[output_file_len++] = c;
+				*output_ptr++ = c;
 			}
 		}
 		else {
-			if (output_file_len >= sizeof(output_file) - 1)
+			if (output_ptr >= output_file + sizeof(output_file) - 1)
 				fatal_error("filename too long");
-			output_file[output_file_len++] = c;
+			*output_ptr++ = c;
 		}
 	}
-	output_file[output_file_len] = '\0';
-	return output_file_len;
-}
+	*output_ptr = '\0';
 
-static void set_output_file_from_elements(int path_len, const char *filename, const char *ext)
-{
-	/* assume ext is as long as in filename */
-	if (path_len + strlen(filename) >= sizeof(output_file))
-		fatal_error("filename too long");
-	sprintf(output_file + path_len, "%.*s%s", (int) (strrchr(filename, '.') - filename), filename, ext);
-}
-
-static FILE *open_output_file(const char *input_file, const ASAPInfo *info)
-{
-	const char *output_ext = strrchr(output_arg, '.');
-	FILE *fp;
-	if (output_ext == output_arg) {
-		/* .EXT */
-		set_output_file_from_elements(0, input_file, output_ext);
-	}
-	else if (output_ext == output_arg + 1 && output_arg[0] == '-') {
-		/* -.EXT */
-		strcpy(output_file, "stdout");
-#ifdef __WIN32
-		_setmode(_fileno(stdout), _O_BINARY);
-#endif
-		return stdout;
-	}
-	else if (output_ext[-1] == '/' || output_ext[-1] == '\\') {
-		/* DIR/.EXT */
-		int path_len = set_output_file_from_pattern(output_arg, output_ext - output_arg, info);
-		const char *base_name = input_file;
-		const char *p;
-		for (p = input_file; *p != '\0'; p++)
-			if (*p == '/' || *p == '\\')
-				base_name = p + 1;
-		set_output_file_from_elements(path_len, base_name, output_ext);
-	}
-	else {
-		/* FILE.EXT */
-		set_output_file_from_pattern(output_arg, strlen(output_arg), info);
-	}
 	fp = fopen(output_file, "wb");
 	if (fp == NULL)
 		fatal_error("cannot write %s", output_file);
