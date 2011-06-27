@@ -59,8 +59,6 @@ static void print_help(void)
 		"Each INPUTFILE must be in a supported format:\n"
 		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2.\n"
 		"Output EXT must be one of the above or XEX, " SAMPLE_FORMATS ".\n"
-		"In FILE and DIR you can use the following placeholders:\n"
-		"%%a (author), %%n (music name) and %%d (music creation date).\n"
 		"Options:\n"
 		"-o FILE.EXT --output=FILE.EXT  Write to the specified file\n"
 		"-o .EXT     --output=.EXT      Use input file path and name\n"
@@ -71,6 +69,11 @@ static void print_help(void)
 		"-d \"TEXT\"   --date=\"TEXT\"      Set music creation date (DD/MM/YYYY format)\n"
 		"-h          --help             Display this information\n"
 		"-v          --version          Display version information\n"
+		"In FILE, DIR and EXT you may use the following placeholders:\n"
+		"%%a                             Music author\n"
+		"%%n                             Music name\n"
+		"%%d                             Music creation date\n"
+		"%%e                             Original extension (e.g. \"cmc\")\n"
 		"Options for " SAMPLE_FORMATS " output:\n"
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n"
 		"-t TIME     --time=TIME        Set output length (MM:SS format)\n"
@@ -205,7 +208,7 @@ static ASAP *load_module(const char *input_file, const unsigned char *module, in
 	return asap;
 }
 
-static FILE *open_output_file(const char *input_file, const ASAPInfo *info)
+static FILE *open_output_file(const char *input_file, const unsigned char *module, int module_len, const ASAPInfo *info)
 {
 	const char *output_ext = strrchr(output_arg, '.');
 	const char *pattern_ptr;
@@ -258,6 +261,11 @@ static FILE *open_output_file(const char *input_file, const ASAPInfo *info)
 				break;
 			case 'd':
 				tag = ASAPInfo_GetDate(info);
+				break;
+			case 'e':
+				tag = ASAPInfo_GetOriginalModuleExt(info, module, module_len);
+				if (tag == NULL)
+					tag = "unknown";
 				break;
 			case '%':
 				tag = "%";
@@ -320,7 +328,7 @@ static void close_output_file(FILE *fp)
 static void convert_to_wav(const char *input_file, const unsigned char *module, int module_len, cibool output_header)
 {
 	ASAP *asap = load_module(input_file, module, module_len);
-	FILE *fp = open_output_file(input_file, ASAP_GetInfo(asap));
+	FILE *fp = open_output_file(input_file, module, module_len, ASAP_GetInfo(asap));
 	int n_bytes;
 	static unsigned char buffer[8192];
 
@@ -435,7 +443,7 @@ static void convert_to_mp3(const char *input_file, const unsigned char *module, 
 		}
 		id3tag_set_genre(lame, "Electronic");
 	}
-	fp = open_output_file(input_file, info);
+	fp = open_output_file(input_file, module, module_len, info);
 	do {
 		static short pcm[8192];
 		int i;
@@ -488,7 +496,7 @@ static void convert_to_module(const char *input_file, const unsigned char *modul
 	if (music_address >= 0)
 		ASAPInfo_SetMusicAddress(info, music_address);
 
-	fp = open_output_file(input_file, info);
+	fp = open_output_file(input_file, module, module_len, info);
 	bw.obj = fp;
 	bw.func = write_byte;
 	/* FIXME: stdout */
