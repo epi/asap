@@ -123,6 +123,7 @@ ASAP includes the following programs:
 - plugin for http://audacious-media-player.org/[Audacious]
 - plugin for http://foobar2000.org/[foobar2000] {asapwin=}
 - plugin for http://hp.vector.co.jp/authors/VA032810/[GSPlayer] {asapwin=}{asapwince=}
+- plugin for http://gstreamer.freedesktop.org/[GStreamer]
 - plugin for http://moc.daper.net/[MOC]
 - plugin for http://www.winamp.com/[Winamp] {asapwin=}
 - plugin for http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player] {asapwin=}

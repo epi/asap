@@ -120,6 +120,7 @@ clean:
 .DELETE_ON_ERROR:
 
 include $(srcdir)audacious/audacious.mk
+include $(srcdir)gstreamer/gstreamer.mk
 include $(srcdir)moc/moc.mk
 include $(srcdir)xbmc/xbmc.mk
 include $(srcdir)xmms/xmms.mk

@@ -466,4 +466,20 @@
 		<mute-pokey>no</mute-pokey>
 		<lang>D</lang>
 	</port>
+	<port name="GStreamer plugin">
+		<bin></bin>
+		<platform>Linux, Unix</platform>
+		<interface>player plugin</interface>
+		<since>3.0.1</since>
+		<status>experimental</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info><!-- TODO: yes -->
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<lang>C</lang>
+		<a href="http://gstreamer.freedesktop.org/">GStreamer</a>
+	</port>
 </ports>
