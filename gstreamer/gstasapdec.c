@@ -215,7 +215,6 @@ static void
 gst_asap_dec_init (GstAsapDec * asapdec, GstAsapDecClass * gclass)
 {
   asapdec->sinkpad = gst_pad_new_from_static_template (&sink_factory, "sink");
-  gst_pad_set_getcaps_function (asapdec->sinkpad, GST_DEBUG_FUNCPTR(gst_pad_proxy_getcaps));
   gst_pad_set_event_function (asapdec->sinkpad, GST_DEBUG_FUNCPTR(gst_asap_dec_event));
   gst_pad_set_chain_function (asapdec->sinkpad, GST_DEBUG_FUNCPTR(gst_asap_dec_chain));
   gst_element_add_pad (GST_ELEMENT (asapdec), asapdec->sinkpad);
