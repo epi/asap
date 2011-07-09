@@ -138,7 +138,7 @@ start_play_tune (GstAsapDec * asapdec)
     song--;
   else
     song = ASAPInfo_GetDefaultSong (info);
-  if (!ASAP_PlaySong (asapdec->asap, song, ASAPInfo_GetDuration (info, song))) {
+  if (!ASAP_PlaySong (asapdec->asap, song, -1)) {
     GST_ELEMENT_ERROR (asapdec, LIBRARY, INIT, ("Could not initialize song"), ("Could not initialize song"));
     return FALSE;
   }
