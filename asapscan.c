@@ -404,7 +404,7 @@ int main(int argc, char **argv)
 	FILE *fp;
 	static unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
-	
+
 	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-d") == 0)
 			dump = TRUE;

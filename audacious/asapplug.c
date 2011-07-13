@@ -296,7 +296,7 @@ static void play_stop(InputPlayback *playback)
 
 static
 #if __AUDACIOUS_PLUGIN_API__ >= 16
-	const 
+	const
 #endif
 	gchar *exts[] = { "sap", "cmc", "cm3", "cmr", "cms", "dmc", "dlt", "mpt", "mpd", "rmt", "tmc", "tm8", "tm2", NULL };
 

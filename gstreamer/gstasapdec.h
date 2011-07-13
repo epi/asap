@@ -55,7 +55,7 @@ struct _GstAsapDec
   guchar module[ASAPInfo_MAX_MODULE_LENGTH];
 };
 
-struct _GstAsapDecClass 
+struct _GstAsapDecClass
 {
   GstElementClass parent_class;
 };

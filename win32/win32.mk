@@ -17,11 +17,11 @@ WIN64_WINDRES = $(DO)x86_64-w64-mingw32-windres -o $@ $<
 
 # old Microsoft compiler for XBMC plugin
 WIN32_CL71 = $(DO)cl -GR- -DNDEBUG $(WIN32_CLARGS)
- 
+
 # gcc for Windows Mobile
 WINCE_CC = $(DO)arm-mingw32ce-gcc -s -O2 -Wall -o $@ $(INCLUDEOPTS) $(filter-out %.h,$^)
 WINCE_WINDRES = $(DO)arm-mingw32ce-windres -o $@ -D_WIN32_WCE $<
- 
+
 # Microsoft compiler for Windows Mobile
 WINCE_VC = "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/ce"
 WINCE_CL = $(DO)$(WINCE_VC)/bin/x86_arm/cl -DUNICODE -D_UNICODE -DUNDER_CE -D_ARM_ -I$(WINCE_SDK)/Include/Armv4i $(WIN32_CLARGS)
@@ -111,7 +111,7 @@ win32/wasap/wasap-res.o: $(call src,win32/gui.rc asap.h win32/info_dlg.h win32/w
 	$(WIN32_WINDRES) -DWASAP
 CLEAN += win32/wasap/wasap-res.o
 
-win32/wince/wasap.exe: $(call src,win32/wasap/wasap.[ch] asap.[ch] win32/info_dlg.[ch]) win32/wince/wasap-res.o 
+win32/wince/wasap.exe: $(call src,win32/wasap/wasap.[ch] asap.[ch] win32/info_dlg.[ch]) win32/wince/wasap-res.o
 	$(WINCE_CC) -DWASAP
 CLEAN += win32/wince/wasap.exe
 

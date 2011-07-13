@@ -37,7 +37,7 @@ bool showInfo;
 void processFile(string filename)
 {
 	auto asap = new ASAP;
-	auto mod = cast(ubyte[]) read(filename, ASAPInfo.MaxModuleLength);	
+	auto mod = cast(ubyte[]) read(filename, ASAPInfo.MaxModuleLength);
 	asap.Load(filename, mod, mod.length);
 	ASAPInfo info = asap.GetInfo();
 	if (song < 0)
