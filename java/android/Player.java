@@ -136,7 +136,7 @@ public class Player extends Activity implements Runnable
 	private void playPreviousSong()
 	{
 		if (song > 0)
-			playSong(song - 1); 
+			playSong(song - 1);
 	}
 
 	private void seek(int pos)

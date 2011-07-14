@@ -109,9 +109,9 @@ public class FileSelector extends ListActivity
 					if (name.startsWith(path) && ASAPInfo.isOurFile(name)) {
 						int i = name.indexOf('/', pathLen);
 						if (i < 0)
-							name = name.substring(pathLen);
+							name = name.substring(pathLen); // file
 						else
-							name = name.substring(pathLen, i + 1);
+							name = name.substring(pathLen, i + 1); // file in a subdirectory - add subdirectory with the trailing slash
 						names.add(name);
 					}
 				}
