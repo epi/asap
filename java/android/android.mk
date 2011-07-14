@@ -87,8 +87,8 @@ CLEAN += java/android/classes.dex
 java/android/classes.jar: $(srcdir)java/android/proguard.cfg java/android/classes/net/sf/asap/Player.class
 	$(PROGUARD) -injars java/android/classes -outjars $@ -libraryjars "$(ANDROID_PLATFORM)/android.jar" @$<
 
-java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,FileSelector.java Player.java Util.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
-	$(JAVAC) -d java/android/classes -bootclasspath "$(ANDROID_PLATFORM)/android.jar" $(addprefix $(srcdir)java/android/,FileSelector.java Player.java Util.java) java/android/src/net/sf/asap/R.java java/src/net/sf/asap/*.java
+java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,FileSelector.java Player.java PlayerService.java Util.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
+	$(JAVAC) -d java/android/classes -bootclasspath "$(ANDROID_PLATFORM)/android.jar" $(addprefix $(srcdir)java/android/,FileSelector.java Player.java PlayerService.java Util.java) java/android/src/net/sf/asap/R.java java/src/net/sf/asap/*.java
 CLEANDIR += java/android/classes
 
 # Also generates java/android/src/net/sf/asap/R.java

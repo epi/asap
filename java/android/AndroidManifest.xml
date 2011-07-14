@@ -33,5 +33,6 @@
 				<data android:pathPattern=".*\\.tm2" />
 			</intent-filter>
 		</activity>
+		<service android:name=".PlayerService" />
 	</application>
 </manifest>
