@@ -343,7 +343,7 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
 /**
  * ASAP version as a string.
  */
-#define ASAPInfo_VERSION  "3.0.0"
+#define ASAPInfo_VERSION  "3.0.1"
 
 /**
  * ASAP version - major part.
@@ -353,7 +353,7 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
 /**
  * ASAP version - micro part.
  */
-#define ASAPInfo_VERSION_MICRO  0
+#define ASAPInfo_VERSION_MICRO  1
 
 /**
  * ASAP version - minor part.

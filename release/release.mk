@@ -5,7 +5,7 @@ GREP = @grep -H
 
 # no user-configurable paths below this line
 
-VERSION = 3.0.0
+VERSION = 3.0.1
 
 ifndef DO
 $(error Use "Makefile" instead of "release.mk")
@@ -77,6 +77,7 @@ release/README_WindowsCE.html: $(call src,README win32/wince/USAGE NEWS CREDITS)
 CLEAN += release/README_WindowsCE.html
 
 version:
+	@echo VERSION=$(VERSION)
 	$(GREP) -m 1 ^ASAP $(srcdir)NEWS
 	$(GREP) "<since>" $(srcdir)PORTS.xml | sort -ru | head -1
 	$(GREP) Version: $(srcdir)asap.spec

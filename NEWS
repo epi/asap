@@ -1,6 +1,21 @@
 ﻿History
 -------
 
+ASAP 3.0.1 (2011-07-15)::
+
+- Uses linear interpolation for resampling (try Toxic_Cream.sap).
+- Displays titles of RMT, TMC and TM2 files.
+- The GSPlayer plugin now works on new Windows Mobile versions.
+- The Android player can play files directly from ZIP archives.
+- asapconv can auto-detect the native format (`asapconv -o .%e *.sap`).
+- asapconv can relocate modules (`asapconv --address=a000 -o relocated.tmc original.tmc`).
+- asapconv can write metadata to WAV files.
+- Created an experimental plugin for GStreamer (requires GStreamer with https://bugzilla.gnome.org/show_bug.cgi?id=654295[this bug] fixed).
+- Converted XEX files disable the built-in BASIC.
+- Converted XEX files clear the I flag for the TYPE D PLAYER routine.
+- Doublequotes and pipes are now allowed characters in the AUTHOR and NAME tags.
+
+
 ASAP 3.0.0 (2011-05-24)::
 
 New ports;;

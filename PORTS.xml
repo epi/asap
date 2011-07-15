@@ -469,7 +469,7 @@
 	<port name="GStreamer plugin">
 		<bin></bin>
 		<platform>Linux, Unix</platform>
-		<interface>player plugin</interface>
+		<interface>library plugin</interface>
 		<since>3.0.1</since>
 		<status>experimental</status>
 		<output>16-bit sound</output>
