@@ -1,5 +1,5 @@
 /*
- * waveout.d - convenience wrapper for Windows waveOut API
+ * waveout.d - convenience wrapper for Windows waveOut API and ALSA
  *
  * Copyright (C) 2011  Adrian Matoga
  *
@@ -25,6 +25,10 @@ import std.stdio;
 import std.exception;
 import std.algorithm;
 import std.conv;
+import std.string;
+
+version (Windows)
+{
 
 import win32.windef: UINT, DWORD, DWORD_PTR, NULL;
 import win32.winbase: GetCurrentThreadId, INVALID_HANDLE_VALUE;
@@ -141,3 +145,57 @@ private:
 	size_t offset;
 	size_t usedBuffers;
 }
+
+} // version (Windows)
+
+version (linux)
+{
+
+import alsa.pcm;
+
+class WaveOut
+{
+	this(ushort channels, uint samplesPerSec, ushort bitsPerSample, size_t bufferSize = 16384)
+	{
+		int err;
+		if ((err = snd_pcm_open(&hpcm, "default".toStringz(), snd_pcm_stream_t.SND_PCM_STREAM_PLAYBACK, 0)) < 0)
+			throw new Exception("Cannot open default audio device");
+		if ((err = snd_pcm_set_params(
+			hpcm, bitsPerSample == 8 ? snd_pcm_format_t.SND_PCM_FORMAT_U8 : snd_pcm_format_t.SND_PCM_FORMAT_S16_LE,
+			snd_pcm_access_t.SND_PCM_ACCESS_RW_INTERLEAVED,
+			channels, samplesPerSec, 1, 50000)) < 0) {
+			close();
+			throw new Exception("Cannot set audio device params");
+		}
+		bytesPerSample = bitsPerSample / 8 * channels;
+	}
+
+	~this()
+	{
+		close();
+	}
+
+	void close()
+	{
+		if (hpcm is null)
+			return;
+		snd_pcm_close(hpcm);
+		hpcm = null;
+	}
+
+	void write(const(ubyte)[] buf)
+	{
+		snd_pcm_sframes_t frames = snd_pcm_writei(hpcm, buf.ptr, buf.length / bytesPerSample);
+		if (frames < 0) {
+			frames = snd_pcm_recover(hpcm, cast(int) frames, 0);
+			if (frames < 0)
+				throw new Exception("snd_pcm_writei failed");
+		}
+	}
+
+private:
+	snd_pcm_t* hpcm;
+	int bytesPerSample;
+}
+
+} // version (linux)
