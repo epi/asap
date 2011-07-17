@@ -38,7 +38,7 @@ void processFile(string filename)
 {
 	auto asap = new ASAP;
 	auto mod = cast(ubyte[]) read(filename, ASAPInfo.MaxModuleLength);
-	asap.Load(filename, mod, mod.length);
+	asap.Load(filename, mod, cast(int) mod.length);
 	ASAPInfo info = asap.GetInfo();
 	if (song < 0)
 		song = info.GetDefaultSong();
@@ -53,7 +53,7 @@ void processFile(string filename)
 	ubyte[] buffer = new ubyte[8192];
 	if (showInfo)
 		writefln("%s - %s (%d:%02d)", info.GetAuthor(), info.GetTitle(), duration / 60000, duration / 1000 % 60);
-	while ((buffer.length = asap.Generate(buffer, buffer.length, ASAPSampleFormat.S16LE)) > 0)
+	while ((buffer.length = asap.Generate(buffer, cast(int) buffer.length, ASAPSampleFormat.S16LE)) > 0)
 		wo.write(buffer);
 	song = -1;
 	duration = -1;
