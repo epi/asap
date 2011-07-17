@@ -77,7 +77,7 @@ void setMuteMask(string s)
 void processFile(string inputFilename)
 {
 	auto asap = new ASAP;
-	auto mod = cast(ubyte[]) read(inputFilename, ASAPInfo.MaxModuleLength);	
+	auto mod = cast(ubyte[]) read(inputFilename, ASAPInfo.MaxModuleLength);
 	asap.Load(inputFilename, mod, cast(int) mod.length);
 	ASAPInfo info = asap.GetInfo();
 	if (song < 0)
