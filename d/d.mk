@@ -1,5 +1,4 @@
-DC = $(DO)dmd -release -inline -O -of$@ $^
-#$(subst /,\\,$@) $(subst /,\\,$^)
+DC = $(if $(WINDIR),$(DO)dmd -release -inline -O -of$(subst /,\\,$@) $(subst /,\\,$^),$(DO)dmd -release -inline -O -of$@ $^) 
 
 # no user-configurable paths below this line
 
