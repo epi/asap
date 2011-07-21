@@ -78,7 +78,7 @@ void processFile(string inputFilename)
 {
 	auto asap = new ASAP;
 	auto mod = cast(ubyte[]) read(inputFilename, ASAPInfo.MaxModuleLength);
-	asap.Load(inputFilename, mod, mod.length);
+	asap.Load(inputFilename, mod, cast(int) mod.length);
 	ASAPInfo info = asap.GetInfo();
 	if (song < 0)
 		song = info.GetDefaultSong();
@@ -90,7 +90,7 @@ void processFile(string inputFilename)
 	asap.PlaySong(song, duration);
 	asap.MutePokeyChannels(muteMask);
 	if (!outputFilename.length) {
-		int i = inputFilename.lastIndexOf('.');
+		auto i = inputFilename.lastIndexOf('.');
 		outputFilename = inputFilename[0 .. i + 1] ~ (outputHeader ? "wav" : "raw");
 	}
 	auto s = File(outputFilename, "wb");
@@ -99,7 +99,7 @@ void processFile(string inputFilename)
 		int len = asap.GetWavHeader(buffer, format, false);
 		s.rawWrite(buffer[0 .. len]);
 	}
-	while ((buffer.length = asap.Generate(buffer, buffer.length, format)) > 0)
+	while ((buffer.length = asap.Generate(buffer, cast(int) buffer.length, format)) > 0)
 		s.rawWrite(buffer);
 	s.close();
 	outputFilename = null;
