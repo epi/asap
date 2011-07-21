@@ -344,3 +344,20 @@ make flash/asap.swf
 --------------------------------------------------------------------------------
 
 You should get `asap.swf`.
+
+
+Building D ASAP2WAV and asapplay on Windows and Linux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You need DMD 2.054 or compatible D compiler.
+To build asapplay on Windows, you need http://www.dsource.org/projects/bindings/wiki/WindowsApi[D Windows API bindings].
+On Linux, you need ALSA development libraries (e.g. libasound2-dev package in Ubuntu).
+D bindings for ALSA are currently included in ASAP sources.
+
+Open the command prompt in the root directory of ASAP sources and run:
+--------------------------------------------------------------------------------
+make d
+--------------------------------------------------------------------------------
+
+This should produce `asap2wav.exe` and `asapplay.exe`.
+
