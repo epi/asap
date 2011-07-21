@@ -6,6 +6,9 @@ ifndef DO
 $(error Use "Makefile" instead of "d.mk")
 endif
 
+d: d/asap2wav.exe d/asapplay.exe
+.PHONY: d
+
 d/asap2wav.exe: $(srcdir)d/asap2wav.d d/asap.d
 	$(DC)
 CLEAN += d/asap2wav.exe d/asap2wav.obj asap2wav.map
