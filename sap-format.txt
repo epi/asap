@@ -152,6 +152,8 @@ DATE "12/2001"
 SONG::
 Number of subsongs in the file.
 If there is just one song in the file, it is recommended to omit this tag.
+ASAP currently limits the number of songs to 32.
+The biggest known number of songs in a SAP file is 15.
 
 DEFSONG::
 Zero-based index of the song that should be played when the file is opened.
@@ -263,9 +265,10 @@ and the CONSOL register at D01F for 1-bit sounds, the rest is RAM.
 - D200-D2FF - POKEY chip mirrored 16 times
 or two POKEY chips (stereo) mirrored 8 times.
 At least the AUDF1-4, AUDC1-4 and AUDCTL registers must be implemented
-in a SAP player. Emulation of timer interrupts via IRQEN and IRQST
-is strongly recommended.
-- D300-D3FF - reserved for PIA, do not use.
+in a SAP player.
+Emulation of timer interrupts via IRQEN and IRQST is strongly recommended.
+SAP by Adam Bienias emulates only timer 1 interrupts.
+- D300-D3FF - reserved for the PIA chip, do not use.
 - D400-D4FF - ANTIC chip mirrored 16 times.
 SAP files may rely on WSYNC (D40A) and VCOUNT (D40B) registers.
 ASAP also implements NMIST/NMIRES (D40F), but not NMIEN (D40E).
