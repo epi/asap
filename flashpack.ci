@@ -138,7 +138,7 @@ class FlashPack
 	byte[65536] Compressed;
 	int CompressedLength;
 
-	FlashPackItem[64]() Items;
+	FlashPackItem()[64] Items;
 	int ItemsCount;
 
 	int GetInnerFlags(int index)
