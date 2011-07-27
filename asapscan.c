@@ -50,6 +50,7 @@ static cibool dump = FALSE;
 #define FEATURE_HIPASS_FILTER  4
 #define FEATURE_LOW_OF_16_BIT  8
 #define FEATURE_9_BIT_POLY     16
+#define FEATURE_ULTRASOUND     32
 static int features = 0;
 
 #define CPU_TRACE_PRINT        1
@@ -255,6 +256,16 @@ static void print_pokey(const Pokey *pokey)
 	);
 }
 
+static cibool is_ultrasound(int period_cycles, int audc)
+{
+	if (period_cycles > 112)
+		return FALSE;
+	if ((audc & 0xf) == 0)
+		return FALSE;
+	audc >>= 4;
+	return audc == 10 || audc == 14;
+}
+
 #define CYCLES_PER_FRAME (asap->moduleInfo.ntsc ? 262 * 114 : 312 * 114)
 #define MAIN_CLOCK (asap->moduleInfo.ntsc ? 1789772 : 1773447)
 
@@ -311,6 +322,11 @@ static void scan_song(int song)
 				features |= FEATURE_LOW_OF_16_BIT;
 			if (((c1 | c2) & 0x80) != 0)
 				features |= FEATURE_9_BIT_POLY;
+			if (is_ultrasound(asap->pokeys.basePokey.periodCycles1, asap->pokeys.basePokey.audc1)
+			 || is_ultrasound(asap->pokeys.basePokey.periodCycles2, asap->pokeys.basePokey.audc2)
+			 || is_ultrasound(asap->pokeys.basePokey.periodCycles3, asap->pokeys.basePokey.audc3)
+			 || is_ultrasound(asap->pokeys.basePokey.periodCycles4, asap->pokeys.basePokey.audc4))
+				features |= FEATURE_ULTRASOUND;
 		}
 		if (detect_time) {
 			if (store_pokeys(frame)) {
@@ -473,6 +489,8 @@ int main(int argc, char **argv)
 			printf("Low byte of 16-bit counter\n");
 		if ((features & FEATURE_9_BIT_POLY) != 0)
 			printf("9-bit poly\n");
+		if ((features & FEATURE_ULTRASOUND) != 0)
+			printf("Ultrasound\n");
 	}
 	if ((cpu_trace & CPU_TRACE_UNOFFICIAL) != 0) {
 		for (i = 0; i < 256; i++) {
