@@ -598,11 +598,12 @@ sub process($$) {
 	}
 	if ($features) {
 		my @features = `$asapscan -f -u $filename`;
-		chomp(@features);
 		if ($?) {
 			$fatal{'error running asapscan'} = 1;
 		}
-		push @{$features{$_}}, $fullpath for @features;
+		else {
+			s/\s+$//, push @{$features{$_}}, $fullpath for @features;
+		}
 	}
 	if (%fatal) {
 		push @fatal_messages,
