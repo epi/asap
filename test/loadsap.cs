@@ -1,5 +1,5 @@
 /*
- * chksap.cs - print files with ASAP loading errors
+ * loadsap.cs - print files with ASAP loading errors
  *
  * Copyright (C) 2011  Piotr Fusik
  *
@@ -50,7 +50,7 @@ public class CheckSap
 	public static int Main(string[] args)
 	{
 		if (args.Length == 0) {
-			Console.WriteLine("Usage: chksap FILE_OR_DIR...");
+			Console.WriteLine("Usage: loadsap FILE_OR_DIR...");
 			return 1;
 		}
 		foreach (string path in args)

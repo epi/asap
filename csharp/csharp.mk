@@ -8,7 +8,7 @@ ifndef DO
 $(error Use "Makefile" instead of "csharp.mk")
 endif
 
-csharp: csharp/asap2wav.exe csharp/asapplay.exe csharp/SilverASAP.xap csharp/chksap.exe
+csharp: csharp/asap2wav.exe csharp/asapplay.exe csharp/SilverASAP.xap
 .PHONY: csharp
 
 csharp/asap2wav.exe: $(srcdir)csharp/asap2wav.cs csharp/asap.cs
@@ -26,10 +26,6 @@ CLEAN += csharp/SilverASAP.xap
 csharp/SilverASAP.dll: $(srcdir)csharp/SilverASAP.cs csharp/asap.cs
 	$(CSC) -nostdlib -noconfig -r:$(SL)/mscorlib.dll -r:$(SL)/system.dll -r:$(SL)/System.Net.dll -r:$(SL)/System.Windows.dll -r:$(SL)/System.Windows.Browser.dll
 CLEAN += csharp/SilverASAP.dll
-
-csharp/chksap.exe: $(call src,csharp/chksap.cs csharp/asap.cs)
-	$(CSC)
-CLEAN += csharp/chksap.exe
 
 csharp/asap.cs: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(NATIVE_ROUTINES_OBX)
 	$(CITO) -n Sf.Asap

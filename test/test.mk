@@ -38,5 +38,9 @@ test/timevsnative: $(call src,test/timevsnative.c asap.[ch])
 	$(CC)
 CLEAN += test/timevsnative
 
+test/loadsap.exe: $(call src,test/loadsap.cs csharp/asap.cs)
+	$(CSC)
+CLEAN += test/loadsap.exe
+
 include $(srcdir)test/benchmark/benchmark.mk
 include $(srcdir)test/disasm/disasm.mk
