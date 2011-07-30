@@ -26,7 +26,7 @@ using System.IO;
 
 using Sf.Asap;
 
-public class CheckSap
+public class LoadSap
 {
 	static void Check(string path)
 	{
