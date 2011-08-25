@@ -38,6 +38,7 @@
 #endif
 
 #include "asap.h"
+#include "astil.h"
 #include "info_dlg.h"
 
 void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext)
@@ -84,6 +85,7 @@ static int invalid_fields;
 #define INVALID_FIELD_TIME_SHOW  16
 static HWND monthcal = NULL;
 static WNDPROC monthcalOriginalWndProc;
+static ASTIL *astil = NULL;
 
 static void showSongTime(void)
 {
@@ -368,6 +370,10 @@ static void closeInfoDialog(void)
 		ASAPInfo_Delete(edited_info);
 		edited_info = NULL;
 	}
+	if (astil != NULL) {
+		ASTIL_Delete(astil);
+		astil = NULL;
+	}
 }
 
 static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -482,6 +488,68 @@ void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, LPCTSTR filename, int 
 		updateInfoDialog(filename, song);
 }
 
+static char *appendCrLf(char *p, const char *s)
+{
+	for (;;) {
+		switch (*s) {
+		case '\0':
+			return p;
+		case '\n':
+			*p++ = '\r';
+			/* FALLTHROUGH */
+		default:
+			*p++ = *s++;
+			break;
+		}
+	}
+}
+
+static char *appendStil(char *p, const char *prefix, const char *value)
+{
+	if (value[0] != '\0') {
+		p = appendCrLf(p, prefix);
+		p = appendCrLf(p, value);
+		*p++ = '\r';
+		*p++ = '\n';
+	}
+	return p;
+}
+
+static void updateStil(void)
+{
+	char buf[16000];
+	char *p = buf;
+	int i;
+	p = appendStil(p, "", ASTIL_GetTitle(astil));
+	p = appendStil(p, "by ", ASTIL_GetAuthor(astil));
+	p = appendStil(p, "Directory comment: ", ASTIL_GetDirectoryComment(astil));
+	p = appendStil(p, "File comment: ", ASTIL_GetFileComment(astil));
+	p = appendStil(p, "Song comment: ", ASTIL_GetSongComment(astil));
+	for (i = 0; ; i++) {
+		const ASTILCover *cover = ASTIL_GetCover(astil, i);
+		int startSeconds;
+		const char *s;
+		if (cover == NULL)
+			break;
+		startSeconds = ASTILCover_GetStartSeconds(cover);
+		if (startSeconds >= 0) {
+			int endSeconds = ASTILCover_GetEndSeconds(cover);
+			if (endSeconds >= 0)
+				p += sprintf(p, "At %d:%02d-%d-%02d c", startSeconds / 60, startSeconds % 60, endSeconds / 60, endSeconds % 60);
+			else
+				p += sprintf(p, "At %d:%02d c", startSeconds / 60, startSeconds % 60);
+		}
+		else
+			*p++ = 'C';
+		s = ASTILCover_GetTitleAndSource(cover);
+		p = appendStil(p, "overs: ", s[0] != '\0' ? s : "<?>");
+		p = appendStil(p, "by ", ASTILCover_GetArtist(cover));
+		p = appendStil(p, "Comment: ", ASTILCover_GetComment(cover));
+	}
+	*p = '\0';
+	SendDlgItemMessage(infoDialog, IDC_STILINFO, WM_SETTEXT, 0, (LPARAM) buf);
+}
+
 void updateInfoDialog(LPCTSTR filename, int song)
 {
 	int songs;
@@ -490,7 +558,8 @@ void updateInfoDialog(LPCTSTR filename, int song)
 		return;
 	if (edited_info == NULL) {
 		edited_info = ASAPInfo_New();
-		if (edited_info == NULL) {
+		astil = ASTIL_New();
+		if (edited_info == NULL || astil == NULL) {
 			closeInfoDialog();
 			return;
 		}
@@ -523,6 +592,9 @@ void updateInfoDialog(LPCTSTR filename, int song)
 	edited_song = song;
 	showSongTime();
 	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
+	ASTIL_Load(astil, filename, song);
+	SendDlgItemMessage(infoDialog, IDC_STILFILE, WM_SETTEXT, 0, (LPARAM) ASTIL_GetStilFilename(astil));
+	updateStil();
 }
 
 void setPlayingSong(LPCTSTR filename, int song)

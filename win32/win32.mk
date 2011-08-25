@@ -103,7 +103,7 @@ CLEAN += win32/asapscan.exe
 
 # WASAP
 
-win32/wasap.exe: $(call src,win32/wasap/wasap.[ch] asap.[ch] win32/info_dlg.[ch]) win32/wasap/wasap-res.o
+win32/wasap.exe: $(call src,win32/wasap/wasap.[ch] asap.[ch] astil.[ch] win32/info_dlg.[ch]) win32/wasap/wasap-res.o
 	$(WIN32_CC) -Wl,-subsystem,windows -DWASAP -lcomctl32 -lcomdlg32 -lwinmm
 CLEAN += win32/wasap.exe
 
@@ -121,7 +121,7 @@ CLEAN += win32/wince/wasap-res.o
 
 # Apollo
 
-win32/ASAP_Apollo.dll: $(call src,win32/apollo/ASAP_Apollo.cpp asap.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/apollo/InputPlugin.h) win32/apollo/ASAP_Apollo-res.o
+win32/ASAP_Apollo.dll: $(call src,win32/apollo/ASAP_Apollo.cpp asap.[ch] astil.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/apollo/InputPlugin.h) win32/apollo/ASAP_Apollo-res.o
 	$(WIN32_CXX) -DAPOLLO -lcomctl32 -lcomdlg32
 CLEAN += win32/ASAP_Apollo.dll
 
@@ -214,7 +214,7 @@ CLEAN += win32/wince/gspasap.res
 
 # Winamp
 
-win32/in_asap.dll: $(call src,win32/winamp/in_asap.c asap.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/winamp/in2.h win32/winamp/out.h win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h) win32/winamp/in_asap-res.o
+win32/in_asap.dll: $(call src,win32/winamp/in_asap.c asap.[ch] astil.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/winamp/in2.h win32/winamp/out.h win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h) win32/winamp/in_asap-res.o
 	$(WIN32_CC) -DWINAMP -lcomctl32 -lcomdlg32
 CLEAN += win32/in_asap.dll
 
@@ -234,7 +234,7 @@ CLEAN += win32/xbmc/xbmc_asap.res
 
 # XMPlay
 
-win32/xmp-asap.dll: $(call src,win32/xmplay/xmp-asap.c asap.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/xmplay/xmpin.h win32/xmplay/xmpfunc.h) win32/xmplay/xmp-asap-res.o
+win32/xmp-asap.dll: $(call src,win32/xmplay/xmp-asap.c asap.[ch] astil.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/xmplay/xmpin.h win32/xmplay/xmpfunc.h) win32/xmplay/xmp-asap-res.o
 	$(WIN32_CC) -Wl,--kill-at -DXMPLAY -lcomctl32 -lcomdlg32
 CLEAN += win32/xmp-asap.dll
 

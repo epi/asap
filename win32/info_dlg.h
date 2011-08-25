@@ -34,8 +34,10 @@
 #define IDC_SONGNO     307
 #define IDC_TIME       308
 #define IDC_LOOP       309
-#define IDC_SAVE       310
-#define IDC_SAVEAS     311
+#define IDC_STILFILE   310
+#define IDC_STILINFO   311
+#define IDC_SAVE       312
+#define IDC_SAVEAS     313
 
 #define IDD_PROGRESS   500
 #define IDC_PROGRESS   501
