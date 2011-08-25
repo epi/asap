@@ -2472,6 +2472,11 @@ int ASAPInfo_GetChannels(ASAPInfo const *self)
 	return self->channels;
 }
 
+int ASAPInfo_GetCovoxAddress(ASAPInfo const *self)
+{
+	return self->covoxAddr;
+}
+
 const char *ASAPInfo_GetDate(ASAPInfo const *self)
 {
 	return self->date;
@@ -2532,6 +2537,11 @@ const char *ASAPInfo_GetExtDescription(const char *ext)
 	}
 }
 
+int ASAPInfo_GetInitAddress(ASAPInfo const *self)
+{
+	return self->init;
+}
+
 cibool ASAPInfo_GetLoop(ASAPInfo const *self, int song)
 {
 	return self->loops[song];
@@ -2543,6 +2553,11 @@ int ASAPInfo_GetMonth(ASAPInfo const *self)
 	if (n < 7)
 		return -1;
 	return ASAPInfo_GetTwoDateDigits(self, n - 7);
+}
+
+int ASAPInfo_GetMusicAddress(ASAPInfo const *self)
+{
+	return self->music;
 }
 
 const char *ASAPInfo_GetOriginalModuleExt(ASAPInfo const *self, unsigned char const *module, int moduleLen)
@@ -2609,6 +2624,22 @@ static int ASAPInfo_GetPackedExt(const char *filename)
 		ext = (ext << 8) + c;
 	}
 	return 0;
+}
+
+int ASAPInfo_GetPlayerAddress(ASAPInfo const *self)
+{
+	return self->player;
+}
+
+int ASAPInfo_GetPlayerRateHz(ASAPInfo const *self)
+{
+	int scanlineClock = self->ntsc ? 15699 : 15556;
+	return (scanlineClock + (self->fastplay >> 1)) / self->fastplay;
+}
+
+int ASAPInfo_GetPlayerRateScanlines(ASAPInfo const *self)
+{
+	return self->fastplay;
 }
 
 static int ASAPInfo_GetRmtInstrumentFrames(unsigned char const *module, int instrument, int volume, int volumeFrame, cibool onExtraPokey)
@@ -2695,6 +2726,11 @@ static int ASAPInfo_GetRmtSapOffset(ASAPInfo const *self, unsigned char const *m
 	return offset;
 }
 
+int ASAPInfo_GetSapHeaderLength(ASAPInfo const *self)
+{
+	return self->headerLen;
+}
+
 int ASAPInfo_GetSongs(ASAPInfo const *self)
 {
 	return self->songs;
@@ -2713,6 +2749,22 @@ const char *ASAPInfo_GetTitleOrFilename(ASAPInfo const *self)
 static int ASAPInfo_GetTwoDateDigits(ASAPInfo const *self, int i)
 {
 	return (self->date[i] - 48) * 10 + self->date[i + 1] - 48;
+}
+
+int ASAPInfo_GetTypeLetter(ASAPInfo const *self)
+{
+	switch (self->type) {
+	case ASAPModuleType_SAP_B:
+		return 66;
+	case ASAPModuleType_SAP_C:
+		return 67;
+	case ASAPModuleType_SAP_D:
+		return 68;
+	case ASAPModuleType_SAP_S:
+		return 83;
+	default:
+		return 0;
+	}
 }
 
 static int ASAPInfo_GetWord(unsigned char const *array, int i)
@@ -2836,6 +2888,7 @@ cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *
 	self->init = -1;
 	self->player = -1;
 	self->covoxAddr = -1;
+	self->headerLen = 0;
 	switch (ASAPInfo_GetPackedExt(filename)) {
 	case 7364979:
 		return ASAPInfo_ParseSap(self, module, moduleLen);

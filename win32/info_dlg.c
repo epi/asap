@@ -515,6 +515,50 @@ static char *appendStil(char *p, const char *prefix, const char *value)
 	return p;
 }
 
+static char *appendAddress(char *p, const char *format, int value)
+{
+	if (value >= 0)
+		p += sprintf(p, format, value);
+	return p;
+}
+
+static void updateTech(void)
+{
+	char buf[16000];
+	char *p = buf;
+	const char *ext;
+	int type;
+	int i;
+	ext = ASAPInfo_GetOriginalModuleExt(edited_info, saved_module, saved_module_len);
+	if (ext != NULL)
+		p += sprintf(p, "Composed in %s\r\n", ASAPInfo_GetExtDescription(ext));
+	p += sprintf(p, ASAPInfo_GetChannels(edited_info) > 1 ? "STEREO\r\n" : "MONO\r\n");
+	p += sprintf(p, ASAPInfo_IsNtsc(edited_info) ? "NTSC\r\n" : "PAL\r\n");
+	type = ASAPInfo_GetTypeLetter(edited_info);
+	if (type != 0)
+		p += sprintf(p, "TYPE %c\r\n", type);
+	p += sprintf(p, "FASTPLAY %d (%d Hz)\r\n", ASAPInfo_GetPlayerRateScanlines(edited_info), ASAPInfo_GetPlayerRateHz(edited_info));
+	if (type == 'C')
+		p += sprintf(p, "MUSIC %04X\r\n", ASAPInfo_GetMusicAddress(edited_info));
+	if (type != 0) {
+		p = appendAddress(p, "INIT %04X\r\n", ASAPInfo_GetInitAddress(edited_info));
+		p = appendAddress(p, "PLAYER %04X\r\n", ASAPInfo_GetPlayerAddress(edited_info));
+		p = appendAddress(p, "COVOX %04X\r\n", ASAPInfo_GetCovoxAddress(edited_info));
+	}
+	for (i = ASAPInfo_GetSapHeaderLength(edited_info); p < buf + sizeof(buf) - 17 && i + 4 < saved_module_len; ) {
+		int start = saved_module[i] + (saved_module[i + 1] << 8);
+		int end;
+		if (start == 0xffff) {
+			i += 2;
+			start = saved_module[i] + (saved_module[i + 1] << 8);
+		}
+		end = saved_module[i + 2] + (saved_module[i + 3] << 8);
+		p += sprintf(p, "LOAD %04X-%04X\r\n", start, end);
+		i += 5 + end - start;
+	}
+	SendDlgItemMessage(infoDialog, IDC_TECHINFO, WM_SETTEXT, 0, (LPARAM) buf);
+}
+
 static void updateStil(void)
 {
 	char buf[16000];
@@ -592,6 +636,7 @@ void updateInfoDialog(LPCTSTR filename, int song)
 	edited_song = song;
 	showSongTime();
 	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
+	updateTech();
 	ASTIL_Load(astil, filename, song);
 	SendDlgItemMessage(infoDialog, IDC_STILFILE, WM_SETTEXT, 0, (LPARAM) ASTIL_GetStilFilename(astil));
 	updateStil();

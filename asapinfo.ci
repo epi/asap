@@ -312,6 +312,33 @@ public class ASAPInfo
 		return Ntsc;
 	}
 
+	public int GetTypeLetter()
+	{
+		switch (Type) {
+		case ASAPModuleType.SapB: return 'B';
+		case ASAPModuleType.SapC: return 'C';
+		case ASAPModuleType.SapD: return 'D';
+		case ASAPModuleType.SapS: return 'S';
+		default: return 0;
+		}
+	}
+
+	public int GetPlayerRateScanlines()
+	{
+		return Fastplay;
+	}
+
+	public int GetPlayerRateHz()
+	{
+		int scanlineClock = Ntsc ? 1789772 / 114 : 1773447 / 114;
+		return (scanlineClock + (Fastplay >> 1)) / Fastplay;
+	}
+
+	public int GetMusicAddress()
+	{
+		return Music;
+	}
+
 	/// Causes music to be relocated.
 	/// Use only with `ASAPWriter.Write`.
 	public void SetMusicAddress(int address)
@@ -319,6 +346,26 @@ public class ASAPInfo
 		if (address < 0 || address >= 0xffff)
 			throw "Invalid music address";
 		Music = address;
+	}
+
+	public int GetInitAddress()
+	{
+		return Init;
+	}
+
+	public int GetPlayerAddress()
+	{
+		return Player;
+	}
+
+	public int GetCovoxAddress()
+	{
+		return CovoxAddr;
+	}
+
+	public int GetSapHeaderLength()
+	{
+		return HeaderLen;
 	}
 
 	static int GetWord(byte[] array, int i)
@@ -1437,6 +1484,7 @@ public class ASAPInfo
 		Init = -1;
 		Player = -1;
 		CovoxAddr = -1;
+		HeaderLen = 0;
 		switch (GetPackedExt(filename)) {
 		case ASAP_EXT("SAP"):
 			ParseSap(module, moduleLen);
@@ -1484,7 +1532,6 @@ public class ASAPInfo
 			if (moduleLen < 7 || module[0] != 0xff || module[1] != 0xff)
 				throw "Missing 0xff,0xff header";
 			Type = ASAPModuleType.Xex;
-			HeaderLen = 0;
 			return;
 #endif
 #endif

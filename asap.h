@@ -155,6 +155,8 @@ const char *ASAPInfo_GetAuthor(ASAPInfo const *self);
  */
 int ASAPInfo_GetChannels(ASAPInfo const *self);
 
+int ASAPInfo_GetCovoxAddress(ASAPInfo const *self);
+
 /**
  * Returns music creation date.
  * Some of the possible formats are:
@@ -192,6 +194,8 @@ int ASAPInfo_GetDuration(ASAPInfo const *self, int song);
  */
 const char *ASAPInfo_GetExtDescription(const char *ext);
 
+int ASAPInfo_GetInitAddress(ASAPInfo const *self);
+
 /**
  * Returns information whether the specified song loops.
  * Returns:
@@ -209,6 +213,8 @@ cibool ASAPInfo_GetLoop(ASAPInfo const *self, int song);
  */
 int ASAPInfo_GetMonth(ASAPInfo const *self);
 
+int ASAPInfo_GetMusicAddress(ASAPInfo const *self);
+
 /**
  * Returns the extension of the original module format.
  * For native modules it simply returns their extension.
@@ -217,6 +223,14 @@ int ASAPInfo_GetMonth(ASAPInfo const *self);
  * @param moduleLen Length of the file.
  */
 const char *ASAPInfo_GetOriginalModuleExt(ASAPInfo const *self, unsigned char const *module, int moduleLen);
+
+int ASAPInfo_GetPlayerAddress(ASAPInfo const *self);
+
+int ASAPInfo_GetPlayerRateHz(ASAPInfo const *self);
+
+int ASAPInfo_GetPlayerRateScanlines(ASAPInfo const *self);
+
+int ASAPInfo_GetSapHeaderLength(ASAPInfo const *self);
 
 /**
  * Returns number of songs in the file.
@@ -234,6 +248,8 @@ const char *ASAPInfo_GetTitle(ASAPInfo const *self);
  * If title is unknown returns filename without the path or extension.
  */
 const char *ASAPInfo_GetTitleOrFilename(ASAPInfo const *self);
+
+int ASAPInfo_GetTypeLetter(ASAPInfo const *self);
 
 /**
  * Returns music creation year.
