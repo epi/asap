@@ -131,6 +131,13 @@ static void updateTech(void)
 	ext = ASAPInfo_GetOriginalModuleExt(edited_info, saved_module, saved_module_len);
 	if (ext != NULL)
 		p += sprintf(p, "Composed in %s\r\n", ASAPInfo_GetExtDescription(ext));
+	i = ASAPInfo_GetSongs(edited_info);
+	if (i > 1) {
+		p += sprintf(p, "SONGS %d\r\n", i);
+		i = ASAPInfo_GetDefaultSong(edited_info);
+		if (i > 0)
+			p += sprintf(p, "DEFSONG %d (song %d)\r\n", i, i + 1);
+	}
 	p += sprintf(p, ASAPInfo_GetChannels(edited_info) > 1 ? "STEREO\r\n" : "MONO\r\n");
 	p += sprintf(p, ASAPInfo_IsNtsc(edited_info) ? "NTSC\r\n" : "PAL\r\n");
 	type = ASAPInfo_GetTypeLetter(edited_info);
