@@ -87,14 +87,129 @@ static HWND monthcal = NULL;
 static WNDPROC monthcalOriginalWndProc;
 static ASTIL *astil = NULL;
 
-static void showSongTime(void)
+static char *appendCrLf(char *p, const char *s)
 {
+	for (;;) {
+		switch (*s) {
+		case '\0':
+			return p;
+		case '\n':
+			*p++ = '\r';
+			/* FALLTHROUGH */
+		default:
+			*p++ = *s++;
+			break;
+		}
+	}
+}
+
+static char *appendStil(char *p, const char *prefix, const char *value)
+{
+	if (value[0] != '\0') {
+		p = appendCrLf(p, prefix);
+		p = appendCrLf(p, value);
+		*p++ = '\r';
+		*p++ = '\n';
+	}
+	return p;
+}
+
+static char *appendAddress(char *p, const char *format, int value)
+{
+	if (value >= 0)
+		p += sprintf(p, format, value);
+	return p;
+}
+
+static void updateTech(void)
+{
+	char buf[16000];
+	char *p = buf;
+	const char *ext;
+	int type;
+	int i;
+	ext = ASAPInfo_GetOriginalModuleExt(edited_info, saved_module, saved_module_len);
+	if (ext != NULL)
+		p += sprintf(p, "Composed in %s\r\n", ASAPInfo_GetExtDescription(ext));
+	p += sprintf(p, ASAPInfo_GetChannels(edited_info) > 1 ? "STEREO\r\n" : "MONO\r\n");
+	p += sprintf(p, ASAPInfo_IsNtsc(edited_info) ? "NTSC\r\n" : "PAL\r\n");
+	type = ASAPInfo_GetTypeLetter(edited_info);
+	if (type != 0)
+		p += sprintf(p, "TYPE %c\r\n", type);
+	p += sprintf(p, "FASTPLAY %d (%d Hz)\r\n", ASAPInfo_GetPlayerRateScanlines(edited_info), ASAPInfo_GetPlayerRateHz(edited_info));
+	if (type == 'C')
+		p += sprintf(p, "MUSIC %04X\r\n", ASAPInfo_GetMusicAddress(edited_info));
+	if (type != 0) {
+		p = appendAddress(p, "INIT %04X\r\n", ASAPInfo_GetInitAddress(edited_info));
+		p = appendAddress(p, "PLAYER %04X\r\n", ASAPInfo_GetPlayerAddress(edited_info));
+		p = appendAddress(p, "COVOX %04X\r\n", ASAPInfo_GetCovoxAddress(edited_info));
+	}
+	for (i = ASAPInfo_GetSapHeaderLength(edited_info); p < buf + sizeof(buf) - 17 && i + 4 < saved_module_len; ) {
+		int start = saved_module[i] + (saved_module[i + 1] << 8);
+		int end;
+		if (start == 0xffff) {
+			i += 2;
+			start = saved_module[i] + (saved_module[i + 1] << 8);
+		}
+		end = saved_module[i + 2] + (saved_module[i + 3] << 8);
+		p += sprintf(p, "LOAD %04X-%04X\r\n", start, end);
+		i += 5 + end - start;
+	}
+	SendDlgItemMessage(infoDialog, IDC_TECHINFO, WM_SETTEXT, 0, (LPARAM) buf);
+}
+
+static void updateStil(void)
+{
+	char buf[16000];
+	char *p = buf;
+	int i;
+	p = appendStil(p, "", ASTIL_GetTitle(astil));
+	p = appendStil(p, "by ", ASTIL_GetAuthor(astil));
+	p = appendStil(p, "Directory comment: ", ASTIL_GetDirectoryComment(astil));
+	p = appendStil(p, "File comment: ", ASTIL_GetFileComment(astil));
+	p = appendStil(p, "Song comment: ", ASTIL_GetSongComment(astil));
+	for (i = 0; ; i++) {
+		const ASTILCover *cover = ASTIL_GetCover(astil, i);
+		int startSeconds;
+		const char *s;
+		if (cover == NULL)
+			break;
+		startSeconds = ASTILCover_GetStartSeconds(cover);
+		if (startSeconds >= 0) {
+			int endSeconds = ASTILCover_GetEndSeconds(cover);
+			if (endSeconds >= 0)
+				p += sprintf(p, "At %d:%02d-%d-%02d c", startSeconds / 60, startSeconds % 60, endSeconds / 60, endSeconds % 60);
+			else
+				p += sprintf(p, "At %d:%02d c", startSeconds / 60, startSeconds % 60);
+		}
+		else
+			*p++ = 'C';
+		s = ASTILCover_GetTitleAndSource(cover);
+		p = appendStil(p, "overs: ", s[0] != '\0' ? s : "<?>");
+		p = appendStil(p, "by ", ASTILCover_GetArtist(cover));
+		p = appendStil(p, "Comment: ", ASTILCover_GetComment(cover));
+	}
+	*p = '\0';
+	SendDlgItemMessage(infoDialog, IDC_STILINFO, WM_SETTEXT, 0, (LPARAM) buf);
+}
+
+static void setEditedSong(int song)
+{
+	_TCHAR filename[MAX_PATH];
 	unsigned char str[ASAPWriter_MAX_DURATION_LENGTH + 1];
-	int len = ASAPWriter_DurationToString(str, ASAPInfo_GetDuration(edited_info, edited_song));
+	int len;
+
+	edited_song = song;
+	len = ASAPWriter_DurationToString(str, ASAPInfo_GetDuration(edited_info, song));
 	str[len] = '\0';
 	SendDlgItemMessage(infoDialog, IDC_TIME, WM_SETTEXT, 0, (LPARAM) str);
-	CheckDlgButton(infoDialog, IDC_LOOP, ASAPInfo_GetLoop(edited_info, edited_song) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(infoDialog, IDC_LOOP, ASAPInfo_GetLoop(edited_info, song) ? BST_CHECKED : BST_UNCHECKED);
 	EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), len > 0);
+
+	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
+	ASTIL_Load(astil, filename, song);
+	SendDlgItemMessage(infoDialog, IDC_STILFILE, WM_SETTEXT, 0, (LPARAM) ASTIL_GetStilFilename(astil));
+	updateStil();
 }
 
 static void showEditTip(int nID, LPCTSTR title, LPCTSTR message)
@@ -427,8 +542,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			updateSaveButtons(0, TRUE);
 			return TRUE;
 		case MAKEWPARAM(IDC_SONGNO, CBN_SELCHANGE):
-			edited_song = SendDlgItemMessage(hDlg, IDC_SONGNO, CB_GETCURSEL, 0, 0);
-			showSongTime();
+			setEditedSong(SendDlgItemMessage(hDlg, IDC_SONGNO, CB_GETCURSEL, 0, 0));
 			updateSaveButtons(INVALID_FIELD_TIME | INVALID_FIELD_TIME_SHOW, TRUE);
 			return TRUE;
 		case MAKEWPARAM(IDC_SAVE, BN_CLICKED):
@@ -488,112 +602,6 @@ void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, LPCTSTR filename, int 
 		updateInfoDialog(filename, song);
 }
 
-static char *appendCrLf(char *p, const char *s)
-{
-	for (;;) {
-		switch (*s) {
-		case '\0':
-			return p;
-		case '\n':
-			*p++ = '\r';
-			/* FALLTHROUGH */
-		default:
-			*p++ = *s++;
-			break;
-		}
-	}
-}
-
-static char *appendStil(char *p, const char *prefix, const char *value)
-{
-	if (value[0] != '\0') {
-		p = appendCrLf(p, prefix);
-		p = appendCrLf(p, value);
-		*p++ = '\r';
-		*p++ = '\n';
-	}
-	return p;
-}
-
-static char *appendAddress(char *p, const char *format, int value)
-{
-	if (value >= 0)
-		p += sprintf(p, format, value);
-	return p;
-}
-
-static void updateTech(void)
-{
-	char buf[16000];
-	char *p = buf;
-	const char *ext;
-	int type;
-	int i;
-	ext = ASAPInfo_GetOriginalModuleExt(edited_info, saved_module, saved_module_len);
-	if (ext != NULL)
-		p += sprintf(p, "Composed in %s\r\n", ASAPInfo_GetExtDescription(ext));
-	p += sprintf(p, ASAPInfo_GetChannels(edited_info) > 1 ? "STEREO\r\n" : "MONO\r\n");
-	p += sprintf(p, ASAPInfo_IsNtsc(edited_info) ? "NTSC\r\n" : "PAL\r\n");
-	type = ASAPInfo_GetTypeLetter(edited_info);
-	if (type != 0)
-		p += sprintf(p, "TYPE %c\r\n", type);
-	p += sprintf(p, "FASTPLAY %d (%d Hz)\r\n", ASAPInfo_GetPlayerRateScanlines(edited_info), ASAPInfo_GetPlayerRateHz(edited_info));
-	if (type == 'C')
-		p += sprintf(p, "MUSIC %04X\r\n", ASAPInfo_GetMusicAddress(edited_info));
-	if (type != 0) {
-		p = appendAddress(p, "INIT %04X\r\n", ASAPInfo_GetInitAddress(edited_info));
-		p = appendAddress(p, "PLAYER %04X\r\n", ASAPInfo_GetPlayerAddress(edited_info));
-		p = appendAddress(p, "COVOX %04X\r\n", ASAPInfo_GetCovoxAddress(edited_info));
-	}
-	for (i = ASAPInfo_GetSapHeaderLength(edited_info); p < buf + sizeof(buf) - 17 && i + 4 < saved_module_len; ) {
-		int start = saved_module[i] + (saved_module[i + 1] << 8);
-		int end;
-		if (start == 0xffff) {
-			i += 2;
-			start = saved_module[i] + (saved_module[i + 1] << 8);
-		}
-		end = saved_module[i + 2] + (saved_module[i + 3] << 8);
-		p += sprintf(p, "LOAD %04X-%04X\r\n", start, end);
-		i += 5 + end - start;
-	}
-	SendDlgItemMessage(infoDialog, IDC_TECHINFO, WM_SETTEXT, 0, (LPARAM) buf);
-}
-
-static void updateStil(void)
-{
-	char buf[16000];
-	char *p = buf;
-	int i;
-	p = appendStil(p, "", ASTIL_GetTitle(astil));
-	p = appendStil(p, "by ", ASTIL_GetAuthor(astil));
-	p = appendStil(p, "Directory comment: ", ASTIL_GetDirectoryComment(astil));
-	p = appendStil(p, "File comment: ", ASTIL_GetFileComment(astil));
-	p = appendStil(p, "Song comment: ", ASTIL_GetSongComment(astil));
-	for (i = 0; ; i++) {
-		const ASTILCover *cover = ASTIL_GetCover(astil, i);
-		int startSeconds;
-		const char *s;
-		if (cover == NULL)
-			break;
-		startSeconds = ASTILCover_GetStartSeconds(cover);
-		if (startSeconds >= 0) {
-			int endSeconds = ASTILCover_GetEndSeconds(cover);
-			if (endSeconds >= 0)
-				p += sprintf(p, "At %d:%02d-%d-%02d c", startSeconds / 60, startSeconds % 60, endSeconds / 60, endSeconds % 60);
-			else
-				p += sprintf(p, "At %d:%02d c", startSeconds / 60, startSeconds % 60);
-		}
-		else
-			*p++ = 'C';
-		s = ASTILCover_GetTitleAndSource(cover);
-		p = appendStil(p, "overs: ", s[0] != '\0' ? s : "<?>");
-		p = appendStil(p, "by ", ASTILCover_GetArtist(cover));
-		p = appendStil(p, "Comment: ", ASTILCover_GetComment(cover));
-	}
-	*p = '\0';
-	SendDlgItemMessage(infoDialog, IDC_STILINFO, WM_SETTEXT, 0, (LPARAM) buf);
-}
-
 void updateInfoDialog(LPCTSTR filename, int song)
 {
 	int songs;
@@ -633,13 +641,9 @@ void updateInfoDialog(LPCTSTR filename, int song)
 	if (song < 0)
 		song = ASAPInfo_GetDefaultSong(edited_info);
 	SendDlgItemMessage(infoDialog, IDC_SONGNO, CB_SETCURSEL, song, 0);
-	edited_song = song;
-	showSongTime();
+	setEditedSong(song);
 	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
 	updateTech();
-	ASTIL_Load(astil, filename, song);
-	SendDlgItemMessage(infoDialog, IDC_STILFILE, WM_SETTEXT, 0, (LPARAM) ASTIL_GetStilFilename(astil));
-	updateStil();
 }
 
 void setPlayingSong(LPCTSTR filename, int song)
