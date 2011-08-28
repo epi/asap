@@ -121,6 +121,14 @@ static char *appendAddress(char *p, const char *format, int value)
 	return p;
 }
 
+static void setChomped(int id, char *s)
+{
+	int i = strlen(s);
+	if (i >= 2 && s[i - 2] == '\r' && s[i - 1] == '\n')
+		s[i - 2] = '\0';
+	SendDlgItemMessage(infoDialog, id, WM_SETTEXT, 0, (LPARAM) s);
+}
+
 static void updateTech(void)
 {
 	char buf[16000];
@@ -162,7 +170,7 @@ static void updateTech(void)
 		p += sprintf(p, "LOAD %04X-%04X\r\n", start, end);
 		i += 5 + end - start;
 	}
-	SendDlgItemMessage(infoDialog, IDC_TECHINFO, WM_SETTEXT, 0, (LPARAM) buf);
+	setChomped(IDC_TECHINFO, buf);
 }
 
 static void updateStil(void)
@@ -197,7 +205,7 @@ static void updateStil(void)
 		p = appendStil(p, "Comment: ", ASTILCover_GetComment(cover));
 	}
 	*p = '\0';
-	SendDlgItemMessage(infoDialog, IDC_STILINFO, WM_SETTEXT, 0, (LPARAM) buf);
+	setChomped(IDC_STILINFO, buf);
 }
 
 static void setEditedSong(int song)
