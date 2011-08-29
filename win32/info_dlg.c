@@ -87,27 +87,28 @@ static HWND monthcal = NULL;
 static WNDPROC monthcalOriginalWndProc;
 static ASTIL *astil = NULL;
 
-static char *appendCrLf(char *p, const char *s)
+static char *appendStilString(char *p, const char *s)
 {
 	for (;;) {
-		switch (*s) {
+		char c = *s++;
+		switch (c) {
 		case '\0':
 			return p;
 		case '\n':
-			*p++ = '\r';
-			/* FALLTHROUGH */
+			c = ' ';
+			break;
 		default:
-			*p++ = *s++;
 			break;
 		}
+		*p++ = c;
 	}
 }
 
 static char *appendStil(char *p, const char *prefix, const char *value)
 {
 	if (value[0] != '\0') {
-		p = appendCrLf(p, prefix);
-		p = appendCrLf(p, value);
+		p = appendStilString(p, prefix);
+		p = appendStilString(p, value);
 		*p++ = '\r';
 		*p++ = '\n';
 	}
