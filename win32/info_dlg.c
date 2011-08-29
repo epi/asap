@@ -193,7 +193,7 @@ static void updateStil(void)
 		if (startSeconds >= 0) {
 			int endSeconds = ASTILCover_GetEndSeconds(cover);
 			if (endSeconds >= 0)
-				p += sprintf(p, "At %d:%02d-%d-%02d c", startSeconds / 60, startSeconds % 60, endSeconds / 60, endSeconds % 60);
+				p += sprintf(p, "At %d:%02d-%d:%02d c", startSeconds / 60, startSeconds % 60, endSeconds / 60, endSeconds % 60);
 			else
 				p += sprintf(p, "At %d:%02d c", startSeconds / 60, startSeconds % 60);
 		}
