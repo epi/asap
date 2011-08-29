@@ -194,7 +194,7 @@ FONT 8, "MS Sans Serif"
 
 #ifndef _UNICODE /* TODO */
 
-#define INFO_W  320
+#define INFO_W  270
 #if defined(WINAMP) || defined(XMPLAY)
 #define INFO_Y  18
 #else
