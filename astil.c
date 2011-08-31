@@ -82,6 +82,8 @@ static int ASTIL_ReadLine(FILE *fp, char *result)
 			result[0] = '\0';
 			return -1;
 		case '\n':
+			while (len > 0 && (result[len - 1] == ' ' || result[len - 1] == '\t'))
+				len--;
 			result[len] = '\0';
 			return len;
 		case '\r':
