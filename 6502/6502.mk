@@ -6,7 +6,7 @@ ifndef DO
 $(error Use "Makefile" instead of "6502.mk")
 endif
 
-NATIVE_ROUTINES = cmc cm3 cmr cms dlt mpt rmt4 rmt8 tmc tm2
+NATIVE_ROUTINES = cmc cm3 cmr cms dlt mpt rmt4 rmt8 tmc tm2 fc
 NATIVE_ROUTINES_OBX = $(NATIVE_ROUTINES:%=6502/%.obx)
 
 6502/cmc.obx: $(srcdir)6502/cmc.asx
@@ -26,6 +26,9 @@ NATIVE_ROUTINES_OBX = $(NATIVE_ROUTINES:%=6502/%.obx)
 
 6502/rmt8.obx: $(srcdir)6502/rmt.asx
 	$(XASM) -d STEREOMODE=1
+
+6502/fc.obx: $(srcdir)6502/fc.as8
+	$(MADS)
 
 6502/fp3depk.obx: $(srcdir)6502/fp3depk.asx
 	$(XASM) -l 6502/fp3depk.lst

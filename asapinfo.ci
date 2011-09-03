@@ -33,7 +33,8 @@ enum ASAPModuleType
 	Mpt,
 	Rmt,
 	Tmc,
-	Tm2
+	Tm2,
+	Fc
 #if EXPERIMENTAL_XEX
 	// actually it works, but without VBLKI it's practically useless
 	, Xex
@@ -61,7 +62,8 @@ public class ASAPInfo
 		"CMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\n" +
 		"RMT player (C) 2002-2005 Radek Sterba\n" +
 		"DLT player (C) 2009 Marek Konopka\n" +
-		"CMS player (C) 1999 David Spilka\n";
+		"CMS player (C) 1999 David Spilka\n" +
+		"FC player (C) 2011 Jerzy Kut\n";
 
 	/// Short license notice.
 	/// Display after the credits.
@@ -1148,6 +1150,116 @@ public class ASAPInfo
 		Title = title.ToString(0, titleLen);
 	}
 
+	macro FC_TRKCMD(n) ( module[3+n*0x100+trackPos[n]] )
+	macro FC_PATCMD(n) ( module[patternOffsets[FC_TRKCMD(n)]+patternPos[n]] )
+	macro MAX(a,b) ( (a > b? a: b) )
+	macro FC_NXTRKPOS(n) ( (patternPos[n] > 0? trackPos[n]+1: trackPos[n]) )
+	
+	void ParseFc(byte[] module, int moduleLen)
+	{
+		if (moduleLen < 0x383)
+			throw "Module too short";
+		Type = ASAPModuleType.Fc;
+		if (module[0] != 0x26 || module[1] != 0x23)
+			throw "Invalid two leading bytes of the module";
+		
+		Player = 0x400;
+		Init = Player+3;
+		SetMusicAddress(0xa00);
+		Songs = 0;
+		
+		int i;
+		int[0x40] patternOffsets;
+		int currentOffset = 0x383;
+		//patterns
+		for (i = 0; i < 0x40; i++) {
+			patternOffsets[i] = currentOffset;
+			do {
+				if (currentOffset >= moduleLen)
+					throw "Module too short";
+			} while (module[currentOffset++] != 0xff);
+		}
+		//envelopes
+		for (i = 0; i < 0x20; i++) {
+			do {
+				if (currentOffset >= moduleLen)
+					throw "Module too short";
+			} while (module[currentOffset++] != 0xff);
+		}
+
+		int n;
+		int[3] trackPos;
+		int[3] patternDelay;
+		int[3] noteDuration;
+		int[3] patternPos;
+		int pos = 0;
+		do {
+			Loops[Songs] = true;
+			
+			int tempo = module[2];
+			
+			for (n = 0; n < 3; n++) {
+				trackPos[n] = pos;
+				noteDuration[n] = 0;
+				patternDelay[n] = 0;
+				patternPos[n] = 0;
+			}
+			int playerCalls = 0;
+			
+			//stops when one channel (or more) has STOP command or each channel has LOOP command
+			while ( (FC_TRKCMD(0) != 0xfe && FC_TRKCMD(1) != 0xfe && FC_TRKCMD(2) != 0xfe) &&
+				(FC_TRKCMD(0) != 0xff || FC_TRKCMD(1) != 0xff || FC_TRKCMD(2) != 0xff) &&
+				(trackPos[0] < 0x100 && trackPos[1] < 0x100 && trackPos[2] < 0x100) ) {
+				
+				for (n = 0; n < 3; n++) {
+					int trackCmd = FC_TRKCMD(n);
+					if (trackCmd != 0xff && patternDelay[n]-- <= 0) { //"<" for junks in track
+						while (trackPos[n] < 0x100) {
+							trackCmd = FC_TRKCMD(n);
+							if (trackCmd >= 0x00 && trackCmd < 0x40) {
+								int patternCmd = FC_PATCMD(n);
+								patternPos[n]++;
+								if (patternCmd < 0x40) {
+									patternDelay[n] = noteDuration[n];
+									break;
+								} else if (patternCmd >= 0x40 && patternCmd < 0x60) {
+									noteDuration[n] = (patternCmd & 0x1f);
+								//} else if (patternCmd >= 0x80 && patternCmd < 0xa0) {
+								} else if (patternCmd == 0xff) {
+									patternDelay[n] = 0;
+									noteDuration[n] = 0;
+									patternPos[n] = 0;
+									trackPos[n]++;
+									//break;
+								}
+							} else if (trackCmd == 0x40) {
+								trackPos[n] += 2;
+							//} else if (trackCmd >= 0x80 && trackCmd < 0x90) {
+							//	trackPos[n]++;
+							} else if (trackCmd == 0xfe) {
+								Loops[Songs] = false;
+								break;
+							} else if (trackCmd == 0xff) {
+								break;
+							} else {
+								trackPos[n]++; //for junks in track
+							}
+						}
+					}
+				}
+				if ( (FC_TRKCMD(0) != 0xfe && FC_TRKCMD(1) != 0xfe && FC_TRKCMD(2) != 0xfe) &&
+				     (FC_TRKCMD(0) != 0xff || FC_TRKCMD(1) != 0xff || FC_TRKCMD(2) != 0xff) &&
+				     (trackPos[0] < 0x100 && trackPos[1] < 0x100 && trackPos[2] < 0x100) )
+				playerCalls += tempo;
+			}
+	
+			pos = MAX(MAX(FC_NXTRKPOS(0), FC_NXTRKPOS(1)), FC_NXTRKPOS(2)) + 1;
+			if (pos <= 0x100)
+				AddSong(playerCalls);
+			
+		} while (pos < 0x100);
+	}
+
 	static bool HasStringAt(byte[] module, int moduleIndex, string s)
 	{
 		int n = s.Length;
@@ -1413,6 +1525,7 @@ public class ASAPInfo
 		case ASAP_EXT("TMC"):
 		case ASAP_EXT("TM8"):
 		case ASAP_EXT("TM2"):
+		case ASAP_EXT("FC "):
 #if EXPERIMENTAL_XEX
 		case ASAP_EXT("XEX"):
 #endif
@@ -1527,6 +1640,9 @@ public class ASAPInfo
 		case ASAP_EXT("TM2"):
 			ParseTm2(module, moduleLen);
 			return;
+		case ASAP_EXT("FC "):
+			ParseFc(module, moduleLen);
+			return;
 #if EXPERIMENTAL_XEX
 		case ASAP_EXT("XEX"):
 			if (moduleLen < 7 || module[0] != 0xff || module[1] != 0xff)
@@ -1563,6 +1679,7 @@ public class ASAPInfo
 		case ASAP_EXT("TMC"):
 		case ASAP_EXT("TM8"): return "Theta Music Composer 1.x";
 		case ASAP_EXT("TM2"): return "Theta Music Composer 2.x";
+		case ASAP_EXT("FC "): return "Future Composer";
 		case ASAP_EXT("XEX"): return "Atari 8-bit executable";
 		default: throw "Unknown extension";
 		}
@@ -1603,6 +1720,8 @@ public class ASAPInfo
 				return "tmc";
 			if ((Init == 0x1080 && Player == 0x503) || (Init == 0x1380 && Player == 0x803))
 				return "tm2";
+			if (Init == 0x400 && Player == 0x503)
+				return "fc";
 			return null;
 		case ASAPModuleType.SapC:
 			if ((Player == 0x500 || Player == 0xf500) && moduleLen >= 1024) {
@@ -1635,6 +1754,8 @@ public class ASAPInfo
 			return "tmc";
 		case ASAPModuleType.Tm2:
 			return "tm2";
+		case ASAPModuleType.Fc:
+			return "fc";
 		default:
 			return null;
 		}

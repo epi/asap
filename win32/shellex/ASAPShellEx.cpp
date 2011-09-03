@@ -100,7 +100,7 @@ DECLARE_INTERFACE_(IPropertyStoreCapabilities,IUnknown)
 #include "asap-infowriter.h"
 
 static const char extensions[][5] =
-	{ ".sap", ".cmc", ".cm3", ".cmr", ".cms", ".dmc", ".dlt", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2" };
+	{ ".sap", ".cmc", ".cm3", ".cmr", ".cms", ".dmc", ".dlt", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2", ".fc" };
 #define N_EXTS (int) (sizeof(extensions) / sizeof(extensions[0]))
 
 static HINSTANCE g_hDll;

@@ -12,7 +12,7 @@ BuildRoot: %{_tmppath}/asap-root
 ASAP is a player of 8-bit Atari music for modern computers.
 It emulates the POKEY sound chip and the 6502 processor.
 ASAP supports the following file formats:
-SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2.
+SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 
 %package devel
 Summary: Development library with 8-bit Atari music emulation
@@ -30,7 +30,7 @@ BuildRequires: audacious-devel
 %description audacious
 Provides playback of 8-bit Atari music in Audacious.
 Supports the following file formats:
-SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2.
+SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 
 %package xmms
 Summary: ASAP plugin for XMMS
@@ -41,7 +41,7 @@ BuildRequires: xmms-devel
 %description xmms
 Provides playback of 8-bit Atari music in XMMS.
 Supports the following file formats:
-SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2.
+SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 
 %prep
 %setup -q

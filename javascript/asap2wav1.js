@@ -264,7 +264,7 @@ function printHelp()
 	print(
 		"Usage: " + usage + "\n" +
 		"Each INPUTFILE must be in a supported format:\n" +
-		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2.\n" +
+		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2 or FC.\n" +
 		"Options:\n" +
 		"-o FILE     --output=FILE      Set output file name\n" +
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n" +

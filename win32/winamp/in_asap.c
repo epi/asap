@@ -408,6 +408,7 @@ static In_Module mod = {
 	"RMT\0Raster Music Tracker (*.RMT)\0"
 	"TMC;TM8\0Theta Music Composer 1.x (*.TMC;*.TM8)\0"
 	"TM2\0Theta Music Composer 2.x (*.TM2)\0"
+	"FC\0FutureComposer (*.FC)\0"
 	,
 	1,    // is_seekable
 	1,    // UsesOutputPlug

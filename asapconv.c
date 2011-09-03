@@ -57,7 +57,7 @@ static void print_help(void)
 	printf(
 		"Usage: asapconv [OPTIONS] INPUTFILE...\n"
 		"Each INPUTFILE must be in a supported format:\n"
-		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2.\n"
+		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2 or FC.\n"
 		"Output EXT must be one of the above or XEX, " SAMPLE_FORMATS ".\n"
 		"Options:\n"
 		"-o FILE.EXT --output=FILE.EXT  Write to the specified file\n"

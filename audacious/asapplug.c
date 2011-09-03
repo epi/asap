@@ -298,7 +298,7 @@ static
 #if __AUDACIOUS_PLUGIN_API__ >= 16
 	const
 #endif
-	gchar *exts[] = { "sap", "cmc", "cm3", "cmr", "cms", "dmc", "dlt", "mpt", "mpd", "rmt", "tmc", "tm8", "tm2", NULL };
+	gchar *exts[] = { "sap", "cmc", "cm3", "cmr", "cms", "dmc", "dlt", "mpt", "mpd", "rmt", "tmc", "tm8", "tm2", "fc", NULL };
 
 static InputPlugin asap_ip = {
 	.description = "ASAP Plugin",

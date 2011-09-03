@@ -24,10 +24,10 @@
 		<MajorUpgrade DowngradeErrorMessage="Newer version of ASAP is already installed!" MigrateFeatures="yes" />
 		<Media Id="1" Cabinet="asap.cab" EmbedCab="yes" CompressionLevel="high" />
 
-		<?define EXT_FILTER=*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2?>
-		<?define NATIVE_EXTS=cmc;cm3;cmr;cms;dmc;dlt;mpt;mpd;rmt;tmc;tm8;tm2?>
+		<?define EXT_FILTER=*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2;*.fc?>
+		<?define NATIVE_EXTS=cmc;cm3;cmr;cms;dmc;dlt;mpt;mpd;rmt;tmc;tm8;tm2;fc?>
 		<?define ASAP_EXTS=sap;$(var.NATIVE_EXTS)?>
-		<?define DOUBLECLICK=Double-click SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8 or TM2 file in Windows Explorer to play it in?>
+		<?define DOUBLECLICK=Double-click SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2 or FC file in Windows Explorer to play it in?>
 
 		<Icon Id="wasap.ico" SourceFile="wasap/wasap.ico" />
 		<Property Id="ARPHELPLINK" Value="http://asap.sourceforge.net/" />

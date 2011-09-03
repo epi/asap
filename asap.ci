@@ -240,6 +240,7 @@ public class ASAP
 		case ASAPModuleType.Mpt:
 		case ASAPModuleType.Rmt:
 		case ASAPModuleType.Tm2:
+		case ASAPModuleType.Fc:
 			Call6502(player + 3);
 			break;
 		case ASAPModuleType.Tmc:
@@ -330,7 +331,10 @@ public class ASAP
 			if (ModuleInfo.Music <= playerLastByte)
 				throw "Module address conflicts with the player routine";
 			Memory[0x4c00] = 0; // for 11270-byte DLT
-			module.CopyTo(6, Memory, ModuleInfo.Music, moduleLen - 6);
+			if (ModuleInfo.Type == ASAPModuleType.Fc)
+				module.CopyTo(0, Memory, ModuleInfo.Music, moduleLen);
+			else
+				module.CopyTo(6, Memory, ModuleInfo.Music, moduleLen - 6);
 			playerRoutine.CopyTo(6, Memory, player, playerLastByte + 1 - player);
 			if (ModuleInfo.Player < 0)
 				ModuleInfo.Player = player;
@@ -454,6 +458,9 @@ public class ASAP
 			Do6502Init(ModuleInfo.Player, 0x70, ModuleInfo.Music >> 8, ModuleInfo.Music);
 			Do6502Init(ModuleInfo.Player, 0x00, song, 0);
 			TmcPerFrameCounter = 1;
+			break;
+		case ASAPModuleType.Fc:
+			Do6502Init(ModuleInfo.Player, song, 0, 0);
 			break;
 #if EXPERIMENTAL_XEX
 		case ASAPModuleType.Xex:

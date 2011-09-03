@@ -92,5 +92,11 @@
 			<description>8-bit Atari music</description>
 			<contentType>application/x-tm2</contentType>
 		</fileType>
+		<fileType>
+			<name>fc.file</name>
+			<extension>fc</extension>
+			<description>8-bit Atari music</description>
+			<contentType>application/x-fc</contentType>
+		</fileType>
 	</fileTypes>
 </application>

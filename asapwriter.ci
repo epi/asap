@@ -424,6 +424,14 @@ public class ASAPWriter
 			w(0x4c); WriteWord(w, 0x800); // JMP PLAYER
 			WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
 			break;
+		case ASAPModuleType.Fc:
+			WriteExecutableHeader(w, initAndPlayer, info, 'B', player, player+3);
+			WriteWord(w, 0xffff);
+			WriteBytes(w, playerRoutine, 2, playerLastByte+1-player+6);
+			WriteWord(w, info.Music);
+			WriteWord(w, info.Music+moduleLen-1);
+			WriteBytes(w, module, 0, moduleLen);
+			break;
 		}
 	}
 
@@ -556,6 +564,10 @@ public class ASAPWriter
 			WriteRelocatedLowHigh(w, diff, module, 6 + 128 + 128, 256);
 			WriteRelocatedBytes(w, diff, module, 6 + 128, 6 + 128 + 128 + 512, 128, 8);
 			WriteBytes(w, module, 6 + 128 + 128 + 512 + 128, moduleLen);
+			break;
+		case ASAPModuleType.Fc:
+			// FC -> FC
+			WriteBytes(w, module, 0, moduleLen);
 			break;
 		default:
 			throw "Impossible conversion";

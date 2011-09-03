@@ -33,6 +33,7 @@ class ASAP6502
 		case ASAPModuleType.Rmt: return info.Channels == 1 ? BinaryResource("rmt4.obx") : BinaryResource("rmt8.obx");
 		case ASAPModuleType.Tmc: return BinaryResource("tmc.obx");
 		case ASAPModuleType.Tm2: return BinaryResource("tm2.obx");
+		case ASAPModuleType.Fc:  return BinaryResource("fc.obx");
 		default: return null;
 		}
 	}

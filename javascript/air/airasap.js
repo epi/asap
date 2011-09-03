@@ -126,7 +126,7 @@ function selectFile()
 	var selector = new air.File();
 	selector.addEventListener(air.Event.SELECT, onFileSelect);
 	selector.browseForOpen("Select 8-bit Atari music", [
-		new air.FileFilter("All supported", "*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2"),
+		new air.FileFilter("All supported", "*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2;*.fc"),
 		new air.FileFilter("Slight Atari Player (*.sap)", "*.sap"),
 		new air.FileFilter("Chaos Music Composer (*.cmc;*.cm3;*.cmr;*.cms;*.dmc)", "*.cmc;*.cm3;*.cmr;*.cms;*.dmc"),
 		new air.FileFilter("Delta Music Composer (*.dlt)", "*.dlt"),
@@ -134,6 +134,7 @@ function selectFile()
 		new air.FileFilter("Raster Music Tracker (*.rmt)", "*.rmt"),
 		new air.FileFilter("Theta Music Composer 1.x (*.tmc;*.tm8)", "*.tmc;*.tm8"),
 		new air.FileFilter("Theta Music Composer 2.x (*.tm2)", "*.tm2")
+		new air.FileFilter("Future Composer (*.fc)", "*.fc")
 	]);
 }
 

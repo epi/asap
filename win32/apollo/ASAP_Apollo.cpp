@@ -142,6 +142,7 @@ public:
 			"Raster Music Tracker\0*.RMT\0"
 			"Theta Music Composer 1.x\0*.TMC;*.TM8\0"
 			"Theta Music Composer 2.x\0*.TM2\0"
+			"Future Composer\0*.FC\0"
 			"\0");
 	}
 

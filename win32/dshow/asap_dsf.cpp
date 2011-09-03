@@ -29,9 +29,9 @@
 
 static const TCHAR extensions[][5] =
 	{ _T(".sap"), _T(".cmc"), _T(".cm3"), _T(".cmr"), _T(".cms"), _T(".dmc"), _T(".dlt"),
-	  _T(".mpt"), _T(".mpd"), _T(".rmt"), _T(".tmc"), _T(".tm8"), _T(".tm2") };
+	  _T(".mpt"), _T(".mpd"), _T(".rmt"), _T(".tmc"), _T(".tm8"), _T(".tm2"), _T(".fc") };
 #define N_EXTS (sizeof(extensions) / sizeof(extensions[0]))
-#define EXT_FILTER _T("*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2")
+#define EXT_FILTER _T("*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2;*.fc")
 
 #define BITS_PER_SAMPLE      16
 #define MIN_BUFFERED_BLOCKS  4096

@@ -312,7 +312,7 @@ static void SelectAndLoadFile(void)
 		NULL,
 		0,
 		_T("All supported\0"
-		"*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2\0"
+		"*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2;*.fc\0"
 #ifdef _WIN32_WCE
 #define ASAP_FILTER(description, masks) description "\0" masks "\0"
 #else
@@ -325,6 +325,7 @@ static void SelectAndLoadFile(void)
 		ASAP_FILTER("Raster Music Tracker", "*.rmt")
 		ASAP_FILTER("Theta Music Composer 1.x", "*.tmc;*.tm8")
 		ASAP_FILTER("Theta Music Composer 2.x", "*.tm2")
+		ASAP_FILTER("Future Composer", "*.fc")
 		"\0"),
 		NULL,
 		0,

@@ -16,7 +16,8 @@ typedef enum {
 	ASAPModuleType_MPT,
 	ASAPModuleType_RMT,
 	ASAPModuleType_TMC,
-	ASAPModuleType_TM2
+	ASAPModuleType_TM2,
+	ASAPModuleType_FC
 }
 ASAPModuleType;
 typedef struct Cpu6502 Cpu6502;
@@ -103,6 +104,7 @@ static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, i
 static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int maxVal);
 static cibool ASAPInfo_ParseDlt(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseDltSong(ASAPInfo *self, unsigned char const *module, cibool *seen, int pos);
+static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static int ASAPInfo_ParseHex(unsigned char const *module, int moduleIndex);
 static cibool ASAPInfo_ParseModule(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static cibool ASAPInfo_ParseMpt(ASAPInfo *self, unsigned char const *module, int moduleLen);
@@ -910,6 +912,83 @@ static const unsigned char CiBinaryResource_dlt_obx[2125] = { 255, 255, 0, 4, 70
 	168, 177, 238, 170, 160, 51, 177, 238, 48, 14, 138, 109, 11, 3, 170, 173,
 	31, 3, 141, 55, 3, 76, 60, 12, 138, 109, 31, 3, 141, 55, 3, 174,
 	11, 3, 189, 0, 4, 24, 109, 55, 3, 141, 39, 3, 96 };
+static const unsigned char CiBinaryResource_fc_obx[1220] = { 255, 255, 0, 4, 189, 8, 76, 9, 4, 32, 16, 4, 76, 173, 5, 162,
+	0, 160, 10, 32, 25, 5, 162, 8, 189, 172, 8, 157, 0, 210, 157, 16,
+	210, 202, 16, 244, 96, 133, 244, 162, 0, 134, 230, 134, 232, 134, 234, 169,
+	0, 133, 231, 133, 233, 133, 235, 133, 236, 133, 238, 133, 240, 133, 237, 133,
+	239, 133, 241, 138, 160, 2, 162, 4, 32, 9, 5, 136, 202, 202, 16, 248,
+	162, 4, 32, 160, 4, 202, 202, 16, 249, 169, 255, 197, 230, 240, 34, 197,
+	232, 240, 30, 197, 234, 240, 26, 169, 254, 160, 0, 209, 224, 240, 18, 209,
+	226, 240, 14, 209, 228, 240, 10, 177, 224, 49, 226, 49, 228, 201, 255, 208,
+	207, 162, 4, 32, 153, 4, 202, 202, 16, 249, 166, 230, 228, 232, 176, 2,
+	166, 232, 228, 234, 176, 2, 166, 234, 232, 198, 244, 208, 140, 138, 96, 181,
+	231, 240, 2, 246, 230, 96, 161, 224, 201, 254, 176, 29, 181, 230, 201, 255,
+	240, 23, 181, 237, 208, 17, 161, 224, 201, 64, 144, 28, 208, 3, 32, 196,
+	4, 32, 196, 4, 76, 160, 4, 214, 237, 96, 246, 224, 208, 2, 246, 225,
+	180, 230, 200, 240, 2, 246, 230, 96, 168, 185, 191, 8, 133, 242, 185, 31,
+	9, 133, 243, 180, 231, 246, 231, 177, 242, 201, 64, 144, 22, 201, 96, 144,
+	23, 201, 255, 144, 238, 169, 0, 149, 237, 149, 236, 149, 231, 32, 196, 4,
+	76, 160, 4, 181, 236, 149, 237, 96, 41, 31, 149, 236, 76, 221, 4, 72,
+	24, 121, 159, 9, 149, 224, 169, 0, 121, 162, 9, 149, 225, 104, 96, 134,
+	252, 132, 253, 72, 160, 2, 177, 252, 162, 0, 157, 127, 9, 24, 113, 252,
+	232, 224, 32, 144, 245, 165, 252, 166, 253, 24, 105, 3, 144, 1, 232, 141,
+	159, 9, 142, 162, 9, 232, 141, 160, 9, 142, 163, 9, 232, 141, 161, 9,
+	142, 164, 9, 232, 133, 254, 134, 255, 24, 105, 128, 144, 1, 232, 133, 252,
+	134, 253, 162, 0, 160, 0, 165, 252, 153, 191, 8, 165, 253, 153, 31, 9,
+	161, 252, 230, 252, 208, 2, 230, 253, 201, 255, 208, 244, 200, 192, 64, 144,
+	229, 162, 0, 165, 252, 157, 255, 8, 165, 253, 157, 95, 9, 160, 0, 177,
+	252, 200, 201, 255, 208, 249, 152, 24, 101, 252, 133, 252, 144, 2, 230, 253,
+	232, 224, 32, 144, 222, 104, 240, 3, 32, 31, 4, 141, 190, 8, 169, 64,
+	141, 170, 8, 44, 170, 8, 48, 39, 80, 53, 169, 0, 162, 11, 157, 125,
+	8, 202, 16, 250, 141, 170, 8, 162, 2, 169, 8, 157, 167, 8, 173, 190,
+	8, 157, 122, 8, 202, 16, 242, 169, 80, 141, 180, 8, 76, 233, 5, 169,
+	0, 162, 7, 157, 172, 8, 202, 16, 250, 169, 128, 141, 170, 8, 96, 238,
+	171, 8, 162, 2, 134, 30, 232, 138, 10, 168, 132, 31, 202, 189, 159, 9,
+	133, 28, 189, 162, 9, 133, 29, 189, 128, 8, 240, 3, 76, 240, 6, 188,
+	122, 8, 177, 28, 201, 64, 240, 14, 201, 255, 240, 24, 201, 254, 208, 45,
+	141, 170, 8, 76, 203, 7, 200, 177, 28, 141, 180, 8, 200, 152, 157, 122,
+	8, 76, 9, 6, 173, 190, 8, 157, 122, 8, 169, 80, 141, 180, 8, 169,
+	0, 157, 128, 8, 157, 131, 8, 157, 125, 8, 76, 9, 6, 72, 41, 128,
+	240, 11, 254, 122, 8, 104, 41, 15, 157, 167, 8, 16, 178, 104, 168, 185,
+	191, 8, 133, 28, 185, 31, 9, 133, 29, 189, 131, 8, 157, 128, 8, 169,
+	0, 157, 158, 8, 188, 125, 8, 177, 28, 48, 7, 10, 48, 36, 74, 76,
+	177, 6, 10, 10, 168, 177, 254, 157, 137, 8, 200, 177, 254, 157, 143, 8,
+	200, 177, 254, 157, 146, 8, 200, 177, 254, 157, 149, 8, 254, 125, 8, 76,
+	110, 6, 74, 41, 31, 170, 189, 127, 9, 166, 30, 157, 128, 8, 157, 131,
+	8, 254, 125, 8, 76, 110, 6, 157, 155, 8, 24, 125, 167, 8, 168, 224,
+	0, 208, 15, 185, 242, 7, 141, 172, 8, 185, 50, 8, 141, 174, 8, 76,
+	215, 6, 185, 196, 7, 157, 134, 8, 164, 31, 153, 172, 8, 169, 0, 157,
+	140, 8, 254, 125, 8, 188, 125, 8, 177, 28, 201, 255, 208, 8, 169, 0,
+	157, 125, 8, 254, 122, 8, 189, 137, 8, 168, 185, 255, 8, 141, 6, 7,
+	185, 95, 9, 141, 7, 7, 166, 30, 188, 140, 8, 185, 255, 255, 201, 255,
+	240, 39, 16, 16, 164, 31, 153, 173, 8, 169, 0, 153, 172, 8, 254, 140,
+	8, 76, 148, 7, 164, 31, 254, 140, 8, 29, 143, 8, 153, 173, 8, 224,
+	0, 240, 6, 189, 134, 8, 153, 172, 8, 189, 146, 8, 240, 35, 173, 171,
+	8, 41, 1, 208, 5, 189, 146, 8, 208, 2, 169, 0, 141, 78, 7, 24,
+	189, 155, 8, 105, 2, 125, 167, 8, 168, 185, 196, 7, 164, 31, 153, 172,
+	8, 189, 149, 8, 240, 52, 48, 32, 188, 152, 8, 254, 152, 8, 185, 181,
+	8, 201, 31, 208, 7, 169, 0, 157, 152, 8, 240, 236, 24, 125, 134, 8,
+	164, 31, 153, 172, 8, 76, 148, 7, 189, 134, 8, 201, 255, 240, 11, 254,
+	134, 8, 254, 134, 8, 164, 31, 153, 172, 8, 189, 158, 8, 240, 41, 189,
+	161, 8, 240, 6, 222, 161, 8, 76, 194, 7, 189, 158, 8, 16, 10, 24,
+	189, 134, 8, 125, 164, 8, 76, 186, 7, 56, 189, 134, 8, 253, 164, 8,
+	157, 134, 8, 164, 31, 153, 172, 8, 222, 128, 8, 202, 48, 3, 76, 238,
+	5, 96, 255, 241, 228, 215, 203, 192, 181, 170, 161, 152, 143, 135, 127, 120,
+	114, 107, 101, 95, 90, 85, 80, 75, 71, 67, 63, 60, 56, 53, 50, 47,
+	44, 42, 39, 37, 35, 33, 31, 29, 28, 26, 23, 22, 19, 15, 7, 0,
+	56, 140, 0, 106, 232, 106, 239, 128, 8, 174, 70, 230, 149, 65, 246, 176,
+	110, 48, 246, 187, 132, 82, 34, 244, 200, 160, 122, 85, 52, 20, 245, 216,
+	189, 164, 141, 119, 96, 78, 56, 39, 21, 6, 247, 232, 219, 207, 195, 184,
+	172, 162, 154, 144, 136, 127, 120, 112, 106, 100, 94, 87, 82, 50, 10, 0,
+	11, 10, 10, 9, 8, 8, 7, 7, 7, 6, 6, 5, 5, 5, 4, 4,
+	4, 4, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 80, 0, 0, 1, 1, 0,
+	0, 255, 255, 31 };
 static const unsigned char CiBinaryResource_mpt_obx[2233] = { 255, 255, 0, 5, 178, 13, 76, 205, 11, 173, 46, 7, 208, 1, 96, 169,
 	0, 141, 28, 14, 238, 29, 14, 173, 23, 14, 205, 187, 13, 144, 80, 206,
 	21, 14, 240, 3, 76, 197, 5, 162, 0, 142, 23, 14, 169, 0, 157, 237,
@@ -1869,6 +1948,7 @@ static void ASAP_Call6502Player(ASAP *self)
 	case ASAPModuleType_MPT:
 	case ASAPModuleType_RMT:
 	case ASAPModuleType_TM2:
+	case ASAPModuleType_FC:
 		ASAP_Call6502(self, player + 3);
 		break;
 	case ASAPModuleType_TMC:
@@ -2108,7 +2188,10 @@ cibool ASAP_Load(ASAP *self, const char *filename, unsigned char const *module, 
 		if (self->moduleInfo.music <= playerLastByte)
 			return FALSE;
 		self->memory[19456] = 0;
-		memcpy(self->memory + self->moduleInfo.music, module + 6, moduleLen - 6);
+		if (self->moduleInfo.type == ASAPModuleType_FC)
+			memcpy(self->memory + self->moduleInfo.music, module + 0, moduleLen);
+		else
+			memcpy(self->memory + self->moduleInfo.music, module + 6, moduleLen - 6);
 		memcpy(self->memory + player, playerRoutine + 6, playerLastByte + 1 - player);
 		if (self->moduleInfo.player < 0)
 			self->moduleInfo.player = player;
@@ -2251,6 +2334,10 @@ cibool ASAP_PlaySong(ASAP *self, int song, int duration)
 		if (!ASAP_Do6502Init(self, self->moduleInfo.player, 0, song, 0))
 			return FALSE;
 		self->tmcPerFrameCounter = 1;
+		break;
+	case ASAPModuleType_FC:
+		if (!ASAP_Do6502Init(self, self->moduleInfo.player, song, 0, 0))
+			return FALSE;
 		break;
 	}
 	ASAP_MutePokeyChannels(self, 0);
@@ -2396,6 +2483,8 @@ static unsigned char const *ASAP6502_GetPlayerRoutine(ASAPInfo const *info)
 		return CiBinaryResource_tmc_obx;
 	case ASAPModuleType_TM2:
 		return CiBinaryResource_tm2_obx;
+	case ASAPModuleType_FC:
+		return CiBinaryResource_fc_obx;
 	default:
 		return NULL;
 	}
@@ -2530,6 +2619,8 @@ const char *ASAPInfo_GetExtDescription(const char *ext)
 		return "Theta Music Composer 1.x";
 	case 3304820:
 		return "Theta Music Composer 2.x";
+	case 2122598:
+		return "Future Composer";
 	case 7890296:
 		return "Atari 8-bit executable";
 	default:
@@ -2574,6 +2665,8 @@ const char *ASAPInfo_GetOriginalModuleExt(ASAPInfo const *self, unsigned char co
 			return "tmc";
 		if ((self->init == 4224 && self->player == 1283) || (self->init == 4992 && self->player == 2051))
 			return "tm2";
+		if (self->init == 1024 && self->player == 1283)
+			return "fc";
 		return NULL;
 	case ASAPModuleType_SAP_C:
 		if ((self->player == 1280 || self->player == 62720) && moduleLen >= 1024) {
@@ -2606,6 +2699,8 @@ const char *ASAPInfo_GetOriginalModuleExt(ASAPInfo const *self, unsigned char co
 		return "tmc";
 	case ASAPModuleType_TM2:
 		return "tm2";
+	case ASAPModuleType_FC:
+		return "fc";
 	default:
 		return NULL;
 	}
@@ -2840,6 +2935,7 @@ static cibool ASAPInfo_IsOurPackedExt(int ext)
 	case 6516084:
 	case 3698036:
 	case 3304820:
+	case 2122598:
 		return TRUE;
 	default:
 		return FALSE;
@@ -2918,6 +3014,8 @@ cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *
 		return ASAPInfo_ParseTmc(self, module, moduleLen);
 	case 3304820:
 		return ASAPInfo_ParseTm2(self, module, moduleLen);
+	case 2122598:
+		return ASAPInfo_ParseFc(self, module, moduleLen);
 	default:
 		return FALSE;
 	}
@@ -3165,6 +3263,106 @@ int ASAPInfo_ParseDuration(const char *s)
 	i++;
 	r += d;
 	return r;
+}
+
+static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int moduleLen)
+{
+	int i;
+	int patternOffsets[64];
+	int currentOffset;
+	int n;
+	int trackPos[3];
+	int patternDelay[3];
+	int noteDuration[3];
+	int patternPos[3];
+	int pos;
+	if (moduleLen < 899)
+		return FALSE;
+	self->type = ASAPModuleType_FC;
+	if (module[0] != 38 || module[1] != 35)
+		return FALSE;
+	self->player = 1024;
+	self->init = self->player + 3;
+	if (!ASAPInfo_SetMusicAddress(self, 2560))
+		return FALSE;
+	self->songs = 0;
+	currentOffset = 899;
+	for (i = 0; i < 64; i++) {
+		patternOffsets[i] = currentOffset;
+		do {
+			if (currentOffset >= moduleLen)
+				return FALSE;
+		}
+		while (module[currentOffset++] != 255);
+	}
+	for (i = 0; i < 32; i++) {
+		do {
+			if (currentOffset >= moduleLen)
+				return FALSE;
+		}
+		while (module[currentOffset++] != 255);
+	}
+	pos = 0;
+	do {
+		int tempo;
+		int playerCalls;
+		self->loops[self->songs] = TRUE;
+		tempo = module[2];
+		for (n = 0; n < 3; n++) {
+			trackPos[n] = pos;
+			noteDuration[n] = 0;
+			patternDelay[n] = 0;
+			patternPos[n] = 0;
+		}
+		playerCalls = 0;
+		while (module[3 + trackPos[0]] != 254 && module[259 + trackPos[1]] != 254 && module[515 + trackPos[2]] != 254 && (module[3 + trackPos[0]] != 255 || module[259 + trackPos[1]] != 255 || module[515 + trackPos[2]] != 255) && trackPos[0] < 256 && trackPos[1] < 256 && trackPos[2] < 256) {
+			for (n = 0; n < 3; n++) {
+				int trackCmd = module[3 + n * 256 + trackPos[n]];
+				if (trackCmd != 255 && patternDelay[n]-- <= 0) {
+					while (trackPos[n] < 256) {
+						trackCmd = module[3 + n * 256 + trackPos[n]];
+						if (trackCmd >= 0 && trackCmd < 64) {
+							int patternCmd = module[patternOffsets[module[3 + n * 256 + trackPos[n]]] + patternPos[n]];
+							patternPos[n]++;
+							if (patternCmd < 64) {
+								patternDelay[n] = noteDuration[n];
+								break;
+							}
+							else if (patternCmd >= 64 && patternCmd < 96) {
+								noteDuration[n] = patternCmd & 31;
+							}
+							else if (patternCmd == 255) {
+								patternDelay[n] = 0;
+								noteDuration[n] = 0;
+								patternPos[n] = 0;
+								trackPos[n]++;
+							}
+						}
+						else if (trackCmd == 64) {
+							trackPos[n] += 2;
+						}
+						else if (trackCmd == 254) {
+							self->loops[self->songs] = FALSE;
+							break;
+						}
+						else if (trackCmd == 255) {
+							break;
+						}
+						else {
+							trackPos[n]++;
+						}
+					}
+				}
+			}
+			if (module[3 + trackPos[0]] != 254 && module[259 + trackPos[1]] != 254 && module[515 + trackPos[2]] != 254 && (module[3 + trackPos[0]] != 255 || module[259 + trackPos[1]] != 255 || module[515 + trackPos[2]] != 255) && trackPos[0] < 256 && trackPos[1] < 256 && trackPos[2] < 256)
+				playerCalls += tempo;
+		}
+		pos = (((patternPos[0] > 0 ? trackPos[0] + 1 : trackPos[0]) > (patternPos[1] > 0 ? trackPos[1] + 1 : trackPos[1]) ? patternPos[0] > 0 ? trackPos[0] + 1 : trackPos[0] : patternPos[1] > 0 ? trackPos[1] + 1 : trackPos[1]) > (patternPos[2] > 0 ? trackPos[2] + 1 : trackPos[2]) ? (patternPos[0] > 0 ? trackPos[0] + 1 : trackPos[0]) > (patternPos[1] > 0 ? trackPos[1] + 1 : trackPos[1]) ? patternPos[0] > 0 ? trackPos[0] + 1 : trackPos[0] : patternPos[1] > 0 ? trackPos[1] + 1 : trackPos[1] : patternPos[2] > 0 ? trackPos[2] + 1 : trackPos[2]) + 1;
+		if (pos <= 256)
+			ASAPInfo_AddSong(self, playerCalls);
+	}
+	while (pos < 256);
+	return TRUE;
 }
 
 static int ASAPInfo_ParseHex(unsigned char const *module, int moduleIndex)
@@ -4343,6 +4541,14 @@ static cibool ASAPWriter_WriteExecutable(ByteWriter w, int *initAndPlayer, ASAPI
 		ASAPWriter_WriteWord(w, 2048);
 		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
 		break;
+	case ASAPModuleType_FC:
+		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, player, player + 3);
+		ASAPWriter_WriteWord(w, 65535);
+		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte + 1 - player + 6);
+		ASAPWriter_WriteWord(w, info->music);
+		ASAPWriter_WriteWord(w, info->music + moduleLen - 1);
+		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+		break;
 	}
 	return TRUE;
 }
@@ -4484,6 +4690,9 @@ static cibool ASAPWriter_WriteNative(ByteWriter w, ASAPInfo const *info, unsigne
 		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 262, 256);
 		ASAPWriter_WriteRelocatedBytes(w, diff, module, 134, 774, 128, 8);
 		ASAPWriter_WriteBytes(w, module, 902, moduleLen);
+		break;
+	case ASAPModuleType_FC:
+		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
 		break;
 	default:
 		return FALSE;

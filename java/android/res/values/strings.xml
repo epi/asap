@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="app_name">ASAP</string>
-	<string name="app_description">ASAP is a player of 8-bit Atari music. It emulates the POKEY sound chip and the 6502 processor. ASAP supports the following file formats: SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2.</string>
+	<string name="app_description">ASAP is a player of 8-bit Atari music. It emulates the POKEY sound chip and the 6502 processor. ASAP supports the following file formats: SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.</string>
 	<string name="play_in_asap">Play in ASAP</string>
 	<string name="access_denied">Access denied</string>
 	<string name="playing_title">ASAP - Playing</string>
@@ -12,5 +12,5 @@
 	<string name="song_format">Song %d of %d</string>
 	<string name="menu_about">About</string>
 	<string name="about_title">About ASAP 3.0.1</string>
-	<string name="about_message">Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\n\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.</string>
+	<string name="about_message">Another Slight Atari Player (C) 2005-2011 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\nFC player (C) 2011 Jerzy Kut\n\nThis program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.</string>
 </resources>

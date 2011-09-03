@@ -128,7 +128,8 @@ static const char * const exts[] = {
 	"rmt", "Raster Music Tracker (*.rmt)",
 	"tmc", "Theta Music Composer 1.x (*.tmc)",
 	"tm8", "Theta Music Composer 1.x (*.tm8)",
-	"tm2", "Theta Music Composer 2.x (*.tm2)"
+	"tm2", "Theta Music Composer 2.x (*.tm2)",
+	"fc", "Future Composer (*.fc)"
 };
 #define N_EXTS (sizeof(exts) / sizeof(exts[0]) / 2)
 

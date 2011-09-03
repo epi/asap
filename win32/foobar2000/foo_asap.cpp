@@ -440,7 +440,8 @@ static const char * const names_and_masks[][2] = {
 	{ "Music ProTracker", "*.MPT;*.MPD" },
 	{ "Raster Music Tracker", "*.RMT" },
 	{ "Theta Music Composer 1.x", "*.TMC;*.TM8" },
-	{ "Theta Music Composer 2.x", "*.TM2" }
+	{ "Theta Music Composer 2.x", "*.TM2" },
+	{ "Future Composer", "*.FC" }
 };
 
 #define N_FILE_TYPES (sizeof(names_and_masks) / sizeof(names_and_masks[0]))

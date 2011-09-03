@@ -210,7 +210,7 @@ __declspec(dllexport) XMPIN *WINAPI XMPIN_GetInterface(DWORD face, InterfaceProc
 	static XMPIN xmpin = {
 		0,
 		"ASAP",
-		"ASAP\0sap/cmc/cm3/cmr/cms/dmc/dlt/mpt/mpd/rmt/tmc/tm8/tm2",
+		"ASAP\0sap/cmc/cm3/cmr/cms/dmc/dlt/mpt/mpd/rmt/tmc/tm8/tm2/fc",
 		ASAP_About,
 		ASAP_Config,
 		ASAP_CheckFile,
