@@ -133,7 +133,7 @@ function selectFile()
 		new air.FileFilter("Music ProTracker (*.mpt;*.mpd)", "*.mpt;*.mpd"),
 		new air.FileFilter("Raster Music Tracker (*.rmt)", "*.rmt"),
 		new air.FileFilter("Theta Music Composer 1.x (*.tmc;*.tm8)", "*.tmc;*.tm8"),
-		new air.FileFilter("Theta Music Composer 2.x (*.tm2)", "*.tm2")
+		new air.FileFilter("Theta Music Composer 2.x (*.tm2)", "*.tm2"),
 		new air.FileFilter("Future Composer (*.fc)", "*.fc")
 	]);
 }
