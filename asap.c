@@ -85,6 +85,7 @@ struct ASAPInfo {
 	ASAPModuleType type;
 };
 static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls);
+static int ASAPInfo_AfterFF(unsigned char const *module, int moduleLen, int currentOffset);
 static int ASAPInfo_CheckDate(ASAPInfo const *self);
 static cibool ASAPInfo_CheckTwoDateDigits(ASAPInfo const *self, int i);
 static cibool ASAPInfo_CheckValidChar(int c);
@@ -97,6 +98,7 @@ static int ASAPInfo_GetWord(unsigned char const *array, int i);
 static cibool ASAPInfo_HasStringAt(unsigned char const *module, int moduleIndex, const char *s);
 static cibool ASAPInfo_IsDltPatternEnd(unsigned char const *module, int pos, int i);
 static cibool ASAPInfo_IsDltTrackEmpty(unsigned char const *module, int pos);
+static cibool ASAPInfo_IsFcSongEnd(unsigned char const *module, int const *trackPos);
 static cibool ASAPInfo_IsOurPackedExt(int ext);
 static cibool ASAPInfo_IsValidChar(int c);
 static cibool ASAPInfo_ParseCmc(ASAPInfo *self, unsigned char const *module, int moduleLen, ASAPModuleType type);
@@ -2506,6 +2508,15 @@ static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls)
 	self->durations[self->songs++] = (int) ((double) (playerCalls * self->fastplay) * 38000 / 591149);
 }
 
+static int ASAPInfo_AfterFF(unsigned char const *module, int moduleLen, int currentOffset)
+{
+	while (currentOffset < moduleLen) {
+		if (module[currentOffset++] == 255)
+			return currentOffset;
+	}
+	return -1;
+}
+
 static int ASAPInfo_CheckDate(ASAPInfo const *self)
 {
 	int n = strlen(self->date);
@@ -2591,9 +2602,7 @@ int ASAPInfo_GetDuration(ASAPInfo const *self, int song)
 
 const char *ASAPInfo_GetExtDescription(const char *ext)
 {
-	if (strlen(ext) != 3)
-		return NULL;
-	switch ((ext[0] + (ext[1] << 8) + (ext[2] << 16)) | 2105376) {
+	switch (strlen(ext) >> 1 == 1 ? (ext[0] + (ext[1] << 8) + (strlen(ext) == 3 ? ext[2] << 16 : 0)) | 2105376 : 0) {
 	case 7364979:
 		return "Slight Atari Player";
 	case 6516067:
@@ -2665,7 +2674,7 @@ const char *ASAPInfo_GetOriginalModuleExt(ASAPInfo const *self, unsigned char co
 			return "tmc";
 		if ((self->init == 4224 && self->player == 1283) || (self->init == 4992 && self->player == 2051))
 			return "tm2";
-		if (self->init == 1024 && self->player == 1283)
+		if (self->init == 1024 && self->player == 1027)
 			return "fc";
 		return NULL;
 	case ASAPModuleType_SAP_C:
@@ -2904,6 +2913,24 @@ static cibool ASAPInfo_IsDltTrackEmpty(unsigned char const *module, int pos)
 	return module[8198 + pos] >= 67 && module[8454 + pos] >= 64 && module[8710 + pos] >= 64 && module[8966 + pos] >= 64;
 }
 
+static cibool ASAPInfo_IsFcSongEnd(unsigned char const *module, int const *trackPos)
+{
+	int n;
+	for (n = 0; n < 3; n++) {
+		if (trackPos[n] >= 256)
+			return TRUE;
+		switch (module[3 + (n << 8) + trackPos[n]]) {
+		case 254:
+			return TRUE;
+		case 255:
+			break;
+		default:
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 cibool ASAPInfo_IsNtsc(ASAPInfo const *self)
 {
 	return self->ntsc;
@@ -2911,7 +2938,7 @@ cibool ASAPInfo_IsNtsc(ASAPInfo const *self)
 
 cibool ASAPInfo_IsOurExt(const char *ext)
 {
-	return strlen(ext) == 3 && ASAPInfo_IsOurPackedExt((ext[0] + (ext[1] << 8) + (ext[2] << 16)) | 2105376);
+	return ASAPInfo_IsOurPackedExt(strlen(ext) >> 1 == 1 ? (ext[0] + (ext[1] << 8) + (strlen(ext) == 3 ? ext[2] << 16 : 0)) | 2105376 : 0);
 }
 
 cibool ASAPInfo_IsOurFile(const char *filename)
@@ -3267,14 +3294,9 @@ int ASAPInfo_ParseDuration(const char *s)
 
 static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int moduleLen)
 {
-	int i;
 	int patternOffsets[64];
 	int currentOffset;
-	int n;
-	int trackPos[3];
-	int patternDelay[3];
-	int noteDuration[3];
-	int patternPos[3];
+	int i;
 	int pos;
 	if (moduleLen < 899)
 		return FALSE;
@@ -3282,55 +3304,47 @@ static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int 
 	if (module[0] != 38 || module[1] != 35)
 		return FALSE;
 	self->player = 1024;
-	self->init = self->player + 3;
-	if (!ASAPInfo_SetMusicAddress(self, 2560))
-		return FALSE;
+	self->music = 2560;
 	self->songs = 0;
+	self->headerLen = -1;
 	currentOffset = 899;
 	for (i = 0; i < 64; i++) {
 		patternOffsets[i] = currentOffset;
-		do {
-			if (currentOffset >= moduleLen)
-				return FALSE;
-		}
-		while (module[currentOffset++] != 255);
+		if ((currentOffset = ASAPInfo_AfterFF(module, moduleLen, currentOffset)) == -1)
+			return FALSE;
 	}
-	for (i = 0; i < 32; i++) {
-		do {
-			if (currentOffset >= moduleLen)
-				return FALSE;
-		}
-		while (module[currentOffset++] != 255);
-	}
-	pos = 0;
-	do {
-		int tempo;
+	for (i = 0; i < 32; i++)
+		if ((currentOffset = ASAPInfo_AfterFF(module, moduleLen, currentOffset)) == -1)
+			return FALSE;
+	for (pos = 0; pos < 256;) {
+		int trackPos[3];
+		int n;
+		int patternDelay[3];
+		int noteDuration[3];
+		int patternPos[3];
 		int playerCalls;
-		self->loops[self->songs] = TRUE;
-		tempo = module[2];
-		for (n = 0; n < 3; n++) {
+		for (n = 0; n < 3; n++)
 			trackPos[n] = pos;
-			noteDuration[n] = 0;
-			patternDelay[n] = 0;
-			patternPos[n] = 0;
-		}
+		memset(patternDelay, 0, sizeof(patternDelay));
+		memset(noteDuration, 0, sizeof(noteDuration));
+		memset(patternPos, 0, sizeof(patternPos));
 		playerCalls = 0;
-		while (module[3 + trackPos[0]] != 254 && module[259 + trackPos[1]] != 254 && module[515 + trackPos[2]] != 254 && (module[3 + trackPos[0]] != 255 || module[259 + trackPos[1]] != 255 || module[515 + trackPos[2]] != 255) && trackPos[0] < 256 && trackPos[1] < 256 && trackPos[2] < 256) {
+		self->loops[self->songs] = TRUE;
+		while (!ASAPInfo_IsFcSongEnd(module, trackPos)) {
+			int n;
 			for (n = 0; n < 3; n++) {
-				int trackCmd = module[3 + n * 256 + trackPos[n]];
+				int trackCmd = module[3 + (n << 8) + trackPos[n]];
 				if (trackCmd != 255 && patternDelay[n]-- <= 0) {
 					while (trackPos[n] < 256) {
-						trackCmd = module[3 + n * 256 + trackPos[n]];
-						if (trackCmd >= 0 && trackCmd < 64) {
-							int patternCmd = module[patternOffsets[module[3 + n * 256 + trackPos[n]]] + patternPos[n]];
-							patternPos[n]++;
+						trackCmd = module[3 + (n << 8) + trackPos[n]];
+						if (trackCmd < 64) {
+							int patternCmd = module[patternOffsets[trackCmd] + patternPos[n]++];
 							if (patternCmd < 64) {
 								patternDelay[n] = noteDuration[n];
 								break;
 							}
-							else if (patternCmd >= 64 && patternCmd < 96) {
-								noteDuration[n] = patternCmd & 31;
-							}
+							else if (patternCmd < 96)
+								noteDuration[n] = patternCmd - 64;
 							else if (patternCmd == 255) {
 								patternDelay[n] = 0;
 								noteDuration[n] = 0;
@@ -3338,30 +3352,35 @@ static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int 
 								trackPos[n]++;
 							}
 						}
-						else if (trackCmd == 64) {
+						else if (trackCmd == 64)
 							trackPos[n] += 2;
-						}
 						else if (trackCmd == 254) {
 							self->loops[self->songs] = FALSE;
 							break;
 						}
-						else if (trackCmd == 255) {
+						else if (trackCmd == 255)
 							break;
-						}
-						else {
+						else
 							trackPos[n]++;
-						}
 					}
 				}
 			}
-			if (module[3 + trackPos[0]] != 254 && module[259 + trackPos[1]] != 254 && module[515 + trackPos[2]] != 254 && (module[3 + trackPos[0]] != 255 || module[259 + trackPos[1]] != 255 || module[515 + trackPos[2]] != 255) && trackPos[0] < 256 && trackPos[1] < 256 && trackPos[2] < 256)
-				playerCalls += tempo;
+			if (ASAPInfo_IsFcSongEnd(module, trackPos))
+				break;
+			playerCalls += module[2];
 		}
-		pos = (((patternPos[0] > 0 ? trackPos[0] + 1 : trackPos[0]) > (patternPos[1] > 0 ? trackPos[1] + 1 : trackPos[1]) ? patternPos[0] > 0 ? trackPos[0] + 1 : trackPos[0] : patternPos[1] > 0 ? trackPos[1] + 1 : trackPos[1]) > (patternPos[2] > 0 ? trackPos[2] + 1 : trackPos[2]) ? (patternPos[0] > 0 ? trackPos[0] + 1 : trackPos[0]) > (patternPos[1] > 0 ? trackPos[1] + 1 : trackPos[1]) ? patternPos[0] > 0 ? trackPos[0] + 1 : trackPos[0] : patternPos[1] > 0 ? trackPos[1] + 1 : trackPos[1] : patternPos[2] > 0 ? trackPos[2] + 1 : trackPos[2]) + 1;
+		pos = -1;
+		for (n = 0; n < 3; n++) {
+			int nxtrkpos = trackPos[n];
+			if (patternPos[n] > 0)
+				nxtrkpos++;
+			if (pos < nxtrkpos)
+				pos = nxtrkpos;
+		}
+		pos++;
 		if (pos <= 256)
 			ASAPInfo_AddSong(self, playerCalls);
 	}
-	while (pos < 256);
 	return TRUE;
 }
 
@@ -4544,10 +4563,10 @@ static cibool ASAPWriter_WriteExecutable(ByteWriter w, int *initAndPlayer, ASAPI
 	case ASAPModuleType_FC:
 		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, player, player + 3);
 		ASAPWriter_WriteWord(w, 65535);
-		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte + 1 - player + 6);
 		ASAPWriter_WriteWord(w, info->music);
 		ASAPWriter_WriteWord(w, info->music + moduleLen - 1);
 		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
 		break;
 	}
 	return TRUE;
@@ -4617,7 +4636,10 @@ static cibool ASAPWriter_WriteNative(ByteWriter w, ASAPInfo const *info, unsigne
 		blockLen = ASAPInfo_GetWord(module, info->headerLen + 4) - ASAPInfo_GetWord(module, info->headerLen + 2) + 7;
 		if (blockLen < 7 || info->headerLen + blockLen >= moduleLen)
 			return FALSE;
-		ASAPWriter_WriteBytes(w, module, info->headerLen, info->headerLen + blockLen);
+		if (info->init == 1024 && info->player == 1027)
+			ASAPWriter_WriteBytes(w, module, info->headerLen + 6, info->headerLen + blockLen);
+		else
+			ASAPWriter_WriteBytes(w, module, info->headerLen, info->headerLen + blockLen);
 		break;
 	case ASAPModuleType_CMC:
 	case ASAPModuleType_CM3:
