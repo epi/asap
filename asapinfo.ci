@@ -1167,6 +1167,7 @@ public class ASAPInfo
 		Init = Player+3;
 		SetMusicAddress(0xa00);
 		Songs = 0;
+		HeaderLen = -1;
 		
 		int i;
 		int[0x40] patternOffsets;

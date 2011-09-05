@@ -160,16 +160,19 @@ static void updateTech(void)
 		p = appendAddress(p, "PLAYER %04X\r\n", ASAPInfo_GetPlayerAddress(edited_info));
 		p = appendAddress(p, "COVOX %04X\r\n", ASAPInfo_GetCovoxAddress(edited_info));
 	}
-	for (i = ASAPInfo_GetSapHeaderLength(edited_info); p < buf + sizeof(buf) - 17 && i + 4 < saved_module_len; ) {
-		int start = saved_module[i] + (saved_module[i + 1] << 8);
-		int end;
-		if (start == 0xffff) {
-			i += 2;
-			start = saved_module[i] + (saved_module[i + 1] << 8);
+	i = ASAPInfo_GetSapHeaderLength(edited_info);
+	if (i >= 0) {
+		while (p < buf + sizeof(buf) - 17 && i + 4 < saved_module_len) {
+			int start = saved_module[i] + (saved_module[i + 1] << 8);
+			int end;
+			if (start == 0xffff) {
+				i += 2;
+				start = saved_module[i] + (saved_module[i + 1] << 8);
+			}
+			end = saved_module[i + 2] + (saved_module[i + 3] << 8);
+			p += sprintf(p, "LOAD %04X-%04X\r\n", start, end);
+			i += 5 + end - start;
 		}
-		end = saved_module[i + 2] + (saved_module[i + 3] << 8);
-		p += sprintf(p, "LOAD %04X-%04X\r\n", start, end);
-		i += 5 + end - start;
 	}
 	setChomped(IDC_TECHINFO, buf);
 }
