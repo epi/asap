@@ -1492,7 +1492,7 @@ public class ASAPInfo
 		HeaderLen = moduleIndex;
 	}
 
-	macro ASAP_EXT(s) ( s[0] + (s[1] << 8) + (s[2] << 16) | 0x202020 )
+	macro ASAP_EXT(s) ( s.Length >> 1 == 1 ? s[0] + (s[1] << 8) + (s.Length == 3 ? s[2] << 16 : 0) | 0x202020 : 0 )
 
 	static int GetPackedExt(string filename)
 	{
@@ -1525,7 +1525,7 @@ public class ASAPInfo
 		case ASAP_EXT("TMC"):
 		case ASAP_EXT("TM8"):
 		case ASAP_EXT("TM2"):
-		case ASAP_EXT("FC "):
+		case ASAP_EXT("FC"):
 #if EXPERIMENTAL_XEX
 		case ASAP_EXT("XEX"):
 #endif
@@ -1551,7 +1551,7 @@ public class ASAPInfo
 		/// Filename extension without the leading dot.
 		string ext)
 	{
-		return ext.Length == 3 && IsOurPackedExt(ASAP_EXT(ext));
+		return IsOurPackedExt(ASAP_EXT(ext));
 	}
 
 	/// Loads file information.
@@ -1640,7 +1640,7 @@ public class ASAPInfo
 		case ASAP_EXT("TM2"):
 			ParseTm2(module, moduleLen);
 			return;
-		case ASAP_EXT("FC "):
+		case ASAP_EXT("FC"):
 			ParseFc(module, moduleLen);
 			return;
 #if EXPERIMENTAL_XEX
@@ -1663,8 +1663,6 @@ public class ASAPInfo
 		/// Filename extension without the leading dot.
 		string ext)
 	{
-		if (ext.Length != 3)
-			throw "Unknown extension";
 		switch (ASAP_EXT(ext)) {
 		case ASAP_EXT("SAP"): return "Slight Atari Player";
 		case ASAP_EXT("CMC"): return "Chaos Music Composer";
@@ -1679,7 +1677,7 @@ public class ASAPInfo
 		case ASAP_EXT("TMC"):
 		case ASAP_EXT("TM8"): return "Theta Music Composer 1.x";
 		case ASAP_EXT("TM2"): return "Theta Music Composer 2.x";
-		case ASAP_EXT("FC "): return "Future Composer";
+		case ASAP_EXT("FC"): return "Future Composer";
 		case ASAP_EXT("XEX"): return "Atari 8-bit executable";
 		default: throw "Unknown extension";
 		}
