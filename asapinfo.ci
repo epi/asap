@@ -1718,7 +1718,7 @@ public class ASAPInfo
 				return "tmc";
 			if ((Init == 0x1080 && Player == 0x503) || (Init == 0x1380 && Player == 0x803))
 				return "tm2";
-			if (Init == 0x400 && Player == 0x503)
+			if (Init == 0x400 && Player == 0x403)
 				return "fc";
 			return null;
 		case ASAPModuleType.SapC:

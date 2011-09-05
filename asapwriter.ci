@@ -425,12 +425,12 @@ public class ASAPWriter
 			WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
 			break;
 		case ASAPModuleType.Fc:
-			WriteExecutableHeader(w, initAndPlayer, info, 'B', player, player+3);
+			WriteExecutableHeader(w, initAndPlayer, info, 'B', player, player + 3);
 			WriteWord(w, 0xffff);
-			WriteBytes(w, playerRoutine, 2, playerLastByte+1-player+6);
 			WriteWord(w, info.Music);
-			WriteWord(w, info.Music+moduleLen-1);
+			WriteWord(w, info.Music + moduleLen - 1);
 			WriteBytes(w, module, 0, moduleLen);
+			WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
 			break;
 		}
 	}
@@ -491,7 +491,10 @@ public class ASAPWriter
 			int blockLen = ASAPInfo.GetWord(module, info.HeaderLen + 4) - ASAPInfo.GetWord(module, info.HeaderLen + 2) + 7;
 			if (blockLen < 7 || info.HeaderLen + blockLen >= moduleLen)
 				throw "Cannot extract module from SAP";
-			WriteBytes(w, module, info.HeaderLen, info.HeaderLen + blockLen);
+			if (info.Init == 0x400 && info.Player == 0x403)
+				WriteBytes(w, module, info.HeaderLen + 6, info.HeaderLen + blockLen); // SAP -> FC
+			else
+				WriteBytes(w, module, info.HeaderLen, info.HeaderLen + blockLen);
 			break;
 		case ASAPModuleType.Cmc:
 		case ASAPModuleType.Cm3:
