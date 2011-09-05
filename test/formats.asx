@@ -83,3 +83,13 @@ tm2
 :x	dta	pattern7,transp7,...pattern0,transp0,patlen
 ; patlen=0 = stop, patlen>=$80 = jump transp0
 ; instruments&patterns
+
+fc ; no DOS header
+	dta	'F'-' ','C'-' '
+	dta	tempo
+:256	dta	track1
+:256	dta	track2
+:256	dta	track3
+:32	dta	env,audc,depth,effect	; instruments
+:64*x	dta	0	; patterns
+:32*x	dta	0	; envelopes
