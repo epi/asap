@@ -41,7 +41,7 @@ release/asap-$(VERSION)-flash.zip: release/COPYING.txt release/README_Flash.html
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-java.zip: release/COPYING.txt release/README_Java.html \
-	java/asap2wav.jar java/asap_applet.jar java/j2me/asap_midlet.jad java/j2me/asap_midlet.jar
+	java/asap2wav.jar java/asap_applet.jar java/j2me/asap_midlet.jad java/j2me/asap_midlet.jar java/asap.jar
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-win32.zip: release/COPYING.txt release/README_Windows.html \
