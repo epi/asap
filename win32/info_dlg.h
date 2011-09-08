@@ -44,9 +44,12 @@
 #define IDC_PROGRESS   501
 
 void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext);
-BOOL loadModule(LPCTSTR filename, byte *module, int *module_len);
+BOOL loadModule(LPCTSTR filename, BYTE *module, int *module_len);
 
 extern HWND infoDialog;
 void showInfoDialog(HINSTANCE hInstance, HWND hwndParent, LPCTSTR filename, int song);
 void updateInfoDialog(LPCTSTR filename, int song);
 void setPlayingSong(LPCTSTR filename, int song);
+#ifdef XMPLAY
+const ASTIL *getPlayingASTIL(void);
+#endif

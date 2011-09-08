@@ -24,7 +24,7 @@
 						<th>Platform</th>
 						<th>User interface</th>
 						<th>First appeared in&#160;ASAP</th>
-						<th>Development status</th>
+						<th>Develop&#173;ment status</th>
 						<th>Output</th>
 						<th>Supports subsongs?</th>
 						<th>Shows file information?</th>
@@ -32,7 +32,8 @@
 						<th>Converts to and from SAP?</th>
 						<th>Configurable playback time?</th>
 						<th>Mute POKEY channels?</th>
-						<th>Programming language</th>
+						<th>Shows STIL?</th>
+						<th>Program&#173;ming language</th>
 						<th>Related website</th>
 					</tr>
 					<xsl:apply-templates />
@@ -68,7 +69,7 @@
 		</td>
 	</xsl:template>
 
-	<xsl:template match="subsongs|file-info|edit-info|convert-sap|config-time|mute-pokey">
+	<xsl:template match="subsongs|file-info|edit-info|convert-sap|config-time|mute-pokey|stil">
 		<td>
 			<xsl:attribute name="class">
 				<xsl:choose>

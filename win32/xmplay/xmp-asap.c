@@ -26,6 +26,7 @@
 #include "xmpin.h"
 
 #include "asap.h"
+#include "astil.h"
 #include "info_dlg.h"
 #include "settings_dlg.h"
 
@@ -161,14 +162,81 @@ static void WINAPI ASAP_GetInfoText(char *format, char *length)
 
 static void WINAPI ASAP_GetGeneralInfo(char *buf)
 {
-	const char *date = ASAPInfo_GetDate(ASAP_GetInfo(asap));
-	if (date[0] != '\0')
-		buf += sprintf(buf, "Date\t%s\r", date);
+	const ASAPInfo *info = ASAP_GetInfo(asap);
+	const char *s = ASAPInfo_GetDate(info);
+	if (s[0] != '\0')
+		buf += sprintf(buf, "Date\t%s\r", s);
+	s = ASAPInfo_GetOriginalModuleExt(info, module, module_len);
+	if (s != NULL)
+		buf += sprintf(buf, "Composed in\t%s\r", ASAPInfo_GetExtDescription(s));
 	*buf = '\0';
+}
+
+static char *appendStilString(char *p, const char *s)
+{
+	for (;;) {
+		char c = *s++;
+		switch (c) {
+		case '\0':
+			return p;
+		case '\n':
+			*p++ = '\r';
+			*p++ = '\n';
+			*p++ = '\t';
+			break;
+		default:
+			*p++ = c;
+			break;
+		}
+	}
+}
+
+static char *appendStil(char *p, const char *prefix, const char *value)
+{
+	if (value[0] != '\0') {
+		p = appendStilString(p, prefix);
+		*p++ = '\t';
+		p = appendStilString(p, value);
+		*p++ = '\r';
+		*p++ = '\n';
+	}
+	return p;
 }
 
 static void WINAPI ASAP_GetMessage(char *buf)
 {
+	const ASTIL *astil = getPlayingASTIL();
+	char *p = buf;
+	int i;
+	p = appendStil(p, "STIL file", ASTIL_GetStilFilename(astil));
+	p = appendStil(p, "Title", ASTIL_GetTitle(astil));
+	p = appendStil(p, "Author", ASTIL_GetAuthor(astil));
+	p = appendStil(p, "Directory comment", ASTIL_GetDirectoryComment(astil));
+	p = appendStil(p, "File comment", ASTIL_GetFileComment(astil));
+	p = appendStil(p, "Song comment", ASTIL_GetSongComment(astil));
+	for (i = 0; ; i++) {
+		const ASTILCover *cover = ASTIL_GetCover(astil, i);
+		int startSeconds;
+		const char *s;
+		if (cover == NULL)
+			break;
+		startSeconds = ASTILCover_GetStartSeconds(cover);
+		if (startSeconds >= 0) {
+			int endSeconds = ASTILCover_GetEndSeconds(cover);
+			if (endSeconds >= 0)
+				p += sprintf(p, "At %d:%02d-%d:%02d c", startSeconds / 60, startSeconds % 60, endSeconds / 60, endSeconds % 60);
+			else
+				p += sprintf(p, "At %d:%02d c", startSeconds / 60, startSeconds % 60);
+		}
+		else
+			*p++ = 'C';
+		s = ASTILCover_GetTitleAndSource(cover);
+		p = appendStil(p, "overs", s[0] != '\0' ? s : "<?>");
+		p = appendStil(p, "by", ASTILCover_GetArtist(cover));
+		p = appendStil(p, "Comment", ASTILCover_GetComment(cover));
+	}
+	if (p > buf)
+		p[-2] = '\0'; /* chomp trailing \r\n */
 }
 
 static double WINAPI ASAP_SetPosition(DWORD pos)
@@ -210,7 +278,7 @@ static void WINAPI ASAP_GetSamples(char *buf)
 			buf += sprintf(buf, "%03d\t%s\r\n", i, s);
 			s = ASAPInfo_GetInstrumentName(info, module, module_len, ++i);
 		} while (s != NULL);
-		buf[-2] = '\0';
+		buf[-2] = '\0'; /* chomp trailing \r\n */
 	}
 }
 

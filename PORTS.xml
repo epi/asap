@@ -13,6 +13,7 @@
 		<convert-sap>yes</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>yes</stil>
 		<lang>C</lang>
 	</port>
 	<port name="Winamp plugin">
@@ -28,6 +29,7 @@
 		<convert-sap>yes</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
+		<stil>yes</stil>
 		<lang>C</lang>
 		<a href="http://www.winamp.com/">Winamp</a>
 	</port>
@@ -44,6 +46,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://xmms.org/">XMMS</a>
 	</port>
@@ -60,6 +63,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
 		<lang>C, C++</lang>
 		<a href="http://foobar2000.org/">foobar2000</a>
 	</port>
@@ -76,6 +80,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://hp.vector.co.jp/authors/VA032810/">GSPlayer</a>
 	</port>
@@ -92,6 +97,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
 		<lang>Java</lang>
 	</port>
 	<port name="Java applet">
@@ -107,6 +113,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>Java</lang>
 		<a href="http://asap.sourceforge.net/applet.html">online demo</a>
 	</port>
@@ -123,6 +130,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>Java</lang>
 	</port>
 	<port name="MOC plugin">
@@ -138,6 +146,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://moc.daper.net/">MOC</a>
 	</port>
@@ -154,6 +163,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C, C++</lang>
 		<a href="http://www.microsoft.com/windows/windowsmedia/player/">Windows Media Player</a>
 	</port>
@@ -170,6 +180,7 @@
 		<convert-sap>yes</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
+		<stil>yes</stil>
 		<lang>C, C++</lang>
 		<a href="http://koti.welho.com/hylinen/apollo/">Apollo</a>
 	</port>
@@ -186,6 +197,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
 		<lang>C#</lang>
 	</port>
 	<port name="XBMC plugin">
@@ -201,6 +213,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://xbmc.org/">XBMC</a>
 	</port>
@@ -217,6 +230,7 @@
 		<convert-sap>N/A</convert-sap>
 		<config-time>N/A</config-time>
 		<mute-pokey>N/A</mute-pokey>
+		<stil>N/A</stil>
 		<lang>C</lang>
 		<a href="http://raster.infos.cz/atari/rmt/rmt.htm">Raster Music Tracker</a>
 	</port>
@@ -233,6 +247,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
 		<lang>JavaScript</lang>
 	</port>
 	<port name="ASAP2WAV (browser JavaScript)">
@@ -248,6 +263,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>JavaScript</lang>
 	</port>
 	<port name="Flash player">
@@ -263,6 +279,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>ActionScript 3</lang>
 		<a href="http://asap.sourceforge.net/flash.html">online demo</a>
 	</port>
@@ -279,6 +296,7 @@
 		<convert-sap>yes, multi-file</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
 		<lang>C</lang>
 	</port>
 	<port name="XMPlay plugin">
@@ -294,6 +312,7 @@
 		<convert-sap>yes</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
+		<stil>yes</stil>
 		<lang>C</lang>
 		<a href="http://www.un4seen.com/xmplay.html">XMPlay</a>
 	</port>
@@ -310,6 +329,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://www.un4seen.com/bass.html">BASS</a>
 	</port>
@@ -326,6 +346,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>N/A</config-time>
 		<mute-pokey>N/A</mute-pokey>
+		<stil>no</stil>
 		<lang>C, C++</lang>
 	</port>
 	<port name="asapplay (C#)">
@@ -341,6 +362,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C#</lang>
 	</port>
 	<port name="SilverASAP">
@@ -356,6 +378,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C#</lang>
 		<a href="http://asap.sourceforge.net/silverlight.html">online demo</a>
 	</port>
@@ -372,6 +395,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://www.libsdl.org/">SDL</a>
 	</port>
@@ -388,6 +412,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://audacious-media-player.org/">Audacious</a>
 	</port>
@@ -404,6 +429,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C</lang>
 	</port>
 	<port name="AndroidASAP">
@@ -419,6 +445,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>Java</lang>
 	</port>
 	<port name="AIRASAP">
@@ -434,6 +461,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>JavaScript</lang>
 	</port>
 	<port name="ASAP2WAV (D)">
@@ -449,6 +477,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
 		<lang>D</lang>
 	</port>
 	<port name="asapplay (D)">
@@ -464,6 +493,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>D</lang>
 	</port>
 	<port name="GStreamer plugin">
@@ -479,6 +509,7 @@
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://gstreamer.freedesktop.org/">GStreamer</a>
 	</port>

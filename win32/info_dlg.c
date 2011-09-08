@@ -50,7 +50,7 @@ void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext)
 	_tcscpy(dest + filenameChars, ext);
 }
 
-BOOL loadModule(LPCTSTR filename, byte *module, int *module_len)
+BOOL loadModule(LPCTSTR filename, BYTE *module, int *module_len)
 {
 	HANDLE fh;
 	BOOL ok;
@@ -629,13 +629,13 @@ void updateInfoDialog(LPCTSTR filename, int song)
 	int i;
 	if (infoDialog == NULL)
 		return;
-	if (edited_info == NULL) {
+	if (edited_info == NULL)
 		edited_info = ASAPInfo_New();
+	if (astil == NULL)
 		astil = ASTIL_New();
-		if (edited_info == NULL || astil == NULL) {
-			closeInfoDialog();
-			return;
-		}
+	if (edited_info == NULL || astil == NULL) {
+		closeInfoDialog();
+		return;
 	}
 	else if (infoChanged())
 		return;
@@ -674,6 +674,14 @@ void setPlayingSong(LPCTSTR filename, int song)
 	playing_song = song;
 	if (playing_info)
 		updateInfoDialog(playing_filename, song);
+}
+
+const ASTIL *getPlayingASTIL(void)
+{
+	if (astil == NULL)
+		astil = ASTIL_New();
+	ASTIL_Load(astil, playing_filename, playing_song);
+	return astil;
 }
 
 #endif /* _UNICODE */
