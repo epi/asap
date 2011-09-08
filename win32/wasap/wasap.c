@@ -76,7 +76,7 @@ static void WaveOut_Write(LPWAVEHDR pwh)
 	}
 }
 
-static void CALLBACK WaveOut_Proc(HWAVEOUT hwo2, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+static void CALLBACK WaveOut_Proc(HWAVEOUT hwo2, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
 	if (uMsg == WOM_DONE)
 		WaveOut_Write((LPWAVEHDR) dwParam1);
@@ -108,7 +108,7 @@ static int WaveOut_Open(int channels)
 	wfx.nAvgBytesPerSec = ASAP_SAMPLE_RATE * wfx.nBlockAlign;
 	wfx.wBitsPerSample = BITS_PER_SAMPLE;
 	wfx.cbSize = 0;
-	if (waveOutOpen(&hwo, WAVE_MAPPER, &wfx, (DWORD) WaveOut_Proc, 0, CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
+	if (waveOutOpen(&hwo, WAVE_MAPPER, &wfx, (DWORD_PTR) WaveOut_Proc, 0, CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
 		return FALSE;
 	wh[1].dwBufferLength = wh[0].dwBufferLength = BUFFERED_BLOCKS * wfx.nBlockAlign;
 	if (waveOutPrepareHeader(hwo, &wh[0], sizeof(wh[0])) != MMSYSERR_NOERROR

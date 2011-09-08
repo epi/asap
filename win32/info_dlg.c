@@ -25,7 +25,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <tchar.h>
+#ifndef _WIN32_IE
 #define _WIN32_IE 0x400
+#endif
 #include <commctrl.h>
 
 #ifndef MCM_SETCURRENTVIEW
@@ -383,8 +385,8 @@ static void toggleCalendar(HWND hDlg)
 				st.wDay = 1;
 				view = MCMV_DECADE;
 			}
-			MonthCal_SetCurSel(monthcal, &st);
-			MonthCal_SetCurrentView(monthcal, view);
+			(void) MonthCal_SetCurSel(monthcal, &st);
+			(void) MonthCal_SetCurrentView(monthcal, view);
 		}
 		SetFocus(monthcal);
 	}

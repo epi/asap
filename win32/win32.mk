@@ -119,6 +119,14 @@ win32/wince/wasap-res.o: $(call src,win32/gui.rc asap.h win32/info_dlg.h win32/w
 	$(WINCE_WINDRES) -DWASAP
 CLEAN += win32/wince/wasap-res.o
 
+win32/x64/wasap.exe: $(call src,win32/wasap/wasap.[ch] asap.[ch] astil.[ch] win32/info_dlg.[ch]) win32/x64/wasap-res.o
+	$(WIN64_CC) -Wl,-subsystem,windows -DWASAP -lcomctl32 -lcomdlg32 -lwinmm
+CLEAN += win32/x64/wasap.exe
+
+win32/x64/wasap-res.o: $(call src,win32/gui.rc asap.h win32/info_dlg.h win32/wasap/wasap.h win32/wasap/wasap.ico win32/wasap/play.ico win32/wasap/stop.ico)
+	$(WIN64_WINDRES) -DWASAP
+CLEAN += win32/x64/wasap-res.o
+
 # Apollo
 
 win32/ASAP_Apollo.dll: $(call src,win32/apollo/ASAP_Apollo.cpp asap.[ch] astil.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/apollo/InputPlugin.h) win32/apollo/ASAP_Apollo-res.o

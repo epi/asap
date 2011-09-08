@@ -63,15 +63,20 @@ IDR_TRAYMENU MENU
 }
 
 #ifndef _WIN32_WCE
+#ifdef _WIN64
+#define PROCESSOR_ARCHITECTURE  "amd64"
+#else
+#define PROCESSOR_ARCHITECTURE  "X86"
+#endif
 1 24
 {
 	"<?xml version=""1.0""?>"
 	"<assembly xmlns=""urn:schemas-microsoft-com:asm.v1"" manifestVersion=""1.0"">"
 	"<assemblyIdentity version=""" ASAPInfo_VERSION ".0"" "
-		"processorArchitecture=""X86"" name=""WASAP"" type=""win32"" />"
+		"processorArchitecture=""" PROCESSOR_ARCHITECTURE """ name=""WASAP"" type=""win32"" />"
 	"<dependency><dependentAssembly>"
 	"<assemblyIdentity type=""win32"" name=""Microsoft.Windows.Common-Controls"" "
-		"version=""6.0.0.0"" processorArchitecture=""X86"" publicKeyToken=""6595b64144ccf1df"" language=""*"" />"
+		"version=""6.0.0.0"" processorArchitecture=""" PROCESSOR_ARCHITECTURE """ publicKeyToken=""6595b64144ccf1df"" language=""*"" />"
 	"</dependentAssembly></dependency>"
 	"</assembly>"
 }
