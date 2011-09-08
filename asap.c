@@ -2642,6 +2642,20 @@ int ASAPInfo_GetInitAddress(ASAPInfo const *self)
 	return self->init;
 }
 
+const char *ASAPInfo_GetInstrumentName(ASAPInfo const *self, unsigned char const *module, int moduleLen, int i)
+{
+	int offset;
+	if (self->type != ASAPModuleType_RMT)
+		return NULL;
+	for (offset = ASAPInfo_GetWord(module, 4) - ASAPInfo_GetWord(module, 2) + 12; offset < moduleLen; offset++) {
+		if (module[offset - 1] == 0 && --i == -1) {
+			
+					return (const char *) module + offset;
+				}
+	}
+	return NULL;
+}
+
 cibool ASAPInfo_GetLoop(ASAPInfo const *self, int song)
 {
 	return self->loops[song];

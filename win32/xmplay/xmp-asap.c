@@ -37,6 +37,8 @@ static const XMPFUNC_REGISTRY *xmpfreg;
 static const XMPFUNC_FILE *xmpffile;
 static const XMPFUNC_IN *xmpfin;
 
+static BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
+static int module_len;
 ASAP *asap;
 
 static void WINAPI ASAP_ShowInfo()
@@ -126,8 +128,7 @@ static BOOL WINAPI ASAP_GetFileInfo(const char *filename, XMPFILE file, float *l
 
 static DWORD WINAPI ASAP_Open(const char *filename, XMPFILE file)
 {
-	BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
-	int module_len = xmpffile->Read(file, module, sizeof(module));
+	module_len = xmpffile->Read(file, module, sizeof(module));
 	if (!ASAP_Load(asap, filename, module, module_len))
 		return 0;
 	setPlayingSong(filename, 0);
@@ -198,6 +199,21 @@ static DWORD WINAPI ASAP_Process(float *buf, DWORD count)
 	return n;
 }
 
+static void WINAPI ASAP_GetSamples(char *buf)
+{
+	const ASAPInfo *info = ASAP_GetInfo(asap);
+	const char *s = ASAPInfo_GetInstrumentName(info, module, module_len, 0);
+	if (s != NULL) {
+		int i = 0;
+		buf += sprintf(buf, "instrument list:\r\n");
+		do {
+			buf += sprintf(buf, "%03d\t%s\r\n", i, s);
+			s = ASAPInfo_GetInstrumentName(info, module, module_len, ++i);
+		} while (s != NULL);
+		buf[-2] = '\0';
+	}
+}
+
 static DWORD WINAPI ASAP_GetSubSongs(float *length)
 {
 	const ASAPInfo *info = ASAP_GetInfo(asap);
@@ -228,7 +244,7 @@ __declspec(dllexport) XMPIN *WINAPI XMPIN_GetInterface(DWORD face, InterfaceProc
 		NULL,
 		ASAP_Process,
 		NULL,
-		NULL,
+		ASAP_GetSamples,
 		ASAP_GetSubSongs,
 		NULL,
 		NULL,

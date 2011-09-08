@@ -196,6 +196,8 @@ const char *ASAPInfo_GetExtDescription(const char *ext);
 
 int ASAPInfo_GetInitAddress(ASAPInfo const *self);
 
+const char *ASAPInfo_GetInstrumentName(ASAPInfo const *self, unsigned char const *module, int moduleLen, int i);
+
 /**
  * Returns information whether the specified song loops.
  * Returns:

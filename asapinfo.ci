@@ -370,6 +370,23 @@ public class ASAPInfo
 		return HeaderLen;
 	}
 
+#if C
+	public string GetInstrumentName(byte[] module, int moduleLen, int i)
+	{
+		if (Type != ASAPModuleType.Rmt)
+			return null;
+		for (int offset = GetWord(module, 4) - GetWord(module, 2) + 12; offset < moduleLen; offset++) {
+			// skip title and i instruments
+			if (module[offset - 1] == 0 && --i == -1) {
+				native {
+					return (const char *) module + offset;
+				}
+			}
+		}
+		return null;
+	}
+#endif
+
 	static int GetWord(byte[] array, int i)
 	{
 		return array[i] + (array[i + 1] << 8);

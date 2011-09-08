@@ -105,7 +105,7 @@ CLEAN += asap-asapscan.c asap-asapscan.h
 $(srcdir)asap.h: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx | $(srcdir)asap.c
 
 $(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx
-	$(CITO) -D FLASHPACK
+	$(CITO) -D C -D FLASHPACK
 
 # other
 
