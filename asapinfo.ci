@@ -1220,7 +1220,7 @@ public class ASAPInfo
 		for (int i = 0; i < 0x20; i++)
 			currentOffset = AfterFF(module, moduleLen, currentOffset);
 
-		for (int pos = 0; pos < 0x100; ) {
+		for (int pos = 0; pos < 0x100 && Songs < MaxSongs; ) {
 			int[3] trackPos;
 			for (int n = 0; n < 3; n++)
 				trackPos[n] = pos;
