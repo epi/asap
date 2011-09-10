@@ -430,7 +430,7 @@ static void WriteASAPValue(LPCTSTR lpSubKey, LPCTSTR value)
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, lpSubKey, 0, KEY_SET_VALUE, &hKey) != ERROR_SUCCESS)
 		return;
 	if (value != NULL)
-		RegSetValueEx(hKey, _T("ASAP"), 0, REG_SZ, (const BYTE *) value, (_tcslen(value) + 1) * sizeof(TCHAR));
+		RegSetValueEx(hKey, _T("ASAP"), 0, REG_SZ, (const BYTE *) value, ((DWORD) _tcslen(value) + 1) * sizeof(TCHAR));
 	else
 		RegDeleteValue(hKey, _T("ASAP"));
 	RegCloseKey(hKey);

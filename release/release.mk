@@ -18,7 +18,7 @@ dist: \
 	release/asap-$(VERSION)-java.zip \
 	release/asap-$(VERSION)-win32.msi \
 	release/asap-$(VERSION)-win32.zip \
-	release/asap-shellex-$(VERSION)-win64.msi \
+	release/asap-$(VERSION)-win64.msi \
 	release/asap-$(VERSION)-wince-arm.cab \
 	release/asap-$(VERSION)-wince-arm.zip \
 	srcdist

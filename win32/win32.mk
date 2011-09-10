@@ -9,6 +9,8 @@ FOOBAR2000_SDK_DIR = ../foobar2000_SDK
 WIN32_CL = $(DO)cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS)
 WIN32_LINKOPT = -link -release
 WIN32_MKLIB = $(DO)lib -nologo -ltcg -out:$@ $^
+WIN64_CL = $(DO)"C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin/x86_amd64/cl" -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS)
+WIN64_LINKOPT = -link -release -libpath:"C:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib/x64" -libpath:"C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/lib/amd64"
 
 # MinGW x64
 WIN64_CC = $(DO)x86_64-w64-mingw32-gcc $(WIN32_CARGS)
@@ -167,6 +169,14 @@ win32/wince/asap_dsf.res: $(call src,win32/gui.rc asap.h)
 	$(WINCE_WINDRES) -DDSHOW
 CLEAN += win32/wince/asap_dsf.res
 
+win32/x64/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/x64/asap_dsf.res
+	$(WIN64_CL) $(DSHOW_BASECLASSES) -Fowin32/dshow/ -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(WIN64_LINKOPT)
+CLEAN += win32/x64/asap_dsf.dll win32/x64/asap_dsf.exp win32/x64/asap_dsf.lib win32/x64/*.obj
+
+win32/x64/asap_dsf.res: $(call src,win32/gui.rc asap.h)
+	$(WIN64_WINDRES) -DDSHOW
+CLEAN += win32/x64/asap_dsf.res
+
 win32/install_dsf.bat:
 	$(DO)echo regsvr32 asap_dsf.dll >$@
 CLEAN += win32/install_dsf.bat
@@ -308,9 +318,9 @@ release/README_WindowsSetup.html: $(call src,README win32/USAGE NEWS CREDITS)
 	$(call ASCIIDOC,-a asapwin="(included in this binary package)" -a asapsetup)
 CLEAN += release/README_WindowsSetup.html
 
-release/asap-shellex-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
+release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/shellex/ASAPShellEx.propdesc) \
-	win32/x64/ASAPShellEx.dll
+	win32/x64/asap_dsf.dll win32/x64/ASAPShellEx.dll
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b $(srcdir)/win32/setup -b $(srcdir)win32 $<
 
 win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs

@@ -2435,7 +2435,7 @@ static void ASAP_PutLittleEndians(unsigned char *buffer, int offset, int value1,
 
 static int ASAP_PutWavMetadata(unsigned char *buffer, int offset, int fourCC, const char *value)
 {
-	int len = strlen(value);
+	int len = (int) strlen(value);
 	if (len > 0) {
 		int i;
 		ASAP_PutLittleEndians(buffer, offset, fourCC, (len | 1) + 1);
@@ -2519,7 +2519,7 @@ static int ASAPInfo_AfterFF(unsigned char const *module, int moduleLen, int curr
 
 static int ASAPInfo_CheckDate(ASAPInfo const *self)
 {
-	int n = strlen(self->date);
+	int n = (int) strlen(self->date);
 	switch (n) {
 	case 10:
 		if (!ASAPInfo_CheckTwoDateDigits(self, 0) || self->date[2] != 47)
@@ -2552,7 +2552,7 @@ static cibool ASAPInfo_CheckValidChar(int c)
 
 static cibool ASAPInfo_CheckValidText(const char *s)
 {
-	int n = strlen(s);
+	int n = (int) strlen(s);
 	int i;
 	if (n > 127)
 		return FALSE;
@@ -2602,7 +2602,7 @@ int ASAPInfo_GetDuration(ASAPInfo const *self, int song)
 
 const char *ASAPInfo_GetExtDescription(const char *ext)
 {
-	switch (strlen(ext) >> 1 == 1 ? (ext[0] + (ext[1] << 8) + (strlen(ext) == 3 ? ext[2] << 16 : 0)) | 2105376 : 0) {
+	switch ((int) strlen(ext) >> 1 == 1 ? (ext[0] + (ext[1] << 8) + ((int) strlen(ext) == 3 ? ext[2] << 16 : 0)) | 2105376 : 0) {
 	case 7364979:
 		return "Slight Atari Player";
 	case 6516067:
@@ -2733,7 +2733,7 @@ static int ASAPInfo_GetPackedExt(const char *filename)
 {
 	int ext = 0;
 	int i;
-	for (i = strlen(filename); --i > 0;) {
+	for (i = (int) strlen(filename); --i > 0;) {
 		int c = filename[i];
 		if (c <= 32 || c > 122)
 			return 0;
@@ -2900,7 +2900,7 @@ int ASAPInfo_GetYear(ASAPInfo const *self)
 
 static cibool ASAPInfo_HasStringAt(unsigned char const *module, int moduleIndex, const char *s)
 {
-	int n = strlen(s);
+	int n = (int) strlen(s);
 	int i;
 	for (i = 0; i < n; i++)
 		if (module[moduleIndex + i] != s[i])
@@ -2952,7 +2952,7 @@ cibool ASAPInfo_IsNtsc(ASAPInfo const *self)
 
 cibool ASAPInfo_IsOurExt(const char *ext)
 {
-	return ASAPInfo_IsOurPackedExt(strlen(ext) >> 1 == 1 ? (ext[0] + (ext[1] << 8) + (strlen(ext) == 3 ? ext[2] << 16 : 0)) | 2105376 : 0);
+	return ASAPInfo_IsOurPackedExt((int) strlen(ext) >> 1 == 1 ? (ext[0] + (ext[1] << 8) + ((int) strlen(ext) == 3 ? ext[2] << 16 : 0)) | 2105376 : 0);
 }
 
 cibool ASAPInfo_IsOurFile(const char *filename)
@@ -2990,7 +2990,7 @@ static cibool ASAPInfo_IsValidChar(int c)
 
 cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *module, int moduleLen)
 {
-	int len = strlen(filename);
+	int len = (int) strlen(filename);
 	int basename = 0;
 	int ext = -1;
 	int i;
@@ -3242,7 +3242,7 @@ static void ASAPInfo_ParseDltSong(ASAPInfo *self, unsigned char const *module, c
 int ASAPInfo_ParseDuration(const char *s)
 {
 	int i = 0;
-	int n = strlen(s);
+	int n = (int) strlen(s);
 	int d;
 	int r;
 	if (i >= n)
@@ -3330,7 +3330,7 @@ static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int 
 	for (i = 0; i < 32; i++)
 		if ((currentOffset = ASAPInfo_AfterFF(module, moduleLen, currentOffset)) == -1)
 			return FALSE;
-	for (pos = 0; pos < 256;) {
+	for (pos = 0; pos < 256 && self->songs < 32;) {
 		int trackPos[3];
 		int n;
 		int patternDelay[3];
@@ -4827,7 +4827,7 @@ static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int ty
 
 static void ASAPWriter_WriteString(ByteWriter w, const char *s)
 {
-	int n = strlen(s);
+	int n = (int) strlen(s);
 	int i;
 	for (i = 0; i < n; i++)
 		w.func(w.obj, s[i]);

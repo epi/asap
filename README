@@ -18,43 +18,43 @@ Download
 --------
 
 [horizontal]
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-3.0.1-win32.msi/download[asap-3.0.1-win32.msi]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0-win32.msi/download[asap-3.1.0-win32.msi]::
 Installer for all versions of desktop Windows (32-bit and 64-bit).
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-3.0.1-android.apk/download[asap-3.0.1-android.apk]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0-android.apk/download[asap-3.1.0-android.apk]::
 Android application.
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-3.0.1-wince-arm.cab/download[asap-3.0.1-wince-arm.cab]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0-wince-arm.cab/download[asap-3.1.0-wince-arm.cab]::
 WASAP, Windows Media Player and GSPlayer plugins for Windows Mobile.
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-3.0.1-flash.zip/download[asap-3.0.1-flash.zip]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0-flash.zip/download[asap-3.1.0-flash.zip]::
 For webmasters.
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-3.0.1-java.zip/download[asap-3.0.1-java.zip]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0-java.zip/download[asap-3.1.0-java.zip]::
 Java applet for web pages and Java midlet for mobile phones.
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-3.0.1-air.air/download[asap-3.0.1-air.air]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0-air.air/download[asap-3.1.0-air.air]::
 Desktop player in JavaScript (requires http://www.adobe.com/products/air/[Adobe AIR]).
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-shellex-3.0.1-win64.msi/download[asap-shellex-3.0.1-win64.msi]::
-View and edit SAP file tags in your 64-bit Windows Explorer.
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0-win64.msi/download[asap-shellex-3.1.0-win64.msi]::
+View and edit SAP file tags in your 64-bit Windows Explorer. Listen in 64-bit Windows Media Player.
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-3.0.1-win32.zip/download[asap-3.0.1-win32.zip]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0-win32.zip/download[asap-3.1.0-win32.zip]::
 For Windows people allergic to installers.
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-3.0.1-wince-arm.zip/download[asap-3.0.1-wince-arm.zip]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0-wince-arm.zip/download[asap-3.1.0-wince-arm.zip]::
 For Windows Mobile people allergic to installers.
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-3.0.1-1.i386.rpm/download[asap-3.0.1-1.i386.rpm]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0-1.i386.rpm/download[asap-3.1.0-1.i386.rpm]::
 Linux binary of asapconv.
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-xmms-3.0.1-1.i386.rpm/download[asap-xmms-3.0.1-1.i386.rpm]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-xmms-3.1.0-1.i386.rpm/download[asap-xmms-3.1.0-1.i386.rpm]::
 Linux binary of the XMMS plugin.
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-devel-3.0.1-1.i386.rpm/download[asap-devel-3.0.1-1.i386.rpm]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-devel-3.1.0-1.i386.rpm/download[asap-devel-3.1.0-1.i386.rpm]::
 Linux library for linking ASAP with other applications.
 
-http://sourceforge.net/projects/asap/files/asap/3.0.1/asap-3.0.1.tar.gz/download[asap-3.0.1.tar.gz]::
+http://sourceforge.net/projects/asap/files/asap/3.1.0/asap-3.1.0.tar.gz/download[asap-3.1.0.tar.gz]::
 Full source code (use for the Audacious plugin on Linux).
 
 All released files are available http://sourceforge.net/projects/asap/files/asap/[here].

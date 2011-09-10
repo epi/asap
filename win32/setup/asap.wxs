@@ -245,9 +245,10 @@
 						<Environment Id="path" Action="set" Name="Path" Part="last" Permanent="no" System="yes" Value="[ASAP.DIR]" />
 						<CreateFolder />
 					</Component>
+					<?endif?>
 
-					<Component Id="asap_dsf.dll" Guid="*">
-						<File Id="asap_dsf.dll" Name="asap_dsf.dll" Source="asap_dsf.dll" Checksum="yes" KeyPath="yes">
+					<Component Id="asap_dsf.dll" Guid="*" Win64="$(var.WIN64)">
+						<File Id="asap_dsf.dll" Name="asap_dsf.dll" Source="$(var.SRC_DIR)asap_dsf.dll" Checksum="yes" KeyPath="yes">
 							<Class Id="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Context="InprocServer32" Description="ASAP source filter" ThreadingModel="both" />
 						</File>
 						<RegistryValue Root="HKCR" Key="CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance\{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Name="FriendlyName" Value="ASAP source filter" Type="string" Action="write" />
@@ -263,6 +264,7 @@
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\MediaPlayer\Player\Extensions\MUIDescriptions" Name="ASAP" Value="ASAP files ($(var.EXT_FILTER))" Type="string" Action="write" />
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\MediaPlayer\Player\Extensions\Types" Name="ASAP" Value="$(var.EXT_FILTER)" Type="string" Action="write" />
 					</Component>
+					<?if $(sys.BUILDARCH) = x86?>
 					<Component Id="asap_dsf.ext" Guid="*">
 						<RegistryValue Root="HKCR" Key="asap.file" Name="asap_dsf" Type="integer" Value="1" KeyPath="yes" />
 						<ProgId Id="asap.file">
@@ -478,13 +480,17 @@
 				<ComponentRef Id="path" />
 			</Feature>
 		</Feature>
+		<?endif?>
 		<Feature Id="asap_dsf" Title="Windows Media Player plugin" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Plugin for Windows Media Player." AllowAdvertise="no">
 			<ComponentRef Id="asap_dsf.dll" />
+			<?if $(sys.BUILDARCH) = x86?>
 			<Feature Id="asap_dsf.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) Windows Media Player." AllowAdvertise="no">
 				<Condition Level="9">WMP.EXE</Condition>
 				<ComponentRef Id="asap_dsf.ext" />
 			</Feature>
+			<?endif?>
 		</Feature>
+		<?if $(sys.BUILDARCH) = x86?>
 		<Feature Id="in_asap" Title="Winamp plugin" Level="9" ConfigurableDirectory="WINAMPPLUG.DIR" Description="Plugin for Winamp." AllowAdvertise="no">
 			<Condition Level="1">WINAMP.DIR</Condition>
 			<ComponentRef Id="in_asap.dll" />
