@@ -629,13 +629,14 @@ void updateInfoDialog(LPCTSTR filename, int song)
 	int i;
 	if (infoDialog == NULL)
 		return;
-	if (edited_info == NULL)
+	if (edited_info == NULL) {
 		edited_info = ASAPInfo_New();
-	if (astil == NULL)
-		astil = ASTIL_New();
-	if (edited_info == NULL || astil == NULL) {
-		closeInfoDialog();
-		return;
+		if (astil == NULL)
+			astil = ASTIL_New();
+		if (edited_info == NULL || astil == NULL) {
+			closeInfoDialog();
+			return;
+		}
 	}
 	else if (infoChanged())
 		return;
