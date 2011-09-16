@@ -34,19 +34,20 @@
 #ifdef __MINGW32__
 /* missing in MinGW */
 
-extern "C" const FMTID FMTID_SummaryInformation =
-	{ 0xf29f85e0, 0x4ff9, 0x1068, { 0xab, 0x91, 0x08, 0x00, 0x2b, 0x27, 0xb3, 0xd9 } };
 extern "C" const FMTID FMTID_MUSIC =
 	{ 0x56a3372e, 0xce9c, 0x11d2, { 0x9f, 0x0e, 0x00, 0x60, 0x97, 0xc6, 0x86, 0xf6 } };
-#define PIDSI_ARTIST          2
-#define PIDSI_YEAR            5
 extern "C" const FMTID FMTID_AudioSummaryInformation =
 	{ 0x64440490, 0x4c8b, 0x11d1, { 0x8b, 0x70, 0x08, 0x00, 0x36, 0xb1, 0x1a, 0x03 } };
+
 #ifndef __MINGW64__
+/* missing just in 32-bit MinGW */
+extern "C" const FMTID FMTID_SummaryInformation =
+	{ 0xf29f85e0, 0x4ff9, 0x1068, { 0xab, 0x91, 0x08, 0x00, 0x2b, 0x27, 0xb3, 0xd9 } };
+#define PIDSI_ARTIST          2
+#define PIDSI_YEAR            5
 #define PIDASI_TIMELENGTH     3
 #define PIDASI_CHANNEL_COUNT  7
 #define SHCDF_UPDATEITEM      1
-#endif
 
 typedef SHCOLUMNID PROPERTYKEY;
 #define REFPROPERTYKEY const PROPERTYKEY &
@@ -94,6 +95,7 @@ DECLARE_INTERFACE_(IPropertyStoreCapabilities,IUnknown)
 };
 #undef INTERFACE
 
+#endif
 /* end missing in MinGW */
 #endif
 
