@@ -1,6 +1,18 @@
 ﻿History
 -------
 
+ASAP 3.1.0 (2011-09-20)::
+
+- WASAP/Winamp/Apollo/XMPlay file information window now includes STIL
+(SAP Tune Information List) and technical data.
+- Added Future Composer (*.fc) format (contributed by Jerzy Kut).
+- Written http://asap.sourceforge.net/sap-format.html[specification of the SAP format].
+- The 64-bit setup package now includes the Windows Media Player plugin
+(useful for the Vista/7 http://gallery.live.com/liveItemDetail.aspx?li=3af0c591-260b-4721-b28f-fa0f1d929760[sidebar WMP gadget]).
+- Java release now includes `asap.jar` for http://wudsn.com[WUDSN IDE].
+- asapplay in the D programming language has been ported to Linux and 64-bit compilers (by Adrian Matoga).
+
+
 ASAP 3.0.1 (2011-07-15)::
 
 - Uses linear interpolation for resampling (try Toxic_Cream.sap).

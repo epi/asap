@@ -1,5 +1,5 @@
 Name: asap
-Version: 3.0.1
+Version: 3.1.0
 Release: 1
 Summary: Player of 8-bit Atari music
 License: GPLv2+
@@ -75,6 +75,9 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib/xmms/Input/libasap-xmms.so
 
 %changelog
+* Tue Sep 20 2011 Piotr Fusik <fox@scene.pl>
+- 3.1.0-1
+
 * Fri Jul 15 2011 Piotr Fusik <fox@scene.pl>
 - 3.0.1-1
 
