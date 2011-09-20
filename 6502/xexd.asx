@@ -1,5 +1,5 @@
 	org	$100
-	dta	c'ASAP 3.0.0 TYPE D',0
+	dta	c'ASAP 3.1.0 TYPE D',0
 main
 	sei
 	mva	#0	^4e
