@@ -75,7 +75,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib/xmms/Input/libasap-xmms.so
 
 %changelog
-* Tue Sep 20 2011 Piotr Fusik <fox@scene.pl>
+* Sat Sep 24 2011 Piotr Fusik <fox@scene.pl>
 - 3.1.0-1
 
 * Fri Jul 15 2011 Piotr Fusik <fox@scene.pl>
