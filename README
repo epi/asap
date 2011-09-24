@@ -150,7 +150,7 @@ ASAP includes the following programs:
 - AndroidASAP - for mobile devices
 - AIRASAP - simple desktop player in the http://www.adobe.com/products/air/[Adobe AIR] technology {asapjavascript=}
 - http://www.digitalmars.com/d/[D] version of ASAP2WAV
-- command-line player in D for Windows
+- command-line player in D for Windows and Linux
 
 {asapports}link:PORTS.xml[This table] summarizes the differences between the above versions.
 
