@@ -1820,7 +1820,7 @@ static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int ty
 static void ASAPWriter_WriteString(ByteWriter w, const char *s);
 static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value);
 static void ASAPWriter_WriteWord(ByteWriter w, int value);
-static const unsigned char CiBinaryResource_xexb_obx[209] = { 255, 255, 0, 1, 196, 1, 65, 83, 65, 80, 32, 51, 46, 48, 46, 48,
+static const unsigned char CiBinaryResource_xexb_obx[209] = { 255, 255, 0, 1, 196, 1, 65, 83, 65, 80, 32, 51, 46, 49, 46, 48,
 	32, 84, 89, 80, 69, 32, 66, 0, 120, 169, 0, 141, 14, 212, 173, 11,
 	212, 208, 251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 162, 8,
 	157, 16, 210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31, 210, 141, 0,
@@ -1834,7 +1834,7 @@ static const unsigned char CiBinaryResource_xexb_obx[209] = { 255, 255, 0, 1, 19
 	181, 1, 176, 193, 238, 179, 1, 64, 0, 0, 0, 125, 0, 156, 131, 76,
 	0, 0, 76, 0, 0, 0, 0, 0, 0, 0, 0, 224, 2, 225, 2, 18,
 	1 };
-static const unsigned char CiBinaryResource_xexd_obx[133] = { 255, 255, 0, 1, 120, 1, 65, 83, 65, 80, 32, 51, 46, 48, 46, 48,
+static const unsigned char CiBinaryResource_xexd_obx[133] = { 255, 255, 0, 1, 120, 1, 65, 83, 65, 80, 32, 51, 46, 49, 46, 48,
 	32, 84, 89, 80, 69, 32, 68, 0, 120, 169, 0, 141, 14, 212, 141, 14,
 	210, 173, 11, 212, 208, 251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16,
 	250, 162, 8, 157, 16, 210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31,
