@@ -7,6 +7,7 @@ ASAP 3.1.0 (2011-09-24)::
 (SAP Tune Information List) and technical data.
 - Added Future Composer (*.fc) format (contributed by Jerzy Kut).
 - Written http://asap.sourceforge.net/sap-format.html[specification of the SAP format].
+- XMPlay displays STIL, tracker name and RMT instrument names.
 - The 64-bit setup package now includes the Windows Media Player plugin
 (useful for the Vista/7 http://gallery.live.com/liveItemDetail.aspx?li=3af0c591-260b-4721-b28f-fa0f1d929760[sidebar WMP gadget]).
 - Java release now includes `asap.jar` for http://wudsn.com[WUDSN IDE].
