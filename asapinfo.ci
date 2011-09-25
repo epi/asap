@@ -1181,6 +1181,7 @@ public class ASAPInfo
 	static bool IsFcSongEnd(byte[] module, int[] trackPos)
 	{
 		// stops when one channel (or more) has STOP command or each channel has LOOP command
+		bool allLoop = true;
 		for (int n = 0; n < 3; n++) {
 			if (trackPos[n] >= 0x100)
 				return true;
@@ -1190,10 +1191,11 @@ public class ASAPInfo
 			case 0xff: // LOOP
 				break;
 			default:
-				return false;
+				allLoop = false;
+				break;
 			}
 		}
-		return true;
+		return allLoop;
 	}
 
 	void ParseFc(byte[] module, int moduleLen)

@@ -2929,6 +2929,7 @@ static cibool ASAPInfo_IsDltTrackEmpty(unsigned char const *module, int pos)
 
 static cibool ASAPInfo_IsFcSongEnd(unsigned char const *module, int const *trackPos)
 {
+	cibool allLoop = TRUE;
 	int n;
 	for (n = 0; n < 3; n++) {
 		if (trackPos[n] >= 256)
@@ -2939,10 +2940,11 @@ static cibool ASAPInfo_IsFcSongEnd(unsigned char const *module, int const *track
 		case 255:
 			break;
 		default:
-			return FALSE;
+			allLoop = FALSE;
+			break;
 		}
 	}
-	return TRUE;
+	return allLoop;
 }
 
 cibool ASAPInfo_IsNtsc(ASAPInfo const *self)
