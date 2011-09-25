@@ -110,6 +110,12 @@ TM8 means it's stereo (8-channel) music while TMC can be either mono or stereo.
 TM2 (http://jaskier.atari8.info/[Theta Music Composer] 2.x)::
 Modern Atari music editor.
 
+STIL (SAP Tune Information List)::
+This isn't a music format.
+It's a text file that contains cover information and comments for many music files.
+This format is identical to http://www.hvsc.de/download/C64Music/DOCUMENTS/STIL.faq[C64 STIL].
+`STIL.txt` is distributed with ASMA (see above).
+
 You can find some example files in http://asap.sourceforge.net/examples.zip[examples.zip].
 
 For viewing Atari pictures check out our sister project http://fail.sourceforge.net[FAIL].
