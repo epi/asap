@@ -102,9 +102,9 @@ CLEAN += asap-asapscan.c asap-asapscan.h
 
 # asap.[ch]
 
-$(srcdir)asap.h: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx | $(srcdir)asap.c
+$(srcdir)asap.h: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx 6502/xexinfo.obx | $(srcdir)asap.c
 
-$(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx
+$(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx 6502/xexinfo.obx
 	$(CITO) -D C -D FLASHPACK
 
 # other

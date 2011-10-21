@@ -83,7 +83,7 @@ static void print_help(void)
 #endif
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
-		"Options for WAV "
+		"Options for XEX, WAV "
 #ifdef HAVE_LIBMP3LAME
 		                "or MP3 "
 #endif
@@ -500,7 +500,7 @@ static void convert_to_module(const char *input_file, const unsigned char *modul
 	bw.obj = fp;
 	bw.func = write_byte;
 	/* FIXME: stdout */
-	if (!ASAPWriter_Write(output_file, bw, info, module, module_len)) {
+	if (!ASAPWriter_Write(output_file, bw, info, module, module_len, tag)) {
 		if (fp != stdout) {
 			fclose(fp);
 			remove(output_file); /* "unlink" is less portable */

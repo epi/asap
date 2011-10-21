@@ -262,9 +262,9 @@ typedef struct
 		MessageBox(infoDialog, message, title, MB_OK | MB_ICONERROR);
 }
 
-static BOOL isSap(LPCTSTR filename)
+static BOOL isExt(LPCTSTR filename, LPCTSTR ext)
 {
-	return _tcsicmp(filename + _tcslen(filename) - 4, _T(".sap")) == 0;
+	return _tcsicmp(filename + _tcslen(filename) - 4, ext) == 0;
 }
 
 static void setSaved(void)
@@ -397,7 +397,7 @@ static void saveByte(void *obj, int data)
 	putc(data, (FILE *) obj);
 }
 
-static BOOL doSaveFile(LPCTSTR filename)
+static BOOL doSaveFile(LPCTSTR filename, BOOL tag)
 {
 	FILE *fp = _tfopen(filename, _T("wb"));
 	ByteWriter bw;
@@ -405,7 +405,7 @@ static BOOL doSaveFile(LPCTSTR filename)
 		return FALSE;
 	bw.obj = fp;
 	bw.func = saveByte;
-	if (!ASAPWriter_Write(filename, bw, edited_info, saved_module, saved_module_len)) {
+	if (!ASAPWriter_Write(filename, bw, edited_info, saved_module, saved_module_len, tag)) {
 		fclose(fp);
 		DeleteFile(filename);
 		return FALSE;
@@ -417,9 +417,10 @@ static BOOL doSaveFile(LPCTSTR filename)
 	return TRUE;
 }
 
-static BOOL saveFile(LPCTSTR filename)
+static BOOL saveFile(LPCTSTR filename, BOOL tag)
 {
-	if (isSap(filename)) {
+	BOOL isSap = isExt(filename, _T(".sap"));
+	if (isSap) {
 		int song = ASAPInfo_GetSongs(edited_info);
 		while (--song >= 0 && ASAPInfo_GetDuration(edited_info, song) < 0);
 		while (--song >= 0) {
@@ -429,12 +430,12 @@ static BOOL saveFile(LPCTSTR filename)
 			}
 		}
 	}
-	if (!doSaveFile(filename)) {
+	if (!doSaveFile(filename, tag)) {
 		MessageBox(infoDialog, _T("Cannot save file"), _T("Error"), MB_OK | MB_ICONERROR);
 		// FIXME: delete file
 		return FALSE;
 	}
-	if (isSap(filename))
+	if (isSap)
 		setSaved();
 	return TRUE;
 }
@@ -443,7 +444,7 @@ static BOOL saveInfo(void)
 {
 	_TCHAR filename[MAX_PATH];
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
-	return saveFile(filename);
+	return saveFile(filename, FALSE);
 }
 
 static void addFilterExt(void *obj, const char *ext)
@@ -488,6 +489,7 @@ static BOOL saveInfoAs(void)
 		NULL
 	};
 	LPTSTR ext;
+	BOOL tag = FALSE;
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
 	ext = _tcsrchr(filename, '.');
 	if (ext != NULL) {
@@ -495,7 +497,20 @@ static BOOL saveInfoAs(void)
 		ofn.lpstrDefExt = ext + 1;
 	}
 	setSaveFilters(filter);
-	return GetSaveFileName(&ofn) && saveFile(filename);
+	if (!GetSaveFileName(&ofn))
+		return FALSE;
+	if (isExt(filename, _T(".xex"))) {
+		switch (MessageBox(infoDialog, _T("Do you want to display information during playback?"), _T("ASAP"), MB_YESNOCANCEL | MB_ICONQUESTION)) {
+		case IDYES:
+			tag = TRUE;
+			break;
+		case IDCANCEL:
+			return FALSE;
+		default:
+			break;
+		}
+	}
+	return saveFile(filename, tag);
 }
 
 static void closeInfoDialog(void)
@@ -646,7 +661,7 @@ void updateInfoDialog(LPCTSTR filename, int song)
 		return;
 	}
 	setSaved();
-	can_save = isSap(filename);
+	can_save = isExt(filename, _T(".sap"));
 	invalid_fields = 0;
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_SETTEXT, 0, (LPARAM) filename);
 	SendDlgItemMessage(infoDialog, IDC_AUTHOR, WM_SETTEXT, 0, (LPARAM) saved_author);

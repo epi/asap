@@ -1,0 +1,67 @@
+font	equ	$fc00
+
+	ift	TEST
+
+	org	$8000
+scr
+	dta	c'404 Error                       '
+:8	dta	$55
+	dta	c'by Grzegorz Kwiatek (Greg)      '
+	dta	c' & Lukasz Sychowicz (X-Ray)     '
+	dta	c'01/03/2003          STEREO 02:26'
+
+dl
+:22	dta	$70
+	dta	$30,$62,a(scr),8,0,2,2,$10,2
+
+	els
+
+	org	$fcb0
+dl	org	*+32
+
+	eif
+
+	dta	$41,a(dl)
+
+main
+	ift	TEST
+	sei
+	mvy	#0	^4e
+	lda:rne	^4b
+	sta	^40
+	ldx	#29
+	sta:rpl	^00,x-
+; copy font from ROM, reordering from ANTIC codes to ASCII, semigraphics not needed
+copy_font_1
+	mvx	#$ff	^31
+	lda:pha	$e000,y	; punctuation
+	lda:pha	$e100,y	; uppercase
+	lda	$e300,y	; lowercase
+	dex:stx	^31
+	sta	font+$300,y	; lowercase
+	pla:sta	font+$200,y	; uppercase
+	pla:sta	font+$100,y	; punctuation
+	iny
+	bne	copy_font_1
+	eif
+
+	lda:rne	^4b
+	sta	^45
+	mvx	#$26	^16
+	mvx	#$0a	^17
+	mvx	#$21	^40
+	mwx	#dl	^42
+:>font!=>dl	ldx	>font
+	stx	^49
+
+	ift	TEST
+
+	jmp	*
+	run	main
+
+	els
+
+	rts
+
+	eif
+	end

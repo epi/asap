@@ -413,8 +413,9 @@ void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsign
  * @param info File information got from the source file with data updated for the output file.
  * @param module Contents of the source file.
  * @param moduleLen Length of the source file.
+ * @param tag Display information (xex output only).
  */
-cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen);
+cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen, cibool tag);
 
 #ifdef __cplusplus
 }

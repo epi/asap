@@ -1,12 +1,30 @@
+font	equ	$fc00
+
 	org	$100
-	dta	c'ASAP 3.1.0 TYPE B',0
 main
 	sei
-	mva	#0	^4e
+	mvy	#0	^4e
 	lda:rne	^4b
 	sta	^40
 	ldx	#29
 	sta:rpl	^00,x-
+
+; copy font from ROM, reordering from ANTIC codes to ASCII, semigraphics not needed
+copy_font_1
+	stx	^31	; #$ff
+	lda:pha	$e000,y	; punctuation
+	lda:pha	$e100,y	; uppercase
+	lda	$e300,y	; lowercase
+	dex:stx	^31
+	inx
+	sta	font+$300,y	; lowercase
+	pla:sta	font+$200,y	; uppercase
+	pla:sta	font+$100,y	; punctuation
+	iny
+	bne	copy_font_1
+	jsr	$fcd3
+; A==0 here!
+
 	ldx	#8
 init_pokey_1
 	sta	$d210,x

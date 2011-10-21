@@ -30,10 +30,13 @@ NATIVE_ROUTINES_OBX = $(NATIVE_ROUTINES:%=6502/%.obx)
 6502/fc.obx: $(srcdir)6502/fc.as8
 	$(MADS)
 
-6502/fp3depk.obx: $(srcdir)6502/fp3depk.asx
-	$(XASM) -l 6502/fp3depk.lst
+6502/xexinfo.obx: $(srcdir)6502/xexinfo.asx
+	$(XASM) -d TEST=0 -l
+
+6502/xexinfo.xex: $(srcdir)6502/xexinfo.asx
+	$(XASM) -d TEST=1
 
 6502/%.obx: $(srcdir)6502/%.asx
-	$(XASM)
+	$(XASM) -l
 
-CLEAN += $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx 6502/fp3depk.obx 6502/fp3depk.lst
+CLEAN += $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx 6502/fp3depk.obx 6502/xexinfo.obx 6502/xexinfo.xex 6502/*.lst

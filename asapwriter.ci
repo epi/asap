@@ -68,6 +68,17 @@ public class ASAPWriter
 		result[offset + 1] = '0' + value % 10;
 	}
 
+	static bool SecondsToString(byte[] result, int offset, int value)
+	{
+		if (value < 0 || value >= 100 * 60 * 1000)
+			return false;
+		value /= 1000;
+		TwoDigitsToString(result, offset, value / 60);
+		result[offset + 2] = ':';
+		TwoDigitsToString(result, offset + 3, value % 60);
+		return true;
+	}
+
 	/// Maximum length of text representation of a duration.
 	/// Corresponds to the longest format which is `"mm:ss.xxx"`.
 	public const int MaxDurationLength = 9;
@@ -80,13 +91,9 @@ public class ASAPWriter
 		/// Number of milliseconds.
 		int value)
 	{
-		if (value < 0 || value >= 100 * 60 * 1000)
+		if (!SecondsToString(result, 0, value))
 			return 0;
-		int seconds = value / 1000;
 		value %= 1000;
-		TwoDigitsToString(result, 0, seconds / 60);
-		result[2] = ':';
-		TwoDigitsToString(result, 3, seconds % 60);
 		if (value == 0)
 			return 5;
 		result[5] = '.';
@@ -435,6 +442,111 @@ public class ASAPWriter
 		}
 	}
 
+	const int XexInfoCharactersPerLine = 32;
+
+	static int PadXexInfo(byte[] dest, int offset, int endColumn)
+	{
+		while (offset % XexInfoCharactersPerLine != endColumn)
+			dest[offset++] = ' ';
+		return offset;
+	}
+
+	static int FormatXexInfoText(byte[] dest, int destLen, int endColumn, string src, bool author)
+	{
+		int srcLen = src.Length;
+		for (int srcOffset = 0; srcOffset < srcLen; ) {
+			int c = src[srcOffset++];
+			if (c == ' ') {
+				if (author && srcOffset < srcLen && src[srcOffset] == '&') {
+					int authorLen;
+					for (authorLen = 1; srcOffset + authorLen < srcLen; authorLen++) {
+						if (src[srcOffset + authorLen] == ' ' && srcOffset + authorLen + 1 < srcLen && src[srcOffset + authorLen + 1] == '&')
+							break;
+					}
+					if (authorLen <= XexInfoCharactersPerLine && destLen % XexInfoCharactersPerLine + 1 + authorLen > XexInfoCharactersPerLine) {
+						destLen = PadXexInfo(dest, destLen, 1); // align author names after "by" and "&"
+						continue;
+					}
+				}
+				int wordLen;
+				for (wordLen = 0; srcOffset + wordLen < srcLen && src[srcOffset + wordLen] != ' '; wordLen++) {
+				}
+				if (wordLen <= XexInfoCharactersPerLine && destLen % XexInfoCharactersPerLine + 1 + wordLen > XexInfoCharactersPerLine) {
+					destLen = PadXexInfo(dest, destLen, 0);
+					continue;
+				}
+			}
+			dest[destLen++] = c;
+		}
+		return PadXexInfo(dest, destLen, endColumn);
+	}
+
+	static void WriteXexDriver(ByteWriter w, int[] initAndPlayer, ASAPInfo info, byte[] driver, int driverLen, bool tag)
+	{
+		if (tag) {
+			byte[ASAPInfo.MaxTextLength * 2] title;
+			int titleLen = FormatXexInfoText(title, 0, 0, info.Title.Length == 0 ? "(untitled)" : info.Title, false);
+			byte[ASAPInfo.MaxTextLength * 2] author;
+			int authorLen;
+			if (info.Author.Length > 0) {
+				author[0] = 'b';
+				author[1] = 'y';
+				author[2] = ' ';
+				authorLen = FormatXexInfoText(author, 3, 0, info.Author, true);
+			}
+			else
+				authorLen = 0;
+			byte[ASAPInfo.MaxTextLength * 2] other;
+			int otherLen = FormatXexInfoText(other, 0, XexInfoCharactersPerLine - 13, info.Date, false);
+			otherLen = FormatXexInfoText(other, otherLen, XexInfoCharactersPerLine - 5, info.Channels > 1 ? " STEREO" : "  MONO", false);
+			int duration = info.Durations[info.DefaultSong];
+			if (duration > 0 && SecondsToString(other, otherLen, duration + 999)) // round up to full seconds
+				otherLen += 5;
+			else
+				otherLen = PadXexInfo(other, otherLen, 0);
+
+			const int xexinfoDl = 0xfcb0; // must match xexinfo.asx
+			int totalCharacters = titleLen + authorLen + otherLen;
+			int totalLines = totalCharacters / XexInfoCharactersPerLine;
+			int startAddress = xexinfoDl - totalCharacters - 8;
+			WriteWord(w, startAddress);
+			WriteBytes(w, BinaryResource("xexinfo.obx"), 4, 6);
+			WriteBytes(w, title, 0, titleLen);
+			for (int i = 0; i < 8; i++)
+				w(0x55);
+			WriteBytes(w, author, 0, authorLen);
+			WriteBytes(w, other, 0, otherLen);
+			for (int i = totalLines; i < 26; i++)
+				w(0x70);
+			w(0x30);
+			w(titleLen == XexInfoCharactersPerLine ? 0x62 : 0x42);
+			WriteWord(w, startAddress);
+			for (int i = XexInfoCharactersPerLine; i < titleLen; i += XexInfoCharactersPerLine)
+				w(i + XexInfoCharactersPerLine < titleLen ? 2 : 0x22);
+			w(8);
+			w(0);
+			for (int i = 0; i < authorLen; i += XexInfoCharactersPerLine)
+				w(2);
+			w(0x10);
+			for (int i = 0; i < otherLen; i += XexInfoCharactersPerLine)
+				w(2);
+			WriteBytes(w, BinaryResource("xexinfo.obx"), 6, BinaryResource("xexinfo.obx").Length);
+
+			WriteBytes(w, driver, 2, driverLen);
+		}
+		else {
+			WriteBytes(w, driver, 2, 0x1c);
+			// replace info display with NOPs
+			for (int i = 0x1c; i < 0x40; i++)
+				w(0xea); // NOP
+			WriteBytes(w, driver, 0x40, driverLen);
+		}
+		WriteWord(w, initAndPlayer[0]);
+		w(0x4c); // JMP
+		WriteWord(w, initAndPlayer[1]); // possibly -1 writen as 0xff, 0xff
+		w(info.DefaultSong);
+	}
+
 	static int WriteNativeHeader(ByteWriter w, ASAPInfo info, byte[] module)
 	{
 		int diff = info.Music - ASAPInfo.GetWord(module, 2);
@@ -588,7 +700,9 @@ public class ASAPWriter
 		/// Contents of the source file.
 		byte[] module,
 		/// Length of the source file.
-		int moduleLen)
+		int moduleLen,
+		/// Display information (xex output only).
+		bool tag)
 	{
 		macro ASAP_EXT(s) ( s[0] + (s[1] << 8) + (s[2] << 16) | 0x202020 )
 		int destExt = ASAPInfo.GetPackedExt(targetFilename);
@@ -615,22 +729,14 @@ public class ASAPWriter
 					if (info.Fastplay != 312)
 						throw "Impossible conversion";
 					const int dObxLen = BinaryResource("xexd.obx").Length;
-					WriteBytes(w, BinaryResource("xexd.obx"), 0, dObxLen - 12);
-					WriteWord(w, initAndPlayer[0]);
-					w(0x4c); // JMP
-					WriteWord(w, initAndPlayer[1]); // possibly -1 writen as 0xff, 0xff
-					w(info.DefaultSong);
+					WriteXexDriver(w, initAndPlayer, info, BinaryResource("xexd.obx"), dObxLen - 12, tag);
 					WriteBytes(w, BinaryResource("xexd.obx"), dObxLen - 6, dObxLen);
 					break;
 				case ASAPModuleType.SapS:
 					throw "Impossible conversion";
 				default:
 					const int bObxLen = BinaryResource("xexb.obx").Length;
-					WriteBytes(w, BinaryResource("xexb.obx"), 0, bObxLen - 17);
-					WriteWord(w, initAndPlayer[0]);
-					w(0x4c); // JMP
-					WriteWord(w, initAndPlayer[1]);
-					w(info.DefaultSong);
+					WriteXexDriver(w, initAndPlayer, info, BinaryResource("xexb.obx"), bObxLen - 17, tag);
 					w(info.Fastplay & 1);
 					w((info.Fastplay >> 1) % 156);
 					w((info.Fastplay >> 1) % 131);
