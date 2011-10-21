@@ -1823,35 +1823,39 @@ static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int ty
 static void ASAPWriter_WriteString(ByteWriter w, const char *s);
 static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value);
 static void ASAPWriter_WriteWord(ByteWriter w, int value);
-static void ASAPWriter_WriteXexDriver(ByteWriter w, int const *initAndPlayer, ASAPInfo const *info, unsigned char const *driver, int driverLen, cibool tag);
-static const unsigned char CiBinaryResource_xexb_obx[227] = { 255, 255, 0, 1, 214, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212, 208,
-	251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 142, 1, 211, 185,
-	0, 224, 72, 185, 0, 225, 72, 185, 0, 227, 202, 142, 1, 211, 232, 153,
-	0, 255, 104, 153, 0, 254, 104, 153, 0, 253, 200, 208, 223, 32, 211, 252,
-	162, 8, 157, 16, 210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31, 210,
-	141, 0, 210, 169, 130, 205, 11, 212, 208, 251, 141, 10, 212, 141, 10, 212,
-	141, 10, 212, 173, 11, 212, 208, 3, 238, 196, 1, 173, 209, 1, 32, 203,
-	1, 169, 254, 141, 1, 211, 169, 192, 141, 250, 255, 169, 1, 141, 251, 255,
-	169, 64, 141, 14, 212, 169, 125, 205, 11, 212, 208, 251, 32, 206, 1, 174,
-	196, 1, 173, 210, 1, 74, 144, 7, 173, 198, 1, 238, 198, 1, 74, 189,
-	211, 1, 109, 199, 1, 176, 5, 221, 201, 1, 144, 4, 253, 201, 1, 56,
-	141, 199, 1, 189, 213, 1, 109, 200, 1, 141, 200, 1, 205, 197, 1, 208,
-	251, 173, 199, 1, 176, 193, 238, 197, 1, 64, 0, 0, 0, 125, 0, 156,
-	131, 76, 0, 0, 76, 0, 0, 0, 0, 0, 0, 0, 0, 224, 2, 225,
-	2, 0, 1 };
-static const unsigned char CiBinaryResource_xexd_obx[151] = { 255, 255, 0, 1, 138, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212, 208,
-	251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 142, 1, 211, 185,
-	0, 224, 72, 185, 0, 225, 72, 185, 0, 227, 202, 142, 1, 211, 232, 153,
-	0, 255, 104, 153, 0, 254, 104, 153, 0, 253, 200, 208, 223, 32, 211, 252,
-	141, 14, 210, 162, 8, 157, 16, 210, 157, 0, 210, 202, 16, 247, 169, 3,
-	141, 31, 210, 141, 0, 210, 169, 254, 141, 1, 211, 173, 136, 1, 45, 137,
-	1, 201, 255, 240, 15, 169, 117, 141, 250, 255, 169, 1, 141, 251, 255, 169,
-	64, 141, 14, 212, 173, 138, 1, 88, 76, 132, 1, 88, 72, 138, 72, 152,
-	72, 32, 135, 1, 104, 168, 104, 170, 104, 64, 76, 0, 0, 76, 0, 0,
-	0, 224, 2, 225, 2, 0, 1 };
-static const unsigned char CiBinaryResource_xexinfo_obx[46] = { 255, 255, 208, 252, 247, 252, 65, 176, 252, 173, 11, 212, 208, 251, 141, 5,
+static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info);
+static const unsigned char CiBinaryResource_xexb_obx[183] = { 255, 255, 36, 1, 223, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212, 208,
+	251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 162, 8, 157, 16,
+	210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31, 210, 141, 0, 210, 169,
+	130, 205, 11, 212, 208, 251, 141, 10, 212, 141, 10, 212, 141, 10, 212, 173,
+	11, 212, 208, 3, 238, 145, 1, 173, 218, 1, 32, 212, 1, 169, 254, 141,
+	1, 211, 169, 206, 174, 53, 1, 240, 2, 169, 194, 141, 250, 255, 169, 1,
+	141, 251, 255, 169, 64, 141, 14, 212, 169, 125, 205, 11, 212, 208, 251, 32,
+	215, 1, 162, 0, 173, 219, 1, 74, 144, 6, 169, 0, 238, 153, 1, 74,
+	189, 220, 1, 105, 125, 176, 5, 221, 210, 1, 144, 4, 253, 210, 1, 56,
+	141, 162, 1, 189, 222, 1, 105, 0, 141, 181, 1, 201, 0, 208, 252, 173,
+	162, 1, 176, 198, 72, 138, 72, 174, 145, 1, 32, 184, 252, 104, 170, 104,
+	238, 186, 1, 64, 156, 131, 76 };
+static const unsigned char CiBinaryResource_xexd_obx[116] = { 255, 255, 36, 1, 151, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212, 208,
+	251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 141, 14, 210, 162,
+	8, 157, 16, 210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31, 210, 141,
+	0, 210, 169, 254, 141, 1, 211, 173, 148, 1, 201, 96, 240, 15, 169, 114,
+	141, 250, 255, 169, 1, 141, 251, 255, 169, 64, 141, 14, 212, 173, 151, 1,
+	88, 76, 145, 1, 88, 72, 138, 72, 152, 72, 32, 148, 1, 174, 53, 1,
+	240, 11, 174, 20, 208, 202, 240, 2, 162, 1, 32, 184, 252, 104, 168, 104,
+	170, 104, 64, 76 };
+static const unsigned char CiBinaryResource_xexinfo_obx[177] = { 255, 255, 144, 252, 252, 252, 65, 112, 252, 173, 11, 212, 208, 251, 141, 5,
 	212, 162, 38, 142, 22, 208, 162, 10, 142, 23, 208, 162, 33, 142, 0, 212,
-	162, 176, 142, 2, 212, 162, 252, 142, 3, 212, 142, 9, 212, 96 };
+	162, 112, 142, 2, 212, 162, 252, 142, 3, 212, 142, 9, 212, 96, 189, 249,
+	252, 24, 105, 0, 141, 189, 252, 189, 251, 252, 105, 0, 141, 197, 252, 144,
+	18, 173, 107, 252, 13, 108, 252, 13, 110, 252, 13, 111, 252, 201, 49, 162,
+	4, 176, 13, 96, 169, 57, 224, 3, 208, 2, 169, 53, 157, 107, 252, 202,
+	189, 107, 252, 201, 49, 144, 237, 201, 58, 240, 244, 222, 107, 252, 96, 34,
+	69, 5, 4, 0, 1, 57, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212,
+	208, 251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 142, 1, 211,
+	185, 0, 224, 72, 185, 0, 225, 72, 185, 0, 227, 202, 142, 1, 211, 232,
+	153, 0, 255, 104, 153, 0, 254, 104, 153, 0, 253, 200, 208, 223, 32, 147,
+	252 };
 
 struct FlashPackItem {
 	FlashPackItemType type;
@@ -4333,21 +4337,39 @@ cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const
 			case ASAPModuleType_SAP_D:
 				if (info->fastplay != 312)
 					return FALSE;
-				ASAPWriter_WriteXexDriver(w, initAndPlayer, info, CiBinaryResource_xexd_obx, 139, tag);
-				ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 145, 151);
+				ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 2, 116);
+				ASAPWriter_WriteWord(w, initAndPlayer[0]);
+				if (initAndPlayer[1] < 0) {
+					w.func(w.obj, 96);
+					w.func(w.obj, 96);
+					w.func(w.obj, 96);
+				}
+				else {
+					w.func(w.obj, 76);
+					ASAPWriter_WriteWord(w, initAndPlayer[1]);
+				}
+				w.func(w.obj, info->defaultSong);
 				break;
 			case ASAPModuleType_SAP_S:
 				return FALSE;
 			default:
-				ASAPWriter_WriteXexDriver(w, initAndPlayer, info, CiBinaryResource_xexb_obx, 210, tag);
+				ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 2, 183);
+				ASAPWriter_WriteWord(w, initAndPlayer[0]);
+				w.func(w.obj, 76);
+				ASAPWriter_WriteWord(w, initAndPlayer[1]);
+				w.func(w.obj, info->defaultSong);
 				w.func(w.obj, info->fastplay & 1);
 				w.func(w.obj, (info->fastplay >> 1) % 156);
 				w.func(w.obj, (info->fastplay >> 1) % 131);
 				w.func(w.obj, info->fastplay / 312);
 				w.func(w.obj, info->fastplay / 262);
-				ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 221, 227);
 				break;
 			}
+			if (tag)
+				ASAPWriter_WriteXexInfo(w, info);
+			ASAPWriter_WriteWord(w, 736);
+			ASAPWriter_WriteWord(w, 737);
+			ASAPWriter_WriteWord(w, tag ? 256 : 292);
 			return FlashPack_Compress(&flashPack, resultWriter);
 		}
 	default:
@@ -4898,73 +4920,59 @@ static void ASAPWriter_WriteWord(ByteWriter w, int value)
 	w.func(w.obj, (value >> 8) & 255);
 }
 
-static void ASAPWriter_WriteXexDriver(ByteWriter w, int const *initAndPlayer, ASAPInfo const *info, unsigned char const *driver, int driverLen, cibool tag)
+static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info)
 {
-	if (tag) {
-		unsigned char title[254];
-		int titleLen = ASAPWriter_FormatXexInfoText(title, 0, 0, info->title[0] == '\0' ? "(untitled)" : info->title, FALSE);
-		unsigned char author[254];
-		int authorLen;
-		unsigned char other[254];
-		int otherLen;
-		int duration;
-		int totalCharacters;
-		int totalLines;
-		int startAddress;
-		int i;
-		if (info->author[0] != '\0') {
-			author[0] = 98;
-			author[1] = 121;
-			author[2] = 32;
-			authorLen = ASAPWriter_FormatXexInfoText(author, 3, 0, info->author, TRUE);
-		}
-		else
-			authorLen = 0;
-		otherLen = ASAPWriter_FormatXexInfoText(other, 0, 19, info->date, FALSE);
-		otherLen = ASAPWriter_FormatXexInfoText(other, otherLen, 27, info->channels > 1 ? " STEREO" : "  MONO", FALSE);
-		duration = info->durations[info->defaultSong];
-		if (duration > 0 && ASAPWriter_SecondsToString(other, otherLen, duration + 999))
-			otherLen += 5;
-		else
-			otherLen = ASAPWriter_PadXexInfo(other, otherLen, 0);
-		totalCharacters = titleLen + authorLen + otherLen;
-		totalLines = totalCharacters / 32;
-		startAddress = 64688 - totalCharacters - 8;
-		ASAPWriter_WriteWord(w, startAddress);
-		ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 4, 6);
-		ASAPWriter_WriteBytes(w, title, 0, titleLen);
-		for (i = 0; i < 8; i++)
-			w.func(w.obj, 85);
-		ASAPWriter_WriteBytes(w, author, 0, authorLen);
-		ASAPWriter_WriteBytes(w, other, 0, otherLen);
-		for (i = totalLines; i < 26; i++)
-			w.func(w.obj, 112);
-		w.func(w.obj, 48);
-		w.func(w.obj, titleLen == 32 ? 98 : 66);
-		ASAPWriter_WriteWord(w, startAddress);
-		for (i = 32; i < titleLen; i += 32)
-			w.func(w.obj, i + 32 < titleLen ? 2 : 34);
-		w.func(w.obj, 8);
-		w.func(w.obj, 0);
-		for (i = 0; i < authorLen; i += 32)
-			w.func(w.obj, 2);
-		w.func(w.obj, 16);
-		for (i = 0; i < otherLen; i += 32)
-			w.func(w.obj, 2);
-		ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 6, 46);
-		ASAPWriter_WriteBytes(w, driver, 2, driverLen);
+	unsigned char title[254];
+	int titleLen = ASAPWriter_FormatXexInfoText(title, 0, 0, info->title[0] == '\0' ? "(untitled)" : info->title, FALSE);
+	unsigned char author[254];
+	int authorLen;
+	unsigned char other[254];
+	int otherLen;
+	int duration;
+	int totalCharacters;
+	int totalLines;
+	int startAddress;
+	int i;
+	if (info->author[0] != '\0') {
+		author[0] = 98;
+		author[1] = 121;
+		author[2] = 32;
+		authorLen = ASAPWriter_FormatXexInfoText(author, 3, 0, info->author, TRUE);
 	}
-	else {
-		int i;
-		ASAPWriter_WriteBytes(w, driver, 2, 28);
-		for (i = 28; i < 64; i++)
-			w.func(w.obj, 234);
-		ASAPWriter_WriteBytes(w, driver, 64, driverLen);
-	}
-	ASAPWriter_WriteWord(w, initAndPlayer[0]);
-	w.func(w.obj, 76);
-	ASAPWriter_WriteWord(w, initAndPlayer[1]);
-	w.func(w.obj, info->defaultSong);
+	else
+		authorLen = 0;
+	otherLen = ASAPWriter_FormatXexInfoText(other, 0, 19, info->date, FALSE);
+	otherLen = ASAPWriter_FormatXexInfoText(other, otherLen, 27, info->channels > 1 ? " STEREO" : "   MONO", FALSE);
+	duration = info->durations[info->defaultSong];
+	if (duration > 0 && ASAPWriter_SecondsToString(other, otherLen, duration + 999))
+		otherLen += 5;
+	else
+		otherLen = ASAPWriter_PadXexInfo(other, otherLen, 0);
+	totalCharacters = titleLen + authorLen + otherLen;
+	totalLines = totalCharacters / 32;
+	startAddress = 64624 - totalCharacters - 8;
+	ASAPWriter_WriteWord(w, startAddress);
+	ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 4, 6);
+	ASAPWriter_WriteBytes(w, title, 0, titleLen);
+	for (i = 0; i < 8; i++)
+		w.func(w.obj, 85);
+	ASAPWriter_WriteBytes(w, author, 0, authorLen);
+	ASAPWriter_WriteBytes(w, other, 0, otherLen);
+	for (i = totalLines; i < 26; i++)
+		w.func(w.obj, 112);
+	w.func(w.obj, 48);
+	w.func(w.obj, titleLen == 32 ? 98 : 66);
+	ASAPWriter_WriteWord(w, startAddress);
+	for (i = 32; i < titleLen; i += 32)
+		w.func(w.obj, i + 32 < titleLen ? 2 : 34);
+	w.func(w.obj, 8);
+	w.func(w.obj, 0);
+	for (i = 0; i < authorLen; i += 32)
+		w.func(w.obj, 2);
+	w.func(w.obj, 16);
+	for (i = 0; i < otherLen; i += 32)
+		w.func(w.obj, 2);
+	ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 6, 177);
 }
 
 static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)

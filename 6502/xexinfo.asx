@@ -16,35 +16,14 @@ dl
 
 	els
 
-	org	$fcb0
+	org	$fc70
 dl	org	*+32
 
 	eif
 
 	dta	$41,a(dl)
 
-main
-	ift	TEST
-	sei
-	mvy	#0	^4e
-	lda:rne	^4b
-	sta	^40
-	ldx	#29
-	sta:rpl	^00,x-
-; copy font from ROM, reordering from ANTIC codes to ASCII, semigraphics not needed
-copy_font_1
-	mvx	#$ff	^31
-	lda:pha	$e000,y	; punctuation
-	lda:pha	$e100,y	; uppercase
-	lda	$e300,y	; lowercase
-	dex:stx	^31
-	sta	font+$300,y	; lowercase
-	pla:sta	font+$200,y	; uppercase
-	pla:sta	font+$100,y	; punctuation
-	iny
-	bne	copy_font_1
-	eif
-
+show_info
 	lda:rne	^4b
 	sta	^45
 	mvx	#$26	^16
@@ -56,12 +35,91 @@ copy_font_1
 
 	ift	TEST
 
+	mwa	#vbl	$fffa
+	mva	#$40	^4e
 	jmp	*
-	run	main
+	
+vbl
+	pha
+	txa:pha
+	ldx	$d014
+	dex
+	seq:ldx	#1
+	jsr	countdown
+	pla:tax
+	pla:rti
 
 	els
 
 	rts
 
 	eif
+
+countdown
+	lda	countdown_framerate_lo,x
+	add	#0
+	sta	*-1
+	lda	countdown_framerate_hi,x
+	adc	#0
+	sta	*-1
+	bcc	countdown_skip
+	lda	dl-5
+	ora	dl-4
+	ora	dl-2
+	ora	dl-1
+	cmp	#'1'
+	ldx	#4
+	bcs	countdown_start
+countdown_skip
+	rts
+
+countdown_wrap
+	lda	#'9'
+	cpx	#3
+	sne:lda	#'5'
+	sta	dl-5,x
+countdown_next
+	dex
+countdown_start
+	lda	dl-5,x
+	cmp	#'1'
+	bcc	countdown_wrap
+	cmp	#':'
+	beq	countdown_next
+
+	dec	dl-5,x
+	rts
+
+countdown_framerate_lo	dta	l(312*114/2*65536/[1773447/2],262*114*65536/1789772)
+countdown_framerate_hi	dta	h(312*114/2*65536/[1773447/2],262*114*65536/1789772)
+
+	org	$100
+main
+	sei
+	mvy	#0	^4e
+	lda:rne	^4b
+	sta	^40
+	ldx	#29
+	sta:rpl	^00,x-
+; copy font from ROM, reordering from ANTIC codes to ASCII, semigraphics not needed
+copy_font_1
+	stx	^31	; #$ff
+	lda:pha	$e000,y	; punctuation
+	lda:pha	$e100,y	; uppercase
+	lda	$e300,y	; lowercase
+	dex:stx	^31
+	inx
+	sta	font+$300,y	; lowercase
+	pla:sta	font+$200,y	; uppercase
+	pla:sta	font+$100,y	; punctuation
+	iny
+	bne	copy_font_1
+	jsr	show_info
+	ert	*!=$13a
+
+	ift	TEST
+	jmp	*
+	run	main
+	eif
+
 	end

@@ -1,6 +1,6 @@
-font	equ	$fc00
+countdown	equ	$fcb8
 
-	org	$100
+	org	$124
 main
 	sei
 	mvy	#0	^4e
@@ -8,23 +8,7 @@ main
 	sta	^40
 	ldx	#29
 	sta:rpl	^00,x-
-
-; copy font from ROM, reordering from ANTIC codes to ASCII, semigraphics not needed
-copy_font_1
-	stx	^31	; #$ff
-	lda:pha	$e000,y	; punctuation
-	lda:pha	$e100,y	; uppercase
-	lda	$e300,y	; lowercase
-	dex:stx	^31
-	inx
-	sta	font+$300,y	; lowercase
-	pla:sta	font+$200,y	; uppercase
-	pla:sta	font+$100,y	; punctuation
-	iny
-	bne	copy_font_1
-	jsr	$fcd3
-; A==0 here!
-
+	ert	*!=$13a
 	ldx	#8
 init_pokey_1
 	sta	$d210,x
@@ -47,7 +31,11 @@ init_pokey_1
 
 ; TODO: support 400/800/600XL
 	mva	#$fe	^31
-	mwa	#nmi	$fffa
+	lda	<nmi
+	ldx	$135
+	seq:lda	<nmi_info
+	sta	$fffa
+	mva	>nmi	$fffb
 	mva	#$40	^4e
 
 	lda	#125
@@ -55,15 +43,19 @@ init_pokey_1
 player_loop
 	cmp:rne	^4b
 	jsr	player
-	ldx	ntsc
+	ldx	#0
+ntsc	equ	*-1
 	lda	fastplay_low_bit
 	lsr	@
 	bcc	fastplay_is_even
-	lda:inc	calls
+	lda	#0
+calls	equ	*-1
+	inc	calls
 	lsr	@
 fastplay_is_even
 	lda	vcount_period,x
-	adc	expected_vcount
+	adc	#125
+expected_vcount	equ	*-1
 	bcs	next_frame
 	cmp	vcount_wrap,x
 	bcc	same_frame
@@ -73,27 +65,34 @@ next_frame
 same_frame
 	sta	expected_vcount
 	lda	frame_period,x
-	adc:sta	expected_frame
-	cmp:rne	frame
+	adc	#0
+expected_frame	equ	*-1
+	sta	expected_frame
+	cmp	#0
+frame	equ	*-1
+	rne
 	lda	expected_vcount
 	bcs	player_loop	!
 
+nmi_info
+	pha
+	txa:pha
+	ldx	ntsc
+	jsr	countdown
+	pla:tax
+	pla
 nmi
 	inc	frame
 	rti
 
-ntsc	dta	0
-frame	dta	0
-calls	dta	0
-expected_vcount	dta	125
-expected_frame	dta	0
 vcount_wrap	dta	156,131
-init	jmp	0
+init	dta	{jmp 0}
+	opt	o-
+	dta	a(0)
 player	jmp	0
 song	dta	0
 fastplay_low_bit	dta	0
 vcount_period	dta	0,0
 frame_period	dta	0,0
 
-	run	main
 	end

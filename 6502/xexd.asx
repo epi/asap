@@ -1,6 +1,6 @@
-font	equ	$fc00
+countdown	equ	$fcb8
 
-	org	$100
+	org	$124
 main
 	sei
 	mvy	#0	^4e
@@ -8,23 +8,7 @@ main
 	sta	^40
 	ldx	#29
 	sta:rpl	^00,x-
-
-; copy font from ROM, reordering from ANTIC codes to ASCII, semigraphics not needed
-copy_font_1
-	stx	^31	; #$ff
-	lda:pha	$e000,y	; punctuation
-	lda:pha	$e100,y	; uppercase
-	lda	$e300,y	; lowercase
-	dex:stx	^31
-	inx
-	sta	font+$300,y	; lowercase
-	pla:sta	font+$200,y	; uppercase
-	pla:sta	font+$100,y	; punctuation
-	iny
-	bne	copy_font_1
-	jsr	$fcd3
-; A==0 here!
-
+	ert	*!=$13a
 	sta	^2e
 	ldx	#8
 init_pokey_1
@@ -37,9 +21,8 @@ init_pokey_1
 
 ; TODO: support 400/800/600XL
 	mva	#$fe	^31
-	lda	player+1
-	and	player+2
-	cmp	#$ff
+	lda	player
+	cmp	#{rts}
 	beq	no_player
 	mwa	#nmi	$fffa
 	mva	#$40	^4e
@@ -54,13 +37,21 @@ nmi
 	txa:pha
 	tya:pha
 	jsr	player
+	ldx	$135
+	beq	no_info
+	ldx	$d014
+	dex
+	seq:ldx	#1
+	jsr	countdown
+no_info
 	pla:tay
 	pla:tax
 	pla:rti
 
-init	jmp	0
+init	dta	{jmp 0}
+	opt	o-
+	dta	a(0)
 player	jmp	0
 song	dta	0
 
-	run	main
 	end
