@@ -1824,6 +1824,7 @@ static void ASAPWriter_WriteString(ByteWriter w, const char *s);
 static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value);
 static void ASAPWriter_WriteWord(ByteWriter w, int value);
 static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info);
+static void ASAPWriter_WriteXexInfoTextDl(ByteWriter w, int address, int len, int verticalScrollAt);
 static const unsigned char CiBinaryResource_xexb_obx[183] = { 255, 255, 36, 1, 223, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212, 208,
 	251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 162, 8, 157, 16,
 	210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31, 210, 141, 0, 210, 169,
@@ -1834,7 +1835,7 @@ static const unsigned char CiBinaryResource_xexb_obx[183] = { 255, 255, 36, 1, 2
 	215, 1, 162, 0, 173, 219, 1, 74, 144, 6, 169, 0, 238, 153, 1, 74,
 	189, 220, 1, 105, 125, 176, 5, 221, 210, 1, 144, 4, 253, 210, 1, 56,
 	141, 162, 1, 189, 222, 1, 105, 0, 141, 181, 1, 201, 0, 208, 252, 173,
-	162, 1, 176, 198, 72, 138, 72, 174, 145, 1, 32, 184, 252, 104, 170, 104,
+	162, 1, 176, 198, 72, 138, 72, 174, 145, 1, 32, 167, 252, 104, 170, 104,
 	238, 186, 1, 64, 156, 131, 76 };
 static const unsigned char CiBinaryResource_xexd_obx[116] = { 255, 255, 36, 1, 151, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212, 208,
 	251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 141, 14, 210, 162,
@@ -1842,19 +1843,20 @@ static const unsigned char CiBinaryResource_xexd_obx[116] = { 255, 255, 36, 1, 1
 	0, 210, 169, 254, 141, 1, 211, 173, 148, 1, 201, 96, 240, 15, 169, 114,
 	141, 250, 255, 169, 1, 141, 251, 255, 169, 64, 141, 14, 212, 173, 151, 1,
 	88, 76, 145, 1, 88, 72, 138, 72, 152, 72, 32, 148, 1, 174, 53, 1,
-	240, 11, 174, 20, 208, 202, 240, 2, 162, 1, 32, 184, 252, 104, 168, 104,
+	240, 11, 174, 20, 208, 202, 240, 2, 162, 1, 32, 167, 252, 104, 168, 104,
 	170, 104, 64, 76 };
-static const unsigned char CiBinaryResource_xexinfo_obx[177] = { 255, 255, 144, 252, 252, 252, 65, 112, 252, 173, 11, 212, 208, 251, 141, 5,
-	212, 162, 38, 142, 22, 208, 162, 10, 142, 23, 208, 162, 33, 142, 0, 212,
-	162, 112, 142, 2, 212, 162, 252, 142, 3, 212, 142, 9, 212, 96, 189, 249,
-	252, 24, 105, 0, 141, 189, 252, 189, 251, 252, 105, 0, 141, 197, 252, 144,
-	18, 173, 107, 252, 13, 108, 252, 13, 110, 252, 13, 111, 252, 201, 49, 162,
-	4, 176, 13, 96, 169, 57, 224, 3, 208, 2, 169, 53, 157, 107, 252, 202,
-	189, 107, 252, 201, 49, 144, 237, 201, 58, 240, 244, 222, 107, 252, 96, 34,
+static const unsigned char CiBinaryResource_xexinfo_obx[193] = { 255, 255, 129, 252, 253, 252, 96, 173, 11, 212, 208, 251, 141, 5, 212, 162,
+	38, 142, 22, 208, 162, 10, 142, 23, 208, 162, 33, 142, 0, 212, 162, 80,
+	142, 2, 212, 162, 252, 142, 3, 212, 142, 9, 212, 96, 169, 4, 44, 15,
+	210, 208, 10, 173, 9, 210, 201, 33, 208, 3, 32, 119, 252, 216, 189, 250,
+	252, 24, 105, 0, 141, 190, 252, 189, 252, 252, 105, 0, 141, 198, 252, 144,
+	18, 173, 75, 252, 13, 76, 252, 13, 78, 252, 13, 79, 252, 201, 49, 162,
+	4, 176, 13, 96, 169, 57, 224, 3, 208, 2, 169, 53, 157, 75, 252, 202,
+	189, 75, 252, 201, 49, 144, 237, 201, 58, 240, 244, 222, 75, 252, 96, 34,
 	69, 5, 4, 0, 1, 57, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212,
 	208, 251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 142, 1, 211,
 	185, 0, 224, 72, 185, 0, 225, 72, 185, 0, 227, 202, 142, 1, 211, 232,
-	153, 0, 255, 104, 153, 0, 254, 104, 153, 0, 253, 200, 208, 223, 32, 147,
+	153, 0, 255, 104, 153, 0, 254, 104, 153, 0, 253, 200, 208, 223, 32, 130,
 	252 };
 
 struct FlashPackItem {
@@ -4931,7 +4933,10 @@ static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info)
 	int duration;
 	int totalCharacters;
 	int totalLines;
-	int startAddress;
+	int otherAddress;
+	int authorAddress;
+	int hiddenAddress;
+	int titleAddress;
 	int i;
 	if (info->author[0] != '\0') {
 		author[0] = 98;
@@ -4950,29 +4955,61 @@ static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info)
 		otherLen = ASAPWriter_PadXexInfo(other, otherLen, 0);
 	totalCharacters = titleLen + authorLen + otherLen;
 	totalLines = totalCharacters / 32;
-	startAddress = 64624 - totalCharacters - 8;
-	ASAPWriter_WriteWord(w, startAddress);
+	otherAddress = 64592 - otherLen;
+	authorAddress = otherAddress - authorLen;
+	hiddenAddress = authorAddress - authorLen;
+	titleAddress = hiddenAddress - 8 - titleLen;
+	ASAPWriter_WriteWord(w, titleAddress);
 	ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 4, 6);
 	ASAPWriter_WriteBytes(w, title, 0, titleLen);
 	for (i = 0; i < 8; i++)
 		w.func(w.obj, 85);
-	ASAPWriter_WriteBytes(w, author, 0, authorLen);
+	if (authorLen > 0) {
+		int i;
+		ASAPWriter_WriteString(w, "(press space to show author)");
+		for (i = 28; i < authorLen; i++)
+			w.func(w.obj, 32);
+		ASAPWriter_WriteBytes(w, author, 0, authorLen);
+	}
 	ASAPWriter_WriteBytes(w, other, 0, otherLen);
 	for (i = totalLines; i < 26; i++)
 		w.func(w.obj, 112);
 	w.func(w.obj, 48);
-	w.func(w.obj, titleLen == 32 ? 98 : 66);
-	ASAPWriter_WriteWord(w, startAddress);
-	for (i = 32; i < titleLen; i += 32)
-		w.func(w.obj, i + 32 < titleLen ? 2 : 34);
+	ASAPWriter_WriteXexInfoTextDl(w, titleAddress, titleLen, titleLen - 32);
 	w.func(w.obj, 8);
 	w.func(w.obj, 0);
-	for (i = 0; i < authorLen; i += 32)
-		w.func(w.obj, 2);
+	if (authorLen > 0)
+		ASAPWriter_WriteXexInfoTextDl(w, hiddenAddress, authorLen, -1);
 	w.func(w.obj, 16);
-	for (i = 0; i < otherLen; i += 32)
-		w.func(w.obj, 2);
-	ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 6, 177);
+	ASAPWriter_WriteXexInfoTextDl(w, otherAddress, otherLen, -1);
+	w.func(w.obj, 65);
+	ASAPWriter_WriteWord(w, 64592);
+	if (authorLen > 0) {
+		int dlAuthor = 64624 - totalLines + titleLen / 32;
+		w.func(w.obj, 169);
+		w.func(w.obj, authorAddress & 255);
+		w.func(w.obj, 141);
+		ASAPWriter_WriteWord(w, dlAuthor);
+		w.func(w.obj, 169);
+		w.func(w.obj, authorAddress >> 8);
+		w.func(w.obj, 141);
+		ASAPWriter_WriteWord(w, dlAuthor + 1);
+	}
+	else {
+		int i;
+		for (i = 0; i < 12; i++)
+			w.func(w.obj, 96);
+	}
+	ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 6, 193);
+}
+
+static void ASAPWriter_WriteXexInfoTextDl(ByteWriter w, int address, int len, int verticalScrollAt)
+{
+	int i;
+	w.func(w.obj, verticalScrollAt == 0 ? 98 : 66);
+	ASAPWriter_WriteWord(w, address);
+	for (i = 32; i < len; i += 32)
+		w.func(w.obj, i == verticalScrollAt ? 34 : 2);
 }
 
 static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)

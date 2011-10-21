@@ -254,7 +254,7 @@ public:
 		filesystem::g_open(m_file, filename, filesystem::open_mode_write_new, p_abort);
 		this->p_abort = &p_abort;
 		ByteWriter bw = { this, static_write };
-		if (!ASAPWriter_Write(filename, bw, ASAP_GetInfo(asap), module, module_len))
+		if (!ASAPWriter_Write(filename, bw, ASAP_GetInfo(asap), module, module_len, FALSE))
 			throw exception_io_unsupported_format();
 	}
 };

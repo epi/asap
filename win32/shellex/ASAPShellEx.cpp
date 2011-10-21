@@ -599,7 +599,7 @@ public:
 				hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, NULL);
 				if (SUCCEEDED(hr)) {
 					CMemoryByteWriter mbw;
-					if (!ASAPWriter_Write("dummy.sap", mbw.GetByteWriter(), m_pinfo, module, module_len))
+					if (!ASAPWriter_Write("dummy.sap", mbw.GetByteWriter(), m_pinfo, module, module_len, FALSE))
 						hr = E_FAIL;
 					else {
 						ULARGE_INTEGER liSize;

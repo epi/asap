@@ -1,6 +1,11 @@
 ﻿History
 -------
 
+ASAP 3.1.1 (2011-10-??)::
+- Converted XEX files may optionally display information.
+- Fixed time detection for some FC files.
+
+
 ASAP 3.1.0 (2011-09-24)::
 
 - WASAP/Winamp/Apollo/XMPlay file information window now includes STIL

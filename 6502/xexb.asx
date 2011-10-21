@@ -1,4 +1,4 @@
-countdown	equ	$fcb8
+countdown	equ	$fca7
 
 	org	$124
 main

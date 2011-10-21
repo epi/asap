@@ -1,3 +1,5 @@
+HIDE_AUTHOR	equ	1
+
 font	equ	$fc00
 
 	ift	TEST
@@ -6,22 +8,42 @@ font	equ	$fc00
 scr
 	dta	c'404 Error                       '
 :8	dta	$55
+	ift	HIDE_AUTHOR
+hidden
+	dta	c'(press space to show author)    '
+	dta	c'                                '
+author
+	eif
 	dta	c'by Grzegorz Kwiatek (Greg)      '
 	dta	c' & Lukasz Sychowicz (X-Ray)     '
+date
 	dta	c'01/03/2003          STEREO 02:26'
 
 dl
 :22	dta	$70
-	dta	$30,$62,a(scr),8,0,2,2,$10,2
+	dta	$30,$62,a(scr),8,0
+	ift	HIDE_AUTHOR
+	dta	$42
+dl_author
+	dta	a(hidden),2,$10,$42,a(date)
+	dta	$41,a(dl)
+show_author
+	mwa	#author	dl_author
+	els
+	dta	2,2,$10,2
+	dta	$41,a(dl)
+	eif
 
 	els
 
-	org	$fc70
-dl	org	*+32
+	org	$fc50
+dl	org	*+39
+
+show_author
+	org	*+10
+	rts
 
 	eif
-
-	dta	$41,a(dl)
 
 show_info
 	lda:rne	^4b
@@ -56,6 +78,18 @@ vbl
 	eif
 
 countdown
+	ift	HIDE_AUTHOR
+	lda	#4
+	bit	$d20f
+	bne	no_author
+	lda	$d209
+	cmp	#$21
+	bne	no_author
+	jsr	show_author
+no_author
+	eif
+
+	cld
 	lda	countdown_framerate_lo,x
 	add	#0
 	sta	*-1

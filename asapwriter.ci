@@ -481,6 +481,14 @@ public class ASAPWriter
 		return PadXexInfo(dest, destLen, endColumn);
 	}
 
+	static void WriteXexInfoTextDl(ByteWriter w, int address, int len, int verticalScrollAt)
+	{
+		w(verticalScrollAt == 0 ? 0x62 : 0x42);
+		WriteWord(w, address);
+		for (int i = XexInfoCharactersPerLine; i < len; i += XexInfoCharactersPerLine)
+			w(i == verticalScrollAt ? 0x22 : 2);
+	}
+
 	static void WriteXexInfo(ByteWriter w, ASAPInfo info)
 	{
 		byte[ASAPInfo.MaxTextLength * 2] title;
@@ -504,31 +512,50 @@ public class ASAPWriter
 		else
 			otherLen = PadXexInfo(other, otherLen, 0);
 
-		const int xexinfoDl = 0xfc70; // must match xexinfo.asx
+		const int xexInfoDl = 0xfc50; // must match xexinfo.asx
 		int totalCharacters = titleLen + authorLen + otherLen;
 		int totalLines = totalCharacters / XexInfoCharactersPerLine;
-		int startAddress = xexinfoDl - totalCharacters - 8;
-		WriteWord(w, startAddress);
+		int otherAddress = xexInfoDl - otherLen;
+		int authorAddress = otherAddress - authorLen;
+		int hiddenAddress = authorAddress - authorLen;
+		int titleAddress = hiddenAddress - 8 - titleLen;
+		WriteWord(w, titleAddress);
 		WriteBytes(w, BinaryResource("xexinfo.obx"), 4, 6);
 		WriteBytes(w, title, 0, titleLen);
 		for (int i = 0; i < 8; i++)
 			w(0x55);
-		WriteBytes(w, author, 0, authorLen);
+		if (authorLen > 0) {
+			WriteString(w, "(press space to show author)");
+			for (int i = 28; i < authorLen; i++)
+				w(' ');
+			WriteBytes(w, author, 0, authorLen);
+		}
 		WriteBytes(w, other, 0, otherLen);
 		for (int i = totalLines; i < 26; i++)
 			w(0x70);
 		w(0x30);
-		w(titleLen == XexInfoCharactersPerLine ? 0x62 : 0x42);
-		WriteWord(w, startAddress);
-		for (int i = XexInfoCharactersPerLine; i < titleLen; i += XexInfoCharactersPerLine)
-			w(i + XexInfoCharactersPerLine < titleLen ? 2 : 0x22);
+		WriteXexInfoTextDl(w, titleAddress, titleLen, titleLen - XexInfoCharactersPerLine);
 		w(8);
 		w(0);
-		for (int i = 0; i < authorLen; i += XexInfoCharactersPerLine)
-			w(2);
+		if (authorLen > 0)
+			WriteXexInfoTextDl(w, hiddenAddress, authorLen, -1);
 		w(0x10);
-		for (int i = 0; i < otherLen; i += XexInfoCharactersPerLine)
-			w(2);
+		WriteXexInfoTextDl(w, otherAddress, otherLen, -1);
+		w(0x41);
+		WriteWord(w, xexInfoDl);
+		if (authorLen > 0) {
+			int dlAuthor = xexInfoDl + 32 - totalLines + titleLen / XexInfoCharactersPerLine;
+			w(0xa9); w(authorAddress & 0xff); // LDA #<author
+			w(0x8d); WriteWord(w, dlAuthor); // STA dl_author
+			w(0xa9); w(authorAddress >> 8); // LDA #>author
+			w(0x8d); WriteWord(w, dlAuthor + 1); // STA dl_author+1
+		}
+		else {
+			// pad two bytes because DL is shorter due to no LMS for author
+			// show_author is just RTS, pad with more RTSes
+			for (int i = 0; i < 12; i++)
+				w(0x60);
+		}
 		WriteBytes(w, BinaryResource("xexinfo.obx"), 6, BinaryResource("xexinfo.obx").Length);
 	}
 
