@@ -158,7 +158,9 @@ ASAP includes the following programs:
 - http://www.digitalmars.com/d/[D] version of ASAP2WAV
 - command-line player in D for Windows and Linux
 
-{asapports}link:PORTS.xml[This table] summarizes the differences between the above versions.
+{asapports}link:PORTS.xml[This table] summarizes differences between the above versions.
+
+To play the music on an 8-bit Atari, convert the music to an Atari program (XEX) using asapconv/WASAP/Winamp/Apollo/XMPlay.
 
 There are other projects which use ASAP:
 
