@@ -491,9 +491,9 @@ public class ASAPWriter
 
 	static void WriteXexInfo(ByteWriter w, ASAPInfo info)
 	{
-		byte[ASAPInfo.MaxTextLength * 2] title;
+		byte[256] title;
 		int titleLen = FormatXexInfoText(title, 0, 0, info.Title.Length == 0 ? "(untitled)" : info.Title, false);
-		byte[ASAPInfo.MaxTextLength * 2] author;
+		byte[256] author;
 		int authorLen;
 		if (info.Author.Length > 0) {
 			author[0] = 'b';
@@ -503,7 +503,7 @@ public class ASAPWriter
 		}
 		else
 			authorLen = 0;
-		byte[ASAPInfo.MaxTextLength * 2] other;
+		byte[256] other;
 		int otherLen = FormatXexInfoText(other, 0, XexInfoCharactersPerLine - 13, info.Date, false);
 		otherLen = FormatXexInfoText(other, otherLen, XexInfoCharactersPerLine - 5, info.Channels > 1 ? " STEREO" : "   MONO", false);
 		int duration = info.Durations[info.DefaultSong];

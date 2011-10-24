@@ -4924,11 +4924,11 @@ static void ASAPWriter_WriteWord(ByteWriter w, int value)
 
 static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info)
 {
-	unsigned char title[254];
+	unsigned char title[256];
 	int titleLen = ASAPWriter_FormatXexInfoText(title, 0, 0, info->title[0] == '\0' ? "(untitled)" : info->title, FALSE);
-	unsigned char author[254];
+	unsigned char author[256];
 	int authorLen;
-	unsigned char other[254];
+	unsigned char other[256];
 	int otherLen;
 	int duration;
 	int totalCharacters;
