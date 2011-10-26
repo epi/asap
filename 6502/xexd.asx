@@ -32,7 +32,7 @@ no_player
 	jmp	init
 
 nmi
-	cli
+	plp:php	; unblock IRQ if NMI blocked it
 	pha
 	txa:pha
 	tya:pha
