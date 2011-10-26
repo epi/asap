@@ -1,7 +1,7 @@
 ﻿History
 -------
 
-ASAP 3.1.1 (2011-10-??)::
+ASAP 3.1.1 (2011-10-26)::
 - Converted XEX files may optionally display information.
 - Fixed conversion of some TYPE D SAP files (e.g. Saturday_Demo.sap) to XEX.
 - Fixed time detection for some FC files.
