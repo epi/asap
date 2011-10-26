@@ -27,7 +27,7 @@ csharp/SilverASAP.dll: $(srcdir)csharp/SilverASAP.cs csharp/asap.cs
 	$(CSC) -nostdlib -noconfig -r:$(SL)/mscorlib.dll -r:$(SL)/system.dll -r:$(SL)/System.Net.dll -r:$(SL)/System.Windows.dll -r:$(SL)/System.Windows.Browser.dll
 CLEAN += csharp/SilverASAP.dll
 
-csharp/asap.cs: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(NATIVE_ROUTINES_OBX)
+csharp/asap.cs: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
 	$(CITO) -n Sf.Asap
 CLEAN += csharp/asap.cs
 

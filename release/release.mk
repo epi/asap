@@ -24,7 +24,7 @@ dist: \
 	srcdist
 .PHONY: dist
 
-srcdist: $(srcdir)MANIFEST $(srcdir)README.html $(srcdir)asap.c $(srcdir)asap.h $(NATIVE_ROUTINES_OBX) 6502/xexb.obx 6502/xexd.obx
+srcdist: $(srcdir)MANIFEST $(srcdir)README.html $(srcdir)asap.c $(srcdir)asap.h $(ASM6502_OBX)
 	$(RM) release/asap-$(VERSION).tar.gz && $(TAR) -c --numeric-owner --owner=0 --group=0 --mode=644 -T MANIFEST --transform=s,,asap-$(VERSION)/, | $(SEVENZIP) -tgzip -si release/asap-$(VERSION).tar.gz
 .PHONY: srcdist
 
@@ -32,7 +32,7 @@ $(srcdir)MANIFEST:
 	$(DO)if test -e $(srcdir).git; then \
 		($(GIT) ls-tree -r --name-only --full-tree master | grep -vF .gitignore \
 			&& echo MANIFEST && echo README.html && echo asap.c && echo asap.h \
-			&& for obx in $(NATIVE_ROUTINES_OBX); do echo $$obx; done && echo 6502/xexb.obx && echo 6502/xexd.obx) | sort -u >$@; \
+			&& for obx in $(ASM6502_OBX); do echo $$obx; done) | sort -u >$@; \
 	fi
 .PHONY: $(srcdir)MANIFEST
 

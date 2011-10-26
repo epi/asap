@@ -13,7 +13,7 @@ java/j2me/asap_midlet.jad: $(srcdir)java/j2me/MANIFEST.MF java/j2me/asap_midlet.
 CLEAN += java/j2me/asap_midlet.jad
 
 java/j2me/asap_midlet.jar: $(srcdir)java/j2me/MANIFEST.MF java/j2me/preverified/ASAPMIDlet.class $(JAVA_OBX)
-	$(JAR) cfm $@ $< -C java/j2me/preverified . $(NATIVE_ROUTINES:%=-C java/obx net/sf/asap/%.obx)
+	$(JAR) cfm $@ $< -C java/j2me/preverified . $(ASM6502_PLAYERS:%=-C java/obx net/sf/asap/%.obx)
 CLEAN += java/j2me/asap_midlet.jar
 
 java/j2me/preverified/ASAPMIDlet.class: java/classes/ASAPMIDlet.class

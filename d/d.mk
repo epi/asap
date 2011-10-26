@@ -17,6 +17,6 @@ d/asapplay.exe: $(call src,d/asapplay.d d/waveout.d d/alsa/pcm.d) d/asap.d
 	$(DC)
 CLEAN += d/asapplay.exe d/asapplay.obj asapplay.map
 
-d/asap.d: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(NATIVE_ROUTINES_OBX)
+d/asap.d: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
 	$(CITO)
 CLEAN += d/asap.d

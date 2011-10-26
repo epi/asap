@@ -8,11 +8,11 @@ ifndef DO
 $(error Use "Makefile" instead of "flash.mk")
 endif
 
-flash/asap.swf: $(srcdir)flash/ASAPPlayer.as flash/net/sf/asap/ASAP.as $(NATIVE_ROUTINES_OBX)
+flash/asap.swf: $(srcdir)flash/ASAPPlayer.as flash/net/sf/asap/ASAP.as $(ASM6502_PLAYERS_OBX)
 	$(MXMLC) -source-path flash 6502
 CLEAN += flash/asap.swf
 
-flash/net/sf/asap/ASAP.as: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(NATIVE_ROUTINES_OBX)
+flash/net/sf/asap/ASAP.as: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
 	$(CITO) -n net.sf.asap -D FLASH
 CLEAN += flash/net/sf/asap/*.as
 

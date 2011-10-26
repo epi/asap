@@ -294,9 +294,9 @@ win32/x64/ASAPShellEx-res.o: $(call src,win32/gui.rc asap.h)
 	$(WIN64_WINDRES) -DSHELLEX
 CLEAN += win32/x64/ASAPShellEx-res.o
 
-win32/shellex/asap-infowriter.h: $(call src,asapinfo.ci asap6502.ci asapwriter.ci) $(NATIVE_ROUTINES_OBX) | win32/shellex/asap-infowriter.c
+win32/shellex/asap-infowriter.h: $(call src,asapinfo.ci asap6502.ci asapwriter.ci) $(ASM6502_OBX) | win32/shellex/asap-infowriter.c
 
-win32/shellex/asap-infowriter.c: $(call src,asapinfo.ci asap6502.ci asapwriter.ci) $(NATIVE_ROUTINES_OBX)
+win32/shellex/asap-infowriter.c: $(call src,asapinfo.ci asap6502.ci asapwriter.ci) $(ASM6502_OBX)
 	$(CITO)
 CLEAN += win32/shellex/asap-infowriter.c win32/shellex/asap-infowriter.h
 
