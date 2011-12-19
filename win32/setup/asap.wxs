@@ -258,7 +258,7 @@
 							<RegistryValue Root="HKCR" Key="Media Type\Extensions\.$(var.EXT)" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
 						<?endforeach?>
 						<?foreach EXT in $(var.ASAP_EXTS)?>
-							<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.$(var.EXT)" Name="Permissions" Value="15" Type="integer" Action="write" />
+							<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.$(var.EXT)" Name="Permissions" Value="15" Type="integer" Action="write" /><!-- 143 = transcoding -->
 							<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.$(var.EXT)" Name="Runtime" Value="7" Type="integer" Action="write" />
 						<?endforeach?>
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\MediaPlayer\Player\Extensions\MUIDescriptions" Name="ASAP" Value="ASAP files ($(var.EXT_FILTER))" Type="string" Action="write" />

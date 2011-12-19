@@ -25,6 +25,12 @@
 #include <streams.h>
 #include <tchar.h>
 
+#ifdef ASAP_DSF_TRANSCODE
+/* seems it doesn't work */
+#include <wmpservices.h>
+static const IID IID_IWMPTranscodePolicy = { 0xb64cbac3, 0x401c, 0x4327, { 0xa3, 0xe8, 0xb9, 0xfe, 0xb3, 0xa8, 0xc2, 0x5c } };
+#endif
+
 #include "asap.h"
 
 static const TCHAR extensions[][5] =
@@ -307,6 +313,9 @@ public:
 };
 
 class CASAPSource : public CSource, IFileSourceFilter
+#ifdef ASAP_DSF_TRANSCODE
+	, IWMPTranscodePolicy
+#endif
 {
 	CASAPSourceStream *m_pin;
 	WCHAR *m_filename;
@@ -336,6 +345,10 @@ public:
 	{
 		if (riid == IID_IFileSourceFilter)
 			return GetInterface((IFileSourceFilter *) this, ppv);
+#ifdef ASAP_DSF_TRANSCODE
+		if (riid == IID_IWMPTranscodePolicy)
+			return GetInterface((IWMPTranscodePolicy *) this, ppv);
+#endif
 		return CSource::NonDelegatingQueryInterface(riid, ppv);
 	}
 
@@ -373,6 +386,14 @@ public:
 			CopyMediaType(pmt, &m_mt);
 		return S_OK;
 	}
+
+#ifdef ASAP_DSF_TRANSCODE
+	STDMETHODIMP allowTranscode(VARIANT_BOOL *pvarfAllow)
+	{
+		*pvarfAllow = VARIANT_TRUE;
+		return S_OK;
+	}
+#endif
 
 	static CUnknown * WINAPI CreateInstance(IUnknown *pUnk, HRESULT *phr)
 	{
@@ -454,7 +475,11 @@ STDAPI DllRegisterServer()
 		 || RegSetValueEx(hKey, _T("Source Filter"), 0, REG_SZ, (const BYTE *) &CLSID_ASAPSource_str, sizeof(CLSID_ASAPSource_str)) != ERROR_SUCCESS
 		 || RegCloseKey(hKey) != ERROR_SUCCESS)
 			 return E_FAIL;
+#ifdef ASAP_DSF_TRANSCODE
+		static const DWORD perms = 15 + 128;
+#else
 		static const DWORD perms = 15;
+#endif
 		static const DWORD runtime = 7;
 		if (RegCreateKeyEx(hWMPKey, extensions[i], 0, NULL, 0, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS
 		 || RegSetValueEx(hKey, _T("Permissions"), 0, REG_DWORD, (const BYTE *) &perms, sizeof(perms)) != ERROR_SUCCESS
