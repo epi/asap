@@ -168,6 +168,14 @@
 		<UIRef Id="WixUI_Common" />
 
 		<?if $(sys.BUILDARCH) = x86?>
+		<!-- TODO
+		<Property Id="TSVN.VER">
+			<RegistrySearch Id="tsvn.ver" Root="HKCU" Key="SOFTWARE\TortoiseSVN\DiffTools" Name="CurrentVersion" Type="raw" />
+		</Property>
+		<Property Id="TGIT.VER">
+			<RegistrySearch Id="tgit.ver" Root="HKCU" Key="SOFTWARE\TortoiseGit\DiffTools" Name="CurrentVersion" Type="raw" />
+		</Property>
+		-->
 		<Property Id="WMP.EXE">
 			<RegistrySearch Id="wmp.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\MediaPlayer" Name="Installation Directory" Type="directory">
 				<FileSearch Id="wmp.exe" Name="wmplayer.exe" />
@@ -308,6 +316,19 @@
 					</Component>
 
 					<?if $(sys.BUILDARCH) = x86?>
+					<Component Id="sap2txt.exe" Guid="*">
+						<File Name="sap2txt.exe" Source="sap2txt.exe" Checksum="yes" KeyPath="yes" />
+					</Component>
+					<Component Id="diff_sap.js" Guid="*">
+						<File Name="diff-sap.js" Source="diff-sap.js" KeyPath="yes" />
+					</Component>
+					<Component Id="diff_sap_tsvn.reg" Guid="318158B4-BD70-440F-B672-924A9CB09FD6">
+						<RegistryValue Root="HKCU" Key="Software\TortoiseSVN\DiffTools" Name=".sap" Value="wscript.exe &quot;[#diff_sap.js]&quot; %base %mine %bname %yname //E:javascript" Type="string" Action="write" KeyPath="yes" />
+					</Component>
+					<Component Id="diff_sap_tgit.reg" Guid="BA42D084-4B09-4FB6-B209-8ADEE70A4289">
+						<RegistryValue Root="HKCU" Key="Software\TortoiseGit\DiffTools" Name=".sap" Value="wscript.exe &quot;[#diff_sap.js]&quot; %base %mine %bname %yname //E:javascript" Type="string" Action="write" KeyPath="yes" />
+					</Component>
+
 					<Component Id="README_WindowsSetup.html" Guid="*">
 						<File Name="README_WindowsSetup.html" Source="README_WindowsSetup.html" KeyPath="yes" />
 					</Component>
@@ -551,6 +572,19 @@
 		</Feature>
 
 		<?if $(sys.BUILDARCH) = x86?>
+		<Feature Id="diff_sap_tsvn" Title="TortoiseSVN diff viewer" Level="9" Description="Compare changes in SAP files." AllowAdvertise="no">
+			<!-- <Condition Level="1">TSVN.VER</Condition> -->
+			<ComponentRef Id="sap2txt.exe" />
+			<ComponentRef Id="diff_sap.js" />
+			<ComponentRef Id="diff_sap_tsvn.reg" />
+		</Feature>
+		<Feature Id="diff_sap_tgit" Title="TortoiseGit diff viewer" Level="9" Description="Compare changes in SAP files." AllowAdvertise="no">
+			<!-- <Condition Level="1">TGIT.VER</Condition> -->
+			<ComponentRef Id="sap2txt.exe" />
+			<ComponentRef Id="diff_sap.js" />
+			<ComponentRef Id="diff_sap_tgit.reg" />
+		</Feature>
+
 		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file." AllowAdvertise="no">
 			<ComponentRef Id="README_WindowsSetup.html" />
 			<Feature Id="docs.lnk" Title="Start menu shortcuts" Level="1" Description="Adds documentation and website links to the Programs menu." AllowAdvertise="no">

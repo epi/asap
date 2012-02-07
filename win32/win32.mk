@@ -103,6 +103,12 @@ win32/asapscan.exe: $(srcdir)asapscan.c asap-asapscan.h
 	$(WIN32_CC)
 CLEAN += win32/asapscan.exe
 
+# sap2txt
+
+win32/sap2txt.exe: $(srcdir)sap2txt.c
+	$(WIN32_CC) -lz
+CLEAN += win32/sap2txt.exe
+
 # WASAP
 
 win32/wasap.exe: $(call src,win32/wasap/wasap.[ch] asap.[ch] astil.[ch] win32/info_dlg.[ch]) win32/wasap/wasap-res.o
@@ -306,8 +312,8 @@ win32/setup: release/asap-$(VERSION)-win32.msi
 .PHONY: win32/setup
 
 release/asap-$(VERSION)-win32.msi: win32/setup/asap.wixobj release/README_WindowsSetup.html \
-	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/setup/Website.url win32/shellex/ASAPShellEx.propdesc) \
-	$(addprefix win32/,asapconv.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll asap_dsf.dll foo_asap.dll xbmc_asap.dll)
+	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/setup/Website.url win32/diff-sap.js win32/shellex/ASAPShellEx.propdesc) \
+	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll asap_dsf.dll foo_asap.dll xbmc_asap.dll)
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b release -b $(srcdir)win32/setup -b $(srcdir)win32 $<
 
 win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs
