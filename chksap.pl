@@ -292,7 +292,7 @@ use Getopt::Long;
 use Pod::Usage;
 use strict;
 
-my $VERSION = '3.1.1';
+my $VERSION = '3.1.2';
 my $asapscan = File::Spec->rel2abs('asapscan');
 my ($check, $fix, $stat) = (0, 0, 0);
 my ($progress, $time, $overwrite_time, $features, $help, $version) = (0, 0, 0, 0, 0, 0);
@@ -677,18 +677,19 @@ elsif ($stat) {
 		for (sort { $a <=> $b } keys(%$ref)) {
 			next if $_ == 1;
 			my $files = $ref->{$_};
-			printf "%3s subsongs:%3d file%s\n", $_, $files, $files != 1 ? 's' : '';
+			printf "%3s subsongs:%4d file%s\n", $_, $files, $files != 1 ? 's' : '';
 			$files_with_subsongs += $files;
 			$extra_subsongs += $files * ($_ - 1);
 		}
 		print "Total: $extra_subsongs extra subsongs in $files_with_subsongs files\n";
 	}
-	printf "\nFiles tagged with TIME:       $time_files (%d hours %d minutes %d seconds)\n",
-		int($total_millis / 3600_000), int($total_millis / 60_000 % 60), $total_millis / 1000 % 60;
+	printf "\nFiles tagged with TIME:       $time_files (%d days %d hours %d minutes %g seconds)\n",
+		$total_millis / 86_400_000, $total_millis / 3600_000 % 24,
+		$total_millis / 60_000 % 60, $total_millis / 1000 % 60;
 	print "\nStereo SAP files:             $stereo_files\n";
 	print "NTSC SAP files:               $ntsc_files\n";
 	for (sort keys %types) {
-		printf "Type %s:   mono:%4d   stereo:%4d   total:%4d\n", $_,
+		printf "Type %s:    mono:%5d    stereo:%5d    total:%5d\n", $_,
 			$types{$_}{'mono'}, $types{$_}{'stereo'}, $types{$_}{'mono'} + $types{$_}{'stereo'};
 	}
 	for ('FASTPLAY', 'AUTHOR', 'DATE', 'NAME') {
