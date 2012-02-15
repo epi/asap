@@ -168,14 +168,12 @@
 		<UIRef Id="WixUI_Common" />
 
 		<?if $(sys.BUILDARCH) = x86?>
-		<!-- TODO
 		<Property Id="TSVN.VER">
-			<RegistrySearch Id="tsvn.ver" Root="HKCU" Key="SOFTWARE\TortoiseSVN\DiffTools" Name="CurrentVersion" Type="raw" />
+			<RegistrySearch Id="tsvn.ver" Root="HKCU" Key="SOFTWARE\TortoiseSVN" Name="CurrentVersion" Type="raw" />
 		</Property>
 		<Property Id="TGIT.VER">
-			<RegistrySearch Id="tgit.ver" Root="HKCU" Key="SOFTWARE\TortoiseGit\DiffTools" Name="CurrentVersion" Type="raw" />
+			<RegistrySearch Id="tgit.ver" Root="HKCU" Key="SOFTWARE\TortoiseGit" Name="CurrentVersion" Type="raw" />
 		</Property>
-		-->
 		<Property Id="WMP.EXE">
 			<RegistrySearch Id="wmp.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\MediaPlayer" Name="Installation Directory" Type="directory">
 				<FileSearch Id="wmp.exe" Name="wmplayer.exe" />
@@ -572,14 +570,14 @@
 		</Feature>
 
 		<?if $(sys.BUILDARCH) = x86?>
-		<Feature Id="diff_sap_tsvn" Title="TortoiseSVN diff viewer" Level="9" Description="Compare changes in SAP files." AllowAdvertise="no">
-			<!-- <Condition Level="1">TSVN.VER</Condition> -->
+		<Feature Id="diff_sap_tsvn" Title="TortoiseSVN diff viewer" Level="0" Description="Compare changes in SAP files." AllowAdvertise="no">
+			<Condition Level="1">TSVN.VER</Condition>
 			<ComponentRef Id="sap2txt.exe" />
 			<ComponentRef Id="diff_sap.js" />
 			<ComponentRef Id="diff_sap_tsvn.reg" />
 		</Feature>
-		<Feature Id="diff_sap_tgit" Title="TortoiseGit diff viewer" Level="9" Description="Compare changes in SAP files." AllowAdvertise="no">
-			<!-- <Condition Level="1">TGIT.VER</Condition> -->
+		<Feature Id="diff_sap_tgit" Title="TortoiseGit diff viewer" Level="0" Description="Compare changes in SAP files." AllowAdvertise="no">
+			<Condition Level="1">TGIT.VER</Condition>
 			<ComponentRef Id="sap2txt.exe" />
 			<ComponentRef Id="diff_sap.js" />
 			<ComponentRef Id="diff_sap_tgit.reg" />
