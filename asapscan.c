@@ -1,7 +1,7 @@
 /*
  * asapscan.c - 8-bit Atari music analyzer
  *
- * Copyright (C) 2007-2011  Piotr Fusik
+ * Copyright (C) 2007-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -36,6 +36,7 @@ static int scan_frames;
 static int silence_frames;
 static int loop_check_frames;
 static int loop_min_frames;
+static int frame;
 static byte *registers_dump;
 #define HASH_BITS  8
 static int hash_first[1 << HASH_BITS];
@@ -55,13 +56,35 @@ static int features = 0;
 
 #define CPU_TRACE_PRINT        1
 #define CPU_TRACE_UNOFFICIAL   2
+#define CPU_TRACE_PC_TIME      4
 static int cpu_trace = 0;
 static void trace_cpu(const ASAP *asap, int pc, int a, int x, int y, int s, int nz, int vdi, int c);
+
+static int print_time_at_pc = -1;
 
 static cibool acid = FALSE;
 static int exit_code = 0;
 
 #include "asap-asapscan.c"
+
+#define CYCLES_PER_FRAME (asap->moduleInfo.ntsc ? 262 * 114 : 312 * 114)
+#define MAIN_CLOCK (asap->moduleInfo.ntsc ? 1789772 : 1773447)
+
+static int seconds_to_frames(int seconds)
+{
+	return (int) ((double) seconds * MAIN_CLOCK / CYCLES_PER_FRAME);
+}
+
+static int frames_to_milliseconds(int frames)
+{
+	return (int) ceil(frames * 1000.0 * CYCLES_PER_FRAME / MAIN_CLOCK);
+}
+
+static void print_time(int frames, cibool loop)
+{
+	int duration = frames_to_milliseconds(frames);
+	printf("TIME %02d:%02d.%02d%s\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100, loop ? " LOOP" : "");
+}
 
 static const char cpu_mnemonics[256][10] = {
 	"BRK", "ORA (1,X)", "CIM", "ASO (1,X)", "NOP 1", "ORA 1", "ASL 1", "ASO 1",
@@ -165,6 +188,8 @@ static void trace_cpu(const ASAP *asap, int pc, int a, int x, int y, int s, int 
 			(vdi & 4) != 0 ? 'I' : '-', (nz & 0xff) == 0 ? 'Z' : '-', c != 0 ? 'C' : '-');
 		show_instruction(asap, pc);
 	}
+	if (pc == print_time_at_pc)
+		print_time(frame, TRUE);
 	if (pc != 0xd200 && pc != 0xd203) /* don't count 0xd2 used by Do6502Init() and Call6502() */
 		cpu_opcodes[asap->memory[pc]] |= CPU_OPCODE_USED;
 }
@@ -182,7 +207,7 @@ static void print_unofficial_mnemonic(int opcode)
 			printf("%02X: %.*s$xxxx%s\n", opcode, (int) (p - mnemonic), mnemonic, p + 1);
 			return;
 		}
-		/* no undocumented branches ('0') */
+		/* there are no undocumented branches ('0') */
 	}
 	printf("%02X: %s\n", opcode, mnemonic);
 }
@@ -192,15 +217,16 @@ static void print_help(void)
 	printf(
 		"Usage: asapscan COMMAND [OPTIONS] INPUTFILE\n"
 		"Commands:\n"
-		"-d  Dump POKEY registers\n"
-		"-f  List POKEY features used\n"
-		"-t  Detect silence and loops\n"
-		"-c  Dump 6502 trace\n"
-		"-u  List used unofficial 6502 instructions and BRK\n"
-		"-a  Run Acid800 test\n"
-		"-v  Display version information\n"
+		"-d          Dump POKEY registers\n"
+		"-f          List POKEY features used\n"
+		"-t          Detect silence and loops\n"
+		"-c          Dump 6502 trace\n"
+		"-u          List used unofficial 6502 instructions and BRK\n"
+		"-b HEXADDR  Print time the given instruction reached\n"
+		"-a          Run Acid800 test\n"
+		"-v          Display version information\n"
 		"Options:\n"
-		"-s SONG  Process the specified subsong (zero-based)\n"
+		"-s SONG     Process the specified subsong (zero-based)\n"
 	);
 }
 
@@ -266,28 +292,8 @@ static cibool is_ultrasound(int period_cycles, int audc)
 	return audc == 10 || audc == 14;
 }
 
-#define CYCLES_PER_FRAME (asap->moduleInfo.ntsc ? 262 * 114 : 312 * 114)
-#define MAIN_CLOCK (asap->moduleInfo.ntsc ? 1789772 : 1773447)
-
-static int seconds_to_frames(int seconds)
-{
-	return (int) ((double) seconds * MAIN_CLOCK / CYCLES_PER_FRAME);
-}
-
-static int frames_to_milliseconds(int frames)
-{
-	return (int) ceil(frames * 1000.0 * CYCLES_PER_FRAME / MAIN_CLOCK);
-}
-
-static void print_time(int frames, cibool loop)
-{
-	int duration = frames_to_milliseconds(frames);
-	printf("TIME %02d:%02d.%02d%s\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100, loop ? " LOOP" : "");
-}
-
 static void scan_song(int song)
 {
-	int frame;
 	int silence_run = 0;
 	int running_hash = 0;
 	int i;
@@ -432,6 +438,10 @@ int main(int argc, char **argv)
 			cpu_trace |= CPU_TRACE_PRINT;
 		else if (strcmp(argv[i], "-u") == 0)
 			cpu_trace |= CPU_TRACE_UNOFFICIAL;
+		else if (strcmp(argv[i], "-b") == 0) {
+			print_time_at_pc = (int) strtol(argv[++i], NULL, 16);
+			cpu_trace |= CPU_TRACE_PC_TIME;
+		}
 		else if (strcmp(argv[i], "-s") == 0)
 			song = atoi(argv[++i]);
 		else if (strcmp(argv[i], "-a") == 0)
