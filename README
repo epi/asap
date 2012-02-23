@@ -160,7 +160,7 @@ ASAP includes the following programs:
 
 {asapports}link:PORTS.xml[This table] summarizes differences between the above versions.
 
-To play the music on an 8-bit Atari, convert the music to an Atari program (XEX) using asapconv/WASAP/Winamp/Apollo/XMPlay.
+To play the music on an 8-bit Atari, convert the music to an Atari program (XEX) using asapconv, WASAP, Winamp, Apollo or XMPlay.
 
 There are other projects which use ASAP:
 
@@ -170,7 +170,7 @@ There are other projects which use ASAP:
 - Game Music Gear MX - player for PlayStation Portable
 - http://yoyofr.blogspot.com/p/modizer.html[Modizer] - player for iPhone, iPod and iPad
 - http://www.chipamp.org/[Chipamp] - bundle of plugins for Winamp
-
+- http://atari-sounds.fatmagnus.ppa.pl/[Atari Sound For The Masses] - GUI frontend to asapconv for Mac OS X
 
 ifdef::asapsrc[]
 include::INSTALL[]
