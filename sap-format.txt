@@ -153,7 +153,7 @@ SONG::
 Number of subsongs in the file.
 If there is just one song in the file, it is recommended to omit this tag.
 ASAP currently limits the number of songs to 32.
-The biggest known number of songs in a SAP file is 15.
+The biggest known number of songs in a SAP file is 20.
 
 DEFSONG::
 Zero-based index of the song that should be played when the file is opened.
