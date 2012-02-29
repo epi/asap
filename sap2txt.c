@@ -22,10 +22,19 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #ifdef __WIN32
 #include <fcntl.h>
 #endif
 #include <zlib.h>
+
+static void usage(void)
+{
+	fprintf(stderr,
+		"Usage:\n"
+		"sap2txt INPUT.sap             - dump to stdout\n"
+		"sap2txt INPUT.txt OUTPUT.sap  - replace header in SAP\n");
+}
 
 static int get_word(FILE *fp)
 {
@@ -39,25 +48,18 @@ static int get_word(FILE *fp)
 	return lo | (hi << 8);
 }
 
-int main(int argc, char **argv)
+static int sap2txt(const char *sap_file)
 {
-	const char *input_file;
-	FILE *fp;
-
-	if (argc != 2) {
-		fprintf(stderr, "Usage: sap2txt FILE.sap\n");
-		return 1;
-	}
-	input_file = argv[1];
-	fp = fopen(input_file, "rb");
+	FILE *fp = fopen(sap_file, "rb");
 	if (fp == NULL) {
-		fprintf(stderr, "sap2txt: cannot open %s\n", input_file);
+		fprintf(stderr, "sap2txt: cannot open %s\n", sap_file);
 		return 1;
 	}
 #ifdef __WIN32
 	_setmode(_fileno(stdout), _O_BINARY);
 #endif
 
+	/* copy header */
 	for (;;) {
 		int c = getc(fp);
 		if (c == EOF)
@@ -110,5 +112,84 @@ int main(int argc, char **argv)
 		if (ffff)
 			printf("FFFF ");
 		printf("LOAD %04X-%04X CRC32=%08lX\r\n", start_address, end_address, crc);
+	}
+}
+
+static size_t slurp(const char *input_file, Bytef *buffer, size_t len)
+{
+	FILE *fp = fopen(input_file, "rb");
+	size_t result;
+	if (fp == NULL) {
+		fprintf(stderr, "sap2txt: cannot open %s\n", input_file);
+		return 0;
+	}
+	result = fread(buffer, 1, len, fp);
+	fclose(fp);
+	if (result == len) {
+		fprintf(stderr, "sap2txt: %s: file too long\n", input_file);
+		return 0;
+	}
+	return result;
+}
+
+static int txt2sap(const char *txt_file, const char *sap_file)
+{
+	Bytef txt_buf[65536];
+	size_t txt_len;
+	Bytef sap_buf[65536];
+	size_t sap_len;
+	const void *bin_ptr;
+	size_t i;
+	FILE *fp;
+
+	txt_len = slurp(txt_file, txt_buf, sizeof(txt_buf));
+	if (txt_len == 0)
+		return 1;
+	sap_len = slurp(sap_file, sap_buf, sizeof(sap_buf));
+	if (sap_len == 0)
+		return 1;
+
+	bin_ptr = memchr(sap_buf, 0xff, sap_len);
+	if (bin_ptr == NULL) {
+		fprintf(stderr, "sap2txt: missing binary part in %s\n", sap_file);
+		return 1;
+	}
+
+	for (i = 0; i < txt_len; ) {
+		if (memcmp(txt_buf + i, "LOAD ", 5) == 0)
+			break;
+		if (txt_buf[i] == (char) 0xff && txt_buf[i + 1] == (char) 0xff)
+			break;
+		while (i < txt_len && txt_buf[i++] != 0x0a) { }
+	}
+
+	if (i == (const Bytef *) bin_ptr - sap_buf && memcmp(txt_buf, sap_buf, i) == 0)
+		return 0; /* same */
+
+	fp = fopen(sap_file, "wb");
+	if (fp == NULL) {
+		fprintf(stderr, "sap2txt: cannot write %s\n", sap_file);
+		return 1;
+	}
+	fwrite(txt_buf, 1, i, fp);
+	fwrite(bin_ptr, 1, sap_len - ((const Bytef *) bin_ptr - sap_buf), fp);
+	fclose(fp);
+	return 0;
+}
+
+int main(int argc, char **argv)
+{
+	switch (argc) {
+	case 2:
+		if (strcmp(argv[1], "--help") == 0) {
+			usage();
+			return 0;
+		}
+		return sap2txt(argv[1]);
+	case 3:
+		return txt2sap(argv[1], argv[2]);
+	default:
+		usage();
+		return 1;
 	}
 }

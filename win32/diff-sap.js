@@ -55,6 +55,10 @@ var txt2 = sap2txt(sap2);
 
 wsh.Run("\"" + tmerge + "\" /base:\"" + txt1 + "\" /mine:\"" + txt2 + "\"" + names, 4, true);
 
+// Write back changes
+
+wsh.Run("\"" + exe +"\" \"" + txt2 + "\" \"" + sap2 + "\"", 0, true);
+
 // Delete temporary files when done
 
 fso.DeleteFile(txt2);
