@@ -2,6 +2,8 @@
 WIN32_CC = $(DO)mingw32-gcc $(WIN32_CARGS)
 WIN32_CXX = $(DO)mingw32-g++ -static $(WIN32_CARGS)
 WIN32_WINDRES = $(DO)windres -o $@ $<
+AUDACIOUS_DIR = ../porty/audacious/audacious-3.2.1
+PKG_CONFIG = ../porty/audacious/gtk/bin/pkg-config
 
 # Microsoft compiler for Windows Media Player and foobar2000
 DSHOW_BASECLASSES_DIR = "C:/Program Files/Microsoft SDKs/Windows/v7.1/Samples/multimedia/directshow/baseclasses"
@@ -144,6 +146,20 @@ CLEAN += win32/ASAP_Apollo.dll
 win32/apollo/ASAP_Apollo-res.o: $(call src,win32/gui.rc asap.h win32/info_dlg.h win32/settings_dlg.h)
 	$(WIN32_WINDRES) -DAPOLLO
 CLEAN += win32/apollo/ASAP_Apollo-res.o
+
+# Audacious
+
+win32/asapplug.dll: $(call src,audacious/asapplug.c asap.[ch]) win32/audacious/libaudcore.a
+	$(WIN32_CC) $(shell $(PKG_CONFIG) --cflags --libs gtk+-2.0) -I$(AUDACIOUS_DIR)/src -lpthread
+CLEAN += win32/asapplug.dll
+
+win32/audacious/libaudcore.a: $(addprefix win32/audacious/, audstrings.o strpool.o tuple.o tuple_compiler.o tuple_formatter.o vfs.o)
+	$(AR)
+CLEAN += win32/audacious/libaudcore.a
+
+win32/audacious/%.o: $(AUDACIOUS_DIR)/src/libaudcore/%.c
+	$(WIN32_CC) -c -std=c99 $(shell $(PKG_CONFIG) --cflags --libs gtk+-2.0) -I$(AUDACIOUS_DIR) -I$(AUDACIOUS_DIR)/src
+CLEAN += win32/audacious/*.o
 
 # BASS
 
@@ -313,7 +329,7 @@ win32/setup: release/asap-$(VERSION)-win32.msi
 
 release/asap-$(VERSION)-win32.msi: win32/setup/asap.wixobj release/README_WindowsSetup.html \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/setup/Website.url win32/diff-sap.js win32/shellex/ASAPShellEx.propdesc) \
-	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll asap_dsf.dll foo_asap.dll xbmc_asap.dll)
+	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll asap_dsf.dll foo_asap.dll xbmc_asap.dll asapplug.dll)
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b release -b $(srcdir)win32/setup -b $(srcdir)win32 $<
 
 win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs

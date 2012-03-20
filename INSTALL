@@ -164,6 +164,32 @@ sudo make install-audacious
 --------------------------------------------------------------------------------
 
 
+Building the Audacious plugin on Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Unpack Audacious source code and make sure `AUDACIOUS_DIR` in `win32/win32.mk`
+points to this directory.
+
+Unpack GTK+ bundle (link in `audacious/contrib/win32/notes.rtf`) and make sure
+`PKG_CONFIG` points to the tool in GTK+.
+
+Install `gettext` and `libgnurx` in MinGW (that's probably not an exhaustive
+list, `configure` will complain about missing things).
+
+From the Audacious source directory run:
+--------------------------------------------------------------------------------
+bash configure PKG_CONFIG=../gtk/bin/pkg-config
+--------------------------------------------------------------------------------
+
+After it finishes with no errors (warnings are fine), go to ASAP and run:
+--------------------------------------------------------------------------------
+make win32/asapplug.dll
+--------------------------------------------------------------------------------
+
+Put the DLL in `lib/audacious/Input` of the Windows binary
+distribution of Audacious.
+
+
 Building the GStreamer plugin on Unix-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

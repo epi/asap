@@ -442,6 +442,17 @@
 						<File Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
 					</Component>
 				</Directory>
+				<Directory Id="AUDACIOUS.DIR" Name="audacious-3.2.1">
+					<Directory Id="AUDLIB.DIR" Name="lib">
+						<Directory Id="AUDAUD.DIR" Name="audacious">
+							<Directory Id="AUDINPUT.DIR" Name="Input">
+								<Component Id="asapplug.dll" Guid="*">
+									<File Name="asapplug.dll" Source="asapplug.dll" Checksum="yes" KeyPath="yes" />
+								</Component>
+							</Directory>
+						</Directory>
+					</Directory>
+				</Directory>
 				<?endif?>
 			</Directory>
 
@@ -556,6 +567,9 @@
 		</Feature>
 		<Feature Id="gspasap" Title="GSPlayer plugin" Level="9" ConfigurableDirectory="GSP.DIR" Description="Plugin for GSPlayer (desktop Windows only)." AllowAdvertise="no">
 			<ComponentRef Id="gspasap.dll" />
+		</Feature>
+		<Feature Id="asapplug" Title="Audacious 3.2.1 plugin" Level="9" ConfigurableDirectory="AUDACIOUS.DIR" Description="Plugin for Audacious (not guaranteed to work with Audacious other than 3.2.1)." AllowAdvertise="no">
+			<ComponentRef Id="asapplug.dll" />
 		</Feature>
 		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
 			<ComponentRef Id="apokeysnd.dll" />

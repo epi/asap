@@ -400,8 +400,8 @@
 		<a href="http://www.libsdl.org/">SDL</a>
 	</port>
 	<port name="Audacious plugin">
-		<bin></bin>
-		<platform>Linux, Unix</platform>
+		<bin>Windows</bin>
+		<platform>Linux, Unix, Windows</platform>
 		<interface>player plugin</interface>
 		<since>2.1.2</since>
 		<status>stable</status>
