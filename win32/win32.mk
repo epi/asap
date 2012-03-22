@@ -4,6 +4,7 @@ WIN32_CXX = $(DO)mingw32-g++ -static $(WIN32_CARGS)
 WIN32_WINDRES = $(DO)windres -o $@ $<
 AUDACIOUS_DIR = ../porty/audacious/audacious-3.2.1
 PKG_CONFIG = ../porty/audacious/gtk/bin/pkg-config
+VLC_SDK_DIR = "C:/Program Files (x86)/VideoLAN/VLC/sdk"
 
 # Microsoft compiler for Windows Media Player and foobar2000
 DSHOW_BASECLASSES_DIR = "C:/Program Files/Microsoft SDKs/Windows/v7.1/Samples/multimedia/directshow/baseclasses"
@@ -160,6 +161,12 @@ CLEAN += win32/audacious/libaudcore.a
 win32/audacious/%.o: $(AUDACIOUS_DIR)/src/libaudcore/%.c
 	$(WIN32_CC) -c -std=c99 $(shell $(PKG_CONFIG) --cflags --libs gtk+-2.0) -I$(AUDACIOUS_DIR) -I$(AUDACIOUS_DIR)/src
 CLEAN += win32/audacious/*.o
+
+# VLC
+
+win32/libasap_plugin.dll: $(call src,vlc/libasap_plugin.c asap.[ch])
+	$(WIN32_CC) -std=gnu99 -I$(VLC_SDK_DIR)/include/vlc/plugins -L$(VLC_SDK_DIR)/lib -lvlccore
+CLEAN += win32/libasap_plugin.dll
 
 # BASS
 
@@ -329,7 +336,7 @@ win32/setup: release/asap-$(VERSION)-win32.msi
 
 release/asap-$(VERSION)-win32.msi: win32/setup/asap.wixobj release/README_WindowsSetup.html \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/setup/Website.url win32/diff-sap.js win32/shellex/ASAPShellEx.propdesc) \
-	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll asap_dsf.dll foo_asap.dll xbmc_asap.dll asapplug.dll)
+	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll asap_dsf.dll foo_asap.dll xbmc_asap.dll asapplug.dll libasap_plugin.dll)
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b release -b $(srcdir)win32/setup -b $(srcdir)win32 $<
 
 win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs

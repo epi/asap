@@ -513,4 +513,21 @@
 		<lang>C</lang>
 		<a href="http://gstreamer.freedesktop.org/">GStreamer</a>
 	</port>
+	<port name="VLC plugin">
+		<bin>Windows</bin>
+		<platform>Windows</platform><!-- TODO -->
+		<interface>player plugin</interface>
+		<since>3.1.2</since>
+		<status>stable</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<lang>C</lang>
+		<a href="http://www.videolan.org/vlc/">VLC</a>
+	</port>
 </ports>

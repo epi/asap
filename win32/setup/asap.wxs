@@ -453,6 +453,17 @@
 						</Directory>
 					</Directory>
 				</Directory>
+				<Directory Id="VIDEOLAN.DIR" Name="VideoLAN">
+					<Directory Id="VLC.DIR" Name="VLC">
+						<Directory Id="VLCPLUGINS.DIR" Name="plugins">
+							<Directory Id="VLCDEMUX.DIR" Name="demux">
+								<Component Id="libasap_plugin.dll" Guid="*">
+									<File Name="libasap_plugin.dll" Source="libasap_plugin.dll" Checksum="yes" KeyPath="yes" />
+								</Component>
+							</Directory>
+						</Directory>
+					</Directory>
+				</Directory>
 				<?endif?>
 			</Directory>
 
@@ -570,6 +581,9 @@
 		</Feature>
 		<Feature Id="asapplug" Title="Audacious 3.2.1 plugin" Level="9" ConfigurableDirectory="AUDACIOUS.DIR" Description="Plugin for Audacious (not guaranteed to work with Audacious other than 3.2.1)." AllowAdvertise="no">
 			<ComponentRef Id="asapplug.dll" />
+		</Feature>
+		<Feature Id="libasap_plugin" Title="VLC plugin" Level="9" ConfigurableDirectory="VLC.DIR" Description="Plugin for VLC." AllowAdvertise="no">
+			<ComponentRef Id="libasap_plugin.dll" />
 		</Feature>
 		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
 			<ComponentRef Id="apokeysnd.dll" />
