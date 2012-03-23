@@ -143,15 +143,22 @@
 			<?foreach MUTEXCOND in (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3) OR $in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)));
 (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
 (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
+(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
 (($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3) OR $foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)));
 (($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3) OR $xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
 (($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
+(($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
 (($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
 (($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
+(($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
 (($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3) OR $xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
 (($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
+(($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
 (($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
-(($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)))?>
+(($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
+(($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
+(($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
+(($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)))?>
 			<Publish Dialog="MyCustomizeDlg" Control="Next" Event="SpawnDialog" Value="MyManyAssociationsDlg" Order="3">
 				$(var.MUTEXCOND)
 			</Publish>
@@ -224,6 +231,11 @@
 		</Property>
 		<Property Id="VLC.DIR">
 			<RegistrySearch Id="vlc.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VLC media player" Name="InstallLocation" Type="directory" />
+		</Property>
+		<Property Id="VLC.EXE">
+			<RegistrySearch Id="vlc.exe" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VLC media player" Name="InstallLocation" Type="directory">
+				<FileSearch Name="vlc.exe" />
+			</RegistrySearch>
 		</Property>
 		<?endif?>
 
@@ -463,6 +475,14 @@
 								<Component Id="libasap_plugin.dll" Guid="*">
 									<File Name="libasap_plugin.dll" Source="libasap_plugin.dll" Checksum="yes" KeyPath="yes" />
 								</Component>
+								<Component Id="libasap_plugin.ext" Guid="*">
+									<RegistryValue Root="HKCR" Key="asap.file" Name="vlc" Type="integer" Value="1" KeyPath="yes" />
+									<ProgId Id="VLC.sap">
+										<Extension Id="sap">
+											<Verb Id="open" TargetProperty="VLC.EXE" Argument='--started-from-file "%1"' />
+										</Extension>
+									</ProgId>
+								</Component>
 							</Directory>
 						</Directory>
 					</Directory>
@@ -585,8 +605,13 @@
 		<Feature Id="asapplug" Title="Audacious 3.2.1 plugin" Level="9" ConfigurableDirectory="AUDACIOUS.DIR" Description="Plugin for Audacious (not guaranteed to work with Audacious other than 3.2.1)." AllowAdvertise="no">
 			<ComponentRef Id="asapplug.dll" />
 		</Feature>
-		<Feature Id="libasap_plugin" Title="VLC plugin" Level="9" ConfigurableDirectory="VLC.DIR" Description="Plugin for VLC." AllowAdvertise="no">
+		<Feature Id="libasap_plugin" Title="VLC plugin" Level="9" ConfigurableDirectory="VLC.DIR" Description="Plugin for VLC (SAP format only)." AllowAdvertise="no">
+			<Condition Level="1">VLC.DIR</Condition>
 			<ComponentRef Id="libasap_plugin.dll" />
+			<Feature Id="libasap_plugin.ext" Title="Associate file types" Level="0" Description="Double-click SAP file in Windows Explorer to play it in VLC." AllowAdvertise="no">
+				<Condition Level="9">VLC.EXE</Condition>
+				<ComponentRef Id="libasap_plugin.ext" />
+			</Feature>
 		</Feature>
 		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
 			<ComponentRef Id="apokeysnd.dll" />
