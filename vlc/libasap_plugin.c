@@ -21,6 +21,10 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#define __PLUGIN__
+#define MODULE_NAME  asap
+#define MODULE_STRING  "asap"
+
 #include <stdarg.h>
 
 #include <vlc_common.h>
@@ -76,6 +80,21 @@ static int Control(demux_t *demux, int query, va_list args)
 	demux_sys_t *sys = demux->p_sys;
 
 	switch (query) {
+		case DEMUX_GET_POSITION: {
+			if (sys->duration <= 0)
+				return VLC_EGENERIC;
+			double *v = va_arg(args, double *);
+			*v = (double) ASAP_GetPosition(sys->asap) / sys->duration;
+			return VLC_SUCCESS;
+		}
+		case DEMUX_SET_POSITION: {
+			if (sys->duration <= 0)
+				return VLC_EGENERIC;
+			double v = va_arg(args, double);
+			if (v < 0 || v > 1 || !ASAP_Seek(sys->asap, (int) (v * sys->duration)))
+				return VLC_EGENERIC;
+			return VLC_SUCCESS;
+		}
 		case DEMUX_GET_LENGTH: {
 			if (sys->duration <= 0)
 				return VLC_EGENERIC;
@@ -127,11 +146,10 @@ static int Control(demux_t *demux, int query, va_list args)
 			int song = (int) va_arg(args, int);
 			if (!PlaySong(sys, song))
 				return VLC_EGENERIC;
+			demux->info.i_title = song;
+			demux->info.i_update |= INPUT_UPDATE_TITLE;
 			return VLC_SUCCESS;
 		}
-		//case DEMUX_CAN_SEEK:
-		//	*va_arg(args, bool *) = true;
-		//	return VLC_SUCCESS;
 		default:
 			return VLC_EGENERIC;
 	}
@@ -214,9 +232,6 @@ static void Close(vlc_object_t *obj)
 	ASAP_Delete(sys->asap);
 	free(sys);
 }
-
-#define MODULE_NAME  1_2_0l
-#define MODULE_STRING  "1_2_0l"
 
 vlc_module_begin()
 	set_shortname("ASAP")
