@@ -125,6 +125,7 @@ clean:
 include $(srcdir)audacious/audacious.mk
 include $(srcdir)gstreamer/gstreamer.mk
 include $(srcdir)moc/moc.mk
+include $(srcdir)vlc/vlc.mk
 include $(srcdir)xbmc/xbmc.mk
 include $(srcdir)xmms/xmms.mk
 
