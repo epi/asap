@@ -68,11 +68,16 @@ static int Demux(demux_t *demux)
 	return 1;
 }
 
-static cibool PlaySong(demux_sys_t *sys, int song)
+static cibool PlaySong(demux_t *demux, demux_sys_t *sys, int song)
 {
 	const ASAPInfo *info = ASAP_GetInfo(sys->asap);
-	sys->duration = ASAPInfo_GetDuration(info, song);
-	return ASAP_PlaySong(sys->asap, song, sys->duration);
+	int duration = ASAPInfo_GetDuration(info, song);
+	if (!ASAP_PlaySong(sys->asap, song, duration))
+		return FALSE;
+	sys->duration = duration;
+	demux->info.i_title = song;
+	demux->info.i_update |= INPUT_UPDATE_TITLE;
+	return TRUE;
 }
 
 static int Control(demux_t *demux, int query, va_list args)
@@ -144,10 +149,8 @@ static int Control(demux_t *demux, int query, va_list args)
 		}
 		case DEMUX_SET_TITLE: {
 			int song = (int) va_arg(args, int);
-			if (!PlaySong(sys, song))
+			if (!PlaySong(demux, sys, song))
 				return VLC_EGENERIC;
-			demux->info.i_title = song;
-			demux->info.i_update |= INPUT_UPDATE_TITLE;
 			return VLC_SUCCESS;
 		}
 		default:
@@ -199,7 +202,7 @@ static int Open(vlc_object_t *obj)
 	free(module);
 	const ASAPInfo *info = ASAP_GetInfo(sys->asap);
 	int song = ASAPInfo_GetDefaultSong(info);
-	if (!PlaySong(sys, song)) {
+	if (!PlaySong(demux, sys, song)) {
 		ASAP_Delete(sys->asap);
 		free(sys);
 		return VLC_EGENERIC;
