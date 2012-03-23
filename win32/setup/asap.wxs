@@ -222,6 +222,9 @@
 				<FileSearch Name="AIMP2.exe" />
 			</RegistrySearch>
 		</Property>
+		<Property Id="VLC.DIR">
+			<RegistrySearch Id="vlc.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VLC media player" Name="InstallLocation" Type="directory" />
+		</Property>
 		<?endif?>
 
 		<Directory Id="TARGETDIR" Name="SourceDir">
