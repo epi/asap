@@ -172,6 +172,7 @@ There are other projects which use ASAP:
 - http://yoyofr.blogspot.com/p/modizer.html[Modizer] - player for iPhone, iPod and iPad
 - http://www.chipamp.org/[Chipamp] - bundle of plugins for Winamp
 - http://atari-sounds.fatmagnus.ppa.pl/[Atari Sounds For The Masses] - GUI frontend to asapconv for Mac OS X
+- http://dangerousprototypes.com/forum/viewtopic.php?t=3944[Atari POKEY 8-bit Computer Sound on PIC32] - ASAP on a microcontroller
 
 ifdef::asapsrc[]
 include::INSTALL[]
