@@ -75,7 +75,7 @@ Part One - Text Header
 This part consists of tags, one tag per line.
 Lines must be terminated by a CR/LF (0x0d, 0x0a) pair
 (required by ASAP, other SAP players may be more forgiving).
-A line consists of an uppercase tag name and an optional argument which may be
+A line consists of an uppercase tag name and an optional argument, which may be
 a string, a decimal integer, a hexadecimal integer or a single letter.
 The argument should be separated from tag name with a single space.
 Extra whitespace is not allowed.
@@ -147,7 +147,11 @@ DATE "1986"
 DATE "1993-1994"
 DATE "28/08/1997"
 DATE "12/2001" 
+DATE "23-26/07/2010"
+DATE "199?"
 -------------------------------------------------------------
++
+The last example means some unknown year in the 1990s.
 
 SONG::
 Number of subsongs in the file.
@@ -156,8 +160,8 @@ ASAP currently limits the number of songs to 32.
 The biggest known number of songs in a SAP file is 20.
 
 DEFSONG::
-Zero-based index of the song that should be played when the file is opened.
-Defaults to zero.
+Zero-based index of the subsong that should be played first
+when the file is opened. Defaults to zero.
 
 STEREO::
 Specifies that the file uses dual POKEY configuration. Takes no argument.
@@ -173,7 +177,7 @@ See below for an explanation.
 
 FASTPLAY::
 Number of scanlines between calls of the player routine.
-A scanline is defined to be 114 clock cycles.
+A scanline is defined to be 114 Atari clock cycles.
 FASTPLAY defaults to one frame: 312 scanlines for PAL (about 50 Hz),
 262 for NTSC (about 60 Hz).
 Most songs don't include this tag. Common values are 156 (twice per frame),
@@ -220,12 +224,12 @@ Part Two - Binary Data
 
 This part contains the player routine and music data in the format
 of Atari executables. This format has a two-byte header 0xFF, 0xFF.
-The following two bytes are the starting memory address (little endian),
+The two following bytes are the starting memory address (little endian),
 the next two bytes are the ending address. Then data bytes follow.
 Usually there are multiple blocks
 (the 0xFF/0xFF header is only required for the first block).
 
-The difference from Atari executables is that
+The difference from real Atari executables is that
 INIT (0x2e2) and RUN (0x2e0) blocks are not supported.
 
 Example:
@@ -264,7 +268,7 @@ and the CONSOL register at D01F for 1-bit sounds, the rest is RAM.
 - D100-D1FF - reserved for parallel devices connected to the Atari, do not use.
 - D200-D2FF - POKEY chip mirrored 16 times
 or two POKEY chips (stereo) mirrored 8 times.
-At least the AUDF1-4, AUDC1-4 and AUDCTL registers must be implemented
+At least the AUDF1-4, AUDC1-4, AUDCTL and RANDOM registers must be implemented
 in a SAP player.
 Emulation of timer interrupts via IRQEN and IRQST is strongly recommended.
 SAP by Adam Bienias emulates only timer 1 interrupts.
@@ -327,10 +331,13 @@ The difference is that the INIT routine must not return.
 It should play the digitalized music. It can use WSYNC and VCOUNT registers
 and/or POKEY timer interrupts for timing. The POKEY interrupts
 can be programmed via IRQEN/IRQST/AUDF1-4/AUDCTL registers,
-the FFFE/FFFF interrupt vector and the I 6502 flag.
+the FFFE/FFFF interrupt vector and the I 6502 flag (which is initially clear,
+allowing interrupts).
 All 6502 registers (including flags) are saved when calling the PLAYER routine
 and restored when it returns to the running INIT routine.
 In ASAP 2.1.0 and above the PLAYER tag is optional for TYPE D.
+First call to PLAYER usually occurs before the first instruction of INIT
+gets executed.
 
 TYPE S::
 This is a convenience type for SoftSynth music.
@@ -345,3 +352,11 @@ in FASTPLAY intervals, instead of an Atari executable.
 No mainstream SAP player supports this type at the time of writing.
 
 Game_Music_Emu supports only types B and C.
+
+When 6502 routines get called, don't assume register values except for
+the specified above. For example, don't assume that the INIT routine starts
+with zero in the X register. Also, don't assume that 6502 registers
+are unchanged between the calls to PLAYER or from INIT to PLAYER.
+
+When starting a song, a SAP player must initialize POKEY registers to:
+AUDF1-4 = AUDC1-4 = AUDCTL = IRQEN = 0, SKCTL = 3.
