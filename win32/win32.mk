@@ -191,7 +191,7 @@ win32/dshow/asap_dsf.res: $(call src,win32/gui.rc asap.h)
 CLEAN += win32/dshow/asap_dsf.res
 
 win32/wince/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/wince/asap_dsf.res
-	$(WINCE_CL) -Fowin32/wince/ -Zc:wchar_t- ole32.lib strmbase.lib strmiids.lib uuid.lib $(WINCE_LINKOPT)
+	$(WINCE_CL) -Fowin32/wince/ -Zc:wchar_t- ole32.lib oleaut32.lib strmbase.lib strmiids.lib uuid.lib $(WINCE_LINKOPT)
 CLEAN += win32/wince/asap_dsf.dll win32/wince/asap_dsf.exp win32/wince/asap_dsf.lib win32/wince/asap_dsf.obj win32/wince/asap.obj
 
 win32/wince/asap_dsf.res: $(call src,win32/gui.rc asap.h)

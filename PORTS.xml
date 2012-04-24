@@ -158,7 +158,7 @@
 		<status>stable</status>
 		<output>16-bit sound</output>
 		<subsongs>experimental</subsongs>
-		<file-info>no</file-info>
+		<file-info>AUTHOR, NAME (experimental)</file-info>
 		<edit-info>no</edit-info>
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>

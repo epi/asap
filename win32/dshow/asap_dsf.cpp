@@ -25,6 +25,10 @@
 #include <malloc.h>
 #include <streams.h>
 #include <tchar.h>
+#ifndef UNDER_CE
+#include <initguid.h>
+#endif
+#include <qnetwork.h>
 
 #ifdef ASAP_DSF_TRANSCODE
 /* seems it doesn't work */
@@ -348,9 +352,24 @@ public:
 			*pdwFlags = song == m_song ? AMSTREAMSELECTINFO_EXCLUSIVE : 0;
 		return S_OK;
 	}
+
+	HRESULT GetMetadata(BOOL author, BSTR *pbstr)
+	{
+		CAutoLock lck(&m_cs);
+		if (!m_loaded)
+			return VFW_E_NOT_FOUND;
+		const ASAPInfo *info = ASAP_GetInfo(m_asap);
+		const char *s = author ? ASAPInfo_GetAuthor(info) : ASAPInfo_GetTitle(info);
+		/* *pbstr = A2BSTR(s); - just don't want dependency on ATL */
+		int cch = (int) strlen(s);
+		*pbstr = SysAllocStringLen(NULL, cch);
+		if (MultiByteToWideChar(CP_ACP, 0, s, cch, *pbstr, cch) != cch)
+			return HRESULT_FROM_WIN32(GetLastError());
+		return S_OK;
+	}
 };
 
-class CASAPSource : public CSource, IFileSourceFilter, IAMStreamSelect
+class CASAPSource : public CSource, IFileSourceFilter, IAMStreamSelect, IAMMediaContent
 #ifdef ASAP_DSF_TRANSCODE
 	, IWMPTranscodePolicy
 #endif
@@ -385,6 +404,8 @@ public:
 			return GetInterface((IFileSourceFilter *) this, ppv);
 		if (riid == IID_IAMStreamSelect)
 			return GetInterface((IAMStreamSelect *) this, ppv);
+		if (riid == IID_IAMMediaContent)
+			return GetInterface((IAMMediaContent *) this, ppv);
 #ifdef ASAP_DSF_TRANSCODE
 		if (riid == IID_IWMPTranscodePolicy)
 			return GetInterface((IWMPTranscodePolicy *) this, ppv);
@@ -475,6 +496,37 @@ public:
 			*ppUnk = NULL;
 		return S_OK;
 	}
+
+	STDMETHODIMP GetTypeInfoCount(UINT* pctinfo) { return E_NOTIMPL; }
+	STDMETHODIMP GetTypeInfo(UINT itinfo, LCID lcid, ITypeInfo** pptinfo) { return E_NOTIMPL; }
+	STDMETHODIMP GetIDsOfNames(REFIID riid, OLECHAR** rgszNames, UINT cNames, LCID lcid, DISPID* rgdispid) { return E_NOTIMPL; }
+	STDMETHODIMP Invoke(DISPID dispidMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pdispparams,
+		VARIANT* pvarResult, EXCEPINFO* pexcepinfo, UINT* puArgErr)
+	{
+		return E_NOTIMPL;
+	}
+
+	STDMETHODIMP get_AuthorName(BSTR* pbstrAuthorName)
+	{
+		return m_pin->GetMetadata(TRUE, pbstrAuthorName);
+	}
+
+	STDMETHODIMP get_Title(BSTR* pbstrTitle)
+	{
+		return m_pin->GetMetadata(FALSE, pbstrTitle);
+	}
+
+	STDMETHODIMP get_Rating(BSTR* pbstrRating) { return E_NOTIMPL; }
+	STDMETHODIMP get_Description(BSTR* pbstrDescription) { return E_NOTIMPL; }
+	STDMETHODIMP get_Copyright(BSTR* pbstrCopyright) { return E_NOTIMPL; }
+	STDMETHODIMP get_BaseURL(BSTR* pbstrBaseURL) { return E_NOTIMPL; }
+	STDMETHODIMP get_LogoURL(BSTR* pbstrLogoURL) { return E_NOTIMPL; }
+	STDMETHODIMP get_LogoIconURL(BSTR* pbstrLogoURL) { return E_NOTIMPL; }
+	STDMETHODIMP get_WatermarkURL(BSTR* pbstrWatermarkURL) { return E_NOTIMPL; }
+	STDMETHODIMP get_MoreInfoURL(BSTR* pbstrMoreInfoURL) { return E_NOTIMPL; }
+	STDMETHODIMP get_MoreInfoBannerImage(BSTR* pbstrMoreInfoBannerImage) { return E_NOTIMPL; }
+	STDMETHODIMP get_MoreInfoBannerURL(BSTR* pbstrMoreInfoBannerURL) { return E_NOTIMPL; }
+	STDMETHODIMP get_MoreInfoText(BSTR* pbstrMoreInfoText) { return E_NOTIMPL; }
 
 #ifdef ASAP_DSF_TRANSCODE
 	STDMETHODIMP allowTranscode(VARIANT_BOOL *pvarfAllow)
