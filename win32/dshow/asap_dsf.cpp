@@ -1,7 +1,7 @@
 /*
  * asap_dsf.cpp - ASAP DirectShow source filter
  *
- * Copyright (C) 2008-2011  Piotr Fusik
+ * Copyright (C) 2008-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdio.h>
 #include <malloc.h>
 #include <streams.h>
 #include <tchar.h>
@@ -49,24 +50,25 @@ static const GUID CLSID_ASAPSource = { 0x8e6205a0, 0x19e2, 0x4037, { 0xaf, 0x32,
 
 class CASAPSourceStream : public CSourceStream, IMediaSeeking
 {
-	CCritSec cs;
-	ASAP *asap;
-	BOOL loaded;
-	int channels;
-	int duration;
-	LONGLONG blocks;
+	CCritSec m_cs;
+	ASAP *m_asap;
+	BOOL m_loaded;
+	int m_channels;
+	int m_song;
+	int m_duration;
+	LONGLONG m_blocks;
 
 public:
 
 	CASAPSourceStream(HRESULT *phr, CSource *pFilter)
-		: CSourceStream(NAME("ASAPSourceStream"), phr, pFilter, L"Out"), asap(NULL), loaded(FALSE), duration(0)
+		: CSourceStream(NAME("ASAPSourceStream"), phr, pFilter, L"Out"), m_asap(NULL), m_loaded(FALSE), m_duration(0)
 	{
 	}
 
 	~CASAPSourceStream()
 	{
-		if (asap != NULL)
-			ASAP_Delete(asap);
+		if (m_asap != NULL)
+			ASAP_Delete(m_asap);
 	}
 
 	DECLARE_IUNKNOWN
@@ -76,6 +78,19 @@ public:
 		if (riid == IID_IMediaSeeking)
 			return GetInterface((IMediaSeeking *) this, ppv);
 		return CSourceStream::NonDelegatingQueryInterface(riid, ppv);
+	}
+
+	HRESULT InternalPlaySong(int song)
+	{
+		const ASAPInfo *info = ASAP_GetInfo(m_asap);
+		m_duration = ASAPInfo_GetDuration(info, song);
+		if (!ASAP_PlaySong(m_asap, song, m_duration)) {
+			m_loaded = FALSE;
+			return E_FAIL;
+		}
+		m_song = song;
+		m_blocks = 0;
+		return S_OK;
 	}
 
 	HRESULT Load(LPCOLESTR pszFileName, int cch)
@@ -103,45 +118,38 @@ public:
 			return HRESULT_FROM_WIN32(GetLastError());
 		}
 
-		CAutoLock lck(&cs);
-		if (asap == NULL) {
-			asap = ASAP_New();
-			CheckPointer(asap, E_OUTOFMEMORY);
+		CAutoLock lck(&m_cs);
+		if (m_asap == NULL) {
+			m_asap = ASAP_New();
+			CheckPointer(m_asap, E_OUTOFMEMORY);
 		}
-		loaded = ASAP_Load(asap, filename, module, module_len);
+		m_loaded = ASAP_Load(m_asap, filename, module, module_len);
 		delete[] module;
 
-		if (!loaded)
+		if (!m_loaded)
 			return E_FAIL;
-		const ASAPInfo *info = ASAP_GetInfo(asap);
-		channels = ASAPInfo_GetChannels(info);
-		int song = ASAPInfo_GetDefaultSong(info);
-		duration = ASAPInfo_GetDuration(info, song);
-		if (!ASAP_PlaySong(asap, song, duration)) {
-			loaded = FALSE;
-			return E_FAIL;
-		}
-		blocks = 0;
-		return S_OK;
+		const ASAPInfo *info = ASAP_GetInfo(m_asap);
+		m_channels = ASAPInfo_GetChannels(info);
+		return InternalPlaySong(ASAPInfo_GetDefaultSong(info));
 	}
 
 	HRESULT GetMediaType(CMediaType *pMediaType)
 	{
 		CheckPointer(pMediaType, E_POINTER);
-		CAutoLock lck(&cs);
-		if (!loaded)
+		CAutoLock lck(&m_cs);
+		if (!m_loaded)
 			return E_FAIL;
 		WAVEFORMATEX *wfx = (WAVEFORMATEX *) pMediaType->AllocFormatBuffer(sizeof(WAVEFORMATEX));
 		CheckPointer(wfx, E_OUTOFMEMORY);
 		pMediaType->SetType(&MEDIATYPE_Audio);
 		pMediaType->SetSubtype(&MEDIASUBTYPE_PCM);
 		pMediaType->SetTemporalCompression(FALSE);
-		pMediaType->SetSampleSize(channels * (BITS_PER_SAMPLE / 8));
+		pMediaType->SetSampleSize(m_channels * (BITS_PER_SAMPLE / 8));
 		pMediaType->SetFormatType(&FORMAT_WaveFormatEx);
 		wfx->wFormatTag = WAVE_FORMAT_PCM;
-		wfx->nChannels = channels;
+		wfx->nChannels = m_channels;
 		wfx->nSamplesPerSec = ASAP_SAMPLE_RATE;
-		wfx->nBlockAlign = channels * (BITS_PER_SAMPLE / 8);
+		wfx->nBlockAlign = m_channels * (BITS_PER_SAMPLE / 8);
 		wfx->nAvgBytesPerSec = ASAP_SAMPLE_RATE * wfx->nBlockAlign;
 		wfx->wBitsPerSample = BITS_PER_SAMPLE;
 		wfx->cbSize = 0;
@@ -152,12 +160,12 @@ public:
 	{
 		CheckPointer(pAlloc, E_POINTER);
 		CheckPointer(pRequest, E_POINTER);
-		CAutoLock lck(&cs);
-		if (!loaded)
+		CAutoLock lck(&m_cs);
+		if (!m_loaded)
 			return E_FAIL;
 		if (pRequest->cBuffers == 0)
 			pRequest->cBuffers = 2;
-		int bytes = MIN_BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
+		int bytes = MIN_BUFFERED_BLOCKS * m_channels * (BITS_PER_SAMPLE / 8);
 		if (pRequest->cbBuffer < bytes)
 			pRequest->cbBuffer = bytes;
 		ALLOCATOR_PROPERTIES actual;
@@ -172,21 +180,21 @@ public:
 	HRESULT FillBuffer(IMediaSample *pSample)
 	{
 		CheckPointer(pSample, E_POINTER);
-		CAutoLock lck(&cs);
-		if (!loaded)
+		CAutoLock lck(&m_cs);
+		if (!m_loaded)
 			return E_FAIL;
 		BYTE *pData;
 		HRESULT hr = pSample->GetPointer(&pData);
 		if (FAILED(hr))
 			return hr;
 		int cbData = pSample->GetSize();
-		cbData = ASAP_Generate(asap, pData, cbData, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
+		cbData = ASAP_Generate(m_asap, pData, cbData, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 		if (cbData == 0)
 			return S_FALSE;
 		pSample->SetActualDataLength(cbData);
-		LONGLONG startTime = blocks * UNITS / ASAP_SAMPLE_RATE;
-		blocks += cbData / (channels * (BITS_PER_SAMPLE / 8));
-		LONGLONG endTime = blocks * UNITS / ASAP_SAMPLE_RATE;
+		LONGLONG startTime = m_blocks * UNITS / ASAP_SAMPLE_RATE;
+		m_blocks += cbData / (m_channels * (BITS_PER_SAMPLE / 8));
+		LONGLONG endTime = m_blocks * UNITS / ASAP_SAMPLE_RATE;
 		pSample->SetTime(&startTime, &endTime);
 		pSample->SetSyncPoint(TRUE);
 		return S_OK;
@@ -252,7 +260,7 @@ public:
 	STDMETHODIMP GetDuration(LONGLONG *pDuration)
 	{
 		CheckPointer(pDuration, E_POINTER);
-		*pDuration = duration * (UNITS / MILLISECONDS);
+		*pDuration = m_duration * (UNITS / MILLISECONDS);
 		return S_OK;
 	}
 
@@ -276,9 +284,9 @@ public:
 		if ((dwCurrentFlags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_AbsolutePositioning) {
 			CheckPointer(pCurrent, E_POINTER);
 			int position = (int) (*pCurrent / (UNITS / MILLISECONDS));
-			CAutoLock lck(&cs);
-			ASAP_Seek(asap, position);
-			blocks = 0;
+			CAutoLock lck(&m_cs);
+			ASAP_Seek(m_asap, position);
+			m_blocks = 0;
 			if ((dwCurrentFlags & AM_SEEKING_ReturnTime) != 0)
 				*pCurrent = position * (UNITS / MILLISECONDS);
 			return S_OK;
@@ -310,9 +318,39 @@ public:
 	{
 		return E_NOTIMPL;
 	}
+
+	HRESULT GetSongs(DWORD *pcSongs)
+	{
+		CAutoLock lck(&m_cs);
+		if (!m_loaded)
+			return VFW_E_NOT_CONNECTED;
+		const ASAPInfo *info = ASAP_GetInfo(m_asap);
+		*pcSongs = ASAPInfo_GetSongs(info);
+		return S_OK;
+	}
+
+	HRESULT PlaySong(int song)
+	{
+		CAutoLock lck(&m_cs);
+		if (!m_loaded)
+			return VFW_E_NOT_CONNECTED;
+		return InternalPlaySong(song);
+	}
+
+	HRESULT IsSong(int song, DWORD *pdwFlags)
+	{
+		CAutoLock lck(&m_cs);
+		if (!m_loaded)
+			return VFW_E_NOT_CONNECTED;
+		if (song < 0 || song >= ASAPInfo_GetSongs(ASAP_GetInfo(m_asap)))
+			return S_FALSE;
+		if (pdwFlags != NULL)
+			*pdwFlags = song == m_song ? AMSTREAMSELECTINFO_EXCLUSIVE : 0;
+		return S_OK;
+	}
 };
 
-class CASAPSource : public CSource, IFileSourceFilter
+class CASAPSource : public CSource, IFileSourceFilter, IAMStreamSelect
 #ifdef ASAP_DSF_TRANSCODE
 	, IWMPTranscodePolicy
 #endif
@@ -345,6 +383,8 @@ public:
 	{
 		if (riid == IID_IFileSourceFilter)
 			return GetInterface((IFileSourceFilter *) this, ppv);
+		if (riid == IID_IAMStreamSelect)
+			return GetInterface((IAMStreamSelect *) this, ppv);
 #ifdef ASAP_DSF_TRANSCODE
 		if (riid == IID_IWMPTranscodePolicy)
 			return GetInterface((IWMPTranscodePolicy *) this, ppv);
@@ -384,6 +424,55 @@ public:
 		CopyMemory(*ppszFileName, m_filename, n);
 		if (pmt != NULL)
 			CopyMediaType(pmt, &m_mt);
+		return S_OK;
+	}
+
+	STDMETHODIMP Count(DWORD *pcStreams)
+	{
+		CheckPointer(pcStreams, E_POINTER);
+		return m_pin->GetSongs(pcStreams);
+	}
+
+	STDMETHODIMP Enable(long lIndex, DWORD dwFlags)
+	{
+		if (dwFlags != AMSTREAMSELECTENABLE_ENABLE)
+			return E_NOTIMPL;
+		return m_pin->PlaySong(lIndex);
+		/* found this in Musepack Demuxer, doesn't do the trick for Media Player Classic Home Cinema
+		HRESULT hr = m_pin->PlaySong(lIndex);
+		if (FAILED(hr))
+			return hr;
+		IMediaSeeking *ms;
+		if (m_pGraph != NULL && m_pGraph->QueryInterface(IID_IMediaSeeking, (void **) &ms)) {
+			LONGLONG zero = 0;
+			ms->SetPositions(&zero, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
+			ms->Release();
+		}
+		return S_OK;
+		*/
+	}
+
+	STDMETHODIMP Info(long lIndex, AM_MEDIA_TYPE **ppmt, DWORD *pdwFlags, LCID *plcid,
+		DWORD *pdwGroup, WCHAR **ppszName, IUnknown **ppObject, IUnknown **ppUnk)
+	{
+		HRESULT hr = m_pin->IsSong(lIndex, pdwFlags);
+		if (hr != S_OK)
+			return hr;
+		if (ppmt != NULL)
+			*ppmt = NULL;
+		if (plcid != NULL)
+			*plcid = 0;
+		if (pdwGroup != NULL)
+			*pdwGroup = 0;
+		if (ppszName != NULL) {
+			*ppszName = (LPWSTR) CoTaskMemAlloc(8 * sizeof(WCHAR));
+			CheckPointer(*ppszName, E_OUTOFMEMORY);
+			swprintf(*ppszName, L"Song %d", lIndex + 1);
+		}
+		if (ppObject != NULL)
+			*ppObject = NULL;
+		if (ppUnk != NULL)
+			*ppUnk = NULL;
 		return S_OK;
 	}
 

@@ -157,7 +157,7 @@
 		<since>1.2.0</since>
 		<status>stable</status>
 		<output>16-bit sound</output>
-		<subsongs>no</subsongs>
+		<subsongs>experimental</subsongs>
 		<file-info>no</file-info>
 		<edit-info>no</edit-info>
 		<convert-sap>no</convert-sap>
