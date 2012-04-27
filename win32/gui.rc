@@ -1,7 +1,7 @@
 /*
  * gui.rc - Windows resources
  *
- * Copyright (C) 2005-2011  Piotr Fusik
+ * Copyright (C) 2005-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -114,6 +114,12 @@ IDR_TRAYMENU MENU
 #elif defined(SHELLEX)
 #  define INTERNAL_NAME "ASAPShellEx"
 #  define FILE_DESCRIPTION "ASAP Windows Explorer extension"
+#elif defined(AUDACIOUS)
+#  define APP_NAME "Audacious"
+#  define INTERNAL_NAME "asapplug"
+#elif defined(VLC)
+#  define APP_NAME "VLC"
+#  define INTERNAL_NAME "libasap_plugin"
 #endif
 
 #ifndef FILE_DESCRIPTION

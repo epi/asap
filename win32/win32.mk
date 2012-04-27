@@ -150,7 +150,7 @@ CLEAN += win32/apollo/ASAP_Apollo-res.o
 
 # Audacious
 
-win32/asapplug.dll: $(call src,audacious/asapplug.c asap.[ch]) win32/audacious/libaudcore.a
+win32/asapplug.dll: $(call src,audacious/asapplug.c asap.[ch]) win32/audacious/asapplug-res.o win32/audacious/libaudcore.a
 	$(WIN32_CC) $(shell $(PKG_CONFIG) --cflags --libs gtk+-2.0) -I$(AUDACIOUS_DIR)/src -lpthread
 CLEAN += win32/asapplug.dll
 
@@ -162,11 +162,19 @@ win32/audacious/%.o: $(AUDACIOUS_DIR)/src/libaudcore/%.c
 	$(WIN32_CC) -c -std=c99 $(shell $(PKG_CONFIG) --cflags --libs gtk+-2.0) -I$(AUDACIOUS_DIR) -I$(AUDACIOUS_DIR)/src
 CLEAN += win32/audacious/*.o
 
+win32/audacious/asapplug-res.o: $(call src,win32/gui.rc asap.h)
+	$(WIN32_WINDRES) -DAUDACIOUS
+CLEAN += win32/audacious/asapplug-res.o
+
 # VLC
 
-win32/libasap_plugin.dll: $(call src,vlc/libasap_plugin.c asap.[ch])
+win32/libasap_plugin.dll: $(call src,vlc/libasap_plugin.c asap.[ch]) win32/libasap_plugin-res.o
 	$(WIN32_CC) -std=gnu99 -I$(VLC_SDK_DIR)/include/vlc/plugins -L$(VLC_SDK_DIR)/lib -lvlccore
 CLEAN += win32/libasap_plugin.dll
+
+win32/libasap_plugin-res.o: $(call src,win32/gui.rc asap.h)
+	$(WIN32_WINDRES) -DVLC
+CLEAN += win32/libasap_plugin-res.o
 
 # BASS
 
