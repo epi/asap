@@ -1,7 +1,7 @@
 /*
  * in_asap.c - ASAP plugin for Winamp
  *
- * Copyright (C) 2005-2011  Piotr Fusik
+ * Copyright (C) 2005-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -31,6 +31,7 @@
 #include "wa_ipc.h"
 
 #include "asap.h"
+#include "aatr.h"
 #include "info_dlg.h"
 #include "settings_dlg.h"
 
@@ -106,31 +107,66 @@ static int extractSongNumber(const char *s, char *filename)
 	return song;
 }
 
-static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
+static BOOL isATR(const char *filename)
 {
-	const char *fn;
-	fileinfo fi;
+	size_t len = strlen(filename);
+	return len >= 4 && _stricmp(filename + len - 4, ".atr") == 0;
+}
+
+static void addFileSongs(HWND playlistWnd, fileinfo *fi, const ASAPInfo *info, int *index)
+{
+	char *p = fi->file + strlen(fi->file);
 	int song;
-	char *p;
-	int j;
-	fn = (const char *) SendMessage(mod.hMainWindow, WM_WA_IPC, index, IPC_GETPLAYLISTFILE);
-	song = extractSongNumber(fn, fi.file);
-	if (song >= 0 || !ASAPInfo_IsOurFile(fi.file))
-		return;
-	if (!loadModule(fi.file, module, &module_len))
-		return;
-	if (!ASAPInfo_Load(info, fi.file, module, module_len))
-		return;
-	SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
-	p = fi.file + strlen(fi.file);
-	for (j = 0; j < ASAPInfo_GetSongs(info); j++) {
+	for (song = 0; song < ASAPInfo_GetSongs(info); song++) {
 		COPYDATASTRUCT cds;
-		sprintf(p, "#%d", j + 1);
-		fi.index = index + j;
+		sprintf(p, "#%d", song + 1);
+		fi->index = (*index)++;
 		cds.dwData = IPC_PE_INSERTFILENAME;
-		cds.lpData = &fi;
+		cds.lpData = fi;
 		cds.cbData = sizeof(fileinfo);
 		SendMessage(playlistWnd, WM_COPYDATA, 0, (LPARAM) &cds);
+	}
+}
+
+static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
+{
+	const char *fn = (const char *) SendMessage(mod.hMainWindow, WM_WA_IPC, index, IPC_GETPLAYLISTFILE);
+	fileinfo fi;
+	int song = extractSongNumber(fn, fi.file);
+	if (song >= 0)
+		return;
+	if (ASAPInfo_IsOurFile(fi.file)) {
+		if (loadModule(fi.file, module, &module_len)
+		 && ASAPInfo_Load(info, fi.file, module, module_len)) {
+			SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
+			addFileSongs(playlistWnd, &fi, info, &index);
+		}
+	}
+	else if (isATR(fi.file)) {
+		AATR *aatr = AATR_New();
+		if (aatr != NULL) {
+			if (AATR_Open(aatr, fi.file)) {
+				size_t atr_fn_len = strlen(fi.file);
+				SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
+				fi.file[atr_fn_len++] = '#';
+				for (;;) {
+					const char *inside_fn = AATR_NextFile(aatr);
+					if (inside_fn == NULL)
+						break;
+					if (ASAPInfo_IsOurFile(inside_fn)) {
+						module_len = AATR_ReadCurrentFile(aatr, module, sizeof(module));
+						if (ASAPInfo_Load(info, inside_fn, module, module_len)) {
+							size_t inside_fn_len = strlen(inside_fn);
+							if (atr_fn_len + inside_fn_len + 4 <= sizeof(fi.file)) {
+								memcpy(fi.file + atr_fn_len, inside_fn, inside_fn_len + 1);
+								addFileSongs(playlistWnd, &fi, info, &index);
+							}
+						}
+					}
+				}
+			}
+			AATR_Delete(aatr);
+		}
 	}
 }
 
@@ -409,6 +445,7 @@ static In_Module mod = {
 	"TMC;TM8\0Theta Music Composer 1.x (*.TMC;*.TM8)\0"
 	"TM2\0Theta Music Composer 2.x (*.TM2)\0"
 	"FC\0FutureComposer (*.FC)\0"
+	"ATR\0Atari 8-bit disk image (*.ATR)\0"
 	,
 	1,    // is_seekable
 	1,    // UsesOutputPlug

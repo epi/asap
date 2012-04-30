@@ -1,7 +1,7 @@
 /*
  * info_dlg.c - file information dialog box
  *
- * Copyright (C) 2007-2011  Piotr Fusik
+ * Copyright (C) 2007-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -42,6 +42,9 @@
 #include "asap.h"
 #include "astil.h"
 #include "info_dlg.h"
+#ifdef WINAMP
+#include "aatr.h"
+#endif
 
 void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext)
 {
@@ -54,6 +57,16 @@ BOOL loadModule(LPCTSTR filename, BYTE *module, int *module_len)
 {
 	HANDLE fh;
 	BOOL ok;
+#ifdef WINAMP
+	LPCTSTR hash = _tcsrchr(filename, '#');
+	if (hash >= filename + 4 && hash < filename + MAX_PATH && memcmp(hash - 4, _T(".atr"), 4 * sizeof(_TCHAR)) == 0) {
+		_TCHAR atr_filename[MAX_PATH];
+		memcpy(atr_filename, filename, (hash - filename) * sizeof(_TCHAR));
+		atr_filename[hash - filename] = '\0';
+		*module_len = AATR_ReadFile(atr_filename, hash + 1, module, ASAPInfo_MAX_MODULE_LENGTH);
+		return *module_len >= 0;
+	}
+#endif
 	fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
 		return FALSE;

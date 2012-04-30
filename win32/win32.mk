@@ -269,7 +269,7 @@ CLEAN += win32/wince/gspasap.res
 
 # Winamp
 
-win32/in_asap.dll: $(call src,win32/winamp/in_asap.c asap.[ch] astil.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/winamp/in2.h win32/winamp/out.h win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h) win32/winamp/in_asap-res.o
+win32/in_asap.dll: $(call src,win32/winamp/in_asap.c asap.[ch] astil.[ch] aatr.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/winamp/in2.h win32/winamp/out.h win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h) win32/winamp/in_asap-res.o
 	$(WIN32_CC) -DWINAMP -lcomctl32 -lcomdlg32
 CLEAN += win32/in_asap.dll
 
