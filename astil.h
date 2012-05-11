@@ -1,7 +1,7 @@
 /*
  * astil.h - another SID/SAP Tune Information List parser
  *
- * Copyright (C) 2011  Piotr Fusik
+ * Copyright (C) 2011-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -43,6 +43,9 @@ ASTIL *ASTIL_New(void);
 void ASTIL_Delete(ASTIL *self);
 cibool ASTIL_Load(ASTIL *self, const char *filename, int song);
 const char *ASTIL_GetStilFilename(const ASTIL *self);
+/* If TRUE, the following strings are expected to be UTF-8 encoded,
+   otherwise it's an old STIL.txt, ASCII or Windows-1250 maybe? */
+cibool ASTIL_IsUTF8(const ASTIL *self);
 const char *ASTIL_GetTitle(const ASTIL *self);
 const char *ASTIL_GetAuthor(const ASTIL *self);
 const char *ASTIL_GetDirectoryComment(const ASTIL *self);

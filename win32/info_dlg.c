@@ -137,12 +137,11 @@ static char *appendAddress(char *p, const char *format, int value)
 	return p;
 }
 
-static void setChomped(int id, char *s)
+static void chomp(char *s)
 {
-	int i = strlen(s);
+	size_t i = strlen(s);
 	if (i >= 2 && s[i - 2] == '\r' && s[i - 1] == '\n')
 		s[i - 2] = '\0';
-	SendDlgItemMessage(infoDialog, id, WM_SETTEXT, 0, (LPARAM) s);
 }
 
 static void updateTech(void)
@@ -189,7 +188,8 @@ static void updateTech(void)
 			i += 5 + end - start;
 		}
 	}
-	setChomped(IDC_TECHINFO, buf);
+	chomp(buf);
+	SendDlgItemMessage(infoDialog, IDC_TECHINFO, WM_SETTEXT, 0, (LPARAM) buf);
 }
 
 static void updateStil(void)
@@ -224,7 +224,18 @@ static void updateStil(void)
 		p = appendStil(p, "Comment: ", ASTILCover_GetComment(cover));
 	}
 	*p = '\0';
-	setChomped(IDC_STILINFO, buf);
+	chomp(buf);
+#if 1
+	/* not compatible with Windows 9x */
+	if (ASTIL_IsUTF8(astil)) {
+		WCHAR wBuf[16000];
+		if (MultiByteToWideChar(CP_UTF8, 0, buf, -1, wBuf, 16000) > 0) {
+			SendDlgItemMessageW(infoDialog, IDC_STILINFO, WM_SETTEXT, 0, (LPARAM) wBuf);
+			return;
+		}
+	}
+#endif
+	SendDlgItemMessage(infoDialog, IDC_STILINFO, WM_SETTEXT, 0, (LPARAM) buf);
 }
 
 static void setEditedSong(int song)
@@ -265,8 +276,8 @@ typedef struct
 	WCHAR wTitle[64];
 	WCHAR wMessage[64];
 	EDITBALLOONTIP ebt = { sizeof(EDITBALLOONTIP), wTitle, wMessage, TTI_ERROR };
-	if (MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, title, -1, wTitle, 64) <= 0
-	 || MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, message, -1, wMessage, 64) <= 0
+	if (MultiByteToWideChar(CP_ACP, 0, title, -1, wTitle, 64) <= 0
+	 || MultiByteToWideChar(CP_ACP, 0, message, -1, wMessage, 64) <= 0
 	 || !SendDlgItemMessage(infoDialog, nID, EM_SHOWBALLOONTIP, 0, (LPARAM) &ebt))
 
 #endif /* _UNICODE */

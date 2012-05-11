@@ -1,7 +1,7 @@
 /*
  * astil.c - another SID/SAP Tune Information List parser
  *
- * Copyright (C) 2011  Piotr Fusik
+ * Copyright (C) 2011-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -42,6 +42,7 @@ struct ASTILCover
 struct ASTIL
 {
 	int nCovers;
+	cibool isUTF8;
 	char stilFilename[FILENAME_MAX];
 	char title[ASTIL_MAX_TEXT_LENGTH + 1];
 	char author[ASTIL_MAX_TEXT_LENGTH + 1];
@@ -70,6 +71,14 @@ static int ASTIL_FindPreviousSlash(const char *filename, int pos)
 			return pos;
 	}
 	return -1;
+}
+
+static cibool ASTIL_ReadUTF8BOM(FILE *fp)
+{
+	if (getc(fp) == 0xef && getc(fp) == 0xbb && getc(fp) == 0xbf)
+		return TRUE;
+	fseek(fp, 0, SEEK_SET);
+	return FALSE;
 }
 
 static int ASTIL_ReadLine(FILE *fp, char *result)
@@ -258,6 +267,7 @@ cibool ASTIL_Load(ASTIL *self, const char *filename, int song)
 		if (fp != NULL)
 			break;
 	}
+	self->isUTF8 = ASTIL_ReadUTF8BOM(fp);
 	while (ASTIL_ReadLine(fp, line) >= 0) {
 		int len = ASTIL_MatchFilename(line, filename + rootSlash);
 		if (len == -1) {
@@ -286,6 +296,11 @@ cibool ASTIL_Load(ASTIL *self, const char *filename, int song)
 const char *ASTIL_GetStilFilename(const ASTIL *self)
 {
 	return self->stilFilename;
+}
+
+cibool ASTIL_IsUTF8(const ASTIL *self)
+{
+	return self->isUTF8;
 }
 
 const char *ASTIL_GetTitle(const ASTIL *self)
