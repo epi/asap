@@ -147,7 +147,7 @@ static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
 		if (aatr != NULL) {
 			if (AATR_Open(aatr, fi.file)) {
 				size_t atr_fn_len = strlen(fi.file);
-				SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
+				BOOL found = FALSE;
 				fi.file[atr_fn_len++] = '#';
 				for (;;) {
 					const char *inside_fn = AATR_NextFile(aatr);
@@ -159,11 +159,22 @@ static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
 							size_t inside_fn_len = strlen(inside_fn);
 							if (atr_fn_len + inside_fn_len + 4 <= sizeof(fi.file)) {
 								memcpy(fi.file + atr_fn_len, inside_fn, inside_fn_len + 1);
+								if (!found) {
+									found = TRUE;
+									SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
+								}
 								addFileSongs(playlistWnd, &fi, info, &index);
 							}
 						}
 					}
 				}
+				/* Prevent Winamp crash:
+				   1. Play anything.
+				   2. Open an ATR with no songs.
+				   3. If the ATR deletes itself, Winamp crashes (tested with 5.581).
+				   Solution: leave the ATR on playlist. */
+				if (!found && SendMessage(mod.hMainWindow, WM_WA_IPC, 0, IPC_GETLISTLENGTH) > 1)
+					SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
 			}
 			AATR_Delete(aatr);
 		}
