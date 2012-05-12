@@ -35,6 +35,8 @@
 #include "info_dlg.h"
 #include "settings_dlg.h"
 
+LPCTSTR atrFilenameHash(LPCTSTR filename);
+
 // Winamp's equalizer works only with 16-bit samples
 #define SUPPORT_EQUALIZER  1
 
@@ -262,6 +264,7 @@ static void tagFreeFunc(char *tag, void *p)
 static void getFileInfo(char *file, char *title, int *length_in_ms)
 {
 	char filename[MAX_PATH];
+	const char *hash;
 	if (file == NULL || file[0] == '\0')
 		file = playing_filename_with_song;
 	title_song = extractSongNumber(file, filename);
@@ -269,7 +272,8 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 		expandPlaylistSongs();
 	if (!loadModule(filename, module, &module_len))
 		return;
-	if (!ASAPInfo_Load(title_info, filename, module, module_len))
+	hash = atrFilenameHash(filename);
+	if (!ASAPInfo_Load(title_info, hash != NULL ? hash + 1 : filename, module, module_len))
 		return;
 	if (title_song < 0)
 		title_song = ASAPInfo_GetDefaultSong(title_info);

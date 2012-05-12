@@ -53,13 +53,24 @@ void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext)
 	_tcscpy(dest + filenameChars, ext);
 }
 
+#ifdef WINAMP
+LPCTSTR atrFilenameHash(LPCTSTR filename)
+{
+	for ( ; *filename != '\0'; filename++) {
+		if (_tcsnicmp(filename, _T(".atr#"), 5) == 0)
+			return filename + 4;
+	}
+	return NULL;
+}
+#endif
+
 BOOL loadModule(LPCTSTR filename, BYTE *module, int *module_len)
 {
 	HANDLE fh;
 	BOOL ok;
 #ifdef WINAMP
-	LPCTSTR hash = _tcsrchr(filename, '#');
-	if (hash >= filename + 4 && hash < filename + MAX_PATH && memcmp(hash - 4, _T(".atr"), 4 * sizeof(_TCHAR)) == 0) {
+	LPCTSTR hash = atrFilenameHash(filename);
+	if (hash != NULL && hash < filename + MAX_PATH) {
 		_TCHAR atr_filename[MAX_PATH];
 		memcpy(atr_filename, filename, (hash - filename) * sizeof(_TCHAR));
 		atr_filename[hash - filename] = '\0';
