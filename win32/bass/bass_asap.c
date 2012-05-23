@@ -1,7 +1,7 @@
 /*
  * bass_asap.c - ASAP add-on for BASS
  *
- * Copyright (C) 2010-2011  Piotr Fusik
+ * Copyright (C) 2010-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -27,7 +27,7 @@
 
 #include "bass-addon.h"
 
-/* ID3 tag doesn't work in AIMP2 because it doesn't call GetTags */
+/* ID3 tag doesn't work in AIMP because it doesn't call GetTags */
 /* #define SUPPORT_ID3 */
 
 #define BASS_CTYPE_MUSIC_ASAP  0x1f100
@@ -121,7 +121,7 @@ static QWORD WINAPI ASAP_SetPosition(void *inst, QWORD pos, DWORD mode)
 	return pos;
 }
 
-static ADDON_FUNCTIONS ASAPfuncs={
+static ADDON_FUNCTIONS ASAPfuncs = {
 	0,
 	ASAP_Free,
 	ASAP_GetLength,
@@ -164,9 +164,13 @@ static HSTREAM WINAPI StreamCreateProc(BASSFILE file, DWORD flags)
 	int duration;
 	HSTREAM handle;
 	filename = (const char *) bassfunc->file.GetFileName(file, &unicode);
-	if (filename == NULL)
-		error(BASS_ERROR_NOTFILE);
-	if (unicode) {
+	if (filename == NULL) {
+		/* AIMP 3 doesn't return filenames (AIMP 2 did), so assume SAP.
+		This will fail for non-SAP files,
+		Need to implement format detection by content. */
+		filename = "unknown.sap";
+	}
+	else if (unicode) {
 		if (WideCharToMultiByte(CP_ACP, 0, (LPCWSTR) filename, -1, aFilename, MAX_PATH, NULL, NULL) <= 0)
 			error(BASS_ERROR_NOTFILE);
 		filename = aFilename;
