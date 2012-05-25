@@ -33,6 +33,7 @@
 						<th>Configurable playback time?</th>
 						<th>Mute POKEY channels?</th>
 						<th>Shows STIL?</th>
+						<th>Comment</th>
 						<th>Program&#173;ming language</th>
 						<th>Related website</th>
 					</tr>
@@ -45,42 +46,43 @@
 	<xsl:template match="port">
 		<tr>
 			<td class="name"><xsl:value-of select="@name" /></td>
-			<xsl:apply-templates />
+			<td><xsl:value-of select="bin" /></td>
+			<td><xsl:value-of select="platform" /></td>
+			<td><xsl:value-of select="interface" /></td>
+			<td><xsl:value-of select="since" /></td>
+			<td>
+				<xsl:attribute name="class">
+					<xsl:choose>
+						<xsl:when test="status = 'stable'">yes</xsl:when>
+						<xsl:when test="status = 'experimental'">no</xsl:when>
+						<xsl:otherwise>partial</xsl:otherwise>
+					</xsl:choose>
+				</xsl:attribute>
+				<xsl:value-of select="status" />
+			</td>
+			<td><xsl:value-of select="output" /></td>
+			<td><xsl:apply-templates select="subsongs" /></td>
+			<td><xsl:apply-templates select="file-info" /></td>
+			<td><xsl:apply-templates select="edit-info" /></td>
+			<td><xsl:apply-templates select="convert-sap" /></td>
+			<td><xsl:apply-templates select="config-time" /></td>
+			<td><xsl:apply-templates select="mute-pokey" /></td>
+			<td><xsl:apply-templates select="stil" /></td>
+			<td><xsl:apply-templates select="comment" /></td>
+			<td><xsl:value-of select="lang" /></td>
 			<td><xsl:copy-of select="a" /></td>
 		</tr>
 	</xsl:template>
 
-	<xsl:template match="bin|platform|interface|since|output|lang">
-		<td>
-			<xsl:value-of select="." />
-		</td>
+	<xsl:template match="subsongs|file-info|edit-info|convert-sap|config-time|mute-pokey|stil|comment">
+		<xsl:attribute name="class">
+			<xsl:choose>
+				<xsl:when test="@class"><xsl:value-of select="@class" /></xsl:when>
+				<xsl:when test="starts-with(., 'yes')">yes</xsl:when>
+				<xsl:when test=". = 'no'">no</xsl:when>
+				<xsl:otherwise>partial</xsl:otherwise>
+			</xsl:choose>
+		</xsl:attribute>
+		<xsl:value-of select="." />
 	</xsl:template>
-
-	<xsl:template match="status">
-		<td>
-			<xsl:attribute name="class">
-				<xsl:choose>
-					<xsl:when test=". = 'stable'">yes</xsl:when>
-					<xsl:when test=". = 'experimental'">no</xsl:when>
-					<xsl:otherwise>partial</xsl:otherwise>
-				</xsl:choose>
-			</xsl:attribute>
-			<xsl:value-of select="." />
-		</td>
-	</xsl:template>
-
-	<xsl:template match="subsongs|file-info|edit-info|convert-sap|config-time|mute-pokey|stil">
-		<td>
-			<xsl:attribute name="class">
-				<xsl:choose>
-					<xsl:when test="starts-with(., 'yes')">yes</xsl:when>
-					<xsl:when test=". = 'no'">no</xsl:when>
-					<xsl:otherwise>partial</xsl:otherwise>
-				</xsl:choose>
-			</xsl:attribute>
-			<xsl:value-of select="." />
-		</td>
-	</xsl:template>
-
-	<xsl:template match="a" />
 </xsl:stylesheet>

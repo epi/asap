@@ -27,8 +27,9 @@
 
 #include "bass-addon.h"
 
-/* ID3 tag doesn't work in AIMP because it doesn't call GetTags */
-/* #define SUPPORT_ID3 */
+/* ID3 tag doesn't work in AIMP because it doesn't call GetTags.
+   It works e.g. in http://sourceforge.net/projects/encorebassing/ */
+#define SUPPORT_ID3
 
 #define BASS_CTYPE_MUSIC_ASAP  0x1f100
 
