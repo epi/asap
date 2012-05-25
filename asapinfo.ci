@@ -1,6 +1,6 @@
 // asapinfo.ci - module parser
 //
-// Copyright (C) 2010-2011  Piotr Fusik
+// Copyright (C) 2010-2012  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -49,12 +49,12 @@ public class ASAPInfo
 	/// ASAP version - minor part.
 	public const int VersionMinor = 1;
 	/// ASAP version - micro part.
-	public const int VersionMicro = 1;
+	public const int VersionMicro = 2;
 	/// ASAP version as a string.
 	public const string Version = VersionMajor + "." + VersionMinor + "." + VersionMicro;
 
 	/// Years ASAP was created in.
-	public const string Years = "2005-2011";
+	public const string Years = "2005-2012";
 
 	/// Short credits for ASAP.
 	public const string Credits =
