@@ -1,7 +1,7 @@
 /*
  * ASAPPlayer.as - ASAP Flash player
  *
- * Copyright (C) 2009-2011  Piotr Fusik
+ * Copyright (C) 2009-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -40,21 +40,29 @@ package
 	{
 		private var filename : String;
 		private var song : int;
-
+		private var info : ASAPInfo;
 		private var soundChannel : SoundChannel = null;
 
-		private function completeHandler(event : Event) : void
+		private function callJS(paramName : String) : void
+		{
+			var js : String = this.loaderInfo.parameters[paramName];
+			if (js != null)
+				ExternalInterface.call(js);
+		}
+
+		private function loadCompleteHandler(event : Event) : void
 		{
 			var module : ByteArray = URLLoader(event.target).data;
 
 			var asap : ASAP = new ASAP();
 			asap.load(filename, module, module.length);
-			var info : ASAPInfo = asap.getInfo();
+			info = asap.getInfo();
 			var song : int = this.song;
 			if (song < 0)
 				song = info.getDefaultSong();
 			var duration : int = info.getLoop(song) ? -1 : info.getDuration(song);
 			asap.playSong(song, duration);
+			callJS("onLoad");
 
 			var sound : Sound = new Sound();
 			function generator(event : SampleDataEvent) : void
@@ -63,6 +71,11 @@ package
 			}
 			sound.addEventListener(SampleDataEvent.SAMPLE_DATA, generator);
 			this.soundChannel = sound.play();
+			function soundCompleteHandler(event : Event) : void
+			{
+				callJS("onPlaybackEnd");
+			}
+			soundChannel.addEventListener(Event.SOUND_COMPLETE, soundCompleteHandler);
 		}
 
 		public function play(filename : String, song : int = -1) : void
@@ -71,7 +84,7 @@ package
 			this.song = song;
 			var loader : URLLoader = new URLLoader();
 			loader.dataFormat = URLLoaderDataFormat.BINARY;
-			loader.addEventListener(Event.COMPLETE, completeHandler);
+			loader.addEventListener(Event.COMPLETE, loadCompleteHandler);
 			loader.load(new URLRequest(filename));
 		}
 
@@ -83,10 +96,28 @@ package
 			}
 		}
 
+		public function getAuthor() : String
+		{
+			return info.getAuthor();
+		}
+
+		public function getTitle() : String
+		{
+			return info.getTitle();
+		}
+
+		public function getDate() : String
+		{
+			return info.getDate();
+		}
+
 		public function ASAPPlayer()
 		{
 			ExternalInterface.addCallback("asapPlay", play);
 			ExternalInterface.addCallback("asapStop", stop);
+			ExternalInterface.addCallback("getAuthor", getAuthor);
+			ExternalInterface.addCallback("getTitle", getTitle);
+			ExternalInterface.addCallback("getDate", getDate);
 			var parameters : Object = this.loaderInfo.parameters;
 			if (parameters.file != null)
 				play(parameters.file, parameters.song != null ? parameters.song : -1);
