@@ -1,7 +1,7 @@
 /*
  * SilverASAP.cs - Silverlight version of ASAP
  *
- * Copyright (C) 2010-2011  Piotr Fusik
+ * Copyright (C) 2010-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -41,55 +41,49 @@ class ASAPMediaStreamSource : MediaStreamSource
 	readonly ASAP Asap;
 	readonly int Duration;
 	MediaStreamDescription MediaStreamDescription;
+	readonly byte[] buffer = new byte[8192];
 
 	public ASAPMediaStreamSource(ASAP asap, int duration)
 	{
-		Asap = asap;
-		Duration = duration;
+		this.Asap = asap;
+		this.Duration = duration;
 	}
 
-	static string LittleEndianHex(int x)
+	static int SwapBytes(int x)
 	{
-		return string.Format("{0:X2}{1:X2}{2:X2}{3:X2}", x & 0xff, (x >> 8) & 0xff, (x >> 16) & 0xff, (x >> 24) & 0xff);
+		return x << 24 | (x & 0xff00) << 8 | ((x >> 8) & 0xff00) | ((x >> 24) & 0xff);
 	}
 
 	protected override void OpenMediaAsync()
 	{
-		int channels = Asap.GetInfo().GetChannels();
+		int channels = this.Asap.GetInfo().GetChannels();
 		int blockSize = channels * BitsPerSample >> 3;
-		string waveFormatHex = string.Format("0100{0:X2}00{1}{2}{3:X2}00{4:X2}000000",
-			channels, LittleEndianHex(ASAP.SampleRate), LittleEndianHex(ASAP.SampleRate * blockSize),
-			blockSize, BitsPerSample);
+		string waveFormatHex = string.Format("0100{0:X2}00{1:X8}{2:X8}{3:X2}00{4:X2}000000",
+			channels, SwapBytes(ASAP.SampleRate), SwapBytes(ASAP.SampleRate * blockSize), blockSize, BitsPerSample);
 		Dictionary<MediaStreamAttributeKeys, string> streamAttributes = new Dictionary<MediaStreamAttributeKeys, string>();
 		streamAttributes[MediaStreamAttributeKeys.CodecPrivateData] = waveFormatHex;
-		MediaStreamDescription = new MediaStreamDescription(MediaStreamType.Audio, streamAttributes);
+		this.MediaStreamDescription = new MediaStreamDescription(MediaStreamType.Audio, streamAttributes);
 
 		Dictionary<MediaSourceAttributesKeys, string> sourceAttributes = new Dictionary<MediaSourceAttributesKeys, string>();
 		sourceAttributes[MediaSourceAttributesKeys.CanSeek] = "True";
-		sourceAttributes[MediaSourceAttributesKeys.Duration] = (Duration < 0 ? 0 : Duration * 10000).ToString();
+		sourceAttributes[MediaSourceAttributesKeys.Duration] = (this.Duration < 0 ? 0 : this.Duration * 10000).ToString();
 
-		ReportOpenMediaCompleted(sourceAttributes, new MediaStreamDescription[1] { MediaStreamDescription });
+		ReportOpenMediaCompleted(sourceAttributes, new MediaStreamDescription[1] { this.MediaStreamDescription });
 	}
 
 	protected override void GetSampleAsync(MediaStreamType mediaStreamType)
 	{
-		byte[] buffer = new byte[8192];
-		int blocksPlayed;
-		int bufferLen;
-		lock (Asap) {
-			blocksPlayed = Asap.GetBlocksPlayed();
-			bufferLen = Asap.Generate(buffer, buffer.Length, BitsPerSample == 8 ? ASAPSampleFormat.U8 : ASAPSampleFormat.S16LE);
-		}
-		Stream s = new MemoryStream(buffer);
-		MediaStreamSample mss = new MediaStreamSample(MediaStreamDescription, s, 0, bufferLen,
-			blocksPlayed * 10000000 / ASAP.SampleRate, SampleAttributes);
+		int blocksPlayed = this.Asap.GetBlocksPlayed();
+		int bufferLen = this.Asap.Generate(buffer, buffer.Length, BitsPerSample == 8 ? ASAPSampleFormat.U8 : ASAPSampleFormat.S16LE);
+		Stream s = bufferLen == 0 ? null : new MemoryStream(buffer);
+		MediaStreamSample mss = new MediaStreamSample(this.MediaStreamDescription, s, 0, bufferLen,
+			blocksPlayed * 10000000L / ASAP.SampleRate, SampleAttributes);
 		ReportGetSampleCompleted(mss);
 	}
 
 	protected override void SeekAsync(long seekToTime)
 	{
-		lock (Asap)
-			Asap.Seek((int) (seekToTime / 10000));
+		this.Asap.Seek((int) (seekToTime / 10000));
 		ReportSeekCompleted(seekToTime);
 	}
 
@@ -114,6 +108,7 @@ public class SilverASAP : Application
 	string Filename;
 	int Song = -1;
 	WebClient WebClient = null;
+	ASAPInfo Info;
 	MediaElement MediaElement = null;
 
 	public SilverASAP()
@@ -121,37 +116,55 @@ public class SilverASAP : Application
 		this.Startup += this.Application_Startup;
 	}
 
+	void CallJS(string paramName)
+	{
+		string js;
+		if (this.Host.InitParams.TryGetValue(paramName, out js))
+			HtmlPage.Window.Eval(js);
+	}
+
+	// TODO: can't make it work
+	//delegate void StringDelegate(string s);
+	//
+	//void MediaElement_MediaEnded(object sender, RoutedEventArgs e)
+	//{
+	//	Deployment.Current.Dispatcher.BeginInvoke(new StringDelegate(CallJS), "onPlaybackEnd");
+	//	// or simply? CallJS("onPlaybackEnd");
+	//}
+
 	void WebClient_OpenReadCompleted(object sender, OpenReadCompletedEventArgs e)
 	{
-		WebClient = null;
+		this.WebClient = null;
 		if (e.Cancelled || e.Error != null)
 			return;
 		byte[] module = new byte[e.Result.Length];
 		int moduleLen = e.Result.Read(module, 0, module.Length);
 
 		ASAP asap = new ASAP();
-		asap.Load(Filename, module, moduleLen);
-		ASAPInfo info = asap.GetInfo();
-		if (Song < 0)
-			Song = info.GetDefaultSong();
-		int duration = info.GetLoop(Song) ? -1 : info.GetDuration(Song);
-		asap.PlaySong(Song, duration);
+		asap.Load(this.Filename, module, moduleLen);
+		this.Info = asap.GetInfo();
+		if (this.Song < 0)
+			this.Song = this.Info.GetDefaultSong();
+		int duration = this.Info.GetLoop(this.Song) ? -1 : this.Info.GetDuration(this.Song);
+		asap.PlaySong(this.Song, duration);
 
 		Stop();
-		MediaElement = new MediaElement();
-		MediaElement.Volume = 1;
-		MediaElement.AutoPlay = true;
-		MediaElement.SetSource(new ASAPMediaStreamSource(asap, duration));
+		CallJS("onLoad");
+		this.MediaElement = new MediaElement();
+		this.MediaElement.Volume = 1;
+		this.MediaElement.AutoPlay = true;
+		//this.MediaElement.MediaEnded += MediaElement_MediaEnded;
+		this.MediaElement.SetSource(new ASAPMediaStreamSource(asap, duration));
 	}
 
 	[ScriptableMember]
 	public void Play(string filename, int song)
 	{
-		Filename = filename;
-		Song = song;
-		WebClient = new WebClient();
-		WebClient.OpenReadCompleted += WebClient_OpenReadCompleted;
-		WebClient.OpenReadAsync(new Uri(filename, UriKind.Relative));
+		this.Filename = filename;
+		this.Song = song;
+		this.WebClient = new WebClient();
+		this.WebClient.OpenReadCompleted += WebClient_OpenReadCompleted;
+		this.WebClient.OpenReadAsync(new Uri(filename, UriKind.Relative));
 	}
 
 	[ScriptableMember]
@@ -161,26 +174,57 @@ public class SilverASAP : Application
 	}
 
 	[ScriptableMember]
-	public void Pause()
+	public bool Pause()
 	{
-		if (MediaElement != null) {
-			if (MediaElement.CurrentState == MediaElementState.Playing)
-				MediaElement.Pause();
-			else
-				MediaElement.Play();
+		if (this.MediaElement == null)
+			return true;
+		if (this.MediaElement.CurrentState == MediaElementState.Playing) {
+			this.MediaElement.Pause();
+			return true;
+		}
+		else {
+			this.MediaElement.Play();
+			return false;
 		}
 	}
 
 	[ScriptableMember]
 	public void Stop()
 	{
-		if (WebClient != null)
-			WebClient.CancelAsync();
-		if (MediaElement != null) {
-			MediaElement.Stop();
+		if (this.WebClient != null)
+			this.WebClient.CancelAsync();
+		if (this.MediaElement != null) {
+			this.MediaElement.Stop();
 			// in Opera Stop() doesn't work when mediaElement is in the Opening state:
-			MediaElement.Source = null;
-			MediaElement = null;
+			this.MediaElement.Source = null;
+			this.MediaElement = null;
+		}
+	}
+
+	[ScriptableMember]
+	public string Author
+	{
+		get
+		{
+			return this.Info.GetAuthor();
+		}
+	}
+
+	[ScriptableMember]
+	public string Title
+	{
+		get
+		{
+			return this.Info.GetTitle();
+		}
+	}
+
+	[ScriptableMember]
+	public string Date
+	{
+		get
+		{
+			return this.Info.GetDate();
 		}
 	}
 
