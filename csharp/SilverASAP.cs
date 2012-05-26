@@ -105,11 +105,11 @@ class ASAPMediaStreamSource : MediaStreamSource
 
 public class SilverASAP : Application
 {
+	readonly MediaElement MediaElement = new MediaElement();
 	string Filename;
 	int Song = -1;
 	WebClient WebClient = null;
 	ASAPInfo Info;
-	MediaElement MediaElement = null;
 
 	public SilverASAP()
 	{
@@ -123,14 +123,10 @@ public class SilverASAP : Application
 			HtmlPage.Window.Eval(js);
 	}
 
-	// TODO: can't make it work
-	//delegate void StringDelegate(string s);
-	//
-	//void MediaElement_MediaEnded(object sender, RoutedEventArgs e)
-	//{
-	//	Deployment.Current.Dispatcher.BeginInvoke(new StringDelegate(CallJS), "onPlaybackEnd");
-	//	// or simply? CallJS("onPlaybackEnd");
-	//}
+	void MediaElement_MediaEnded(object sender, RoutedEventArgs e)
+	{
+		CallJS("onPlaybackEnd");
+	}
 
 	void WebClient_OpenReadCompleted(object sender, OpenReadCompletedEventArgs e)
 	{
@@ -150,10 +146,6 @@ public class SilverASAP : Application
 
 		Stop();
 		CallJS("onLoad");
-		this.MediaElement = new MediaElement();
-		this.MediaElement.Volume = 1;
-		this.MediaElement.AutoPlay = true;
-		//this.MediaElement.MediaEnded += MediaElement_MediaEnded;
 		this.MediaElement.SetSource(new ASAPMediaStreamSource(asap, duration));
 	}
 
@@ -176,8 +168,6 @@ public class SilverASAP : Application
 	[ScriptableMember]
 	public bool Pause()
 	{
-		if (this.MediaElement == null)
-			return true;
 		if (this.MediaElement.CurrentState == MediaElementState.Playing) {
 			this.MediaElement.Pause();
 			return true;
@@ -193,12 +183,9 @@ public class SilverASAP : Application
 	{
 		if (this.WebClient != null)
 			this.WebClient.CancelAsync();
-		if (this.MediaElement != null) {
-			this.MediaElement.Stop();
-			// in Opera Stop() doesn't work when mediaElement is in the Opening state:
-			this.MediaElement.Source = null;
-			this.MediaElement = null;
-		}
+		this.MediaElement.Stop();
+		// in Opera Stop() doesn't work when MediaElement is in the Opening state:
+		this.MediaElement.Source = null;
 	}
 
 	[ScriptableMember]
@@ -230,6 +217,10 @@ public class SilverASAP : Application
 
 	void Application_Startup(object sender, StartupEventArgs e)
 	{
+		this.RootVisual = this.MediaElement;
+		this.MediaElement.Volume = 1;
+		this.MediaElement.AutoPlay = true;
+		this.MediaElement.MediaEnded += MediaElement_MediaEnded;
 		HtmlPage.RegisterScriptableObject("ASAP", this);
 		string filename;
 		if (e.InitParams.TryGetValue("file", out filename)) {
