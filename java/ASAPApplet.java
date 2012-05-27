@@ -1,7 +1,7 @@
 /*
  * ASAPApplet.java - ASAP applet
  *
- * Copyright (C) 2007-2011  Piotr Fusik
+ * Copyright (C) 2007-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -82,6 +82,13 @@ public class ASAPApplet extends Applet implements Runnable
 	*/
 	}
 
+	private void callJS(String paramName)
+	{
+		String js = getParameter(paramName);
+		if (js != null)
+			JSObject.getWindow(this).eval(js);
+	}
+
 	public void run()
 	{
 		byte[] buffer = new byte[8192];
@@ -101,13 +108,11 @@ public class ASAPApplet extends Applet implements Runnable
 			}
 			line.write(buffer, 0, len);
 			repaint();
-		} while (len == buffer.length && running);
-		if (running) {
-			String js = getParameter("onPlaybackEnd");
-			if (js != null)
-				JSObject.getWindow(this).eval(js);
-			running = false;
-		}
+			if (len != buffer.length) {
+				callJS("onPlaybackEnd");
+				running = false;
+			}
+		} while (running);
 		repaint();
 	}
 
@@ -169,6 +174,7 @@ public class ASAPApplet extends Applet implements Runnable
 			showStatus("ERROR OPENING AUDIO");
 			return;
 		}
+		callJS("onLoad");
 		line.start();
 		if (!running) {
 			running = true;
@@ -226,9 +232,9 @@ public class ASAPApplet extends Applet implements Runnable
 		return asap.getInfo().getAuthor();
 	}
 
-	public String getName()
+	public String getTitle()
 	{
-		return asap.getInfo().getTitleOrFilename();
+		return asap.getInfo().getTitle();
 	}
 
 	public String getDate()

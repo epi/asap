@@ -35,7 +35,7 @@ or the following XHTML:
 </object>
 ---------------------------------------------------------------------------
 
-(tested with Internet Explorer 6 and 9, Firefox 3.6 and Chrome 11).
+(tested with Internet Explorer 6 and 9, Firefox 3.6, Chrome 19).
 
 The applet will play the specified file and display POKEY channel volume
 meters scaled to the applet area (you can specify a different size).
@@ -47,8 +47,14 @@ The applet understands the following parameters:
 - `song` - zero-based subsong number
 - `background` - background color specified as six hexadecimal digits (`"rrggbb"`)
 - `foreground` - volume bars color specified as six hexadecimal digits (`"rrggbb"`)
-- `onPlaybackEnd` - JavaScript to be executed when playback ends
-  (additionally, the `mayscript` attribute must be added to the `applet` element)
+- `onLoad` - JavaScript code to be executed when file is loaded.
+This is a safe place to call `getTitle()` etc - see below.
+Playback starts after the JavaScript code returns.
+- `onPlaybackEnd` - JavaScript code to be executed when playback ends.
+Will not be called as a result of `stop()`.
+
+All the above parameters are optional. For `onLoad` and `onPlaybackEnd` to work, add the `mayscript` attribute
+to the `applet` element.
 
 The applet contains the following methods that can be called from JavaScript:
 
@@ -56,7 +62,7 @@ The applet contains the following methods that can be called from JavaScript:
 - `void stop()` - stops playback
 - `boolean togglePause()` - toggles pause and returns `true` if pause has been enabled
 - `String getAuthor()` - returns the AUTHOR tag of the playing song
-- `String getName()` - returns the NAME tag of the playing song
+- `String getTitle()` - returns the NAME tag of the playing song
 - `String getDate()` - returns the DATE tag of the playing song
 
 
@@ -68,3 +74,4 @@ The ASAP midlet requires CLDC 1.1 and MIDP 2.0
 and thus will not work on very old Java implementations.
 The midlet has a file browser for selecting music files,
 which should be stored in phone memory or on a memory card.
+J2ME platforms usually start playback after the music is completely rendered.
