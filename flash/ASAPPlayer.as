@@ -40,7 +40,7 @@ package
 	{
 		private var filename : String;
 		private var song : int;
-		private var info : ASAPInfo;
+		private var asap : ASAP = new ASAP();
 		private var soundChannel : SoundChannel = null;
 
 		private function callJS(paramName : String) : void
@@ -50,20 +50,8 @@ package
 				ExternalInterface.call(js);
 		}
 
-		private function loadCompleteHandler(event : Event) : void
+		private function startPlayback() : void
 		{
-			var module : ByteArray = URLLoader(event.target).data;
-
-			var asap : ASAP = new ASAP();
-			asap.load(filename, module, module.length);
-			info = asap.getInfo();
-			var song : int = this.song;
-			if (song < 0)
-				song = info.getDefaultSong();
-			var duration : int = info.getLoop(song) ? -1 : info.getDuration(song);
-			asap.playSong(song, duration);
-			callJS("onLoad");
-
 			var sound : Sound = new Sound();
 			function generator(event : SampleDataEvent) : void
 			{
@@ -75,7 +63,22 @@ package
 			{
 				callJS("onPlaybackEnd");
 			}
-			soundChannel.addEventListener(Event.SOUND_COMPLETE, soundCompleteHandler);
+			this.soundChannel.addEventListener(Event.SOUND_COMPLETE, soundCompleteHandler);
+		}
+
+		private function loadCompleteHandler(event : Event) : void
+		{
+			var module : ByteArray = URLLoader(event.target).data;
+			stop();
+			this.asap.load(this.filename, module, module.length);
+			var info : ASAPInfo = this.asap.getInfo();
+			var song : int = this.song;
+			if (song < 0)
+				song = info.getDefaultSong();
+			var duration : int = info.getLoop(song) ? -1 : info.getDuration(song);
+			this.asap.playSong(song, duration);
+			callJS("onLoad");
+			startPlayback();
 		}
 
 		public function play(filename : String, song : int = -1) : void
@@ -88,6 +91,18 @@ package
 			loader.load(new URLRequest(filename));
 		}
 
+		public function pause() : Boolean
+		{
+			if (this.soundChannel != null) {
+				stop();
+				return true;
+			}
+			else {
+				startPlayback();
+				return false;
+			}
+		}
+
 		public function stop() : void
 		{
 			if (this.soundChannel != null) {
@@ -98,22 +113,23 @@ package
 
 		public function getAuthor() : String
 		{
-			return info.getAuthor();
+			return this.asap.getInfo().getAuthor();
 		}
 
 		public function getTitle() : String
 		{
-			return info.getTitle();
+			return this.asap.getInfo().getTitle();
 		}
 
 		public function getDate() : String
 		{
-			return info.getDate();
+			return this.asap.getInfo().getDate();
 		}
 
 		public function ASAPPlayer()
 		{
 			ExternalInterface.addCallback("asapPlay", play);
+			ExternalInterface.addCallback("asapPause", pause);
 			ExternalInterface.addCallback("asapStop", stop);
 			ExternalInterface.addCallback("getAuthor", getAuthor);
 			ExternalInterface.addCallback("getTitle", getTitle);
