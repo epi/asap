@@ -3,9 +3,10 @@
 
 ASAP 3.1.2 (2012-??-??)::
 - Created VLC plugin (SAP format only).
+- UTF-8 encoding is supported for STIL.
+- Author is no longer hidden in the converted XEX files.
 - Audacious plugin updated to Audacious 3.2 and compiled for Windows.
 - Winamp plugin opens ATR disk images and plays files inside them.
-- UTF-8 encoding is supported for STIL.
 - New TortoiseSVN and TortoiseGit plugins show changes in SAP tags.
 - BASS add-on updated to be compatible with AIMP 3 (SAP format only).
 - Enabled title/author/year in the BASS add-on (only selected BASS-based players use it,

@@ -1,4 +1,9 @@
+HIDE_AUTHOR	equ	0
+	ift	HIDE_AUTHOR
 countdown	equ	$fca7
+	els
+countdown	equ	$fc98
+	eif
 
 	org	$124
 main

@@ -1,4 +1,4 @@
-HIDE_AUTHOR	equ	1
+HIDE_AUTHOR	equ	0
 
 font	equ	$fc00
 
@@ -37,11 +37,17 @@ show_author
 	els
 
 	org	$fc50
+	ift	HIDE_AUTHOR
 dl	org	*+39
 
 show_author
 	org	*+10
 	rts
+
+	els
+dl	org	*+32
+	dta	$41,a(dl)
+	eif
 
 	eif
 

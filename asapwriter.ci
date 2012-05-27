@@ -1,6 +1,6 @@
 // asapwriter.ci - format conversions
 //
-// Copyright (C) 2011  Piotr Fusik
+// Copyright (C) 2011-2012  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -516,20 +516,28 @@ public class ASAPWriter
 		int totalCharacters = titleLen + authorLen + otherLen;
 		int totalLines = totalCharacters / XexInfoCharactersPerLine;
 		int otherAddress = xexInfoDl - otherLen;
+#if HIDE_AUTHOR
 		int authorAddress = otherAddress - authorLen;
 		int hiddenAddress = authorAddress - authorLen;
 		int titleAddress = hiddenAddress - 8 - titleLen;
+#else
+		int titleAddress = otherAddress - authorLen - 8 - titleLen;
+#endif
 		WriteWord(w, titleAddress);
 		WriteBytes(w, BinaryResource("xexinfo.obx"), 4, 6);
 		WriteBytes(w, title, 0, titleLen);
 		for (int i = 0; i < 8; i++)
 			w(0x55);
+#if HIDE_AUTHOR
 		if (authorLen > 0) {
 			WriteString(w, "(press space to show author)");
 			for (int i = 28; i < authorLen; i++)
 				w(' ');
 			WriteBytes(w, author, 0, authorLen);
 		}
+#else
+		WriteBytes(w, author, 0, authorLen);
+#endif
 		WriteBytes(w, other, 0, otherLen);
 		for (int i = totalLines; i < 26; i++)
 			w(0x70);
@@ -537,6 +545,7 @@ public class ASAPWriter
 		WriteXexInfoTextDl(w, titleAddress, titleLen, titleLen - XexInfoCharactersPerLine);
 		w(8);
 		w(0);
+#if HIDE_AUTHOR
 		if (authorLen > 0)
 			WriteXexInfoTextDl(w, hiddenAddress, authorLen, -1);
 		w(0x10);
@@ -556,6 +565,13 @@ public class ASAPWriter
 			for (int i = 0; i < 12; i++)
 				w(0x60);
 		}
+#else
+		for (int i = 0; i < authorLen; i += XexInfoCharactersPerLine)
+			w(2);
+		w(0x10);
+		for (int i = 0; i < otherLen; i += XexInfoCharactersPerLine)
+			w(2);
+#endif
 		WriteBytes(w, BinaryResource("xexinfo.obx"), 6, BinaryResource("xexinfo.obx").Length);
 	}
 
