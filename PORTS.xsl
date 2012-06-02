@@ -10,10 +10,10 @@
 					table { border-collapse: collapse; }
 					th, td { border: solid black 1px; }
 					th, .name { background-color: #ccf; }
-					.yes { background-color: #cfc; }
-					.no { background-color: #fcc; }
+					.good { background-color: #cfc; }
+					.bad { background-color: #fcc; }
 					.partial { background-color: #ffc; }
-					.yes, .no, .partial { text-align: center; }
+					.good, .bad, .partial { text-align: center; }
 				</style>
 			</head>
 			<body>
@@ -53,8 +53,8 @@
 			<td>
 				<xsl:attribute name="class">
 					<xsl:choose>
-						<xsl:when test="status = 'stable'">yes</xsl:when>
-						<xsl:when test="status = 'experimental'">no</xsl:when>
+						<xsl:when test="status = 'stable'">good</xsl:when>
+						<xsl:when test="status = 'experimental'">bad</xsl:when>
 						<xsl:otherwise>partial</xsl:otherwise>
 					</xsl:choose>
 				</xsl:attribute>
@@ -78,8 +78,8 @@
 		<xsl:attribute name="class">
 			<xsl:choose>
 				<xsl:when test="@class"><xsl:value-of select="@class" /></xsl:when>
-				<xsl:when test="starts-with(., 'yes')">yes</xsl:when>
-				<xsl:when test=". = 'no'">no</xsl:when>
+				<xsl:when test="starts-with(., 'yes')">good</xsl:when>
+				<xsl:when test=". = 'no'">bad</xsl:when>
 				<xsl:otherwise>partial</xsl:otherwise>
 			</xsl:choose>
 		</xsl:attribute>

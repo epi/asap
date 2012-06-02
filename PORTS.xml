@@ -30,7 +30,7 @@
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
 		<stil>yes</stil>
-		<comment class="yes">Plays from ATR disk images</comment>
+		<comment class="good">Plays from ATR disk images</comment>
 		<lang>C</lang>
 		<a href="http://www.winamp.com/">Winamp</a>
 	</port>
@@ -112,7 +112,7 @@
 		<file-info>yes</file-info>
 		<edit-info>no</edit-info>
 		<convert-sap>no</convert-sap>
-		<config-time>yes</config-time>
+		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>Java</lang>
@@ -276,10 +276,10 @@
 		<status>stable</status>
 		<output>32-bit floating-point sound</output>
 		<subsongs>yes</subsongs>
-		<file-info>no</file-info><!-- TODO: yes -->
+		<file-info>yes</file-info>
 		<edit-info>no</edit-info>
 		<convert-sap>no</convert-sap>
-		<config-time>yes</config-time>
+		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>ActionScript 3</lang>
@@ -315,7 +315,7 @@
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
 		<stil>yes</stil>
-		<comment class="yes">Displays RMT instrument names</comment>
+		<comment class="good">Displays RMT instrument names</comment>
 		<lang>C</lang>
 		<a href="http://www.un4seen.com/xmplay.html">XMPlay</a>
 	</port>
@@ -376,10 +376,10 @@
 		<status>stable</status>
 		<output>16-bit sound</output>
 		<subsongs>yes</subsongs>
-		<file-info>no</file-info><!-- TODO: yes -->
+		<file-info>yes</file-info>
 		<edit-info>no</edit-info>
 		<convert-sap>no</convert-sap>
-		<config-time>yes</config-time>
+		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>C#</lang>
@@ -449,13 +449,13 @@
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
-		<comment class="yes">Plays from ZIP archives</comment>
+		<comment class="good">Plays from ZIP archives</comment>
 		<lang>Java</lang>
 	</port>
 	<port name="AIRASAP">
 		<bin></bin>
 		<platform>Adobe AIR</platform>
-		<interface>HTML</interface>
+		<interface>GUI</interface>
 		<since>3.0.0</since>
 		<status>in development</status>
 		<output>32-bit floating-point sound</output>
@@ -514,7 +514,7 @@
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
-		<comment class="no">SAP format only</comment>
+		<comment class="bad">SAP format only</comment>
 		<lang>C</lang>
 		<a href="http://gstreamer.freedesktop.org/">GStreamer</a>
 	</port>
@@ -532,7 +532,7 @@
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
-		<comment class="no">SAP format only</comment>
+		<comment class="bad">SAP format only</comment>
 		<lang>C</lang>
 		<a href="http://www.videolan.org/vlc/">VLC</a>
 	</port>

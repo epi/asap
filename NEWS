@@ -2,20 +2,22 @@
 -------
 
 ASAP 3.1.2 (2012-??-??)::
+
 - Created VLC plugin (SAP format only).
 - UTF-8 encoding is supported for STIL.
 - Author is no longer hidden in the converted XEX files.
-- Audacious plugin updated to Audacious 3.2 and compiled for Windows.
 - Winamp plugin opens ATR disk images and plays files inside them.
-- New TortoiseSVN and TortoiseGit plugins show changes in SAP tags.
+- Audacious plugin updated to Audacious 3.2 and compiled for Windows.
 - BASS add-on updated to be compatible with AIMP 3 (SAP format only).
 - Enabled title/author/year in the BASS add-on (only selected BASS-based players use it,
 for example http://sourceforge.net/projects/encorebassing/[EncoreBassing]).
 - Windows Media Player codec supports subsongs, AUTHOR and NAME
 (this works at least with Media Player Classic Home Cinema).
+- New TortoiseSVN and TortoiseGit plugins show changes in SAP tags.
 
 
 ASAP 3.1.1 (2011-10-26)::
+
 - Converted XEX files may optionally display information.
 - Fixed conversion of some TYPE D SAP files (e.g. Saturday_Demo.sap) to XEX.
 - Fixed time detection for some FC files.
