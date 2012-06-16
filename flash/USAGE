@@ -7,12 +7,14 @@ To embed the player in your web page, use the following XHTML syntax:
 <object width="0" height="0" type="application/x-shockwave-flash" data="asap.swf" id="asap">
     <param name="movie" value="asap.swf" />
     <param name="FlashVars" value="file=File.sap&song=2" />
+    <param name="wmode" value="transparent" />
 </object>
 ---------------------------------------------------------------------------
 
 (tested with Internet Explorer 9, Firefox 3.5 and Chrome 19).
 
 The player will play the specified file. It doesn't display anything.
+The `wmove` parameter prevents a single white pixel in Internet Explorer.
 
 The player understands the following parameters (in ampersand-separated `FlashVars`):
 
@@ -30,6 +32,7 @@ The player contains the following methods that can be called from JavaScript:
 
 - `asapPlay(filename : String, song : int = -1) : void` - plays the specified song (-1 for the default)
 - `asapStop() : void` - stops playback
+- `asapPause() : Boolean` - toggles pause and returns `true` if pause has been enabled
 - `getAuthor() : String` - returns the AUTHOR tag of the playing song
 - `getTitle() : String` - returns the NAME tag of the playing song
 - `getDate() : String` - returns the DATE tag of the playing song
