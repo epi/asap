@@ -75,7 +75,7 @@ static int sap2txt(const char *sap_file)
 		int ffff = 0;
 		int start_address = get_word(fp);
 		int end_address;
-		Bytef buffer[65536];
+		Byte buffer[65536];
 		int len;
 		uLong crc;
 
@@ -115,7 +115,7 @@ static int sap2txt(const char *sap_file)
 	}
 }
 
-static size_t slurp(const char *input_file, Bytef *buffer, size_t len)
+static size_t slurp(const char *input_file, Byte *buffer, size_t len)
 {
 	FILE *fp = fopen(input_file, "rb");
 	size_t result;
@@ -134,9 +134,9 @@ static size_t slurp(const char *input_file, Bytef *buffer, size_t len)
 
 static int txt2sap(const char *txt_file, const char *sap_file)
 {
-	Bytef txt_buf[65536];
+	Byte txt_buf[65536];
 	size_t txt_len;
-	Bytef sap_buf[65536];
+	Byte sap_buf[65536];
 	size_t sap_len;
 	const void *bin_ptr;
 	size_t i;
@@ -158,12 +158,12 @@ static int txt2sap(const char *txt_file, const char *sap_file)
 	for (i = 0; i < txt_len; ) {
 		if (memcmp(txt_buf + i, "LOAD ", 5) == 0)
 			break;
-		if (txt_buf[i] == (char) 0xff && txt_buf[i + 1] == (char) 0xff)
+		if (txt_buf[i] == 0xff && txt_buf[i + 1] == 0xff)
 			break;
 		while (i < txt_len && txt_buf[i++] != 0x0a) { }
 	}
 
-	if (i == (const Bytef *) bin_ptr - sap_buf && memcmp(txt_buf, sap_buf, i) == 0)
+	if (i == (const Byte *) bin_ptr - sap_buf && memcmp(txt_buf, sap_buf, i) == 0)
 		return 0; /* same */
 
 	fp = fopen(sap_file, "wb");
@@ -172,7 +172,7 @@ static int txt2sap(const char *txt_file, const char *sap_file)
 		return 1;
 	}
 	fwrite(txt_buf, 1, i, fp);
-	fwrite(bin_ptr, 1, sap_len - ((const Bytef *) bin_ptr - sap_buf), fp);
+	fwrite(bin_ptr, 1, sap_len - ((const Byte *) bin_ptr - sap_buf), fp);
 	fclose(fp);
 	return 0;
 }
