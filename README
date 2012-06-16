@@ -150,7 +150,7 @@ ASAP includes the following programs:
 - Java midlet - for mobile devices {asapjava=}
 - C# version of ASAP2WAV
 - JavaScript version of ASAP2WAV running in http://en.wikipedia.org/wiki/Windows_Script_Host[Windows Script Host], https://developer.mozilla.org/en/Rhino_Shell[Rhino Shell], http://code.google.com/p/v8/[V8 Shell], http://en.wikipedia.org/wiki/JScript_.NET[JScript .NET], http://en.wikipedia.org/wiki/JaegerMonkey[JaegerMonkey] and http://www.digitalmars.com/dscript/[DMDScript] {asapjavascript=}
-- experimental JavaScript version of ASAP2WAV running in Firefox {asapjavascript=}
+- experimental JavaScript player running in Firefox and Chrome {asapjavascript=}
 - Flash player - for web pages {asapflash=}{asapwww?(see link:flash.html[online demo])}
 - asapplay - simple command-line player in C#
 - http://www.silverlight.net/[Silverlight] player - for web pages {asapwww?(see link:silverlight.html[online demo])}

@@ -252,18 +252,18 @@
 		<stil>no</stil>
 		<lang>JavaScript</lang>
 	</port>
-	<port name="ASAP2WAV (browser JavaScript)">
+	<port name="Browser JavaScript player">
 		<bin></bin>
-		<platform>Firefox</platform>
+		<platform>Firefox, Chrome</platform>
 		<interface>via JavaScript</interface>
 		<since>2.0.0</since>
 		<status>experimental</status>
-		<output>WAV file, 8 or 16-bit</output>
+		<output>floating-point sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info>
 		<edit-info>no</edit-info>
 		<convert-sap>no</convert-sap>
-		<config-time>yes</config-time>
+		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>JavaScript</lang>

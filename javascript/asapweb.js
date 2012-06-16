@@ -1,7 +1,7 @@
 /*
  * asapweb.js - pure JavaScript ASAP for web browsers
  *
- * Copyright (C) 2009-2011  Piotr Fusik
+ * Copyright (C) 2009-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -41,7 +41,7 @@ function downloadBinaryFile(url)
 	}
 }
 
-function ASAP2WAVURL(url, song, duration, format)
+function asapPlay(url, song)
 {
 	var module = downloadBinaryFile(url);
 	var asap = new ASAP();
@@ -49,46 +49,24 @@ function ASAP2WAVURL(url, song, duration, format)
 	var info = asap.getInfo();
 	if (song < 0)
 		song = info.getDefaultSong();
-	if (duration != null)
-		duration = ASAPInfo.parseDuration(duration);
-	else {
-		duration = info.getDuration(song);
-		if (duration < 0)
-			duration = 180 * 1000;
-	}
-	asap.playSong(song, duration);
+	asap.playSong(song, info.getDuration(song));
 
-	var result = "";
-	var base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	function appendBase64(data, len)
+	function audioCallback(samplesRequested)
 	{
-		for (var i = 0; i < len; ) {
-			var b1 = data[i++] & 0xff;
-			var r = base64chars.charAt(b1 >> 2);
-			if (i < len) {
-				var b2 = data[i++] & 0xff;
-				r += base64chars.charAt(((b1 & 3) << 4) + (b2 >> 4));
-				if (i < len) {
-					var b3 = data[i++] & 0xff;
-					r += base64chars.charAt(((b2 & 15) << 2) + (b3 >> 6)) + base64chars.charAt(b3 & 63);
-				}
-				else
-					r += base64chars.charAt((b2 & 15) << 2) + "=";
-			}
-			else
-				r += base64chars.charAt(b1 << 4) + "==";
-			result += r;
-		}
+		var buffer = new Array(samplesRequested);
+		buffer.length = asap.generate(buffer, samplesRequested, ASAPSampleFormat.U8);
+		for (var i = 0; i < buffer.length; i++)
+			buffer[i] = (buffer[i] - 128) / 128;
+		return buffer;
 	}
-
-	var buffer = new Array(8193); // must be multiple of 3
-	var got = asap.getWavHeader(buffer, format, false);
-	for (;;) {
-		got += asap.generateAt(buffer, got, buffer.length - got, format);
-		appendBase64(buffer, got);
-		if (got < buffer.length)
-			break;
-		got = 0;
+	function failureCallback()
+	{
+		alert("JavaScript sound not supported by your browser");
 	}
-	return "data:audio/x-wav;base64," + result;
+	var audio = new XAudioServer(info.getChannels(), ASAP.SAMPLE_RATE, 4096, 8192, audioCallback, 1, failureCallback);
+	function heartbeat()
+	{
+		audio.executeCallback();
+	}
+	setInterval(heartbeat, 50);
 }
