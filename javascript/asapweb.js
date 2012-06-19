@@ -21,33 +21,22 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-function downloadBinaryFile(url)
+var asapTimerId;
+
+function asapStop()
 {
-	try {
-		var req = new XMLHttpRequest();
-		req.open("GET", url, false);
-		req.overrideMimeType("text/plain; charset=x-user-defined");
-		req.send(null);
-		if (req.status != 200 && req.status != 0)
-			throw "Status: " + req.status;
-		var response = req.responseText;
-		var result = new Array(response.length);
-		for (var i = 0; i < response.length; i++)
-			result[i] = response.charCodeAt(i) & 0xff;
-		return result;
-	}
-	catch (e) {
-		throw "Error: Failed to load " + url;
+	if (asapTimerId) {
+		clearInterval(asapTimerId);
+		asapTimerId = null;
 	}
 }
 
-function asapPlay(url, song)
+function asapPlay(filename, module, song)
 {
-	var module = downloadBinaryFile(url);
 	var asap = new ASAP();
-	asap.load(url, module, module.length);
+	asap.load(filename, module, module.length);
 	var info = asap.getInfo();
-	if (song < 0)
+	if (song == null)
 		song = info.getDefaultSong();
 	asap.playSong(song, info.getDuration(song));
 
@@ -57,6 +46,8 @@ function asapPlay(url, song)
 		buffer.length = asap.generate(buffer, samplesRequested, ASAPSampleFormat.U8);
 		for (var i = 0; i < buffer.length; i++)
 			buffer[i] = (buffer[i] - 128) / 128;
+		if (buffer.length == 0)
+			asapStop();
 		return buffer;
 	}
 	function failureCallback()
@@ -68,5 +59,6 @@ function asapPlay(url, song)
 	{
 		audio.executeCallback();
 	}
-	setInterval(heartbeat, 50);
+	asapStop();
+	asapTimerId = setInterval(heartbeat, 50);
 }

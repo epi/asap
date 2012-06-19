@@ -254,10 +254,10 @@
 	</port>
 	<port name="Browser JavaScript player">
 		<bin></bin>
-		<platform>Firefox, Chrome</platform>
+		<platform>web browsers</platform>
 		<interface>via JavaScript</interface>
 		<since>2.0.0</since>
-		<status>experimental</status>
+		<status>in development</status>
 		<output>floating-point sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>no</file-info>

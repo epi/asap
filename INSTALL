@@ -376,8 +376,8 @@ make csharp
 This should produce `asap2wav.exe`, `asapplay.exe` and `SilverASAP.xap`.
 
 
-Building JavaScript ASAP2WAVs (command-line and for web browsers)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building JavaScript command-line ASAP2WAV and the web browser player
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Open the command prompt in the root directory of ASAP sources and run:
 --------------------------------------------------------------------------------
@@ -385,7 +385,7 @@ make javascript
 --------------------------------------------------------------------------------
 
 `asap2wav.js` is the command-line script.
-`asapweb.js` plus `asap.js` are for Firefox.
+`asapweb.js` plus `asap.js` are the browser player (you'll probably need `binaryHttpRequest.js` as well).
 
 
 Building Flash player version of ASAP
