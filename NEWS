@@ -1,10 +1,11 @@
 ﻿History
 -------
 
-ASAP 3.1.2 (2012-??-??)::
+ASAP 3.1.2 (2012-06-??)::
 
 - Created VLC plugin (SAP format only).
 - The JavaScript player now works in Chrome, Firefox, Internet Explorer 9 and 6, using https://github.com/grantgalitz/XAudioJS[XAudioJS].
+- Flash Player, Java applet, Silverlight and JavaScript players were put in a single "web" package.
 - UTF-8 encoding is supported for STIL.
 - Author is no longer hidden in the converted XEX files.
 - Winamp plugin opens ATR disk images and plays files inside them.
@@ -14,7 +15,7 @@ ASAP 3.1.2 (2012-??-??)::
 for example http://sourceforge.net/projects/encorebassing/[EncoreBassing]).
 - Windows Media Player codec supports subsongs, AUTHOR and NAME
 (this works at least with Media Player Classic Home Cinema).
-- JavaScript interface of the Java/Flash/Silverlight players has been extended and now has same functionality in these three players.
+- JavaScript interface of the web players has been extended and now has same functionality.
 - New TortoiseSVN and TortoiseGit plugins show changes in SAP tags.
 
 

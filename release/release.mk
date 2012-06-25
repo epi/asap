@@ -14,8 +14,8 @@ endif
 dist: \
 	release/asap-$(VERSION)-air.air \
 	release/asap-$(VERSION)-android.apk \
-	release/asap-$(VERSION)-flash.zip \
 	release/asap-$(VERSION)-java.zip \
+	release/asap-$(VERSION)-web.zip \
 	release/asap-$(VERSION)-win32.msi \
 	release/asap-$(VERSION)-win32.zip \
 	release/asap-$(VERSION)-win64.msi \
@@ -36,12 +36,12 @@ $(srcdir)MANIFEST:
 	fi
 .PHONY: $(srcdir)MANIFEST
 
-release/asap-$(VERSION)-flash.zip: release/COPYING.txt release/README_Flash.html \
-	flash/asap.swf
+release/asap-$(VERSION)-java.zip: release/COPYING.txt release/README_Java.html \
+	java/asap2wav.jar java/j2me/asap_midlet.jad java/j2me/asap_midlet.jar java/asap.jar
 	$(MAKEZIP)
 
-release/asap-$(VERSION)-java.zip: release/COPYING.txt release/README_Java.html \
-	java/asap2wav.jar java/asap_applet.jar java/j2me/asap_midlet.jad java/j2me/asap_midlet.jar java/asap.jar
+release/asap-$(VERSION)-web.zip: release/COPYING.txt release/README_Web.html \
+	flash/asap.swf java/asap_applet.jar javascript/asap.js $(srcdir)javascript/asapweb.js $(srcdir)javascript/binaryHttpRequest.js csharp/SilverASAP.xap
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-win32.zip: release/COPYING.txt release/README_Windows.html \
@@ -56,9 +56,9 @@ release/COPYING.txt: $(srcdir)COPYING
 	$(UNIX2DOS)
 CLEAN += release/COPYING.txt
 
-release/README_Flash.html: $(call src,README flash/USAGE NEWS CREDITS)
-	$(call ASCIIDOC,-a asapflash="(included in this binary package)")
-CLEAN += release/README_Flash.html
+release/README_Web.html: $(call src,README USAGE-WEB NEWS CREDITS)
+	$(call ASCIIDOC,-a toc -a asapweb="(included in this binary package)")
+CLEAN += release/README_Web.html
 
 release/README_Java.html: $(call src,README java/USAGE NEWS CREDITS)
 	$(call ASCIIDOC,-a asapjava="(included in this binary package)")

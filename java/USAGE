@@ -14,58 +14,6 @@ Unless you specify the `-o`/`--output` option, the output filename will be
 constructed from the input filename with the extension changed to `wav`.
 
 
-Java applet
-~~~~~~~~~~~
-
-To embed the applet in a web page, use the following HTML syntax:
-
----------------------------------------------------------------------------
-<applet width="40" height="45" archive="asap_applet.jar" code="ASAPApplet">
-    <param name="file" value="File.sap" />
-</applet>
----------------------------------------------------------------------------
-
-or the following XHTML:
-
----------------------------------------------------------------------------
-<object width="40" height="45" type="application/x-java-applet">
-    <param name="archive" value="asap_applet.jar" />
-    <param name="code" value="ASAPApplet" />
-    <param name="file" value="File.sap" />
-</object>
----------------------------------------------------------------------------
-
-(tested with Internet Explorer 6 and 9, Firefox 3.6, Chrome 19).
-
-The applet will play the specified file and display POKEY channel volume
-meters scaled to the applet area (you can specify a different size).
-There are four volume meters for mono music and eight for stereo.
-
-The applet understands the following parameters:
-
-- `file` - URL of the file to play
-- `song` - zero-based subsong number
-- `background` - background color specified as six hexadecimal digits (`"rrggbb"`)
-- `foreground` - volume bars color specified as six hexadecimal digits (`"rrggbb"`)
-- `onLoad` - JavaScript code to be executed when file is loaded.
-This is a safe place to call `getTitle()` etc - see below.
-Playback starts after the JavaScript code returns.
-- `onPlaybackEnd` - JavaScript code to be executed when playback ends.
-Will not be called as a result of `stop()`.
-
-All the above parameters are optional. For `onLoad` and `onPlaybackEnd` to work, add the `mayscript` attribute
-to the `applet` element.
-
-The applet contains the following methods that can be called from JavaScript:
-
-- `void play(String filename, int song)` - plays the specified song (-1 for default)
-- `void stop()` - stops playback
-- `boolean togglePause()` - toggles pause and returns `true` if pause has been enabled
-- `String getAuthor()` - returns the AUTHOR tag of the playing song
-- `String getTitle()` - returns the NAME tag of the playing song
-- `String getDate()` - returns the DATE tag of the playing song
-
-
 Java midlet
 ~~~~~~~~~~~
 

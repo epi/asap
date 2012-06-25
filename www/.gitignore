@@ -1,3 +1,4 @@
+XAudioJS
 *.html
 favicon.ico
 PORTS.xml
@@ -7,4 +8,7 @@ PORTS.xsl
 apokeysnd.dll
 asap_applet.jar
 asap.swf
+asap.js
+asapweb.js
+binaryHttpRequest.js
 SilverASAP.xap

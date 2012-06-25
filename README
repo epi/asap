@@ -27,7 +27,7 @@ Android application.
 http://sourceforge.net/projects/asap/files/asap/3.1.2/asap-3.1.2-wince-arm.cab/download[asap-3.1.2-wince-arm.cab]::
 WASAP, Windows Media Player and GSPlayer plugins for Windows Mobile.
 
-http://sourceforge.net/projects/asap/files/asap/3.1.2/asap-3.1.2-flash.zip/download[asap-3.1.2-flash.zip]::
+http://sourceforge.net/projects/asap/files/asap/3.1.2/asap-3.1.2-web.zip/download[asap-3.1.2-web.zip]::
 For webmasters.
 
 http://sourceforge.net/projects/asap/files/asap/3.1.2/asap-3.1.2-java.zip/download[asap-3.1.2-java.zip]::
@@ -146,14 +146,14 @@ ASAP includes the following programs:
 - POKEY sound emulation DLL for http://raster.infos.cz/atari/rmt/rmt.htm[Raster Music Tracker] {asapwin=}
 - Windows Explorer extension - shows metadata {asapwin=}
 - Java version of ASAP2WAV - command-line converter to WAV files {asapjava=}
-- Java applet - for web pages {asapjava=}{asapwww?(see link:applet.html[online demo])}
+- Java applet - for web pages {asapweb=}{asapwww?(see link:applet.html[online demo])}
 - Java midlet - for mobile devices {asapjava=}
 - C# version of ASAP2WAV
 - JavaScript version of ASAP2WAV running in http://en.wikipedia.org/wiki/Windows_Script_Host[Windows Script Host], https://developer.mozilla.org/en/Rhino_Shell[Rhino Shell], http://code.google.com/p/v8/[V8 Shell], http://en.wikipedia.org/wiki/JScript_.NET[JScript .NET], http://en.wikipedia.org/wiki/JaegerMonkey[JaegerMonkey] and http://www.digitalmars.com/dscript/[DMDScript] {asapjavascript=}
-- JavaScript player - for web pages {asapwww?(see link:javascript.html[online demo])}
-- Flash player - for web pages {asapflash=}{asapwww?(see link:flash.html[online demo])}
+- JavaScript player - for web pages {asapweb=}{asapwww?(see link:javascript.html[online demo])}
+- Flash player - for web pages {asapweb=}{asapwww?(see link:flash.html[online demo])}
 - asapplay - simple command-line player in C#
-- http://www.silverlight.net/[Silverlight] player - for web pages {asapwww?(see link:silverlight.html[online demo])}
+- http://www.silverlight.net/[Silverlight] player - for web pages {asapweb=}{asapwww?(see link:silverlight.html[online demo])}
 - AndroidASAP - for mobile devices
 - AIRASAP - simple desktop player in the http://www.adobe.com/products/air/[Adobe AIR] technology {asapjavascript=}
 - http://www.digitalmars.com/d/[D] version of ASAP2WAV
@@ -178,10 +178,6 @@ ifdef::asapsrc[]
 include::INSTALL[]
 endif::asapsrc[]
 
-ifdef::asapflash[]
-include::flash/USAGE[]
-endif::asapflash[]
-
 ifdef::asapjava[]
 include::java/USAGE[]
 endif::asapjava[]
@@ -189,6 +185,10 @@ endif::asapjava[]
 ifdef::asapjavascript[]
 include::javascript/USAGE[]
 endif::asapjavascript[]
+
+ifdef::asapweb[]
+include::USAGE-WEB[]
+endif::asapweb[]
 
 ifdef::asapwin[]
 include::win32/USAGE[]
