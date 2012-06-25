@@ -21,45 +21,54 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-var asapTimerId;
-
-function asapStop()
-{
-	if (asapTimerId) {
-		clearInterval(asapTimerId);
-		asapTimerId = null;
-	}
-}
-
-function asapPlay(filename, module, song)
-{
-	var asap = new ASAP();
-	asap.load(filename, module, module.length);
-	var info = asap.getInfo();
-	if (song == null)
-		song = info.getDefaultSong();
-	asap.playSong(song, info.getDuration(song));
-
-	var buffer = new Array(8192);
-
-	function audioCallback(samplesRequested)
+var asap = {
+	timerId : null,
+	onLoad : new Function(),
+	onPlaybackEnd : new Function(),
+	stop : function()
 	{
-		buffer.length = asap.generate(buffer, samplesRequested, ASAPSampleFormat.U8);
-		for (var i = 0; i < buffer.length; i++)
-			buffer[i] = (buffer[i] - 128) / 128;
-		if (buffer.length == 0)
-			asapStop();
-		return buffer;
-	}
-	function failureCallback()
+		if (window.asap.timerId) {
+			clearInterval(window.asap.timerId);
+			window.asap.timerId = null;
+		}
+	},
+	play : function(filename, module, song)
 	{
-		alert("Your browser doesn't support JavaScript sound");
+		var asap = new ASAP();
+		asap.load(filename, module, module.length);
+		var info = asap.getInfo();
+		if (song == null)
+			song = info.getDefaultSong();
+		asap.playSong(song, info.getDuration(song));
+
+		var buffer = new Array(8192);
+
+		function audioCallback(samplesRequested)
+		{
+			buffer.length = asap.generate(buffer, samplesRequested, ASAPSampleFormat.U8);
+			for (var i = 0; i < buffer.length; i++)
+				buffer[i] = (buffer[i] - 128) / 128;
+			if (buffer.length == 0) {
+				window.asap.stop();
+				window.asap.onPlaybackEnd();
+			}
+			return buffer;
+		}
+		function failureCallback()
+		{
+			alert("Your browser doesn't support JavaScript audio");
+		}
+		var audio = new XAudioServer(info.getChannels(), ASAP.SAMPLE_RATE, 8192, 16384, audioCallback, 1, failureCallback);
+		function heartbeat()
+		{
+			audio.executeCallback();
+		}
+
+		window.asap.stop();
+		window.asap.author = info.getAuthor();
+		window.asap.title = info.getTitle();
+		window.asap.date = info.getDate();
+		window.asap.onLoad();
+		window.asap.timerId = setInterval(heartbeat, 50);
 	}
-	var audio = new XAudioServer(info.getChannels(), ASAP.SAMPLE_RATE, 8192, 16384, audioCallback, 1, failureCallback);
-	function heartbeat()
-	{
-		audio.executeCallback();
-	}
-	asapStop();
-	asapTimerId = setInterval(heartbeat, 50);
-}
+};
