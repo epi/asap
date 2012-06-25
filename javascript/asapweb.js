@@ -40,9 +40,10 @@ function asapPlay(filename, module, song)
 		song = info.getDefaultSong();
 	asap.playSong(song, info.getDuration(song));
 
+	var buffer = new Array(8192);
+
 	function audioCallback(samplesRequested)
 	{
-		var buffer = new Array(samplesRequested);
 		buffer.length = asap.generate(buffer, samplesRequested, ASAPSampleFormat.U8);
 		for (var i = 0; i < buffer.length; i++)
 			buffer[i] = (buffer[i] - 128) / 128;
@@ -52,9 +53,9 @@ function asapPlay(filename, module, song)
 	}
 	function failureCallback()
 	{
-		alert("JavaScript sound not supported by your browser");
+		alert("Your browser doesn't support JavaScript sound");
 	}
-	var audio = new XAudioServer(info.getChannels(), ASAP.SAMPLE_RATE, 4096, 8192, audioCallback, 1, failureCallback);
+	var audio = new XAudioServer(info.getChannels(), ASAP.SAMPLE_RATE, 8192, 16384, audioCallback, 1, failureCallback);
 	function heartbeat()
 	{
 		audio.executeCallback();
