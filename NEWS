@@ -1,7 +1,7 @@
 ﻿History
 -------
 
-ASAP 3.1.2 (2012-06-??)::
+ASAP 3.1.2 (2012-06-25)::
 
 - Created VLC plugin (SAP format only).
 - The JavaScript player now works in Chrome, Firefox, Internet Explorer 9 and 6, using https://github.com/grantgalitz/XAudioJS[XAudioJS].
