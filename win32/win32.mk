@@ -226,11 +226,11 @@ CLEAN += win32/uninstall_dsf.bat
 
 FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp win32/foobar2000/foobar2000_SDK.lib win32/foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
 
-win32/foo_asap.dll: $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] win32/settings_dlg.[ch]) win32/foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME)
+win32/foo_asap.dll: $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] aatr.[ch] win32/settings_dlg.[ch]) win32/foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME)
 	$(WIN32_CL) -Fowin32/foobar2000/ -DFOOBAR2000 -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) user32.lib $(WIN32_LINKOPT)
 CLEAN += win32/foo_asap.dll win32/foo_asap.exp win32/foo_asap.lib
 
-win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,abort_callback audio_chunk audio_chunk_channel_config console file_info filesystem guids mem_block_container playable_location preferences_page replaygain_info service)
+win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,abort_callback audio_chunk audio_chunk_channel_config console file_info filesystem filesystem_helper guids mem_block_container playable_location preferences_page replaygain_info service)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/foobar2000_SDK.lib
 

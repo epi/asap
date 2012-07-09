@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000
  *
- * Copyright (C) 2006-2011  Piotr Fusik
+ * Copyright (C) 2006-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,6 +26,7 @@
 
 #include "foobar2000/SDK/foobar2000.h"
 
+#include "aatr.h"
 #include "asap.h"
 #include "settings_dlg.h"
 
@@ -357,6 +358,7 @@ class preferences_page_instance_asap : public preferences_page_instance
 	}
 
 public:
+
 	preferences_page_instance_asap(HWND parent) : m_parent(parent)
 	{
 		m_hWnd = CreateDialog(core_api::get_my_instance(), MAKEINTRESOURCE(IDD_SETTINGS), parent, ::settings_dialog_proc);
@@ -398,6 +400,7 @@ public:
 class preferences_page_asap : public preferences_page_v3
 {
 public:
+
 	virtual preferences_page_instance::ptr instantiate(HWND parent, preferences_page_callback::ptr callback)
 	{
 		g_callback = callback;
@@ -480,5 +483,71 @@ public:
 };
 
 static service_factory_single_t<input_file_type_asap> g_input_file_type_asap_factory;
+
+/* ATR filesystem -------------------------------------------------------- */
+
+class archive_atr : public archive_impl
+{
+public:
+
+	virtual bool supports_content_types()
+	{
+		return false;
+	}
+
+	virtual const char *get_archive_type()
+	{
+		return "atr";
+	}
+
+	virtual t_filestats get_stats_in_archive(const char *p_archive, const char *p_file, abort_callback &p_abort)
+	{
+		BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
+		int module_len = AATR_ReadFile(p_archive, p_file, module, sizeof(module));
+		if (module_len < 0)
+			throw exception_io_not_found();
+		t_filestats stats = { module_len, filetimestamp_invalid };
+		return stats;
+	}
+
+	virtual void open_archive(service_ptr_t<file> &p_out, const char *archive, const char *file, abort_callback &p_abort)
+	{
+		BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
+		int module_len = AATR_ReadFile(archive, file, module, sizeof(module));
+		if (module_len < 0)
+			throw exception_io_not_found();
+		p_out = new service_impl_t<reader_membuffer_simple>(module, module_len);
+	}
+
+	virtual void archive_list(const char *path, const service_ptr_t<file> &p_reader, archive_callback &p_out, bool p_want_readers)
+	{
+		if (!_extract_native_path_ptr(path))
+			throw exception_io_data();
+		AATR *aatr = pfc::new_ptr_check_t(AATR_New());
+		if (!AATR_Open(aatr, path)) {
+			AATR_Delete(aatr);
+			throw exception_io_data();
+		}
+		pfc::string8_fastalloc url;
+		for (;;) {
+			const char *fn = AATR_NextFile(aatr);
+			if (fn == NULL)
+				break;
+			t_filestats stats = { filesize_invalid, filetimestamp_invalid };
+			service_ptr_t<file> p_file;
+			if (p_want_readers) {
+				BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
+				int module_len = AATR_ReadCurrentFile(aatr, module, sizeof(module));
+				p_file = new service_impl_t<reader_membuffer_simple>(module, module_len);
+			}
+			archive_impl::g_make_unpack_path(url, path, fn, "atr");
+			if (!p_out.on_entry(this, url, stats, p_file))
+				break;
+		}
+		AATR_Delete(aatr);
+	}
+};
+
+static archive_factory_t<archive_atr> g_archive_atr_factory;
 
 DECLARE_COMPONENT_VERSION("ASAP", ASAPInfo_VERSION, ASAPInfo_CREDITS "\n" ASAPInfo_COPYRIGHT);

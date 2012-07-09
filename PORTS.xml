@@ -65,6 +65,7 @@
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
 		<stil>no</stil>
+		<comment class="good">Plays from ATR disk images</comment>
 		<lang>C, C++</lang>
 		<a href="http://foobar2000.org/">foobar2000</a>
 	</port>
