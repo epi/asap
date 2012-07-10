@@ -179,7 +179,8 @@ int AATR_ReadCurrentFile(AATR *self, unsigned char output[], int length)
 		sector_used = sector_data[self->bytes_per_sector - 1];
 		if (sector_used > length)
 			sector_used = length;
-		memcpy(output + result, sector_data, sector_used);
+		if (output != NULL)
+			memcpy(output + result, sector_data, sector_used);
 		result += sector_used;
 		length -= sector_used;
 		sector = (sector_data[self->bytes_per_sector - 2] + (sector_data[self->bytes_per_sector - 3] << 8)) & 0x3ff;

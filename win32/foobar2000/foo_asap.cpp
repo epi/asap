@@ -502,8 +502,7 @@ public:
 
 	virtual t_filestats get_stats_in_archive(const char *p_archive, const char *p_file, abort_callback &p_abort)
 	{
-		BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
-		int module_len = AATR_ReadFile(p_archive, p_file, module, sizeof(module));
+		int module_len = AATR_ReadFile(p_archive, p_file, NULL, ASAPInfo_MAX_MODULE_LENGTH);
 		if (module_len < 0)
 			throw exception_io_not_found();
 		t_filestats stats = { module_len, filetimestamp_invalid };
