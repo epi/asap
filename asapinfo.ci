@@ -1412,7 +1412,7 @@ public class ASAPInfo
 
 	static bool ValidateSap(byte[] module, int moduleLen)
 	{
-		return HasStringAt(module, 0, "SAP\r\n");
+		return moduleLen >= 30 && HasStringAt(module, 0, "SAP\r\n");
 	}
 
 	void ParseSap(byte[] module, int moduleLen)

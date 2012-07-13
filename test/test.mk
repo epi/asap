@@ -46,5 +46,9 @@ test/ultrasap.exe: $(call src,test/ultrasap.cs csharp/asap.cs)
 	$(CSC)
 CLEAN += test/ultrasap.exe
 
+test/crashsap.exe: $(call src,test/crashsap.cs csharp/asap.cs)
+	$(CSC)
+CLEAN += test/crashsap.exe
+
 include $(srcdir)test/benchmark/benchmark.mk
 include $(srcdir)test/disasm/disasm.mk

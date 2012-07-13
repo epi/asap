@@ -4256,7 +4256,7 @@ static cibool ASAPInfo_ValidateRmt(unsigned char const *module, int moduleLen)
 
 static cibool ASAPInfo_ValidateSap(unsigned char const *module, int moduleLen)
 {
-	return ASAPInfo_HasStringAt(module, 0, "SAP\r\n");
+	return moduleLen >= 30 && ASAPInfo_HasStringAt(module, 0, "SAP\r\n");
 }
 
 int ASAPWriter_DurationToString(unsigned char *result, int value)
