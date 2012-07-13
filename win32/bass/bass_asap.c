@@ -165,13 +165,7 @@ static HSTREAM WINAPI StreamCreateProc(BASSFILE file, DWORD flags)
 	int duration;
 	HSTREAM handle;
 	filename = (const char *) bassfunc->file.GetFileName(file, &unicode);
-	if (filename == NULL) {
-		/* AIMP 3 doesn't return filenames (AIMP 2 did), so assume SAP.
-		This will fail for non-SAP files,
-		Need to implement format detection by content. */
-		filename = "unknown.sap";
-	}
-	else if (unicode) {
+	if (filename != NULL && unicode) {
 		if (WideCharToMultiByte(CP_ACP, 0, (LPCWSTR) filename, -1, aFilename, MAX_PATH, NULL, NULL) <= 0)
 			error(BASS_ERROR_NOTFILE);
 		filename = aFilename;

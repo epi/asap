@@ -534,7 +534,7 @@
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
-		<comment class="bad">SAP format only</comment>
+		<comment class="bad">SAP, FC, RMT formats only</comment>
 		<lang>C</lang>
 		<a href="http://www.videolan.org/vlc/">VLC</a>
 	</port>

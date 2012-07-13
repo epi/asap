@@ -485,6 +485,8 @@
 										<Extension Id="sap">
 											<Verb Id="open" TargetProperty="VLC.EXE" Argument='--started-from-file "%1"' />
 										</Extension>
+										<Extension Id="fc" />
+										<Extension Id="rmt" />
 									</ProgId>
 								</Component>
 							</Directory>

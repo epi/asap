@@ -1,7 +1,7 @@
 /*
  * gstasapdec.c - ASAP plugin for GStreamer
  *
- * Copyright (C) 2011  Piotr Fusik
+ * Copyright (C) 2011-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -127,7 +127,7 @@ start_play_tune (GstAsapDec * asapdec)
   int song;
   GstCaps *caps;
 
-  if (!ASAP_Load (asapdec->asap, "dummy.sap", asapdec->module, asapdec->module_len)) {
+  if (!ASAP_Load (asapdec->asap, NULL, asapdec->module, asapdec->module_len)) {
     GST_ELEMENT_ERROR (asapdec, LIBRARY, INIT, ("Could not load tune"), ("Could not load tune"));
     return FALSE;
   }

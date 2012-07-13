@@ -95,6 +95,7 @@ static int ASAPInfo_GetRmtInstrumentFrames(unsigned char const *module, int inst
 static int ASAPInfo_GetRmtSapOffset(ASAPInfo const *self, unsigned char const *module, int moduleLen);
 static int ASAPInfo_GetTwoDateDigits(ASAPInfo const *self, int i);
 static int ASAPInfo_GetWord(unsigned char const *array, int i);
+static int ASAPInfo_GuessPackedExt(unsigned char const *module, int moduleLen);
 static cibool ASAPInfo_HasStringAt(unsigned char const *module, int moduleIndex, const char *s);
 static cibool ASAPInfo_IsDltPatternEnd(unsigned char const *module, int pos, int i);
 static cibool ASAPInfo_IsDltTrackEmpty(unsigned char const *module, int pos);
@@ -120,6 +121,9 @@ static void ASAPInfo_ParseTm2Song(ASAPInfo *self, unsigned char const *module, i
 static cibool ASAPInfo_ParseTmc(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseTmcSong(ASAPInfo *self, unsigned char const *module, int pos);
 static int ASAPInfo_ParseTmcTitle(unsigned char *title, int titleLen, unsigned char const *module, int moduleOffset);
+static cibool ASAPInfo_ValidateFc(unsigned char const *module, int moduleLen);
+static cibool ASAPInfo_ValidateRmt(unsigned char const *module, int moduleLen);
+static cibool ASAPInfo_ValidateSap(unsigned char const *module, int moduleLen);
 
 struct Pokey {
 	int audc1;
@@ -2912,6 +2916,17 @@ int ASAPInfo_GetYear(ASAPInfo const *self)
 	return ASAPInfo_GetTwoDateDigits(self, n - 4) * 100 + ASAPInfo_GetTwoDateDigits(self, n - 2);
 }
 
+static int ASAPInfo_GuessPackedExt(unsigned char const *module, int moduleLen)
+{
+	if (ASAPInfo_ValidateSap(module, moduleLen))
+		return 7364979;
+	if (ASAPInfo_ValidateFc(module, moduleLen))
+		return 2122598;
+	if (ASAPInfo_ValidateRmt(module, moduleLen))
+		return 7630194;
+	return -1;
+}
+
 static cibool ASAPInfo_HasStringAt(unsigned char const *module, int moduleIndex, const char *s)
 {
 	int n = (int) strlen(s);
@@ -3006,25 +3021,35 @@ static cibool ASAPInfo_IsValidChar(int c)
 
 cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *module, int moduleLen)
 {
-	int len = (int) strlen(filename);
-	int basename = 0;
-	int ext = -1;
+	int ext;
 	int i;
-	for (i = len; --i >= 0;) {
-		int c = filename[i];
-		if (c == 47 || c == 92) {
-			basename = i + 1;
-			break;
+	if (filename != NULL) {
+		int len = (int) strlen(filename);
+		int basename = 0;
+		int i;
+		ext = -1;
+		for (i = len; --i >= 0;) {
+			int c = filename[i];
+			if (c == 47 || c == 92) {
+				basename = i + 1;
+				break;
+			}
+			if (c == 46)
+				ext = i;
 		}
-		if (c == 46)
-			ext = i;
+		if (ext < 0)
+			return FALSE;
+		ext -= basename;
+		if (ext > 127)
+			ext = 127;
+		((char *) memcpy(self->filename, filename + basename, ext))[ext] = '\0';
+		ext = ASAPInfo_GetPackedExt(filename);
 	}
-	if (ext < 0)
-		return FALSE;
-	ext -= basename;
-	if (ext > 127)
-		ext = 127;
-	((char *) memcpy(self->filename, filename + basename, ext))[ext] = '\0';
+	else {
+		self->filename[0] = '\0';
+		if ((ext = ASAPInfo_GuessPackedExt(module, moduleLen)) == -1)
+			return FALSE;
+	}
 	self->author[0] = '\0';
 	self->title[0] = '\0';
 	self->date[0] = '\0';
@@ -3042,7 +3067,7 @@ cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *
 	self->player = -1;
 	self->covoxAddr = -1;
 	self->headerLen = 0;
-	switch (ASAPInfo_GetPackedExt(filename)) {
+	switch (ext) {
 	case 7364979:
 		return ASAPInfo_ParseSap(self, module, moduleLen);
 	case 6516067:
@@ -3328,11 +3353,9 @@ static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int 
 	int currentOffset;
 	int i;
 	int pos;
-	if (moduleLen < 899)
+	if (!ASAPInfo_ValidateFc(module, moduleLen))
 		return FALSE;
 	self->type = ASAPModuleType_FC;
-	if (module[0] != 38 || module[1] != 35)
-		return FALSE;
 	self->player = 1024;
 	self->music = 2560;
 	self->songs = 0;
@@ -3577,9 +3600,7 @@ static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int
 	int pos;
 	unsigned char title[127];
 	int titleLen;
-	if (moduleLen < 48)
-		return FALSE;
-	if (module[6] != 82 || module[7] != 77 || module[8] != 84 || module[13] != 1)
+	if (!ASAPInfo_ValidateRmt(module, moduleLen))
 		return FALSE;
 	switch (module[9]) {
 	case 52:
@@ -3742,7 +3763,7 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 	int type;
 	int moduleIndex;
 	int durationIndex;
-	if (!ASAPInfo_HasStringAt(module, 0, "SAP\r\n"))
+	if (!ASAPInfo_ValidateSap(module, moduleLen))
 		return FALSE;
 	self->fastplay = -1;
 	type = 0;
@@ -4213,6 +4234,29 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value)
 		return FALSE;
 	strcpy(self->title, value);
 	return TRUE;
+}
+
+static cibool ASAPInfo_ValidateFc(unsigned char const *module, int moduleLen)
+{
+	if (moduleLen < 899)
+		return FALSE;
+	if (module[0] != 38 || module[1] != 35)
+		return FALSE;
+	return TRUE;
+}
+
+static cibool ASAPInfo_ValidateRmt(unsigned char const *module, int moduleLen)
+{
+	if (moduleLen < 48)
+		return FALSE;
+	if (module[6] != 82 || module[7] != 77 || module[8] != 84 || module[13] != 1)
+		return FALSE;
+	return TRUE;
+}
+
+static cibool ASAPInfo_ValidateSap(unsigned char const *module, int moduleLen)
+{
+	return ASAPInfo_HasStringAt(module, 0, "SAP\r\n");
 }
 
 int ASAPWriter_DurationToString(unsigned char *result, int value)

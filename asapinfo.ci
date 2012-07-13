@@ -854,12 +854,19 @@ public class ASAPInfo
 			AddSong(frames);
 	}
 
-	void ParseRmt(byte[] module, int moduleLen)
+	static bool ValidateRmt(byte[] module, int moduleLen)
 	{
 		if (moduleLen < 0x30)
-			throw "Module too short";
+			return false;
 		if (module[6] != 'R' || module[7] != 'M' || module[8] != 'T' || module[0xd] != 1)
-			throw "Invalid module header";
+			return false;
+		return true;
+	}
+
+	void ParseRmt(byte[] module, int moduleLen)
+	{
+		if (!ValidateRmt(module, moduleLen))
+			throw "Invalid RMT file";
 		int posShift;
 		switch (module[9]) {
 		case '4':
@@ -1198,13 +1205,20 @@ public class ASAPInfo
 		return allLoop;
 	}
 
-	void ParseFc(byte[] module, int moduleLen)
+	static bool ValidateFc(byte[] module, int moduleLen)
 	{
 		if (moduleLen < 0x383)
-			throw "Module too short";
-		Type = ASAPModuleType.Fc;
+			return false;
 		if (module[0] != 0x26 || module[1] != 0x23)
-			throw "Invalid two leading bytes of the module";
+			return false;
+		return true;
+	}
+
+	void ParseFc(byte[] module, int moduleLen)
+	{
+		if (!ValidateFc(module, moduleLen))
+			throw "Invalid FC file";
+		Type = ASAPModuleType.Fc;
 
 		Player = 0x400;
 		Music = 0xa00;
@@ -1396,10 +1410,15 @@ public class ASAPInfo
 		return r;
 	}
 
+	static bool ValidateSap(byte[] module, int moduleLen)
+	{
+		return HasStringAt(module, 0, "SAP\r\n");
+	}
+
 	void ParseSap(byte[] module, int moduleLen)
 	{
-		if (!HasStringAt(module, 0, "SAP\r\n"))
-			throw "Missing SAP header";
+		if (!ValidateSap(module, moduleLen))
+			throw "Invalid SAP file";
 		Fastplay = -1;
 		int type = 0;
 		int moduleIndex = 5;
@@ -1579,6 +1598,17 @@ public class ASAPInfo
 		return IsOurPackedExt(ASAP_EXT(ext));
 	}
 
+	static int GuessPackedExt(byte[] module, int moduleLen)
+	{
+		if (ValidateSap(module, moduleLen))
+			return ASAP_EXT("SAP");
+		if (ValidateFc(module, moduleLen))
+			return ASAP_EXT("FC");
+		if (ValidateRmt(module, moduleLen))
+			return ASAP_EXT("RMT");
+		throw "Unknown format";
+	}
+
 	/// Loads file information.
 	public void Load(
 		/// Filename, used to determine the format.
@@ -1588,24 +1618,33 @@ public class ASAPInfo
 		/// Length of the file.
 		int moduleLen)
 	{
-		int len = filename.Length;
-		int basename = 0;
-		int ext = -1;
-		for (int i = len; --i >= 0; ) {
-			int c = filename[i];
-			if (c == '/' || c == '\\') {
-				basename = i + 1;
-				break;
+		int ext;
+		if (filename != null) {
+			int len = filename.Length;
+			int basename = 0;
+			ext = -1;
+			for (int i = len; --i >= 0; ) {
+				int c = filename[i];
+				if (c == '/' || c == '\\') {
+					basename = i + 1;
+					break;
+				}
+				if (c == '.')
+					ext = i;
 			}
-			if (c == '.')
-				ext = i;
+			if (ext < 0)
+				throw "Filename has no extension";
+			ext -= basename;
+			if (ext > MaxTextLength)
+				ext = MaxTextLength;
+			Filename = filename.Substring(basename, ext);
+			ext = GetPackedExt(filename);
 		}
-		if (ext < 0)
-			throw "Filename has no extension";
-		ext -= basename;
-		if (ext > MaxTextLength)
-			ext = MaxTextLength;
-		Filename = filename.Substring(basename, ext);
+		else {
+			Filename = "";
+			ext = GuessPackedExt(module, moduleLen);
+		}
+
 		Author = "";
 		Title = "";
 		Date = "";
@@ -1623,7 +1662,7 @@ public class ASAPInfo
 		Player = -1;
 		CovoxAddr = -1;
 		HeaderLen = 0;
-		switch (GetPackedExt(filename)) {
+		switch (ext) {
 		case ASAP_EXT("SAP"):
 			ParseSap(module, moduleLen);
 			return;

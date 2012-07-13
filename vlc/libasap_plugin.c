@@ -162,17 +162,10 @@ static int Open(vlc_object_t *obj)
 {
 	demux_t *demux = (demux_t *) obj;
 
-	/* detect format - only SAP for now */
+	/* read module */
 	int64_t module_len = stream_Size(demux->s);
 	if (module_len > ASAPInfo_MAX_MODULE_LENGTH)
 		return VLC_EGENERIC;
-	const uint8_t *peek;
-	if (stream_Peek(demux->s, &peek, 5) < 5)
-		return VLC_EGENERIC;
-	if (memcmp(peek, "SAP\r\n", 5) != 0)
-		return VLC_EGENERIC;
-
-	/* read module */
 	uint8_t *module = (uint8_t *) malloc(module_len);
 	if (unlikely(module == NULL))
 		return VLC_ENOMEM;
@@ -193,7 +186,7 @@ static int Open(vlc_object_t *obj)
 		free(module);
 		return VLC_ENOMEM;
 	}
-	if (!ASAP_Load(sys->asap, "dummy.sap", module, module_len)) {
+	if (!ASAP_Load(sys->asap, NULL, module, module_len)) {
 		ASAP_Delete(sys->asap);
 		free(sys);
 		free(module);
