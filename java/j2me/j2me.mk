@@ -1,6 +1,7 @@
-WTK = C:/bin/Java_ME_platform_SDK_3.0
+WTK = C:/bin/Java_ME_platform_SDK_3.0.5
 ME_CLASSES = $(WTK)/lib/cldc_1.1.jar;$(WTK)/lib/midp_2.0.jar;$(WTK)/lib/jsr75_1.0.jar
 PREVERIFY = $(DO)"$(WTK)/bin/preverify"
+ME_EMU = "$(WTK)/bin/emulator"
 
 # no user-configurable paths below this line
 
@@ -8,8 +9,11 @@ ifndef DO
 $(error Use "Makefile" instead of "j2me.mk")
 endif
 
+midlet-emu: java/j2me/asap_midlet.jad
+	$(ME_EMU) -Xdescriptor:$<
+
 java/j2me/asap_midlet.jad: $(srcdir)java/j2me/MANIFEST.MF java/j2me/asap_midlet.jar
-	$(DO)(echo MIDlet-Jar-URL: asap_midlet.jad && echo MIDlet-Jar-Size: `stat -c %s java/j2me/asap_midlet.jar` && cat $<) > $@
+	$(DO)(echo MIDlet-Jar-URL: asap_midlet.jar && echo MIDlet-Jar-Size: `stat -c %s java/j2me/asap_midlet.jar` && cat $<) > $@
 CLEAN += java/j2me/asap_midlet.jad
 
 java/j2me/asap_midlet.jar: $(srcdir)java/j2me/MANIFEST.MF java/j2me/preverified/ASAPMIDlet.class $(JAVA_OBX)
