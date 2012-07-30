@@ -12,7 +12,7 @@ History
 The SAP format was created in the 1990s by Adam Bienias and was intended
 to be a single format for playback of any 8-bit Atari music on a PC.
 Adam Bienias has also created the first player for Windows and later published
-its source code so that other players were created.
+its source code so that other players appeared.
 
 At the time of writing there are four independent players of the SAP format:
 
@@ -33,19 +33,19 @@ the Atari music. SAP players actually run the program contained in the SAP file
 on an emulated or real (sapemu) 6502 processor.
 The program controls the POKEY chip, which generates the sound.
 
-The same method is used on other platforms, for example the SID format
-for the C64 music.
+Identical method is used with platforms other than Atari,
+for example the SID format for the C64 music.
 
-Important advantages of SAP over, let's say, MP3 are that
+Important advantages of SAP over, let's say, MP3, are that
 SAP files are very small (about 5 KB on average) and play more accurately
 as new players improve their emulation. The downside is that SAP files
 are generally hard to create. Creating SAP files from Atari software
-is called ripping and requires some knowledge of the 6502 assembly language.
+is called ripping and requires knowledge of the 6502 assembly language.
 On the other hand, Atari music in popular formats such as CMC or RMT
 can be easily converted to SAP (and back) using ASAP.
 
 One SAP file may contain multiple independent tunes - these are called
-"subsongs". For example, a game containing many songs may be ripped
+"subsongs". For example, several songs from one game may be ripped
 into one SAP file. Over 90% SAP files contain just one song.
 Unfortunately many audio players do not support the concept of multiple
 subsongs per file.
@@ -105,7 +105,7 @@ requires the AUTHOR tag be placed right after the "SAP" line.
 The arguments to AUTHOR, NAME and DATE must be wrapped in doublequotes.
 Allowed characters are those identical in ASCII and ATASCII (ATari ASCII),
 which are: characters with ASCII codes from space to underscore
-plus all lowercase letters plus the pipe (`|`).
+plus all lowercase letters plus the pipe character (`|`).
 There are no backquote, tilde nor curly brackets in ATASCII.
 It is recommended to avoid doublequotes inside the arguments,
 as not all SAP players handle them.
@@ -189,7 +189,7 @@ INIT::
 Hexadecimal address of a 6502 routine that initializes the player.
 Required for player types B, D and S. Invalid for type C.
 The address should be specified as four uppercase hexadecimal digits,
-although players usually forgive lowercase and less digits.
+although players usually forgive lowercase and fewer digits.
 
 MUSIC::
 Hexadecimal address of the music data.
@@ -307,7 +307,7 @@ Then, every FASTPLAY scanlines (312 being the default)
 the PLAYER routine is called. It must return with an RTS as well.
 
 TYPE C::
-This type is for convenience of handling CMC (Chaos Music Composer) music.
+This type is for easy handling CMC (Chaos Music Composer) music.
 The player is initialized using the values
 of MUSIC, PLAYER and DEFSONG as follows:
 +
