@@ -1,6 +1,12 @@
 ASAP - Another Slight Atari Player
 ==================================
 
+link:/[Home]
+image:http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get ASAP - Another Slight Atari Player at SourceForge.net. Fast, secure and Free Open Source software downloads",width=120,height=30,link="http://sourceforge.net/projects/asap/"]
+
+Flash Player demo
+-----------------
+
 This page contains a pure-ActionScript player of Atari music.
 
 ++++
@@ -15,5 +21,3 @@ This page contains a pure-ActionScript player of Atari music.
 <input type="button" value="Pause" onclick="document.getElementById('asap').asapPause()" />
 <input type="button" value="Stop" onclick="document.getElementById('asap').asapStop()" />
 ++++
-
-image::http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get ASAP - Another Slight Atari Player at SourceForge.net. Fast, secure and Free Open Source software downloads",width=120,height=30,link="http://sourceforge.net/projects/asap/"]

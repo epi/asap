@@ -18,27 +18,41 @@
 			</head>
 			<body>
 				<table>
-					<tr>
-						<th>Name</th>
-						<th>Binary release</th>
-						<th>Platform</th>
-						<th>User interface</th>
-						<th>First appeared in&#160;ASAP</th>
-						<th>Develop&#173;ment status</th>
-						<th>Output</th>
-						<th>Supports subsongs?</th>
-						<th>Shows file information?</th>
-						<th>Edits file information?</th>
-						<th>Converts to and from SAP?</th>
-						<th>Configurable playback time?</th>
-						<th>Mute POKEY channels?</th>
-						<th>Shows STIL?</th>
-						<th>Comment</th>
-						<th>Program&#173;ming language</th>
-						<th>Related website</th>
-					</tr>
-					<xsl:apply-templates />
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Binary release</th>
+							<th>Platform</th>
+							<th>User interface</th>
+							<th>First appeared in&#160;ASAP</th>
+							<th>Develop&#173;ment status<sup><a href="#status_note">[1]</a></sup></th>
+							<th>Output</th>
+							<th>Supports sub&#173;songs?</th>
+							<th>Shows file infor&#173;mation?</th>
+							<th>Edits file infor&#173;mation?</th>
+							<th>Converts to and from SAP?</th>
+							<th>Configu&#173;rable play&#173;back time?</th>
+							<th>Mute POKEY chan&#173;nels?</th>
+							<th>Shows STIL?</th>
+							<th>Comment</th>
+							<th>Program&#173;ming lan&#173;guage</th>
+							<th>Related website</th>
+						</tr>
+					</thead>
+					<tbody>
+						<xsl:apply-templates />
+					</tbody>
 				</table>
+				<ol>
+					<li id="status_note">Development status:
+						<ul>
+							<li><span class="good">stable</span> - complete</li>
+							<li><span class="partial">in development</span> - working, but incomplete or buggy</li>
+							<li><span class="bad">experimental</span> - initial implementation</li>
+							<li><span class="bad">sample</span> - sample code for developers, not recommended for end-users</li>
+						</ul>
+					</li>
+				</ol>
 			</body>
 		</html>
 	</xsl:template>
@@ -54,7 +68,7 @@
 				<xsl:attribute name="class">
 					<xsl:choose>
 						<xsl:when test="status = 'stable'">good</xsl:when>
-						<xsl:when test="status = 'experimental'">bad</xsl:when>
+						<xsl:when test="status = 'experi&#173;mental' or status = 'sample'">bad</xsl:when>
 						<xsl:otherwise>partial</xsl:otherwise>
 					</xsl:choose>
 				</xsl:attribute>

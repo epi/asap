@@ -351,8 +351,8 @@ win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs
 	$(CANDLE) -dVERSION=$(VERSION) $<
 CLEAN += win32/setup/asap.wixobj
 
-release/README_WindowsSetup.html: $(call src,README win32/USAGE NEWS CREDITS)
-	$(call ASCIIDOC,-a asapwin="(included in this binary package)" -a asapsetup)
+release/README_WindowsSetup.html: $(call src,README win32/USAGE CREDITS)
+	$(call ASCIIDOC,-a asapwin -a asapsetup)
 CLEAN += release/README_WindowsSetup.html
 
 release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \

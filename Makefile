@@ -109,7 +109,7 @@ $(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu650
 
 # other
 
-$(srcdir)README.html: $(call src,README INSTALL NEWS CREDITS)
+$(srcdir)README.html: $(call src,README INSTALL CREDITS)
 	$(call ASCIIDOC,-a toc -a asapsrc -a asapports)
 
 sap-format.html: $(srcdir)sap-format.txt

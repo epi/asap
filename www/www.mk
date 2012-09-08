@@ -2,13 +2,16 @@ ifndef DO
 $(error Use "Makefile" instead of "www.mk")
 endif
 
-www: www/index.html www/applet.html www/flash.html www/javascript.html www/silverlight.html www/apokeysnd.dll \
+www: www/index.html www/NEWS.html www/applet.html www/flash.html www/javascript.html www/silverlight.html www/apokeysnd.dll \
 	www/asap.swf www/asap_applet.jar www/asap.js www/asapweb.js www/binaryHttpRequest.js www/SilverASAP.xap \
 	www/favicon.ico www/PORTS.xml www/PORTS.xsl
 .PHONY: www
 
-www/index.html: $(call src,README NEWS CREDITS)
+www/index.html: $(call src,README CREDITS)
 	$(call ASCIIDOC,-a asapwww -a asapports)
+
+www/NEWS.html: $(srcdir)NEWS
+	$(call ASCIIDOC,)
 
 www/applet.html: $(srcdir)www/applet.txt
 	$(call ASCIIDOC,)

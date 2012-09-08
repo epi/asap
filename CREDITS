@@ -1,6 +1,8 @@
 Authors
 -------
 
+[horizontal]
+
 Piotr Fusik {asapwww!<fox@scene.pl>}::
 Creator and main developer.
 
@@ -23,7 +25,7 @@ Daniel Kozminski {asapwww!<daniel.kozminski@gmail.com>}::
 Ideas.
 
 Jerzy Kut {asapwww!<mono@atari.pl>}::
-FC format support.
+FC format.
 
 Marcin Lewandowski {asapwww!<jaskier@atari8.info>}::
 6502 routines for playing CMC, MPT, TMC and TM2.
@@ -32,9 +34,7 @@ Ian Luck {asapwww!<il@un4seen.com>}::
 Guided development of XMPlay and BASS plugins.
 
 Adrian Matoga {asapwww!<epi@atari8.info>}::
-COVOX information and test files.
-Testing.
-Porting to D.
+COVOX information and test files. Testing. Porting to D.
 
 Perry McFarlane {asapwww!<perry_m@fastmail.fm>}::
 POKEY reverse-engineering.
@@ -46,8 +46,7 @@ Mariusz Rozwadowski {asapwww!<ramosc64@o2.pl>}::
 Suggested CMS, CM3, DLT and STIL format support.
 
 Slawomir Sledz {asapwww!<slaves@scene.pl>}::
-Windows Mobile setup.
-Thorough testing.
+Windows Mobile setup. Thorough testing.
 
 David Spilka::
 6502 routine for playing CMS.

@@ -56,24 +56,24 @@ release/COPYING.txt: $(srcdir)COPYING
 	$(UNIX2DOS)
 CLEAN += release/COPYING.txt
 
-release/README_Web.html: $(call src,README USAGE-WEB NEWS CREDITS)
-	$(call ASCIIDOC,-a toc -a asapweb="(included in this binary package)")
+release/README_Web.html: $(call src,README USAGE-WEB CREDITS)
+	$(call ASCIIDOC,-a toc -a asapweb)
 CLEAN += release/README_Web.html
 
-release/README_Java.html: $(call src,README java/USAGE NEWS CREDITS)
-	$(call ASCIIDOC,-a asapjava="(included in this binary package)")
+release/README_Java.html: $(call src,README java/USAGE CREDITS)
+	$(call ASCIIDOC,-a asapjava)
 CLEAN += release/README_Java.html
 
-release/README_JavaScript.html: $(call src,README javascript/USAGE NEWS CREDITS)
-	$(call ASCIIDOC,-a asapjavascript="(included in this binary package)")
+release/README_JavaScript.html: $(call src,README javascript/USAGE CREDITS)
+	$(call ASCIIDOC,-a asapjavascript)
 CLEAN += release/README_JavaScript.html
 
-release/README_Windows.html: $(call src,README win32/USAGE NEWS CREDITS)
-	$(call ASCIIDOC,-a asapwin="(included in this binary package)")
+release/README_Windows.html: $(call src,README win32/USAGE CREDITS)
+	$(call ASCIIDOC,-a asapwin)
 CLEAN += release/README_Windows.html
 
-release/README_WindowsCE.html: $(call src,README win32/wince/USAGE NEWS CREDITS)
-	$(call ASCIIDOC,-a asapwince="(included in this binary package)")
+release/README_WindowsCE.html: $(call src,README win32/wince/USAGE CREDITS)
+	$(call ASCIIDOC,-a asapwince)
 CLEAN += release/README_WindowsCE.html
 
 version:
