@@ -1,7 +1,7 @@
 /*
  * asap2wav.cs - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2008-2011  Piotr Fusik
+ * Copyright (C) 2008-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -76,10 +76,11 @@ public class Asap2Wav
 
 	static void ProcessFile(string inputFilename)
 	{
-		Stream s = File.OpenRead(inputFilename);
 		byte[] module = new byte[ASAPInfo.MaxModuleLength];
-		int moduleLen = s.Read(module, 0, module.Length);
-		s.Close();
+		int moduleLen;
+		using (Stream s = File.OpenRead(inputFilename)) {
+			moduleLen = s.Read(module, 0, module.Length);
+		}
 		ASAP asap = new ASAP();
 		asap.Load(inputFilename, module, moduleLen);
 		ASAPInfo info = asap.GetInfo();
@@ -96,18 +97,18 @@ public class Asap2Wav
 			int i = inputFilename.LastIndexOf('.');
 			OutputFilename = inputFilename.Substring(0, i + 1) + (OutputHeader ? "wav" : "raw");
 		}
-		s = File.Create(OutputFilename);
-		byte[] buffer = new byte[8192];
-		int nBytes;
-		if (OutputHeader) {
-			nBytes = asap.GetWavHeader(buffer, Format, false);
-			s.Write(buffer, 0, nBytes);
+		using (Stream s = File.Create(OutputFilename)) {
+			byte[] buffer = new byte[8192];
+			int nBytes;
+			if (OutputHeader) {
+				nBytes = asap.GetWavHeader(buffer, Format, false);
+				s.Write(buffer, 0, nBytes);
+			}
+			do {
+				nBytes = asap.Generate(buffer, buffer.Length, Format);
+				s.Write(buffer, 0, nBytes);
+			} while (nBytes == buffer.Length);
 		}
-		do {
-			nBytes = asap.Generate(buffer, buffer.Length, Format);
-			s.Write(buffer, 0, nBytes);
-		} while (nBytes == buffer.Length);
-		s.Close();
 		OutputFilename = null;
 		Song = -1;
 		Duration = -1;
