@@ -1,6 +1,6 @@
 // asap.ci - emulation engine
 //
-// Copyright (C) 2010-2011  Piotr Fusik
+// Copyright (C) 2010-2012  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -205,9 +205,11 @@ public class ASAP
 			break;
 		case ASAPModuleType.SapD:
 			if (player >= 0) {
-				macro PH(x) { Memory[0x100 + Cpu.S] = x; Cpu.S = (Cpu.S - 1) & 0xff; }
-				PH(Cpu.Pc >> 8);
-				PH(Cpu.Pc.LowByte);
+				int s = Cpu.S;
+				Memory[0x100 + s] = Cpu.Pc >> 8;
+				s = s - 1 & 0xff;
+				Memory[0x100 + s] = Cpu.Pc.LowByte;
+				Cpu.S = s - 1 & 0xff;
 				const int codeAddr = 0xd200;
 				Memory[codeAddr] = 0x08; // PHP
 				Memory[codeAddr + 1] = 0x48; // PHA

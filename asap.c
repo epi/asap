@@ -1934,10 +1934,11 @@ static void ASAP_Call6502Player(ASAP *self)
 		break;
 	case ASAPModuleType_SAP_D:
 		if (player >= 0) {
-			self->memory[256 + self->cpu.s] = self->cpu.pc >> 8;
-			self->cpu.s = (self->cpu.s - 1) & 255;
-			self->memory[256 + self->cpu.s] = (unsigned char) self->cpu.pc;
-			self->cpu.s = (self->cpu.s - 1) & 255;
+			int s = self->cpu.s;
+			self->memory[256 + s] = self->cpu.pc >> 8;
+			s = (s - 1) & 255;
+			self->memory[256 + s] = (unsigned char) self->cpu.pc;
+			self->cpu.s = (s - 1) & 255;
 			self->memory[53760] = 8;
 			self->memory[53761] = 72;
 			self->memory[53762] = 138;
