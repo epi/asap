@@ -112,6 +112,12 @@ win32/sap2txt.exe: $(srcdir)sap2txt.c
 	$(WIN32_CC) -lz
 CLEAN += win32/sap2txt.exe
 
+# sap2ntsc
+
+win32/sap2ntsc.exe: $(call src,sap2ntsc.c asap.h) # FIXME: also asap.c, but we #include it and not link
+	$(WIN32_CC)
+CLEAN += win32/sap2ntsc.exe
+
 # WASAP
 
 win32/wasap.exe: $(call src,win32/wasap/wasap.[ch] asap.[ch] astil.[ch] win32/info_dlg.[ch]) win32/wasap/wasap-res.o
