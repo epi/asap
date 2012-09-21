@@ -2470,7 +2470,11 @@ static int ASAP_PutWavMetadata(unsigned char *buffer, int offset, int fourCC, co
 
 cibool ASAP_Seek(ASAP *self, int position)
 {
-	int block = ASAP_MillisecondsToBlocks(position);
+	return ASAP_SeekSample(self, ASAP_MillisecondsToBlocks(position));
+}
+
+cibool ASAP_SeekSample(ASAP *self, int block)
+{
 	if (block < self->blocksPlayed)
 		if (!ASAP_PlaySong(self, self->currentSong, self->currentDuration))
 			return FALSE;

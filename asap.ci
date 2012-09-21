@@ -498,11 +498,10 @@ public class ASAP
 	}
 
 	/// Changes the playback position.
-	public void Seek(
-		/// The requested absolute position in milliseconds.
-		int position)
+	public void SeekSample(
+		/// The requested absolute position in samples (always 44100 per second, even in stereo).
+		int block)
 	{
-		int block = MillisecondsToBlocks(position);
 		if (block < BlocksPlayed)
 			PlaySong(CurrentSong, CurrentDuration);
 		while (BlocksPlayed + Pokeys.ReadySamplesEnd < block) {
@@ -511,6 +510,14 @@ public class ASAP
 		}
 		Pokeys.ReadySamplesStart = block - BlocksPlayed;
 		BlocksPlayed = block;
+	}
+
+	/// Changes the playback position.
+	public void Seek(
+		/// The requested absolute position in milliseconds.
+		int position)
+	{
+		SeekSample(MillisecondsToBlocks(position));
 	}
 
 	static void PutLittleEndian(byte[] buffer, int offset, int value)

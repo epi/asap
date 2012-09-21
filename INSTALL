@@ -376,6 +376,28 @@ make csharp
 This should produce `asap2wav.exe`, `asapplay.exe` and `SilverASAP.xap`.
 
 
+Building MetroASAP for Windows 8
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+NOTE: Windows 8 is not yet generally available and this port is work in progress.
+
+Install .NET Framework 4.5 (Windows 8 already has it).
+Install Windows SDK for Windows 8 or Visual Studio 2012 (any edition should be fine).
+Verify the paths at the top of `csharp/winrt/winrt.mk`.
+
+Open the command prompt in the root directory of ASAP sources and run:
+--------------------------------------------------------------------------------
+make csharp/winrt/MetroASAP.appx
+--------------------------------------------------------------------------------
+
+If you're not on Windows 8, the last step (creating the appx) will fail,
+but you'll have the application in the `csharp/winrt/obj` directory.
+Copy it to Windows 8 and install from PowerShell:
+--------------------------------------------------------------------------------
+Add-AppxPackage AppxManifest.xml -Register
+--------------------------------------------------------------------------------
+
+
 Building JavaScript command-line ASAP2WAV and the web browser player
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

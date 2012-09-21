@@ -128,6 +128,12 @@ cibool ASAP_PlaySong(ASAP *self, int song, int duration);
  */
 cibool ASAP_Seek(ASAP *self, int position);
 
+/**
+ * Changes the playback position.
+ * @param block The requested absolute position in samples (always 44100 per second, even in stereo).
+ */
+cibool ASAP_SeekSample(ASAP *self, int block);
+
 ASAPInfo *ASAPInfo_New(void);
 void ASAPInfo_Delete(ASAPInfo *self);
 

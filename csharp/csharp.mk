@@ -39,3 +39,5 @@ CLEAN += csharp/doc/ASAP.chm
 csharp/doc/ASAP.dll: csharp/asap.cs
 	$(CSC) -t:library -doc:csharp/doc/ASAP.xml
 CLEAN += csharp/doc/ASAP.dll csharp/doc/ASAP.xml
+
+include $(srcdir)csharp/winrt/winrt.mk
