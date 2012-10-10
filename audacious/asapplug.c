@@ -21,9 +21,12 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <gtk/gtk.h>
+#include <glib.h>
 #include <audacious/plugin.h>
 #include <libaudcore/audstrings.h>
+#if _AUD_PLUGIN_VERSION < 40
+#include <gtk/gtk.h>
+#endif
 
 #include "asap.h"
 
@@ -62,6 +65,7 @@ static void plugin_cleanup(void)
 	g_mutex_free(control_mutex);
 }
 
+#if _AUD_PLUGIN_VERSION < 40
 static void plugin_about(void)
 {
 	static GtkWidget *aboutbox = NULL;
@@ -74,6 +78,7 @@ static void plugin_about(void)
 	}
 	gtk_window_present((GtkWindow *) aboutbox);
 }
+#endif
 
 static gint is_our_file_from_vfs(const gchar *filename, VFSFile *file)
 {
@@ -251,12 +256,16 @@ static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFi
 #endif
 	}
 
+#if _AUD_PLUGIN_VERSION < 40
 	while (playing && playback->output->buffer_playing())
 		g_usleep(10000);
+#endif
 	g_mutex_lock(control_mutex);
 	playing = FALSE;
 	g_mutex_unlock(control_mutex);
+#if _AUD_PLUGIN_VERSION < 40
 	playback->output->close_audio();
+#endif
 	return TRUE;
 }
 
@@ -317,6 +326,11 @@ static
 #endif
 	gchar *exts[] = { "sap", "cmc", "cm3", "cmr", "cms", "dmc", "dlt", "mpt", "mpd", "rmt", "tmc", "tm8", "tm2", "fc", NULL };
 
+#ifdef _WIN32
+/* For some strange reason, it doesn't get exported without it. It wasn't necessary for Audacious 3.2... */
+__declspec(dllexport) InputPlugin *get_plugin_info(AudAPITable *);
+#endif
+
 #if _AUD_PLUGIN_VERSION >= 30
 
 AUD_INPUT_PLUGIN
@@ -324,7 +338,11 @@ AUD_INPUT_PLUGIN
 	.name = "ASAP",
 	.init = plugin_init,
 	.cleanup = plugin_cleanup,
+#if _AUD_PLUGIN_VERSION >= 40
+	.about_text = "ASAP " ASAPInfo_VERSION "\n" ASAPInfo_CREDITS "\n" ASAPInfo_COPYRIGHT,
+#else
 	.about = plugin_about,
+#endif
 	.have_subtune = TRUE,
 	.extensions = exts,
 	.is_our_file_from_vfs = is_our_file_from_vfs,
