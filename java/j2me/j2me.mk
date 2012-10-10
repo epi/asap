@@ -1,4 +1,4 @@
-WTK = C:/bin/Java_ME_platform_SDK_3.0.5
+WTK = C:/bin/Java_ME_platform_SDK_3.2
 ME_CLASSES = $(WTK)/lib/cldc_1.1.jar;$(WTK)/lib/midp_2.0.jar;$(WTK)/lib/jsr75_1.0.jar
 PREVERIFY = $(DO)"$(WTK)/bin/preverify"
 ME_EMU = "$(WTK)/bin/emulator"
