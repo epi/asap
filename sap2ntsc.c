@@ -1,5 +1,5 @@
 /*
- * sap2ntsc.c - create NTSC SAP files from PAL SAP files
+ * sap2ntsc.c - convert PAL SAP files to NTSC
  *
  * Copyright (C) 2012  Piotr Fusik
  *
@@ -45,10 +45,9 @@ static void write_byte(void *obj, int data)
 	putc(data, (FILE *) obj);
 }
 
-static void process_file(const char *input_file)
+static void process_file(const char *filename)
 {
 	const char *ext;
-	char output_file[FILENAME_MAX];
 	FILE *fp;
 	static unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
@@ -57,18 +56,15 @@ static void process_file(const char *input_file)
 	int i;
 	int warnings;
 
-	/* check filename and make output filename */
-	ext = strrchr(input_file, '.');
+	/* check filename */
+	ext = strrchr(filename, '.');
 	if (ext == NULL || strcasecmp(ext, ".sap") != 0)
-		fatal_error("%s: filename must be *.sap", input_file);
-	if (ext - input_file + 9 >= FILENAME_MAX)
-		fatal_error("%s: filename too long", input_file);
-	sprintf(output_file, "%.*s_NTSC.sap", (int) (ext - input_file), input_file);
+		fatal_error("%s: filename must be *.sap", filename);
 
 	/* read file */
-	fp = fopen(input_file, "rb");
+	fp = fopen(filename, "rb");
 	if (fp == NULL)
-		fatal_error("cannot open %s", input_file);
+		fatal_error("cannot open %s", filename);
 	module_len = fread(module, 1, sizeof(module), fp);
 	fclose(fp);
 
@@ -76,14 +72,14 @@ static void process_file(const char *input_file)
 	info = ASAPInfo_New();
 	if (info == NULL)
 		fatal_error("out of memory");
-	if (!ASAPInfo_Load(info, input_file, module, module_len))
-		fatal_error("%s: unsupported file", input_file);
+	if (!ASAPInfo_Load(info, filename, module, module_len))
+		fatal_error("%s: unsupported file", filename);
 
 	/* check if conversion possible */
 	if (ASAPInfo_IsNtsc(info))
-		fatal_error("%s: is already NTSC", input_file);
+		fatal_error("%s: is already NTSC", filename);
 	if (ASAPInfo_GetPlayerRateScanlines(info) != 312)
-		fatal_error("%s: uses FASTPLAY", input_file);
+		fatal_error("%s: uses FASTPLAY", filename);
 
 	/* do the conversion */
 	info->ntsc = TRUE;
@@ -95,24 +91,24 @@ static void process_file(const char *input_file)
 	}
 
 	/* write file */
-	fp = fopen(output_file, "wb");
+	fp = fopen(filename, "wb");
 	if (fp == NULL)
-		fatal_error("cannot write %s", output_file);
+		fatal_error("cannot write %s", filename);
 	bw.obj = fp;
 	bw.func = write_byte;
-	if (!ASAPWriter_Write(output_file, bw, info, module, module_len, TRUE)) {
+	if (!ASAPWriter_Write(filename, bw, info, module, module_len, TRUE)) {
 		fclose(fp);
-		remove(output_file); /* "unlink" is less portable */
-		fatal_error("%s: write error", output_file);
+		remove(filename); /* "unlink" is less portable */
+		fatal_error("%s: write error", filename);
 	}
 	fclose(fp);
 
 	/* print summary */
-	printf("%s -> %s: ", input_file, output_file);
+	printf("%s: ", filename);
 	warnings = 0;
 
 	/* issue a warning for samples - they may break on NTSC */
-	/* TYPE S has FASTPLAY!=312, so we reject it */
+	/* TYPE S has FASTPLAY!=312, so it has been rejected earlier */
 	if (ASAPInfo_GetTypeLetter(info) == 'D') {
 		printf("WARNING: TYPE D");
 		warnings++;
@@ -156,7 +152,7 @@ int main(int argc, char **argv)
 	if (usage) {
 		printf(
 			"Usage: sap2ntsc FILE.sap...\n"
-			"Reads FILE.sap and writes FILE_NTSC.sap\n"
+			"Replaces FILE.sap with an NTSC version\n"
 		);
 	}
 	return 0;
