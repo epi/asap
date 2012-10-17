@@ -80,12 +80,12 @@ static void plugin_about(void)
 }
 #endif
 
-static gint is_our_file_from_vfs(const gchar *filename, VFSFile *file)
+static gboolean is_our_file_from_vfs(const char *filename, VFSFile *file)
 {
 	return ASAPInfo_IsOurFile(filename);
 }
 
-static int load_module(const gchar *filename, VFSFile *file, unsigned char *module)
+static int load_module(const char *filename, VFSFile *file, unsigned char *module)
 {
 	int module_len;
 	if (file != NULL)
@@ -110,13 +110,13 @@ static char *filename_split_subtune(const char *filename, int *song)
 #define tuple_set_str  tuple_associate_string
 #endif
 
-static void tuple_set_nonblank(Tuple *tuple, gint nfield, const char *value)
+static void tuple_set_nonblank(Tuple *tuple, int nfield, const char *value)
 {
 	if (value[0] != '\0')
 		tuple_set_str(tuple, nfield, NULL, value);
 }
 
-static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
+static Tuple *probe_for_tuple(const char *filename, VFSFile *file)
 {
 	int song = -1;
 	unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
@@ -179,13 +179,13 @@ static Tuple *probe_for_tuple(const gchar *filename, VFSFile *file)
 }
 
 #if _AUD_PLUGIN_VERSION < 18
-static Tuple *get_song_tuple(const gchar *filename)
+static Tuple *get_song_tuple(const char *filename)
 {
 	return probe_for_tuple(filename, NULL);
 }
 #endif
 
-static gboolean play_start(InputPlayback *playback, const gchar *filename, VFSFile *file, gint start_time, gint stop_time, gboolean pause)
+static gboolean play_start(InputPlayback *playback, const char *filename, VFSFile *file, int start_time, int stop_time, gboolean pause)
 {
 	int song = -1;
 	unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
@@ -292,7 +292,7 @@ static void play_pause(InputPlayback *playback,
 
 static void play_mseek(InputPlayback *playback,
 #if _AUD_PLUGIN_VERSION >= 18
-	gint
+	int
 #else
 	gulong
 #endif
@@ -320,11 +320,63 @@ static void play_stop(InputPlayback *playback)
 	g_mutex_unlock(control_mutex);
 }
 
+static void write_byte(void *obj, int data)
+{
+	VFSFile *file = (VFSFile *) obj;
+	const char buf[1] = { data };
+	vfs_fwrite(buf, 1, 1, file);
+}
+
+static gboolean update_song_tuple(const Tuple * tuple, VFSFile *file)
+{
+	/* read file */
+	const char *filename = vfs_get_filename(file);
+	unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
+	int module_len = load_module(filename, file, module);
+	ASAPInfo *info;
+	char *s;
+	ByteWriter bw;
+	gboolean ok;
+	if (module_len <= 0)
+		return FALSE;
+	info = ASAPInfo_New();
+	if (info == NULL)
+		return FALSE;
+	if (!ASAPInfo_Load(info, filename, module, module_len)) {
+		ASAPInfo_Delete(info);
+		return FALSE;
+	}
+
+	/* apply new tags */
+	s = tuple_get_str(tuple, FIELD_ARTIST, NULL);
+	if (s != NULL) {
+		ASAPInfo_SetAuthor(info, s);
+		str_unref(s);
+	}
+	else
+		ASAPInfo_SetAuthor(info, "");
+	s = tuple_get_str(tuple, FIELD_TITLE, NULL);
+	if (s != NULL) {
+		ASAPInfo_SetTitle(info, s);
+		str_unref(s);
+	}
+	else
+		ASAPInfo_SetTitle(info, "");
+
+	/* write file */
+	vfs_rewind(file);
+	bw.obj = file;
+	bw.func = write_byte;
+	ok = ASAPWriter_Write(filename, bw, info, module, module_len, TRUE) && vfs_ftruncate(file, vfs_ftell(file)) == 0;
+	ASAPInfo_Delete(info);
+	return ok;
+}
+
 static
 #if _AUD_PLUGIN_VERSION >= 16
 	const
 #endif
-	gchar *exts[] = { "sap", "cmc", "cm3", "cmr", "cms", "dmc", "dlt", "mpt", "mpd", "rmt", "tmc", "tm8", "tm2", "fc", NULL };
+	char *exts[] = { "sap", "cmc", "cm3", "cmr", "cms", "dmc", "dlt", "mpt", "mpd", "rmt", "tmc", "tm8", "tm2", "fc", NULL };
 
 #ifdef _WIN32
 /* For some strange reason, it doesn't get exported without it. It wasn't necessary for Audacious 3.2... */
@@ -351,6 +403,7 @@ AUD_INPUT_PLUGIN
 	.pause = play_pause,
 	.mseek = play_mseek,
 	.stop = play_stop,
+	.update_song_tuple = update_song_tuple
 );
 
 #else
@@ -374,6 +427,7 @@ static InputPlugin asap_ip = {
 	.pause = play_pause,
 	.mseek = play_mseek,
 	.stop = play_stop,
+	.update_song_tuple = update_song_tuple
 };
 
 static InputPlugin *asap_iplist[] = { &asap_ip, NULL };
