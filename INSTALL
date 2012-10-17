@@ -234,6 +234,9 @@ points to this directory.
 Install http://www.tarnyko.net/repo/GTK+-Bundle-3.4.2_(TARNYKO).exe[GTK+ 3 bundle]
 and make sure `GTK_DIR` points to it.
 
+WARNING: `GTK+-Bundle-3.4.2_(TARNYKO).exe` *overwrites* your PATH environment
+variable if it's 1k long. Make a backup first!
+
 Now comes the tricky part: configure Audacious for Windows. I was able to do that with
 http://ftp.gnome.org/pub/gnome/binaries/win32/gtk+/2.24/gtk+-bundle_2.24.10-20120208_win32.zip[GTK+ 2 bundle]
 and installing `gettext` and `libgnurx` in MinGW (that's probably not an exhaustive list,
