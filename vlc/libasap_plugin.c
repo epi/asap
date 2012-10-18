@@ -208,7 +208,7 @@ static int Open(vlc_object_t *obj)
 	fmt.audio.i_bitspersample = BITS_PER_SAMPLE;
 	fmt.audio.i_rate = ASAP_SAMPLE_RATE;
 	fmt.audio.i_blockalign = fmt.audio.i_frame_length = fmt.audio.i_bytes_per_frame = sys->bytes_per_frame = fmt.audio.i_channels * (BITS_PER_SAMPLE / 8);
-	fmt.i_bitrate = ASAP_SAMPLE_RATE * fmt.audio.i_bytes_per_frame;
+	fmt.i_bitrate = ASAP_SAMPLE_RATE * 8 * fmt.audio.i_bytes_per_frame;
 	sys->es = es_out_Add(demux->out, &fmt);
 	date_Init(&sys->pts, ASAP_SAMPLE_RATE, 1);
 	date_Set(&sys->pts, 0);
