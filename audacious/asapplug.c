@@ -353,14 +353,22 @@ static gboolean update_song_tuple(const Tuple * tuple, VFSFile *file)
 	/* apply new tags */
 	s = tuple_get_str(tuple, FIELD_ARTIST, NULL);
 	if (s != NULL) {
-		ASAPInfo_SetAuthor(info, s);
+		if (!ASAPInfo_SetAuthor(info, s)) {
+			str_unref(s);
+			ASAPInfo_Delete(info);
+			return FALSE;
+		}
 		str_unref(s);
 	}
 	else
 		ASAPInfo_SetAuthor(info, "");
 	s = tuple_get_str(tuple, FIELD_TITLE, NULL);
 	if (s != NULL) {
-		ASAPInfo_SetTitle(info, s);
+		if (!ASAPInfo_SetTitle(info, s)) {
+			str_unref(s);
+			ASAPInfo_Delete(info);
+			return FALSE;
+		}
 		str_unref(s);
 	}
 	else
