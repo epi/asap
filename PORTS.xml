@@ -36,7 +36,7 @@
 	</port>
 	<port name="XMMS plugin">
 		<bin>asap-xmms-*.rpm</bin>
-		<platform>Linux, Unix</platform>
+		<platform>Linux</platform>
 		<interface>player plugin</interface>
 		<since>0.2.0</since>
 		<status>stable</status>
@@ -121,7 +121,7 @@
 	</port>
 	<port name="MOC plugin">
 		<bin></bin>
-		<platform>Linux, Unix</platform>
+		<platform>Linux</platform>
 		<interface>player plugin</interface>
 		<since>1.0.1</since>
 		<status>stable</status>
@@ -325,7 +325,7 @@
 	</port>
 	<port name="Audacious plugin">
 		<bin>Windows</bin>
-		<platform>Linux, Unix, Windows</platform>
+		<platform>Linux, Windows</platform>
 		<interface>player plugin</interface>
 		<since>2.1.2</since>
 		<status>stable</status>
@@ -390,8 +390,8 @@
 		<lang>JavaScript</lang>
 	</port>
 	<port name="GStreamer plugin">
-		<bin></bin>
-		<platform>Linux, Unix</platform>
+		<bin>Windows</bin>
+		<platform>Linux, Windows</platform>
 		<interface>library plugin</interface>
 		<since>3.0.1</since>
 		<status>experi&#173;mental</status>

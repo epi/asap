@@ -63,7 +63,7 @@ http://sourceforge.net/projects/asap/files/asap/3.1.2/asap-devel-3.1.2-1.i386.rp
 Linux library for linking ASAP with other applications.
 
 http://sourceforge.net/projects/asap/files/asap/3.1.2/asap-3.1.2.tar.gz/download[asap-3.1.2.tar.gz]::
-Full source code (use for the Audacious and VLC plugins on Linux).
+Full source code (use for the Audacious, VLC and GStreamer plugins on Linux).
 
 All released files are available http://sourceforge.net/projects/asap/files/asap/[here].
 
@@ -136,9 +136,9 @@ This remarkable portability is possible thanks to the http://cito.sourceforge.ne
 
 ASAP includes the following programs:
 
-- plugins for Windows/Linux players: http://audacious-media-player.org/[Audacious], http://www.videolan.org/vlc/[VLC], http://xbmc.org/[XBMC]
+- plugins for Windows/Linux players: http://audacious-media-player.org/[Audacious], http://www.videolan.org/vlc/[VLC], http://xbmc.org/[XBMC], http://gstreamer.freedesktop.org/[GStreamer]
 - plugins for Windows players: http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player], http://www.winamp.com/[Winamp], http://foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo], http://hp.vector.co.jp/authors/VA032810/[GSPlayer]
-- plugins for Linux players: http://xmms.org/[XMMS], http://moc.daper.net/[MOC], http://gstreamer.freedesktop.org/[GStreamer]
+- plugins for Linux players: http://xmms.org/[XMMS], http://moc.daper.net/[MOC]
 - add-on for Windows library http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players])
 - asapconv - portable command-line converter
 - WASAP - tiny player for Windows (desktop and mobile)
