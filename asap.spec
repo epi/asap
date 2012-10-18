@@ -1,5 +1,5 @@
 Name: asap
-Version: 3.1.2
+Version: 3.1.3
 Release: 1
 Summary: Player of 8-bit Atari music
 License: GPLv2+
@@ -43,15 +43,37 @@ Provides playback of 8-bit Atari music in XMMS.
 Supports the following file formats:
 SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 
+%package gstreamer0.10
+Summary: ASAP plugin for GStreamer 0.10
+Group: Applications/Multimedia
+Requires: gstreamer >= 0.10.36
+BuildRequires: gstreamer-devel
+
+%description gstreamer0.10
+Provides playback of 8-bit Atari music in GStreamer-based players.
+Supports the following file formats:
+SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
+
+%package vlc
+Summary: ASAP plugin for VLC
+Group: Applications/Multimedia
+Requires: vlc
+BuildRequires: vlc-devel
+
+%description vlc
+Provides playback of 8-bit Atari music in VLC.
+Supports the following file formats:
+SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
+
 %prep
 %setup -q
 
 %build
-make asapconv libasap.a asap-audacious asap-xmms
+make asapconv libasap.a asap-audacious asap-xmms asap-gstreamer asap-vlc
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make DESTDIR=$RPM_BUILD_ROOT prefix=%{_prefix} install install-audacious install-xmms
+make DESTDIR=$RPM_BUILD_ROOT prefix=%{_prefix} install install-audacious install-xmms install-gstreamer install-vlc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -74,7 +96,19 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 /usr/lib/xmms/Input/libasap-xmms.so
 
+%files gstreamer0.10
+%defattr(-,root,root)
+/usr/lib/gstreamer-0.10/libgstasapdec.so
+
+%files vlc
+%defattr(-,root,root)
+/usr/lib/vlc/plugins/demux/libasap_plugin.so
+
 %changelog
+* Thu Oct 18 2012 Piotr Fusik <fox@scene.pl>
+- 3.1.3-1
+- Added subpackages with GStreamer and VLC plugins
+
 * Mon Jun 25 2012 Piotr Fusik <fox@scene.pl>
 - 3.1.2-1
 
