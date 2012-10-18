@@ -24,7 +24,12 @@
 #include <glib.h>
 #include <audacious/plugin.h>
 #include <libaudcore/audstrings.h>
-#if _AUD_PLUGIN_VERSION < 40
+
+#if !defined(_AUD_PLUGIN_VERSION) && defined(__AUDACIOUS_PLUGIN_API__)
+#define _AUD_PLUGIN_VERSION  __AUDACIOUS_PLUGIN_API__
+#define _AUD_PLUGIN_VERSION_MIN  __AUDACIOUS_PLUGIN_API__
+#endif
+#if _AUD_PLUGIN_VERSION_MIN < 40
 #include <gtk/gtk.h>
 #endif
 
@@ -35,9 +40,6 @@
 static GMutex *control_mutex;
 static ASAP *asap;
 
-#if !defined(_AUD_PLUGIN_VERSION) && defined(__AUDACIOUS_PLUGIN_API__)
-#define _AUD_PLUGIN_VERSION  __AUDACIOUS_PLUGIN_API__
-#endif
 #if _AUD_PLUGIN_VERSION >= 18
 static gboolean playing;
 #else
@@ -65,7 +67,7 @@ static void plugin_cleanup(void)
 	g_mutex_free(control_mutex);
 }
 
-#if _AUD_PLUGIN_VERSION < 40
+#if _AUD_PLUGIN_VERSION_MIN < 40
 static void plugin_about(void)
 {
 	static GtkWidget *aboutbox = NULL;
@@ -256,14 +258,14 @@ static gboolean play_start(InputPlayback *playback, const char *filename, VFSFil
 #endif
 	}
 
-#if _AUD_PLUGIN_VERSION < 40
+#if _AUD_PLUGIN_VERSION_MIN < 40
 	while (playing && playback->output->buffer_playing())
 		g_usleep(10000);
 #endif
 	g_mutex_lock(control_mutex);
 	playing = FALSE;
 	g_mutex_unlock(control_mutex);
-#if _AUD_PLUGIN_VERSION < 40
+#if _AUD_PLUGIN_VERSION_MIN < 40
 	playback->output->close_audio();
 #endif
 	return TRUE;
@@ -390,7 +392,7 @@ AUD_INPUT_PLUGIN
 	.name = "ASAP",
 	.init = plugin_init,
 	.cleanup = plugin_cleanup,
-#if _AUD_PLUGIN_VERSION >= 40
+#if _AUD_PLUGIN_VERSION_MIN >= 40
 	.about_text = "ASAP " ASAPInfo_VERSION "\n" ASAPInfo_CREDITS "\n" ASAPInfo_COPYRIGHT,
 #else
 	.about = plugin_about,
