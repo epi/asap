@@ -2,8 +2,9 @@
 WIN32_CC = $(DO)mingw32-gcc $(WIN32_CARGS)
 WIN32_CXX = $(DO)mingw32-g++ -static $(WIN32_CARGS)
 WIN32_WINDRES = $(DO)windres -o $@ $<
-AUDACIOUS_DIR = ../porty/audacious/audacious-3.3.2
-GTK_DIR = "C:/Program Files (x86)/GTK+-Bundle-3.4.2"
+GTK_DIR = ../porty/audacious/gtk
+AUDACIOUS_INCLUDE = ../porty/audacious/audacious-3.3.2/src
+AUDACIOUS_LIB = "C:/Program Files (x86)/audacious-3.3.1a/bin"
 VLC_SDK_DIR = "C:/Program Files (x86)/VideoLAN/VLC/sdk"
 GST_SDK_DIR = "C:/gstreamer-sdk/0.10/x86"
 
@@ -157,19 +158,9 @@ CLEAN += win32/apollo/ASAP_Apollo-res.o
 
 # Audacious
 
-win32/asapplug.dll: $(call src,audacious/asapplug.c asap.[ch]) win32/audacious/asapplug-res.o win32/audacious/libaudcore.a
-	$(WIN32_CC) -I$(GTK_DIR)/include/glib-2.0 -I$(GTK_DIR)/lib/glib-2.0/include -I$(GTK_DIR)/include/cairo -I$(GTK_DIR)/include/pango-1.0 \
-		-I$(GTK_DIR)/include/gdk-pixbuf-2.0 -I$(GTK_DIR)/include/atk-1.0 -I$(GTK_DIR)/include/gtk-3.0 -I$(AUDACIOUS_DIR)/src \
-		-L$(GTK_DIR)/lib -lglib-2.0 -lgobject-2.0 -lintl -lgtk-3 -lpthread
+win32/asapplug.dll: $(call src,audacious/asapplug.c asap.[ch]) win32/audacious/asapplug-res.o
+	$(WIN32_CC) -I$(GTK_DIR)/include/glib-2.0 -I$(GTK_DIR)/lib/glib-2.0/include -I$(AUDACIOUS_INCLUDE) -L$(AUDACIOUS_LIB) -laudcore -lglib-2.0-0
 CLEAN += win32/asapplug.dll
-
-win32/audacious/libaudcore.a: $(addprefix win32/audacious/, audstrings.o strpool.o tuple.o tuple_compiler.o tuple_formatter.o vfs.o)
-	$(AR)
-CLEAN += win32/audacious/libaudcore.a
-
-win32/audacious/%.o: $(AUDACIOUS_DIR)/src/libaudcore/%.c
-	$(WIN32_CC) -c -std=c99 -I$(GTK_DIR)/include/glib-2.0 -I$(GTK_DIR)/lib/glib-2.0/include -I$(AUDACIOUS_DIR) -I$(AUDACIOUS_DIR)/src
-CLEAN += win32/audacious/*.o
 
 win32/audacious/asapplug-res.o: $(call src,win32/gui.rc asap.h)
 	$(WIN32_WINDRES) -DAUDACIOUS

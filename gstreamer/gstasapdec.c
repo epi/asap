@@ -294,17 +294,24 @@ asapdec_init (GstPlugin * asapdec)
       GST_TYPE_ASAPDEC);
 }
 
-/* GST_PLUGIN_DEFINE needs PACKAGE to be defined. */
-#ifndef PACKAGE
-#define PACKAGE "asap"
+/* Workaround for sloppy gstconfig.h: it only checks _MSC_VER,
+   so it doesn't emit __declspec(dllexport) for MinGW.
+   As a result, no symbol has __declspec(dllexport)
+   and thus all are exported from the DLL. */
+#ifdef _WIN32
+#undef GST_PLUGIN_EXPORT
+#define GST_PLUGIN_EXPORT __declspec(dllexport)
 #endif
+
+/* GST_PLUGIN_DEFINE needs PACKAGE to be defined. */
+#define PACKAGE "asap"
 
 /* gstreamer looks for this structure to register asapdec */
 GST_PLUGIN_DEFINE (
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
     "asapdec",
-    "Decodes 8-bit Atari .sap chiptunes",
+    "Decodes Atari 8-bit .sap chiptunes",
     asapdec_init,
     ASAPInfo_VERSION,
     "GPL",
