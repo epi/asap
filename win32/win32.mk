@@ -199,13 +199,13 @@ win32/dshow/asap_dsf.res: $(call src,win32/gui.rc asap.h)
 	$(WIN32_WINDRES) -DDSHOW
 CLEAN += win32/dshow/asap_dsf.res
 
-win32/wince/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/wince/asap_dsf.res
+win32/wince/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/wince/asap_dsf-res.obj
 	$(WINCE_CL) -Zc:wchar_t- ole32.lib oleaut32.lib strmbase.lib strmiids.lib uuid.lib $(WINCE_LINKOPT)
 CLEAN += win32/wince/asap_dsf.dll win32/wince/asap_dsf.exp win32/wince/asap_dsf.lib win32/wince/asap_dsf.obj win32/wince/asap.obj
 
-win32/wince/asap_dsf.res: $(call src,win32/gui.rc asap.h)
+win32/wince/asap_dsf-res.obj: $(call src,win32/gui.rc asap.h)
 	$(WINCE_WINDRES) -DDSHOW
-CLEAN += win32/wince/asap_dsf.res
+CLEAN += win32/wince/asap_dsf-res.obj
 
 win32/x64/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/x64/asap_dsf.res
 	$(WIN64_CL) $(DSHOW_BASECLASSES) -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(WIN64_LINKOPT)
@@ -260,13 +260,13 @@ win32/gsplayer/gspasap-res.o: $(call src,win32/gui.rc asap.h win32/settings_dlg.
 	$(WIN32_WINDRES) -DGSPLAYER
 CLEAN += win32/gsplayer/gspasap-res.o
 
-win32/wince/gspasap.dll: $(call src,win32/gsplayer/gspasap.c asap.[ch] win32/settings_dlg.[ch]) win32/wince/gspasap.res
+win32/wince/gspasap.dll: $(call src,win32/gsplayer/gspasap.c asap.[ch] win32/settings_dlg.[ch]) win32/wince/gspasap-res.obj
 	$(WINCE_CL) -DGSPLAYER coredll.lib corelibc.lib $(WINCE_LINKOPT)
 CLEAN += win32/wince/gspasap.dll win32/wince/gspasap.exp win32/wince/gspasap.lib win32/wince/gspasap.obj win32/wince/asap.obj
 
-win32/wince/gspasap.res: $(call src,win32/gui.rc asap.h win32/settings_dlg.h)
+win32/wince/gspasap-res.obj: $(call src,win32/gui.rc asap.h win32/settings_dlg.h)
 	$(WINCE_WINDRES) -DGSPLAYER
-CLEAN += win32/wince/gspasap.res
+CLEAN += win32/wince/gspasap-res.obj
 
 # Winamp
 
