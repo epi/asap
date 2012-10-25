@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef __WIN32
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -379,7 +379,7 @@ static void scan_song(int song)
 	if (detect_time)
 		printf("No silence or loop detected in song %d\n", song);
 	if (acid) {
-#ifdef __WIN32
+#ifdef _WIN32
 		HANDLE so = GetStdHandle(STD_OUTPUT_HANDLE);
 		CONSOLE_SCREEN_BUFFER_INFO csbi;
 		GetConsoleScreenBufferInfo(so, &csbi);

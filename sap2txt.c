@@ -23,8 +23,11 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef __WIN32
+#ifdef _WIN32
 #include <fcntl.h>
+#ifdef _MSC_VER
+#include <io.h>
+#endif
 #endif
 #include <zlib.h>
 
@@ -55,7 +58,7 @@ static int sap2txt(const char *sap_file)
 		fprintf(stderr, "sap2txt: cannot open %s\n", sap_file);
 		return 1;
 	}
-#ifdef __WIN32
+#ifdef _WIN32
 	_setmode(_fileno(stdout), _O_BINARY);
 #endif
 

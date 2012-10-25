@@ -1,7 +1,7 @@
 /*
  * asapconv.c - converter of ASAP-supported formats
  *
- * Copyright (C) 2005-2011  Piotr Fusik
+ * Copyright (C) 2005-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -25,8 +25,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#ifdef __WIN32
+#ifdef _WIN32
 #include <fcntl.h>
+#ifdef _MSC_VER
+#define strcasecmp _stricmp
+#include <io.h>
+#endif
 #endif
 
 #ifdef HAVE_LIBMP3LAME
@@ -220,7 +224,7 @@ static FILE *open_output_file(const char *input_file, const unsigned char *modul
 	else if (output_ext == output_arg + 1 && output_arg[0] == '-') {
 		/* -.EXT */
 		strcpy(output_file, "stdout");
-#ifdef __WIN32
+#ifdef _WIN32
 		_setmode(_fileno(stdout), _O_BINARY);
 #endif
 		return stdout;
@@ -365,6 +369,18 @@ typedef int (*pid3tag_set_year)(lame_global_flags *, const char *);
 typedef int (*pid3tag_set_genre)(lame_global_flags *, const char *);
 #define LAME_OKAY 0
 
+static HMODULE lame_load(void)
+{
+	HMODULE lame_dll = LoadLibrary("libmp3lame.dll");
+	if (lame_dll != NULL)
+		return lame_dll;
+	lame_dll = LoadLibrary("lame_enc.dll");
+	if (lame_dll != NULL)
+		return lame_dll;
+	fatal_error("libmp3lame.dll and lame_enc.dll not found");
+	return NULL;
+}
+
 static FARPROC lame_proc(HMODULE lame_dll, const char *name)
 {
 	FARPROC proc = GetProcAddress(lame_dll, name);
@@ -393,13 +409,7 @@ static void convert_to_mp3(const char *input_file, const unsigned char *module, 
 	int mp3_bytes;
 
 #ifdef HAVE_LIBMP3LAME_DLL
-	HMODULE lame_dll;
-	lame_dll = LoadLibrary("libmp3lame.dll");
-	if (lame_dll == NULL) {
-		lame_dll = LoadLibrary("lame_enc.dll");
-		if (lame_dll == NULL)
-			fatal_error("libmp3lame.dll and lame_enc.dll not found");
-	}
+	HMODULE lame_dll = lame_load();
 	LAME_FUNC(lame_init);
 	LAME_FUNC(lame_set_num_samples);
 	LAME_FUNC(lame_set_in_samplerate);
