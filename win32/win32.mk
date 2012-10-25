@@ -11,10 +11,10 @@ GST_SDK_DIR = "C:/gstreamer-sdk/0.10/x86"
 # Microsoft compiler for Windows Media Player and foobar2000
 DSHOW_BASECLASSES_DIR = "C:/Program Files/Microsoft SDKs/Windows/v7.1/Samples/multimedia/directshow/baseclasses"
 FOOBAR2000_SDK_DIR = ../foobar2000_SDK
-WIN32_CL = $(DO)cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS)
+WIN32_CL = $(WIN32_CLDO)cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS)
 WIN32_LINKOPT = -link -release
 WIN32_MKLIB = $(DO)lib -nologo -ltcg -out:$@ $^
-WIN64_CL = $(DO)"C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin/x86_amd64/cl" -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS)
+WIN64_CL = $(WIN32_CLDO)"C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin/x86_amd64/cl" -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS)
 WIN64_LINKOPT = -link -release -libpath:"C:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib/x64" -libpath:"C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/lib/amd64"
 
 # MinGW x64
@@ -23,7 +23,7 @@ WIN64_CXX = $(DO)x86_64-w64-mingw32-g++ -static $(WIN32_CARGS)
 WIN64_WINDRES = $(DO)x86_64-w64-mingw32-windres -o $@ $<
 
 # old Microsoft compiler for XBMC plugin
-WIN32_CL71 = $(DO)cl -GR- -DNDEBUG $(WIN32_CLARGS)
+WIN32_CL71 = $(WIN32_CLDO)cl -GR- -DNDEBUG $(WIN32_CLARGS)
 
 # gcc for Windows Mobile
 WINCE_CC = $(DO)arm-mingw32ce-gcc -s -O2 -Wall -o $@ $(INCLUDEOPTS) $(filter-out %.h,$^)
@@ -31,7 +31,7 @@ WINCE_WINDRES = $(DO)arm-mingw32ce-windres -o $@ -D_WIN32_WCE $<
 
 # Microsoft compiler for Windows Mobile
 WINCE_VC = "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/ce"
-WINCE_CL = $(DO)$(WINCE_VC)/bin/x86_arm/cl -DUNICODE -D_UNICODE -DUNDER_CE -D_ARM_ -I$(WINCE_SDK)/Include/Armv4i $(WIN32_CLARGS)
+WINCE_CL = $(WIN32_CLDO)$(WINCE_VC)/bin/x86_arm/cl -DUNICODE -D_UNICODE -DUNDER_CE -D_ARM_ -I$(WINCE_SDK)/Include/Armv4i $(WIN32_CLARGS)
 WINCE_SDK = "C:/Program Files (x86)/Windows Mobile 5.0 SDK R2/PocketPC"
 WINCE_CABWIZ = "C:/Program Files (x86)/Windows Mobile 6 SDK/Tools/CabWiz/cabwiz.exe"
 WINCE_LINKOPT = -link -subsystem:windowsce,4.02 -release -libpath:$(WINCE_VC)/lib/armv4i -libpath:$(WINCE_SDK)/Lib/ARMV4I
@@ -48,7 +48,8 @@ endif
 
 comma = ,
 WIN32_CARGS = -s -O2 -Wall -Wl,--nxcompat -o $@ $(if $(filter %.dll,$@),-shared -Wl$(comma)-subsystem$(comma)windows) $(INCLUDEOPTS) $(filter-out %.h,$^)
-WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@) $(if $(filter %.dll,$@),-LD) $(INCLUDEOPTS) $(filter-out %.h,$^)
+WIN32_CLDO = $(DO)$(if $(filter-out %.obj,$@),mkdir -p win32/obj/$@ && )
+WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@ -Fowin32/obj/$@/) $(if $(filter %.dll,$@),-LD) $(INCLUDEOPTS) $(filter-out %.h,$^)
 
 mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe ASAP_Apollo.dll bass_asap.dll gspasap.dll in_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
 .PHONY: mingw
@@ -71,7 +72,7 @@ win32/asapconv-no-lame.exe: $(call src,asapconv.c asap.[ch])
 CLEAN += win32/asapconv-no-lame.exe
 
 win32/msvc/asapconv.exe: $(call src,asapconv.c asap.[ch])
-	$(WIN32_CC) -Fowin32/msvc/ -DHAVE_LIBMP3LAME -DHAVE_LIBMP3LAME_DLL
+	$(WIN32_CL) -DHAVE_LIBMP3LAME -DHAVE_LIBMP3LAME_DLL
 CLEAN += win32/msvc/asapconv.exe
 
 win32/x64/asapconv.exe: $(call src,asapconv.c asap.[ch])
@@ -191,7 +192,7 @@ CLEAN += win32/bass/bass_asap-res.o
 DSHOW_BASECLASSES = $(patsubst %,$(DSHOW_BASECLASSES_DIR)/%.cpp,amfilter combase dllentry dllsetup mtype source wxlist wxutil)
 
 win32/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/dshow/asap_dsf.res
-	$(WIN32_CL) $(DSHOW_BASECLASSES) -Fowin32/dshow/ -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(WIN32_LINKOPT)
+	$(WIN32_CL) $(DSHOW_BASECLASSES) -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(WIN32_LINKOPT)
 CLEAN += win32/asap_dsf.dll win32/asap_dsf.exp win32/asap_dsf.lib win32/dshow/*.obj
 
 win32/dshow/asap_dsf.res: $(call src,win32/gui.rc asap.h)
@@ -199,7 +200,7 @@ win32/dshow/asap_dsf.res: $(call src,win32/gui.rc asap.h)
 CLEAN += win32/dshow/asap_dsf.res
 
 win32/wince/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/wince/asap_dsf.res
-	$(WINCE_CL) -Fowin32/wince/ -Zc:wchar_t- ole32.lib oleaut32.lib strmbase.lib strmiids.lib uuid.lib $(WINCE_LINKOPT)
+	$(WINCE_CL) -Zc:wchar_t- ole32.lib oleaut32.lib strmbase.lib strmiids.lib uuid.lib $(WINCE_LINKOPT)
 CLEAN += win32/wince/asap_dsf.dll win32/wince/asap_dsf.exp win32/wince/asap_dsf.lib win32/wince/asap_dsf.obj win32/wince/asap.obj
 
 win32/wince/asap_dsf.res: $(call src,win32/gui.rc asap.h)
@@ -207,7 +208,7 @@ win32/wince/asap_dsf.res: $(call src,win32/gui.rc asap.h)
 CLEAN += win32/wince/asap_dsf.res
 
 win32/x64/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/x64/asap_dsf.res
-	$(WIN64_CL) $(DSHOW_BASECLASSES) -Fowin32/dshow/ -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(WIN64_LINKOPT)
+	$(WIN64_CL) $(DSHOW_BASECLASSES) -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(WIN64_LINKOPT)
 CLEAN += win32/x64/asap_dsf.dll win32/x64/asap_dsf.exp win32/x64/asap_dsf.lib win32/x64/*.obj
 
 win32/x64/asap_dsf.res: $(call src,win32/gui.rc asap.h)
@@ -227,7 +228,7 @@ CLEAN += win32/uninstall_dsf.bat
 FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp win32/foobar2000/foobar2000_SDK.lib win32/foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
 
 win32/foo_asap.dll: $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] aatr.[ch] win32/settings_dlg.[ch]) win32/foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME)
-	$(WIN32_CL) -Fowin32/foobar2000/ -DFOOBAR2000 -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) user32.lib $(WIN32_LINKOPT)
+	$(WIN32_CL) -DFOOBAR2000 -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) user32.lib $(WIN32_LINKOPT)
 CLEAN += win32/foo_asap.dll win32/foo_asap.exp win32/foo_asap.lib
 
 win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,abort_callback audio_chunk audio_chunk_channel_config console file_info filesystem filesystem_helper guids mem_block_container playable_location preferences_page replaygain_info service)
@@ -260,7 +261,7 @@ win32/gsplayer/gspasap-res.o: $(call src,win32/gui.rc asap.h win32/settings_dlg.
 CLEAN += win32/gsplayer/gspasap-res.o
 
 win32/wince/gspasap.dll: $(call src,win32/gsplayer/gspasap.c asap.[ch] win32/settings_dlg.[ch]) win32/wince/gspasap.res
-	$(WINCE_CL) -Fowin32/wince/ -DGSPLAYER coredll.lib corelibc.lib $(WINCE_LINKOPT)
+	$(WINCE_CL) -DGSPLAYER coredll.lib corelibc.lib $(WINCE_LINKOPT)
 CLEAN += win32/wince/gspasap.dll win32/wince/gspasap.exp win32/wince/gspasap.lib win32/wince/gspasap.obj win32/wince/asap.obj
 
 win32/wince/gspasap.res: $(call src,win32/gui.rc asap.h win32/settings_dlg.h)
@@ -280,7 +281,7 @@ CLEAN += win32/winamp/in_asap-res.o
 # XBMC
 
 win32/xbmc_asap.dll: $(call src,xbmc/xbmc_asap.c asap.[ch]) win32/xbmc/xbmc_asap.res
-	$(WIN32_CL71) -Fowin32/xbmc/ -MD $(WIN32_LINKOPT)
+	$(WIN32_CL71) -MD $(WIN32_LINKOPT)
 CLEAN += win32/xbmc_asap.dll win32/xbmc_asap.exp win32/xbmc_asap.lib win32/xbmc/xbmc_asap.obj win32/xbmc/asap.obj
 
 win32/xbmc/xbmc_asap.res: $(call src,win32/gui.rc asap.h)
