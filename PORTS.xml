@@ -394,10 +394,10 @@
 		<platform>Linux, Windows</platform>
 		<interface>library plugin</interface>
 		<since>3.0.1</since>
-		<status>experi&#173;mental</status>
+		<status>in develop&#173;ment</status>
 		<output>16-bit sound</output>
 		<subsongs>yes</subsongs>
-		<file-info>no</file-info><!-- TODO: yes -->
+		<file-info>yes</file-info>
 		<edit-info>no</edit-info>
 		<convert-sap>no</convert-sap>
 		<config-time>no</config-time>

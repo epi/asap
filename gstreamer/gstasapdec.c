@@ -25,8 +25,8 @@
  * SECTION:element-asapdec
  *
  * This element decodes .sap files to raw audio.
- * .sap files are small Atari XL/XE programs that are executed on an emulated 6502
- * and a POKEY sound chip.
+ * .sap files are small Atari XL/XE programs that are executed
+ * on an emulated 6502 and a POKEY sound chip.
  *
  * <refsect2>
  * <title>Example launch line</title>
@@ -82,14 +82,16 @@ play_loop (GstPad * pad)
   GstAsapDec *asapdec = GST_ASAPDEC (gst_pad_get_parent (pad));
   GstBuffer *out = gst_buffer_new_and_alloc (BUFFER_SIZE);
   int position;
+  int len;
   gint64 time;
   gint64 time2;
-  GstFlowReturn ret;
   gst_buffer_set_caps (out, GST_PAD_CAPS (pad));
 
   position = ASAP_GetBlocksPlayed (asapdec->asap);
+  len = ASAP_Generate (asapdec->asap, GST_BUFFER_DATA (out), GST_BUFFER_SIZE (out), ASAPSampleFormat_S16_L_E);
+  if (len == 0)
+    goto eos;
   time = gst_util_uint64_scale_int (position, GST_SECOND, ASAP_SAMPLE_RATE);
-  ASAP_Generate (asapdec->asap, GST_BUFFER_DATA (out), GST_BUFFER_SIZE (out), ASAPSampleFormat_S16_L_E);
   GST_BUFFER_OFFSET (out) = position;
   GST_BUFFER_TIMESTAMP (out) = time;
   position = ASAP_GetBlocksPlayed (asapdec->asap);
@@ -97,27 +99,20 @@ play_loop (GstPad * pad)
   GST_BUFFER_OFFSET_END (out) = position;
   GST_BUFFER_DURATION (out) = time2 - time;
 
-  ret = gst_pad_push (asapdec->srcpad, out);
-  switch (ret) {
-  case GST_FLOW_OK:
-    break;
-  case GST_FLOW_UNEXPECTED:
-    /* perform EOS logic, FIXME, segment seek? */
+  if (gst_pad_push (asapdec->srcpad, out) != GST_FLOW_OK || len < BUFFER_SIZE) {
+  eos:
     gst_pad_push_event (pad, gst_event_new_eos ());
     gst_pad_pause_task (pad);
-    break;
-  default:
-    if (ret < GST_FLOW_UNEXPECTED || ret == GST_FLOW_NOT_LINKED) {
-      /* for fatal errors we post an error message */
-      GST_ELEMENT_ERROR (asapdec, STREAM, FAILED, (NULL), ("streaming task paused"));
-      gst_pad_push_event (pad, gst_event_new_eos ());
-    }
-    GST_INFO_OBJECT (asapdec, "pausing task, reason");
-    gst_pad_pause_task (pad);
-    break;
   }
 
   gst_object_unref (asapdec);
+}
+
+static void
+add_tag (GstTagList * tags, const char * tag, const char * value)
+{
+  if (value[0] != '\0')
+      gst_tag_list_add (tags, GST_TAG_MERGE_REPLACE, tag, value, (void *) NULL);
 }
 
 static gboolean
@@ -125,6 +120,8 @@ start_play_tune (GstAsapDec * asapdec)
 {
   const ASAPInfo *info;
   int song;
+  GstTagList *tags;
+  int i;
   GstCaps *caps;
 
   if (!ASAP_Load (asapdec->asap, NULL, asapdec->module, asapdec->module_len)) {
@@ -138,10 +135,31 @@ start_play_tune (GstAsapDec * asapdec)
     song--;
   else
     song = ASAPInfo_GetDefaultSong (info);
-  if (!ASAP_PlaySong (asapdec->asap, song, -1)) {
+
+  tags = gst_tag_list_new ();
+  add_tag (tags, GST_TAG_TITLE, ASAPInfo_GetTitle (info));
+  add_tag (tags, GST_TAG_ARTIST, ASAPInfo_GetAuthor (info));
+  i = ASAPInfo_GetYear (info);
+  if (i > 0) {
+    GDate *date = g_date_new ();
+    g_date_set_year (date, i);
+    i = ASAPInfo_GetMonth (info);
+    if (i > 0) {
+      g_date_set_month (date, i);
+      i = ASAPInfo_GetDayOfMonth (info);
+      if (i > 0)
+        g_date_set_day (date, i);
+    }
+    gst_tag_list_add (tags, GST_TAG_MERGE_REPLACE, GST_TAG_DATE, date, (void *) NULL);
+  }
+  gst_pad_push_event (asapdec->srcpad, gst_event_new_tag (tags));
+
+  asapdec->duration = ASAPInfo_GetDuration (info, song);
+  if (!ASAP_PlaySong (asapdec->asap, song, asapdec->duration)) {
     GST_ELEMENT_ERROR (asapdec, LIBRARY, INIT, ("Could not initialize song"), ("Could not initialize song"));
     return FALSE;
   }
+  asapdec->playing = TRUE;
 
   caps = gst_caps_new_simple ("audio/x-raw-int",
       "endianness", G_TYPE_INT, G_LITTLE_ENDIAN,
@@ -157,31 +175,31 @@ start_play_tune (GstAsapDec * asapdec)
 }
 
 static gboolean
-gst_asap_dec_event (GstPad * pad, GstEvent * event)
+gst_asap_sink_event (GstPad * pad, GstEvent * event)
 {
   GstAsapDec *asapdec = GST_ASAPDEC (gst_pad_get_parent (pad));
   gboolean res;
+
   switch (GST_EVENT_TYPE (event)) {
-  case GST_EVENT_EOS:
-    res = start_play_tune (asapdec);
-    break;
-  case GST_EVENT_NEWSEGMENT:
-    res = FALSE;
-    break;
-  default:
-    res = FALSE;
-    break;
+    case GST_EVENT_EOS:
+      res = start_play_tune (asapdec);
+      break;
+    default:
+      res = FALSE;
+      break;
   }
-  gst_event_unref (event);
+
   gst_object_unref (asapdec);
+  gst_event_unref (event);
   return res;
 }
 
 static GstFlowReturn
-gst_asap_dec_chain (GstPad * pad, GstBuffer * buffer)
+gst_asap_sink_chain (GstPad * pad, GstBuffer * buffer)
 {
   GstAsapDec *asapdec = GST_ASAPDEC (gst_pad_get_parent (pad));
   guint64 size = GST_BUFFER_SIZE (buffer);
+
   if (asapdec->module_len + size > ASAPInfo_MAX_MODULE_LENGTH) {
     GST_ELEMENT_ERROR (asapdec, STREAM, DECODE, (NULL), ("Input file too long"));
     gst_object_unref (asapdec);
@@ -189,9 +207,77 @@ gst_asap_dec_chain (GstPad * pad, GstBuffer * buffer)
   }
   memcpy (asapdec->module + asapdec->module_len, GST_BUFFER_DATA (buffer), size);
   asapdec->module_len += size;
-  gst_buffer_unref (buffer);
+
   gst_object_unref (asapdec);
+  gst_buffer_unref (buffer);
   return GST_FLOW_OK;
+}
+
+static gboolean
+gst_asap_src_query (GstPad * pad, GstQuery * query)
+{
+  GstAsapDec *asapdec = GST_ASAPDEC (gst_pad_get_parent (pad));
+  gboolean res = FALSE;
+  gint64 time;
+
+  switch (GST_QUERY_TYPE (query)) {
+    case GST_QUERY_POSITION:
+      if (asapdec->playing) {
+        time = gst_util_uint64_scale_int (ASAP_GetBlocksPlayed (asapdec->asap), GST_SECOND, ASAP_SAMPLE_RATE);
+        gst_query_set_duration (query, GST_FORMAT_TIME, time);
+        res = TRUE;
+      }
+      break;
+    case GST_QUERY_DURATION:
+      if (asapdec->playing && asapdec->duration >= 0) {
+        gst_query_set_duration (query, GST_FORMAT_TIME, asapdec->duration * GST_MSECOND);
+        res = TRUE;
+      }
+      break;
+    default:
+      break;
+  }
+
+  gst_object_unref (asapdec);
+  return res;
+}
+
+static gboolean
+perform_seek (GstAsapDec * asapdec, GstEvent * event)
+{
+  gdouble rate;
+  GstFormat format;
+  GstSeekFlags flags;
+  GstSeekType start_type;
+  gint64 start;
+  GstSeekType stop_type;
+  gint64 stop;
+
+  if (!asapdec->playing)
+    return FALSE;
+  gst_event_parse_seek (event, &rate, &format, &flags, &start_type, &start, &stop_type, &stop);
+  if (rate != 1.0 || format != GST_FORMAT_TIME || start_type != GST_SEEK_TYPE_SET || stop_type != GST_SEEK_TYPE_NONE) {
+    GST_DEBUG_OBJECT (asapdec, "unsupported seek, aborted.");
+    return FALSE;
+  }
+  ASAP_Seek (asapdec->asap, (int) (start / GST_MSECOND));
+  return TRUE;
+}
+
+static gboolean
+gst_asap_src_event (GstPad * pad, GstEvent * event)
+{
+  GstAsapDec *asapdec = GST_ASAPDEC (gst_pad_get_parent (pad));
+  gboolean res;
+
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_SEEK:
+      res = perform_seek (asapdec, event);
+      gst_event_unref (event);
+      return res;
+    default:
+      return gst_pad_event_default (pad, event);
+  }
 }
 
 static void
@@ -215,15 +301,19 @@ static void
 gst_asap_dec_init (GstAsapDec * asapdec, GstAsapDecClass * gclass)
 {
   asapdec->sinkpad = gst_pad_new_from_static_template (&sink_factory, "sink");
-  gst_pad_set_event_function (asapdec->sinkpad, GST_DEBUG_FUNCPTR(gst_asap_dec_event));
-  gst_pad_set_chain_function (asapdec->sinkpad, GST_DEBUG_FUNCPTR(gst_asap_dec_chain));
+  gst_pad_set_event_function (asapdec->sinkpad, GST_DEBUG_FUNCPTR (gst_asap_sink_event));
+  gst_pad_set_chain_function (asapdec->sinkpad, GST_DEBUG_FUNCPTR (gst_asap_sink_chain));
   gst_element_add_pad (GST_ELEMENT (asapdec), asapdec->sinkpad);
 
   asapdec->srcpad = gst_pad_new_from_static_template (&src_factory, "src");
   gst_pad_use_fixed_caps (asapdec->srcpad);
+  gst_pad_set_query_function (asapdec->srcpad, GST_DEBUG_FUNCPTR (gst_asap_src_query));
+  gst_pad_set_event_function (asapdec->srcpad, GST_DEBUG_FUNCPTR (gst_asap_src_event));
   gst_element_add_pad (GST_ELEMENT (asapdec), asapdec->srcpad);
 
   asapdec->asap = ASAP_New ();
+  asapdec->playing = FALSE;
+  asapdec->duration = -1;
   asapdec->tune_number = 0;
   asapdec->module_len = 0;
 }
@@ -233,7 +323,7 @@ gst_asap_dec_finalize (GObject * object)
 {
   GstAsapDec *asapdec = GST_ASAPDEC (object);
 
-  ASAP_Delete(asapdec->asap);
+  ASAP_Delete (asapdec->asap);
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -243,13 +333,14 @@ gst_asap_dec_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
   GstAsapDec *asapdec = GST_ASAPDEC (object);
+
   switch (prop_id) {
-  case PROP_TUNE:
-    asapdec->tune_number = g_value_get_int (value);
-    break;
-  default:
-    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    return;
+    case PROP_TUNE:
+      asapdec->tune_number = g_value_get_int (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      return;
   }
 }
 
@@ -258,13 +349,14 @@ gst_asap_dec_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec)
 {
   GstAsapDec *asapdec = GST_ASAPDEC (object);
+
   switch (prop_id) {
-  case PROP_TUNE:
-    g_value_set_int (value, asapdec->tune_number);
-    break;
-  default:
-    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    return;
+    case PROP_TUNE:
+      g_value_set_int (value, asapdec->tune_number);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      return;
   }
 }
 
@@ -278,8 +370,7 @@ gst_asap_dec_class_init (GstAsapDecClass * klass)
   gobject_class->get_property = gst_asap_dec_get_property;
 
   g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_TUNE,
-      g_param_spec_int ("tune", "tune", "tune",
-          0, ASAPInfo_MAX_SONGS, 0,
+      g_param_spec_int ("tune", "tune", "tune", 0, ASAPInfo_MAX_SONGS, 0,
           (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
 }
 
@@ -287,14 +378,12 @@ static gboolean
 asapdec_init (GstPlugin * asapdec)
 {
   /* debug category for filtering log messages */
-  GST_DEBUG_CATEGORY_INIT (gst_asap_dec_debug, "asapdec",
-      0, "ASAP decoder");
+  GST_DEBUG_CATEGORY_INIT (gst_asap_dec_debug, "asapdec", 0, "ASAP decoder");
 
-  return gst_element_register (asapdec, "asapdec", GST_RANK_NONE,
-      GST_TYPE_ASAPDEC);
+  return gst_element_register (asapdec, "asapdec", GST_RANK_NONE, GST_TYPE_ASAPDEC);
 }
 
-/* Workaround for sloppy gstconfig.h: it only checks _MSC_VER,
+/* Workaround for gstconfig.h: it only checks _MSC_VER,
    so it doesn't emit __declspec(dllexport) for MinGW.
    As a result, no symbol has __declspec(dllexport)
    and thus all are exported from the DLL. */

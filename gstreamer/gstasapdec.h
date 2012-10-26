@@ -50,6 +50,8 @@ struct _GstAsapDec
   GstPad *sinkpad, *srcpad;
 
   ASAP *asap;
+  gboolean playing;
+  gint duration;
   gint tune_number;
   gint module_len;
   guchar module[ASAPInfo_MAX_MODULE_LENGTH];
