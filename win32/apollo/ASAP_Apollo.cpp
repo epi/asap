@@ -1,7 +1,7 @@
 /*
  * ASAP_Apollo.cpp - ASAP plugin for Apollo
  *
- * Copyright (C) 2008-2011  Piotr Fusik
+ * Copyright (C) 2008-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -117,7 +117,7 @@ public:
 		trackInfo->sampleRate = ASAP_SAMPLE_RATE;
 		trackInfo->numChannels = ASAPInfo_GetChannels(info);
 		trackInfo->bitResolution = BITS_PER_SAMPLE;
-		strcpy(trackInfo->fileTypeDescription, "8-bit Atari music");
+		strcpy(trackInfo->fileTypeDescription, "Atari 8-bit music");
 		ASAPInfo_Delete(info);
 		return TRUE;
 	}

@@ -189,7 +189,7 @@ or for all users:
 sudo make install-xmms
 --------------------------------------------------------------------------------
 
-If you have another XMMS plugin that supports 8-bit Atari music,
+If you have another XMMS plugin that supports Atari 8-bit music,
 remove it in order to avoid conflicts.
 
 

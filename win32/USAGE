@@ -28,7 +28,7 @@ available in the menu which appears when you right-click the icon.
 
 Winamp plugin::
 {asapsetup%}Extract `in_asap.dll` to the `Plugins` directory of your Winamp installation.
-It is recommended that you remove other plugins that support 8-bit Atari music.
+It is recommended that you remove other plugins that support Atari 8-bit music.
 
 {asapsetup%}Windows Media Player plugin::
 {asapsetup%}To install: extract `asap_dsf.dll`, `install_dsf.bat` and `uninstall_dsf.bat`

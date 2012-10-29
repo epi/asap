@@ -1,7 +1,7 @@
 /*
  * airasap.js - ASAP for Adobe AIR
  *
- * Copyright (C) 2010-2011  Piotr Fusik
+ * Copyright (C) 2010-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -125,7 +125,7 @@ function selectFile()
 {
 	var selector = new air.File();
 	selector.addEventListener(air.Event.SELECT, onFileSelect);
-	selector.browseForOpen("Select 8-bit Atari music", [
+	selector.browseForOpen("Select Atari 8-bit music", [
 		new air.FileFilter("All supported", "*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2;*.fc"),
 		new air.FileFilter("Slight Atari Player (*.sap)", "*.sap"),
 		new air.FileFilter("Chaos Music Composer (*.cmc;*.cm3;*.cmr;*.cms;*.dmc)", "*.cmc;*.cm3;*.cmr;*.cms;*.dmc"),

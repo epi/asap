@@ -4,7 +4,7 @@
 		<DisplayName>ASAP</DisplayName>
 		<PublisherDisplayName>foxoft.com.pl</PublisherDisplayName>
 		<Logo>Logo.png</Logo>
-		<Description>ASAP plays 8-bit Atari chiptunes</Description>
+		<Description>ASAP plays Atari 8-bit chiptunes</Description>
 	</Properties>
 	<Prerequisites>
 		<OSMinVersion>6.2</OSMinVersion>
@@ -15,7 +15,7 @@
 	</Resources>
 	<Applications>
 		<Application Id="MetroASAP" Executable="MetroASAP.exe" EntryPoint="MetroASAP">
-			<VisualElements DisplayName="ASAP" Description="ASAP plays 8-bit Atari chiptunes"
+			<VisualElements DisplayName="ASAP" Description="ASAP plays Atari 8-bit chiptunes"
 				Logo="Logo.png" SmallLogo="SmallLogo.png" BackgroundColor="#c02020" ForegroundText="light">
 				<DefaultTile ShowName="allLogos" />
 				<SplashScreen Image="SplashScreen.png" />

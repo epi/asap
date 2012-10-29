@@ -1,7 +1,7 @@
 Name: asap
 Version: 3.1.3
 Release: 1
-Summary: Player of 8-bit Atari music
+Summary: Player of Atari 8-bit music
 License: GPLv2+
 Group: Applications/Multimedia
 Source: http://prdownloads.sourceforge.net/asap/asap-%{version}.tar.gz
@@ -9,13 +9,13 @@ URL: http://asap.sourceforge.net/
 BuildRoot: %{_tmppath}/asap-root
 
 %description
-ASAP is a player of 8-bit Atari music for modern computers.
+ASAP is a player of Atari 8-bit music for modern computers.
 It emulates the POKEY sound chip and the 6502 processor.
 ASAP supports the following file formats:
 SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 
 %package devel
-Summary: Development library with 8-bit Atari music emulation
+Summary: Development library with Atari 8-bit music emulation
 Group: Development/Libraries
 
 %description devel
@@ -28,7 +28,7 @@ Requires: audacious
 BuildRequires: audacious-devel
 
 %description audacious
-Provides playback of 8-bit Atari music in Audacious.
+Provides playback of Atari 8-bit music in Audacious.
 Supports the following file formats:
 SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 
@@ -39,7 +39,7 @@ Requires: xmms
 BuildRequires: xmms-devel
 
 %description xmms
-Provides playback of 8-bit Atari music in XMMS.
+Provides playback of Atari 8-bit music in XMMS.
 Supports the following file formats:
 SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 
@@ -50,7 +50,7 @@ Requires: gstreamer >= 0.10.36
 BuildRequires: gstreamer-devel
 
 %description gstreamer0.10
-Provides playback of 8-bit Atari music in GStreamer-based players.
+Provides playback of Atari 8-bit music in GStreamer-based players.
 Supports the following file formats:
 SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 
@@ -61,7 +61,7 @@ Requires: vlc
 BuildRequires: vlc-devel
 
 %description vlc
-Provides playback of 8-bit Atari music in VLC.
+Provides playback of Atari 8-bit music in VLC.
 Supports the following file formats:
 SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 

@@ -41,7 +41,7 @@ BOOL WINAPI Shell_NotifyIcon(DWORD,PNOTIFYICONDATAW);
 
 #define APP_TITLE        _T("WASAP")
 #define WND_CLASS_NAME   _T("WASAP")
-#define OPEN_TITLE       _T("Select 8-bit Atari music")
+#define OPEN_TITLE       _T("Select Atari 8-bit music")
 #define BITS_PER_SAMPLE  16
 #define BUFFERED_BLOCKS  4096
 

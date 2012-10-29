@@ -1,7 +1,7 @@
 /*
  * ASAPMusicRoutine.java - music embeddable in an Atari program
  *
- * Copyright (C) 2011  Piotr Fusik
+ * Copyright (C) 2011-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -42,7 +42,7 @@ public class ASAPMusicRoutine
 	private final int playerRate;
 
 	/**
-	 * Transforms music data into a form that can be embedded in an 8-bit Atari program.
+	 * Transforms music data into a form that can be embedded in an Atari 8-bit program.
 	 * @param filename Name of the source music file. The extension is used to identify the format. No I/O is performed.
 	 * @param module Contents of the source music file. Only <code>moduleLen</code> leading bytes are meaningful.
 	 * @param moduleLen Length of the source music file.
@@ -67,7 +67,7 @@ public class ASAPMusicRoutine
 
 	/**
 	 * Returns music data.
-	 * The data is in the format of 8-bit Atari executables:
+	 * The data is in the format of Atari 8-bit executables:
 	 * two <code>0xff</code> bytes followed by multiple blocks loaded
 	 * at different addresses.
 	 * It is not a complete program, there is no init or run address.

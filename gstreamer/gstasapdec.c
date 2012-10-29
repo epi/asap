@@ -288,7 +288,7 @@ gst_asap_dec_base_init (gpointer gclass)
   gst_element_class_set_details_simple (element_class,
     "ASAP decoder",
     "Codec/Decoder/Audio",
-    "Decodes 8-bit Atari .sap chiptunes",
+    "Decodes Atari 8-bit .sap chiptunes",
     "Piotr Fusik <fox@scene.pl>");
 
   gst_element_class_add_pad_template (element_class,

@@ -3,14 +3,14 @@ SAP File Format
 :author: Piotr Fusik
 
 This is the specification of the SAP (Slight Atari Player) file format.
-SAP files contain chip music of the 8-bit Atari computers.
+SAP files contain chip music of the Atari 8-bit computers.
 
 
 History
 -------
 
 The SAP format was created in the 1990s by Adam Bienias and was intended
-to be a single format for playback of any 8-bit Atari music on a PC.
+to be a single format for playback of any Atari 8-bit music on a PC.
 Adam Bienias has also created the first player for Windows and later published
 its source code so that other players appeared.
 

@@ -1,5 +1,5 @@
 /*
- * asapscan.c - 8-bit Atari music analyzer
+ * asapscan.c - Atari 8-bit music analyzer
  *
  * Copyright (C) 2007-2012  Piotr Fusik
  *

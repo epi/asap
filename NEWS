@@ -229,6 +229,6 @@ ASAP 0.2.0 (2006-01-15)::
 ASAP 0.1.0 (2005-12-31)::
 
 - This initial release included: ASAP2WAV - portable command-line utility for converting
-8-bit Atari music to WAV files, WASAP - a tiny player for Windows and in_asap - a Winamp plugin.
+Atari 8-bit music to WAV files, WASAP - a tiny player for Windows and in_asap - a Winamp plugin.
 - It supported the following formats: SAP (except for samples and stereo),
 CMC, CMR, DMC, MPT (without samples), MPD, RMT (mono) and TMC (mono).

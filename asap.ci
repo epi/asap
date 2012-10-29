@@ -26,7 +26,7 @@ enum NmiStatus
 	WasVBlank
 }
 
-/// 8-bit Atari chip music emulator.
+/// Atari 8-bit chip music emulator.
 /// This class performs no I/O operations - all music data must be passed in byte arrays.
 public class ASAP
 {
