@@ -47,7 +47,9 @@ SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 Summary: ASAP plugin for GStreamer 0.10
 Group: Applications/Multimedia
 Requires: gstreamer >= 0.10.36
+Requires: gstreamer < 0.11
 BuildRequires: gstreamer-devel
+# 0.10.36 is the first version to properly recognize SAP files. This isn't required for the build.
 
 %description gstreamer0.10
 Provides playback of Atari 8-bit music in GStreamer-based players.
