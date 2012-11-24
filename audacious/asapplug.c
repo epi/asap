@@ -322,11 +322,11 @@ static void play_stop(InputPlayback *playback)
 	g_mutex_unlock(control_mutex);
 }
 
+#pragma GCC diagnostic ignored "-Wunused-result"
 static void write_byte(void *obj, int data)
 {
 	VFSFile *file = (VFSFile *) obj;
 	const char buf[1] = { data };
-#pragma GCC diagnostic ignored "-Wunused-result"
 	vfs_fwrite(buf, 1, 1, file);
 }
 
