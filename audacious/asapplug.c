@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdio.h>
 #include <glib.h>
 #include <audacious/plugin.h>
 #include <libaudcore/audstrings.h>
@@ -338,6 +339,7 @@ static gboolean update_song_tuple(const Tuple * tuple, VFSFile *file)
 	int module_len = load_module(filename, file, module);
 	ASAPInfo *info;
 	char *s;
+	int year;
 	ByteWriter bw;
 	gboolean ok;
 	if (module_len <= 0)
@@ -373,6 +375,19 @@ static gboolean update_song_tuple(const Tuple * tuple, VFSFile *file)
 	}
 	else
 		ASAPInfo_SetTitle(info, "");
+	year = tuple_get_int(tuple, FIELD_YEAR, NULL);
+	if (year == 0)
+		year = -1;
+	/* check if year changed so that we don't lose other date parts */
+	if (year != ASAPInfo_GetYear(info)) {
+		if (year <= 0)
+			ASAPInfo_SetDate(info, "");
+		else {
+			char d[16];
+			sprintf(d, "%d", year);
+			ASAPInfo_SetDate(info, d);
+		}
+	}
 
 	/* write file */
 	vfs_rewind(file);
