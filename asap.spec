@@ -107,7 +107,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/lib/vlc/plugins/demux/libasap_plugin.so
 
 %changelog
-* Thu Oct 18 2012 Piotr Fusik <fox@scene.pl>
+* Tue Dec 4 2012 Piotr Fusik <fox@scene.pl>
 - 3.1.3-1
 - Added subpackages with GStreamer and VLC plugins
 

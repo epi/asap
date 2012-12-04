@@ -9,7 +9,7 @@ image:http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get 
 News
 ----
 
-ASAP 3.1.3 (2012-12-??)::
+ASAP 3.1.3 (2012-12-04)::
 
 - foobar2000 plugin plays files inside ATR disk images.
 - VLC and AIMP 3 plugins support RMT and FC in addition to SAP.
