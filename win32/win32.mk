@@ -112,7 +112,7 @@ CLEAN += win32/asapscan.exe
 # sap2txt
 
 win32/sap2txt.exe: $(srcdir)sap2txt.c
-	$(WIN32_CC) -lz
+	$(WIN32_CC) -static -lz
 CLEAN += win32/sap2txt.exe
 
 # sap2ntsc
