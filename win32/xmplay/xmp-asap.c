@@ -1,7 +1,7 @@
 /*
  * xmp-asap.c - ASAP plugin for XMPlay
  *
- * Copyright (C) 2010-2011  Piotr Fusik
+ * Copyright (C) 2010-2012  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -41,6 +41,11 @@ static const XMPFUNC_IN *xmpfin;
 static BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 static int module_len;
 ASAP *asap;
+
+void onUpdatePlayingInfo(void)
+{
+	xmpfreg->SetInt("ASAP", "PlayingInfo", &playing_info);
+}
 
 static void WINAPI ASAP_ShowInfo()
 {
@@ -337,6 +342,7 @@ __declspec(dllexport) XMPIN *WINAPI XMPIN_GetInterface(DWORD face, InterfaceProc
 	xmpfreg->GetInt("ASAP", "SilenceSeconds", &silence_seconds);
 	xmpfreg->GetInt("ASAP", "PlayLoops", &play_loops);
 	xmpfreg->GetInt("ASAP", "MuteMask", &mute_mask);
+	xmpfreg->GetInt("ASAP", "PlayingInfo", &playing_info);
 	return &xmpin;
 }
 

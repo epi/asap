@@ -92,7 +92,7 @@ HWND infoDialog = NULL;
 
 static _TCHAR playing_filename[MAX_PATH];
 static int playing_song = 0;
-static BOOL playing_info = FALSE;
+BOOL playing_info = FALSE;
 static byte saved_module[ASAPInfo_MAX_MODULE_LENGTH];
 static int saved_module_len;
 static ASAPInfo *edited_info = NULL;
@@ -566,7 +566,9 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 {
 	switch (uMsg) {
 	case WM_INITDIALOG:
+#if defined(WINAMP) || defined(XMPLAY)
 		CheckDlgButton(hDlg, IDC_PLAYING, playing_info ? BST_CHECKED : BST_UNCHECKED);
+#endif
 		SendDlgItemMessage(hDlg, IDC_AUTHOR, EM_LIMITTEXT, ASAPInfo_MAX_TEXT_LENGTH, 0);
 		SendDlgItemMessage(hDlg, IDC_NAME, EM_LIMITTEXT, ASAPInfo_MAX_TEXT_LENGTH, 0);
 		SendDlgItemMessage(hDlg, IDC_DATE, EM_LIMITTEXT, ASAPInfo_MAX_TEXT_LENGTH, 0);
@@ -574,11 +576,14 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 		return TRUE;
 	case WM_COMMAND:
 		switch (wParam) {
+#if defined(WINAMP) || defined(XMPLAY)
 		case MAKEWPARAM(IDC_PLAYING, BN_CLICKED):
 			playing_info = (IsDlgButtonChecked(hDlg, IDC_PLAYING) == BST_CHECKED);
 			if (playing_info && playing_filename[0] != '\0')
 				updateInfoDialog(playing_filename, playing_song);
+			onUpdatePlayingInfo();
 			return TRUE;
+#endif
 		case MAKEWPARAM(IDC_AUTHOR, EN_CHANGE):
 			updateInfoString(hDlg, IDC_AUTHOR, INVALID_FIELD_AUTHOR, ASAPInfo_SetAuthor);
 			return TRUE;

@@ -74,6 +74,11 @@ static void writeIniInt(const char *name, int value)
 	WritePrivateProfileString(INI_SECTION, name, str, ini_file);
 }
 
+void onUpdatePlayingInfo(void)
+{
+	writeIniInt("playing_info", playing_info);
+}
+
 static void config(HWND hwndParent)
 {
 	if (settingsDialog(mod.hDllInstance, hwndParent)) {
@@ -226,6 +231,7 @@ static void init(void)
 	silence_seconds = GetPrivateProfileInt(INI_SECTION, "silence_seconds", silence_seconds, ini_file);
 	play_loops = GetPrivateProfileInt(INI_SECTION, "play_loops", play_loops, ini_file);
 	mute_mask = GetPrivateProfileInt(INI_SECTION, "mute_mask", mute_mask, ini_file);
+	playing_info = GetPrivateProfileInt(INI_SECTION, "playing_info", playing_info, ini_file);
 }
 
 static void quit(void)
