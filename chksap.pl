@@ -535,7 +535,7 @@ sub process($$) {
 						if (!$times) {
 							$fatal{'error running asapscan'} = 1;
 						}
-						elsif ($times =~ /^(?:TIME \d?\d:\d\d(?:\.\d\d\d?)?(?: LOOP)?\n)+$/s) {
+						elsif ($times =~ /^(?:TIME \d?\d:\d\d(?:\.\d\d\d?)?(?: LOOP)?\r?\n)+$/s) {
 							my @new_times = $times =~ /\d?\d:\d\d(?:\.\d\d\d?)?(?: LOOP)?/gs;
 							if (!@times) {
 								@times = @new_times;
