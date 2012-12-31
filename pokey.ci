@@ -1,6 +1,6 @@
 // pokey.ci - POKEY chip emulator
 //
-// Copyright (C) 2010-2011  Piotr Fusik
+// Copyright (C) 2010-2012  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -81,8 +81,15 @@ class Pokey
 	int Delta2;
 	int Delta3;
 	int Delta4;
+	// Sample rates from 32000 to 50000 should be fine,
+	// but weren't tested - please report your experience.
+	// For lower rates, you'll need to add a low-pass filter.
+	// The DC filter in PokeyPair.Generate should also be adjusted
+	// whenever the sample rate considerably differs from 44100.
 	const int SampleRate = 44100;
-	int[888] DeltaBuffer; // enough for one PAL frame == 312 * 114 cycles =~ 885 samples
+	// Enough for one PAL frame == 312 * 114 cycles + some margin,
+	// as we emulate whole 6502 instructions and interpolate samples.
+	int[SampleRate * 312 * 114 / 1773447 + 4] DeltaBuffer;
 
 	void Initialize()
 	{
@@ -310,8 +317,9 @@ class PokeyPair
 	Pokey() BasePokey;
 	Pokey() ExtraPokey;
 
-	// 885 << SampleFactorShift shouldn't overflow int
-	// SampleFactorShift could be 21, but it wouldn't improve accuracy because SampleFactor would be even
+	// DeltaBuffer.Length << SampleFactorShift shouldn't overflow int.
+	// SampleFactorShift could be 21, but that wouldn't improve
+	// accuracy because SampleFactor would be even.
 	const int SampleFactorShift = 20;
 	int SampleFactor;
 	int SampleOffset;
@@ -351,9 +359,14 @@ class PokeyPair
 		Irqst = 0xff;
 		BasePokey.Initialize();
 		ExtraPokey.Initialize();
-		// 25837 = (SampleRate << SampleFactorShift) / 1789772.5, rounded to the nearest (i.e. up)
-		// 26075 = (SampleRate << SampleFactorShift) / 1773447, rounded to the nearest (i.e. up)
-		SampleFactor = ntsc ? 25837 : 26075;
+
+		// What we really need here is:
+		// macro SAMPLE_FACTOR(clock) (((Pokey.SampleRate << SampleFactorShift) + (clock >> 1)) / clock)
+		// unfortunately cito provides only 32-bit arithmetic for the moment,
+		// so I shift by 5 to avoid overflow.
+		macro SAMPLE_FACTOR(clock) (((Pokey.SampleRate << SampleFactorShift - 5) + (clock >> 6)) / (clock >> 5))
+		SampleFactor = ntsc ? SAMPLE_FACTOR(1789772) : SAMPLE_FACTOR(1773447);
+
 		SampleOffset = 0;
 		ReadySamplesStart = 0;
 		ReadySamplesEnd = 0;
