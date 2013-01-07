@@ -337,7 +337,7 @@ static void scan_song(int song)
 		if (detect_time) {
 			if (store_pokeys(frame)) {
 				silence_run++;
-				if (silence_run >= silence_frames && /* do not trigger at the initial silence */ silence_run < i) {
+				if (silence_run >= silence_frames && /* do not trigger at the initial silence */ silence_run < frame) {
 					print_time(frame + 1 - silence_run, FALSE);
 					return;
 				}
