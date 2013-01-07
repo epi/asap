@@ -1,7 +1,7 @@
 /*
  * asapscan.c - Atari 8-bit music analyzer
  *
- * Copyright (C) 2007-2012  Piotr Fusik
+ * Copyright (C) 2007-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -37,7 +37,7 @@ static int silence_frames;
 static int loop_check_frames;
 static int loop_min_frames;
 static int frame;
-static byte *registers_dump;
+static unsigned char *registers_dump;
 #define HASH_BITS  8
 static int hash_first[1 << HASH_BITS];
 static int *hash_next;
