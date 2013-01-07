@@ -45,6 +45,8 @@ static int hash_last[1 << HASH_BITS];
 
 static ASAP *asap;
 static cibool dump = FALSE;
+static cibool fingerprint = FALSE;
+static cibool long_fingerprint = FALSE;
 
 #define FEATURE_CHECK          1
 #define FEATURE_15_KHZ         2
@@ -220,6 +222,8 @@ static void print_help(void)
 		"-d          Dump POKEY registers\n"
 		"-f          List POKEY features used\n"
 		"-t          Detect silence and loops\n"
+		"-p          Calculate fingerprint\n"
+		"-l          Calculate hash representation (fingerprint is a substring of this)\n"
 		"-c          Dump 6502 trace\n"
 		"-u          List used unofficial 6502 instructions and BRK\n"
 		"-b HEXADDR  Print time the given instruction reached\n"
@@ -268,9 +272,71 @@ static int get_hash(int player_call)
 {
 	int hash = 0;
 	int i;
+	for (i = 1; i < 9; i += 2) {
+		if ((registers_dump[18 * player_call + i] & 0xe0) == 0xe0)
+			registers_dump[18 * player_call + i] &= 0xbf;
+		if ((registers_dump[18 * player_call + i + 9] & 0xe0) == 0xe0)
+			registers_dump[18 * player_call + i + 9] &= 0xbf;
+	}
 	for (i = 0; i < 18; i++)
 		hash += registers_dump[18 * player_call + i];
 	return hash;
+}
+
+static int get_byte_hash(int frame)
+{
+	int res = get_hash(frame);
+	res = (res & 0xff) + (res >> 8);
+	res = (res & 0xff) + (res >> 8);
+	return res;
+}
+
+static void compute_entrophy(int frames)
+{
+	int entrophy_counters[256];
+#define ENTROPHY_LEN 32
+	int emaxvalue = 0;
+	int emaxframe = 0;
+	int evalue = 0;
+	int i;
+	int v;
+
+	for (i = 0; i < 256; i++)
+		entrophy_counters[i] = 0;
+
+	if (long_fingerprint) {
+		for (i = 0; i < frame; i++) {
+			v = get_byte_hash(i);
+			printf("%02x", v);
+		}
+		printf("\n");
+	}
+	else {
+		for (i = 0; i < frames; i++) {
+			v = get_byte_hash(i);
+			if (entrophy_counters[v] == 0)
+				evalue++;
+			entrophy_counters[v]++;
+
+			if (i >= ENTROPHY_LEN) {
+				v = get_byte_hash(i - ENTROPHY_LEN);
+				entrophy_counters[v]--;
+				if (entrophy_counters[v] == 0)
+					evalue--;
+
+				if (emaxvalue < evalue) {
+					emaxvalue = evalue;
+					emaxframe = i - ENTROPHY_LEN;
+				}
+			}
+		}
+
+		for (i = 0; i < ENTROPHY_LEN; i++) {
+			v = get_byte_hash(i + emaxframe);
+			printf("%02x", v);
+		}
+		printf("\n");
+	}
 }
 
 static void print_pokey(const Pokey *pokey)
@@ -338,7 +404,10 @@ static void scan_song(int song)
 			if (store_pokeys(frame)) {
 				silence_run++;
 				if (silence_run >= silence_frames && /* do not trigger at the initial silence */ silence_run < frame) {
-					print_time(frame + 1 - silence_run, FALSE);
+					if (fingerprint)
+						compute_entrophy(frame + 1 - silence_run);
+					else
+						print_time(frame + 1 - silence_run, FALSE);
 					return;
 				}
 			}
@@ -353,12 +422,18 @@ static void scan_song(int song)
 					if (has_loop_at(first_frame, second_frame)) {
 						int loop_len = second_frame - first_frame;
 						if (loop_len >= loop_min_frames) {
-							print_time(second_frame, TRUE);
+							if (fingerprint)
+								compute_entrophy(second_frame);
+							else
+								print_time(second_frame, TRUE);
 							return;
 						}
 						if (loop_len == 1) {
 							/* POKEY registers do not change - probably an ultrasound */
-							print_time(first_frame, FALSE);
+							if (fingerprint)
+								compute_entrophy(first_frame);
+							else
+								print_time(first_frame, FALSE);
 							return;
 						}
 					}
@@ -376,8 +451,12 @@ static void scan_song(int song)
 			running_hash += get_hash(frame);
 		}
 	}
-	if (detect_time)
-		printf("No silence or loop detected in song %d\n", song);
+	if (detect_time) {
+		if (fingerprint)
+			compute_entrophy(loop_check_frames);
+		else
+			printf("No silence or loop detected in song %d\n", song);
+	}
 	if (acid) {
 #ifdef _WIN32
 		HANDLE so = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -430,6 +509,10 @@ int main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-d") == 0)
 			dump = TRUE;
+		else if (strcmp(argv[i], "-p") == 0)
+			detect_time = fingerprint = TRUE;
+		else if (strcmp(argv[i], "-l") == 0)
+			detect_time = fingerprint = long_fingerprint = TRUE;
 		else if (strcmp(argv[i], "-f") == 0)
 			features = FEATURE_CHECK;
 		else if (strcmp(argv[i], "-t") == 0)

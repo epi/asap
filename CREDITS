@@ -12,6 +12,9 @@ Atari800 Emulator Developers {asapwww!(http://atari800.sourceforge.net)}::
 Zdenek Eisenhammer {asapwww!<pg@pinknet.cz>}::
 Testing.
 
+Jakub Husak {asapwww!<jakub.husak@gmail.com>}::
+SAP fingerprint calculation. asapscan fixes.
+
 Henryk Karpowicz {asapwww!<henkar@poczta.tygrys.net>}::
 CMC routine modified for the CM3 format.
 
