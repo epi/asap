@@ -1,7 +1,7 @@
 /*
  * gspasap.c - ASAP plugin for GSPlayer
  *
- * Copyright (C) 2007-2011  Piotr Fusik
+ * Copyright (C) 2007-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -159,7 +159,7 @@ static BOOL loadFile(LPCTSTR pszFile)
 	CONVERT_FILENAME;
 	if (!ASAPInfo_IsOurFile(ANSI_FILENAME))
 		return FALSE;
-	fh = CreateFile(pszFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	fh = CreateFile(pszFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fh == INVALID_HANDLE_VALUE)
 		return FALSE;
 	if (!ReadFile(fh, module, sizeof(module), &module_len, NULL)) {
