@@ -65,24 +65,24 @@ struct Cpu6502 {
 static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit);
 
 struct ASAPInfo {
-	char author[128];
 	int channels;
 	int covoxAddr;
-	char date[128];
 	int defaultSong;
-	int durations[32];
 	int fastplay;
-	char filename[128];
 	int headerLen;
 	int init;
-	cibool loops[32];
 	int music;
 	cibool ntsc;
 	int player;
-	unsigned char songPos[32];
 	int songs;
-	char title[128];
 	ASAPModuleType type;
+	unsigned char songPos[32];
+	char author[128];
+	char date[128];
+	int durations[32];
+	char filename[128];
+	cibool loops[32];
+	char title[128];
 };
 static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls);
 static int ASAPInfo_AfterFF(unsigned char const *module, int moduleLen, int currentOffset);
@@ -139,7 +139,6 @@ struct Pokey {
 	int delta2;
 	int delta3;
 	int delta4;
-	int deltaBuffer[888];
 	int divCycles;
 	cibool init;
 	int mute1;
@@ -162,6 +161,7 @@ struct Pokey {
 	int tickCycle2;
 	int tickCycle3;
 	int tickCycle4;
+	int deltaBuffer[888];
 };
 static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int delta);
 static void Pokey_EndFrame(Pokey *self, PokeyPair const *pokeys, int cycle);
@@ -171,14 +171,10 @@ static cibool Pokey_IsSilent(Pokey const *self);
 static void Pokey_Mute(Pokey *self, int mask);
 
 struct PokeyPair {
-	Pokey basePokey;
-	Pokey extraPokey;
 	int extraPokeyMask;
 	int iirAccLeft;
 	int iirAccRight;
 	int irqst;
-	unsigned char poly17Lookup[16385];
-	unsigned char poly9Lookup[511];
 	int readySamplesEnd;
 	int readySamplesStart;
 	int sampleFactor;
@@ -186,6 +182,10 @@ struct PokeyPair {
 	int timer1Cycle;
 	int timer2Cycle;
 	int timer4Cycle;
+	unsigned char poly9Lookup[511];
+	Pokey basePokey;
+	Pokey extraPokey;
+	unsigned char poly17Lookup[16385];
 };
 static void PokeyPair_Construct(PokeyPair *self);
 static int PokeyPair_EndFrame(PokeyPair *self, int cycle);
@@ -200,20 +200,20 @@ struct ASAP {
 	int blocksPlayed;
 	int consol;
 	unsigned char covox[4];
-	Cpu6502 cpu;
 	int currentDuration;
 	int currentSong;
 	int cycle;
-	unsigned char memory[65536];
-	ASAPInfo moduleInfo;
 	int nextEventCycle;
 	int nextPlayerCycle;
 	int nextScanlineCycle;
 	NmiStatus nmist;
-	PokeyPair pokeys;
 	int silenceCycles;
 	int silenceCyclesCounter;
 	int tmcPerFrameCounter;
+	Cpu6502 cpu;
+	ASAPInfo moduleInfo;
+	PokeyPair pokeys;
+	unsigned char memory[65536];
 };
 static void ASAP_Construct(ASAP *self);
 static void ASAP_Call6502(ASAP *self, int addr);
@@ -1869,13 +1869,13 @@ struct FlashPackItem {
 static int FlashPackItem_WriteValueTo(FlashPackItem const *self, unsigned char *buffer, int index);
 
 struct FlashPack {
-	unsigned char compressed[65536];
 	int compressedLength;
-	FlashPackItem items[64];
 	int itemsCount;
 	int loadAddress;
 	int loadEndAddress;
 	FlashPackLoadState loadState;
+	FlashPackItem items[64];
+	unsigned char compressed[65536];
 	int memory[65536];
 };
 static void FlashPack_Construct(FlashPack *self);
@@ -2010,7 +2010,6 @@ static int ASAP_Do6502Frame(ASAP *self)
 
 static cibool ASAP_Do6502Init(ASAP *self, int pc, int a, int x, int y)
 {
-	int frame;
 	self->cpu.pc = pc;
 	self->cpu.a = a & 255;
 	self->cpu.x = x & 255;
@@ -2019,10 +2018,13 @@ static cibool ASAP_Do6502Init(ASAP *self, int pc, int a, int x, int y)
 	self->memory[510] = 255;
 	self->memory[511] = 209;
 	self->cpu.s = 253;
-	for (frame = 0; frame < 50; frame++) {
-		ASAP_Do6502Frame(self);
-		if (self->cpu.pc == 53760)
-			return TRUE;
+	{
+		int frame;
+		for (frame = 0; frame < 50; frame++) {
+			ASAP_Do6502Frame(self);
+			if (self->cpu.pc == 53760)
+				return TRUE;
+		}
 	}
 	return FALSE;
 }
@@ -2143,11 +2145,13 @@ int ASAP_GetWavHeader(ASAP const *self, unsigned char *buffer, ASAPSampleFormat 
 			i = ASAP_PutWavMetadata(buffer, 48, 1296125513, self->moduleInfo.title);
 			i = ASAP_PutWavMetadata(buffer, i, 1414676809, self->moduleInfo.author);
 			if (year > 0) {
-				int j;
 				ASAP_PutLittleEndians(buffer, i, 1146241865, 6);
-				for (j = 3; j >= 0; j--) {
-					buffer[i + 8 + j] = 48 + year % 10;
-					year /= 10;
+				{
+					int j;
+					for (j = 3; j >= 0; j--) {
+						buffer[i + 8 + j] = 48 + year % 10;
+						year /= 10;
+					}
 				}
 				buffer[i + 12] = 0;
 				buffer[i + 13] = 0;
@@ -2456,11 +2460,13 @@ static int ASAP_PutWavMetadata(unsigned char *buffer, int offset, int fourCC, co
 {
 	int len = (int) strlen(value);
 	if (len > 0) {
-		int i;
 		ASAP_PutLittleEndians(buffer, offset, fourCC, (len | 1) + 1);
 		offset += 8;
-		for (i = 0; i < len; i++)
-			buffer[offset++] = value[i];
+		{
+			int i;
+			for (i = 0; i < len; i++)
+				buffer[offset++] = value[i];
+		}
 		buffer[offset++] = 0;
 		if ((len & 1) == 0)
 			buffer[offset++] = 0;
@@ -2576,12 +2582,14 @@ static cibool ASAPInfo_CheckValidChar(int c)
 static cibool ASAPInfo_CheckValidText(const char *s)
 {
 	int n = (int) strlen(s);
-	int i;
 	if (n > 127)
 		return FALSE;
-	for (i = 0; i < n; i++)
-		if (!ASAPInfo_CheckValidChar(s[i]))
-			return FALSE;
+	{
+		int i;
+		for (i = 0; i < n; i++)
+			if (!ASAPInfo_CheckValidChar(s[i]))
+				return FALSE;
+	}
 	return TRUE;
 }
 
@@ -2667,14 +2675,16 @@ int ASAPInfo_GetInitAddress(ASAPInfo const *self)
 
 const char *ASAPInfo_GetInstrumentName(ASAPInfo const *self, unsigned char const *module, int moduleLen, int i)
 {
-	int offset;
 	if (self->type != ASAPModuleType_RMT)
 		return NULL;
-	for (offset = ASAPInfo_GetWord(module, 4) - ASAPInfo_GetWord(module, 2) + 12; offset < moduleLen; offset++) {
-		if (module[offset - 1] == 0 && --i == -1) {
-			
+	{
+		int offset;
+		for (offset = ASAPInfo_GetWord(module, 4) - ASAPInfo_GetWord(module, 2) + 12; offset < moduleLen; offset++) {
+			if (module[offset - 1] == 0 && --i == -1) {
+				
 					return (const char *) module + offset;
 				}
+		}
 	}
 	return NULL;
 }
@@ -2755,14 +2765,16 @@ const char *ASAPInfo_GetOriginalModuleExt(ASAPInfo const *self, unsigned char co
 static int ASAPInfo_GetPackedExt(const char *filename)
 {
 	int ext = 0;
-	int i;
-	for (i = (int) strlen(filename); --i > 0;) {
-		int c = filename[i];
-		if (c <= 32 || c > 122)
-			return 0;
-		if (c == 46)
-			return ext | 2105376;
-		ext = (ext << 8) + c;
+	{
+		int i;
+		for (i = (int) strlen(filename); --i > 0;) {
+			int c = filename[i];
+			if (c <= 32 || c > 122)
+				return 0;
+			if (c == 46)
+				return ext | 2105376;
+			ext = (ext << 8) + c;
+		}
 	}
 	return 0;
 }
@@ -2935,22 +2947,26 @@ static int ASAPInfo_GuessPackedExt(unsigned char const *module, int moduleLen)
 static cibool ASAPInfo_HasStringAt(unsigned char const *module, int moduleIndex, const char *s)
 {
 	int n = (int) strlen(s);
-	int i;
-	for (i = 0; i < n; i++)
-		if (module[moduleIndex + i] != s[i])
-			return FALSE;
+	{
+		int i;
+		for (i = 0; i < n; i++)
+			if (module[moduleIndex + i] != s[i])
+				return FALSE;
+	}
 	return TRUE;
 }
 
 static cibool ASAPInfo_IsDltPatternEnd(unsigned char const *module, int pos, int i)
 {
-	int ch;
-	for (ch = 0; ch < 4; ch++) {
-		int pattern = module[8198 + (ch << 8) + pos];
-		if (pattern < 64) {
-			int offset = 6 + (pattern << 7) + (i << 1);
-			if ((module[offset] & 128) == 0 && (module[offset + 1] & 128) != 0)
-				return TRUE;
+	{
+		int ch;
+		for (ch = 0; ch < 4; ch++) {
+			int pattern = module[8198 + (ch << 8) + pos];
+			if (pattern < 64) {
+				int offset = 6 + (pattern << 7) + (i << 1);
+				if ((module[offset] & 128) == 0 && (module[offset + 1] & 128) != 0)
+					return TRUE;
+			}
 		}
 	}
 	return FALSE;
@@ -2964,18 +2980,20 @@ static cibool ASAPInfo_IsDltTrackEmpty(unsigned char const *module, int pos)
 static cibool ASAPInfo_IsFcSongEnd(unsigned char const *module, int const *trackPos)
 {
 	cibool allLoop = TRUE;
-	int n;
-	for (n = 0; n < 3; n++) {
-		if (trackPos[n] >= 256)
-			return TRUE;
-		switch (module[3 + (n << 8) + trackPos[n]]) {
-		case 254:
-			return TRUE;
-		case 255:
-			break;
-		default:
-			allLoop = FALSE;
-			break;
+	{
+		int n;
+		for (n = 0; n < 3; n++) {
+			if (trackPos[n] >= 256)
+				return TRUE;
+			switch (module[3 + (n << 8) + trackPos[n]]) {
+			case 254:
+				return TRUE;
+			case 255:
+				break;
+			default:
+				allLoop = FALSE;
+				break;
+			}
 		}
 	}
 	return allLoop;
@@ -3027,20 +3045,21 @@ static cibool ASAPInfo_IsValidChar(int c)
 cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *module, int moduleLen)
 {
 	int ext;
-	int i;
 	if (filename != NULL) {
 		int len = (int) strlen(filename);
 		int basename = 0;
-		int i;
 		ext = -1;
-		for (i = len; --i >= 0;) {
-			int c = filename[i];
-			if (c == 47 || c == 92) {
-				basename = i + 1;
-				break;
+		{
+			int i;
+			for (i = len; --i >= 0;) {
+				int c = filename[i];
+				if (c == 47 || c == 92) {
+					basename = i + 1;
+					break;
+				}
+				if (c == 46)
+					ext = i;
 			}
-			if (c == 46)
-				ext = i;
 		}
 		if (ext < 0)
 			return FALSE;
@@ -3061,9 +3080,12 @@ cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *
 	self->channels = 1;
 	self->songs = 1;
 	self->defaultSong = 0;
-	for (i = 0; i < 32; i++) {
-		self->durations[i] = -1;
-		self->loops[i] = FALSE;
+	{
+		int i;
+		for (i = 0; i < 32; i++) {
+			self->durations[i] = -1;
+			self->loops[i] = FALSE;
+		}
 	}
 	self->ntsc = FALSE;
 	self->fastplay = 312;
@@ -3111,7 +3133,6 @@ cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *
 static cibool ASAPInfo_ParseCmc(ASAPInfo *self, unsigned char const *module, int moduleLen, ASAPModuleType type)
 {
 	int lastPos;
-	int pos;
 	if (moduleLen < 774)
 		return FALSE;
 	self->type = type;
@@ -3128,9 +3149,12 @@ static cibool ASAPInfo_ParseCmc(ASAPInfo *self, unsigned char const *module, int
 	}
 	self->songs = 0;
 	ASAPInfo_ParseCmcSong(self, module, 0);
-	for (pos = 0; pos < lastPos && self->songs < 32; pos++)
-		if (module[518 + pos] == 143 || module[518 + pos] == 239)
-			ASAPInfo_ParseCmcSong(self, module, pos + 1);
+	{
+		int pos;
+		for (pos = 0; pos < lastPos && self->songs < 32; pos++)
+			if (module[518 + pos] == 143 || module[518 + pos] == 239)
+				ASAPInfo_ParseCmcSong(self, module, pos + 1);
+	}
 	return TRUE;
 }
 
@@ -3148,10 +3172,12 @@ static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, i
 		int p2;
 		int p3;
 		if (pos == repEndPos && repTimes > 0) {
-			int i;
-			for (i = 0; i < 85; i++)
-				if (seen[i] == 1 || seen[i] == 3)
-					seen[i] = 0;
+			{
+				int i;
+				for (i = 0; i < 85; i++)
+					if (seen[i] == 1 || seen[i] == 3)
+						seen[i] = 0;
+			}
 			repTimes--;
 			pos = repStartPos;
 		}
@@ -3210,25 +3236,26 @@ static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, i
 
 static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int maxVal)
 {
-	int r;
 	if (module[moduleIndex] == 13)
 		return -1;
-	for (r = 0;;) {
-		int c = module[moduleIndex++];
-		if (c == 13)
-			return r;
-		if (c < 48 || c > 57)
-			return -1;
-		r = 10 * r + c - 48;
-		if (r > maxVal)
-			return -1;
+	{
+		int r;
+		for (r = 0;;) {
+			int c = module[moduleIndex++];
+			if (c == 13)
+				return r;
+			if (c < 48 || c > 57)
+				return -1;
+			r = 10 * r + c - 48;
+			if (r > maxVal)
+				return -1;
+		}
 	}
 }
 
 static cibool ASAPInfo_ParseDlt(ASAPInfo *self, unsigned char const *module, int moduleLen)
 {
 	cibool seen[128];
-	int pos;
 	if (moduleLen != 11270 && moduleLen != 11271)
 		return FALSE;
 	self->type = ASAPModuleType_DLT;
@@ -3238,9 +3265,12 @@ static cibool ASAPInfo_ParseDlt(ASAPInfo *self, unsigned char const *module, int
 		return FALSE;
 	memset(seen, 0, sizeof(seen));
 	self->songs = 0;
-	for (pos = 0; pos < 128 && self->songs < 32; pos++) {
-		if (!seen[pos])
-			ASAPInfo_ParseDltSong(self, module, seen, pos);
+	{
+		int pos;
+		for (pos = 0; pos < 128 && self->songs < 32; pos++) {
+			if (!seen[pos])
+				ASAPInfo_ParseDltSong(self, module, seen, pos);
+		}
 	}
 	if (self->songs == 0)
 		return FALSE;
@@ -3273,9 +3303,11 @@ static void ASAPInfo_ParseDltSong(ASAPInfo *self, unsigned char const *module, c
 		else if (p1 == 66)
 			tempo = module[8326 + pos++];
 		else {
-			int i;
-			for (i = 0; i < 64 && !ASAPInfo_IsDltPatternEnd(module, pos, i); i++)
-				playerCalls += tempo;
+			{
+				int i;
+				for (i = 0; i < 64 && !ASAPInfo_IsDltPatternEnd(module, pos, i); i++)
+					playerCalls += tempo;
+			}
 			pos++;
 		}
 	}
@@ -3356,8 +3388,6 @@ static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int 
 {
 	int patternOffsets[64];
 	int currentOffset;
-	int i;
-	int pos;
 	if (!ASAPInfo_ValidateFc(module, moduleLen))
 		return FALSE;
 	self->type = ASAPModuleType_FC;
@@ -3366,102 +3396,120 @@ static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int 
 	self->songs = 0;
 	self->headerLen = -1;
 	currentOffset = 899;
-	for (i = 0; i < 64; i++) {
-		patternOffsets[i] = currentOffset;
-		if ((currentOffset = ASAPInfo_AfterFF(module, moduleLen, currentOffset)) == -1)
-			return FALSE;
+	{
+		int i;
+		for (i = 0; i < 64; i++) {
+			patternOffsets[i] = currentOffset;
+			if ((currentOffset = ASAPInfo_AfterFF(module, moduleLen, currentOffset)) == -1)
+				return FALSE;
+		}
 	}
-	for (i = 0; i < 32; i++)
-		if ((currentOffset = ASAPInfo_AfterFF(module, moduleLen, currentOffset)) == -1)
-			return FALSE;
-	for (pos = 0; pos < 256 && self->songs < 32;) {
-		int trackPos[3];
-		int n;
-		int patternDelay[3];
-		int noteDuration[3];
-		int patternPos[3];
-		int playerCalls;
-		for (n = 0; n < 3; n++)
-			trackPos[n] = pos;
-		memset(patternDelay, 0, sizeof(patternDelay));
-		memset(noteDuration, 0, sizeof(noteDuration));
-		memset(patternPos, 0, sizeof(patternPos));
-		playerCalls = 0;
-		self->loops[self->songs] = TRUE;
-		while (!ASAPInfo_IsFcSongEnd(module, trackPos)) {
-			int n;
-			for (n = 0; n < 3; n++) {
-				int trackCmd = module[3 + (n << 8) + trackPos[n]];
-				if (trackCmd != 255 && patternDelay[n]-- <= 0) {
-					while (trackPos[n] < 256) {
-						trackCmd = module[3 + (n << 8) + trackPos[n]];
-						if (trackCmd < 64) {
-							int patternCmd = module[patternOffsets[trackCmd] + patternPos[n]++];
-							if (patternCmd < 64) {
-								patternDelay[n] = noteDuration[n];
-								break;
-							}
-							else if (patternCmd < 96)
-								noteDuration[n] = patternCmd - 64;
-							else if (patternCmd == 255) {
-								patternDelay[n] = 0;
-								noteDuration[n] = 0;
-								patternPos[n] = 0;
-								trackPos[n]++;
+	{
+		int i;
+		for (i = 0; i < 32; i++)
+			if ((currentOffset = ASAPInfo_AfterFF(module, moduleLen, currentOffset)) == -1)
+				return FALSE;
+	}
+	{
+		int pos;
+		for (pos = 0; pos < 256 && self->songs < 32;) {
+			int trackPos[3];
+			int patternDelay[3];
+			int noteDuration[3];
+			int patternPos[3];
+			int playerCalls;
+			{
+				int n;
+				for (n = 0; n < 3; n++)
+					trackPos[n] = pos;
+			}
+			memset(patternDelay, 0, sizeof(patternDelay));
+			memset(noteDuration, 0, sizeof(noteDuration));
+			memset(patternPos, 0, sizeof(patternPos));
+			playerCalls = 0;
+			self->loops[self->songs] = TRUE;
+			while (!ASAPInfo_IsFcSongEnd(module, trackPos)) {
+				{
+					int n;
+					for (n = 0; n < 3; n++) {
+						int trackCmd = module[3 + (n << 8) + trackPos[n]];
+						if (trackCmd != 255 && patternDelay[n]-- <= 0) {
+							while (trackPos[n] < 256) {
+								trackCmd = module[3 + (n << 8) + trackPos[n]];
+								if (trackCmd < 64) {
+									int patternCmd = module[patternOffsets[trackCmd] + patternPos[n]++];
+									if (patternCmd < 64) {
+										patternDelay[n] = noteDuration[n];
+										break;
+									}
+									else if (patternCmd < 96)
+										noteDuration[n] = patternCmd - 64;
+									else if (patternCmd == 255) {
+										patternDelay[n] = 0;
+										noteDuration[n] = 0;
+										patternPos[n] = 0;
+										trackPos[n]++;
+									}
+								}
+								else if (trackCmd == 64)
+									trackPos[n] += 2;
+								else if (trackCmd == 254) {
+									self->loops[self->songs] = FALSE;
+									break;
+								}
+								else if (trackCmd == 255)
+									break;
+								else
+									trackPos[n]++;
 							}
 						}
-						else if (trackCmd == 64)
-							trackPos[n] += 2;
-						else if (trackCmd == 254) {
-							self->loops[self->songs] = FALSE;
-							break;
-						}
-						else if (trackCmd == 255)
-							break;
-						else
-							trackPos[n]++;
 					}
 				}
+				if (ASAPInfo_IsFcSongEnd(module, trackPos))
+					break;
+				playerCalls += module[2];
 			}
-			if (ASAPInfo_IsFcSongEnd(module, trackPos))
-				break;
-			playerCalls += module[2];
+			pos = -1;
+			{
+				int n;
+				for (n = 0; n < 3; n++) {
+					int nxtrkpos = trackPos[n];
+					if (patternPos[n] > 0)
+						nxtrkpos++;
+					if (pos < nxtrkpos)
+						pos = nxtrkpos;
+				}
+			}
+			pos++;
+			if (pos <= 256)
+				ASAPInfo_AddSong(self, playerCalls);
 		}
-		pos = -1;
-		for (n = 0; n < 3; n++) {
-			int nxtrkpos = trackPos[n];
-			if (patternPos[n] > 0)
-				nxtrkpos++;
-			if (pos < nxtrkpos)
-				pos = nxtrkpos;
-		}
-		pos++;
-		if (pos <= 256)
-			ASAPInfo_AddSong(self, playerCalls);
 	}
 	return TRUE;
 }
 
 static int ASAPInfo_ParseHex(unsigned char const *module, int moduleIndex)
 {
-	int r;
 	if (module[moduleIndex] == 13)
 		return -1;
-	for (r = 0;;) {
-		int c = module[moduleIndex++];
-		if (c == 13)
-			return r;
-		if (r > 4095)
-			return -1;
-		r <<= 4;
-		if (c >= 48 && c <= 57)
-			r += c - 48;
-		else if (c >= 65 && c <= 70)
-			r += c - 65 + 10;
-		else if (c >= 97 && c <= 102)
-			r += c - 97 + 10;
-		else
-			return -1;
+	{
+		int r;
+		for (r = 0;;) {
+			int c = module[moduleIndex++];
+			if (c == 13)
+				return r;
+			if (r > 4095)
+				return -1;
+			r <<= 4;
+			if (c >= 48 && c <= 57)
+				r += c - 48;
+			else if (c >= 65 && c <= 70)
+				r += c - 65 + 10;
+			else if (c >= 97 && c <= 102)
+				r += c - 97 + 10;
+			else
+				return -1;
+		}
 	}
 }
 
@@ -3496,7 +3544,6 @@ static cibool ASAPInfo_ParseMpt(ASAPInfo *self, unsigned char const *module, int
 	int track0Addr;
 	int songLen;
 	cibool globalSeen[256];
-	int pos;
 	if (moduleLen < 464)
 		return FALSE;
 	self->type = ASAPModuleType_MPT;
@@ -3510,10 +3557,13 @@ static cibool ASAPInfo_ParseMpt(ASAPInfo *self, unsigned char const *module, int
 		return FALSE;
 	memset(globalSeen, 0, sizeof(globalSeen));
 	self->songs = 0;
-	for (pos = 0; pos < songLen && self->songs < 32; pos++) {
-		if (!globalSeen[pos]) {
-			self->songPos[self->songs] = pos;
-			ASAPInfo_ParseMptSong(self, module, globalSeen, songLen, pos);
+	{
+		int pos;
+		for (pos = 0; pos < songLen && self->songs < 32; pos++) {
+			if (!globalSeen[pos]) {
+				self->songPos[self->songs] = pos;
+				ASAPInfo_ParseMptSong(self, module, globalSeen, songLen, pos);
+			}
 		}
 	}
 	if (self->songs == 0)
@@ -3535,7 +3585,6 @@ static void ASAPInfo_ParseMptSong(ASAPInfo *self, unsigned char const *module, c
 	while (pos < songLen) {
 		int i;
 		int ch;
-		int patternRows;
 		if (seen[pos] != 0) {
 			if (seen[pos] != 1)
 				self->loops[self->songs] = TRUE;
@@ -3563,31 +3612,34 @@ static void ASAPInfo_ParseMptSong(ASAPInfo *self, unsigned char const *module, c
 		for (i = 0; i < songLen; i++)
 			if (seen[i] == 1)
 				seen[i] = 2;
-		for (patternRows = module[462]; --patternRows >= 0;) {
-			for (ch = 3; ch >= 0; ch--) {
-				if (patternOffset[ch] == 0 || --blankRowsCounter[ch] >= 0)
-					continue;
-				for (;;) {
-					i = module[patternOffset[ch]++];
-					if (i < 64 || i == 254)
-						break;
-					if (i < 128)
+		{
+			int patternRows;
+			for (patternRows = module[462]; --patternRows >= 0;) {
+				for (ch = 3; ch >= 0; ch--) {
+					if (patternOffset[ch] == 0 || --blankRowsCounter[ch] >= 0)
 						continue;
-					if (i < 192) {
-						blankRows[ch] = i - 128;
-						continue;
+					for (;;) {
+						i = module[patternOffset[ch]++];
+						if (i < 64 || i == 254)
+							break;
+						if (i < 128)
+							continue;
+						if (i < 192) {
+							blankRows[ch] = i - 128;
+							continue;
+						}
+						if (i < 208)
+							continue;
+						if (i < 224) {
+							tempo = i - 207;
+							continue;
+						}
+						patternRows = 0;
 					}
-					if (i < 208)
-						continue;
-					if (i < 224) {
-						tempo = i - 207;
-						continue;
-					}
-					patternRows = 0;
+					blankRowsCounter[ch] = blankRows[ch];
 				}
-				blankRowsCounter[ch] = blankRows[ch];
+				playerCalls += tempo;
 			}
-			playerCalls += tempo;
 		}
 		pos++;
 	}
@@ -3602,7 +3654,6 @@ static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int
 	int blockLen;
 	int songLen;
 	cibool globalSeen[256];
-	int pos;
 	unsigned char title[127];
 	int titleLen;
 	if (!ASAPInfo_ValidateRmt(module, moduleLen))
@@ -3633,10 +3684,13 @@ static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int
 		return FALSE;
 	memset(globalSeen, 0, sizeof(globalSeen));
 	self->songs = 0;
-	for (pos = 0; pos < songLen && self->songs < 32; pos++) {
-		if (!globalSeen[pos]) {
-			self->songPos[self->songs] = pos;
-			ASAPInfo_ParseRmtSong(self, module, globalSeen, songLen, posShift, pos);
+	{
+		int pos;
+		for (pos = 0; pos < songLen && self->songs < 32; pos++) {
+			if (!globalSeen[pos]) {
+				self->songPos[self->songs] = pos;
+				ASAPInfo_ParseRmtSong(self, module, globalSeen, songLen, posShift, pos);
+			}
 		}
 	}
 	self->fastplay = 312 / perFrame;
@@ -3670,16 +3724,12 @@ static void ASAPInfo_ParseRmtSong(ASAPInfo *self, unsigned char const *module, c
 	int volumeValue[8];
 	int volumeFrame[8];
 	int instrumentFrames;
-	int ch;
 	memset(seen, 0, sizeof(seen));
 	memset(instrumentNo, 0, sizeof(instrumentNo));
 	memset(instrumentFrame, 0, sizeof(instrumentFrame));
 	memset(volumeValue, 0, sizeof(volumeValue));
 	memset(volumeFrame, 0, sizeof(volumeFrame));
 	while (pos < songLen) {
-		int ch;
-		int i;
-		int patternRows;
 		if (seen[pos] != 0) {
 			if (seen[pos] != 1)
 				self->loops[self->songs] = TRUE;
@@ -3691,68 +3741,82 @@ static void ASAPInfo_ParseRmtSong(ASAPInfo *self, unsigned char const *module, c
 			pos = module[songOffset + (pos << posShift) + 1];
 			continue;
 		}
-		for (ch = 0; ch < 1 << posShift; ch++) {
-			int p = module[songOffset + (pos << posShift) + ch];
-			if (p == 255)
-				blankRows[ch] = 256;
-			else {
-				patternOffset[ch] = patternBegin[ch] = module[patternLoOffset + p] + (module[patternHiOffset + p] << 8) - addrToOffset;
-				blankRows[ch] = 0;
-			}
-		}
-		for (i = 0; i < songLen; i++)
-			if (seen[i] == 1)
-				seen[i] = 2;
-		for (patternRows = module[10]; --patternRows >= 0;) {
+		{
 			int ch;
 			for (ch = 0; ch < 1 << posShift; ch++) {
-				if (--blankRows[ch] > 0)
-					continue;
-				for (;;) {
-					int i = module[patternOffset[ch]++];
-					if ((i & 63) < 62) {
-						i += module[patternOffset[ch]++] << 8;
-						if ((i & 63) != 61) {
-							instrumentNo[ch] = i >> 10;
-							instrumentFrame[ch] = frames;
-						}
-						volumeValue[ch] = (i >> 6) & 15;
-						volumeFrame[ch] = frames;
-						break;
-					}
-					if (i == 62) {
-						blankRows[ch] = module[patternOffset[ch]++];
-						break;
-					}
-					if ((i & 63) == 62) {
-						blankRows[ch] = i >> 6;
-						break;
-					}
-					if ((i & 191) == 63) {
-						tempo = module[patternOffset[ch]++];
-						continue;
-					}
-					if (i == 191) {
-						patternOffset[ch] = patternBegin[ch] + module[patternOffset[ch]];
-						continue;
-					}
-					patternRows = -1;
-					break;
+				int p = module[songOffset + (pos << posShift) + ch];
+				if (p == 255)
+					blankRows[ch] = 256;
+				else {
+					patternOffset[ch] = patternBegin[ch] = module[patternLoOffset + p] + (module[patternHiOffset + p] << 8) - addrToOffset;
+					blankRows[ch] = 0;
 				}
-				if (patternRows < 0)
-					break;
 			}
-			if (patternRows >= 0)
-				frames += tempo;
+		}
+		{
+			int i;
+			for (i = 0; i < songLen; i++)
+				if (seen[i] == 1)
+					seen[i] = 2;
+		}
+		{
+			int patternRows;
+			for (patternRows = module[10]; --patternRows >= 0;) {
+				{
+					int ch;
+					for (ch = 0; ch < 1 << posShift; ch++) {
+						if (--blankRows[ch] > 0)
+							continue;
+						for (;;) {
+							int i = module[patternOffset[ch]++];
+							if ((i & 63) < 62) {
+								i += module[patternOffset[ch]++] << 8;
+								if ((i & 63) != 61) {
+									instrumentNo[ch] = i >> 10;
+									instrumentFrame[ch] = frames;
+								}
+								volumeValue[ch] = (i >> 6) & 15;
+								volumeFrame[ch] = frames;
+								break;
+							}
+							if (i == 62) {
+								blankRows[ch] = module[patternOffset[ch]++];
+								break;
+							}
+							if ((i & 63) == 62) {
+								blankRows[ch] = i >> 6;
+								break;
+							}
+							if ((i & 191) == 63) {
+								tempo = module[patternOffset[ch]++];
+								continue;
+							}
+							if (i == 191) {
+								patternOffset[ch] = patternBegin[ch] + module[patternOffset[ch]];
+								continue;
+							}
+							patternRows = -1;
+							break;
+						}
+						if (patternRows < 0)
+							break;
+					}
+				}
+				if (patternRows >= 0)
+					frames += tempo;
+			}
 		}
 		pos++;
 	}
 	instrumentFrames = 0;
-	for (ch = 0; ch < 1 << posShift; ch++) {
-		int frame = instrumentFrame[ch];
-		frame += ASAPInfo_GetRmtInstrumentFrames(module, instrumentNo[ch], volumeValue[ch], volumeFrame[ch] - frame, ch >= 4);
-		if (instrumentFrames < frame)
-			instrumentFrames = frame;
+	{
+		int ch;
+		for (ch = 0; ch < 1 << posShift; ch++) {
+			int frame = instrumentFrame[ch];
+			frame += ASAPInfo_GetRmtInstrumentFrames(module, instrumentNo[ch], volumeValue[ch], volumeFrame[ch] - frame, ch >= 4);
+			if (instrumentFrames < frame)
+				instrumentFrames = frame;
+		}
 	}
 	if (frames > instrumentFrames) {
 		if (frames - instrumentFrames > 100)
@@ -3910,17 +3974,19 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 
 static int ASAPInfo_ParseText(unsigned char const *module, int moduleIndex)
 {
-	int len;
 	if (module[moduleIndex] != 34)
 		return -1;
 	if (ASAPInfo_HasStringAt(module, moduleIndex + 1, "<?>\"\r"))
 		return 0;
-	for (len = 0;; len++) {
-		int c = module[moduleIndex + 1 + len];
-		if (c == 34 && module[moduleIndex + 2 + len] == 13)
-			return len;
-		if (!ASAPInfo_CheckValidChar(c))
-			return -1;
+	{
+		int len;
+		for (len = 0;; len++) {
+			int c = module[moduleIndex + 1 + len];
+			if (c == 34 && module[moduleIndex + 2 + len] == 13)
+				return len;
+			if (!ASAPInfo_CheckValidChar(c))
+				return -1;
+		}
 	}
 }
 
@@ -3987,62 +4053,66 @@ static void ASAPInfo_ParseTm2Song(ASAPInfo *self, unsigned char const *module, i
 	int blankRows[8];
 	for (;;) {
 		int patternRows = module[918 + pos];
-		int ch;
 		if (patternRows == 0)
 			break;
 		if (patternRows >= 128) {
 			self->loops[self->songs] = TRUE;
 			break;
 		}
-		for (ch = 7; ch >= 0; ch--) {
-			int pat = module[917 + pos - 2 * ch];
-			patternOffset[ch] = module[262 + pat] + (module[518 + pat] << 8) - addrToOffset;
-			blankRows[ch] = 0;
-		}
-		while (--patternRows >= 0) {
+		{
 			int ch;
 			for (ch = 7; ch >= 0; ch--) {
-				if (--blankRows[ch] >= 0)
-					continue;
-				for (;;) {
-					int i = module[patternOffset[ch]++];
-					if (i == 0) {
-						patternOffset[ch]++;
-						break;
-					}
-					if (i < 64) {
-						if (module[patternOffset[ch]++] >= 128)
-							patternOffset[ch]++;
-						break;
-					}
-					if (i < 128) {
-						patternOffset[ch]++;
-						break;
-					}
-					if (i == 128) {
-						blankRows[ch] = module[patternOffset[ch]++];
-						break;
-					}
-					if (i < 192)
-						break;
-					if (i < 208) {
-						tempo = i - 191;
+				int pat = module[917 + pos - 2 * ch];
+				patternOffset[ch] = module[262 + pat] + (module[518 + pat] << 8) - addrToOffset;
+				blankRows[ch] = 0;
+			}
+		}
+		while (--patternRows >= 0) {
+			{
+				int ch;
+				for (ch = 7; ch >= 0; ch--) {
+					if (--blankRows[ch] >= 0)
 						continue;
-					}
-					if (i < 224) {
-						patternOffset[ch]++;
+					for (;;) {
+						int i = module[patternOffset[ch]++];
+						if (i == 0) {
+							patternOffset[ch]++;
+							break;
+						}
+						if (i < 64) {
+							if (module[patternOffset[ch]++] >= 128)
+								patternOffset[ch]++;
+							break;
+						}
+						if (i < 128) {
+							patternOffset[ch]++;
+							break;
+						}
+						if (i == 128) {
+							blankRows[ch] = module[patternOffset[ch]++];
+							break;
+						}
+						if (i < 192)
+							break;
+						if (i < 208) {
+							tempo = i - 191;
+							continue;
+						}
+						if (i < 224) {
+							patternOffset[ch]++;
+							break;
+						}
+						if (i < 240) {
+							patternOffset[ch] += 2;
+							break;
+						}
+						if (i < 255) {
+							blankRows[ch] = i - 240;
+							break;
+						}
+						blankRows[ch] = 64;
 						break;
 					}
-					if (i < 240) {
-						patternOffset[ch] += 2;
-						break;
-					}
-					if (i < 255) {
-						blankRows[ch] = i - 240;
-						break;
-					}
-					blankRows[ch] = 64;
-					break;
 				}
 			}
 			playerCalls += tempo;
@@ -4100,50 +4170,56 @@ static void ASAPInfo_ParseTmcSong(ASAPInfo *self, unsigned char const *module, i
 	int patternOffset[8];
 	int blankRows[8];
 	while (module[437 + pos] < 128) {
-		int ch;
-		int patternRows;
-		for (ch = 7; ch >= 0; ch--) {
-			int pat = module[437 + pos - 2 * ch];
-			patternOffset[ch] = module[166 + pat] + (module[294 + pat] << 8) - addrToOffset;
-			blankRows[ch] = 0;
-		}
-		for (patternRows = 64; --patternRows >= 0;) {
+		{
 			int ch;
 			for (ch = 7; ch >= 0; ch--) {
-				if (--blankRows[ch] >= 0)
-					continue;
-				for (;;) {
-					int i = module[patternOffset[ch]++];
-					if (i < 64) {
-						patternOffset[ch]++;
-						break;
-					}
-					if (i == 64) {
-						i = module[patternOffset[ch]++];
-						if ((i & 127) == 0)
-							patternRows = 0;
-						else
-							tempo = (i & 127) + 1;
-						if (i >= 128)
-							patternOffset[ch]++;
-						break;
-					}
-					if (i < 128) {
-						i = module[patternOffset[ch]++] & 127;
-						if (i == 0)
-							patternRows = 0;
-						else
-							tempo = i + 1;
-						patternOffset[ch]++;
-						break;
-					}
-					if (i < 192)
-						continue;
-					blankRows[ch] = i - 191;
-					break;
-				}
+				int pat = module[437 + pos - 2 * ch];
+				patternOffset[ch] = module[166 + pat] + (module[294 + pat] << 8) - addrToOffset;
+				blankRows[ch] = 0;
 			}
-			frames += tempo;
+		}
+		{
+			int patternRows;
+			for (patternRows = 64; --patternRows >= 0;) {
+				{
+					int ch;
+					for (ch = 7; ch >= 0; ch--) {
+						if (--blankRows[ch] >= 0)
+							continue;
+						for (;;) {
+							int i = module[patternOffset[ch]++];
+							if (i < 64) {
+								patternOffset[ch]++;
+								break;
+							}
+							if (i == 64) {
+								i = module[patternOffset[ch]++];
+								if ((i & 127) == 0)
+									patternRows = 0;
+								else
+									tempo = (i & 127) + 1;
+								if (i >= 128)
+									patternOffset[ch]++;
+								break;
+							}
+							if (i < 128) {
+								i = module[patternOffset[ch]++] & 127;
+								if (i == 0)
+									patternRows = 0;
+								else
+									tempo = i + 1;
+								patternOffset[ch]++;
+								break;
+							}
+							if (i < 192)
+								continue;
+							blankRows[ch] = i - 191;
+							break;
+						}
+					}
+				}
+				frames += tempo;
+			}
 		}
 		pos += 16;
 	}
@@ -4311,30 +4387,32 @@ void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsign
 static int ASAPWriter_FormatXexInfoText(unsigned char *dest, int destLen, int endColumn, const char *src, cibool author)
 {
 	int srcLen = (int) strlen(src);
-	int srcOffset;
-	for (srcOffset = 0; srcOffset < srcLen;) {
-		int c = src[srcOffset++];
-		if (c == 32) {
-			int wordLen;
-			if (author && srcOffset < srcLen && src[srcOffset] == 38) {
-				int authorLen;
-				for (authorLen = 1; srcOffset + authorLen < srcLen; authorLen++) {
-					if (src[srcOffset + authorLen] == 32 && srcOffset + authorLen + 1 < srcLen && src[srcOffset + authorLen + 1] == 38)
-						break;
+	{
+		int srcOffset;
+		for (srcOffset = 0; srcOffset < srcLen;) {
+			int c = src[srcOffset++];
+			if (c == 32) {
+				int wordLen;
+				if (author && srcOffset < srcLen && src[srcOffset] == 38) {
+					int authorLen;
+					for (authorLen = 1; srcOffset + authorLen < srcLen; authorLen++) {
+						if (src[srcOffset + authorLen] == 32 && srcOffset + authorLen + 1 < srcLen && src[srcOffset + authorLen + 1] == 38)
+							break;
+					}
+					if (authorLen <= 32 && destLen % 32 + 1 + authorLen > 32) {
+						destLen = ASAPWriter_PadXexInfo(dest, destLen, 1);
+						continue;
+					}
 				}
-				if (authorLen <= 32 && destLen % 32 + 1 + authorLen > 32) {
-					destLen = ASAPWriter_PadXexInfo(dest, destLen, 1);
+				for (wordLen = 0; srcOffset + wordLen < srcLen && src[srcOffset + wordLen] != 32; wordLen++) {
+				}
+				if (wordLen <= 32 && destLen % 32 + 1 + wordLen > 32) {
+					destLen = ASAPWriter_PadXexInfo(dest, destLen, 0);
 					continue;
 				}
 			}
-			for (wordLen = 0; srcOffset + wordLen < srcLen && src[srcOffset + wordLen] != 32; wordLen++) {
-			}
-			if (wordLen <= 32 && destLen % 32 + 1 + wordLen > 32) {
-				destLen = ASAPWriter_PadXexInfo(dest, destLen, 0);
-				continue;
-			}
+			dest[destLen++] = c;
 		}
-		dest[destLen++] = c;
 	}
 	return ASAPWriter_PadXexInfo(dest, destLen, endColumn);
 }
@@ -4733,13 +4811,15 @@ static int ASAPWriter_WriteExecutableHeaderForSongPos(ByteWriter w, int *initAnd
 
 static void ASAPWriter_WriteHexSapTag(ByteWriter w, const char *tag, int value)
 {
-	int i;
 	if (value < 0)
 		return;
 	ASAPWriter_WriteString(w, tag);
-	for (i = 12; i >= 0; i -= 4) {
-		int digit = (value >> i) & 15;
-		w.func(w.obj, digit + (digit < 10 ? 48 : 55));
+	{
+		int i;
+		for (i = 12; i >= 0; i -= 4) {
+			int digit = (value >> i) & 15;
+			w.func(w.obj, digit + (digit < 10 ? 48 : 55));
+		}
 	}
 	w.func(w.obj, 13);
 	w.func(w.obj, 10);
@@ -4878,12 +4958,14 @@ static void ASAPWriter_WritePlaTaxLda0(ByteWriter w)
 
 static void ASAPWriter_WriteRelocatedBytes(ByteWriter w, int diff, unsigned char const *module, int lowOffset, int highOffset, int len, int shift)
 {
-	int i;
-	for (i = 0; i < len; i++) {
-		int address = module[lowOffset + i] + (module[highOffset + i] << 8);
-		if (address != 0 && address != 65535)
-			address += diff;
-		w.func(w.obj, (address >> shift) & 255);
+	{
+		int i;
+		for (i = 0; i < len; i++) {
+			int address = module[lowOffset + i] + (module[highOffset + i] << 8);
+			if (address != 0 && address != 65535)
+				address += diff;
+			w.func(w.obj, (address >> shift) & 255);
+		}
 	}
 }
 
@@ -4895,18 +4977,19 @@ static void ASAPWriter_WriteRelocatedLowHigh(ByteWriter w, int diff, unsigned ch
 
 static void ASAPWriter_WriteRelocatedWords(ByteWriter w, int diff, unsigned char const *module, int offset, int len)
 {
-	int i;
-	for (i = 0; i < len; i += 2) {
-		int address = module[offset + i] + (module[offset + i + 1] << 8);
-		if (address != 0 && address != 65535)
-			address += diff;
-		ASAPWriter_WriteWord(w, address);
+	{
+		int i;
+		for (i = 0; i < len; i += 2) {
+			int address = module[offset + i] + (module[offset + i + 1] << 8);
+			if (address != 0 && address != 65535)
+				address += diff;
+			ASAPWriter_WriteWord(w, address);
+		}
 	}
 }
 
 static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int type, int init, int player)
 {
-	int song;
 	ASAPWriter_WriteString(w, "SAP\r\n");
 	ASAPWriter_WriteTextSapTag(w, "AUTHOR ", info->author);
 	ASAPWriter_WriteTextSapTag(w, "NAME ", info->title);
@@ -4931,25 +5014,30 @@ static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int ty
 	ASAPWriter_WriteHexSapTag(w, "INIT ", init);
 	ASAPWriter_WriteHexSapTag(w, "PLAYER ", player);
 	ASAPWriter_WriteHexSapTag(w, "COVOX ", info->covoxAddr);
-	for (song = 0; song < info->songs; song++) {
-		unsigned char s[9];
-		if (info->durations[song] < 0)
-			break;
-		ASAPWriter_WriteString(w, "TIME ");
-		ASAPWriter_WriteBytes(w, s, 0, ASAPWriter_DurationToString(s, info->durations[song]));
-		if (info->loops[song])
-			ASAPWriter_WriteString(w, " LOOP");
-		w.func(w.obj, 13);
-		w.func(w.obj, 10);
+	{
+		int song;
+		for (song = 0; song < info->songs; song++) {
+			unsigned char s[9];
+			if (info->durations[song] < 0)
+				break;
+			ASAPWriter_WriteString(w, "TIME ");
+			ASAPWriter_WriteBytes(w, s, 0, ASAPWriter_DurationToString(s, info->durations[song]));
+			if (info->loops[song])
+				ASAPWriter_WriteString(w, " LOOP");
+			w.func(w.obj, 13);
+			w.func(w.obj, 10);
+		}
 	}
 }
 
 static void ASAPWriter_WriteString(ByteWriter w, const char *s)
 {
 	int n = (int) strlen(s);
-	int i;
-	for (i = 0; i < n; i++)
-		w.func(w.obj, s[i]);
+	{
+		int i;
+		for (i = 0; i < n; i++)
+			w.func(w.obj, s[i]);
+	}
 }
 
 static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value)
@@ -4983,7 +5071,6 @@ static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info)
 	int totalLines;
 	int otherAddress;
 	int titleAddress;
-	int i;
 	if (info->author[0] != '\0') {
 		author[0] = 98;
 		author[1] = 121;
@@ -5006,31 +5093,45 @@ static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info)
 	ASAPWriter_WriteWord(w, titleAddress);
 	ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 4, 6);
 	ASAPWriter_WriteBytes(w, title, 0, titleLen);
-	for (i = 0; i < 8; i++)
-		w.func(w.obj, 85);
+	{
+		int i;
+		for (i = 0; i < 8; i++)
+			w.func(w.obj, 85);
+	}
 	ASAPWriter_WriteBytes(w, author, 0, authorLen);
 	ASAPWriter_WriteBytes(w, other, 0, otherLen);
-	for (i = totalLines; i < 26; i++)
-		w.func(w.obj, 112);
+	{
+		int i;
+		for (i = totalLines; i < 26; i++)
+			w.func(w.obj, 112);
+	}
 	w.func(w.obj, 48);
 	ASAPWriter_WriteXexInfoTextDl(w, titleAddress, titleLen, titleLen - 32);
 	w.func(w.obj, 8);
 	w.func(w.obj, 0);
-	for (i = 0; i < authorLen; i += 32)
-		w.func(w.obj, 2);
+	{
+		int i;
+		for (i = 0; i < authorLen; i += 32)
+			w.func(w.obj, 2);
+	}
 	w.func(w.obj, 16);
-	for (i = 0; i < otherLen; i += 32)
-		w.func(w.obj, 2);
+	{
+		int i;
+		for (i = 0; i < otherLen; i += 32)
+			w.func(w.obj, 2);
+	}
 	ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 6, 178);
 }
 
 static void ASAPWriter_WriteXexInfoTextDl(ByteWriter w, int address, int len, int verticalScrollAt)
 {
-	int i;
 	w.func(w.obj, verticalScrollAt == 0 ? 98 : 66);
 	ASAPWriter_WriteWord(w, address);
-	for (i = 32; i < len; i += 32)
-		w.func(w.obj, i == verticalScrollAt ? 34 : 2);
+	{
+		int i;
+		for (i = 32; i < len; i += 32)
+			w.func(w.obj, i == verticalScrollAt ? 34 : 2);
+	}
 }
 
 static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
@@ -7655,9 +7756,11 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 
 static void FlashPack_Construct(FlashPack *self)
 {
-	int i;
-	for (i = 0; i < 65536; i++)
-		self->memory[i] = -1;
+	{
+		int i;
+		for (i = 0; i < 65536; i++)
+			self->memory[i] = -1;
+	}
 	self->loadState = FlashPackLoadState_START_LOW_BYTE;
 }
 
@@ -7783,106 +7886,110 @@ static cibool FlashPack_Compress(FlashPack *self, ByteWriter w)
 static void FlashPack_CompressMemoryArea(FlashPack *self, int startAddress, int endAddress)
 {
 	int lastDistance = -1;
-	int address;
-	for (address = startAddress; address <= endAddress;) {
-		while (self->memory[address] < 0)
-			if (++address > endAddress)
-				return;
-		FlashPack_PutItem(self, FlashPackItemType_SET_ADDRESS, address);
-		while (address <= endAddress && self->memory[address] >= 0) {
-			int bestMatch = 0;
-			int bestDistance = -1;
-			int backAddress;
-			for (backAddress = address - 1; backAddress >= startAddress && address - backAddress < 128; backAddress--) {
-				int match;
-				for (match = 0; address + match <= endAddress; match++) {
-					int data = self->memory[address + match];
-					if (data < 0 || data != self->memory[backAddress + match])
-						break;
-				}
-				if (bestMatch < match) {
-					bestMatch = match;
-					bestDistance = address - backAddress;
-				}
-				else if (bestMatch == match && address - backAddress == lastDistance)
-					bestDistance = lastDistance;
-			}
-			switch (bestMatch) {
-				int length;
-			case 0:
-			case 1:
-				FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address++]);
-				continue;
-			case 2:
-				FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
-				break;
-			case 3:
-				FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-				break;
-			case 4:
-				if (bestDistance == lastDistance)
-					FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 4);
-				else if (FlashPack_IsLiteralPreferred(self)) {
-					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
-					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-				}
-				else {
-					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address + 3]);
-				}
-				break;
-			case 5:
-				if (bestDistance == lastDistance)
-					FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 5);
-				else {
-					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-					FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
-				}
-				break;
-			case 6:
-				if (bestDistance == lastDistance)
-					FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 6);
-				else {
-					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-				}
-				break;
-			default:
-				length = bestMatch;
-				if (bestDistance != lastDistance) {
-					if (FlashPack_IsLiteralPreferred(self) && length % 255 == 4) {
-						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
-						length--;
+	{
+		int address;
+		for (address = startAddress; address <= endAddress;) {
+			while (self->memory[address] < 0)
+				if (++address > endAddress)
+					return;
+			FlashPack_PutItem(self, FlashPackItemType_SET_ADDRESS, address);
+			while (address <= endAddress && self->memory[address] >= 0) {
+				int bestMatch = 0;
+				int bestDistance = -1;
+				{
+					int backAddress;
+					for (backAddress = address - 1; backAddress >= startAddress && address - backAddress < 128; backAddress--) {
+						int match;
+						for (match = 0; address + match <= endAddress; match++) {
+							int data = self->memory[address + match];
+							if (data < 0 || data != self->memory[backAddress + match])
+								break;
+						}
+						if (bestMatch < match) {
+							bestMatch = match;
+							bestDistance = address - backAddress;
+						}
+						else if (bestMatch == match && address - backAddress == lastDistance)
+							bestDistance = lastDistance;
 					}
-					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
-					length -= 3;
 				}
-				else if (FlashPack_IsLiteralPreferred(self) && length % 255 == 1) {
-					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
-					length--;
-				}
-				for (; length > 255; length -= 255)
-					FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 255);
-				switch (length) {
+				switch (bestMatch) {
+					int length;
 				case 0:
-					break;
 				case 1:
-					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address + bestMatch - 1]);
-					break;
+					FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address++]);
+					continue;
 				case 2:
 					FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
 					break;
 				case 3:
 					FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
 					break;
+				case 4:
+					if (bestDistance == lastDistance)
+						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 4);
+					else if (FlashPack_IsLiteralPreferred(self)) {
+						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+					}
+					else {
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address + 3]);
+					}
+					break;
+				case 5:
+					if (bestDistance == lastDistance)
+						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 5);
+					else {
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+						FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
+					}
+					break;
+				case 6:
+					if (bestDistance == lastDistance)
+						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 6);
+					else {
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+					}
+					break;
 				default:
-					FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, length);
+					length = bestMatch;
+					if (bestDistance != lastDistance) {
+						if (FlashPack_IsLiteralPreferred(self) && length % 255 == 4) {
+							FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
+							length--;
+						}
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+						length -= 3;
+					}
+					else if (FlashPack_IsLiteralPreferred(self) && length % 255 == 1) {
+						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address]);
+						length--;
+					}
+					for (; length > 255; length -= 255)
+						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, 255);
+					switch (length) {
+					case 0:
+						break;
+					case 1:
+						FlashPack_PutItem(self, FlashPackItemType_LITERAL, self->memory[address + bestMatch - 1]);
+						break;
+					case 2:
+						FlashPack_PutItem(self, FlashPackItemType_COPY_TWO_BYTES, bestDistance);
+						break;
+					case 3:
+						FlashPack_PutItem(self, FlashPackItemType_COPY_THREE_BYTES, bestDistance);
+						break;
+					default:
+						FlashPack_PutItem(self, FlashPackItemType_COPY_MANY_BYTES, length);
+						break;
+					}
 					break;
 				}
-				break;
+				address += bestMatch;
+				lastDistance = bestDistance;
 			}
-			address += bestMatch;
-			lastDistance = bestDistance;
 		}
 	}
 }
@@ -7963,19 +8070,24 @@ static void FlashPack_PutItem(FlashPack *self, FlashPackItemType type, int value
 static void FlashPack_PutItems(FlashPack *self)
 {
 	int outerFlags = 0;
-	int i;
-	for (i = 0; i < self->itemsCount; i += 8) {
-		if (FlashPack_GetInnerFlags(self, i) != 0)
-			outerFlags |= 128 >> (i >> 3);
+	{
+		int i;
+		for (i = 0; i < self->itemsCount; i += 8) {
+			if (FlashPack_GetInnerFlags(self, i) != 0)
+				outerFlags |= 128 >> (i >> 3);
+		}
 	}
 	self->compressed[self->compressedLength++] = outerFlags;
-	for (i = 0; i < self->itemsCount; i++) {
-		if ((i & 7) == 0) {
-			int flags = FlashPack_GetInnerFlags(self, i);
-			if (flags != 0)
-				self->compressed[self->compressedLength++] = flags;
+	{
+		int i;
+		for (i = 0; i < self->itemsCount; i++) {
+			if ((i & 7) == 0) {
+				int flags = FlashPack_GetInnerFlags(self, i);
+				if (flags != 0)
+					self->compressed[self->compressedLength++] = flags;
+			}
+			self->compressedLength += FlashPackItem_WriteValueTo(&self->items[i], self->compressed, self->compressedLength);
 		}
-		self->compressedLength += FlashPackItem_WriteValueTo(&self->items[i], self->compressed, self->compressedLength);
 	}
 }
 
@@ -8411,15 +8523,20 @@ static void Pokey_Mute(Pokey *self, int mask)
 static void PokeyPair_Construct(PokeyPair *self)
 {
 	int reg = 511;
-	int i;
-	for (i = 0; i < 511; i++) {
-		reg = ((((reg >> 5) ^ reg) & 1) << 8) + (reg >> 1);
-		self->poly9Lookup[i] = (unsigned char) reg;
+	{
+		int i;
+		for (i = 0; i < 511; i++) {
+			reg = ((((reg >> 5) ^ reg) & 1) << 8) + (reg >> 1);
+			self->poly9Lookup[i] = (unsigned char) reg;
+		}
 	}
 	reg = 131071;
-	for (i = 0; i < 16385; i++) {
-		reg = ((((reg >> 5) ^ reg) & 255) << 9) + (reg >> 8);
-		self->poly17Lookup[i] = (unsigned char) (reg >> 1);
+	{
+		int i;
+		for (i = 0; i < 16385; i++) {
+			reg = ((((reg >> 5) ^ reg) & 255) << 9) + (reg >> 8);
+			self->poly17Lookup[i] = (unsigned char) (reg >> 1);
+		}
 	}
 }
 
