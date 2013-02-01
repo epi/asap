@@ -52,6 +52,16 @@ release/asap-$(VERSION)-wince-arm.zip: release/COPYING.txt release/README_Window
 	win32/wince/wasap.exe win32/wince/gspasap.dll
 	$(MAKEZIP)
 
+release/asap-vlc-$(VERSION)-osx.dmg: release/osx/libasap_plugin.dylib release/osx/plugins
+	$(DO)hdiutil create -volname asap-vlc-$(VERSION)-osx -srcfolder release/osx -imagekey zlib-level=9 -ov $@
+
+release/osx/libasap_plugin.dylib: libasap_plugin.dylib
+	$(COPY) && chmod 644 $@
+CLEANDIR += release/osx
+
+release/osx/plugins:
+	$(DO)ln -s /Applications/VLC.app/Contents/MacOS/plugins $@
+
 release/COPYING.txt: $(srcdir)COPYING
 	$(UNIX2DOS)
 CLEAN += release/COPYING.txt

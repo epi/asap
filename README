@@ -53,6 +53,9 @@ For Windows people allergic to installers.
 http://sourceforge.net/projects/asap/files/asap/3.1.3/asap-3.1.3-wince-arm.zip/download[asap-3.1.3-wince-arm.zip]::
 For Windows Mobile people allergic to installers.
 
+http://sourceforge.net/projects/asap/files/asap/3.1.3/asap-vlc-3.1.3-osx.dmg/download[asap-vlc-3.1.3-osx.dmg]::
+VLC plugin for OS X (Intel 32-bit and 64-bit). Drag `libasap_plugin.dylib` to `plugins`.
+
 http://sourceforge.net/projects/asap/files/asap/3.1.3/asap-3.1.3-1.i386.rpm/download[asap-3.1.3-1.i386.rpm]::
 Linux binary of asapconv.
 
@@ -66,7 +69,7 @@ http://sourceforge.net/projects/asap/files/asap/3.1.3/asap-vlc-3.1.3-1.i386.rpm/
 Linux binary of the VLC plugin.
 
 http://sourceforge.net/projects/asap/files/asap/3.1.3/asap-devel-3.1.3-1.i386.rpm/download[asap-devel-3.1.3-1.i386.rpm]::
-Linux library for linking ASAP with other applications.
+Linux library for embedding ASAP in other applications.
 
 http://sourceforge.net/projects/asap/files/asap/3.1.3/asap-3.1.3.tar.gz/download[asap-3.1.3.tar.gz]::
 Full source code (use for the Audacious plugin on Linux).
