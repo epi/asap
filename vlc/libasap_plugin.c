@@ -121,8 +121,12 @@ static int Control(demux_t *demux, int query, va_list args)
 		case DEMUX_GET_META: {
 			const ASAPInfo *info = ASAP_GetInfo(sys->asap);
 			vlc_meta_t *p_meta = (vlc_meta_t *) va_arg(args, vlc_meta_t *);
-			vlc_meta_SetTitle(p_meta, ASAPInfo_GetTitle(info));
-			vlc_meta_SetArtist(p_meta, ASAPInfo_GetAuthor(info));
+			const char *s = ASAPInfo_GetTitle(info);
+			if (s[0] != '\0')
+				vlc_meta_SetTitle(p_meta, s);
+			s = ASAPInfo_GetAuthor(info);
+			if (s[0] != '\0')
+				vlc_meta_SetArtist(p_meta, s);
 			int year = ASAPInfo_GetYear(info);
 			if (year > 0) {
 				char s[16];
