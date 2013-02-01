@@ -135,8 +135,8 @@ sudo make install-moc MOC_PLUGIN_DIR=/path/to/moc/plugins
 --------------------------------------------------------------------------------
 
 
-Building the VLC plugin on Unix-like systems
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building the VLC plugin on Linux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install `vlc-devel`. Verify paths at the top of `vlc/vlc.mk`.
 To compile, run the following command:
@@ -147,6 +147,29 @@ make asap-vlc
 To install:
 --------------------------------------------------------------------------------
 sudo make install-vlc
+--------------------------------------------------------------------------------
+
+
+Building the VLC plugin on OS X
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install Xcode Command Line Tools.
+
+You need `vlc_plugin.h` and other header files.
+Unfortunately they are not installed with the VLC on Mac.
+You can find them in VLC source code. I copied them from my Windows VLC
+(`C:\Program Files (x86)\VideoLAN\VLC\sdk\include\vlc\plugins`). ;)
+Make sure `VLC_OSX_CFLAGS` in `vlc/vlc.mk` points to the directory
+with these header files.
+
+To compile, run the following command:
+--------------------------------------------------------------------------------
+make asap-vlc-osx
+--------------------------------------------------------------------------------
+
+To install:
+--------------------------------------------------------------------------------
+make install-vlc-osx
 --------------------------------------------------------------------------------
 
 
