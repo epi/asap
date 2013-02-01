@@ -5,7 +5,7 @@ VLC_DEMUX_PLUGIN_DIR = /usr/lib/vlc/plugins/demux
 
 # OS X
 
-VLC_OSX_CFLAGS = -std=gnu99 -I../plugins -dynamiclib -undefined suppress -flat_namespace
+VLC_OSX_CFLAGS = -std=gnu99 -I../plugins -dynamiclib -undefined suppress -flat_namespace -arch x86_64 -arch i386
 VLC_OSX_PLUGIN_DIR = /Applications/VLC.app/Contents/MacOS/plugins
 
 # no user-configurable paths below this line
