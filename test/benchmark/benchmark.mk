@@ -12,3 +12,15 @@ test/benchmark/BENCHMARK.txt: $(srcdir)test/benchmark/benchmark.pl win32/msvc/as
 test/benchmark/gme_benchmark.exe: $(call src,test/benchmark/gme_benchmark.c asap.[ch]) $(GME_PATH)/gme/*.cpp $(GME_PATH)/gme/*.h
 	$(WIN32_CXX)
 CLEAN += test/benchmark/gme_benchmark.exe
+
+profile: gmon.out
+	gprof -bpQ test/benchmark/asapconv-profile.exe
+
+gmon.out: test/benchmark/asapconv-profile.exe
+	$(DO)./test/benchmark/asapconv-profile.exe -b -o .wav test/benchmark/Drunk_Chessboard.sap
+CLEAN += gmon.out
+
+test/benchmark/asapconv-profile.exe: $(call src,asapconv.c asap.[ch])
+	$(DO)mingw32-gcc -O2 -Wall -o $@ -pg $(filter-out %.h,$^)
+	# avoid -s
+CLEAN += test/benchmark/asapconv-profile.exe

@@ -5,8 +5,9 @@
 *.o
 *.obj
 *.res
-asap-asapscan.c
-asap-asapscan.h
-MANIFEST
-README.html
-sap-format.html
+/asap-asapscan.c
+/asap-asapscan.h
+/MANIFEST
+/README.html
+/sap-format.html
+/gmon.out
