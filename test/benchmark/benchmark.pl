@@ -6,7 +6,7 @@ print q{ASAP benchmark
 
 [cols="<,>,>,>,>,>",options="header"]
 |====================================
-|File|MSVC|MinGW|MinGW x64|Java|C#|GME
+|File|MSVC|MinGW|MinGW x64|Java|C#|GME|SAP
 };
 my @progs = (
 	'win32/msvc/asapconv.exe -o .wav',
@@ -14,7 +14,8 @@ my @progs = (
 	'win32/x64/asapconv.exe -o .wav',
 	'java -jar java/asap2wav.jar',
 	'csharp/asap2wav.exe',
-	'test/benchmark/gme_benchmark.exe'
+	'test/benchmark/gme_benchmark.exe',
+	'test/benchmark/sap_benchmark.exe'
 );
 for my $file (glob 'test/benchmark/*.sap') {
 	print '|', $file =~ m{([^/]+)$};
