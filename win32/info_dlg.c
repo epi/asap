@@ -1,7 +1,7 @@
 /*
  * info_dlg.c - file information dialog box
  *
- * Copyright (C) 2007-2012  Piotr Fusik
+ * Copyright (C) 2007-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -552,14 +552,10 @@ static void closeInfoDialog(void)
 {
 	DestroyWindow(infoDialog);
 	infoDialog = NULL;
-	if (edited_info != NULL) {
-		ASAPInfo_Delete(edited_info);
-		edited_info = NULL;
-	}
-	if (astil != NULL) {
-		ASTIL_Delete(astil);
-		astil = NULL;
-	}
+	ASAPInfo_Delete(edited_info);
+	edited_info = NULL;
+	ASTIL_Delete(astil);
+	astil = NULL;
 }
 
 static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)

@@ -1,7 +1,7 @@
 /*
  * libasap_decoder.c - ASAP plugin for MOC (Music On Console)
  *
- * Copyright (C) 2007-2011  Piotr Fusik
+ * Copyright (C) 2007-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -82,8 +82,7 @@ static cibool asap_load(ASAP_Decoder *d, const char *filename)
 static void asap_close(void *data)
 {
 	ASAP_Decoder *d = (ASAP_Decoder *) data;
-	if (d->asap != NULL)
-		ASAP_Delete(d->asap);
+	ASAP_Delete(d->asap);
 	free(d);
 }
 
@@ -128,8 +127,7 @@ static void asap_info(const char *file, struct file_tags *tags, const int tags_s
 			tags->filled |= TAGS_TIME;
 		}
 	}
-	if (d.asap != NULL)
-		ASAP_Delete(d.asap);
+	ASAP_Delete(d.asap);
 }
 
 static int asap_get_bitrate(void *data)

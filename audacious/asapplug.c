@@ -1,7 +1,7 @@
 /*
  * asapplug.c - ASAP plugin for Audacious
  *
- * Copyright (C) 2010-2012  Piotr Fusik
+ * Copyright (C) 2010-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -142,12 +142,10 @@ static Tuple *probe_for_tuple(const char *filename, VFSFile *file)
 			tuple = tuple_new_from_filename(filename);
 	}
 #if _AUD_PLUGIN_VERSION >= 10
-	if (real_filename != NULL)
-		g_free(real_filename);
+	g_free(real_filename);
 #endif
 	if (tuple == NULL) {
-		if (info != NULL)
-			ASAPInfo_Delete(info);
+		ASAPInfo_Delete(info);
 		return NULL;
 	}
 
@@ -205,8 +203,7 @@ static gboolean play_start(InputPlayback *playback, const char *filename, VFSFil
 	module_len = load_module(filename, file, module);
 	ok = module_len > 0 && ASAP_Load(asap, filename, module, module_len);
 #if _AUD_PLUGIN_VERSION >= 10
-	if (real_filename != NULL)
-		g_free(real_filename);
+	g_free(real_filename);
 #endif
 	if (!ok)
 		return FALSE;

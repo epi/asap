@@ -1,7 +1,7 @@
 /*
  * apokeysnd_dll.c - POKEY sound emulator for Raster Music Tracker
  *
- * Copyright (C) 2008-2012  Piotr Fusik
+ * Copyright (C) 2008-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -28,8 +28,7 @@ static PokeyPair *pokeys = NULL;
 
 __declspec(dllexport) void APokeySound_Initialize(bool stereo)
 {
-	if (pokeys != NULL)
-		PokeyPair_Delete(pokeys);
+	PokeyPair_Delete(pokeys);
 	pokeys = PokeyPair_New();
 	PokeyPair_Initialize(pokeys, false, stereo);
 	PokeyPair_StartFrame(pokeys);

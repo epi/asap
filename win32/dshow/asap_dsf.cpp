@@ -1,7 +1,7 @@
 /*
  * asap_dsf.cpp - ASAP DirectShow source filter
  *
- * Copyright (C) 2008-2012  Piotr Fusik
+ * Copyright (C) 2008-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -71,8 +71,7 @@ public:
 
 	~CASAPSourceStream()
 	{
-		if (m_asap != NULL)
-			ASAP_Delete(m_asap);
+		ASAP_Delete(m_asap);
 	}
 
 	DECLARE_IUNKNOWN
@@ -388,10 +387,8 @@ class CASAPSource : public CSource, IFileSourceFilter, IAMStreamSelect, IAMMedia
 
 	~CASAPSource()
 	{
-		if (m_pin != NULL)
-			delete m_pin;
-		if (m_filename != NULL)
-			delete[] m_filename;
+		delete m_pin;
+		delete[] m_filename;
 	}
 
 public:
@@ -420,8 +417,7 @@ public:
 		HRESULT hr = m_pin->Load(pszFileName, cch);
 		if (FAILED(hr))
 			return hr;
-		if (m_filename != NULL)
-			delete[] m_filename;
+		delete[] m_filename;
 		m_filename = new WCHAR[cch];
 		CheckPointer(m_filename, E_OUTOFMEMORY);
 		CopyMemory(m_filename, pszFileName, cch * sizeof(WCHAR));

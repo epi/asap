@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000
  *
- * Copyright (C) 2006-2012  Piotr Fusik
+ * Copyright (C) 2006-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -136,10 +136,8 @@ public:
 
 	~input_asap()
 	{
-		if (asap != NULL)
-			ASAP_Delete(asap);
-		if (filename != NULL)
-			free(filename);
+		ASAP_Delete(asap);
+		free(filename);
 		if (prev != NULL)
 			prev->next = next;
 		if (next != NULL)
