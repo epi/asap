@@ -21,17 +21,18 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <memory>
 #include <stdio.h>
-#include <malloc.h>
 #include <streams.h>
 #include <tchar.h>
 #ifndef UNDER_CE
+#include <shlwapi.h>
 #include <initguid.h>
 #endif
 #include <qnetwork.h>
 
 #ifdef ASAP_DSF_TRANSCODE
-/* seems it doesn't work */
+// seems it doesn't work
 #include <wmpservices.h>
 static const IID IID_IWMPTranscodePolicy = { 0xb64cbac3, 0x401c, 0x4327, { 0xa3, 0xe8, 0xb9, 0xfe, 0xb3, 0xa8, 0xc2, 0x5c } };
 #endif
@@ -96,39 +97,39 @@ public:
 		return S_OK;
 	}
 
-	HRESULT Load(LPCOLESTR pszFileName, int cch)
+	HRESULT Load(LPCOLESTR pszFileName)
 	{
-		char *filename = (char *) alloca(cch * 2);
-		CheckPointer(filename, E_OUTOFMEMORY);
-		if (WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, filename, cch, NULL, NULL) <= 0)
+		int cbFilename = WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, NULL, 0, NULL, NULL);
+		std::auto_ptr<char> filename(new char[cbFilename]);
+		CheckPointer(filename.get(), E_OUTOFMEMORY); // apparently Windows CE returns NULL
+		if (WideCharToMultiByte(CP_ACP, 0, pszFileName, -1, filename.get(), cbFilename, NULL, NULL) <= 0)
 			return HRESULT_FROM_WIN32(GetLastError());
 
+		// read file
 		HANDLE fh = CreateFile(
 #ifdef UNICODE
 			pszFileName,
 #else
-			filename,
+			filename.get(),
 #endif
 			GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (fh == INVALID_HANDLE_VALUE)
 			return HRESULT_FROM_WIN32(GetLastError());
-		BYTE *module = new byte[ASAPInfo_MAX_MODULE_LENGTH];
+		std::auto_ptr<BYTE> module(new BYTE[ASAPInfo_MAX_MODULE_LENGTH]);
+		CheckPointer(module.get(), E_OUTOFMEMORY); // apparently Windows CE returns NULL
 		int module_len;
-		BOOL ok = ReadFile(fh, module, ASAPInfo_MAX_MODULE_LENGTH, (LPDWORD) &module_len, NULL);
+		BOOL ok = ReadFile(fh, module.get(), ASAPInfo_MAX_MODULE_LENGTH, (LPDWORD) &module_len, NULL);
 		CloseHandle(fh);
-		if (!ok) {
-			delete[] module;
+		if (!ok)
 			return HRESULT_FROM_WIN32(GetLastError());
-		}
 
+		// load into ASAP
 		CAutoLock lck(&m_cs);
 		if (m_asap == NULL) {
 			m_asap = ASAP_New();
 			CheckPointer(m_asap, E_OUTOFMEMORY);
 		}
-		m_loaded = ASAP_Load(m_asap, filename, module, module_len);
-		delete[] module;
-
+		m_loaded = ASAP_Load(m_asap, filename.get(), module.get(), module_len);
 		if (!m_loaded)
 			return E_FAIL;
 		const ASAPInfo *info = ASAP_GetInfo(m_asap);
@@ -359,10 +360,11 @@ public:
 			return VFW_E_NOT_FOUND;
 		const ASAPInfo *info = ASAP_GetInfo(m_asap);
 		const char *s = author ? ASAPInfo_GetAuthor(info) : ASAPInfo_GetTitle(info);
-		/* *pbstr = A2BSTR(s); - just don't want dependency on ATL */
-		int cch = (int) strlen(s);
-		*pbstr = SysAllocStringLen(NULL, cch);
-		if (MultiByteToWideChar(CP_ACP, 0, s, cch, *pbstr, cch) != cch)
+		// *pbstr = A2BSTR(s); - just don't want dependency on ATL
+		int cch = MultiByteToWideChar(CP_ACP, 0, s, -1, NULL, 0);
+		*pbstr = SysAllocStringLen(NULL, cch - 1);
+		CheckPointer(*pbstr, E_OUTOFMEMORY);
+		if (MultiByteToWideChar(CP_ACP, 0, s, -1, *pbstr, cch) <= 0)
 			return HRESULT_FROM_WIN32(GetLastError());
 		return S_OK;
 	}
@@ -374,7 +376,7 @@ class CASAPSource : public CSource, IFileSourceFilter, IAMStreamSelect, IAMMedia
 #endif
 {
 	CASAPSourceStream *m_pin;
-	WCHAR *m_filename;
+	LPWSTR m_filename;
 	CMediaType m_mt;
 
 	CASAPSource(IUnknown *pUnk, HRESULT *phr)
@@ -382,13 +384,13 @@ class CASAPSource : public CSource, IFileSourceFilter, IAMStreamSelect, IAMMedia
 	{
 		m_pin = new CASAPSourceStream(phr, this);
 		if (m_pin == NULL && phr != NULL)
-			*phr = E_OUTOFMEMORY;
+			*phr = E_OUTOFMEMORY; // apparently Windows CE returns NULL
 	}
 
 	~CASAPSource()
 	{
+		free(m_filename);
 		delete m_pin;
-		delete[] m_filename;
 	}
 
 public:
@@ -413,14 +415,19 @@ public:
 	STDMETHODIMP Load(LPCOLESTR pszFileName, const AM_MEDIA_TYPE *pmt)
 	{
 		CheckPointer(pszFileName, E_POINTER);
-		int cch = lstrlenW(pszFileName) + 1;
-		HRESULT hr = m_pin->Load(pszFileName, cch);
+		HRESULT hr = m_pin->Load(pszFileName);
 		if (FAILED(hr))
 			return hr;
-		delete[] m_filename;
-		m_filename = new WCHAR[cch];
+		free(m_filename);
+#ifndef UNDER_CE
+		m_filename = _wcsdup(pszFileName);
 		CheckPointer(m_filename, E_OUTOFMEMORY);
-		CopyMemory(m_filename, pszFileName, cch * sizeof(WCHAR));
+#else
+		size_t cbFileName = (lstrlenW(pszFileName) + 1) * sizeof(WCHAR);
+		m_filename = (LPWSTR) malloc(cbFileName);
+		CheckPointer(m_filename, E_OUTOFMEMORY);
+		CopyMemory(m_filename, pszFileName, cbFileName);
+#endif
 		if (pmt == NULL) {
 			m_mt.SetType(&MEDIATYPE_Stream);
 			m_mt.SetSubtype(&MEDIASUBTYPE_NULL);
@@ -435,10 +442,16 @@ public:
 		CheckPointer(ppszFileName, E_POINTER);
 		if (m_filename == NULL)
 			return E_FAIL;
-		DWORD n = (lstrlenW(m_filename) + 1) * sizeof(WCHAR);
-		*ppszFileName = (LPOLESTR) CoTaskMemAlloc(n);
+#ifndef UNDER_CE
+		HRESULT hr = SHStrDupW(m_filename, ppszFileName);
+		if (FAILED(hr))
+			return hr;
+#else
+		size_t cbFilename = (lstrlenW(m_filename) + 1) * sizeof(WCHAR);
+		*ppszFileName = (LPOLESTR) CoTaskMemAlloc(cbFilename);
 		CheckPointer(*ppszFileName, E_OUTOFMEMORY);
-		CopyMemory(*ppszFileName, m_filename, n);
+		CopyMemory(*ppszFileName, m_filename, cbFilename);
+#endif
 		if (pmt != NULL)
 			CopyMediaType(pmt, &m_mt);
 		return S_OK;

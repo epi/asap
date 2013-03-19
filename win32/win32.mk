@@ -192,7 +192,7 @@ CLEAN += win32/bass/bass_asap-res.o
 DSHOW_BASECLASSES = $(patsubst %,$(DSHOW_BASECLASSES_DIR)/%.cpp,amfilter combase dllentry dllsetup mtype source wxlist wxutil)
 
 win32/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/dshow/asap_dsf.res
-	$(WIN32_CL) $(DSHOW_BASECLASSES) -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(WIN32_LINKOPT)
+	$(WIN32_CL) $(DSHOW_BASECLASSES) -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib shlwapi.lib strmiids.lib user32.lib winmm.lib $(WIN32_LINKOPT)
 CLEAN += win32/asap_dsf.dll win32/asap_dsf.exp win32/asap_dsf.lib win32/dshow/*.obj
 
 win32/dshow/asap_dsf.res: $(call src,win32/gui.rc asap.h)
@@ -208,7 +208,7 @@ win32/wince/asap_dsf-res.obj: $(call src,win32/gui.rc asap.h)
 CLEAN += win32/wince/asap_dsf-res.obj
 
 win32/x64/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/x64/asap_dsf.res
-	$(WIN64_CL) $(DSHOW_BASECLASSES) -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib strmiids.lib user32.lib winmm.lib $(WIN64_LINKOPT)
+	$(WIN64_CL) $(DSHOW_BASECLASSES) -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib shlwapi.lib strmiids.lib user32.lib winmm.lib $(WIN64_LINKOPT)
 CLEAN += win32/x64/asap_dsf.dll win32/x64/asap_dsf.exp win32/x64/asap_dsf.lib win32/x64/*.obj
 
 win32/x64/asap_dsf.res: $(call src,win32/gui.rc asap.h)
