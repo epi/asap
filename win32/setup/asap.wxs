@@ -159,9 +159,9 @@
 (($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
 (($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
 (($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)))?>
-			<Publish Dialog="MyCustomizeDlg" Control="Next" Event="SpawnDialog" Value="MyManyAssociationsDlg" Order="3">
-				$(var.MUTEXCOND)
-			</Publish>
+				<Publish Dialog="MyCustomizeDlg" Control="Next" Event="SpawnDialog" Value="MyManyAssociationsDlg" Order="3">
+					$(var.MUTEXCOND)
+				</Publish>
 			<?endforeach?>
 			<Dialog Id="MyManyAssociationsDlg" Width="270" Height="85" Title="!(loc.ErrorDlg_Title)">
 				<Control Id="ErrorText" Type="Text" X="48" Y="15" Width="205" Height="60" TabSkip="no" Text="You have selected &quot;Associate file types&quot; for many players. You may associate files with only one player." />
@@ -247,10 +247,10 @@
 			<Directory Id="$(var.PROGRAM_FILES_FOLDER)">
 				<Directory Id="ASAP.DIR" Name="ASAP">
 					<?if $(sys.BUILDARCH) = x86?>
-					<Component Id="wasap.exe" Guid="*">
+					<Component Id="wasap.exe">
 						<File Name="wasap.exe" Source="wasap.exe" Checksum="yes" KeyPath="yes" />
 					</Component>
-					<Component Id="wasap.ext" Guid="*">
+					<Component Id="wasap.ext">
 						<RegistryValue Root="HKCR" Key="asap.file" Name="wasap" Type="integer" Value="1" KeyPath="yes" />
 						<ProgId Id="asap.file">
 							<Extension Id="sap">
@@ -263,7 +263,7 @@
 						</ProgId>
 					</Component>
 
-					<Component Id="asapconv.exe" Guid="*">
+					<Component Id="asapconv.exe">
 						<File Name="asapconv.exe" Source="asapconv.exe" Checksum="yes" KeyPath="yes" />
 					</Component>
 					<Component Id="path" Guid="D7247D41-0B9A-42D3-9847-06C37F88E2ED">
@@ -272,7 +272,7 @@
 					</Component>
 					<?endif?>
 
-					<Component Id="asap_dsf.dll" Guid="*" Win64="$(var.WIN64)">
+					<Component Id="asap_dsf.dll" Win64="$(var.WIN64)">
 						<File Name="asap_dsf.dll" Source="$(var.SRC_DIR)asap_dsf.dll" Checksum="yes" KeyPath="yes">
 							<Class Id="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Context="InprocServer32" Description="ASAP source filter" ThreadingModel="both" />
 						</File>
@@ -290,7 +290,7 @@
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\MediaPlayer\Player\Extensions\Types" Name="ASAP" Value="$(var.EXT_FILTER)" Type="string" Action="write" />
 					</Component>
 					<?if $(sys.BUILDARCH) = x86?>
-					<Component Id="asap_dsf.ext" Guid="*">
+					<Component Id="asap_dsf.ext">
 						<RegistryValue Root="HKCR" Key="asap.file" Name="asap_dsf" Type="integer" Value="1" KeyPath="yes" />
 						<ProgId Id="asap.file">
 							<Extension Id="sap">
@@ -303,21 +303,21 @@
 					</Component>
 					<?endif?>
 
-					<Component Id="ASAPShellEx.dll" Guid="*" Win64="$(var.WIN64)">
+					<Component Id="ASAPShellEx.dll" Win64="$(var.WIN64)">
 						<File Name="ASAPShellEx.dll" Source="$(var.SRC_DIR)ASAPShellEx.dll" Checksum="yes" KeyPath="yes">
 							<Class Id="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Context="InprocServer32" Description="ASAP Metadata Handler" ThreadingModel="both" />
 						</File>
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" Name="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Metadata Handler" Type="string" Action="write" />
 					</Component>
-					<Component Id="ASAPShellEx.propdesc" Guid="*" Win64="$(var.WIN64)">
+					<Component Id="ASAPShellEx.propdesc" Win64="$(var.WIN64)">
 						<Condition>VersionNT &gt;= 600</Condition>
 						<File Name="ASAPShellEx.propdesc" Source="shellex\ASAPShellEx.propdesc" KeyPath="yes" />
 					</Component>
-					<Component Id="ASAPShellExXP.reg" Guid="323D0FD9-B7D9-419F-B78D-AA646659DC01" Win64="$(var.WIN64)">
+					<Component Id="ASAPShellExXP.reg" Win64="$(var.WIN64)">
 						<Condition>VersionNT &lt; 600</Condition>
 						<RegistryValue Root="HKCR" Key="Folder\shellex\ColumnHandlers\{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Column Handler" Type="string" Action="write" KeyPath="yes" />
 					</Component>
-					<Component Id="ASAPShellExVista.reg" Guid="93C86662-AA18-493C-9384-C0671B675BC4" Win64="$(var.WIN64)">
+					<Component Id="ASAPShellExVista.reg" Win64="$(var.WIN64)">
 						<Condition>VersionNT &gt;= 600</Condition>
 						<?foreach EXT in $(var.ASAP_EXTS)?>
 							<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\PropertySystem\PropertyHandlers\.$(var.EXT)" Value="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Type="string" Action="write" />
@@ -333,20 +333,20 @@
 					</Component>
 
 					<?if $(sys.BUILDARCH) = x86?>
-					<Component Id="sap2txt.exe" Guid="*">
+					<Component Id="sap2txt.exe">
 						<File Name="sap2txt.exe" Source="sap2txt.exe" Checksum="yes" KeyPath="yes" />
 					</Component>
-					<Component Id="diff_sap.js" Guid="*">
+					<Component Id="diff_sap.js">
 						<File Name="diff-sap.js" Source="diff-sap.js" KeyPath="yes" />
 					</Component>
-					<Component Id="diff_sap_tsvn.reg" Guid="318158B4-BD70-440F-B672-924A9CB09FD6">
+					<Component Id="diff_sap_tsvn.reg">
 						<RegistryValue Root="HKCU" Key="Software\TortoiseSVN\DiffTools" Name=".sap" Value="wscript.exe &quot;[#diff_sap.js]&quot; %base %mine %bname %yname //E:javascript" Type="string" Action="write" KeyPath="yes" />
 					</Component>
-					<Component Id="diff_sap_tgit.reg" Guid="BA42D084-4B09-4FB6-B209-8ADEE70A4289">
+					<Component Id="diff_sap_tgit.reg">
 						<RegistryValue Root="HKCU" Key="Software\TortoiseGit\DiffTools" Name=".sap" Value="wscript.exe &quot;[#diff_sap.js]&quot; %base %mine %bname %yname //E:javascript" Type="string" Action="write" KeyPath="yes" />
 					</Component>
 
-					<Component Id="README_WindowsSetup.html" Guid="*">
+					<Component Id="README_WindowsSetup.html">
 						<File Name="README_WindowsSetup.html" Source="README_WindowsSetup.html" KeyPath="yes" />
 					</Component>
 					<?endif?>
@@ -355,10 +355,10 @@
 				<?if $(sys.BUILDARCH) = x86?>
 				<Directory Id="WINAMP.DIR" Name="Winamp">
 					<Directory Id="WINAMPPLUG.DIR" Name="Plugins">
-						<Component Id="in_asap.dll" Guid="*">
+						<Component Id="in_asap.dll">
 							<File Name="in_asap.dll" Source="in_asap.dll" Checksum="yes" KeyPath="yes" />
 						</Component>
-						<Component Id="in_asap.ext" Guid="*">
+						<Component Id="in_asap.ext">
 							<RegistryValue Root="HKCR" Key="Winamp.File" Name="in_asap" Type="integer" Value="1" KeyPath="yes" />
 							<ProgId Id="Winamp.File">
 								<Extension Id="sap">
@@ -373,10 +373,10 @@
 				</Directory>
 				<Directory Id="FOO.DIR" Name="foobar2000">
 					<Directory Id="FOOCOMP.DIR" Name="components">
-						<Component Id="foo_asap.dll" Guid="*">
+						<Component Id="foo_asap.dll">
 							<File Name="foo_asap.dll" Source="foo_asap.dll" Checksum="yes" KeyPath="yes" />
 						</Component>
-						<Component Id="foo_asap.ext" Guid="*">
+						<Component Id="foo_asap.ext">
 							<RegistryValue Root="HKCR" Key="asap.file" Name="foo_asap" Type="integer" Value="1" KeyPath="yes" />
 							<?foreach EXT in $(var.NATIVE_EXTS)?>
 								<ProgId Id="foobar2000.$(var.EXT)">
@@ -392,7 +392,7 @@
 					<Directory Id="XBMCSYS.DIR" Name="system">
 						<Directory Id="XBMCPLS.DIR" Name="players">
 							<Directory Id="XBMCPAPL.DIR" Name="paplayer">
-								<Component Id="xbmc_asap.dll" Guid="*">
+								<Component Id="xbmc_asap.dll">
 									<File Name="xbmc_asap.dll" Source="xbmc_asap.dll" Checksum="yes" KeyPath="yes" />
 								</Component>
 							</Directory>
@@ -401,10 +401,10 @@
 				</Directory>
 				<Directory Id="APOLLO.DIR" Name="Apollo">
 					<Directory Id="APOLLOPLUG.DIR" Name="Plug-ins">
-						<Component Id="ASAP_Apollo.dll" Guid="*">
+						<Component Id="ASAP_Apollo.dll">
 							<File Name="ASAP_Apollo.dll" Source="ASAP_Apollo.dll" Checksum="yes" KeyPath="yes" />
 						</Component>
-						<Component Id="ASAP_Apollo.ext" Guid="*">
+						<Component Id="ASAP_Apollo.ext">
 							<RegistryValue Root="HKCR" Key="Apollo.Track" Name="ASAP_Apollo" Type="integer" Value="1" KeyPath="yes" />
 							<ProgId Id="Apollo.Track">
 								<Extension Id="sap">
@@ -418,10 +418,10 @@
 					</Directory>
 				</Directory>
 				<Directory Id="XMPLAY.DIR" Name="XMPlay">
-					<Component Id="xmp_asap.dll" Guid="*">
+					<Component Id="xmp_asap.dll">
 						<File Name="xmp-asap.dll" Source="xmp-asap.dll" Checksum="yes" KeyPath="yes" />
 					</Component>
-					<Component Id="xmp_asap.ext" Guid="*">
+					<Component Id="xmp_asap.ext">
 						<RegistryValue Root="HKCR" Key="asap.file" Name="xmp_asap" Type="integer" Value="1" KeyPath="yes" />
 						<ProgId Id="XMPlay">
 							<Extension Id="sap">
@@ -435,10 +435,10 @@
 				</Directory>
 				<Directory Id="AIMP.DIR" Name="AIMP3">
 					<Directory Id="AIMPPLUG.DIR" Name="Plugins">
-						<Component Id="bass_asap.dll" Guid="*">
+						<Component Id="bass_asap.dll">
 							<File Name="bass_asap.dll" Source="bass_asap.dll" Checksum="yes" KeyPath="yes" />
 						</Component>
-						<Component Id="aimp_asap.ext" Guid="*">
+						<Component Id="aimp_asap.ext">
 							<RegistryValue Root="HKCR" Key="asap.file" Name="aimp" Type="integer" Value="1" KeyPath="yes" />
 							<ProgId Id="AIMP.ASAP">
 								<Extension Id="sap">
@@ -452,12 +452,12 @@
 					</Directory>
 				</Directory>
 				<Directory Id="GSP.DIR" Name="GSPlayer">
-					<Component Id="gspasap.dll" Guid="*">
+					<Component Id="gspasap.dll">
 						<File Name="gspasap.dll" Source="gspasap.dll" Checksum="yes" KeyPath="yes" />
 					</Component>
 				</Directory>
 				<Directory Id="RMT.DIR" Name="RMT">
-					<Component Id="apokeysnd.dll" Guid="*">
+					<Component Id="apokeysnd.dll">
 						<File Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
 					</Component>
 				</Directory>
@@ -465,7 +465,7 @@
 					<Directory Id="AUDLIB.DIR" Name="lib">
 						<Directory Id="AUDAUD.DIR" Name="audacious">
 							<Directory Id="AUDINPUT.DIR" Name="Input">
-								<Component Id="asapplug.dll" Guid="*">
+								<Component Id="asapplug.dll">
 									<File Name="asapplug.dll" Source="asapplug.dll" Checksum="yes" KeyPath="yes" />
 								</Component>
 							</Directory>
@@ -476,10 +476,10 @@
 					<Directory Id="VLC.DIR" Name="VLC">
 						<Directory Id="VLCPLUGINS.DIR" Name="plugins">
 							<Directory Id="VLCDEMUX.DIR" Name="demux">
-								<Component Id="libasap_plugin.dll" Guid="*">
+								<Component Id="libasap_plugin.dll">
 									<File Name="libasap_plugin.dll" Source="libasap_plugin.dll" Checksum="yes" KeyPath="yes" />
 								</Component>
-								<Component Id="libasap_plugin.ext" Guid="*">
+								<Component Id="libasap_plugin.ext">
 									<RegistryValue Root="HKCR" Key="asap.file" Name="vlc" Type="integer" Value="1" KeyPath="yes" />
 									<ProgId Id="VLC.sap">
 										<Extension Id="sap">
@@ -499,11 +499,11 @@
 			<?if $(sys.BUILDARCH) = x86?>
 			<Directory Id="ProgramMenuFolder" Name="Programs">
 				<Directory Id="menu.dir" Name="ASAP">
-					<Component Id="WASAP.lnk" Guid="*">
+					<Component Id="WASAP.lnk">
 						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuWASAP" Type="integer" Value="1" KeyPath="yes" />
 						<Shortcut Id="WASAP.lnk" Name="WASAP" Target="[#wasap.exe]" />
 					</Component>
-					<Component Id="Documentation.lnk" Guid="*">
+					<Component Id="Documentation.lnk">
 						<RemoveFolder Id="menu.dir" On="uninstall" />
 						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuDoc" Type="integer" Value="1" KeyPath="yes" />
 						<Shortcut Id="Documentation.lnk" Name="Documentation" Target="[#README_WindowsSetup.html]" />
@@ -515,7 +515,7 @@
 						<File Name="Website.url" Source="Website.url" />
 					</Component>
 					<!--
-					<Component Id="uninstall.lnk" Guid="*">
+					<Component Id="uninstall.lnk">
 						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuUninstall" Type="integer" Value="1" KeyPath="yes" />
 						<Shortcut Id="uninstall.lnk" Name="Uninstall" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" />
 					</Component>
@@ -523,7 +523,7 @@
 				</Directory>
 			</Directory>
 			<Directory Id="DesktopFolder" Name="Desktop">
-				<Component Id="WASAP.desktop" Guid="*">
+				<Component Id="WASAP.desktop">
 					<RegistryValue Root="HKCU" Key="Software\ASAP" Name="DesktopWASAP" Type="integer" Value="1" KeyPath="yes" />
 					<Shortcut Id="WASAP.desktop" Name="WASAP" Target="[#wasap.exe]" />
 				</Component>
@@ -659,8 +659,8 @@
 		-->
 		<?endif?>
 
-		<CustomAction Id="InstallPropertySchema" DllEntry="InstallPropertySchema" FileKey="ASAPShellEx.dll" Execute="deferred" Impersonate="no" Return="check" />
-		<CustomAction Id="UninstallPropertySchema" DllEntry="UninstallPropertySchema" FileKey="ASAPShellEx.dll" Execute="deferred" Impersonate="no" Return="check" />
+		<CustomAction Id="InstallPropertySchema" DllEntry="InstallPropertySchema" FileKey="ASAPShellEx.dll" Execute="deferred" Impersonate="no" />
+		<CustomAction Id="UninstallPropertySchema" DllEntry="UninstallPropertySchema" FileKey="ASAPShellEx.dll" Execute="deferred" Impersonate="no" />
 
 		<InstallExecuteSequence>
 			<Custom Action="UninstallPropertySchema" After="SelfUnregModules">$ASAPShellEx.propdesc = 2</Custom>
