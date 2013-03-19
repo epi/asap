@@ -25,7 +25,6 @@
    Column Handler (IColumnProvider) works in Windows XP and 2003 (probably 2000 too and maybe 98).
    Property Handler (IInitializeWithStream+IPropertyStore+IPropertyStoreCapabilities) works in Windows Vista and 7. */
 
-#include <malloc.h>
 #include <stdio.h>
 #define _WIN32_IE 0x500
 #include <shlobj.h>
@@ -58,27 +57,27 @@ typedef SHCOLUMNID PROPERTYKEY;
 static const IID IID_IInitializeWithStream =
 	{ 0xb824b49d, 0x22ac, 0x4161, { 0xac, 0x8a, 0x99, 0x16, 0xe8, 0xfa, 0x3f, 0x7f } };
 #define INTERFACE IInitializeWithStream
-DECLARE_INTERFACE_(IInitializeWithStream,IUnknown)
+DECLARE_INTERFACE_(IInitializeWithStream, IUnknown)
 {
-	STDMETHOD(QueryInterface)(THIS_ REFIID,PVOID*) PURE;
-	STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-	STDMETHOD_(ULONG,Release)(THIS) PURE;
-	STDMETHOD(Initialize)(THIS_ IStream *pstream, DWORD grfMode) PURE;
+	STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID *) PURE;
+	STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+	STDMETHOD_(ULONG, Release)(THIS) PURE;
+	STDMETHOD(Initialize)(THIS_ IStream *, DWORD) PURE;
 };
 #undef INTERFACE
 
 static const IID IID_IPropertyStore =
 	{ 0x886d8eeb, 0x8cf2, 0x4446, { 0x8d, 0x02, 0xcd, 0xba, 0x1d, 0xbd, 0xcf, 0x99 } };
 #define INTERFACE IPropertyStore
-DECLARE_INTERFACE_(IPropertyStore,IUnknown)
+DECLARE_INTERFACE_(IPropertyStore, IUnknown)
 {
-	STDMETHOD(QueryInterface)(THIS_ REFIID,PVOID*) PURE;
-	STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-	STDMETHOD_(ULONG,Release)(THIS) PURE;
-	STDMETHOD(GetCount)(THIS_ DWORD *cProps) PURE;
-	STDMETHOD(GetAt)(THIS_ DWORD iProp, PROPERTYKEY *pkey) PURE;
-	STDMETHOD(GetValue)(THIS_ REFPROPERTYKEY key, PROPVARIANT *pv) PURE;
-	STDMETHOD(SetValue)(THIS_ REFPROPERTYKEY key, REFPROPVARIANT propvar) PURE;
+	STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID *) PURE;
+	STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+	STDMETHOD_(ULONG, Release)(THIS) PURE;
+	STDMETHOD(GetCount)(THIS_ DWORD *) PURE;
+	STDMETHOD(GetAt)(THIS_ DWORD, PROPERTYKEY *) PURE;
+	STDMETHOD(GetValue)(THIS_ REFPROPERTYKEY, PROPVARIANT *) PURE;
+	STDMETHOD(SetValue)(THIS_ REFPROPERTYKEY, REFPROPVARIANT) PURE;
 	STDMETHOD(Commit)(THIS) PURE;
 };
 #undef INTERFACE
@@ -86,12 +85,12 @@ DECLARE_INTERFACE_(IPropertyStore,IUnknown)
 static const IID IID_IPropertyStoreCapabilities =
     { 0xc8e2d566, 0x186e, 0x4d49, { 0xbf, 0x41, 0x69, 0x09, 0xea, 0xd5, 0x6a, 0xcc } };
 #define INTERFACE IPropertyStoreCapabilities
-DECLARE_INTERFACE_(IPropertyStoreCapabilities,IUnknown)
+DECLARE_INTERFACE_(IPropertyStoreCapabilities, IUnknown)
 {
-	STDMETHOD(QueryInterface)(THIS_ REFIID,PVOID*) PURE;
-	STDMETHOD_(ULONG,AddRef)(THIS) PURE;
-	STDMETHOD_(ULONG,Release)(THIS) PURE;
-	STDMETHOD(IsPropertyWritable)(THIS_ REFPROPERTYKEY key) PURE;
+	STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID *) PURE;
+	STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+	STDMETHOD_(ULONG, Release)(THIS) PURE;
+	STDMETHOD(IsPropertyWritable)(THIS_ REFPROPERTYKEY) PURE;
 };
 #undef INTERFACE
 
@@ -165,6 +164,7 @@ public:
 		m_pLock = pLock;
 		EnterCriticalSection(pLock);
 	}
+
 	~CMyLock()
 	{
 		LeaveCriticalSection(m_pLock);
@@ -179,10 +179,14 @@ class CMemoryByteWriter
 		if (self->length < ASAPInfo_MAX_MODULE_LENGTH)
 			self->module[self->length++] = (byte) value;
 	}
+
 public:
+
 	byte module[ASAPInfo_MAX_MODULE_LENGTH];
 	int length;
+
 	CMemoryByteWriter() : length(0) { }
+
 	ByteWriter GetByteWriter()
 	{
 		ByteWriter bw = { this, WriteByte };
@@ -190,7 +194,7 @@ public:
 	}
 };
 
-class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPropertyStore, IPropertyStoreCapabilities
+class CASAPMetadataHandler : IColumnProvider, IInitializeWithStream, IPropertyStore, IPropertyStoreCapabilities
 {
 	LONG m_cRef;
 	CRITICAL_SECTION m_lock;
@@ -207,11 +211,9 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 			m_pstream = NULL;
 		}
 
-		int cch = lstrlenW(wszFile) + 1;
-		char *filename = (char *) alloca(cch * 2);
-		if (filename == NULL)
-			return E_OUTOFMEMORY;
-		if (WideCharToMultiByte(CP_ACP, 0, wszFile, -1, filename, cch, NULL, NULL) <= 0)
+		int cbFilename = WideCharToMultiByte(CP_ACP, 0, wszFile, -1, NULL, 0, NULL, NULL);
+		char filename[cbFilename];
+		if (WideCharToMultiByte(CP_ACP, 0, wszFile, -1, filename, cbFilename, NULL, NULL) <= 0)
 			return HRESULT_FROM_WIN32(GetLastError());
 
 		byte module[ASAPInfo_MAX_MODULE_LENGTH];
@@ -246,16 +248,15 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 
 	static HRESULT GetString(PROPVARIANT *pvarData, const char *s)
 	{
-		OLECHAR str[ASAPInfo_MAX_TEXT_LENGTH + 1];
-		int i = 0;
-		char c;
-		do {
-			c = s[i];
-			str[i++] = c;
-		} while (c != '\0');
 		pvarData->vt = VT_BSTR;
-		pvarData->bstrVal = SysAllocString(str);
-		return pvarData->bstrVal != NULL ? S_OK : E_OUTOFMEMORY;
+		// pvarData->bstrVal = A2BSTR(s); - just don't want dependency on ATL
+		int cch = MultiByteToWideChar(CP_ACP, 0, s, -1, NULL, 0);
+		pvarData->bstrVal = SysAllocStringLen(NULL, cch - 1);
+		if (pvarData->bstrVal == NULL)
+			return E_OUTOFMEMORY;
+		if (MultiByteToWideChar(CP_ACP, 0, s, -1, pvarData->bstrVal, cch) <= 0)
+			return HRESULT_FROM_WIN32(GetLastError());
+		return S_OK;
 	}
 
 	HRESULT GetAuthors(PROPVARIANT *pvarData, BOOL vista)
@@ -333,7 +334,7 @@ class CASAPMetadataHandler : public IColumnProvider, IInitializeWithStream, IPro
 				if (g_windowsVer == WINDOWS_OLD) {
 					duration /= 1000;
 					char timeStr[16];
-					sprintf(timeStr, "%.2d:%.2d:%.2d", duration / 3600, duration / 60 % 60, duration % 60);
+					sprintf(timeStr, "%02d:%02d:%02d", duration / 3600, duration / 60 % 60, duration % 60);
 					return GetString(pvarData, timeStr);
 				}
 				else {
@@ -428,7 +429,7 @@ public:
 		m_pinfo = ASAPInfo_New();
 	}
 
-	virtual ~CASAPMetadataHandler()
+	~CASAPMetadataHandler()
 	{
 		ASAPInfo_Delete(m_pinfo);
 		if (m_pstream != NULL)
@@ -625,15 +626,11 @@ public:
 	STDMETHODIMP IsPropertyWritable(REFPROPERTYKEY key)
 	{
 		if (key.fmtid == FMTID_SummaryInformation) {
-			if (key.pid == PIDSI_TITLE)
-				return S_OK;
-			if (key.pid == PIDSI_AUTHOR)
+			if (key.pid == PIDSI_TITLE || key.pid == PIDSI_AUTHOR)
 				return S_OK;
 		}
 		else if (key.fmtid == FMTID_MUSIC) {
-			if (key.pid == PIDSI_ARTIST)
-				return S_OK;
-			if (key.pid == PIDSI_YEAR)
+			if (key.pid == PIDSI_ARTIST || key.pid == PIDSI_YEAR)
 				return S_OK;
 		}
 		return S_FALSE;
@@ -672,7 +669,7 @@ public:
 		*ppv = NULL;
 		if (punkOuter != NULL)
 			return CLASS_E_NOAGGREGATION;
-		IColumnProvider *punk = new CASAPMetadataHandler;
+		CASAPMetadataHandler *punk = new CASAPMetadataHandler;
 		if (punk == NULL)
 			return E_OUTOFMEMORY;
 		HRESULT hr = punk->QueryInterface(riid, ppv);
