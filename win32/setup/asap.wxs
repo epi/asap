@@ -326,9 +326,13 @@
 							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="ExtendedTileInfo" Value="prop:System.ItemType;System.Size;System.Media.Duration" Type="string" Action="write" />
 							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="PreviewDetails" Value="prop:*System.Title;*System.Media.Duration;*System.Size;*System.Author;*System.Media.Year" Type="string" Action="write" />
 						<?endforeach?>
-						<RegistryValue Root="HKCR" Key=".sap" Name="FullDetails" Value="prop:System.PropGroup.Description;System.Author;System.Title;System.Media.Year;System.PropGroup.Audio;System.Media.Duration;System.Audio.ChannelCount;ASAP.Subsongs;ASAP.PALNTSC;System.PropGroup.FileSystem;System.ItemNameDisplay;System.ItemType;System.ItemFolderPathDisplay;System.Size;System.DateCreated;System.DateModified;System.FileAttributes" Type="string" Action="write" />
-						<?foreach EXT in $(var.NATIVE_EXTS)?>
-							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="FullDetails" Value="prop:System.PropGroup.Audio;System.Media.Duration;System.Audio.ChannelCount;ASAP.Subsongs;ASAP.PALNTSC;System.PropGroup.FileSystem;System.ItemNameDisplay;System.ItemType;System.ItemFolderPathDisplay;System.Size;System.DateCreated;System.DateModified;System.FileAttributes" Type="string" Action="write" />
+						<?define FULLDETAILS_COMMON=System.PropGroup.Audio;System.Media.Duration;System.Audio.ChannelCount;ASAP.Subsongs;ASAP.PALNTSC;System.PropGroup.FileSystem;System.ItemNameDisplay;System.ItemType;System.ItemFolderPathDisplay;System.Size;System.DateCreated;System.DateModified;System.FileAttributes?>
+						<RegistryValue Root="HKCR" Key=".sap" Name="FullDetails" Value="prop:System.PropGroup.Description;System.Author;System.Title;System.Media.Year;$(var.FULLDETAILS_COMMON)" Type="string" Action="write" />
+						<?foreach EXT in rmt;tmc;tm8;tm2?>
+							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="FullDetails" Value="prop:System.PropGroup.Description;System.Title;$(var.FULLDETAILS_COMMON)" Type="string" Action="write" />
+						<?endforeach?>
+						<?foreach EXT in cmc;cm3;cmr;cms;dmc;dlt;mpt;mpd;fc?>
+							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="FullDetails" Value="prop:$(var.FULLDETAILS_COMMON)" Type="string" Action="write" />
 						<?endforeach?>
 					</Component>
 
