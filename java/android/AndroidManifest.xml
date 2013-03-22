@@ -10,8 +10,7 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<activity android:name=".Player" android:label="@string/play_in_asap"
-			android:configChanges="mcc|mnc|keyboard|keyboardHidden|orientation">
+		<activity android:name=".Player" android:label="@string/play_in_asap" android:launchMode="singleTop" android:configChanges="mcc|mnc|keyboard|keyboardHidden|orientation">
 			<intent-filter>
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
@@ -34,5 +33,6 @@
 				<data android:pathPattern=".*\\.fc" />
 			</intent-filter>
 		</activity>
+		<service android:name=".PlayerService" />
 	</application>
 </manifest>
