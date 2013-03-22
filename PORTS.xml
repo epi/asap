@@ -408,8 +408,8 @@
 		<a href="http://gstreamer.freedesktop.org/">GStreamer</a>
 	</port>
 	<port name="VLC plugin">
-		<bin>Windows, Linux</bin>
-		<platform>Windows, Linux, Unix</platform>
+		<bin>Windows, OS X, Linux</bin>
+		<platform>Windows, OS X, Linux</platform>
 		<interface>player plugin</interface>
 		<since>3.1.2</since>
 		<status>stable</status>
