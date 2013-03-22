@@ -1,7 +1,7 @@
 /*
  * PlayerService.java - ASAP for Android
  *
- * Copyright (C) 2010-2011  Piotr Fusik
+ * Copyright (C) 2010-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -33,12 +33,12 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.widget.Toast;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.zip.ZipFile;
 import org.apache.http.HttpResponse;
@@ -48,43 +48,36 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 public class PlayerService extends Service implements Runnable
 {
-	private Uri uri;
-	private final ASAP asap = new ASAP();
-	ASAPInfo info;
-	private String filename;
-	int song;
-	private boolean stop;
-	private AudioTrack audioTrack;
+	// User interface -----------------------------------------------------------------------------------------
 
-	private static final int NOTIFICATION_ID = 1;
-	private static final Class[] START_FOREGROUND_SIGNATURE = new Class[] { int.class, Notification.class };
-	private static final Class[] STOP_FOREGROUND_SIGNATURE = new Class[] { boolean.class };
-	private Method startForeground;
-	private Method stopForeground;
-	private final Object[] startForegroundArgs = new Object[2];
-	private final Object[] stopForegroundArgs = new Object[1];
 	private NotificationManager notMan;
+	private static final int NOTIFICATION_ID = 1;
 
-	private void invokeMethod(Method method, Object[] args)
+	@Override
+	public void onCreate()
 	{
+		notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+	}
+
+	private boolean invokeMethod(String name, Object... args)
+	{
+		Class[] classes = new Class[args.length];
+		for (int i = 0; i < args.length; i++)
+			classes[i] = args[i].getClass();
 		try {
+			Method method = Service.class.getMethod(name, classes);
 			method.invoke(this, args);
-		} catch (InvocationTargetException ex) {
-			// should not happen
-		} catch (IllegalAccessException ex) {
-			// should not happen
 		}
+		catch (Exception ex) {
+			return false;
+		}
+		return true;
 	}
 
 	private void startForegroundCompat(int id, Notification notification)
 	{
-		if (startForeground != null) {
-			startForegroundArgs[0] = Integer.valueOf(id);
-			startForegroundArgs[1] = notification;
-			invokeMethod(startForeground, startForegroundArgs);
-		}
-		else {
-			// fall back on the old API
+		if (!invokeMethod("startForeground", id, notification)) {
+			// Fall back on the old API.
 			setForeground(true);
 			notMan.notify(id, notification);
 		}
@@ -92,22 +85,97 @@ public class PlayerService extends Service implements Runnable
 
 	private void stopForegroundCompat(int id)
 	{
-		if (stopForeground != null) {
-			stopForegroundArgs[0] = Boolean.TRUE;
-			invokeMethod(stopForeground, stopForegroundArgs);
-		}
-		else {
-			// fall back on the old API.
-			// cancel before changing the foreground state, since we could be killed at that point
+		if (!invokeMethod("stopForeground", true)) {
+			// Fall back on the old API.
+			// Cancel before changing the foreground state, since we could be killed at that point.
 			notMan.cancel(id);
 			setForeground(false);
 		}
 	}
 
-	private void showError(int messageId)
+	private final Handler toastHandler = new Handler();
+
+	private void showError(final int messageId)
 	{
-		Toast.makeText(this, messageId, Toast.LENGTH_SHORT);
+		toastHandler.post(new Runnable() {
+			public void run() {
+				Toast.makeText(PlayerService.this, messageId, Toast.LENGTH_SHORT).show();
+			}
+		});
 	}
+
+
+	// Threading ----------------------------------------------------------------------------------------------
+
+	private Thread thread;
+	private boolean stop;
+
+	private void stop()
+	{
+		if (thread != null) {
+			synchronized (this) {
+				stop = true;
+				notify();
+			}
+			try {
+				thread.join();
+			}
+			catch (InterruptedException ex) {
+			}
+			thread = null;
+			stopForegroundCompat(NOTIFICATION_ID);
+		}
+	}
+
+
+	// I/O ----------------------------------------------------------------------------------------------------
+
+	private Uri uri;
+	private String filename;
+
+	private InputStream httpGet(Uri uri) throws IOException
+	{
+		DefaultHttpClient client = new DefaultHttpClient();
+		HttpGet request = new HttpGet(uri.toString());
+		HttpResponse response = client.execute(request);
+		StatusLine status = response.getStatusLine();
+		if (status.getStatusCode() != 200)
+			throw new IOException("HTTP error " + status);
+		return response.getEntity().getContent();
+	}
+
+	/**
+	 * Reads bytes from the stream into the byte array
+	 * until end of stream or array is full.
+	 * @param is source stream
+	 * @param b output array
+	 * @return number of bytes read
+	 */
+	private static int readAndClose(InputStream is, byte[] b) throws IOException
+	{
+		int got = 0;
+		int len = b.length;
+		try {
+			while (got < len) {
+				int i = is.read(b, got, len - got);
+				if (i <= 0)
+					break;
+				got += i;
+			}
+		}
+		finally {
+			is.close();
+		}
+		return got;
+	}
+
+
+	// Playback -----------------------------------------------------------------------------------------------
+
+	private final ASAP asap = new ASAP();
+	ASAPInfo info;
+	int song;
+	private AudioTrack audioTrack;
 
 	boolean isPaused()
 	{
@@ -193,10 +261,11 @@ public class PlayerService extends Service implements Runnable
 
 	public void run()
 	{
+		// read file
 		filename = uri.getLastPathSegment();
-		ZipFile zip = null;
 		final byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 		int moduleLen;
+		ZipFile zip = null;
 		try {
 			InputStream is;
 			if (Util.isZip(filename)) {
@@ -224,6 +293,8 @@ public class PlayerService extends Service implements Runnable
 		finally {
 			Util.close(zip);
 		}
+
+		// load file
 		try {
 			asap.load(filename, module, moduleLen);
 			info = asap.getInfo();
@@ -233,15 +304,6 @@ public class PlayerService extends Service implements Runnable
 			showError(R.string.invalid_file);
 			return;
 		}
-		stop = false;
-
-		int config = info.getChannels() == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
-		int len = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, config, AudioFormat.ENCODING_PCM_8BIT);
-		if (len < 16384)
-			len = 16384;
-		final byte[] buffer = new byte[len];
-		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE, config, AudioFormat.ENCODING_PCM_8BIT, len, AudioTrack.MODE_STREAM);
-		audioTrack.play();
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
 		String title = info.getTitleOrFilename();
@@ -250,9 +312,18 @@ public class PlayerService extends Service implements Runnable
 		notification.setLatestEventInfo(this, title, info.getAuthor(), contentIntent);
 		startForegroundCompat(NOTIFICATION_ID, notification);
 
+		// playback
+		int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
+		int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_8BIT);
+		if (bufferLen < 16384)
+			bufferLen = 16384;
+		final byte[] buffer = new byte[bufferLen];
+		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_8BIT, bufferLen, AudioTrack.MODE_STREAM);
+		audioTrack.play();
+
 		for (;;) {
 			synchronized (this) {
-				if (len < buffer.length || isPaused()) {
+				if (bufferLen < buffer.length || isPaused()) {
 					try {
 						wait();
 					}
@@ -265,95 +336,46 @@ public class PlayerService extends Service implements Runnable
 				}
 			}
 			synchronized (asap) {
-				len = asap.generate(buffer, buffer.length, ASAPSampleFormat.U8);
+				bufferLen = asap.generate(buffer, buffer.length, ASAPSampleFormat.U8);
 			}
-			audioTrack.write(buffer, 0, len);
+			audioTrack.write(buffer, 0, bufferLen);
 		}
-	}
-
-	private InputStream httpGet(Uri uri) throws IOException
-	{
-		Notification notification = new Notification(R.drawable.icon, filename, System.currentTimeMillis());
-		notification.flags |= Notification.FLAG_ONGOING_EVENT;
-		notMan.notify(NOTIFICATION_ID, notification);
-		DefaultHttpClient client = new DefaultHttpClient();
-		HttpGet request = new HttpGet(uri.toString());
-		HttpResponse response = client.execute(request);
-		StatusLine status = response.getStatusLine();
-		if (status.getStatusCode() != 200)
-			throw new IOException("HTTP error " + status);
-		return response.getEntity().getContent();
-	}
-
-	/**
-	 * Reads bytes from the stream into the byte array
-	 * until end of stream or array is full.
-	 * @param is source stream
-	 * @param b output array
-	 * @return number of bytes read
-	 */
-	private static int readAndClose(InputStream is, byte[] b) throws IOException
-	{
-		int got = 0;
-		int len = b.length;
-		try {
-			while (got < len) {
-				int i = is.read(b, got, len - got);
-				if (i <= 0)
-					break;
-				got += i;
-			}
-		}
-		finally {
-			is.close();
-		}
-		return got;
 	}
 
 	@Override
-	public void onCreate()
+	public void onStart(Intent intent, int startId)
 	{
-		try {
-			startForeground = Service.class.getMethod("startForeground", START_FOREGROUND_SIGNATURE);
-			stopForeground = Service.class.getMethod("stopForeground", STOP_FOREGROUND_SIGNATURE);
-		}
-		catch (NoSuchMethodException ex) {
-		}
-        notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-	}
-
-    @Override
-    public void onStart(Intent intent, int startId)
-	{
-    	super.onStart(intent, startId);
+		super.onStart(intent, startId);
+		stop();
 		uri = intent.getData();
-		new Thread(this).start();
-    }
+		stop = false;
+		thread = new Thread(this);
+		thread.start();
+	}
 
 	@Override
-    public void onDestroy()
+	public void onDestroy()
 	{
 		super.onDestroy();
-		synchronized (this) {
-			stop = true;
-			notify();
+		stop();
+	}
+
+
+	// Player.java interface ----------------------------------------------------------------------------------
+
+	class LocalBinder extends Binder
+	{
+		PlayerService getService()
+		{
+			return PlayerService.this;
 		}
-		stopForegroundCompat(NOTIFICATION_ID);
-    }
+	}
 
 	private final IBinder binder = new LocalBinder();
 
-    public class LocalBinder extends Binder
+	@Override
+	public IBinder onBind(Intent intent)
 	{
-    	PlayerService getService()
-		{
-            return PlayerService.this;
-        }
-    }
-
-    @Override
-    public IBinder onBind(Intent intent)
-	{
-        return binder;
-    }
+		return binder;
+	}
 }

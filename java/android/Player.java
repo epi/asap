@@ -1,7 +1,7 @@
 /*
  * Player.java - ASAP for Android
  *
- * Copyright (C) 2010-2011  Piotr Fusik
+ * Copyright (C) 2010-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -56,6 +56,7 @@ public class Player extends Activity
 			Player.this.service = null;
 		}
 	};
+
 	private MediaController mediaController;
 
 	private View getContentView()
@@ -75,8 +76,10 @@ public class Player extends Activity
 		}
 	}
 
-	void showInfo()
+	private void showInfo()
 	{
+		if (service == null)
+			return;
 		ASAPInfo info = service.info;
 		if (info == null)
 			return;
@@ -88,6 +91,7 @@ public class Player extends Activity
 			setTag(R.id.song, getString(R.string.song_format, service.song + 1, songs));
 		else
 			setTag(R.id.song, "");
+
 		if (mediaController == null) {
 			mediaController = new MediaController(this, false);
 			mediaController.setAnchorView(getContentView());
@@ -111,7 +115,12 @@ public class Player extends Activity
 					public void onClick(View v) { service.playPreviousSong(); }
 				});
 			}
-			mediaController.show(2000000000);
+			try {
+				mediaController.show(2000000000);
+			}
+			catch (RuntimeException ex) {
+				// FIXME
+			}
 		}
 	}
 
@@ -139,7 +148,6 @@ public class Player extends Activity
 
 		findViewById(R.id.stop_button).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				unbindService(connection);
 				service.stopSelf();
 				finish();
 			}
@@ -153,12 +161,13 @@ public class Player extends Activity
 	{
 		super.onDestroy();
 		unregisterReceiver(receiver);
+		unbindService(connection);
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event)
 	{
-		if (mediaController == null) {
+		if (service == null) {
 			// error shown
 			return super.onKeyDown(keyCode, event);
 		}

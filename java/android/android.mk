@@ -1,14 +1,14 @@
 ANDROID_SDK = C:/bin/android-sdk-windows
-ANDROID_PLATFORM = $(ANDROID_SDK)/platforms/android-8
+ANDROID_JAR = $(ANDROID_SDK)/platforms/android-8/android.jar
 PROGUARD_JAR = C:/bin/proguard4.6/lib/proguard.jar
 
-AAPT = $(ANDROID_PLATFORM)/tools/aapt
+AAPT = $(ANDROID_SDK)/platform-tools/aapt
 PROGUARD = $(DO)java -jar $(PROGUARD_JAR)
-DX = $(DO)java -jar "$(ANDROID_PLATFORM)/tools/lib/dx.jar" --no-strict
+DX = $(DO)java -jar "$(ANDROID_SDK)/platform-tools/lib/dx.jar" --no-strict
 APKBUILDER = $(DO)java -classpath "$(ANDROID_SDK)/tools/lib/sdklib.jar" com.android.sdklib.build.ApkBuilderMain $@
 JARSIGNER = $(DO)jarsigner
 ZIPALIGN = $(DO)$(ANDROID_SDK)/tools/zipalign
-ADB = $(ANDROID_SDK)/tools/adb
+ADB = $(ANDROID_SDK)/platform-tools/adb
 ANDROID = $(ANDROID_SDK)/tools/android.bat
 EMULATOR = $(ANDROID_SDK)/tools/emulator
 
@@ -35,7 +35,7 @@ android-install-dev: $(ANDROID_RELEASE)
 .PHONY: android-install-dev
 
 android-log-emu:
-	$(ADB) -e logcat
+	$(ADB) -e logcat -d
 .PHONY: android-log-emu
 
 android-log-dev:
@@ -85,13 +85,13 @@ CLEAN += java/android/classes.dex
 #	$(DX) --dex --output=$@ $<
 
 java/android/classes.jar: $(srcdir)java/android/proguard.cfg java/android/classes/net/sf/asap/Player.class
-	$(PROGUARD) -injars java/android/classes -outjars $@ -libraryjars "$(ANDROID_PLATFORM)/android.jar" @$<
+	$(PROGUARD) -injars java/android/classes -outjars $@ -libraryjars $(ANDROID_JAR) @$<
 
 java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,FileSelector.java Player.java PlayerService.java Util.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
-	$(JAVAC) -d java/android/classes -bootclasspath "$(ANDROID_PLATFORM)/android.jar" $(addprefix $(srcdir)java/android/,FileSelector.java Player.java PlayerService.java Util.java) java/android/src/net/sf/asap/R.java java/src/net/sf/asap/*.java
+	$(JAVAC) -d java/android/classes -bootclasspath $(ANDROID_JAR) $(addprefix $(srcdir)java/android/,FileSelector.java Player.java PlayerService.java Util.java) java/android/src/net/sf/asap/R.java java/src/net/sf/asap/*.java
 CLEANDIR += java/android/classes
 
 # Also generates java/android/src/net/sf/asap/R.java
 java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/icon.png res/layout/error.xml res/layout/list_item.xml res/layout/playing.xml res/values/strings.xml res/values/themes.xml) $(JAVA_OBX)
-	$(DO)mkdir -p java/android/src && $(AAPT) p -f -m -M $< -I $(ANDROID_PLATFORM)/android.jar -S $(srcdir)java/android/res -F $@ -J java/android/src java/obx
+	$(DO)mkdir -p java/android/src && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -F $@ -J java/android/src java/obx
 CLEAN += java/android/AndroidASAP-resources.apk java/android/src/net/sf/asap/R.java
