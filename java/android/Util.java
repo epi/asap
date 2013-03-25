@@ -29,10 +29,26 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.zip.ZipFile;
 
 class Util
 {
+	static boolean invokeMethod(Object thiz, String name, Object... args)
+	{
+		Class[] classes = new Class[args.length];
+		for (int i = 0; i < args.length; i++)
+			classes[i] = args[i].getClass();
+		try {
+			Method method = thiz.getClass().getMethod(name, classes);
+			method.invoke(thiz, args);
+		}
+		catch (Exception ex) {
+			return false;
+		}
+		return true;
+	}
+
 	static boolean onCreateOptionsMenu(Activity activity, Menu menu)
 	{
 		MenuInflater inflater = activity.getMenuInflater();

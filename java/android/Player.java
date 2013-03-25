@@ -33,7 +33,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.net.Uri;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -162,28 +161,6 @@ public class Player extends Activity
 		super.onDestroy();
 		unregisterReceiver(receiver);
 		unbindService(connection);
-	}
-
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event)
-	{
-		if (service == null) {
-			// error shown
-			return super.onKeyDown(keyCode, event);
-		}
-		switch (keyCode) {
-		case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-			service.togglePause();
-			return true;
-		case KeyEvent.KEYCODE_MEDIA_NEXT:
-			service.playNextSong();
-			return true;
-		case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-			service.playPreviousSong();
-			return true;
-		default:
-			return super.onKeyDown(keyCode, event);
-		}
 	}
 
 	@Override

@@ -27,6 +27,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -39,7 +40,6 @@ import android.widget.Toast;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.zip.ZipFile;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -59,37 +59,22 @@ public class PlayerService extends Service implements Runnable
 		notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 	}
 
-	private boolean invokeMethod(String name, Object... args)
-	{
-		Class[] classes = new Class[args.length];
-		for (int i = 0; i < args.length; i++)
-			classes[i] = args[i].getClass();
-		try {
-			Method method = Service.class.getMethod(name, classes);
-			method.invoke(this, args);
-		}
-		catch (Exception ex) {
-			return false;
-		}
-		return true;
-	}
-
 	private void startForegroundCompat(int id, Notification notification)
 	{
-		if (!invokeMethod("startForeground", id, notification)) {
+		if (!Util.invokeMethod(this, "startForeground", id, notification)) {
 			// Fall back on the old API.
-			setForeground(true);
+			Util.invokeMethod(this, "setForeground", true);
 			notMan.notify(id, notification);
 		}
 	}
 
 	private void stopForegroundCompat(int id)
 	{
-		if (!invokeMethod("stopForeground", true)) {
+		if (!Util.invokeMethod(this, "stopForeground", true)) {
 			// Fall back on the old API.
 			// Cancel before changing the foreground state, since we could be killed at that point.
 			notMan.cancel(id);
-			setForeground(false);
+			Util.invokeMethod(this, "setForeground", false);
 		}
 	}
 
@@ -342,6 +327,13 @@ public class PlayerService extends Service implements Runnable
 		}
 	}
 
+	private void registerMediaButtonEventReceiver(String methodName)
+	{
+		Object audioManager = getSystemService(AUDIO_SERVICE);
+		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
+		Util.invokeMethod(audioManager, methodName, eventReceiver);
+	}
+
 	@Override
 	public void onStart(Intent intent, int startId)
 	{
@@ -351,6 +343,7 @@ public class PlayerService extends Service implements Runnable
 		stop = false;
 		thread = new Thread(this);
 		thread.start();
+		registerMediaButtonEventReceiver("registerMediaButtonEventReceiver");
 	}
 
 	@Override
@@ -358,6 +351,7 @@ public class PlayerService extends Service implements Runnable
 	{
 		super.onDestroy();
 		stop();
+		registerMediaButtonEventReceiver("unregisterMediaButtonEventReceiver");
 	}
 
 
