@@ -132,6 +132,7 @@ public class FileSelector extends ListActivity
 			}
 		});
 		setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item, names));
+		getListView().setTextFilterEnabled(true);
 	}
 
 	@Override
