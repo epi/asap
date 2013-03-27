@@ -1,7 +1,7 @@
 /*
  * FileSelector.java - ASAP for Android
  *
- * Copyright (C) 2010-2011  Piotr Fusik
+ * Copyright (C) 2010-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,7 +23,6 @@
 
 package net.sf.asap;
 
-import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.net.Uri;
@@ -34,8 +33,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -44,74 +47,52 @@ import java.util.zip.ZipEntry;
 
 public class FileSelector extends ListActivity
 {
-	private ArrayAdapter<String> listAdapter;
-	private File currentDir;
+	private File path;
 	private String zipPath;
 
 	private void onAccessDenied()
 	{
-		new AlertDialog.Builder(this).setMessage(R.string.access_denied).show();
+		Toast.makeText(this, R.string.access_denied, Toast.LENGTH_SHORT).show();
 	}
 
-	private void sortDirectory()
+	private Collection<String> listDirectory()
 	{
-		listAdapter.sort(new Comparator<String>() {
-			public int compare(String name1, String name2)
-			{
-				if (name1.equals(".."))
-					return -1;
-				if (name2.equals(".."))
-					return 1;
-				boolean dir1 = name1.endsWith("/");
-				boolean dir2 = name2.endsWith("/");
-				if (dir1 != dir2)
-					return dir1 ? -1 : 1;
-				return name1.compareTo(name2);
-			}
-		});
-		getListView().setSelection(0); // scroll to the top
-	}
-
-	private void enterDirectory(File dir)
-	{
-		File[] files = dir.listFiles();
-		if (files == null) {
+		ArrayList<String> names = new ArrayList<String>();
+		File[] files = path.listFiles();
+		if (files == null)
 			onAccessDenied();
-			return;
+		else {
+			for (File file : files) {
+				String name = file.getName();
+				if (file.isDirectory())
+					names.add(name + '/');
+				else if (ASAPInfo.isOurFile(name) || Util.isZip(name))
+					names.add(name);
+			}
 		}
-		currentDir = dir;
-		zipPath = null;
-		listAdapter.clear();
-		if (dir.getParentFile() != null)
-			listAdapter.add("..");
-		for (File file : files) {
-			String name = file.getName();
-			if (file.isDirectory())
-				listAdapter.add(name + '/');
-			else if (ASAPInfo.isOurFile(name) || Util.isZip(name))
-				listAdapter.add(name);
-		}
-		sortDirectory();
+		return names;
 	}
 
-	private void enterZipDirectory(String path)
+	private Collection<String> listZipDirectory(String zipPath)
 	{
-		int pathLen = path.length();
+		if (zipPath == null)
+			zipPath = "";
+		int zipPathLen = zipPath.length();
 		HashSet<String> names = new HashSet<String>();
 		ZipFile zip = null;
 		try {
-			zip = new ZipFile(currentDir);
-			Enumeration<? extends ZipEntry> entries = zip.entries();
-			while (entries.hasMoreElements()) {
-				ZipEntry entry = entries.nextElement();
+			zip = new ZipFile(path);
+			Enumeration<? extends ZipEntry> zipEntries = zip.entries();
+			while (zipEntries.hasMoreElements()) {
+				ZipEntry entry = zipEntries.nextElement();
 				if (!entry.isDirectory()) {
 					String name = entry.getName();
-					if (name.startsWith(path) && ASAPInfo.isOurFile(name)) {
-						int i = name.indexOf('/', pathLen);
+					if (name.startsWith(zipPath) && ASAPInfo.isOurFile(name)) {
+						int i = name.indexOf('/', zipPathLen);
 						if (i < 0)
-							name = name.substring(pathLen); // file
+							name = name.substring(zipPathLen); // file
 						else
-							name = name.substring(pathLen, i + 1); // file in a subdirectory - add subdirectory with the trailing slash
+							name = name.substring(zipPathLen, i + 1); // file in a subdirectory - add subdirectory with the trailing slash
 						names.add(name);
 					}
 				}
@@ -119,68 +100,50 @@ public class FileSelector extends ListActivity
 		}
 		catch (IOException ex) {
 			onAccessDenied();
-			return;
 		}
 		finally {
 			Util.close(zip);
 		}
-		zipPath = path;
-		listAdapter.clear();
-		listAdapter.add("..");
-		for (String name : names)
-			listAdapter.add(name);
-		sortDirectory();
+		this.zipPath = zipPath;
+		return names;
 	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		listAdapter = new ArrayAdapter<String>(this, R.layout.list_item);
-		setListAdapter(listAdapter);
-		enterDirectory(Environment.getExternalStorageDirectory());
-	}
 
-	private void play(Uri uri)
-	{
-		Intent intent = new Intent(Intent.ACTION_VIEW, uri, this, Player.class);
-		startActivity(intent);
+		Uri uri = getIntent().getData();
+		if (uri == null)
+			path = Environment.getExternalStorageDirectory();
+		else
+			path = new File(uri.getPath());
+
+		Collection<String> coll = path.isDirectory() ? listDirectory() : listZipDirectory(uri.getFragment());
+		String[] names = coll.toArray(new String[coll.size()]);
+		Arrays.sort(names, new Comparator<String>() {
+			public int compare(String name1, String name2)
+			{
+				boolean dir1 = name1.endsWith("/");
+				boolean dir2 = name2.endsWith("/");
+				if (dir1 != dir2)
+					return dir1 ? -1 : 1;
+				return name1.compareTo(name2);
+			}
+		});
+		setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item, names));
 	}
 
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id)
 	{
-		String name = listAdapter.getItem(position);
-		if (zipPath == null) {
-			if (name.equals("..")) {
-				enterDirectory(currentDir.getParentFile());
-				return;
-			}
-			File file = new File(currentDir, name);
-			if (name.endsWith("/"))
-				enterDirectory(file);
-			else if (Util.isZip(name)) {
-				currentDir = file;
-				enterZipDirectory("");
-			}
-			else
-				play(Uri.fromFile(file));
-		}
-		else {
-			if (name.equals("..")) {
-				if (zipPath.length() == 0)
-					enterDirectory(currentDir.getParentFile());
-				else {
-					int i = zipPath.lastIndexOf('/', zipPath.length() - 2);
-					// the following also handles i==-1
-					enterZipDirectory(zipPath.substring(0, i + 1));
-				}
-			}
-			else if (name.endsWith("/"))
-				enterZipDirectory(zipPath + name);
-			else
-				play(new Uri.Builder().scheme("file").path(currentDir.getAbsolutePath()).fragment(zipPath + name).build());
-		}
+		String name = (String) l.getItemAtPosition(position);
+		Uri uri = zipPath == null
+			? Uri.fromFile(new File(path, name))
+			: Uri.fromFile(path).buildUpon().fragment(zipPath + name).build();
+		Class klass = name.endsWith("/") || Util.isZip(name) ? FileSelector.class : Player.class;
+		Intent intent = new Intent(Intent.ACTION_VIEW, uri, this, klass);
+		startActivity(intent);
 	}
 
 	@Override
