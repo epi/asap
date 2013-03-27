@@ -36,6 +36,8 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.widget.Toast;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -344,6 +346,14 @@ public class PlayerService extends Service implements Runnable
 		thread = new Thread(this);
 		thread.start();
 		registerMediaButtonEventReceiver("registerMediaButtonEventReceiver");
+
+		TelephonyManager telephony = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+		telephony.listen(new PhoneStateListener() {
+				public void onCallStateChanged(int state, String incomingNumber) {
+					if (state == TelephonyManager.CALL_STATE_RINGING)
+						pause();
+				}
+			}, PhoneStateListener.LISTEN_CALL_STATE);
 	}
 
 	@Override
