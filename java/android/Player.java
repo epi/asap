@@ -166,12 +166,19 @@ public class Player extends Activity
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
-		return Util.onCreateOptionsMenu(this, menu);
+		getMenuInflater().inflate(R.menu.playing, menu);
+		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
-		return Util.onOptionsItemSelected(this, item);
+		switch (item.getItemId()) {
+		case R.id.menu_about:
+			Util.showAbout(this);
+			return true;
+		default:
+			return false;
+		}
 	}
 }

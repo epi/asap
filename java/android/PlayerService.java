@@ -131,31 +131,6 @@ public class PlayerService extends Service implements Runnable
 		return response.getEntity().getContent();
 	}
 
-	/**
-	 * Reads bytes from the stream into the byte array
-	 * until end of stream or array is full.
-	 * @param is source stream
-	 * @param b output array
-	 * @return number of bytes read
-	 */
-	private static int readAndClose(InputStream is, byte[] b) throws IOException
-	{
-		int got = 0;
-		int len = b.length;
-		try {
-			while (got < len) {
-				int i = is.read(b, got, len - got);
-				if (i <= 0)
-					break;
-				got += i;
-			}
-		}
-		finally {
-			is.close();
-		}
-		return got;
-	}
-
 
 	// Playback -----------------------------------------------------------------------------------------------
 
@@ -250,35 +225,38 @@ public class PlayerService extends Service implements Runnable
 	{
 		// read file
 		filename = uri.getLastPathSegment();
-		final byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
+		byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 		int moduleLen;
-		ZipFile zip = null;
 		try {
-			InputStream is;
-			if (Util.isZip(filename)) {
-				zip = new ZipFile(uri.getPath());
-				filename = uri.getFragment();
-				is = zip.getInputStream(zip.getEntry(filename));
-			}
-			else {
-				try {
-					is = getContentResolver().openInputStream(uri);
+			ZipFile zip = null;
+			try {
+				InputStream is;
+				if (Util.isZip(filename)) {
+					zip = new ZipFile(uri.getPath());
+					filename = uri.getFragment();
+					is = zip.getInputStream(zip.getEntry(filename));
 				}
-				catch (FileNotFoundException ex) {
-					if (uri.getScheme().equals("http"))
-						is = httpGet(uri);
-					else
-						throw ex;
+				else {
+					try {
+						is = getContentResolver().openInputStream(uri);
+					}
+					catch (FileNotFoundException ex) {
+						if (uri.getScheme().equals("http"))
+							is = httpGet(uri);
+						else
+							throw ex;
+					}
 				}
+				moduleLen = Util.readAndClose(is, module);
 			}
-			moduleLen = readAndClose(is, module);
+			finally {
+				if (zip != null)
+					zip.close();
+			}
 		}
 		catch (IOException ex) {
 			showError(R.string.error_reading_file);
 			return;
-		}
-		finally {
-			Util.close(zip);
 		}
 
 		// load file
@@ -349,11 +327,11 @@ public class PlayerService extends Service implements Runnable
 
 		TelephonyManager telephony = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 		telephony.listen(new PhoneStateListener() {
-				public void onCallStateChanged(int state, String incomingNumber) {
-					if (state == TelephonyManager.CALL_STATE_RINGING)
-						pause();
-				}
-			}, PhoneStateListener.LISTEN_CALL_STATE);
+			public void onCallStateChanged(int state, String incomingNumber) {
+				if (state == TelephonyManager.CALL_STATE_RINGING)
+					pause();
+			}
+		}, PhoneStateListener.LISTEN_CALL_STATE);
 	}
 
 	@Override

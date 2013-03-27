@@ -92,6 +92,6 @@ java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android
 CLEANDIR += java/android/classes
 
 # Also generates java/android/src/net/sf/asap/R.java
-java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/icon.png res/layout/error.xml res/layout/list_item.xml res/layout/playing.xml res/values/strings.xml res/values/themes.xml) $(JAVA_OBX)
+java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/icon.png res/layout/fileinfo_list_item.xml res/layout/filename_list_item.xml res/layout/playing.xml res/menu/file_selector.xml res/menu/playing.xml res/values/strings.xml res/values/themes.xml) $(JAVA_OBX)
 	$(DO)mkdir -p java/android/src && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -F $@ -J java/android/src java/obx
 CLEAN += java/android/AndroidASAP-resources.apk java/android/src/net/sf/asap/R.java

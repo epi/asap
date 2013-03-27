@@ -1,7 +1,7 @@
 /*
  * Util.java - ASAP for Android
  *
- * Copyright (C) 2010  Piotr Fusik
+ * Copyright (C) 2010-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -25,15 +25,37 @@ package net.sf.asap;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import java.io.InputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.zip.ZipFile;
 
 class Util
 {
+	/**
+	 * Reads bytes from the stream into the byte array
+	 * until end of stream or array is full.
+	 * @param is source stream
+	 * @param b output array
+	 * @return number of bytes read
+	 */
+	static int readAndClose(InputStream is, byte[] b) throws IOException
+	{
+		int got = 0;
+		int len = b.length;
+		try {
+			while (got < len) {
+				int i = is.read(b, got, len - got);
+				if (i <= 0)
+					break;
+				got += i;
+			}
+		}
+		finally {
+			is.close();
+		}
+		return got;
+	}
+
 	static boolean invokeMethod(Object thiz, String name, Object... args)
 	{
 		Class[] classes = new Class[args.length];
@@ -49,44 +71,14 @@ class Util
 		return true;
 	}
 
-	static boolean onCreateOptionsMenu(Activity activity, Menu menu)
-	{
-		MenuInflater inflater = activity.getMenuInflater();
-		inflater.inflate(R.menu.main, menu);
-		return true;
-	}
-
 	static void showAbout(Activity activity)
 	{
 		new AlertDialog.Builder(activity).setTitle(R.string.about_title).setIcon(R.drawable.icon).setMessage(R.string.about_message).show();
-	}
-
-	static boolean onOptionsItemSelected(Activity activity, MenuItem item)
-	{
-		switch (item.getItemId()) {
-		case R.id.menu_about:
-			showAbout(activity);
-			return true;
-		default:
-			return false;
-		}
 	}
 
 	static boolean isZip(String filename)
 	{
 		int n = filename.length();
 		return n >= 4 && filename.regionMatches(true, n - 4, ".zip", 0, 4);
-	}
-
-	static void close(ZipFile zip)
-	{
-		if (zip != null) {
-			try {
-				zip.close();
-			}
-			catch (IOException ex) {
-				// not expecting any errors closing a read-only ZIP
-			}
-		}
 	}
 }

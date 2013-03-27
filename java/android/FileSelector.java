@@ -24,22 +24,29 @@
 package net.sf.asap;
 
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.zip.ZipFile;
@@ -47,6 +54,7 @@ import java.util.zip.ZipEntry;
 
 public class FileSelector extends ListActivity
 {
+	private boolean isDetails;
 	private File path;
 	private String zipPath;
 
@@ -55,90 +63,227 @@ public class FileSelector extends ListActivity
 		Toast.makeText(this, R.string.access_denied, Toast.LENGTH_SHORT).show();
 	}
 
-	private Collection<String> listDirectory()
+	private static interface LazyInputStream
 	{
-		ArrayList<String> names = new ArrayList<String>();
+		InputStream get() throws IOException;
+	}
+
+	private static class FileInfo implements Comparable<FileInfo>
+	{
+		private String filename;
+		private String title;
+		private String author;
+		private String date;
+		private int songs;
+
+		private FileInfo(String filename)
+		{
+			this.title = this.filename = filename;
+		}
+
+		private FileInfo(String filename, InputStream is) throws Exception
+		{
+			this(filename);
+			byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
+			int moduleLen = Util.readAndClose(is, module);
+			ASAPInfo info = new ASAPInfo();
+			info.load(filename, module, moduleLen);
+			this.title = info.getTitleOrFilename();
+			this.author = info.getAuthor();
+			this.date = info.getDate();
+			this.songs = info.getSongs();
+		}
+
+		@Override
+		public String toString()
+		{
+			return title;
+		}
+
+		@Override
+		public boolean equals(Object obj)
+		{
+			if (!(obj instanceof FileInfo))
+				return false;
+			FileInfo that = (FileInfo) obj;
+			return this.filename.equals(that.filename);
+		}
+
+		@Override
+		public int hashCode()
+		{
+			return filename.hashCode();
+		}
+
+		public int compareTo(FileInfo that)
+		{
+			boolean dir1 = this.filename.endsWith("/");
+			boolean dir2 = that.filename.endsWith("/");
+			if (dir1 != dir2)
+				return dir1 ? -1 : 1;
+			return this.title.compareTo(that.title);
+		}
+	}
+
+	private static class FileInfoAdapter extends ArrayAdapter<FileInfo>
+	{
+		private LayoutInflater layoutInflater;
+
+		private FileInfoAdapter(Context context, int rowViewResourceId, FileInfo[] infos)
+		{
+			super(context, rowViewResourceId, infos);
+			layoutInflater = LayoutInflater.from(context);
+		}
+
+		private static class ViewHolder
+		{
+			private TextView title;
+			private TextView author;
+			private TextView date;
+			private TextView songs;
+		}
+
+		public View getView(int position, View convertView, ViewGroup parent)
+		{
+			ViewHolder holder;
+			if (convertView == null) {
+				convertView = layoutInflater.inflate(R.layout.fileinfo_list_item, null);
+				holder = new ViewHolder();
+				holder.title = (TextView) convertView.findViewById(R.id.title);
+				holder.author = (TextView) convertView.findViewById(R.id.author);
+				holder.date = (TextView) convertView.findViewById(R.id.date);
+				holder.songs = (TextView) convertView.findViewById(R.id.songs);
+				convertView.setTag(holder);
+			}
+			else
+				holder = (ViewHolder) convertView.getTag();
+
+			FileInfo info = getItem(position);
+			holder.title.setText(info.title);
+			holder.author.setText(info.author);
+			holder.date.setText(info.date);
+			holder.songs.setText(info.songs > 1 ? getContext().getString(R.string.songs_format, info.songs) : "");
+
+			return convertView;
+		}
+	}
+
+	private void tryAdd(Collection<FileInfo> infos, String filename, LazyInputStream lazyIs)
+	{
+		FileInfo info;
+		if (isDetails) {
+			try {
+				info = new FileInfo(filename, lazyIs.get());
+			}
+			catch (Exception ex) {
+				// don't add files we cannot read or understand
+				return;
+			}
+		}
+		else
+			info = new FileInfo(filename);
+		infos.add(info);
+	}
+
+	private Collection<FileInfo> listDirectory()
+	{
+		ArrayList<FileInfo> infos = new ArrayList<FileInfo>();
 		File[] files = path.listFiles();
 		if (files == null)
 			onAccessDenied();
 		else {
-			for (File file : files) {
+			for (final File file : files) {
 				String name = file.getName();
 				if (file.isDirectory())
-					names.add(name + '/');
-				else if (ASAPInfo.isOurFile(name) || Util.isZip(name))
-					names.add(name);
+					infos.add(new FileInfo(name + '/'));
+				else if (ASAPInfo.isOurFile(name)) {
+					tryAdd(infos, name, new LazyInputStream() {
+						public InputStream get() throws IOException {
+							return new FileInputStream(file);
+						}
+					});
+				}
+				else if (Util.isZip(name))
+					infos.add(new FileInfo(name));
 			}
 		}
-		return names;
+		return infos;
 	}
 
-	private Collection<String> listZipDirectory(String zipPath)
+	private Collection<FileInfo> listZipDirectory(String zipPath)
 	{
 		if (zipPath == null)
 			zipPath = "";
 		int zipPathLen = zipPath.length();
-		HashSet<String> names = new HashSet<String>();
-		ZipFile zip = null;
+		HashSet<FileInfo> infos = new HashSet<FileInfo>();
 		try {
-			zip = new ZipFile(path);
-			Enumeration<? extends ZipEntry> zipEntries = zip.entries();
-			while (zipEntries.hasMoreElements()) {
-				ZipEntry entry = zipEntries.nextElement();
-				if (!entry.isDirectory()) {
-					String name = entry.getName();
-					if (name.startsWith(zipPath) && ASAPInfo.isOurFile(name)) {
-						int i = name.indexOf('/', zipPathLen);
-						if (i < 0)
-							name = name.substring(zipPathLen); // file
-						else
-							name = name.substring(zipPathLen, i + 1); // file in a subdirectory - add subdirectory with the trailing slash
-						names.add(name);
+			final ZipFile zip = new ZipFile(path);
+			try {
+				Enumeration<? extends ZipEntry> zipEntries = zip.entries();
+				while (zipEntries.hasMoreElements()) {
+					final ZipEntry zipEntry = zipEntries.nextElement();
+					if (!zipEntry.isDirectory()) {
+						String name = zipEntry.getName();
+						if (name.startsWith(zipPath) && ASAPInfo.isOurFile(name)) {
+							int i = name.indexOf('/', zipPathLen);
+							if (i < 0) {
+								// file
+								tryAdd(infos, name.substring(zipPathLen), new LazyInputStream() {
+									public InputStream get() throws IOException {
+										return zip.getInputStream(zipEntry);
+									}
+								});
+							}
+							else {
+								// file in a subdirectory - add subdirectory with the trailing slash
+								infos.add(new FileInfo(name.substring(zipPathLen, i + 1)));
+							}
+						}
 					}
 				}
+			}
+			finally {
+				zip.close();
 			}
 		}
 		catch (IOException ex) {
 			onAccessDenied();
 		}
-		finally {
-			Util.close(zip);
-		}
 		this.zipPath = zipPath;
-		return names;
+		return infos;
 	}
 
-	@Override
-	public void onCreate(Bundle savedInstanceState)
+	private void reload()
 	{
-		super.onCreate(savedInstanceState);
-
 		Uri uri = getIntent().getData();
 		if (uri == null)
 			path = Environment.getExternalStorageDirectory();
 		else
 			path = new File(uri.getPath());
 
-		Collection<String> coll = path.isDirectory() ? listDirectory() : listZipDirectory(uri.getFragment());
-		String[] names = coll.toArray(new String[coll.size()]);
-		Arrays.sort(names, new Comparator<String>() {
-			public int compare(String name1, String name2)
-			{
-				boolean dir1 = name1.endsWith("/");
-				boolean dir2 = name2.endsWith("/");
-				if (dir1 != dir2)
-					return dir1 ? -1 : 1;
-				return name1.compareTo(name2);
-			}
-		});
-		setListAdapter(new ArrayAdapter<String>(this, R.layout.list_item, names));
+		Collection<FileInfo> coll = path.isDirectory() ? listDirectory() : listZipDirectory(uri.getFragment());
+		FileInfo[] infos = coll.toArray(new FileInfo[coll.size()]);
+		Arrays.sort(infos);
+		ListAdapter adapter = isDetails
+			? new FileInfoAdapter(this, R.layout.fileinfo_list_item, infos)
+			: new ArrayAdapter<FileInfo>(this, R.layout.filename_list_item, infos);
+		setListAdapter(adapter);
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
 		getListView().setTextFilterEnabled(true);
+		isDetails = getPreferences(MODE_PRIVATE).getBoolean("fileDetails", false);
+		reload();
 	}
 
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id)
 	{
-		String name = (String) l.getItemAtPosition(position);
+		FileInfo info = (FileInfo) l.getItemAtPosition(position);
+		String name = info.filename;
 		Uri uri = zipPath == null
 			? Uri.fromFile(new File(path, name))
 			: Uri.fromFile(path).buildUpon().fragment(zipPath + name).build();
@@ -150,12 +295,24 @@ public class FileSelector extends ListActivity
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
-		return Util.onCreateOptionsMenu(this, menu);
+		getMenuInflater().inflate(R.menu.file_selector, menu);
+		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
-		return Util.onOptionsItemSelected(this, item);
+		switch (item.getItemId()) {
+		case R.id.menu_toggle_details:
+			isDetails = !isDetails;
+			getPreferences(MODE_PRIVATE).edit().putBoolean("fileDetails", isDetails).commit();
+			reload();
+			return true;
+		case R.id.menu_about:
+			Util.showAbout(this);
+			return true;
+		default:
+			return false;
+		}
 	}
 }
