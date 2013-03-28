@@ -38,6 +38,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.widget.MediaController;
 import android.widget.Toast;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -48,7 +49,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-public class PlayerService extends Service implements Runnable
+public class PlayerService extends Service implements Runnable, MediaController.MediaPlayerControl
 {
 	// User interface -----------------------------------------------------------------------------------------
 
@@ -139,17 +140,42 @@ public class PlayerService extends Service implements Runnable
 	int song;
 	private AudioTrack audioTrack;
 
-	boolean isPaused()
+	private boolean isPaused()
 	{
 		return audioTrack == null || audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PAUSED;
 	}
 
-	void pause()
+	public boolean isPlaying()
+	{
+		return !isPaused();
+	}
+
+	public boolean canPause()
+	{
+		return !isPaused();
+	}
+
+	public boolean canSeekBackward()
+	{
+		return false;
+	}
+
+	public boolean canSeekForward()
+	{
+		return false;
+	}
+
+	public int getBufferPercentage()
+	{
+		return 100;
+	}
+
+	public void pause()
 	{
 		audioTrack.pause();
 	}
 
-	void resume()
+	public void start()
 	{
 		if (audioTrack != null) {
 			audioTrack.play();
@@ -162,7 +188,7 @@ public class PlayerService extends Service implements Runnable
 	void togglePause()
 	{
 		if (isPaused())
-			resume();
+			start();
 		else
 			pause();
 	}
@@ -174,7 +200,7 @@ public class PlayerService extends Service implements Runnable
 		}
 		this.song = song;
 		sendBroadcast(new Intent(Player.ACTION_SHOW_INFO));
-		resume();
+		start();
 	}
 
 	void playNextSong()
@@ -199,17 +225,17 @@ public class PlayerService extends Service implements Runnable
 		}
 	}
 
-	int getDuration()
+	public int getDuration()
 	{
 		return info.getDuration(song);
 	}
 
-	int getPosition()
+	public int getCurrentPosition()
 	{
 		return asap.getPosition();
 	}
 
-	void seek(int pos)
+	public void seekTo(int pos)
 	{
 		try {
 			synchronized (asap) {

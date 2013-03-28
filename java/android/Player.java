@@ -35,8 +35,8 @@ import android.os.IBinder;
 import android.net.Uri;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.widget.MediaController;
 import android.widget.TextView;
@@ -60,8 +60,7 @@ public class Player extends Activity
 
 	private View getContentView()
 	{
-		ViewGroup vg = (ViewGroup) getWindow().getDecorView();
-		return vg.getChildAt(0);
+		return findViewById(android.R.id.content);
 	}
 
 	private void setTag(int controlId, String value)
@@ -77,6 +76,7 @@ public class Player extends Activity
 
 	private void showInfo()
 	{
+		final PlayerService service = this.service;
 		if (service == null)
 			return;
 		ASAPInfo info = service.info;
@@ -91,35 +91,14 @@ public class Player extends Activity
 		else
 			setTag(R.id.song, "");
 
-		if (mediaController == null) {
-			mediaController = new MediaController(this, false);
-			mediaController.setAnchorView(getContentView());
-			mediaController.setMediaPlayer(new MediaController.MediaPlayerControl() {
-					public boolean canPause() { return !service.isPaused(); }
-					public boolean canSeekBackward() { return false; }
-					public boolean canSeekForward() { return false; }
-					public int getBufferPercentage() { return 100; }
-					public int getCurrentPosition() { return service.getPosition(); }
-					public int getDuration() { return service.getDuration(); }
-					public boolean isPlaying() { return !service.isPaused(); }
-					public void pause() { service.pause(); }
-					public void seekTo(int pos) { service.seek(pos); }
-					public void start() { service.resume(); }
-				});
-			if (songs > 1) {
-				mediaController.setPrevNextListeners(new OnClickListener() {
-					public void onClick(View v) { service.playNextSong(); }
-				},
-				new OnClickListener() {
-					public void onClick(View v) { service.playPreviousSong(); }
-				});
-			}
-			try {
-				mediaController.show(2000000000);
-			}
-			catch (RuntimeException ex) {
-				// FIXME
-			}
+		mediaController.setMediaPlayer(service);
+		if (songs > 1) {
+			mediaController.setPrevNextListeners(new OnClickListener() {
+				public void onClick(View v) { service.playNextSong(); }
+			},
+			new OnClickListener() {
+				public void onClick(View v) { service.playPreviousSong(); }
+			});
 		}
 	}
 
@@ -138,6 +117,8 @@ public class Player extends Activity
 		super.onCreate(savedInstanceState);
 		setTitle(R.string.playing_title);
 		setContentView(R.layout.playing);
+		mediaController = new MediaController(this, false);
+		mediaController.setAnchorView(getContentView());
 
 		Uri uri = getIntent().getData();
 		Intent intent = new Intent(Intent.ACTION_VIEW, uri, this, PlayerService.class);
@@ -147,12 +128,29 @@ public class Player extends Activity
 
 		findViewById(R.id.stop_button).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				service.stopSelf();
+				if (service != null)
+					service.stopSelf();
 				finish();
 			}
 		});
 
 		registerReceiver(receiver, new IntentFilter(ACTION_SHOW_INFO));
+	}
+
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
+		if (service != null)
+			mediaController.show(0);
+	}
+
+	@Override
+	public boolean onTouchEvent(MotionEvent event)
+	{
+		if (service != null)
+			mediaController.show(0);
+		return true;
 	}
 
 	@Override

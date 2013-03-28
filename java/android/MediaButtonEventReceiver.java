@@ -51,7 +51,7 @@ public class MediaButtonEventReceiver extends BroadcastReceiver
 			service.pause();
 			break;
 		case KeyEvent.KEYCODE_MEDIA_PLAY:
-			service.resume();
+			service.start();
 			break;
 		case KeyEvent.KEYCODE_MEDIA_NEXT:
 			service.playNextSong();
