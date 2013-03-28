@@ -42,9 +42,13 @@ android-log-dev:
 	$(ADB) -d logcat
 .PHONY: android-log-dev
 
-android-shell:
+android-shell-emu:
+	$(ADB) -e shell
+.PHONY: android-shell-emu
+
+android-shell-dev:
 	$(ADB) -d shell
-.PHONY: android-shell
+.PHONY: android-shell-dev
 
 android-emu:
 	$(EMULATOR) -avd myavd &
@@ -87,8 +91,8 @@ CLEAN += java/android/classes.dex
 java/android/classes.jar: $(srcdir)java/android/proguard.cfg java/android/classes/net/sf/asap/Player.class
 	$(PROGUARD) -injars java/android/classes -outjars $@ -libraryjars $(ANDROID_JAR) @$<
 
-java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,FileSelector.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
-	$(JAVAC) -d java/android/classes -bootclasspath $(ANDROID_JAR) $(addprefix $(srcdir)java/android/,FileSelector.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java) java/android/src/net/sf/asap/R.java java/src/net/sf/asap/*.java
+java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,FileSelector.java M3uReader.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
+	$(JAVAC) -d java/android/classes -bootclasspath $(ANDROID_JAR) $(addprefix $(srcdir)java/android/,FileSelector.java M3uReader.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java) java/android/src/net/sf/asap/R.java java/src/net/sf/asap/*.java
 CLEANDIR += java/android/classes
 
 # Also generates java/android/src/net/sf/asap/R.java

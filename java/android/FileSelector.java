@@ -63,6 +63,12 @@ public class FileSelector extends ListActivity
 		Toast.makeText(this, R.string.access_denied, Toast.LENGTH_SHORT).show();
 	}
 
+	private static boolean isM3u(String filename)
+	{
+		int n = filename.length();
+		return n >= 4 && filename.regionMatches(true, n - 4, ".m3u", 0, 4);
+	}
+
 	private static interface LazyInputStream
 	{
 		InputStream get() throws IOException;
@@ -203,9 +209,45 @@ public class FileSelector extends ListActivity
 						}
 					});
 				}
-				else if (Util.isZip(name))
+				else if (Util.isZip(name) || isM3u(name))
 					infos.add(new FileInfo(name));
 			}
+		}
+		return infos;
+	}
+
+	private Collection<FileInfo> listM3u(Uri uri)
+	{
+		ArrayList<FileInfo> infos = new ArrayList<FileInfo>();
+		try {
+			final M3uReader reader = new M3uReader(uri);
+
+			if (reader.isInZip()) {
+				zipPath = new File(uri.getFragment()).getParent();
+				if (zipPath == null)
+					zipPath = "";
+			}
+			else
+				path = path.getParentFile();
+
+			try {
+				for (;;) {
+					final String name = reader.readFilename();
+					if (name == null)
+						break;
+					tryAdd(infos, name, new LazyInputStream() {
+						public InputStream get() throws IOException {
+							return reader.openInputStream(name);
+						}
+					});
+				}
+			}
+			finally {
+				reader.close();
+			}
+		}
+		catch (IOException ex) {
+			onAccessDenied();
 		}
 		return infos;
 	}
@@ -224,15 +266,20 @@ public class FileSelector extends ListActivity
 					final ZipEntry zipEntry = zipEntries.nextElement();
 					if (!zipEntry.isDirectory()) {
 						String name = zipEntry.getName();
-						if (name.startsWith(zipPath) && ASAPInfo.isOurFile(name)) {
+						if (name.startsWith(zipPath) && (ASAPInfo.isOurFile(name) || isM3u(name))) {
 							int i = name.indexOf('/', zipPathLen);
 							if (i < 0) {
 								// file
-								tryAdd(infos, name.substring(zipPathLen), new LazyInputStream() {
-									public InputStream get() throws IOException {
-										return zip.getInputStream(zipEntry);
-									}
-								});
+								name = name.substring(zipPathLen);
+								if (isM3u(name))
+									infos.add(new FileInfo(name));
+								else {
+									tryAdd(infos, name, new LazyInputStream() {
+										public InputStream get() throws IOException {
+											return zip.getInputStream(zipEntry);
+										}
+									});
+								}
 							}
 							else {
 								// file in a subdirectory - add subdirectory with the trailing slash
@@ -261,7 +308,9 @@ public class FileSelector extends ListActivity
 		else
 			path = new File(uri.getPath());
 
-		Collection<FileInfo> coll = path.isDirectory() ? listDirectory() : listZipDirectory(uri.getFragment());
+		Collection<FileInfo> coll = path.isDirectory() ? listDirectory()
+			: isM3u(uri.toString()) ? listM3u(uri)
+			: listZipDirectory(uri.getFragment());
 		FileInfo[] infos = coll.toArray(new FileInfo[coll.size()]);
 		Arrays.sort(infos);
 		ListAdapter adapter = isDetails
@@ -287,7 +336,7 @@ public class FileSelector extends ListActivity
 		Uri uri = zipPath == null
 			? Uri.fromFile(new File(path, name))
 			: Uri.fromFile(path).buildUpon().fragment(zipPath + name).build();
-		Class klass = name.endsWith("/") || Util.isZip(name) ? FileSelector.class : Player.class;
+		Class klass = name.endsWith("/") || Util.isZip(name) || isM3u(name) ? FileSelector.class : Player.class;
 		Intent intent = new Intent(Intent.ACTION_VIEW, uri, this, klass);
 		startActivity(intent);
 	}
