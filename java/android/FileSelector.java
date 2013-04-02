@@ -40,39 +40,18 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipEntry;
 
 public class FileSelector extends ListActivity
 {
 	private boolean isDetails;
-	private File path;
-	private String zipPath;
-
-	private void onAccessDenied()
-	{
-		Toast.makeText(this, R.string.access_denied, Toast.LENGTH_SHORT).show();
-	}
-
-	private static boolean isM3u(String filename)
-	{
-		int n = filename.length();
-		return n >= 4 && filename.regionMatches(true, n - 4, ".m3u", 0, 4);
-	}
-
-	private static interface LazyInputStream
-	{
-		InputStream get() throws IOException;
-	}
+	private Uri uri;
+	private boolean isM3u;
 
 	private static class FileInfo implements Comparable<FileInfo>
 	{
@@ -90,14 +69,16 @@ public class FileSelector extends ListActivity
 		private FileInfo(String filename, InputStream is) throws Exception
 		{
 			this(filename);
-			byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
-			int moduleLen = Util.readAndClose(is, module);
-			ASAPInfo info = new ASAPInfo();
-			info.load(filename, module, moduleLen);
-			this.title = info.getTitleOrFilename();
-			this.author = info.getAuthor();
-			this.date = info.getDate();
-			this.songs = info.getSongs();
+			if (is != null) {
+				byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
+				int moduleLen = Util.readAndClose(is, module);
+				ASAPInfo info = new ASAPInfo();
+				info.load(filename, module, moduleLen);
+				this.title = info.getTitleOrFilename();
+				this.author = info.getAuthor();
+				this.date = info.getDate();
+				this.songs = info.getSongs();
+			}
 		}
 
 		@Override
@@ -174,145 +155,30 @@ public class FileSelector extends ListActivity
 		}
 	}
 
-	private void tryAdd(Collection<FileInfo> infos, String filename, LazyInputStream lazyIs)
-	{
-		FileInfo info;
-		if (isDetails) {
-			try {
-				info = new FileInfo(filename, lazyIs.get());
-			}
-			catch (Exception ex) {
-				// don't add files we cannot read or understand
-				return;
-			}
-		}
-		else
-			info = new FileInfo(filename);
-		infos.add(info);
-	}
-
-	private Collection<FileInfo> listDirectory()
-	{
-		ArrayList<FileInfo> infos = new ArrayList<FileInfo>();
-		File[] files = path.listFiles();
-		if (files == null)
-			onAccessDenied();
-		else {
-			for (final File file : files) {
-				String name = file.getName();
-				if (file.isDirectory())
-					infos.add(new FileInfo(name + '/'));
-				else if (ASAPInfo.isOurFile(name)) {
-					tryAdd(infos, name, new LazyInputStream() {
-						public InputStream get() throws IOException {
-							return new FileInputStream(file);
-						}
-					});
-				}
-				else if (Util.isZip(name) || isM3u(name))
-					infos.add(new FileInfo(name));
-			}
-		}
-		return infos;
-	}
-
-	private Collection<FileInfo> listM3u(Uri uri)
-	{
-		ArrayList<FileInfo> infos = new ArrayList<FileInfo>();
-		try {
-			final M3uReader reader = new M3uReader(uri);
-
-			if (reader.isInZip()) {
-				zipPath = new File(uri.getFragment()).getParent();
-				if (zipPath == null)
-					zipPath = "";
-			}
-			else
-				path = path.getParentFile();
-
-			try {
-				for (;;) {
-					final String name = reader.readFilename();
-					if (name == null)
-						break;
-					tryAdd(infos, name, new LazyInputStream() {
-						public InputStream get() throws IOException {
-							return reader.openInputStream(name);
-						}
-					});
-				}
-			}
-			finally {
-				reader.close();
-			}
-		}
-		catch (IOException ex) {
-			onAccessDenied();
-		}
-		return infos;
-	}
-
-	private Collection<FileInfo> listZipDirectory(String zipPath)
-	{
-		if (zipPath == null)
-			zipPath = "";
-		int zipPathLen = zipPath.length();
-		HashSet<FileInfo> infos = new HashSet<FileInfo>();
-		try {
-			final ZipFile zip = new ZipFile(path);
-			try {
-				Enumeration<? extends ZipEntry> zipEntries = zip.entries();
-				while (zipEntries.hasMoreElements()) {
-					final ZipEntry zipEntry = zipEntries.nextElement();
-					if (!zipEntry.isDirectory()) {
-						String name = zipEntry.getName();
-						if (name.startsWith(zipPath) && (ASAPInfo.isOurFile(name) || isM3u(name))) {
-							int i = name.indexOf('/', zipPathLen);
-							if (i < 0) {
-								// file
-								name = name.substring(zipPathLen);
-								if (isM3u(name))
-									infos.add(new FileInfo(name));
-								else {
-									tryAdd(infos, name, new LazyInputStream() {
-										public InputStream get() throws IOException {
-											return zip.getInputStream(zipEntry);
-										}
-									});
-								}
-							}
-							else {
-								// file in a subdirectory - add subdirectory with the trailing slash
-								infos.add(new FileInfo(name.substring(zipPathLen, i + 1)));
-							}
-						}
-					}
-				}
-			}
-			finally {
-				zip.close();
-			}
-		}
-		catch (IOException ex) {
-			onAccessDenied();
-		}
-		this.zipPath = zipPath;
-		return infos;
-	}
-
 	private void reload()
 	{
-		Uri uri = getIntent().getData();
+		uri = getIntent().getData();
 		if (uri == null)
-			path = Environment.getExternalStorageDirectory();
-		else
-			path = new File(uri.getPath());
+			uri = Uri.fromFile(Environment.getExternalStorageDirectory());
 
-		Collection<FileInfo> coll = path.isDirectory() ? listDirectory()
-			: isM3u(uri.toString()) ? listM3u(uri)
-			: listZipDirectory(uri.getFragment());
+		final Collection<FileInfo> coll = Util.isZip(uri.getPath()) ? new HashSet<FileInfo>() : new ArrayList<FileInfo>();
+		try {
+			isM3u = FileContainer.list(uri, new FileContainer.Consumer() {
+					public void onSongFile(String name, InputStream is) throws Exception {
+						coll.add(new FileInfo(name, is));
+					}
+					public void onContainer(String name) {
+						coll.add(new FileInfo(name));
+					}
+				}, true, false);
+		}
+		catch (IOException ex) {
+			Toast.makeText(this, R.string.access_denied, Toast.LENGTH_SHORT).show();
+		}
+
 		FileInfo[] infos = coll.toArray(new FileInfo[coll.size()]);
-		Arrays.sort(infos);
+		if (!isM3u)
+			Arrays.sort(infos);
 		ListAdapter adapter = isDetails
 			? new FileInfoAdapter(this, R.layout.fileinfo_list_item, infos)
 			: new ArrayAdapter<FileInfo>(this, R.layout.filename_list_item, infos);
@@ -333,11 +199,10 @@ public class FileSelector extends ListActivity
 	{
 		FileInfo info = (FileInfo) l.getItemAtPosition(position);
 		String name = info.filename;
-		Uri uri = zipPath == null
-			? Uri.fromFile(new File(path, name))
-			: Uri.fromFile(path).buildUpon().fragment(zipPath + name).build();
-		Class klass = name.endsWith("/") || Util.isZip(name) || isM3u(name) ? FileSelector.class : Player.class;
-		Intent intent = new Intent(Intent.ACTION_VIEW, uri, this, klass);
+		Class klass = ASAPInfo.isOurFile(name) ? Player.class : FileSelector.class;
+		Intent intent = new Intent(Intent.ACTION_VIEW, Util.buildUri(uri, name), this, klass);
+		if (isM3u)
+			intent.putExtra(PlayerService.EXTRA_PLAYLIST, uri.toString());
 		startActivity(intent);
 	}
 

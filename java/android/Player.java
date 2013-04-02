@@ -45,16 +45,16 @@ public class Player extends Activity
 {
 	private PlayerService service;
 	private final ServiceConnection connection = new ServiceConnection() {
-		public void onServiceConnected(ComponentName className, IBinder service)
-		{
-			Player.this.service = ((PlayerService.LocalBinder) service).getService();
-			showInfo();
-		}
-		public void onServiceDisconnected(ComponentName className)
-		{
-			Player.this.service = null;
-		}
-	};
+			public void onServiceConnected(ComponentName className, IBinder service)
+			{
+				Player.this.service = ((PlayerService.LocalBinder) service).getService();
+				showInfo();
+			}
+			public void onServiceDisconnected(ComponentName className)
+			{
+				Player.this.service = null;
+			}
+		};
 
 	private MediaController mediaController;
 
@@ -92,24 +92,22 @@ public class Player extends Activity
 			setTag(R.id.song, "");
 
 		mediaController.setMediaPlayer(service);
-		if (songs > 1) {
-			mediaController.setPrevNextListeners(new OnClickListener() {
+		mediaController.setPrevNextListeners(new OnClickListener() {
 				public void onClick(View v) { service.playNextSong(); }
 			},
 			new OnClickListener() {
 				public void onClick(View v) { service.playPreviousSong(); }
 			});
-		}
 	}
 
 	static final String ACTION_SHOW_INFO = "net.sf.asap.action.SHOW_INFO";
 
 	private BroadcastReceiver receiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			showInfo();
-		}
-	};
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				showInfo();
+			}
+		};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -127,12 +125,12 @@ public class Player extends Activity
 		bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
 		findViewById(R.id.stop_button).setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				if (service != null)
-					service.stopSelf();
-				finish();
-			}
-		});
+				public void onClick(View v) {
+					if (service != null)
+						service.stopSelf();
+					finish();
+				}
+			});
 
 		registerReceiver(receiver, new IntentFilter(ACTION_SHOW_INFO));
 	}

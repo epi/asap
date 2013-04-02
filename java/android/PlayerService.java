@@ -40,10 +40,12 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.widget.MediaController;
 import android.widget.Toast;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
-import java.util.zip.ZipFile;
+import java.util.ArrayList;
+import java.util.Collections;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
@@ -51,6 +53,11 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 public class PlayerService extends Service implements Runnable, MediaController.MediaPlayerControl
 {
+	private Uri uri;
+	int song;
+	private static final int SONG_DEFAULT = -1;
+	private static final int SONG_LAST = -2;
+
 	// User interface -----------------------------------------------------------------------------------------
 
 	private NotificationManager notMan;
@@ -115,13 +122,20 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		}
 	}
 
+	private void playFile(Uri uri, int song)
+	{
+		stop();
+		this.uri = uri;
+		this.song = song;
+		stop = false;
+		thread = new Thread(this);
+		thread.start();
+	}
+
 
 	// I/O ----------------------------------------------------------------------------------------------------
 
-	private Uri uri;
-	private String filename;
-
-	private InputStream httpGet(Uri uri) throws IOException
+	private static InputStream httpGet(Uri uri) throws IOException
 	{
 		DefaultHttpClient client = new DefaultHttpClient();
 		HttpGet request = new HttpGet(uri.toString());
@@ -133,11 +147,48 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	}
 
 
+	// Playlist -----------------------------------------------------------------------------------------------
+
+	static final String EXTRA_PLAYLIST = "asap.intent.extra.PLAYLIST";
+
+	private final ArrayList<Uri> playlist = new ArrayList<Uri>();
+
+	private void setPlaylist(final Uri uri, boolean shuffle)
+	{
+		playlist.clear();
+		try {
+			boolean isM3u = FileContainer.list(uri, new FileContainer.Consumer() {
+					public void onSongFile(String name, InputStream is) {
+						playlist.add(Util.buildUri(uri, name));
+					}
+					public void onContainer(String name) {
+					}
+				}, false, true);
+			if (shuffle)
+				Collections.shuffle(playlist);
+			else if (!isM3u)
+				Collections.sort(playlist);
+		}
+		catch (IOException ex) {
+			// playlist is not essential
+		}
+	}
+
+	private int getPlaylistIndex()
+	{
+		return playlist.indexOf(uri);
+	}
+
+	private void playFileFromPlaylist(int playlistIndex, int song)
+	{
+		playFile(playlist.get(playlistIndex), song);
+	}
+
+
 	// Playback -----------------------------------------------------------------------------------------------
 
 	private final ASAP asap = new ASAP();
 	ASAPInfo info;
-	int song;
 	private AudioTrack audioTrack;
 
 	private boolean isPaused()
@@ -172,7 +223,8 @@ public class PlayerService extends Service implements Runnable, MediaController.
 
 	public void pause()
 	{
-		audioTrack.pause();
+		if (audioTrack != null)
+			audioTrack.pause();
 	}
 
 	public void start()
@@ -193,12 +245,11 @@ public class PlayerService extends Service implements Runnable, MediaController.
 			pause();
 	}
 
-	private void playSong(int song) throws Exception
+	private void playSong() throws Exception
 	{
 		synchronized (asap) {
 			asap.playSong(song, info.getLoop(song) ? -1 : info.getDuration(song));
 		}
-		this.song = song;
 		sendBroadcast(new Intent(Player.ACTION_SHOW_INFO));
 		start();
 	}
@@ -206,27 +257,47 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	void playNextSong()
 	{
 		if (song + 1 < info.getSongs()) {
+			song++;
 			try {
-				playSong(song + 1);
+				playSong();
+				return;
 			}
 			catch (Exception ex) {
 			}
+		}
+
+		int playlistIndex = getPlaylistIndex();
+		if (playlistIndex >= 0) {
+			if (++playlistIndex >= playlist.size())
+				playlistIndex = 0;
+			playFileFromPlaylist(playlistIndex, 0);
 		}
 	}
 
 	void playPreviousSong()
 	{
 		if (song > 0) {
+			song--;
 			try {
-				playSong(song - 1);
+				playSong();
+				return;
 			}
 			catch (Exception ex) {
 			}
+		}
+
+		int playlistIndex = getPlaylistIndex();
+		if (playlistIndex >= 0) {
+			if (playlistIndex == 0)
+				playlistIndex = playlist.size();
+			playFileFromPlaylist(playlistIndex - 1, SONG_LAST);
 		}
 	}
 
 	public int getDuration()
 	{
+		if (song < 0)
+			return -1;
 		return info.getDuration(song);
 	}
 
@@ -250,35 +321,28 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	public void run()
 	{
 		// read file
-		filename = uri.getLastPathSegment();
+		String filename = uri.getPath();
 		byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 		int moduleLen;
 		try {
-			ZipFile zip = null;
-			try {
-				InputStream is;
+			InputStream is;
+			switch (uri.getScheme()) {
+			case "file":
 				if (Util.isZip(filename)) {
-					zip = new ZipFile(uri.getPath());
+					String zipFilename = filename;
 					filename = uri.getFragment();
-					is = zip.getInputStream(zip.getEntry(filename));
+					is = new ZipInputStream(zipFilename, filename);
 				}
-				else {
-					try {
-						is = getContentResolver().openInputStream(uri);
-					}
-					catch (FileNotFoundException ex) {
-						if (uri.getScheme().equals("http"))
-							is = httpGet(uri);
-						else
-							throw ex;
-					}
-				}
-				moduleLen = Util.readAndClose(is, module);
+				else
+					is = new FileInputStream(filename);
+				break;
+			case "http":
+				is = httpGet(uri);
+				break;
+			default:
+				throw new FileNotFoundException(uri.toString());
 			}
-			finally {
-				if (zip != null)
-					zip.close();
-			}
+			moduleLen = Util.readAndClose(is, module);
 		}
 		catch (IOException ex) {
 			showError(R.string.error_reading_file);
@@ -289,7 +353,17 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		try {
 			asap.load(filename, module, moduleLen);
 			info = asap.getInfo();
-			playSong(info.getDefaultSong());
+			switch (song) {
+			case SONG_DEFAULT:
+				song = info.getDefaultSong();
+				break;
+			case SONG_LAST:
+				song = info.getSongs() - 1;
+				break;
+			default:
+				break;
+			}
+			playSong();
 		}
 		catch (Exception ex) {
 			showError(R.string.invalid_file);
@@ -344,20 +418,30 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	public void onStart(Intent intent, int startId)
 	{
 		super.onStart(intent, startId);
-		stop();
-		uri = intent.getData();
-		stop = false;
-		thread = new Thread(this);
-		thread.start();
+
 		registerMediaButtonEventReceiver("registerMediaButtonEventReceiver");
 
 		TelephonyManager telephony = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 		telephony.listen(new PhoneStateListener() {
-			public void onCallStateChanged(int state, String incomingNumber) {
-				if (state == TelephonyManager.CALL_STATE_RINGING)
-					pause();
+				public void onCallStateChanged(int state, String incomingNumber) {
+					if (state == TelephonyManager.CALL_STATE_RINGING)
+						pause();
+				}
+			}, PhoneStateListener.LISTEN_CALL_STATE);
+
+		Uri uri = intent.getData();
+		String playlistUri = intent.getStringExtra(EXTRA_PLAYLIST);
+		if (playlistUri != null)
+			setPlaylist(Uri.parse(playlistUri), false);
+		else if ("file".equals(uri.getScheme())) {
+			if (ASAPInfo.isOurFile(uri.toString()))
+				setPlaylist(Util.getParent(uri), false);
+			else {
+				setPlaylist(uri, true);
+				uri = playlist.get(0);
 			}
-		}, PhoneStateListener.LISTEN_CALL_STATE);
+		}
+		playFile(uri, SONG_DEFAULT);
 	}
 
 	@Override

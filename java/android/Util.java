@@ -25,12 +25,62 @@ package net.sf.asap;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.net.Uri;
+import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 
 class Util
 {
+	static boolean isZip(String filename)
+	{
+		int n = filename.length();
+		return n >= 4 && filename.regionMatches(true, n - 4, ".zip", 0, 4);
+	}
+
+	static boolean isM3u(String filename)
+	{
+		int n = filename.length();
+		return n >= 4 && filename.regionMatches(true, n - 4, ".m3u", 0, 4);
+	}
+
+	static String getParent(String path)
+	{
+		int i = path.lastIndexOf('/');
+		if (i < 0)
+			return "";
+		return path.substring(0, i + 1);
+	}
+
+	static Uri getParent(Uri uri)
+	{
+		String path = uri.getFragment();
+		if (path != null)
+			return uri.buildUpon().fragment(getParent(path)).build();
+		return Uri.fromFile(new File(getParent(uri.getPath())));
+	}
+
+	static String stripM3u(String path)
+	{
+		return isM3u(path) ? getParent(path) : path;
+	}
+
+	static Uri buildUri(Uri baseUri, String relativePath)
+	{
+		String path = baseUri.getPath();
+		if (isZip(path)) {
+			String zipPath = baseUri.getFragment();
+			if (zipPath == null)
+				zipPath = relativePath;
+			else {
+				zipPath = stripM3u(zipPath) + relativePath;
+			}
+			return baseUri.buildUpon().fragment(zipPath).build();
+		}
+		return Uri.fromFile(new File(stripM3u(path), relativePath));
+	}
+
 	/**
 	 * Reads bytes from the stream into the byte array
 	 * until end of stream or array is full.
@@ -74,11 +124,5 @@ class Util
 	static void showAbout(Activity activity)
 	{
 		new AlertDialog.Builder(activity).setTitle(R.string.about_title).setIcon(R.drawable.icon).setMessage(R.string.about_message).show();
-	}
-
-	static boolean isZip(String filename)
-	{
-		int n = filename.length();
-		return n >= 4 && filename.regionMatches(true, n - 4, ".zip", 0, 4);
 	}
 }
