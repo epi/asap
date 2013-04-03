@@ -6,7 +6,7 @@
 
 ifdef::asapwww[]
 link:NEWS.html[News] |
-http://asap.git.sourceforge.net/git/gitweb.cgi?p=asap/asap;a=summary[Browse source code (Git)] |
+http://sourceforge.net/p/asap/code[Browse source code (Git)] |
 http://sourceforge.net/projects/asap/[SourceForge project page]
 image:http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get ASAP - Another Slight Atari Player at SourceForge.net. Fast, secure and Free Open Source software downloads",width=120,height=30,link="http://sourceforge.net/projects/asap/"]
 endif::asapwww[]
@@ -216,5 +216,5 @@ This list is for users and developers.
 Once you subscribe, you can post comments, ideas and questions about ASAP.
 They will be answered ASAP. ;-)
 
-Use http://sourceforge.net/tracker/?group_id=154391[tracker]
+Use http://sourceforge.net/p/asap/_list/tickets[tracker]
 to submit bug reports, feature requests and small code patches.

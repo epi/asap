@@ -62,10 +62,10 @@ Getting latest source code
 Alternatively you may get the latest version from the Git repository.
 To do this using a command-line Git client:
 --------------------------------------------------------------------------------
-git clone git://asap.git.sourceforge.net/gitroot/asap/asap
+git clone git://git.code.sf.net/p/asap/code asap-code
 --------------------------------------------------------------------------------
 
-This will fetch the latest code into a new directory called `asap`.
+This will fetch the latest code into a new directory called `asap-code`.
 
 
 Building asapconv and libasap on Unix-like systems
