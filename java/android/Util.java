@@ -45,6 +45,11 @@ class Util
 		return n >= 4 && filename.regionMatches(true, n - 4, ".m3u", 0, 4);
 	}
 
+	static boolean isM3u(Uri uri)
+	{
+		return isM3u(uri.toString());
+	}
+
 	static String getParent(String path)
 	{
 		int i = path.lastIndexOf('/');

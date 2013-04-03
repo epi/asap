@@ -156,17 +156,17 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	private void setPlaylist(final Uri uri, boolean shuffle)
 	{
 		playlist.clear();
+		FileContainer container = new FileContainer() {
+				@Override
+				protected void onSongFile(String name, InputStream is) {
+					playlist.add(Util.buildUri(uri, name));
+				}
+			};
 		try {
-			boolean isM3u = FileContainer.list(uri, new FileContainer.Consumer() {
-					public void onSongFile(String name, InputStream is) {
-						playlist.add(Util.buildUri(uri, name));
-					}
-					public void onContainer(String name) {
-					}
-				}, false, true);
+			container.list(uri, false, true);
 			if (shuffle)
 				Collections.shuffle(playlist);
-			else if (!isM3u)
+			else if (!Util.isM3u(uri))
 				Collections.sort(playlist);
 		}
 		catch (IOException ex) {

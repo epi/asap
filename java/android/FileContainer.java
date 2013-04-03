@@ -35,15 +35,19 @@ import java.util.Enumeration;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipEntry;
 
-class FileContainer
+/*
+ * Container of files: either a directory, a ZIP directory or an M3U playlist.
+ */
+abstract class FileContainer
 {
-	interface Consumer
+	protected abstract void onSongFile(String name, InputStream is) throws Exception;
+
+	// directory, m3u, zip
+	protected void onContainer(String name)
 	{
-		void onSongFile(String name, InputStream is) throws Exception;
-		void onContainer(String name); // directory, m3u, zip
 	}
 
-	private static void listDirectory(File dir, Consumer consumer, boolean inputStreams) throws IOException
+	private void listDirectory(File dir, boolean inputStreams) throws IOException
 	{
 		File[] files = dir.listFiles();
 		if (files == null)
@@ -51,21 +55,21 @@ class FileContainer
 		for (File file : files) {
 			String name = file.getName();
 			if (file.isDirectory())
-				consumer.onContainer(name + '/');
+				onContainer(name + '/');
 			else if (ASAPInfo.isOurFile(name)) {
 				try {
-					consumer.onSongFile(name, inputStreams ? new FileInputStream(file) : null);
+					onSongFile(name, inputStreams ? new FileInputStream(file) : null);
 				}
 				catch (Exception ex) {
 					// ignore files we cannot read or understand
 				}
 			}
 			else if (Util.isZip(name) || Util.isM3u(name))
-				consumer.onContainer(name);
+				onContainer(name);
 		}
 	}
 
-	private static void listM3u(Uri uri, Consumer consumer, boolean inputStreams) throws IOException
+	private void listM3u(Uri uri, boolean inputStreams) throws IOException
 	{
 		String path = uri.getPath();
 		InputStream m3uIs;
@@ -102,7 +106,7 @@ class FileContainer
 						}
 						else
 							is = null;
-						consumer.onSongFile(line, is);
+						onSongFile(line, is);
 					}
 					catch (Exception ex) {
 						// ignore files we cannot read or understand
@@ -115,7 +119,7 @@ class FileContainer
 		}
 	}
 
-	private static void listZipDirectory(File zipFile, String zipPath, Consumer consumer, boolean inputStreams, boolean recurseZip) throws IOException
+	private void listZipDirectory(File zipFile, String zipPath, boolean inputStreams, boolean recurseZip) throws IOException
 	{
 		if (zipPath == null)
 			zipPath = "";
@@ -132,17 +136,17 @@ class FileContainer
 							int i = name.indexOf('/', zipPathLen);
 							if (i >= 0) {
 								// file in a subdirectory - add subdirectory with the trailing slash
-								consumer.onContainer(name.substring(zipPathLen, i + 1));
+								onContainer(name.substring(zipPathLen, i + 1));
 								continue;
 							}
 						}
 						// file
 						name = name.substring(zipPathLen);
 						if (Util.isM3u(name))
-							consumer.onContainer(name);
+							onContainer(name);
 						else {
 							try {
-								consumer.onSongFile(name, inputStreams ? zip.getInputStream(zipEntry) : null);
+								onSongFile(name, inputStreams ? zip.getInputStream(zipEntry) : null);
 							}
 							catch (Exception ex) {
 								// ignore files we cannot read or understand
@@ -157,18 +161,14 @@ class FileContainer
 		}
 	}
 
-	public static boolean list(Uri uri, Consumer consumer, boolean inputStreams, boolean recurseZip) throws IOException
+	void list(Uri uri, boolean inputStreams, boolean recurseZip) throws IOException
 	{
 		File file = new File(uri.getPath());
-		if (file.isDirectory()) {
-			listDirectory(file, consumer, inputStreams);
-			return false;
-		}
-		if (Util.isM3u(uri.toString())) {
-			listM3u(uri, consumer, inputStreams);
-			return true;
-		}
-		listZipDirectory(file, uri.getFragment(), consumer, inputStreams, recurseZip);
-		return false;
+		if (file.isDirectory())
+			listDirectory(file, inputStreams);
+		else if (Util.isM3u(uri))
+			listM3u(uri, inputStreams);
+		else
+			listZipDirectory(file, uri.getFragment(), inputStreams, recurseZip);
 	}
 }

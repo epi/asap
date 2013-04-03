@@ -45,13 +45,12 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.TreeSet;
 
 public class FileSelector extends ListActivity
 {
 	private boolean isDetails;
 	private Uri uri;
-	private boolean isM3u;
 
 	private static class FileInfo implements Comparable<FileInfo>
 	{
@@ -81,6 +80,12 @@ public class FileSelector extends ListActivity
 			}
 		}
 
+		private FileInfo(String filename, String title)
+		{
+			this.filename = filename;
+			this.title = title;
+		}
+
 		@Override
 		public String toString()
 		{
@@ -93,17 +98,23 @@ public class FileSelector extends ListActivity
 			if (!(obj instanceof FileInfo))
 				return false;
 			FileInfo that = (FileInfo) obj;
+			if (this.filename == null)
+				return that.filename == null;
 			return this.filename.equals(that.filename);
 		}
 
 		@Override
 		public int hashCode()
 		{
-			return filename.hashCode();
+			return filename == null ? 0 : filename.hashCode();
 		}
 
 		public int compareTo(FileInfo that)
 		{
+			if (this.filename == null)
+				return -1;
+			if (that.filename == null)
+				return 1;
 			boolean dir1 = this.filename.endsWith("/");
 			boolean dir2 = that.filename.endsWith("/");
 			if (dir1 != dir2)
@@ -149,9 +160,47 @@ public class FileSelector extends ListActivity
 			holder.title.setText(info.title);
 			holder.author.setText(info.author);
 			holder.date.setText(info.date);
-			holder.songs.setText(info.songs > 1 ? getContext().getString(R.string.songs_format, info.songs) : "");
+			holder.songs.setText(info.songs > 1 ? getContext().getString(R.string.songs_format, info.songs) : null);
 
 			return convertView;
+		}
+	}
+
+	private class FileInfoList extends FileContainer
+	{
+		private Collection<FileInfo> coll;
+		private int songFiles;
+
+		@Override
+		protected void onSongFile(String name, InputStream is) throws Exception
+		{
+			coll.add(new FileInfo(name, is));
+			songFiles++;
+		}
+
+		@Override
+		protected void onContainer(String name)
+		{
+			coll.add(new FileInfo(name));
+		}
+
+		FileInfo[] list() throws IOException
+		{
+			boolean isM3u = Util.isM3u(uri);
+			coll = isM3u ? new ArrayList<FileInfo>() : new TreeSet<FileInfo>();
+			songFiles = 0;
+			list(uri, isDetails, false);
+
+			// "(shuffle all)" if any song files or non-empty ZIP directory
+			if (songFiles > 1 || (!coll.isEmpty() && Util.isZip(uri.getPath()))) {
+				FileInfo shuffleAll = new FileInfo(null, getString(R.string.shuffle_all));
+				if (isM3u)
+					((ArrayList<FileInfo>) coll).add(0, shuffleAll); // insert at the beginning
+				else
+					coll.add(shuffleAll);
+			}
+
+			return coll.toArray(new FileInfo[coll.size()]);
 		}
 	}
 
@@ -161,24 +210,15 @@ public class FileSelector extends ListActivity
 		if (uri == null)
 			uri = Uri.fromFile(Environment.getExternalStorageDirectory());
 
-		final Collection<FileInfo> coll = Util.isZip(uri.getPath()) ? new HashSet<FileInfo>() : new ArrayList<FileInfo>();
+		FileInfo[] infos;
 		try {
-			isM3u = FileContainer.list(uri, new FileContainer.Consumer() {
-					public void onSongFile(String name, InputStream is) throws Exception {
-						coll.add(new FileInfo(name, is));
-					}
-					public void onContainer(String name) {
-						coll.add(new FileInfo(name));
-					}
-				}, true, false);
+			infos = new FileInfoList().list();
 		}
 		catch (IOException ex) {
 			Toast.makeText(this, R.string.access_denied, Toast.LENGTH_SHORT).show();
+			infos = new FileInfo[0];
 		}
 
-		FileInfo[] infos = coll.toArray(new FileInfo[coll.size()]);
-		if (!isM3u)
-			Arrays.sort(infos);
 		ListAdapter adapter = isDetails
 			? new FileInfoAdapter(this, R.layout.fileinfo_list_item, infos)
 			: new ArrayAdapter<FileInfo>(this, R.layout.filename_list_item, infos);
@@ -197,12 +237,19 @@ public class FileSelector extends ListActivity
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id)
 	{
+		Intent intent;
 		FileInfo info = (FileInfo) l.getItemAtPosition(position);
 		String name = info.filename;
-		Class klass = ASAPInfo.isOurFile(name) ? Player.class : FileSelector.class;
-		Intent intent = new Intent(Intent.ACTION_VIEW, Util.buildUri(uri, name), this, klass);
-		if (isM3u)
-			intent.putExtra(PlayerService.EXTRA_PLAYLIST, uri.toString());
+		if (name == null) {
+			// shuffle all
+			intent = new Intent(Intent.ACTION_VIEW, uri, this, Player.class);
+		}
+		else {
+			Class klass = ASAPInfo.isOurFile(name) ? Player.class : FileSelector.class;
+			intent = new Intent(Intent.ACTION_VIEW, Util.buildUri(uri, name), this, klass);
+			if (Util.isM3u(uri))
+				intent.putExtra(PlayerService.EXTRA_PLAYLIST, uri.toString());
+		}
 		startActivity(intent);
 	}
 
