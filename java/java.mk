@@ -1,4 +1,4 @@
-JRE = C:/Program Files/Java/jre6
+JRE = C:/Program Files/Java/jre7
 JAVAC = $(DO)javac
 JAR = $(DO)jar
 JAVADOC = $(DO)javadoc
