@@ -38,7 +38,7 @@ WINCE_LINKOPT = -link -subsystem:windowsce,4.02 -release -libpath:$(WINCE_VC)/li
 
 # Windows Installer XML
 CANDLE = $(DO)candle -nologo -o $@
-LIGHT = $(DO)light -nologo -o $@
+LIGHT = $(DO)light -nologo -o $@ -spdb
 
 # no user-configurable paths below this line
 
