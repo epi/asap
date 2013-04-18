@@ -1,7 +1,7 @@
 /*
  * wasap.c - Another Slight Atari Player for Win32 systems
  *
- * Copyright (C) 2005-2011  Piotr Fusik
+ * Copyright (C) 2005-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -43,6 +43,7 @@ BOOL WINAPI Shell_NotifyIcon(DWORD,PNOTIFYICONDATAW);
 #define WND_CLASS_NAME   _T("WASAP")
 #define OPEN_TITLE       _T("Select Atari 8-bit music")
 #define BITS_PER_SAMPLE  16
+#define BUFFERS          2
 #define BUFFERED_BLOCKS  4096
 
 static ASAP *asap;
@@ -55,52 +56,76 @@ static HWND hWnd;
 
 /* WaveOut ---------------------------------------------------------------- */
 
-/* double-buffering, *2 for 16-bit, *2 for stereo */
-static char buffer[2][BUFFERED_BLOCKS * 2 * 2];
+static HANDLE waveEvent = NULL;
 static HWAVEOUT hwo = INVALID_HANDLE_VALUE;
-static WAVEHDR wh[2] = {
-	{ buffer[0], 0, 0, 0, 0, 0, NULL, 0 },
-	{ buffer[1], 0, 0, 0, 0, 0, NULL, 0 },
-};
+/* double-buffering, *2 for 16-bit, *2 for stereo */
+static char buffer[BUFFERS][BUFFERED_BLOCKS * 2 * 2];
+static WAVEHDR wh[BUFFERS];
+static HANDLE waveThread = NULL;
 static BOOL playing = FALSE;
 
-static void WaveOut_Write(LPWAVEHDR pwh)
+static BOOL WaveOut_Write(LPWAVEHDR pwh)
 {
-	if (playing) {
-		int len = ASAP_Generate(asap, (PBYTE) pwh->lpData, pwh->dwBufferLength, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
-		if (len < (int) pwh->dwBufferLength
-		 || waveOutWrite(hwo, pwh, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) {
-			/* calling StopPlayback() here causes a deadlock */
-			PostMessage(hWnd, WM_COMMAND, IDM_STOP, 0);
-		}
-	}
+	int len = ASAP_Generate(asap, (PBYTE) pwh->lpData, pwh->dwBufferLength, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
+	if (len <= 0)
+		return FALSE;
+	pwh->dwBufferLength = len;
+	pwh->dwFlags &= ~WHDR_DONE;
+	return waveOutWrite(hwo, pwh, sizeof(WAVEHDR)) == MMSYSERR_NOERROR;
 }
 
-static void CALLBACK WaveOut_Proc(HWAVEOUT hwo2, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+static DWORD WINAPI WaveOut_Thread(LPVOID lpParameter)
 {
-	if (uMsg == WOM_DONE)
-		WaveOut_Write((LPWAVEHDR) dwParam1);
+	while (playing) {
+		int i;
+		for (i = 0; i < BUFFERS; i++) {
+			if (wh[i].dwFlags & WHDR_DONE) {
+				if (!WaveOut_Write(&wh[i]))
+					PostMessage(hWnd, WM_COMMAND, IDM_STOP, 0);
+				break;
+			}
+		}
+		if (i >= BUFFERS)
+			WaitForSingleObject(waveEvent, 200);
+	}
+	return 0;
 }
 
 static void WaveOut_Close(void)
 {
-	if (hwo == INVALID_HANDLE_VALUE)
-		return;
-	if (playing) {
-		playing = FALSE;
-		waveOutReset(hwo);
+	if (waveEvent != NULL) {
+		if (hwo != INVALID_HANDLE_VALUE) {
+			int i;
+			playing = FALSE;
+			if (waveThread != NULL) {
+				SetEvent(waveEvent);
+				WaitForSingleObject(waveThread, 300);
+				CloseHandle(waveThread);
+				waveThread = NULL;
+			}
+			waveOutReset(hwo);
+			for (i = 0; i < BUFFERS; i++) {
+				if (wh[i].dwFlags & WHDR_PREPARED)
+					waveOutUnprepareHeader(hwo, &wh[i], sizeof(WAVEHDR));
+			}
+			waveOutClose(hwo);
+			hwo = INVALID_HANDLE_VALUE;
+		}
+		CloseHandle(waveEvent);
+		waveEvent = NULL;
 	}
-	if (wh[0].dwFlags & WHDR_PREPARED)
-		waveOutUnprepareHeader(hwo, &wh[0], sizeof(wh[0]));
-	if (wh[1].dwFlags & WHDR_PREPARED)
-		waveOutUnprepareHeader(hwo, &wh[1], sizeof(wh[1]));
-	waveOutClose(hwo);
-	hwo = INVALID_HANDLE_VALUE;
 }
 
 static int WaveOut_Open(int channels)
 {
 	WAVEFORMATEX wfx;
+	int i;
+	DWORD waveThreadId;
+
+	waveEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (waveEvent == NULL)
+		return FALSE;
+
 	wfx.wFormatTag = WAVE_FORMAT_PCM;
 	wfx.nChannels = channels;
 	wfx.nSamplesPerSec = ASAP_SAMPLE_RATE;
@@ -108,17 +133,27 @@ static int WaveOut_Open(int channels)
 	wfx.nAvgBytesPerSec = ASAP_SAMPLE_RATE * wfx.nBlockAlign;
 	wfx.wBitsPerSample = BITS_PER_SAMPLE;
 	wfx.cbSize = 0;
-	if (waveOutOpen(&hwo, WAVE_MAPPER, &wfx, (DWORD_PTR) WaveOut_Proc, 0, CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
+	if (waveOutOpen(&hwo, WAVE_MAPPER, &wfx, (DWORD_PTR) waveEvent, 0, CALLBACK_EVENT) != MMSYSERR_NOERROR)
 		return FALSE;
-	wh[1].dwBufferLength = wh[0].dwBufferLength = BUFFERED_BLOCKS * wfx.nBlockAlign;
-	if (waveOutPrepareHeader(hwo, &wh[0], sizeof(wh[0])) != MMSYSERR_NOERROR
-	 || waveOutPrepareHeader(hwo, &wh[1], sizeof(wh[1])) != MMSYSERR_NOERROR) {
+
+	ZeroMemory(&wh, sizeof(wh));
+	for (i = 0; i < BUFFERS; i++) {
+		wh[i].lpData = buffer[i];
+		wh[i].dwBufferLength = BUFFERED_BLOCKS * wfx.nBlockAlign;
+		if (waveOutPrepareHeader(hwo, &wh[i], sizeof(WAVEHDR)) != MMSYSERR_NOERROR) {
+			WaveOut_Close();
+			return FALSE;
+		}
+		wh[i].dwFlags |= WHDR_DONE;
+	}
+
+	playing = TRUE;
+	waveThread = CreateThread(NULL, 0, WaveOut_Thread, NULL, 0, &waveThreadId);
+	if (waveThread == NULL) {
 		WaveOut_Close();
 		return FALSE;
 	}
-	playing = TRUE;
-	WaveOut_Write(&wh[0]);
-	WaveOut_Write(&wh[1]);
+
 	return TRUE;
 }
 
