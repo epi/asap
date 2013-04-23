@@ -489,6 +489,22 @@
 		<stil>no</stil>
 		<lang>JavaScript</lang>
 	</port>
+	<port name="ASAP2WAV (Perl)">
+		<bin></bin>
+		<platform>desktop operating systems</platform>
+		<interface>command line</interface>
+		<since>3.1.4</since>
+		<status>sample</status>
+		<output>8 or 16-bit, WAV or raw file</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
+		<lang>Perl</lang>
+	</port>
 	<port name="ASAP2WAV (D)">
 		<bin></bin>
 		<platform>desktop operating systems</platform>

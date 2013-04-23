@@ -134,4 +134,5 @@ include $(srcdir)d/d.mk
 include $(srcdir)flash/flash.mk
 include $(srcdir)java/java.mk
 include $(srcdir)javascript/javascript.mk
+include $(srcdir)perl/perl.mk
 include $(srcdir)win32/win32.mk
