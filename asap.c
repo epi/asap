@@ -2285,7 +2285,6 @@ static int ASAP_PeekHardware(ASAP const *self, int addr)
 			return 31;
 		case NmiStatus_WAS_V_BLANK:
 			return 95;
-		case NmiStatus_ON_V_BLANK:
 		default:
 			return self->cycle < 28291 ? 31 : 95;
 		}
@@ -8101,7 +8100,6 @@ static int FlashPackItem_WriteValueTo(FlashPackItem const *self, unsigned char *
 {
 	switch (self->type) {
 		int value;
-	default:
 	case FlashPackItemType_LITERAL:
 		buffer[index] = self->value;
 		return 1;
@@ -8121,7 +8119,7 @@ static int FlashPackItem_WriteValueTo(FlashPackItem const *self, unsigned char *
 		buffer[index + 1] = (unsigned char) value;
 		buffer[index + 2] = value >> 8;
 		return 3;
-	case FlashPackItemType_END_OF_STREAM:
+	default:
 		buffer[index] = 1;
 		buffer[index + 1] = 0;
 		return 2;

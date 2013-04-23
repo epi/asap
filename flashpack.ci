@@ -1,6 +1,6 @@
 // flashpack.ci - Atari 8-bit executable compression
 //
-// Copyright (C) 2011  Piotr Fusik
+// Copyright (C) 2011-2013  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -46,7 +46,6 @@ class FlashPackItem
 	int WriteValueTo(byte[] buffer, int index)
 	{
 		switch (Type) {
-		default: // just shut gcc warning
 		case FlashPackItemType.Literal:
 			buffer[index] = Value;
 			return 1;
@@ -66,7 +65,7 @@ class FlashPackItem
 			buffer[index + 1] = value.LowByte;
 			buffer[index + 2] = value >> 8;
 			return 3;
-		case FlashPackItemType.EndOfStream:
+		default: // case FlashPackItemType.EndOfStream:
 			buffer[index] = 1;
 			buffer[index + 1] = 0;
 			return 2;

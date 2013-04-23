@@ -1,6 +1,6 @@
 // asap.ci - emulation engine
 //
-// Copyright (C) 2010-2012  Piotr Fusik
+// Copyright (C) 2010-2013  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -112,8 +112,7 @@ public class ASAP
 				return 0x1f;
 			case NmiStatus.WasVBlank:
 				return 0x5f;
-			case NmiStatus.OnVBlank:
-			default: // shut up compilers
+			default: // case NmiStatus.OnVBlank:
 				return Cycle < 28291 ? 0x1f : 0x5f;
 			}
 		default:
