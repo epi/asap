@@ -1,6 +1,6 @@
 // asapinfo.ci - module parser
 //
-// Copyright (C) 2010-2012  Piotr Fusik
+// Copyright (C) 2010-2013  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -454,42 +454,59 @@ public class ASAPInfo
 				pos++;
 				continue;
 			}
-			p1 >>= 4;
-			if (p1 == 8)
-				break;
+			p1 |= Type == ASAPModuleType.Cms ? 7 : 0xf;
 			switch (p1) {
-			case 9:
-				pos = p2;
-				continue;
-			case 0xa:
-				pos -= p2;
-				continue;
-			case 0xb:
-				pos += p2;
-				continue;
-			case 0xc:
-				tempo = p2;
+			case 0x87: // CMS VOLUME
+			case 0xa7: // CMS MODE
 				pos++;
-				continue;
-			case 0xd:
+				break;
+			case 0x8f: // STOP
+				pos = -1;
+				break;
+			case 0x97: // CMS PAUSE
+				if (p2 < 128) {
+					playerCalls += p2;
+					if (p3 < 128)
+						playerCalls += p3 * 50;
+				}
+				pos++;
+				break;
+			case 0x9f: // JUMP
+				pos = p2;
+				break;
+			case 0xaf: // UP
+				pos -= p2;
+				break;
+			case 0xbf: // DOWN
+				pos += p2;
+				break;
+			case 0xcf: // TEMPO
+				if (p2 < 128) {
+					tempo = p2;
+					pos++;
+				}
+				else
+					pos = -1;
+				break;
+			case 0xdf: // REPLAY
 				pos++;
 				repStartPos = pos;
 				repEndPos = pos + p2;
 				repTimes = p3 - 1;
-				continue;
-			default:
 				break;
-			}
-			if (p1 == 0xe) {
+			case 0xef: // BREAK
 				Loops[Songs] = true;
+				pos = -1;
+				break;
+			default:
+				p2 = repTimes > 0 ? SeenRepeat : SeenBefore;
+				for (p1 = 0; p1 < 0x55; p1++)
+					if (seen[p1] == SeenThisCall)
+						seen[p1] = p2;
+				playerCalls += tempo * (Type == ASAPModuleType.Cm3 ? 48 : 64);
+				pos++;
 				break;
 			}
-			p2 = repTimes > 0 ? SeenRepeat : SeenBefore;
-			for (p1 = 0; p1 < 0x55; p1++)
-				if (seen[p1] == SeenThisCall)
-					seen[p1] = p2;
-			playerCalls += tempo * (Type == ASAPModuleType.Cm3 ? 48 : 64);
-			pos++;
 		}
 		AddSong(playerCalls);
 	}

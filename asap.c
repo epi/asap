@@ -3193,42 +3193,59 @@ static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, i
 			pos++;
 			continue;
 		}
-		p1 >>= 4;
-		if (p1 == 8)
-			break;
+		p1 |= self->type == ASAPModuleType_CMS ? 7 : 15;
 		switch (p1) {
-		case 9:
-			pos = p2;
-			continue;
-		case 10:
-			pos -= p2;
-			continue;
-		case 11:
-			pos += p2;
-			continue;
-		case 12:
-			tempo = p2;
+		case 135:
+		case 167:
 			pos++;
-			continue;
-		case 13:
+			break;
+		case 143:
+			pos = -1;
+			break;
+		case 151:
+			if (p2 < 128) {
+				playerCalls += p2;
+				if (p3 < 128)
+					playerCalls += p3 * 50;
+			}
+			pos++;
+			break;
+		case 159:
+			pos = p2;
+			break;
+		case 175:
+			pos -= p2;
+			break;
+		case 191:
+			pos += p2;
+			break;
+		case 207:
+			if (p2 < 128) {
+				tempo = p2;
+				pos++;
+			}
+			else
+				pos = -1;
+			break;
+		case 223:
 			pos++;
 			repStartPos = pos;
 			repEndPos = pos + p2;
 			repTimes = p3 - 1;
-			continue;
-		default:
 			break;
-		}
-		if (p1 == 14) {
+		case 239:
 			self->loops[self->songs] = TRUE;
+			pos = -1;
+			break;
+		default:
+			p2 = repTimes > 0 ? 3 : 2;
+			for (p1 = 0; p1 < 85; p1++)
+				if (seen[p1] == 1)
+					seen[p1] = p2;
+			playerCalls += tempo * (self->type == ASAPModuleType_CM3 ? 48 : 64);
+			pos++;
 			break;
 		}
-		p2 = repTimes > 0 ? 3 : 2;
-		for (p1 = 0; p1 < 85; p1++)
-			if (seen[p1] == 1)
-				seen[p1] = p2;
-		playerCalls += tempo * (self->type == ASAPModuleType_CM3 ? 48 : 64);
-		pos++;
 	}
 	ASAPInfo_AddSong(self, playerCalls);
 }
