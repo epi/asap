@@ -1,5 +1,7 @@
 prefix := /usr/local
 srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
+bindir = $(prefix)/bin
+libdir = $(prefix)/lib$(shell test -d $(prefix)/lib64 && echo 64)
 CC = $(DO)gcc -s -O2 -Wall -o $@ $(if $(filter %.so,$@),-shared -fPIC) $(INCLUDEOPTS) $(filter %.c,$^)
 AR = $(DO)ar rc $@ $^
 CITO = $(DO)cito -o $@ $(patsubst %,-I %,$(sort $(dir $(filter-out %.ci,$^)))) $(filter %.ci,$^)
@@ -45,11 +47,11 @@ asapconv: $(call src,asapconv.c asap.[ch])
 CLEAN += asapconv
 
 install-asapconv: asapconv
-	$(call INSTALL_PROGRAM,asapconv,$(prefix)/bin)
+	$(call INSTALL_PROGRAM,asapconv,$(bindir))
 .PHONY: install-asapconv
 
 uninstall-asapconv:
-	$(RM) $(DESTDIR)$(prefix)/bin/asapconv
+	$(RM) $(DESTDIR)$(bindir)/asapconv
 .PHONY: uninstall-asapconv
 
 # lib
@@ -67,11 +69,11 @@ CLEAN += asap.o
 
 install-lib: libasap.a $(srcdir)asap.h
 	$(call INSTALL_DATA,$(srcdir)asap.h,$(prefix)/include)
-	$(call INSTALL_DATA,libasap.a,$(prefix)/lib)
+	$(call INSTALL_DATA,libasap.a,$(libdir))
 .PHONY: install-lib
 
 uninstall-lib:
-	$(RM) $(DESTDIR)$(prefix)/include/asap.h $(DESTDIR)$(prefix)/lib/libasap.a
+	$(RM) $(DESTDIR)$(prefix)/include/asap.h $(DESTDIR)$(libdir)/libasap.a
 .PHONY: uninstall-lib
 
 # SDL
@@ -81,11 +83,11 @@ asap-sdl: $(call src,asap-sdl.c asap.[ch])
 CLEAN += asap-sdl
 
 install-sdl: asap-sdl
-	$(call INSTALL_PROGRAM,asap-sdl,$(prefix)/bin)
+	$(call INSTALL_PROGRAM,asap-sdl,$(bindir))
 .PHONY: install-sdl
 
 uninstall-sdl:
-	$(RM) $(DESTDIR)$(prefix)/bin/asap-sdl
+	$(RM) $(DESTDIR)$(bindir)/asap-sdl
 .PHONY: uninstall-sdl
 
 # asapscan

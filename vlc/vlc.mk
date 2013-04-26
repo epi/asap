@@ -1,7 +1,7 @@
 # Linux
 
 VLC_CFLAGS = -std=gnu99 -I/usr/include/vlc/plugins
-VLC_DEMUX_PLUGIN_DIR = /usr/lib/vlc/plugins/demux
+VLC_DEMUX_PLUGIN_DIR = $(libdir)/vlc/plugins/demux
 
 # OS X
 

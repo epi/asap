@@ -1,5 +1,5 @@
 GSTREAMER_CFLAGS = `pkg-config --cflags --libs gstreamer-0.10`
-GSTREAMER_PLUGIN_DIR = /usr/lib/gstreamer-0.10
+GSTREAMER_PLUGIN_DIR = `pkg-config --variable=pluginsdir gstreamer-0.10`
 
 # no user-configurable paths below this line
 

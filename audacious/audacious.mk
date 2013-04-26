@@ -1,5 +1,5 @@
-AUDACIOUS_CFLAGS = `pkg-config --cflags gtk+-2.0` `pkg-config --cflags libmowgli`
-AUDACIOUS_INPUT_PLUGIN_DIR = /usr/lib/audacious/Input
+AUDACIOUS_CFLAGS = `pkg-config --cflags gtk+-3.0`
+AUDACIOUS_INPUT_PLUGIN_DIR = `pkg-config --variable=input_plugin_dir audacious`
 
 # no user-configurable paths below this line
 

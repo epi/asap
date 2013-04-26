@@ -92,21 +92,25 @@ rm -rf $RPM_BUILD_ROOT
 
 %files audacious
 %defattr(-,root,root)
-/usr/lib/audacious/Input/asapplug.so
+%{_libdir}/audacious/Input/asapplug.so
 
 %files xmms
 %defattr(-,root,root)
-/usr/lib/xmms/Input/libasap-xmms.so
+%{_libdir}/xmms/Input/libasap-xmms.so
 
 %files gstreamer0.10
 %defattr(-,root,root)
-/usr/lib/gstreamer-0.10/libgstasapdec.so
+%{_libdir}/gstreamer-0.10/libgstasapdec.so
 
 %files vlc
 %defattr(-,root,root)
-/usr/lib/vlc/plugins/demux/libasap_plugin.so
+%{_libdir}/vlc/plugins/demux/libasap_plugin.so
 
 %changelog
+* Fri Apr 26 2013 Piotr Fusik <fox@scene.pl>
+- 3.1.4-1
+- lib64 compatibility
+
 * Tue Dec 4 2012 Piotr Fusik <fox@scene.pl>
 - 3.1.3-1
 - Added subpackages with GStreamer and VLC plugins
