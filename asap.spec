@@ -1,5 +1,5 @@
 Name: asap
-Version: 3.1.3
+Version: 3.1.4
 Release: 1
 Summary: Player of Atari 8-bit music
 License: GPLv2+
@@ -107,7 +107,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/vlc/plugins/demux/libasap_plugin.so
 
 %changelog
-* Fri Apr 26 2013 Piotr Fusik <fox@scene.pl>
+* Mon Apr 29 2013 Piotr Fusik <fox@scene.pl>
 - 3.1.4-1
 - lib64 compatibility
 

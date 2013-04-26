@@ -49,12 +49,12 @@ public class ASAPInfo
 	/// ASAP version - minor part.
 	public const int VersionMinor = 1;
 	/// ASAP version - micro part.
-	public const int VersionMicro = 3;
+	public const int VersionMicro = 4;
 	/// ASAP version as a string.
 	public const string Version = VersionMajor + "." + VersionMinor + "." + VersionMicro;
 
 	/// Years ASAP was created in.
-	public const string Years = "2005-2012";
+	public const string Years = "2005-2013";
 
 	/// Short credits for ASAP.
 	public const string Credits =

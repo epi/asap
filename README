@@ -151,7 +151,6 @@ ASAP includes the following programs:
 - add-on for Windows library http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players])
 - asapconv - portable command-line converter
 - WASAP - tiny player for Windows (desktop and mobile)
-- MetroASAP - player for Windows 8
 - POKEY sound emulation DLL for http://raster.infos.cz/atari/rmt/rmt.htm[Raster Music Tracker]
 - Windows Explorer extension - shows and edits metadata
 - AIRASAP - simple desktop player in the http://www.adobe.com/products/air/[Adobe AIR] technology
@@ -161,6 +160,7 @@ ASAP includes the following programs:
 - Java applet - for web pages {asapwww?(see link:applet.html[online demo])}
 - JavaScript player - for web pages {asapwww?(see link:javascript.html[online demo])}
 - http://www.silverlight.net/[Silverlight] player - for web pages {asapwww?(see link:silverlight.html[online demo])}
+- MetroASAP - experimental player for Windows 8
 - ASAP2WAV - command-line converters to WAV files implemented in Java, C#, JavaScript, Perl and http://dlang.org/[D]
 - simple command-line players implemented in C/SDL, C# and D
 
