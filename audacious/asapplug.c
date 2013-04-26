@@ -22,6 +22,7 @@
  */
 
 #include <stdio.h>
+#include <pthread.h>
 #include <glib.h>
 #include <audacious/plugin.h>
 #include <libaudcore/audstrings.h>
@@ -38,7 +39,7 @@
 
 #define BITS_PER_SAMPLE  16
 
-static GMutex *control_mutex;
+static pthread_mutex_t control_mutex = PTHREAD_MUTEX_INITIALIZER;
 static ASAP *asap;
 
 #if _AUD_PLUGIN_VERSION >= 18
@@ -55,7 +56,6 @@ static
 #endif
 	plugin_init(void)
 {
-	control_mutex = g_mutex_new();
 	asap = ASAP_New();
 #if _AUD_PLUGIN_VERSION >= 18
 	return asap != NULL;
@@ -65,7 +65,6 @@ static
 static void plugin_cleanup(void)
 {
 	ASAP_Delete(asap);
-	g_mutex_free(control_mutex);
 }
 
 #if _AUD_PLUGIN_VERSION_MIN < 40
@@ -236,13 +235,13 @@ static gboolean play_start(InputPlayback *playback, const char *filename, VFSFil
 	for (;;) {
 		static unsigned char buffer[4096];
 		int len;
-		g_mutex_lock(control_mutex);
+		pthread_mutex_lock(&control_mutex);
 		if (!playing) {
-			g_mutex_unlock(control_mutex);
+			pthread_mutex_unlock(&control_mutex);
 			break;
 		}
 		len = ASAP_Generate(asap, buffer, sizeof(buffer), BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
-		g_mutex_unlock(control_mutex);
+		pthread_mutex_unlock(&control_mutex);
 		if (len <= 0) {
 #if _AUD_PLUGIN_VERSION < 18
 			playback->eof = TRUE;
@@ -260,9 +259,9 @@ static gboolean play_start(InputPlayback *playback, const char *filename, VFSFil
 	while (playing && playback->output->buffer_playing())
 		g_usleep(10000);
 #endif
-	g_mutex_lock(control_mutex);
+	pthread_mutex_lock(&control_mutex);
 	playing = FALSE;
-	g_mutex_unlock(control_mutex);
+	pthread_mutex_unlock(&control_mutex);
 #if _AUD_PLUGIN_VERSION_MIN < 40
 	playback->output->close_audio();
 #endif
@@ -284,10 +283,10 @@ static void play_pause(InputPlayback *playback,
 #endif
 	pause)
 {
-	g_mutex_lock(control_mutex);
+	pthread_mutex_lock(&control_mutex);
 	if (playing)
 		playback->output->pause(pause);
-	g_mutex_unlock(control_mutex);
+	pthread_mutex_unlock(&control_mutex);
 }
 
 static void play_mseek(InputPlayback *playback,
@@ -298,26 +297,26 @@ static void play_mseek(InputPlayback *playback,
 #endif
 	time)
 {
-	g_mutex_lock(control_mutex);
+	pthread_mutex_lock(&control_mutex);
 	if (playing) {
 		ASAP_Seek(asap, time);
 #if _AUD_PLUGIN_VERSION >= 15
 		playback->output->abort_write();
 #endif
 	}
-	g_mutex_unlock(control_mutex);
+	pthread_mutex_unlock(&control_mutex);
 }
 
 static void play_stop(InputPlayback *playback)
 {
-	g_mutex_lock(control_mutex);
+	pthread_mutex_lock(&control_mutex);
 	if (playing) {
 #if _AUD_PLUGIN_VERSION >= 15
 		playback->output->abort_write();
 #endif
 		playing = FALSE;
 	}
-	g_mutex_unlock(control_mutex);
+	pthread_mutex_unlock(&control_mutex);
 }
 
 #pragma GCC diagnostic ignored "-Wunused-result"
