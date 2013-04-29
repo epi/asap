@@ -21,17 +21,6 @@ Group: Development/Libraries
 %description devel
 These are the files needed for compiling programs that use libasap.
 
-%package audacious
-Summary: ASAP plugin for Audacious
-Group: Applications/Multimedia
-Requires: audacious
-BuildRequires: audacious-devel
-
-%description audacious
-Provides playback of Atari 8-bit music in Audacious.
-Supports the following file formats:
-SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
-
 %package xmms
 Summary: ASAP plugin for XMMS
 Group: Applications/Multimedia
@@ -71,11 +60,11 @@ SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 %setup -q
 
 %build
-make asapconv libasap.a asap-audacious asap-xmms asap-gstreamer asap-vlc
+make asapconv libasap.a asap-xmms asap-gstreamer asap-vlc
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make DESTDIR=$RPM_BUILD_ROOT prefix=%{_prefix} install install-audacious install-xmms install-gstreamer install-vlc
+make DESTDIR=$RPM_BUILD_ROOT prefix=%{_prefix} install install-xmms install-gstreamer install-vlc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -89,10 +78,6 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_includedir}/asap.h
 %{_libdir}/libasap.a
-
-%files audacious
-%defattr(-,root,root)
-%{_libdir}/audacious/Input/asapplug.so
 
 %files xmms
 %defattr(-,root,root)
@@ -110,6 +95,7 @@ rm -rf $RPM_BUILD_ROOT
 * Mon Apr 29 2013 Piotr Fusik <fox@scene.pl>
 - 3.1.4-1
 - lib64 compatibility
+- Removed the Audacious subpackage
 
 * Tue Dec 4 2012 Piotr Fusik <fox@scene.pl>
 - 3.1.3-1
