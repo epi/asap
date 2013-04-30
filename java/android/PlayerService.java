@@ -190,6 +190,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	private final ASAP asap = new ASAP();
 	ASAPInfo info;
 	private AudioTrack audioTrack;
+	private int seekPosition;
 
 	private boolean isPaused()
 	{
@@ -248,6 +249,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	private void playSong() throws Exception
 	{
 		synchronized (asap) {
+			seekPosition = -1;
 			asap.playSong(song, info.getLoop(song) ? -1 : info.getDuration(song));
 		}
 		sendBroadcast(new Intent(Player.ACTION_SHOW_INFO));
@@ -308,13 +310,8 @@ public class PlayerService extends Service implements Runnable, MediaController.
 
 	public void seekTo(int pos)
 	{
-		try {
-			synchronized (asap) {
-				asap.seek(pos);
-			}
-		}
-		catch (Exception ex) {
-			showError(R.string.invalid_file);
+		synchronized (asap) {
+			seekPosition = pos;
 		}
 	}
 
@@ -401,6 +398,15 @@ public class PlayerService extends Service implements Runnable, MediaController.
 				}
 			}
 			synchronized (asap) {
+				int pos = seekPosition;
+				if (pos >= 0) {
+					seekPosition = -1;
+					try {
+						asap.seek(pos);
+					}
+					catch (Exception ex) {
+					}
+				}
 				bufferLen = asap.generate(buffer, buffer.length, ASAPSampleFormat.U8);
 			}
 			audioTrack.write(buffer, 0, bufferLen);
