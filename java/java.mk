@@ -16,17 +16,17 @@ java/asap2wav.jar: $(srcdir)java/asap2wav.MF java/classes/ASAP2WAV.class $(JAVA_
 	$(JAR) cfm $@ $< -C java/classes ASAP2WAV.class $(JAR_COMMON)
 CLEAN += java/asap2wav.jar
 
-java/classes/ASAP2WAV.class: $(srcdir)java/ASAP2WAV.java java/classes/net/sf/asap
+java/classes/ASAP2WAV.class: $(srcdir)java/ASAP2WAV.java java/classes/net/sf/asap/ASAP.class
 	$(JAVAC) -d $(@D) -source 1.2 -classpath java/classes $<
 
 java/asap_applet.jar: java/classes/ASAPApplet.class $(JAVA_OBX)
 	$(JAR) cf $@ -C java/classes ASAPApplet.class $(JAR_COMMON)
 CLEAN += java/asap_applet.jar
 
-java/classes/ASAPApplet.class: $(srcdir)java/ASAPApplet.java java/classes/net/sf/asap
+java/classes/ASAPApplet.class: $(srcdir)java/ASAPApplet.java java/classes/net/sf/asap/ASAP.class
 	$(JAVAC) -d $(@D) -source 1.2 -classpath "$(JRE)/lib/plugin.jar;java/classes" $<
 
-java/asap.jar: java/classes/net/sf/asap $(JAVA_OBX)
+java/asap.jar: java/classes/net/sf/asap/ASAP.class $(JAVA_OBX)
 	$(JAR) cf $@ $(JAR_COMMON)
 CLEAN += java/asap.jar
 
@@ -34,7 +34,7 @@ java/obx/net/sf/asap/%.obx: 6502/%.obx
 	$(COPY)
 CLEAN += $(JAVA_OBX)
 
-java/classes/net/sf/asap: $(srcdir)java/ASAPMusicRoutine.java java/src/net/sf/asap/ASAP.java
+java/classes/net/sf/asap/ASAP.class: $(srcdir)java/ASAPMusicRoutine.java java/src/net/sf/asap/ASAP.java
 	$(JAVAC) -d java/classes -source 1.2 $(srcdir)java/ASAPMusicRoutine.java java/src/net/sf/asap/*.java
 CLEANDIR += java/classes
 

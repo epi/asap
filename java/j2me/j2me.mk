@@ -24,5 +24,5 @@ java/j2me/preverified/ASAPMIDlet.class: java/classes/ASAPMIDlet.class
 	$(PREVERIFY) -classpath "$(ME_CLASSES);java/classes" -d $(@D) ASAPMIDlet FileList ASAPInputStream net.sf.asap.ASAP net.sf.asap.ASAP6502 net.sf.asap.ASAPInfo net.sf.asap.ASAPModuleType net.sf.asap.ASAPSampleFormat net.sf.asap.Cpu6502 net.sf.asap.NmiStatus net.sf.asap.Pokey net.sf.asap.PokeyPair
 CLEANDIR += java/j2me/preverified
 
-java/classes/ASAPMIDlet.class: $(srcdir)java/j2me/ASAPMIDlet.java java/classes/net/sf/asap
+java/classes/ASAPMIDlet.class: $(srcdir)java/j2me/ASAPMIDlet.java java/classes/net/sf/asap/ASAP.class
 	$(JAVAC) -d $(@D) -source 1.2 -bootclasspath "$(ME_CLASSES)" -classpath java/classes $<
