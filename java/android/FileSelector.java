@@ -40,6 +40,7 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -207,8 +208,13 @@ public class FileSelector extends ListActivity
 	private void reload()
 	{
 		uri = getIntent().getData();
-		if (uri == null)
-			uri = Uri.fromFile(Environment.getExternalStorageDirectory());
+		if (uri == null) {
+			String state = Environment.getExternalStorageState();
+			File dir = Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)
+				? Environment.getExternalStorageDirectory()
+				: Environment.getRootDirectory();
+			uri = Uri.fromFile(dir);
+		}
 
 		FileInfo[] infos;
 		try {
