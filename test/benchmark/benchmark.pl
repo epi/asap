@@ -4,9 +4,9 @@ use strict;
 print q{ASAP benchmark
 ==============
 
-[cols="<,>,>,>,>,>",options="header"]
+[cols="<,>,>,>,>,>,>,>,>",options="header"]
 |====================================
-|File|MSVC|MinGW|MinGW x64|Java|C#|GME|SAP
+|File|MSVC|MinGW|MinGW x64|Java|C#|D|GME|SAP
 };
 my @progs = (
 	'win32/msvc/asapconv.exe -o .wav',
@@ -14,6 +14,7 @@ my @progs = (
 	'win32/x64/asapconv.exe -o .wav',
 	'java -jar java/asap2wav.jar',
 	'csharp/asap2wav.exe',
+	'd/asap2wav.exe',
 	'test/benchmark/gme_benchmark.exe',
 	'test/benchmark/sap_benchmark.exe'
 );
