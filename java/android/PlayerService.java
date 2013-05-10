@@ -376,16 +376,17 @@ public class PlayerService extends Service implements Runnable, MediaController.
 
 		// playback
 		int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
-		int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_8BIT);
+		int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT) >> 1;
 		if (bufferLen < 16384)
 			bufferLen = 16384;
-		final byte[] buffer = new byte[bufferLen];
-		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_8BIT, bufferLen, AudioTrack.MODE_STREAM);
+		final byte[] byteBuffer = new byte[bufferLen << 1];
+		final short[] shortBuffer = new short[bufferLen];
+		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT, bufferLen << 1, AudioTrack.MODE_STREAM);
 		audioTrack.play();
 
 		for (;;) {
 			synchronized (this) {
-				if (bufferLen < buffer.length || isPaused()) {
+				if (bufferLen < shortBuffer.length || isPaused()) {
 					try {
 						wait();
 					}
@@ -407,9 +408,11 @@ public class PlayerService extends Service implements Runnable, MediaController.
 					catch (Exception ex) {
 					}
 				}
-				bufferLen = asap.generate(buffer, buffer.length, ASAPSampleFormat.U8);
+				bufferLen = asap.generate(byteBuffer, byteBuffer.length, ASAPSampleFormat.S16_L_E) >> 1;
 			}
-			audioTrack.write(buffer, 0, bufferLen);
+			for (int i = 0; i < bufferLen; i++)
+				shortBuffer[i] = (short) ((byteBuffer[i << 1] & 0xff) | byteBuffer[i << 1 | 1] << 8);
+			audioTrack.write(shortBuffer, 0, bufferLen);
 		}
 	}
 

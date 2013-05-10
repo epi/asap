@@ -362,7 +362,7 @@
 		<interface>GUI</interface>
 		<since>2.1.2</since>
 		<status>in develop&#173;ment</status>
-		<output>8-bit sound</output>
+		<output>16-bit sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>yes</file-info>
 		<edit-info>no</edit-info>
