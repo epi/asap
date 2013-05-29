@@ -570,4 +570,20 @@
 		<stil>no</stil>
 		<lang>D</lang>
 	</port>
+	<port name="asapconv (Android)">
+		<bin></bin>
+		<platform>Android</platform>
+		<interface>command line</interface>
+		<since>3.1.5</since>
+		<status>sample</status>
+		<output>8 or 16-bit, WAV or raw, file or stdout</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info>
+		<edit-info>yes, multi-file</edit-info>
+		<convert-sap>yes, multi-file</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
+		<lang>C</lang>
+	</port>
 </ports>

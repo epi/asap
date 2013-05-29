@@ -395,6 +395,7 @@ make android-debug
 This should produce `AndroidASAP-debug.apk`.
 AndroidASAP integrates with file managers and the web browser.
 It uses the internet connection only for files clicked in the web browser.
+It reads phone state only to pause playback on incoming phone calls.
 
 
 Building C# ASAP2WAV, asapplay and SilverASAP on Windows
@@ -459,6 +460,17 @@ make flash/asap.swf
 You should get `asap.swf`.
 
 
+Building Perl command-line ASAP2WAV
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Open the command prompt in the root directory of ASAP sources and run:
+--------------------------------------------------------------------------------
+make perl
+--------------------------------------------------------------------------------
+
+`asap2wav.pl` is the Perl script which uses the `Asap.pm` module you have just built.
+
+
 Building D ASAP2WAV and asapplay on Windows and Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -474,3 +486,19 @@ make d
 
 This should produce `asap2wav.exe` and `asapplay.exe`.
 
+
+Building Android command-line asapconv
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You need http://developer.android.com/tools/sdk/ndk/index.html[Android NDK].
+
+Edit the paths at the top of `java/android/android.mk` so that they point to your installed NDK.
+Open the command prompt in the root directory of ASAP sources and run:
+--------------------------------------------------------------------------------
+make java/android/asapconv
+--------------------------------------------------------------------------------
+
+Now you need to put the binary (`java/android/asapconv`) on your device and make it executable.
+It's not possible on a FAT-formatted SD card. I was able to do that in `/data/local/tmp/`.
+If you use USB debugging, `make android-push-asapconv` will copy the file,
+but you have to do the `chmod` part.

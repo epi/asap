@@ -12,6 +12,12 @@ ADB = $(ANDROID_SDK)/platform-tools/adb
 ANDROID = $(ANDROID_SDK)/tools/android.bat
 EMULATOR = $(ANDROID_SDK)/tools/emulator
 
+# NDK is only needed for the command-line asapconv
+# It ended up in this Makefile even though it's not Java
+ANDROID_NDK = C:/bin/android-ndk-r8c
+ANDROID_NDK_PLATFORM = $(ANDROID_NDK)/platforms/android-3/arch-arm
+ANDROID_CC = $(DO)$(ANDROID_NDK)/toolchains/arm-linux-androideabi-4.6/prebuilt/windows/bin/arm-linux-androideabi-gcc --sysroot=$(ANDROID_NDK_PLATFORM) -s -O2 -Wall -o $@ $(INCLUDEOPTS) $(filter %.c,$^)
+
 # no user-configurable paths below this line
 
 ifndef DO
@@ -99,3 +105,11 @@ CLEANDIR += java/android/classes
 java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/icon.png res/layout/fileinfo_list_item.xml res/layout/filename_list_item.xml res/layout/playing.xml res/menu/file_selector.xml res/menu/playing.xml res/values/strings.xml res/values/themes.xml) $(JAVA_OBX)
 	$(DO)mkdir -p java/android/src && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -F $@ -J java/android/src java/obx
 CLEAN += java/android/AndroidASAP-resources.apk java/android/src/net/sf/asap/R.java
+
+android-push-asapconv: java/android/asapconv
+	$(ADB) -d push java/android/asapconv /data/local/tmp/
+.PHONY: android-push-asapconv
+
+java/android/asapconv: $(call src,asapconv.c asap.[ch])
+	$(ANDROID_CC)
+CLEAN += java/android/asapconv
