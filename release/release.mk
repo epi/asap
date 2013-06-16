@@ -21,6 +21,7 @@ dist: \
 	release/asap-$(VERSION)-win64.msi \
 	release/asap-$(VERSION)-wince-arm.cab \
 	release/asap-$(VERSION)-wince-arm.zip \
+	release/foo_asap.fb2k-component \
 	srcdist
 .PHONY: dist
 
@@ -50,6 +51,9 @@ release/asap-$(VERSION)-win32.zip: release/COPYING.txt release/README_Windows.ht
 
 release/asap-$(VERSION)-wince-arm.zip: release/COPYING.txt release/README_WindowsCE.html \
 	win32/wince/wasap.exe win32/wince/gspasap.dll
+	$(MAKEZIP)
+
+release/foo_asap-$(VERSION).fb2k-component: win32/foo_asap.dll
 	$(MAKEZIP)
 
 release/asap-vlc-$(VERSION)-osx.dmg: release/osx/libasap_plugin.dylib release/osx/plugins

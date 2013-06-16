@@ -52,7 +52,7 @@
 		<a href="http://xmms.org/">XMMS</a>
 	</port>
 	<port name="foobar2000 plugin">
-		<bin>Windows</bin>
+		<bin>Windows, foo_asap</bin>
 		<platform>Windows</platform>
 		<interface>player plugin</interface>
 		<since>0.2.0</since>
