@@ -24,7 +24,6 @@
 package net.sf.asap;
 
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
@@ -39,6 +38,7 @@ public class MediaButtonEventReceiver extends BroadcastReceiver
 		if (binder == null)
 			return;
 		PlayerService service = ((PlayerService.LocalBinder) binder).getService();
+
 		KeyEvent event = (KeyEvent) intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
 		if (event.getAction() != KeyEvent.ACTION_DOWN)
 			return;
