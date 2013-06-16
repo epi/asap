@@ -27,8 +27,11 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -246,13 +249,18 @@ public class PlayerService extends Service implements Runnable, MediaController.
 			pause();
 	}
 
+	private void showInfo()
+	{
+		sendBroadcast(new Intent(Player.ACTION_SHOW_INFO));
+	}
+
 	private void playSong() throws Exception
 	{
 		synchronized (asap) {
 			seekPosition = -1;
 			asap.playSong(song, info.getLoop(song) ? -1 : info.getDuration(song));
 		}
-		sendBroadcast(new Intent(Player.ACTION_SHOW_INFO));
+		showInfo();
 		start();
 	}
 
@@ -416,6 +424,17 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		}
 	}
 
+	private final BroadcastReceiver headsetReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent)
+		{
+			if (intent.getIntExtra("state", -1) == 0) {
+				pause();
+				showInfo(); // just to update MediaController
+			}
+		}
+	};
+
 	private void registerMediaButtonEventReceiver(String methodName)
 	{
 		Object audioManager = getSystemService(AUDIO_SERVICE);
@@ -428,6 +447,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	{
 		super.onStart(intent, startId);
 
+		registerReceiver(headsetReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
 		registerMediaButtonEventReceiver("registerMediaButtonEventReceiver");
 
 		TelephonyManager telephony = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
@@ -459,6 +479,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		super.onDestroy();
 		stop();
 		registerMediaButtonEventReceiver("unregisterMediaButtonEventReceiver");
+		unregisterReceiver(headsetReceiver);
 	}
 
 
