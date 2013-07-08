@@ -12,6 +12,9 @@ asap-audacious: asapplug-$(AUDACIOUS_VERSION).so
 .PHONY: asap-audacious
 
 asapplug-$(AUDACIOUS_VERSION).so: $(call src,audacious/asapplug.c asap.[ch])
+ifndef AUDACIOUS_VERSION
+	$(error Please install audacious-dev or audacious-devel)
+endif
 	$(CC) $(AUDACIOUS_CFLAGS)
 CLEAN += asapplug-*.so
 
