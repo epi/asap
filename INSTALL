@@ -86,13 +86,13 @@ in `/usr/local`.
 Building the Audacious plugin on Unix-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Install `audacious-devel`.
+Install `audacious-dev` or `audacious-devel`.
 To compile, run the following command:
 --------------------------------------------------------------------------------
 make asap-audacious
 --------------------------------------------------------------------------------
 
-To install in `/usr/lib/audacious/Input`:
+To install:
 --------------------------------------------------------------------------------
 sudo make install-audacious
 --------------------------------------------------------------------------------
