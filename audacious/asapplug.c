@@ -329,12 +329,19 @@ static void write_byte(void *obj, int data)
 
 static gboolean update_song_tuple(const Tuple * tuple, VFSFile *file)
 {
+#if _AUD_PLUGIN_VERSION < 38
+#define vfs_get_filename(file)  g_filename_from_uri(file->uri, NULL, NULL)
+#define tuple_get_str  tuple_get_string
+#define str_unref(s)
+	const char *s;
+#else
+	char *s;
+#endif
 	/* read file */
 	const char *filename = vfs_get_filename(file);
 	unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len = load_module(filename, file, module);
 	ASAPInfo *info;
-	char *s;
 	int year;
 	ByteWriter bw;
 	gboolean ok;
