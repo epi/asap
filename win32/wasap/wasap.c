@@ -77,16 +77,17 @@ static BOOL WaveOut_Write(LPWAVEHDR pwh)
 static DWORD WINAPI WaveOut_Thread(LPVOID lpParameter)
 {
 	while (playing) {
+		BOOL finished = TRUE;
 		int i;
 		for (i = 0; i < BUFFERS; i++) {
-			if (wh[i].dwFlags & WHDR_DONE) {
-				if (!WaveOut_Write(&wh[i]))
-					PostMessage(hWnd, WM_COMMAND, IDM_STOP, 0);
-				break;
-			}
+			if ((wh[i].dwFlags & WHDR_DONE) == 0 || WaveOut_Write(&wh[i]))
+				finished = FALSE;
 		}
-		if (i >= BUFFERS)
-			WaitForSingleObject(waveEvent, 200);
+		if (finished) {
+			PostMessage(hWnd, WM_COMMAND, IDM_STOP, 0);
+			break;
+		}
+		WaitForSingleObject(waveEvent, 200);
 	}
 	return 0;
 }
