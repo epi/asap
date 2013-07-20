@@ -41,9 +41,7 @@ BuildRequires: gstreamer-devel
 # 0.10.36 is the first version to properly recognize SAP files. This isn't required for the build.
 
 %description gstreamer0.10
-Provides playback of Atari 8-bit music in GStreamer-based players.
-Supports the following file formats:
-SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
+Provides playback of Atari 8-bit music in the SAP format in GStreamer-based players.
 
 %package vlc
 Summary: ASAP plugin for VLC
@@ -53,8 +51,7 @@ BuildRequires: vlc-devel
 
 %description vlc
 Provides playback of Atari 8-bit music in VLC.
-Supports the following file formats:
-SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
+Supports the following file formats: SAP, RMT, FC.
 
 %prep
 %setup -q
