@@ -1,7 +1,7 @@
 prefix := /usr/local
 srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
 bindir = $(prefix)/bin
-libdir = $(prefix)/lib$(shell test -d $(prefix)/lib64 && echo 64)
+libdir = $(prefix)/lib$(shell test -d $(prefix)/lib64 -a `uname -i` = x86_64 && echo 64)
 CC = $(DO)gcc -s -O2 -Wall -o $@ $(if $(filter %.so,$@),-shared -fPIC) $(INCLUDEOPTS) $(filter %.c,$^)
 AR = $(DO)ar rc $@ $^
 CITO = $(DO)cito -o $@ $(patsubst %,-I %,$(sort $(dir $(filter-out %.ci,$^)))) $(filter %.ci,$^)
