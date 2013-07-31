@@ -3765,6 +3765,8 @@ static void ASAPInfo_ParseRmtSong(ASAPInfo *self, unsigned char const *module, c
 					blankRows[ch] = 256;
 				else {
 					patternOffset[ch] = patternBegin[ch] = module[patternLoOffset + p] + (module[patternHiOffset + p] << 8) - addrToOffset;
+					if (patternOffset[ch] < 0)
+						return;
 					blankRows[ch] = 0;
 				}
 			}

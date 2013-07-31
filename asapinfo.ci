@@ -805,6 +805,8 @@ public class ASAPInfo
 				else {
 					patternOffset[ch] = patternBegin[ch] = module[patternLoOffset + p]
 						+ (module[patternHiOffset + p] << 8) - addrToOffset;
+					if (patternOffset[ch] < 0)
+						return; // badly ripped alien.rmt
 					blankRows[ch] = 0;
 				}
 			}
