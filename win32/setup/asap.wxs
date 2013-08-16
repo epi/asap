@@ -465,7 +465,7 @@
 						<File Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
 					</Component>
 				</Directory>
-				<Directory Id="AUDACIOUS.DIR" Name="audacious-3.3.4">
+				<Directory Id="AUDACIOUS.DIR" Name="audacious-3.4">
 					<Directory Id="AUDLIB.DIR" Name="lib">
 						<Directory Id="AUDAUD.DIR" Name="audacious">
 							<Directory Id="AUDINPUT.DIR" Name="Input">
@@ -612,7 +612,7 @@
 		<Feature Id="gspasap" Title="GSPlayer plugin" Level="9" ConfigurableDirectory="GSP.DIR" Description="Plugin for GSPlayer (desktop Windows only)." AllowAdvertise="no">
 			<ComponentRef Id="gspasap.dll" />
 		</Feature>
-		<Feature Id="asapplug" Title="Audacious 3.3.4 plugin" Level="9" ConfigurableDirectory="AUDACIOUS.DIR" Description="Plugin for Audacious (not guaranteed to work with Audacious other than 3.3.4)." AllowAdvertise="no">
+		<Feature Id="asapplug" Title="Audacious 3.4 plugin" Level="9" ConfigurableDirectory="AUDACIOUS.DIR" Description="Plugin for Audacious (not guaranteed to work with Audacious other than 3.4)." AllowAdvertise="no">
 			<ComponentRef Id="asapplug.dll" />
 		</Feature>
 		<Feature Id="libasap_plugin" Title="VLC plugin" Level="9" ConfigurableDirectory="VLC.DIR" Description="Plugin for VLC (SAP format only)." AllowAdvertise="no">
