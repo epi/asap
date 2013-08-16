@@ -54,7 +54,7 @@ __declspec(dllexport) int APokeySound_Generate(int cycles, unsigned char *buffer
 
 __declspec(dllexport) void APokeySound_About(const char **name, const char **author, const char **description)
 {
-	*name = "Another POKEY Sound Emulator, v3.1.4";
+	*name = "Another POKEY Sound Emulator, v3.1.5";
 	*author = "Piotr Fusik, (C) 2007-2013";
 	*description = "Part of ASAP, http://asap.sourceforge.net";
 }

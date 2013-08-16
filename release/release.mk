@@ -5,7 +5,7 @@ GREP = @grep -H
 
 # no user-configurable paths below this line
 
-VERSION = 3.1.4
+VERSION = 3.1.5
 
 ifndef DO
 $(error Use "Makefile" instead of "release.mk")
@@ -21,7 +21,7 @@ dist: \
 	release/asap-$(VERSION)-win64.msi \
 	release/asap-$(VERSION)-wince-arm.cab \
 	release/asap-$(VERSION)-wince-arm.zip \
-	release/foo_asap.fb2k-component \
+	release/foo_asap-$(VERSION).fb2k-component \
 	srcdist
 .PHONY: dist
 
@@ -95,11 +95,11 @@ release/README_WindowsCE.html: $(call src,README win32/wince/USAGE CREDITS)
 CLEAN += release/README_WindowsCE.html
 
 version:
-	@echo VERSION=$(VERSION)
+	@echo ./release/release.mk: VERSION=$(VERSION)
 	$(GREP) -m 1 ^ASAP $(srcdir)NEWS
 	$(GREP) "<since>" $(srcdir)PORTS.xml | sort -ru | head -1
 	$(GREP) Version: $(srcdir)asap.spec
-	head -1 $(srcdir)debian/changelog
+	$(GREP) -m 1 ^asap $(srcdir)debian/changelog
 	$(GREP) "int Version" $(srcdir)asapinfo.ci
 	$(GREP) "VERSION =" $(srcdir)chksap.pl
 	$(GREP) "Version=" $(srcdir)csharp/winrt/AppxManifest.xml

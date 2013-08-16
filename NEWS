@@ -9,6 +9,17 @@ image:http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get 
 News
 ----
 
+ASAP 3.1.5 (2013-08-17)::
+
+- Android: fixed playback on Android 4.1+, disconnecting headset pauses playback, updates position and avoids "process not responding" during seek, starts in root directory if there's no memory card.
+- GStreamer plugin gets autoplugged (read: SAPs play in GStreamer-based players).
+- WASAP plays music to its very end.
+- Fixed crash on malformed RMT files.
+- Restored Audacious 2.x compatibility.
+- DEB packages.
+- foobar2000 `*.fb2k-component` package.
+
+
 ASAP 3.1.4 (2013-04-29)::
 
 - Android: plays in background, can switch to next/previous/random file, opens M3U playlists, file selector can display metadata, "back" returns to parent directory.

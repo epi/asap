@@ -1,5 +1,5 @@
 Name: asap
-Version: 3.1.4
+Version: 3.1.5
 Release: 1
 Summary: Player of Atari 8-bit music
 License: GPLv2+
@@ -15,7 +15,7 @@ ASAP supports the following file formats:
 SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 
 %package devel
-Summary: Development library with Atari 8-bit music emulation
+Summary: Development library providing Atari 8-bit music emulation
 Group: Development/Libraries
 
 %description devel
@@ -89,6 +89,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/vlc/plugins/demux/libasap_plugin.so
 
 %changelog
+* Fri Aug 16 2013 Piotr Fusik <fox@scene.pl>
+- 3.1.5-1
+- Corrected descriptions of GStreamer and VLC plugins - they don't support all the formats
+
 * Mon Apr 29 2013 Piotr Fusik <fox@scene.pl>
 - 3.1.4-1
 - lib64 compatibility
