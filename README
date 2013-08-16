@@ -30,7 +30,7 @@ http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-3.1.4-win32.msi/downl
 Installer for all versions of desktop Windows (32-bit and 64-bit).
 
 http://sourceforge.net/projects/asap/files/asap/3.1.4/foo_asap-3.1.4.fb2k-component/download[foo_asap-3.1.4.fb2k-component]::
-If you want just the http://foobar2000.org/[foobar2000] plugin.
+If you only want the http://foobar2000.org/[foobar2000] plugin.
 
 http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-3.1.4-android.apk/download[asap-3.1.4-android.apk]::
 Android application.
@@ -39,7 +39,7 @@ http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-3.1.4-wince-arm.cab/d
 WASAP, Windows Media Player and GSPlayer plugins for Windows Mobile.
 
 http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-3.1.4-web.zip/download[asap-3.1.4-web.zip]::
-For webmasters.
+Embed ASAP on your web page.
 
 http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-3.1.4-java.zip/download[asap-3.1.4-java.zip]::
 Java midlet for mobile phones.
@@ -59,20 +59,32 @@ For Windows Mobile people allergic to installers.
 http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-vlc-3.1.4-osx.dmg/download[asap-vlc-3.1.4-osx.dmg]::
 VLC plugin for OS X (Intel 32-bit and 64-bit). Drag `libasap_plugin.dylib` to `plugins`.
 
+asap_3.1.4-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.4/asap_3.1.4-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.4/asap_3.1.4-1_x86_64.deb/download[x86_64]\}.deb::
+Linux binary of asapconv.
+
 asap-3.1.4-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-3.1.4-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-3.1.4-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of asapconv.
 
-asap-xmms-3.1.4-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-xmms-3.1.4-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-xmms-3.1.4-1.x86_64.rpm/download[x86_64]\}.rpm::
-Linux binary of the XMMS plugin.
+asap-gstreamer0.10_3.1.4-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-gstreamer0.10_3.1.4-1_i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-gstreamer0.10_3.1.4-1_x86_64.rpm/download[x86_64]\}.deb::
+Linux binary of the GStreamer 0.10 plugin.
 
 asap-gstreamer0.10-3.1.4-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-gstreamer0.10-3.1.4-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-gstreamer0.10-3.1.4-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of the GStreamer 0.10 plugin.
 
+asap-vlc_3.1.4-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-vlc_3.1.4-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-vlc_3.1.4-1_x86_64.deb/download[x86_64]\}.deb::
+Linux binary of the VLC plugin.
+
 asap-vlc-3.1.4-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-vlc-3.1.4-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-vlc-3.1.4-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of the VLC plugin.
 
+asap-dev_3.1.4-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-dev_3.1.4-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-dev_3.1.4-1_x86_64.deb/download[x86_64]\}.deb::
+Linux library for embedding ASAP in other applications.
+
 asap-devel-3.1.4-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-devel-3.1.4-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-devel-3.1.4-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux library for embedding ASAP in other applications.
+
+asap-xmms-3.1.4-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-xmms-3.1.4-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-xmms-3.1.4-1.x86_64.rpm/download[x86_64]\}.rpm::
+Linux binary of the XMMS plugin.
 
 http://sourceforge.net/projects/asap/files/asap/3.1.4/asap-3.1.4.tar.gz/download[asap-3.1.4.tar.gz]::
 Full source code (use for the Audacious plugin on Linux).

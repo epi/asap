@@ -66,6 +66,10 @@ CLEANDIR += release/osx
 release/osx/plugins:
 	$(DO)ln -s /Applications/VLC.app/Contents/MacOS/plugins $@
 
+deb:
+	debuild -b -us -uc
+.PHONY: deb
+
 release/COPYING.txt: $(srcdir)COPYING
 	$(UNIX2DOS)
 CLEAN += release/COPYING.txt
@@ -95,6 +99,7 @@ version:
 	$(GREP) -m 1 ^ASAP $(srcdir)NEWS
 	$(GREP) "<since>" $(srcdir)PORTS.xml | sort -ru | head -1
 	$(GREP) Version: $(srcdir)asap.spec
+	head -1 $(srcdir)debian/changelog
 	$(GREP) "int Version" $(srcdir)asapinfo.ci
 	$(GREP) "VERSION =" $(srcdir)chksap.pl
 	$(GREP) "Version=" $(srcdir)csharp/winrt/AppxManifest.xml
