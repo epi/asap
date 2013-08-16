@@ -1,7 +1,7 @@
 /*
  * gstasapdec.c - ASAP plugin for GStreamer
  *
- * Copyright (C) 2011-2012  Piotr Fusik
+ * Copyright (C) 2011-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -380,7 +380,7 @@ asapdec_init (GstPlugin * asapdec)
   /* debug category for filtering log messages */
   GST_DEBUG_CATEGORY_INIT (gst_asap_dec_debug, "asapdec", 0, "ASAP decoder");
 
-  return gst_element_register (asapdec, "asapdec", GST_RANK_NONE, GST_TYPE_ASAPDEC);
+  return gst_element_register (asapdec, "asapdec", GST_RANK_PRIMARY, GST_TYPE_ASAPDEC);
 }
 
 /* Workaround for gstconfig.h: it only checks _MSC_VER,
