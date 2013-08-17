@@ -59,25 +59,25 @@ For Windows Mobile people allergic to installers.
 http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-vlc-3.1.5-osx.dmg/download[asap-vlc-3.1.5-osx.dmg]::
 VLC plugin for OS X (Intel 32-bit and 64-bit). Drag `libasap_plugin.dylib` to `plugins`.
 
-asap_3.1.5-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap_3.1.5-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap_3.1.5-1_x86_64.deb/download[x86_64]\}.deb::
+asap_3.1.5-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap_3.1.5-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap_3.1.5-1_amd64.deb/download[amd64]\}.deb::
 Linux binary of asapconv.
 
 asap-3.1.5-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-3.1.5-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-3.1.5-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of asapconv.
 
-asap-gstreamer0.10_3.1.5-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-gstreamer0.10_3.1.5-1_i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-gstreamer0.10_3.1.5-1_x86_64.rpm/download[x86_64]\}.deb::
+asap-gstreamer0.10_3.1.5-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-gstreamer0.10_3.1.5-1_i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-gstreamer0.10_3.1.5-1_amd64.deb/download[amd64]\}.deb::
 Linux binary of the GStreamer 0.10 plugin.
 
 asap-gstreamer0.10-3.1.5-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-gstreamer0.10-3.1.5-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-gstreamer0.10-3.1.5-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of the GStreamer 0.10 plugin.
 
-asap-vlc_3.1.5-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-vlc_3.1.5-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-vlc_3.1.5-1_x86_64.deb/download[x86_64]\}.deb::
+asap-vlc_3.1.5-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-vlc_3.1.5-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-vlc_3.1.5-1_amd64.deb/download[amd64]\}.deb::
 Linux binary of the VLC plugin.
 
 asap-vlc-3.1.5-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-vlc-3.1.5-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-vlc-3.1.5-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of the VLC plugin.
 
-asap-dev_3.1.5-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-dev_3.1.5-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-dev_3.1.5-1_x86_64.deb/download[x86_64]\}.deb::
+asap-dev_3.1.5-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-dev_3.1.5-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-dev_3.1.5-1_amd64.deb/download[amd64]\}.deb::
 Linux library for embedding ASAP in other applications.
 
 asap-devel-3.1.5-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-devel-3.1.5-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.5/asap-devel-3.1.5-1.x86_64.rpm/download[x86_64]\}.rpm::
