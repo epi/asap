@@ -29,7 +29,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -208,7 +207,7 @@ public class FileSelector extends ListActivity
 	{
 		uri = getIntent().getData();
 		if (uri == null)
-			uri = Uri.fromFile(Environment.getRootDirectory());
+			uri = Uri.parse("file:///");
 
 		FileInfo[] infos;
 		try {
