@@ -20,9 +20,9 @@ XASM = $(DO)xasm -q -o $@ $<
 
 MAKEFLAGS = -r
 ifdef V
-DO = mkdir -p $(dir $@) && 
+DO = mkdir -p $(@D) && 
 else
-DO = @echo $@ && mkdir -p $(dir $@) && 
+DO = @echo $@ && mkdir -p $(@D) && 
 endif
 src = $(addprefix $(srcdir),$(1:.[ch]=.c) $(patsubst %.[ch],%.h,$(filter %.[ch],$(1))))
 INCLUDEOPTS = $(patsubst %/,-I%,$(sort $(dir $(filter %.h,$^))))

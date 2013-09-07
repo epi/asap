@@ -76,15 +76,15 @@ $(ANDROID_RELEASE): java/android/AndroidASAP-unaligned.apk
 	$(ZIPALIGN) -f 4 $< $@
 
 java/android/AndroidASAP-unaligned.apk: java/android/AndroidASAP-unsigned.apk
-	$(JARSIGNER) -storepass walsie -signedjar $@ java/android/AndroidASAP-unsigned.apk pfusik-android
+	$(JARSIGNER) -storepass walsie -signedjar $@ $< pfusik-android
 CLEAN += java/android/AndroidASAP-unaligned.apk
 
 java/android/AndroidASAP-unsigned.apk: java/android/AndroidASAP-resources.apk java/android/classes.dex
-	$(APKBUILDER) -u -z java/android/AndroidASAP-resources.apk -f java/android/classes.dex
+	$(APKBUILDER) -u -z $< -f java/android/classes.dex
 CLEAN += java/android/AndroidASAP-unsigned.apk
 
 java/android/AndroidASAP-debug.apk: java/android/AndroidASAP-resources.apk java/android/classes.dex
-	$(APKBUILDER) -z java/android/AndroidASAP-resources.apk -f java/android/classes.dex
+	$(APKBUILDER) -z $< -f java/android/classes.dex
 CLEAN += java/android/AndroidASAP-debug.apk
 
 java/android/classes.dex: java/android/classes/net/sf/asap/Player.class
