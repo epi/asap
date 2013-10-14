@@ -87,8 +87,12 @@ class ASAPMediaStreamSource : MediaStreamSource
 		ReportSeekCompleted(seekToTime);
 	}
 
+	public event EventHandler StreamCompleted;
+
 	protected override void CloseMedia()
 	{
+		if (this.StreamCompleted != null)
+			this.StreamCompleted(this, new EventArgs());
 	}
 
 	protected override void SwitchMediaStreamAsync(MediaStreamDescription mediaStreamDescription)
