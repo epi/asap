@@ -30,8 +30,8 @@
 #include "ipc_pe.h"
 #include "wa_ipc.h"
 
+#include "aatr-stdio.h"
 #include "asap.h"
-#include "aatr.h"
 #include "info_dlg.h"
 #include "settings_dlg.h"
 
@@ -150,9 +150,10 @@ static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
 		}
 	}
 	else if (isATR(fi.file)) {
-		AATR *aatr = AATR_New();
-		if (aatr != NULL) {
-			if (AATR_Open(aatr, fi.file)) {
+		FILE *fp = fopen(fi.file, "rb");
+		if (fp != NULL) {
+			AATR *aatr = AATRStdio_New(fp);
+			if (aatr != NULL) {
 				size_t atr_fn_len = strlen(fi.file);
 				BOOL found = FALSE;
 				fi.file[atr_fn_len++] = '#';
@@ -175,6 +176,7 @@ static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
 						}
 					}
 				}
+				AATR_Delete(aatr);
 				/* Prevent Winamp crash:
 				   1. Play anything.
 				   2. Open an ATR with no songs.
@@ -183,7 +185,7 @@ static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
 				if (!found && SendMessage(mod.hMainWindow, WM_WA_IPC, 0, IPC_GETLISTLENGTH) > 1)
 					SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
 			}
-			AATR_Delete(aatr);
+			fclose(fp);
 		}
 	}
 }

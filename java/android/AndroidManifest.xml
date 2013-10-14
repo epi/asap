@@ -32,6 +32,7 @@
 				<data android:pathPattern=".*\\.tm8" />
 				<data android:pathPattern=".*\\.tm2" />
 				<data android:pathPattern=".*\\.fc" />
+				<data android:pathPattern=".*\\.atr" />
 			</intent-filter>
 			<intent-filter>
 				<action android:name="android.intent.action.VIEW" />

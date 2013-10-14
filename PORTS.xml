@@ -370,7 +370,7 @@
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
-		<comment class="good">Plays from ZIP archives and M3U playlists</comment>
+		<comment class="good">Plays from ZIP archives, M3U playlists and ATR disk images</comment>
 		<lang>Java</lang>
 	</port>
 	<port name="AIRASAP">

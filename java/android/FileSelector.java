@@ -185,13 +185,13 @@ public class FileSelector extends ListActivity
 
 		FileInfo[] list() throws IOException
 		{
-			boolean isM3u = Util.isM3u(uri);
+			boolean isM3u = Util.endsWithIgnoreCase(uri.toString(), ".m3u");
 			coll = isM3u ? new ArrayList<FileInfo>() : new TreeSet<FileInfo>();
 			songFiles = 0;
 			list(uri, isDetails, false);
 
 			// "(shuffle all)" if any song files or non-empty ZIP directory
-			if (songFiles > 1 || (!coll.isEmpty() && Util.isZip(uri.getPath()))) {
+			if (songFiles > 1 || (!coll.isEmpty() && Util.endsWithIgnoreCase(uri.getPath(), ".zip"))) {
 				FileInfo shuffleAll = new FileInfo(null, getString(R.string.shuffle_all));
 				if (isM3u)
 					((ArrayList<FileInfo>) coll).add(0, shuffleAll); // insert at the beginning
@@ -246,7 +246,7 @@ public class FileSelector extends ListActivity
 		else {
 			Class klass = ASAPInfo.isOurFile(name) ? Player.class : FileSelector.class;
 			intent = new Intent(Intent.ACTION_VIEW, Util.buildUri(uri, name), this, klass);
-			if (Util.isM3u(uri))
+			if (Util.endsWithIgnoreCase(uri.toString(), ".m3u"))
 				intent.putExtra(PlayerService.EXTRA_PLAYLIST, uri.toString());
 		}
 		startActivity(intent);

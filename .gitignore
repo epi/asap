@@ -5,6 +5,8 @@
 *.o
 *.obj
 *.res
+/aatr.c
+/aatr.h
 /asap-asapscan.c
 /asap-asapscan.h
 /MANIFEST

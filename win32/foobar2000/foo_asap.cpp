@@ -26,7 +26,7 @@
 
 #include "foobar2000/SDK/foobar2000.h"
 
-#include "aatr.h"
+#include "aatr-stdio.h"
 #include "asap.h"
 #include "settings_dlg.h"
 
@@ -500,7 +500,7 @@ public:
 
 	virtual t_filestats get_stats_in_archive(const char *p_archive, const char *p_file, abort_callback &p_abort)
 	{
-		int module_len = AATR_ReadFile(p_archive, p_file, NULL, ASAPInfo_MAX_MODULE_LENGTH);
+		int module_len = AATRStdio_ReadFile(p_archive, p_file, NULL, ASAPInfo_MAX_MODULE_LENGTH);
 		if (module_len < 0)
 			throw exception_io_not_found();
 		t_filestats stats = { module_len, filetimestamp_invalid };
@@ -510,7 +510,7 @@ public:
 	virtual void open_archive(service_ptr_t<file> &p_out, const char *archive, const char *file, abort_callback &p_abort)
 	{
 		BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
-		int module_len = AATR_ReadFile(archive, file, module, sizeof(module));
+		int module_len = AATRStdio_ReadFile(archive, file, module, sizeof(module));
 		if (module_len < 0)
 			throw exception_io_not_found();
 		p_out = new service_impl_t<reader_membuffer_simple>(module, module_len);
@@ -520,9 +520,12 @@ public:
 	{
 		if (!_extract_native_path_ptr(path))
 			throw exception_io_data();
-		AATR *aatr = pfc::new_ptr_check_t(AATR_New());
-		if (!AATR_Open(aatr, path)) {
-			AATR_Delete(aatr);
+		FILE *fp = fopen(path, "rb");
+		if (fp == NULL)
+			throw exception_io_data();
+		AATR *aatr = AATRStdio_New(fp);
+		if (aatr == NULL) {
+			fclose(fp);
 			throw exception_io_data();
 		}
 		pfc::string8_fastalloc url;
@@ -542,6 +545,7 @@ public:
 				break;
 		}
 		AATR_Delete(aatr);
+		fclose(fp);
 	}
 };
 

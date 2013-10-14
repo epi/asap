@@ -109,6 +109,13 @@ $(srcdir)asap.h: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu650
 $(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(ASM6502_OBX)
 	$(CITO) -D C -D FLASHPACK
 
+# aatr.[ch]
+
+$(srcdir)aatr.h: $(srcdir)aatr.ci | $(srcdir)aatr.c
+
+$(srcdir)aatr.c: $(srcdir)aatr.ci
+	$(CITO)
+
 # other
 
 $(srcdir)README.html: $(call src,README INSTALL CREDITS)

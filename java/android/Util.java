@@ -33,21 +33,11 @@ import java.lang.reflect.Method;
 
 class Util
 {
-	static boolean isZip(String filename)
+	static boolean endsWithIgnoreCase(String s, String suffix)
 	{
-		int n = filename.length();
-		return n >= 4 && filename.regionMatches(true, n - 4, ".zip", 0, 4);
-	}
-
-	static boolean isM3u(String filename)
-	{
-		int n = filename.length();
-		return n >= 4 && filename.regionMatches(true, n - 4, ".m3u", 0, 4);
-	}
-
-	static boolean isM3u(Uri uri)
-	{
-		return isM3u(uri.toString());
+		int length = s.length();
+		int suffixLength = suffix.length();
+		return length >= suffixLength && s.regionMatches(true, length - suffixLength, suffix, 0, suffixLength);
 	}
 
 	static String getParent(String path)
@@ -68,20 +58,19 @@ class Util
 
 	static String stripM3u(String path)
 	{
-		return isM3u(path) ? getParent(path) : path;
+		return endsWithIgnoreCase(path, ".m3u") ? getParent(path) : path;
 	}
 
 	static Uri buildUri(Uri baseUri, String relativePath)
 	{
 		String path = baseUri.getPath();
-		if (isZip(path)) {
-			String zipPath = baseUri.getFragment();
-			if (zipPath == null)
-				zipPath = relativePath;
-			else {
-				zipPath = stripM3u(zipPath) + relativePath;
-			}
-			return baseUri.buildUpon().fragment(zipPath).build();
+		if (endsWithIgnoreCase(path, ".zip") || endsWithIgnoreCase(path, ".atr")) {
+			String innerPath = baseUri.getFragment();
+			if (innerPath == null)
+				innerPath = relativePath;
+			else
+				innerPath = stripM3u(innerPath) + relativePath;
+			return baseUri.buildUpon().fragment(innerPath).build();
 		}
 		return Uri.fromFile(new File(stripM3u(path), relativePath));
 	}

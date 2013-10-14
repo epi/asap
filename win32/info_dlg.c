@@ -43,7 +43,7 @@
 #include "astil.h"
 #include "info_dlg.h"
 #ifdef WINAMP
-#include "aatr.h"
+#include "aatr-stdio.h"
 #endif
 
 void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext)
@@ -74,7 +74,7 @@ BOOL loadModule(LPCTSTR filename, BYTE *module, int *module_len)
 		_TCHAR atr_filename[MAX_PATH];
 		memcpy(atr_filename, filename, (hash - filename) * sizeof(_TCHAR));
 		atr_filename[hash - filename] = '\0';
-		*module_len = AATR_ReadFile(atr_filename, hash + 1, module, ASAPInfo_MAX_MODULE_LENGTH);
+		*module_len = AATRStdio_ReadFile(atr_filename, hash + 1, module, ASAPInfo_MAX_MODULE_LENGTH);
 		return *module_len >= 0;
 	}
 #endif

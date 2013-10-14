@@ -169,7 +169,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 			container.list(uri, false, true);
 			if (shuffle)
 				Collections.shuffle(playlist);
-			else if (!Util.isM3u(uri))
+			else if (!Util.endsWithIgnoreCase(uri.toString(), ".m3u"))
 				Collections.sort(playlist);
 		}
 		catch (IOException ex) {
@@ -333,21 +333,36 @@ public class PlayerService extends Service implements Runnable, MediaController.
 			InputStream is;
 			switch (uri.getScheme()) {
 			case "file":
-				if (Util.isZip(filename)) {
+				if (Util.endsWithIgnoreCase(filename, ".zip")) {
 					String zipFilename = filename;
 					filename = uri.getFragment();
 					is = new ZipInputStream(zipFilename, filename);
+					moduleLen = Util.readAndClose(is, module);
 				}
-				else
+				else if (Util.endsWithIgnoreCase(filename, ".atr")) {
+					AATRStream stream = new AATRStream(filename);
+					filename = uri.getFragment();
+					try {
+						moduleLen = stream.open().readFile(filename, module, module.length);
+					}
+					finally {
+						stream.close();
+					}
+					if (moduleLen < 0)
+						throw new FileNotFoundException(filename);
+				}
+				else {
 					is = new FileInputStream(filename);
+					moduleLen = Util.readAndClose(is, module);
+				}
 				break;
 			case "http":
 				is = httpGet(uri);
+				moduleLen = Util.readAndClose(is, module);
 				break;
 			default:
 				throw new FileNotFoundException(uri.toString());
 			}
-			moduleLen = Util.readAndClose(is, module);
 		}
 		catch (IOException ex) {
 			showError(R.string.error_reading_file);
