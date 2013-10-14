@@ -1,7 +1,7 @@
 /*
  * SilverASAP.cs - Silverlight version of ASAP
  *
- * Copyright (C) 2010-2012  Piotr Fusik
+ * Copyright (C) 2010-2013  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -66,7 +66,7 @@ class ASAPMediaStreamSource : MediaStreamSource
 
 		Dictionary<MediaSourceAttributesKeys, string> sourceAttributes = new Dictionary<MediaSourceAttributesKeys, string>();
 		sourceAttributes[MediaSourceAttributesKeys.CanSeek] = "True";
-		sourceAttributes[MediaSourceAttributesKeys.Duration] = (this.Duration < 0 ? 0 : this.Duration * 10000).ToString();
+		sourceAttributes[MediaSourceAttributesKeys.Duration] = (this.Duration < 0 ? 0 : this.Duration * 10000L).ToString();
 
 		ReportOpenMediaCompleted(sourceAttributes, new MediaStreamDescription[1] { this.MediaStreamDescription });
 	}

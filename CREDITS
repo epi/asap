@@ -12,6 +12,9 @@ Atari800 Emulator Developers {asapwww!(http://atari800.sourceforge.net)}::
 Zdenek Eisenhammer {asapwww!<pg@pinknet.cz>}::
 Testing.
 
+Maciej Grzybek {asapwww!<grzybson@pigwa.net>}::
+Fixed an overflow in the Silverlight port.
+
 Jakub Husak {asapwww!<jakub.husak@gmail.com>}::
 SAP fingerprint calculation. asapscan fixes.
 
