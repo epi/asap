@@ -31,7 +31,7 @@ srcdist: $(srcdir)MANIFEST $(srcdir)README.html $(srcdir)asap.c $(srcdir)asap.h 
 
 $(srcdir)MANIFEST:
 	$(DO)if test -e $(srcdir).git; then \
-		($(GIT) ls-tree -r --name-only --full-tree master | grep -vF .gitignore \
+		($(GIT) ls-files | grep -vF .gitignore \
 			&& echo MANIFEST && echo README.html && echo asap.c && echo asap.h \
 			&& for obx in $(ASM6502_OBX); do echo $$obx; done) | sort -u >$@; \
 	fi
