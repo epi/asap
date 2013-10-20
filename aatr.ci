@@ -32,20 +32,18 @@ public class AATR
 
 	public bool Open(RandomAccessInputStream content)
 	{
-		byte[6] header;
-		content(0, header, 6);
+		byte[7] header;
+		content(0, header, 7);
 		if (header[0] != 0x96 || header[1] != 2)
 			return false;
-		int paragraphs = header[2] | header[3] << 8;
-		if ((paragraphs & 7) != 0)
-			return false;
+		int paragraphs = header[2] | header[3] << 8 | header[6] << 16;
 		BytesPerSector = header[4] | header[5] << 8;
 		Sector4Offset = 0x190;
 		switch (BytesPerSector) {
 		case 0x80:
 			break;
 		case 0x100:
-			if ((paragraphs & 8) == 0)
+			if ((paragraphs & 0xf) == 0)
 				Sector4Offset = 0x310;
 			break;
 		default:
@@ -125,6 +123,7 @@ public class AATR
 		int result = 0;
 		int directoryOffset = (FileNo & 7) << 4;
 		int sectorNo = DirectorySector[directoryOffset + 3] | DirectorySector[directoryOffset + 4] << 8;
+		bool myDos = (DirectorySector[directoryOffset] & 4) != 0;
 		byte[256] sector;
 		while (sectorNo != 0 && length > 0) {
 			if (!ReadSector(sectorNo, sector, BytesPerSector))
@@ -136,7 +135,10 @@ public class AATR
 				sector.CopyTo(0, buffer, result, used);
 			result += used;
 			length -= used;
-			sectorNo = sector[BytesPerSector - 2] | (sector[BytesPerSector - 3] & 3) << 8;
+			sectorNo = sector[BytesPerSector - 3];
+			if (!myDos)
+				sectorNo &= 3;
+			sectorNo = sectorNo << 8 | sector[BytesPerSector - 2];
 		}
 		return result;
 	}
