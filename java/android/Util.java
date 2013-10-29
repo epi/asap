@@ -42,10 +42,8 @@ class Util
 
 	static String getParent(String path)
 	{
-		int i = path.lastIndexOf('/');
-		if (i < 0)
-			return "";
-		return path.substring(0, i + 1);
+		// nice hack - if there is no slash we return an empty string
+		return path.substring(0, path.lastIndexOf('/') + 1);
 	}
 
 	static Uri getParent(Uri uri)
