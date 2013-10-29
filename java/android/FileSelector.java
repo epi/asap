@@ -209,6 +209,12 @@ public class FileSelector extends ListActivity
 		if (uri == null)
 			uri = Uri.parse("file:///");
 
+		String title = uri.getPath();
+		String fragment = uri.getFragment();
+		if (fragment != null)
+			title += "#" + fragment;
+		setTitle(getString(R.string.selector_title, title));
+
 		FileInfo[] infos;
 		try {
 			infos = new FileInfoList().list();
