@@ -202,7 +202,7 @@ public:
 	{
 		int channels = ASAPInfo_GetChannels(ASAP_GetInfo(asap));
 		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
-		static BYTE buffer[BUFFERED_BLOCKS * 2 * (BITS_PER_SAMPLE / 8)];
+		BYTE buffer[BUFFERED_BLOCKS * 2 * (BITS_PER_SAMPLE / 8)];
 
 		buffered_bytes = ASAP_Generate(asap, buffer, buffered_bytes,
 			BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
