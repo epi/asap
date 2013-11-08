@@ -1,6 +1,6 @@
 // asapwriter.ci - format conversions
 //
-// Copyright (C) 2011-2012  Piotr Fusik
+// Copyright (C) 2011-2013  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -227,7 +227,7 @@ public class ASAPWriter
 	{
 		if (initAndPlayer == null)
 			return; // to SAP
-		const int initCmc = 0xfe0; // cms.obx ends at 0xfba
+		const int initCmc = 0xfe0; // cms.obx ends at 0xfbe
 		WriteWord(w, initCmc);
 		WriteWord(w, initCmc + 16);
 		w(0x48); // PHA

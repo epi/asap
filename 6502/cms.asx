@@ -668,7 +668,7 @@ L_0C60	lda L_0517,X
 L_0C6A	lda L_051D,X
 	bne L_0CC1
 	ldy L_0535,X
-	cmp #$40
+	cpy #$40
 	bcs L_0CC1
 	lda L_059B
 	sta ZP_FC
@@ -682,6 +682,8 @@ L_0C6A	lda L_051D,X
 	tay
 	lda (ZP_FC),Y
 	sta ZP_FF
+	cmp #$FF
+	bcs L_0CC1
 L_0C8D	ldy L_0511,X
 	lda (ZP_FE),Y
 	and #$C0

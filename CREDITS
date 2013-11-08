@@ -51,6 +51,9 @@ Windows CE testing.
 Mariusz Rozwadowski {asapwww!<ramosc64@o2.pl>}::
 Suggested CMS, CM3, DLT and STIL format support.
 
+Marek Sasnal {asapwww!<marok7@os.pl>}::
+CMS routine fix.
+
 Slawomir Sledz {asapwww!<slaves@scene.pl>}::
 Windows Mobile setup. Thorough testing.
 
