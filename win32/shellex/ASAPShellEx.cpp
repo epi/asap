@@ -203,6 +203,15 @@ class CASAPMetadataHandler : IColumnProvider, IInitializeWithStream, IPropertySt
 	IStream *m_pstream;
 	ASAPInfo *m_pinfo;
 
+	~CASAPMetadataHandler()
+	{
+		ASAPInfo_Delete(m_pinfo);
+		if (m_pstream != NULL)
+			m_pstream->Release();
+		DeleteCriticalSection(&m_lock);
+		DllRelease();
+	}
+
 	HRESULT LoadFile(LPCWSTR wszFile, IStream *pstream, DWORD grfMode)
 	{
 		m_hasInfo = FALSE;
@@ -427,15 +436,6 @@ public:
 		InitializeCriticalSection(&m_lock);
 		m_filename[0] = '\0';
 		m_pinfo = ASAPInfo_New();
-	}
-
-	~CASAPMetadataHandler()
-	{
-		ASAPInfo_Delete(m_pinfo);
-		if (m_pstream != NULL)
-			m_pstream->Release();
-		DeleteCriticalSection(&m_lock);
-		DllRelease();
 	}
 
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
