@@ -148,6 +148,10 @@ The arguments of INIT, PLAYER, MUSIC and COVOX should specify all 4 digits.
 The arguments of INIT, PLAYER, MUSIC and COVOX should use C<A-F> letters
 rather than C<a-f>.
 
+=item B<more TIME tags than songs>
+
+There are more TIME tags than specified in the SONGS tag.
+
 =item B<non-standard order of tags>
 
 The order of tags is of little importance, but making some assumptions
@@ -478,6 +482,10 @@ sub process($$) {
 		}
 		$fatal{'invalid argument of DEFSONG'} = 1
 			if exists($tags{'SONGS'}) && $tags{'DEFSONG'} >= $tags{'SONGS'};
+		if (@times > ($tags{'SONGS'} || 1)) {
+			splice @times, $tags{'SONGS'} || 1;
+			$fixed{'more TIME tags than songs'} = 1;
+		}
 		if (exists($tags{'TYPE'})) {
 			my $type = $tags{'TYPE'};
 			$fatal{'INIT is meaningless with TYPE C'} = 1
