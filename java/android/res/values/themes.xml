@@ -2,5 +2,6 @@
 <resources>
 	<style name="Theme" parent="@android:style/Theme.Wallpaper">
 		<item name="android:textColor">@android:color/white</item>
+		<item name="android:background">#40000000</item>
 	</style>
 </resources>
