@@ -21,6 +21,7 @@
 
 public delegate bool RandomAccessInputStream(int offset, byte[] buffer, int length);
 
+/// ATR disk image reader.
 public class AATR
 {
 	RandomAccessInputStream Content;
@@ -30,20 +31,31 @@ public class AATR
 	byte[128] DirectorySector;
 	string(12) Filename;
 
+	/// Opens an ATR disk image.
+	/// Returns `true` on success.
 	public bool Open(RandomAccessInputStream content)
 	{
-		byte[7] header;
-		content(0, header, 7);
+		byte[6] header;
+		content(0, header, 6);
 		if (header[0] != 0x96 || header[1] != 2)
 			return false;
-		int paragraphs = header[2] | header[3] << 8 | header[6] << 16;
 		BytesPerSector = header[4] | header[5] << 8;
 		Sector4Offset = 0x190;
 		switch (BytesPerSector) {
 		case 0x80:
 			break;
 		case 0x100:
-			if ((paragraphs & 0xf) == 0)
+			// For 256-byte sectors, boot sectors are stored as:
+			// a. 3*128 bytes (the more common format)
+			// b. 3*128 bytes followed by 3*128 zero bytes
+			// For correct disk images, (header[2] & 7) should be zero
+			// (i.e. length of the image should be multiple of 128).
+			// Then (header[2] & 8) != 0 means case a, and (header[2] & 8) == 0 means case b.
+			// However, there are some strange disk images, such as SV2K12_STUFF_AtariDOS.atr,
+			// where (header[2] & 0xf) == 0 while it is case a.
+			// So, assume case b only if (header[2] & 0xf) == 0
+			// and default to the more common case a otherwise.
+			if ((header[2] & 0xf) == 0)
 				Sector4Offset = 0x310;
 			break;
 		default:
@@ -83,6 +95,8 @@ public class AATR
 		return maxLength;
 	}
 
+	/// Advances to the next file on the open disk image.
+	/// Returns the filename or `null` if no more files found.
 	public string NextFile()
 	{
 		for (;;) {
@@ -118,7 +132,13 @@ public class AATR
 		}
 	}
 
-	public int ReadCurrentFile(byte[] buffer, int length)
+	/// Reads the current file.
+	/// Returns the number of bytes read or -1 on error.
+	public int ReadCurrentFile(
+		/// Destination buffer.
+		byte[] buffer,
+		/// Maximum number of bytes to read.
+		int length)
 	{
 		int result = 0;
 		int directoryOffset = (FileNo & 7) << 4;
@@ -143,7 +163,15 @@ public class AATR
 		return result;
 	}
 
-	public int ReadFile(string filename, byte[] buffer, int length)
+	/// Reads the given file from the open disk image.
+	/// Returns the number of bytes read or -1 on error.
+	public int ReadFile(
+		/// Name of file to read.
+		string filename,
+		/// Destination buffer.
+		byte[] buffer,
+		/// Maximum number of bytes to read.
+		int length)
 	{
 		for (;;) {
 			string currentFilename = NextFile();
