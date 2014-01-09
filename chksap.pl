@@ -75,10 +75,6 @@ In the statistics mode the following options are available:
 
 =over 4
 
-=item B<-t>, B<--time>
-
-Lists files with no TIME tags.
-
 =item B<-u>, B<--features>
 
 Lists files with rarely used POKEY and 6502 features.
@@ -278,6 +274,10 @@ Each binary block begins with a header that specifies the addresses
 of the first and the last byte in the block. The end address must not
 be less than the start address.
 
+=item B<missing TIME tags>
+
+The SAP file contains no TIME tags or less TIME tags than songs.
+
 =back
 
 =head1 BUGS
@@ -304,7 +304,7 @@ my ($total_files, $sap_files, $stereo_files, $ntsc_files) = (0, 0, 0, 0);
 my ($total_length, $min_length, $max_length) = (0, 100_000, 0);
 my ($min_filename, $max_filename);
 my ($time_files, $total_millis) = (0, 0);
-my (@fixed_messages, @notfixed_messages, @fatal_messages, @no_time_files);
+my (@fixed_messages, @notfixed_messages, @fatal_messages);
 my (%stat, %types, %features);
 
 sub process($$) {
@@ -486,6 +486,9 @@ sub process($$) {
 			splice @times, $tags{'SONGS'} || 1;
 			$fixed{'more TIME tags than songs'} = 1;
 		}
+		elsif (@times < ($tags{'SONGS'} || 1)) {
+			$fatal{'missing TIME tags'} = 1;
+		}
 		if (exists($tags{'TYPE'})) {
 			my $type = $tags{'TYPE'};
 			$fatal{'INIT is meaningless with TYPE C'} = 1
@@ -600,9 +603,6 @@ sub process($$) {
 				$total_millis += 60_000 * $minutes + 1000 * $seconds + $hundredths * 10 + $millis;
 			}
 		}
-		elsif ($stat && $time) {
-			push @no_time_files, $fullpath
-		}
 	}
 	if ($features) {
 		my @features = `$asapscan -f -u $filename`;
@@ -708,10 +708,6 @@ elsif ($stat) {
 				printf "%4dx: %s\n", $ref->{$_}, $_;
 			}
 		}
-	}
-	if (@no_time_files) {
-		print "\nFiles with no TIME tags:\n";
-		print "$_\n" for sort @no_time_files;
 	}
 	if ($features) {
 		for (sort keys %features) {
