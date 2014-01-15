@@ -1,5 +1,5 @@
 Name: asap
-Version: 3.1.5
+Version: 3.1.6
 Release: 1
 Summary: Player of Atari 8-bit music
 License: GPLv2+
@@ -89,6 +89,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/vlc/plugins/demux/libasap_plugin.so
 
 %changelog
+* Wed Jan 15 2014 Piotr Fusik <fox@scene.pl>
+- 3.1.6-1
+
 * Fri Aug 16 2013 Piotr Fusik <fox@scene.pl>
 - 3.1.5-1
 - Corrected descriptions of GStreamer and VLC plugins - they don't support all the formats

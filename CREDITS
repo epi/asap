@@ -39,6 +39,9 @@ Marcin Lewandowski {asapwww!<jaskier@atari8.info>}::
 Ian Luck {asapwww!<il@un4seen.com>}::
 Guided development of XMPlay and BASS plugins.
 
+MarOk {asapwww!<marok7@os.pl>}::
+CMS routine fix.
+
 Adrian Matoga {asapwww!<epi@atari8.info>}::
 COVOX information and test files. Testing. Porting to D.
 
@@ -50,9 +53,6 @@ Windows CE testing.
 
 Mariusz Rozwadowski {asapwww!<ramosc64@o2.pl>}::
 Suggested CMS, CM3, DLT and STIL format support.
-
-Marek Sasnal {asapwww!<marok7@os.pl>}::
-CMS routine fix.
 
 Slawomir Sledz {asapwww!<slaves@scene.pl>}::
 Windows Mobile setup. Thorough testing.

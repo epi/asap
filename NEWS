@@ -9,6 +9,23 @@ image:http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get 
 News
 ----
 
+ASAP 3.1.6 (2014-01-15)::
+
+Android;;
+- given access to the whole filesystem by always starting in the root directory.
+- plays files from ATR disk images.
+- displays path in the file selector.
+- dimmed the background wallpaper.
+- modified file associations for compatibility with some file managers.
+- possible to move the installed application to a memory card.
+
+Other ports;;
+- foobar2000: fixed parallel conversion.
+- ATR: added support for MyDOS disk images larger than 256k.
+- Silverlight: fixed playback of songs longer than 3:34 (by Maciej "Grzybson" Grzybek).
+- CMS: fixed playback of blank patterns (by MarOk).
+
+
 ASAP 3.1.5 (2013-08-17)::
 
 - Android: fixed playback on Android 4.1+, disconnecting headset pauses playback, updates position and avoids "process not responding" during seek, starts in root directory if there's no memory card.
