@@ -56,7 +56,7 @@
 				<data android:pathPattern=".*\\.fc" />
 			</intent-filter>
 		</activity>
-		<service android:name=".PlayerService" />
+		<service android:name=".PlayerService" android:label="@string/player_service" />
 		<receiver android:name=".MediaButtonEventReceiver">
 			<intent-filter>
 				<action android:name="android.intent.action.MEDIA_BUTTON" />
