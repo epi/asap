@@ -1,10 +1,11 @@
 ANDROID_SDK = C:/bin/android-sdk-windows
-ANDROID_JAR = $(ANDROID_SDK)/platforms/android-17/android.jar
+ANDROID_JAR = $(ANDROID_SDK)/platforms/android-19/android.jar
+ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/19.0.1
 PROGUARD_JAR = C:/bin/proguard4.6/lib/proguard.jar
 
-AAPT = $(ANDROID_SDK)/platform-tools/aapt
+AAPT = $(ANDROID_BUILD_TOOLS)/aapt
+DX = java -jar "$(ANDROID_BUILD_TOOLS)/lib/dx.jar" --no-strict
 PROGUARD = $(DO)java -jar $(PROGUARD_JAR)
-DX = $(DO)java -jar "$(ANDROID_SDK)/platform-tools/lib/dx.jar" --no-strict
 APKBUILDER = $(DO)java -classpath "$(ANDROID_SDK)/tools/lib/sdklib.jar" com.android.sdklib.build.ApkBuilderMain $@
 JARSIGNER = $(DO)jarsigner -sigalg SHA1withDSA -digestalg SHA1
 ZIPALIGN = $(DO)$(ANDROID_SDK)/tools/zipalign
@@ -33,11 +34,11 @@ android-release: $(ANDROID_RELEASE)
 .PHONY: android-release
 
 android-install-emu: java/android/AndroidASAP-debug.apk
-	$(ADB) -e install -r java/android/AndroidASAP-debug.apk
+	$(ADB) -e install -r $<
 .PHONY: android-install-emu
 
 android-install-dev: $(ANDROID_RELEASE)
-	$(ADB) -d install -r $(ANDROID_RELEASE)
+	$(ADB) -d install -r $<
 .PHONY: android-install-dev
 
 android-log-emu:
@@ -98,13 +99,13 @@ java/android/classes.jar: $(srcdir)java/android/proguard.cfg java/android/classe
 	$(PROGUARD) -injars java/android/classes -outjars $@ -libraryjars $(ANDROID_JAR) @$<
 
 java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,AATRStream.java FileContainer.java FileSelector.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
-	$(JAVAC) -d java/android/classes -bootclasspath $(ANDROID_JAR) $(addprefix $(srcdir)java/android/,AATRStream.java FileContainer.java FileSelector.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/src/net/sf/asap/R.java java/src/net/sf/asap/*.java
+	$(JAVAC) -d java/android/classes -bootclasspath $(ANDROID_JAR) $(addprefix $(srcdir)java/android/,AATRStream.java FileContainer.java FileSelector.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/gen/net/sf/asap/R.java java/src/net/sf/asap/*.java
 CLEANDIR += java/android/classes
 
-# Also generates java/android/src/net/sf/asap/R.java
+# Also generates java/android/gen/net/sf/asap/R.java
 java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/icon.png res/layout/fileinfo_list_item.xml res/layout/filename_list_item.xml res/layout/playing.xml res/menu/file_selector.xml res/menu/playing.xml res/values/strings.xml res/values/themes.xml) $(JAVA_OBX)
-	$(DO)mkdir -p java/android/src && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -F $@ -J java/android/src java/obx
-CLEAN += java/android/AndroidASAP-resources.apk java/android/src/net/sf/asap/R.java
+	$(DO)mkdir -p java/android/gen && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -F $@ -J java/android/gen java/obx
+CLEAN += java/android/AndroidASAP-resources.apk java/android/gen/net/sf/asap/R.java
 
 android-push-asapconv: java/android/asapconv
 	$(ADB) -d push java/android/asapconv /data/local/tmp/

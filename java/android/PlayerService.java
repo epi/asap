@@ -323,6 +323,12 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		}
 	}
 
+	public int getAudioSessionId()
+	{
+		// API 9: return audioTrack != null ? audioTrack.getAudioSessionId() : 0;
+		return 0;
+	}
+
 	public void run()
 	{
 		// read file

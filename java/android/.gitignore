@@ -1,3 +1,4 @@
-*.apk
-classes.dex
-asapconv
+/*.apk
+/classes.dex
+/asapconv
+/gen
