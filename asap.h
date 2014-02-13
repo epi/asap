@@ -336,6 +336,11 @@ cibool ASAPInfo_SetAuthor(ASAPInfo *self, const char *value);
 cibool ASAPInfo_SetDate(ASAPInfo *self, const char *value);
 
 /**
+ * Sets the 0-based index of the "main" song.
+ */
+cibool ASAPInfo_SetDefaultSong(ASAPInfo *self, int song);
+
+/**
  * Sets length of the specified song.
  * The length is specified in milliseconds. -1 means the length is indeterminate.
  */

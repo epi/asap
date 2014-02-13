@@ -272,6 +272,14 @@ public class ASAPInfo
 		return DefaultSong;
 	}
 
+	/// Sets the 0-based index of the "main" song.
+	public void SetDefaultSong(int song)
+	{
+		if (song < 0 || song >= Songs)
+			throw "Song out of range";
+		DefaultSong = song;
+	}
+
 	/// Returns length of the specified song.
 	/// The length is specified in milliseconds. -1 means the length is indeterminate.
 	public int GetDuration(int song)

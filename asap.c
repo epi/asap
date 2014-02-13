@@ -4303,6 +4303,14 @@ cibool ASAPInfo_SetDate(ASAPInfo *self, const char *value)
 	return TRUE;
 }
 
+cibool ASAPInfo_SetDefaultSong(ASAPInfo *self, int song)
+{
+	if (song < 0 || song >= self->songs)
+		return FALSE;
+	self->defaultSong = song;
+	return TRUE;
+}
+
 cibool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration)
 {
 	if (song < 0 || song >= self->songs)
