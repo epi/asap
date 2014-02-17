@@ -117,16 +117,21 @@ static void fatal_error(const char *format, ...)
 	exit(1);
 }
 
+static int parse_int(const char *s, int base, const char *description, int max_value)
+{
+	char *e;
+	int result;
+	if (s[0] == '\0')
+		fatal_error("invalid %s", description);
+	result = (int) strtol(s, &e, base);
+	if (e[0] != '\0' || result < 0 || result > max_value)
+		fatal_error("invalid %s", description);
+	return result;
+}
+
 static void set_song(const char *s)
 {
-	arg_song = 0;
-	do {
-		if (*s < '0' || *s > '9')
-			fatal_error("subsong number must be an integer");
-		arg_song = 10 * arg_song + *s++ - '0';
-		if (arg_song >= ASAPInfo_MAX_SONGS)
-			fatal_error("maximum subsong number is %d", ASAPInfo_MAX_SONGS - 1);
-	} while (*s != '\0');
+	arg_song = parse_int(s, 10, "subsong number", ASAPInfo_MAX_SONGS - 1);
 }
 
 static void set_time(const char *s)
@@ -147,26 +152,9 @@ static void set_mute_mask(const char *s)
 
 static void set_music_address(const char *s)
 {
-	int address = 0;
-	if (s[0] == '0' && s[1] == 'x')
-		s += 2;
-	else if (s[0] == '$')
+	if (s[0] == '$')
 		s++;
-	do {
-		int digit = *s++;
-		if (digit >= '0' && digit <= '9')
-			digit -= '0';
-		else if (digit >= 'A' && digit <= 'F')
-			digit -= 'A' - 10;
-		else if (digit >= 'a' && digit <= 'f')
-			digit -= 'a' - 10;
-		else
-			fatal_error("invalid hex number");
-		address = (address << 4) + digit;
-		if (address > 0xffff)
-			fatal_error("address must be 16-bit");
-	} while (*s != '\0');
-	arg_music_address = address;
+	arg_music_address = parse_int(s, 16, "music address", 0xffff);
 }
 
 static void apply_tags(const char *input_file, ASAPInfo *info)
