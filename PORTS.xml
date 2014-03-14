@@ -60,11 +60,11 @@
 		<output>16-bit sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>yes</file-info>
-		<edit-info>AUTHOR, NAME, DATE, but not TIME</edit-info>
-		<convert-sap>no</convert-sap>
+		<edit-info>yes</edit-info>
+		<convert-sap>yes</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
-		<stil>no</stil>
+		<stil>yes</stil>
 		<comment class="good">Plays from ATR disk images</comment>
 		<lang>C, C++</lang>
 		<a href="http://foobar2000.org/">foobar2000</a>

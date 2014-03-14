@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000
  *
- * Copyright (C) 2006-2013  Piotr Fusik
+ * Copyright (C) 2006-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -24,11 +24,13 @@
 #include <windows.h>
 #include <string.h>
 
-#include "foobar2000/SDK/foobar2000.h"
-
 #include "aatr-stdio.h"
 #include "asap.h"
+#include "info_dlg.h"
 #include "settings_dlg.h"
+
+#define UNICODE /* NOT for info_dlg.h */
+#include "foobar2000/SDK/foobar2000.h"
 
 #define BITS_PER_SAMPLE    16
 #define BUFFERED_BLOCKS    1024
@@ -40,7 +42,7 @@ static const GUID song_length_guid =
 static cfg_int song_length(song_length_guid, -1);
 
 static const GUID silence_seconds_guid =
-	{ 0x40170cb0, 0xc18c, 0x4f97, { 0xaa, 0x6, 0xdb, 0xe7, 0x45, 0xb0, 0x7e, 0x1d } };
+	{ 0x40170cb0, 0xc18c, 0x4f97, { 0xaa, 0x06, 0xdb, 0xe7, 0x45, 0xb0, 0x7e, 0x1d } };
 static cfg_int silence_seconds(silence_seconds_guid, -1);
 
 static const GUID play_loops_guid =
@@ -48,8 +50,17 @@ static const GUID play_loops_guid =
 static cfg_bool play_loops(play_loops_guid, false);
 
 static const GUID mute_mask_guid =
-	{ 0x8bd94472, 0x82f1, 0x4e77, { 0x95, 0x78, 0xe9, 0x84, 0x75, 0xad, 0x17, 0x4 } };
+	{ 0x8bd94472, 0x82f1, 0x4e77, { 0x95, 0x78, 0xe9, 0x84, 0x75, 0xad, 0x17, 0x04 } };
 static cfg_int mute_mask(mute_mask_guid, 0);
+
+static const GUID playing_info_guid =
+	{ 0x8a2d4509, 0x405e, 0x482e, { 0xa1, 0x30, 0x3f, 0x0c, 0xd6, 0x16, 0x98, 0x59 } };
+static cfg_bool playing_info_cfg(playing_info_guid, false);
+
+void onUpdatePlayingInfo()
+{
+	playing_info_cfg = playing_info != FALSE; /* avoid warning C4800 */
+}
 
 
 /* Decoding -------------------------------------------------------------- */
@@ -60,7 +71,7 @@ class input_asap
 	input_asap *prev;
 	input_asap *next;
 	service_ptr_t<file> m_file;
-	char *filename;
+	char *url;
 	BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
 	ASAP *asap;
@@ -95,13 +106,13 @@ class input_asap
 
 	void write(int data)
 	{
-		BYTE b = (BYTE) data;
+		BYTE b = static_cast<BYTE>(data);
 		m_file->write(&b, 1, *p_abort);
 	}
 
 	static void static_write(void *obj, int data)
 	{
-		((input_asap *) obj)->write(data);
+		static_cast<input_asap *>(obj)->write(data);
 	}
 
 public:
@@ -130,14 +141,14 @@ public:
 		prev = NULL;
 		next = head;
 		head = this;
-		filename = NULL;
+		url = NULL;
 		asap = ASAP_New();
 	}
 
 	~input_asap()
 	{
 		ASAP_Delete(asap);
-		free(filename);
+		free(url);
 		if (prev != NULL)
 			prev->next = next;
 		if (next != NULL)
@@ -148,11 +159,19 @@ public:
 
 	void open(service_ptr_t<file> p_filehint, const char *p_path, t_input_open_reason p_reason, abort_callback &p_abort)
 	{
-		if (p_reason == input_open_info_write) {
-			int len = strlen(p_path);
-			if (len < 4 || _stricmp(p_path + len - 4, ".sap") != 0)
-				throw exception_io_unsupported_format();
-			filename = strdup(p_path);
+		switch (p_reason) {
+		case input_open_info_write: {
+				int len = strlen(p_path);
+				if (len < 4 || _stricmp(p_path + len - 4, ".sap") != 0)
+					throw exception_io_unsupported_format();
+			}
+			/* FALLTHROUGH */
+		case input_open_decode:
+			free(url);
+			url = strdup(p_path);
+			break;
+		default:
+			break;
 		}
 		if (p_filehint.is_empty())
 			filesystem::g_open(p_filehint, p_path, filesystem::open_mode_read, p_abort);
@@ -196,6 +215,9 @@ public:
 		if (!ASAP_PlaySong(asap, p_subsong, duration))
 			throw exception_io_unsupported_format();
 		ASAP_MutePokeyChannels(asap, mute_mask);
+		const char *filename = url;
+		if (foobar2000_io::_extract_native_path_ptr(filename))
+			setPlayingSong(filename, p_subsong);
 	}
 
 	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort)
@@ -216,7 +238,7 @@ public:
 
 	void decode_seek(double p_seconds, abort_callback &p_abort)
 	{
-		ASAP_Seek(asap, (int) (p_seconds * 1000));
+		ASAP_Seek(asap, static_cast<int>(p_seconds * 1000));
 	}
 
 	bool decode_can_seek()
@@ -250,10 +272,10 @@ public:
 	void retag_commit(abort_callback &p_abort)
 	{
 		m_file.release();
-		filesystem::g_open(m_file, filename, filesystem::open_mode_write_new, p_abort);
+		filesystem::g_open(m_file, url, filesystem::open_mode_write_new, p_abort);
 		this->p_abort = &p_abort;
 		ByteWriter bw = { this, static_write };
-		if (!ASAPWriter_Write(filename, bw, ASAP_GetInfo(asap), module, module_len, FALSE))
+		if (!ASAPWriter_Write(url, bw, ASAP_GetInfo(asap), module, module_len, FALSE))
 			throw exception_io_unsupported_format();
 	}
 };
@@ -329,7 +351,7 @@ class preferences_page_instance_asap : public preferences_page_instance
 			return -1;
 		UINT minutes = GetDlgItemInt(hDlg, IDC_MINUTES, NULL, FALSE);
 		UINT seconds = GetDlgItemInt(hDlg, IDC_SECONDS, NULL, FALSE);
-		return (int) (60 * minutes + seconds);
+		return static_cast<int>(60 * minutes + seconds);
 	}
 
 	int get_silence_input()
@@ -481,6 +503,67 @@ public:
 };
 
 static service_factory_single_t<input_file_type_asap> g_input_file_type_asap_factory;
+
+
+/* Info window ----------------------------------------------------------- */
+
+class info_menu : public mainmenu_commands
+{
+	virtual t_uint32 get_command_count()
+	{
+		return 1;
+	}
+
+	virtual GUID get_command(t_uint32 p_index)
+	{
+		static const GUID guid = { 0x15a24bcd, 0x176b, 0x4e15, { 0xbc, 0xb1, 0x24, 0xfd, 0x92, 0x67, 0xaf, 0x8f } };
+		return guid;
+	}
+
+	virtual void get_name(t_uint32 p_index, pfc::string_base &p_out)
+	{
+		p_out = "ASAP info";
+	}
+
+	virtual bool get_description(t_uint32 p_index, pfc::string_base &p_out)
+	{
+		p_out = "Activates the ASAP File Information window.";
+		return true;
+	}
+
+	virtual GUID get_parent()
+	{
+		return mainmenu_groups::view;
+	}
+
+	virtual bool get_display(t_uint32 p_index, pfc::string_base &p_text, t_uint32 &p_flags)
+	{
+		p_flags = 0;
+		get_name(p_index, p_text);
+		return true;
+	}
+
+	virtual void execute(t_uint32 p_index, service_ptr_t<service_base> p_callback)
+	{
+		if (p_index == 0) {
+			playing_info = playing_info_cfg;
+			const char *filename = NULL;
+			int song = -1;
+			metadb_handle_ptr item;
+			if (static_api_ptr_t<playlist_manager>()->activeplaylist_get_focus_item_handle(item) && item.is_valid()) {
+				const char *url = item->get_path();
+				if (foobar2000_io::_extract_native_path_ptr(url)) {
+					filename = url;
+					song = item->get_subsong_index();
+				}
+			}
+			showInfoDialog(core_api::get_my_instance(), core_api::get_main_window(), filename, song);
+		}
+	}
+};
+
+static mainmenu_commands_factory_t<info_menu> g_info_menu_factory;
+
 
 /* ATR filesystem -------------------------------------------------------- */
 

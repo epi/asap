@@ -1,7 +1,7 @@
 /*
  * info_dlg.c - file information dialog box
  *
- * Copyright (C) 2007-2013  Piotr Fusik
+ * Copyright (C) 2007-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -562,7 +562,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 {
 	switch (uMsg) {
 	case WM_INITDIALOG:
-#if defined(WINAMP) || defined(XMPLAY)
+#ifdef PLAYING_INFO
 		CheckDlgButton(hDlg, IDC_PLAYING, playing_info ? BST_CHECKED : BST_UNCHECKED);
 #endif
 		SendDlgItemMessage(hDlg, IDC_AUTHOR, EM_LIMITTEXT, ASAPInfo_MAX_TEXT_LENGTH, 0);
@@ -572,7 +572,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 		return TRUE;
 	case WM_COMMAND:
 		switch (wParam) {
-#if defined(WINAMP) || defined(XMPLAY)
+#ifdef PLAYING_INFO
 		case MAKEWPARAM(IDC_PLAYING, BN_CLICKED):
 			playing_info = (IsDlgButtonChecked(hDlg, IDC_PLAYING) == BST_CHECKED);
 			if (playing_info && playing_filename[0] != '\0')

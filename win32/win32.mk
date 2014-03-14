@@ -225,21 +225,24 @@ CLEAN += win32/uninstall_dsf.bat
 
 # foobar2000
 
-FOOBAR2000_RUNTIME = $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp win32/foobar2000/foobar2000_SDK.lib win32/foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
+FOOBAR2000_RUNTIME = win32/foobar2000/foobar2000_SDK.lib win32/foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
 
-win32/foo_asap.dll: $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] aatr-stdio.[ch] aatr.[ch] win32/settings_dlg.[ch]) win32/foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME)
-	$(WIN32_CL) -DFOOBAR2000 -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR) user32.lib $(WIN32_LINKOPT)
+win32/foo_asap.dll: $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] astil.[ch] aatr-stdio.[ch] aatr.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch]) win32/foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME)
+	$(WIN32_CL) -DFOOBAR2000 -DWIN32 -EHsc -I$(FOOBAR2000_SDK_DIR) comctl32.lib comdlg32.lib shlwapi.lib user32.lib $(WIN32_LINKOPT)
 CLEAN += win32/foo_asap.dll win32/foo_asap.exp win32/foo_asap.lib
 
-win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,abort_callback audio_chunk audio_chunk_channel_config console file_info filesystem filesystem_helper guids mem_block_container playable_location preferences_page replaygain_info service)
+win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,component_client abort_callback audio_chunk audio_chunk_channel_config console file_info filesystem filesystem_helper guids mem_block_container metadb_handle metadb_handle_list playable_location playlist preferences_page replaygain_info service titleformat)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/foobar2000_SDK.lib
 
+win32/foobar2000/component_client.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp
+	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc
+
 win32/foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
-	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR)
+	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc -D_WIN32_IE=0x550 -I$(FOOBAR2000_SDK_DIR)
 CLEAN += win32/foobar2000/*.obj
 
-win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,cfg_var guid other string string_conv utf8)
+win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,bsearch cfg_var guid other pathUtils sort string stringNew string_conv threads utf8)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/pfc.lib
 

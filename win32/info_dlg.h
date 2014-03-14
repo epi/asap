@@ -1,7 +1,7 @@
 /*
  * info_dlg.h - file information dialog box
  *
- * Copyright (C) 2007-2012  Piotr Fusik
+ * Copyright (C) 2007-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,6 +23,10 @@
 
 #include <windows.h>
 #include <tchar.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define IDD_INFO       300
 #define IDC_PLAYING    301
@@ -53,7 +57,12 @@ void setPlayingSong(LPCTSTR filename, int song);
 #ifdef XMPLAY
 const ASTIL *getPlayingASTIL(void);
 #endif
-#if defined(WINAMP) || defined(XMPLAY)
+#if defined(WINAMP) || defined(FOOBAR2000) || defined(XMPLAY)
+#define PLAYING_INFO
 extern BOOL playing_info;
 void onUpdatePlayingInfo(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
