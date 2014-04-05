@@ -384,7 +384,7 @@ Building AndroidASAP
 ~~~~~~~~~~~~~~~~~~~~
 
 Install http://developer.android.com/sdk/[Android SDK]
-with an Android platform(s) (I compile with 2.2 and test with 1.6).
+with an Android platform(s).
 
 Edit the paths at the top of `java/android/android.mk` so that they point to your installed SDK.
 Open the command prompt in the root directory of ASAP sources and run:
