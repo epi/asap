@@ -8592,7 +8592,7 @@ static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int buffer
 	for (; i < samplesEnd; i++) {
 		int sample;
 		accLeft += self->basePokey.deltaBuffer[i] - (accLeft * 3 >> 10);
-		sample = accLeft >> 10;
+		sample = accLeft >> 11;
 		if (sample < -32767)
 			sample = -32767;
 		else if (sample > 32767)
@@ -8612,7 +8612,7 @@ static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int buffer
 		}
 		if (self->extraPokeyMask != 0) {
 			accRight += self->extraPokey.deltaBuffer[i] - (accRight * 3 >> 10);
-			sample = accRight >> 10;
+			sample = accRight >> 11;
 			if (sample < -32767)
 				sample = -32767;
 			else if (sample > 32767)

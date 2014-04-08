@@ -1,6 +1,6 @@
 // pokey.ci - POKEY chip emulator
 //
-// Copyright (C) 2010-2012  Piotr Fusik
+// Copyright (C) 2010-2014  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -658,16 +658,16 @@ class PokeyPair
 //#if ACTIONSCRIPT
 //					: Number
 //#endif
-					= accLeft / 33553408;
+					= accLeft / 67106816;
 				buffer.writeFloat(sample);
 				if (this.extraPokeyMask != 0) {
 					accRight += this.extraPokey.deltaBuffer[i] - (accRight * 3 >> 10);
-					sample = accRight / 33553408;
+					sample = accRight / 67106816;
 				}
 				buffer.writeFloat(sample);
 			}
 #else
-			int sample = accLeft >> 10;
+			int sample = accLeft >> 11;
 			macro STORE_SAMPLE() {
 				if (sample < -32767)
 					sample = -32767;
@@ -690,7 +690,7 @@ class PokeyPair
 			STORE_SAMPLE();
 			if (ExtraPokeyMask != 0) {
 				accRight += ExtraPokey.DeltaBuffer[i] - (accRight * 3 >> 10);
-				sample = accRight >> 10;
+				sample = accRight >> 11;
 				STORE_SAMPLE();
 			}
 #endif // FLASH
