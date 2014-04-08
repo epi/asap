@@ -1,7 +1,7 @@
 /*
  * FileSelector.java - ASAP for Android
  *
- * Copyright (C) 2010-2013  Piotr Fusik
+ * Copyright (C) 2010-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -118,7 +118,10 @@ public class FileSelector extends ListActivity
 			boolean dir2 = that.filename.endsWith("/");
 			if (dir1 != dir2)
 				return dir1 ? -1 : 1;
-			return this.title.compareTo(that.title);
+			int titleCmp = this.title.compareTo(that.title);
+			if (titleCmp != 0)
+				return titleCmp;
+			return this.filename.compareTo(that.filename);
 		}
 	}
 
