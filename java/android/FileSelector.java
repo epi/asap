@@ -34,6 +34,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -48,6 +49,7 @@ import java.util.TreeSet;
 
 public class FileSelector extends ListActivity
 {
+	private boolean isSearch;
 	private boolean isDetails;
 	private Uri uri;
 
@@ -272,6 +274,18 @@ public class FileSelector extends ListActivity
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
 		switch (item.getItemId()) {
+		case R.id.menu_search:
+			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			if (isSearch) {
+				imm.hideSoftInputFromWindow(getListView().getWindowToken(), 0);
+				getListView().clearTextFilter();
+				isSearch = false;
+			}
+			else {
+				imm.showSoftInput(getListView(), 0);
+				isSearch = true;
+			}
+			return true;
 		case R.id.menu_toggle_details:
 			isDetails = !isDetails;
 			getPreferences(MODE_PRIVATE).edit().putBoolean("fileDetails", isDetails).commit();
