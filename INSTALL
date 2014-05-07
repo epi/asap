@@ -393,8 +393,7 @@ make android-debug
 --------------------------------------------------------------------------------
 
 This should produce `AndroidASAP-debug.apk`.
-AndroidASAP integrates with file managers and the web browser.
-It uses the internet connection only for files clicked in the web browser.
+AndroidASAP integrates with file managers.
 It reads phone state only to pause playback on incoming phone calls.
 
 

@@ -1,7 +1,7 @@
 /*
  * PlayerService.java - ASAP for Android
  *
- * Copyright (C) 2010-2013  Piotr Fusik
+ * Copyright (C) 2010-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -49,10 +49,6 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 
 public class PlayerService extends Service implements Runnable, MediaController.MediaPlayerControl
 {
@@ -133,20 +129,6 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		stop = false;
 		thread = new Thread(this);
 		thread.start();
-	}
-
-
-	// I/O ----------------------------------------------------------------------------------------------------
-
-	private static InputStream httpGet(Uri uri) throws IOException
-	{
-		DefaultHttpClient client = new DefaultHttpClient();
-		HttpGet request = new HttpGet(uri.toString());
-		HttpResponse response = client.execute(request);
-		StatusLine status = response.getStatusLine();
-		if (status.getStatusCode() != 200)
-			throw new IOException("HTTP error " + status);
-		return response.getEntity().getContent();
 	}
 
 
@@ -332,42 +314,33 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	public void run()
 	{
 		// read file
+		if (!"file".equals(uri.getScheme())) {
+			showError(R.string.error_reading_file);
+			return;
+		}
 		String filename = uri.getPath();
 		byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 		int moduleLen;
 		try {
-			InputStream is;
-			switch (uri.getScheme()) {
-			case "file":
-				if (Util.endsWithIgnoreCase(filename, ".zip")) {
-					String zipFilename = filename;
-					filename = uri.getFragment();
-					is = new ZipInputStream(zipFilename, filename);
-					moduleLen = Util.readAndClose(is, module);
+			if (Util.endsWithIgnoreCase(filename, ".zip")) {
+				String zipFilename = filename;
+				filename = uri.getFragment();
+				moduleLen = Util.readAndClose(new ZipInputStream(zipFilename, filename), module);
+			}
+			else if (Util.endsWithIgnoreCase(filename, ".atr")) {
+				AATRStream stream = new AATRStream(filename);
+				filename = uri.getFragment();
+				try {
+					moduleLen = stream.open().readFile(filename, module, module.length);
 				}
-				else if (Util.endsWithIgnoreCase(filename, ".atr")) {
-					AATRStream stream = new AATRStream(filename);
-					filename = uri.getFragment();
-					try {
-						moduleLen = stream.open().readFile(filename, module, module.length);
-					}
-					finally {
-						stream.close();
-					}
-					if (moduleLen < 0)
-						throw new FileNotFoundException(filename);
+				finally {
+					stream.close();
 				}
-				else {
-					is = new FileInputStream(filename);
-					moduleLen = Util.readAndClose(is, module);
-				}
-				break;
-			case "http":
-				is = httpGet(uri);
-				moduleLen = Util.readAndClose(is, module);
-				break;
-			default:
-				throw new FileNotFoundException(uri.toString());
+				if (moduleLen < 0)
+					throw new FileNotFoundException(filename);
+			}
+			else {
+				moduleLen = Util.readAndClose(new FileInputStream(filename), module);
 			}
 		}
 		catch (IOException ex) {
