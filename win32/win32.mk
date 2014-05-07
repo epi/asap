@@ -22,9 +22,6 @@ WIN64_CC = $(DO)x86_64-w64-mingw32-gcc $(WIN32_CARGS)
 WIN64_CXX = $(DO)x86_64-w64-mingw32-g++ -static $(WIN32_CARGS)
 WIN64_WINDRES = $(DO)x86_64-w64-mingw32-windres -o $@ $<
 
-# old Microsoft compiler for XBMC plugin
-WIN32_CL71 = $(WIN32_CLDO)cl -GR- -DNDEBUG $(WIN32_CLARGS)
-
 # gcc for Windows Mobile
 WINCE_CC = $(DO)arm-mingw32ce-gcc -s -O2 -Wall -o $@ $(INCLUDEOPTS) $(filter-out %.h,$^)
 WINCE_WINDRES = $(DO)arm-mingw32ce-windres -o $@ -D_WIN32_WCE $<
@@ -51,7 +48,7 @@ WIN32_CARGS = -s -O2 -Wall -Wl,--nxcompat -o $@ $(if $(filter %.dll,$@),-shared 
 WIN32_CLDO = $(DO)$(if $(filter-out %.obj,$@),mkdir -p win32/obj/$@ && )
 WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@ -Fowin32/obj/$@/) $(if $(filter %.dll,$@),-LD) $(INCLUDEOPTS) $(filter-out %.h,$^)
 
-mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe ASAP_Apollo.dll bass_asap.dll gspasap.dll in_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
+mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe ASAP_Apollo.dll bass_asap.dll gspasap.dll in_asap.dll xbmc_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
 .PHONY: mingw
 
 wince: $(addprefix win32/wince/,wasap.exe gspasap.dll asap_dsf.dll)
@@ -283,13 +280,13 @@ CLEAN += win32/winamp/in_asap-res.o
 
 # XBMC
 
-win32/xbmc_asap.dll: $(call src,xbmc/xbmc_asap.c asap.[ch]) win32/xbmc/xbmc_asap.res
-	$(WIN32_CL71) -MD $(WIN32_LINKOPT)
-CLEAN += win32/xbmc_asap.dll win32/xbmc_asap.exp win32/xbmc_asap.lib win32/xbmc/xbmc_asap.obj win32/xbmc/asap.obj
+win32/xbmc_asap.dll: $(call src,xbmc/xbmc_asap.c asap.[ch]) win32/xbmc/xbmc_asap-res.o
+	$(WIN32_CC) -DXBMC
+CLEAN += win32/xbmc_asap.dll
 
-win32/xbmc/xbmc_asap.res: $(call src,win32/gui.rc asap.h)
+win32/xbmc/xbmc_asap-res.o: $(call src,win32/gui.rc asap.h)
 	$(WIN32_WINDRES) -DXBMC
-CLEAN += win32/xbmc/xbmc_asap.res
+CLEAN += win32/xbmc/xbmc_asap-res.o
 
 # XMPlay
 

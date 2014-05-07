@@ -216,8 +216,8 @@ If you have another XMMS plugin that supports Atari 8-bit music,
 remove it in order to avoid conflicts.
 
 
-Building asapconv, WASAP, Winamp/GSPlayer/Apollo/XMPlay/BASS plugins, RMT DLL, asapscan, shell extension and libasap on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building asapconv, WASAP, Winamp/GSPlayer/Apollo/XMPlay/BASS/XBMC plugins, RMT DLL, asapscan, shell extension and libasap on Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install the C and C++ compilers from http://www.mingw.org/[MinGW].
 
@@ -227,8 +227,8 @@ make mingw
 --------------------------------------------------------------------------------
 
 You should get `asapconv.exe`, `wasap.exe`, `in_asap.dll`, `gspasap.dll`,
-`ASAP_Apollo.dll`, `xmp-asap.dll`, `bass_asap.dll`, `apokeysnd.dll`,
-`asapscan.exe`, `ASAPShellEx.dll` and `libasap.a`.
+`ASAP_Apollo.dll`, `xmp-asap.dll`, `bass_asap.dll`, `xbmc_asap.dll`,
+`apokeysnd.dll`, `asapscan.exe`, `ASAPShellEx.dll` and `libasap.a`.
 
 
 Building Windows Media Player plugin and asap.lib on Windows
@@ -314,25 +314,6 @@ make win32/libasap_plugin.dll
 --------------------------------------------------------------------------------
 
 You will get `libasap_plugin.dll`.
-
-
-Building the XBMC plugin on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You need Visual C\++ Toolkit (it used to be a free download from Microsoft,
-now search the internet for `VCToolkitSetup.exe`)
-and .NET Framework SDK Version 1.1.
-Microsoft Visual C++ 2003 might work, but wasn't tested.
-
-Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make win32/xbmc_asap.dll
---------------------------------------------------------------------------------
-
-This should produce `xbmc_asap.dll`, which you can use with XBox
-or Windows version of XBMC. The XBMC must include support for ASAP.
-
-Alternatively, you may use the `build_vctk.bat` script in the `xbmc` directory.
 
 
 Building WASAP, GSPlayer and Windows Media Player plugins for Windows CE
