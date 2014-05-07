@@ -275,7 +275,7 @@ public class FileSelector extends ListActivity
 	{
 		switch (item.getItemId()) {
 		case R.id.menu_search:
-			InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+			InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
 			if (isSearch) {
 				imm.hideSoftInputFromWindow(getListView().getWindowToken(), 0);
 				getListView().clearTextFilter();
