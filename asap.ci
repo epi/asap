@@ -1,6 +1,6 @@
 // asap.ci - emulation engine
 //
-// Copyright (C) 2010-2013  Piotr Fusik
+// Copyright (C) 2010-2014  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -61,6 +61,7 @@ public class ASAP
 	int BlocksPlayed;
 	int SilenceCycles;
 	int SilenceCyclesCounter;
+	bool GtiaOrCovoxPlayedThisFrame;
 
 	public ASAP()
 	{
@@ -160,16 +161,23 @@ public class ASAP
 				pokey = Pokeys.BasePokey;
 			else
 				pokey = Pokeys.ExtraPokey;
-			const int DeltaShiftCOVOX = 17;
-			pokey.AddDelta(Pokeys, Cycle, (data - Covox[addr]) << DeltaShiftCOVOX);
-			Covox[addr] = data;
+			int delta = data - Covox[addr];
+			if (delta != 0) {
+				const int DeltaShiftCOVOX = 17;
+				pokey.AddDelta(Pokeys, Cycle, delta << DeltaShiftCOVOX);
+				Covox[addr] = data;
+				GtiaOrCovoxPlayedThisFrame = true;
+			}
 		}
 		else if ((addr & 0xff1f) == 0xd01f) {
 			const int DeltaShiftGTIA = 20;
 			// NOT data - Consol; reverse to the POKEY sound
 			int delta = ((Consol & 8) - (data & 8)) << DeltaShiftGTIA;
-			Pokeys.BasePokey.AddDelta(Pokeys, Cycle, delta);
-			Pokeys.ExtraPokey.AddDelta(Pokeys, Cycle, delta);
+			if (delta != 0) {
+				Pokeys.BasePokey.AddDelta(Pokeys, Cycle, delta);
+				Pokeys.ExtraPokey.AddDelta(Pokeys, Cycle, delta);
+				GtiaOrCovoxPlayedThisFrame = true;
+			}
 			Consol = data;
 		}
 		else
@@ -308,6 +316,7 @@ public class ASAP
 
 	int DoFrame()
 	{
+		GtiaOrCovoxPlayedThisFrame = false;
 		Pokeys.StartFrame();
 		int cycles = Do6502Frame();
 		Pokeys.EndFrame(cycles);
@@ -627,7 +636,7 @@ public class ASAP
 				break;
 			int cycles = DoFrame();
 			if (SilenceCycles > 0) {
-				if (Pokeys.IsSilent()) {
+				if (Pokeys.IsSilent() && !GtiaOrCovoxPlayedThisFrame) {
 					SilenceCyclesCounter -= cycles;
 					if (SilenceCyclesCounter <= 0)
 						break;

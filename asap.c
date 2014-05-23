@@ -203,6 +203,7 @@ struct ASAP {
 	int currentDuration;
 	int currentSong;
 	int cycle;
+	cibool gtiaOrCovoxPlayedThisFrame;
 	int nextEventCycle;
 	int nextPlayerCycle;
 	int nextScanlineCycle;
@@ -2032,6 +2033,7 @@ static cibool ASAP_Do6502Init(ASAP *self, int pc, int a, int x, int y)
 static int ASAP_DoFrame(ASAP *self)
 {
 	int cycles;
+	self->gtiaOrCovoxPlayedThisFrame = FALSE;
 	PokeyPair_StartFrame(&self->pokeys);
 	cycles = ASAP_Do6502Frame(self);
 	PokeyPair_EndFrame(&self->pokeys, cycles);
@@ -2067,7 +2069,7 @@ static int ASAP_GenerateAt(ASAP *self, unsigned char *buffer, int bufferOffset, 
 			break;
 		cycles = ASAP_DoFrame(self);
 		if (self->silenceCycles > 0) {
-			if (PokeyPair_IsSilent(&self->pokeys)) {
+			if (PokeyPair_IsSilent(&self->pokeys) && !self->gtiaOrCovoxPlayedThisFrame) {
 				self->silenceCyclesCounter -= cycles;
 				if (self->silenceCyclesCounter <= 0)
 					break;
@@ -2423,18 +2425,26 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 	}
 	else if ((addr & 65280) == self->moduleInfo.covoxAddr) {
 		Pokey *pokey;
+		int delta;
 		addr &= 3;
 		if (addr == 0 || addr == 3)
 			pokey = &self->pokeys.basePokey;
 		else
 			pokey = &self->pokeys.extraPokey;
-		Pokey_AddDelta(pokey, &self->pokeys, self->cycle, (data - self->covox[addr]) << 17);
-		self->covox[addr] = data;
+		delta = data - self->covox[addr];
+		if (delta != 0) {
+			Pokey_AddDelta(pokey, &self->pokeys, self->cycle, delta << 17);
+			self->covox[addr] = data;
+			self->gtiaOrCovoxPlayedThisFrame = TRUE;
+		}
 	}
 	else if ((addr & 65311) == 53279) {
 		int delta = ((self->consol & 8) - (data & 8)) << 20;
-		Pokey_AddDelta(&self->pokeys.basePokey, &self->pokeys, self->cycle, delta);
-		Pokey_AddDelta(&self->pokeys.extraPokey, &self->pokeys, self->cycle, delta);
+		if (delta != 0) {
+			Pokey_AddDelta(&self->pokeys.basePokey, &self->pokeys, self->cycle, delta);
+			Pokey_AddDelta(&self->pokeys.extraPokey, &self->pokeys, self->cycle, delta);
+			self->gtiaOrCovoxPlayedThisFrame = TRUE;
+		}
 		self->consol = data;
 	}
 	else
