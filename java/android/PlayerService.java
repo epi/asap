@@ -189,7 +189,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 
 	public boolean canPause()
 	{
-		return !isPaused();
+		return true;
 	}
 
 	public boolean canSeekBackward()
