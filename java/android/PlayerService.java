@@ -52,11 +52,6 @@ import java.util.Collections;
 
 public class PlayerService extends Service implements Runnable, MediaController.MediaPlayerControl
 {
-	private Uri uri;
-	int song;
-	private static final int SONG_DEFAULT = -1;
-	private static final int SONG_LAST = -2;
-
 	// User interface -----------------------------------------------------------------------------------------
 
 	private NotificationManager notMan;
@@ -98,37 +93,19 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		});
 	}
 
-
-	// Threading ----------------------------------------------------------------------------------------------
-
-	private Thread thread;
-	private boolean stop;
-
-	private void stop()
+	private void showInfo()
 	{
-		if (thread != null) {
-			synchronized (this) {
-				stop = true;
-				notify();
-			}
-			try {
-				thread.join();
-			}
-			catch (InterruptedException ex) {
-			}
-			thread = null;
-			stopForegroundCompat(NOTIFICATION_ID);
-		}
+		sendBroadcast(new Intent(Player.ACTION_SHOW_INFO));
 	}
 
-	private void playFile(Uri uri, int song)
+	private void showNotification()
 	{
-		stop();
-		this.uri = uri;
-		this.song = song;
-		stop = false;
-		thread = new Thread(this);
-		thread.start();
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
+		String title = info.getTitleOrFilename();
+		Notification notification = new Notification(R.drawable.icon, title, System.currentTimeMillis());
+		notification.flags |= Notification.FLAG_ONGOING_EVENT;
+		notification.setLatestEventInfo(this, title, info.getAuthor(), contentIntent);
+		startForegroundCompat(NOTIFICATION_ID, notification);
 	}
 
 
@@ -164,159 +141,47 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		return playlist.indexOf(uri);
 	}
 
-	private void playFileFromPlaylist(int playlistIndex, int song)
+	private boolean loadFromPlaylist(int playlistIndex, int song)
 	{
-		playFile(playlist.get(playlistIndex), song);
+		return load(playlist.get(playlistIndex), song);
 	}
 
 
 	// Playback -----------------------------------------------------------------------------------------------
 
+	private Uri uri;
+	int song;
+	private static final int SONG_DEFAULT = -1;
+	private static final int SONG_LAST = -2;
 	private final ASAP asap = new ASAP();
 	ASAPInfo info;
-	private AudioTrack audioTrack;
+	private Thread thread;
+	private boolean paused;
 	private int seekPosition;
 
-	private boolean isPaused()
+	private void stop()
 	{
-		return audioTrack == null || audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PAUSED;
-	}
-
-	public boolean isPlaying()
-	{
-		return !isPaused();
-	}
-
-	public boolean canPause()
-	{
-		return true;
-	}
-
-	public boolean canSeekBackward()
-	{
-		return false;
-	}
-
-	public boolean canSeekForward()
-	{
-		return false;
-	}
-
-	public int getBufferPercentage()
-	{
-		return 100;
-	}
-
-	public void pause()
-	{
-		if (audioTrack != null)
-			audioTrack.pause();
-	}
-
-	public void start()
-	{
-		if (audioTrack != null) {
-			audioTrack.play();
-			synchronized (this) {
-				notify();
-			}
-		}
-	}
-
-	void togglePause()
-	{
-		if (isPaused())
+		Thread t;
+		synchronized (this) {
+			t = thread;
+			if (t == null || t == Thread.currentThread())
+				return;
+			thread = null;
 			start();
-		else
-			pause();
-	}
-
-	private void showInfo()
-	{
-		sendBroadcast(new Intent(Player.ACTION_SHOW_INFO));
-	}
-
-	private void playSong() throws Exception
-	{
-		synchronized (asap) {
-			seekPosition = -1;
-			asap.playSong(song, info.getLoop(song) ? -1 : info.getDuration(song));
 		}
-		showInfo();
-		start();
-	}
-
-	void playNextSong()
-	{
-		if (song + 1 < info.getSongs()) {
-			song++;
-			try {
-				playSong();
-				return;
-			}
-			catch (Exception ex) {
-			}
+		try {
+			t.join();
 		}
-
-		int playlistIndex = getPlaylistIndex();
-		if (playlistIndex >= 0) {
-			if (++playlistIndex >= playlist.size())
-				playlistIndex = 0;
-			playFileFromPlaylist(playlistIndex, 0);
+		catch (InterruptedException ex) {
 		}
 	}
 
-	void playPreviousSong()
-	{
-		if (song > 0) {
-			song--;
-			try {
-				playSong();
-				return;
-			}
-			catch (Exception ex) {
-			}
-		}
-
-		int playlistIndex = getPlaylistIndex();
-		if (playlistIndex >= 0) {
-			if (playlistIndex == 0)
-				playlistIndex = playlist.size();
-			playFileFromPlaylist(playlistIndex - 1, SONG_LAST);
-		}
-	}
-
-	public int getDuration()
-	{
-		if (song < 0)
-			return -1;
-		return info.getDuration(song);
-	}
-
-	public int getCurrentPosition()
-	{
-		return asap.getPosition();
-	}
-
-	public void seekTo(int pos)
-	{
-		synchronized (asap) {
-			seekPosition = pos;
-		}
-	}
-
-	public int getAudioSessionId()
-	{
-		// API 9: return audioTrack != null ? audioTrack.getAudioSessionId() : 0;
-		return 0;
-	}
-
-	public void run()
+	private boolean load(Uri uri, int song)
 	{
 		// read file
 		if (!"file".equals(uri.getScheme())) {
 			showError(R.string.error_reading_file);
-			return;
+			return false;
 		}
 		String filename = uri.getPath();
 		byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
@@ -345,10 +210,17 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		}
 		catch (IOException ex) {
 			showError(R.string.error_reading_file);
-			return;
+			return false;
 		}
 
-		// load file
+		// stop current playback
+		stop();
+
+		// No need to worry about synchronization, because at this point we are either:
+		// a. on the UI thread with no playback thread
+		// b. on the playback thread switching to the next song
+
+		// load into ASAP
 		try {
 			asap.load(filename, module, moduleLen);
 			info = asap.getInfo();
@@ -362,60 +234,178 @@ public class PlayerService extends Service implements Runnable, MediaController.
 			default:
 				break;
 			}
-			playSong();
+			asap.playSong(song, info.getDuration(song));
 		}
 		catch (Exception ex) {
 			showError(R.string.invalid_file);
-			return;
+			return false;
 		}
 
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
-		String title = info.getTitleOrFilename();
-		Notification notification = new Notification(R.drawable.icon, title, System.currentTimeMillis());
-		notification.flags |= Notification.FLAG_ONGOING_EVENT;
-		notification.setLatestEventInfo(this, title, info.getAuthor(), contentIntent);
-		startForegroundCompat(NOTIFICATION_ID, notification);
+		// start playback
+		this.uri = uri;
+		this.song = song;
+		paused = false;
+		seekPosition = -1;
+		showInfo();
+		if (thread == null) {
+			// we're on the UI thread - start the playback thread
+			thread = new Thread(this);
+			thread.start();
+		}
+		return true;
+	}
 
-		// playback
-		int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
-		int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT) >> 1;
-		if (bufferLen < 16384)
-			bufferLen = 16384;
-		final byte[] byteBuffer = new byte[bufferLen << 1];
-		final short[] shortBuffer = new short[bufferLen];
-		audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT, bufferLen << 1, AudioTrack.MODE_STREAM);
-		audioTrack.play();
+	boolean playNextSong()
+	{
+		if (song + 1 < info.getSongs())
+			return load(uri, song + 1);
+		int playlistIndex = getPlaylistIndex();
+		if (playlistIndex < 0)
+			return false;
+		if (++playlistIndex >= playlist.size())
+			playlistIndex = 0;
+		return loadFromPlaylist(playlistIndex, 0);
+	}
 
-		for (;;) {
-			synchronized (this) {
-				if (bufferLen < shortBuffer.length || isPaused()) {
-					try {
-						wait();
+	boolean playPreviousSong()
+	{
+		if (song > 0)
+			return load(uri, song - 1);
+		int playlistIndex = getPlaylistIndex();
+		if (playlistIndex < 0)
+			return false;
+		if (playlistIndex == 0)
+			playlistIndex = playlist.size();
+		return loadFromPlaylist(playlistIndex - 1, SONG_LAST);
+	}
+
+	public void run()
+	{
+		do {
+			showNotification();
+
+			int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
+			int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT) >> 1;
+			if (bufferLen < 16384)
+				bufferLen = 16384;
+			byte[] byteBuffer = new byte[bufferLen << 1];
+			short[] shortBuffer = new short[bufferLen];
+			AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT, bufferLen << 1, AudioTrack.MODE_STREAM);
+			audioTrack.play();
+
+			do {
+				synchronized (this) {
+					if (paused) {
+						audioTrack.pause();
+						try {
+							wait();
+						}
+						catch (InterruptedException ex) {
+						}
+						audioTrack.play();
 					}
-					catch (InterruptedException ex) {
+
+					if (thread == null) {
+						audioTrack.stop();
+						stopForegroundCompat(NOTIFICATION_ID);
+						return;
+					}
+
+					int pos = seekPosition;
+					if (pos >= 0) {
+						seekPosition = -1;
+						try {
+							asap.seek(pos);
+						}
+						catch (Exception ex) {
+						}
 					}
 				}
-				if (stop) {
-					audioTrack.stop();
-					return;
-				}
-			}
-			synchronized (asap) {
-				int pos = seekPosition;
-				if (pos >= 0) {
-					seekPosition = -1;
-					try {
-						asap.seek(pos);
-					}
-					catch (Exception ex) {
-					}
-				}
+
 				bufferLen = asap.generate(byteBuffer, byteBuffer.length, ASAPSampleFormat.S16_L_E) >> 1;
-			}
-			for (int i = 0; i < bufferLen; i++)
-				shortBuffer[i] = (short) ((byteBuffer[i << 1] & 0xff) | byteBuffer[i << 1 | 1] << 8);
-			audioTrack.write(shortBuffer, 0, bufferLen);
-		}
+				for (int i = 0; i < bufferLen; i++)
+					shortBuffer[i] = (short) ((byteBuffer[i << 1] & 0xff) | byteBuffer[i << 1 | 1] << 8);
+				audioTrack.write(shortBuffer, 0, bufferLen);
+			} while (bufferLen == shortBuffer.length);
+
+			audioTrack.stop();
+		} while (playNextSong());
+
+		stopForegroundCompat(NOTIFICATION_ID);
+		thread = null;
+	}
+
+	private boolean isPaused()
+	{
+		return paused;
+	}
+
+	public boolean isPlaying()
+	{
+		return !paused;
+	}
+
+	public boolean canPause()
+	{
+		return true;
+	}
+
+	public boolean canSeekBackward()
+	{
+		return false;
+	}
+
+	public boolean canSeekForward()
+	{
+		return false;
+	}
+
+	public int getBufferPercentage()
+	{
+		return 100;
+	}
+
+	public synchronized void pause()
+	{
+		paused = true;
+	}
+
+	public synchronized void start()
+	{
+		paused = false;
+		notify();
+	}
+
+	synchronized void togglePause()
+	{
+		if (paused)
+			start();
+		else
+			pause();
+	}
+
+	public int getDuration()
+	{
+		if (song < 0)
+			return -1;
+		return info.getDuration(song);
+	}
+
+	public int getCurrentPosition()
+	{
+		return asap.getPosition();
+	}
+
+	public synchronized void seekTo(int pos)
+	{
+		seekPosition = pos;
+		start();
+	}
+
+	public int getAudioSessionId()
+	{
+		// API 9: return audioTrack != null ? audioTrack.getAudioSessionId() : 0;
+		return 0;
 	}
 
 	private final BroadcastReceiver headsetReceiver = new BroadcastReceiver() {
@@ -424,7 +414,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		{
 			if (intent.getIntExtra("state", -1) == 0) {
 				pause();
-				showInfo(); // just to update MediaController
+				showInfo(); // just to update the MediaController
 			}
 		}
 	};
@@ -464,7 +454,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 				uri = playlist.get(0);
 			}
 		}
-		playFile(uri, SONG_DEFAULT);
+		load(uri, SONG_DEFAULT);
 	}
 
 	@Override
