@@ -1,7 +1,7 @@
 /*
  * xbmc_asap.c - ASAP plugin for XBMC
  *
- * Copyright (C) 2008-2011  Piotr Fusik
+ * Copyright (C) 2008-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef __linux__
+#ifndef _WIN32
 #define __declspec(x)
 #endif
 

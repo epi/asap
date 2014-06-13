@@ -176,19 +176,15 @@ make install-vlc-osx
 Building the XBMC plugin on Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need source code of the Linux port of XBMC.
+Your XBMC must include support for ASAP.
+Unfortunately it's disabled in the official Linux build.
 
-Run:
+Anyway, to build the ASAP plugin, run:
 --------------------------------------------------------------------------------
-make asap-xbmc XBMC_DLL_LOADER_EXPORTS=path/to/dir/in/xbmc/sources
+make asap-xbmc
 --------------------------------------------------------------------------------
 
-`XBMC_DLL_LOADER_EXPORTS` must point to the directory in XBMC sources
-which contains `wrapper.def` and `wrapper.o`.
 You should get `xbmc_asap-i486-linux.so`.
-
-Recently I wasn't able to enable the ASAP plugin in XBMC.
-This seems to be an XBMC issue.
 
 
 Building the XMMS plugin on Unix-like systems
