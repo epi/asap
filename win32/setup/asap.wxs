@@ -581,7 +581,7 @@
 				<ComponentRef Id="foo_asap.ext" />
 			</Feature>
 		</Feature>
-		<Feature Id="xbmc_asap" Title="XBMC plugin" Level="9" ConfigurableDirectory="XBMCPAPL.DIR" Description="Plugin for XBMC (Windows and XBox)." AllowAdvertise="no">
+		<Feature Id="xbmc_asap" Title="XBMC plugin" Level="9" ConfigurableDirectory="XBMCPAPL.DIR" Description="Plugin for XBMC." AllowAdvertise="no">
 			<Condition Level="1">XBMC.DIR</Condition>
 			<ComponentRef Id="xbmc_asap.dll" />
 		</Feature>

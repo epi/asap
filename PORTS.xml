@@ -173,7 +173,7 @@
 	</port>
 	<port name="XBMC plugin">
 		<bin>Windows</bin>
-		<platform>XBox, Windows, Linux</platform>
+		<platform>Windows, Linux</platform>
 		<interface>player plugin</interface>
 		<since>1.2.1</since>
 		<status>stable</status>
