@@ -15,6 +15,7 @@ SEVENZIP = 7z a -mx=9 -bd
 MAKEZIP = $(DO)$(RM) $@ && $(SEVENZIP) -tzip $@ $(^:%=./%) # "./" makes 7z don't store paths in the archive
 COPY = $(DO)cp $< $@
 XASM = $(DO)xasm -q -o $@ $<
+OSX_CC = $(DO)gcc -O2 -Wall -o $@ -undefined dynamic_lookup -arch x86_64 -arch i386 -mmacosx-version-min=10.4 $(INCLUDEOPTS) $(filter %.c,$^)
 
 # no user-configurable paths below this line
 

@@ -29,5 +29,5 @@ asap-xbmc-osx: xbmc_asap-x86-osx.so
 .PHONY: asap-xbmc-osx
 
 xbmc_asap-x86-osx.so: $(call src,xbmc/xbmc_asap.c asap.[ch] xbmc/wrapper.c)
-	$(DO)gcc -O2 -Wall -o $@ -bundle -undefined dynamic_lookup -arch x86_64 -arch i386 $(INCLUDEOPTS) $(filter %.c,$^) $(foreach func,$(XBMC_WRAP_FUNCTIONS),-Wl,-alias,___wrap_$(func),_$(func))
+	$(OSX_CC) -bundle $(foreach func,$(XBMC_WRAP_FUNCTIONS),-Wl,-alias,___wrap_$(func),_$(func))
 CLEAN += xbmc_asap-x86-osx.so
