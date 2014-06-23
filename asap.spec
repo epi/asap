@@ -6,6 +6,7 @@ License: GPLv2+
 Group: Applications/Multimedia
 Source: http://prdownloads.sourceforge.net/asap/asap-%{version}.tar.gz
 URL: http://asap.sourceforge.net/
+BuildRequires: gcc
 BuildRoot: %{_tmppath}/asap-root
 
 %description
