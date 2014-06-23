@@ -26,67 +26,67 @@ Download
 
 [horizontal]
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-win32.msi/download[asap-3.1.6-win32.msi]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-win32.msi/download[asap-3.2.0-win32.msi]::
 Installer for all versions of desktop Windows (32-bit and 64-bit).
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/foo_asap-3.1.6.fb2k-component/download[foo_asap-3.1.6.fb2k-component]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/foo_asap-3.2.0.fb2k-component/download[foo_asap-3.2.0.fb2k-component]::
 If you only want the http://foobar2000.org/[foobar2000] plugin.
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-android.apk/download[asap-3.1.6-android.apk]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-android.apk/download[asap-3.2.0-android.apk]::
 Android application.
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-wince-arm.cab/download[asap-3.1.6-wince-arm.cab]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-wince-arm.cab/download[asap-3.2.0-wince-arm.cab]::
 WASAP, Windows Media Player and GSPlayer plugins for Windows Mobile.
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-web.zip/download[asap-3.1.6-web.zip]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-web.zip/download[asap-3.2.0-web.zip]::
 Embed ASAP on your web page.
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-java.zip/download[asap-3.1.6-java.zip]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-java.zip/download[asap-3.2.0-java.zip]::
 Java midlet for mobile phones.
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-air.air/download[asap-3.1.6-air.air]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-air.air/download[asap-3.2.0-air.air]::
 Desktop player in JavaScript (requires http://www.adobe.com/products/air/[Adobe AIR]).
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-win64.msi/download[asap-3.1.6-win64.msi]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-win64.msi/download[asap-3.2.0-win64.msi]::
 View and edit SAP file tags in your 64-bit Windows Explorer. Listen in 64-bit Windows Media Player.
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-win32.zip/download[asap-3.1.6-win32.zip]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-win32.zip/download[asap-3.2.0-win32.zip]::
 For Windows people allergic to installers.
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-wince-arm.zip/download[asap-3.1.6-wince-arm.zip]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-wince-arm.zip/download[asap-3.2.0-wince-arm.zip]::
 For Windows Mobile people allergic to installers.
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-vlc-3.1.6-osx.dmg/download[asap-vlc-3.1.6-osx.dmg]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-vlc-3.2.0-osx.dmg/download[asap-vlc-3.2.0-osx.dmg]::
 VLC plugin for OS X (Intel 32-bit and 64-bit). Drag `libasap_plugin.dylib` to `plugins`.
 
-asap_3.1.6-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.6/asap_3.1.6-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.6/asap_3.1.6-1_amd64.deb/download[amd64]\}.deb::
+asap_3.2.0-1_\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap_3.2.0-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap_3.2.0-1_amd64.deb/download[amd64]\}.deb::
 Linux binary of asapconv.
 
-asap-3.1.6-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6-1.x86_64.rpm/download[x86_64]\}.rpm::
+asap-3.2.0-1.\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-1.i686.rpm/download[i686],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of asapconv.
 
-asap-gstreamer0.10_3.1.6-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-gstreamer0.10_3.1.6-1_i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-gstreamer0.10_3.1.6-1_amd64.deb/download[amd64]\}.deb::
+asap-gstreamer0.10_3.2.0-1_\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-gstreamer0.10_3.2.0-1_i686.rpm/download[i686],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-gstreamer0.10_3.2.0-1_amd64.deb/download[amd64]\}.deb::
 Linux binary of the GStreamer 0.10 plugin.
 
-asap-gstreamer0.10-3.1.6-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-gstreamer0.10-3.1.6-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-gstreamer0.10-3.1.6-1.x86_64.rpm/download[x86_64]\}.rpm::
+asap-gstreamer0.10-3.2.0-1.\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-gstreamer0.10-3.2.0-1.i686.rpm/download[i686],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-gstreamer0.10-3.2.0-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of the GStreamer 0.10 plugin.
 
-asap-vlc_3.1.6-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-vlc_3.1.6-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-vlc_3.1.6-1_amd64.deb/download[amd64]\}.deb::
+asap-vlc_3.2.0-1_\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-vlc_3.2.0-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-vlc_3.2.0-1_amd64.deb/download[amd64]\}.deb::
 Linux binary of the VLC plugin.
 
-asap-vlc-3.1.6-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-vlc-3.1.6-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-vlc-3.1.6-1.x86_64.rpm/download[x86_64]\}.rpm::
+asap-vlc-3.2.0-1.\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-vlc-3.2.0-1.i686.rpm/download[i686],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-vlc-3.2.0-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of the VLC plugin.
 
-asap-dev_3.1.6-1_\{http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-dev_3.1.6-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-dev_3.1.6-1_amd64.deb/download[amd64]\}.deb::
+asap-dev_3.2.0-1_\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-dev_3.2.0-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-dev_3.2.0-1_amd64.deb/download[amd64]\}.deb::
 Linux library for embedding ASAP in other applications.
 
-asap-devel-3.1.6-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-devel-3.1.6-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-devel-3.1.6-1.x86_64.rpm/download[x86_64]\}.rpm::
+asap-devel-3.2.0-1.\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-devel-3.2.0-1.i686.rpm/download[i686],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-devel-3.2.0-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux library for embedding ASAP in other applications.
 
-asap-xmms-3.1.6-1.\{http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-xmms-3.1.6-1.i386.rpm/download[i386],http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-xmms-3.1.6-1.x86_64.rpm/download[x86_64]\}.rpm::
+asap-xmms-3.2.0-1.\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-xmms-3.2.0-1.i686.rpm/download[i686],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-xmms-3.2.0-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of the XMMS plugin.
 
-http://sourceforge.net/projects/asap/files/asap/3.1.6/asap-3.1.6.tar.gz/download[asap-3.1.6.tar.gz]::
+http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0.tar.gz/download[asap-3.2.0.tar.gz]::
 Full source code (use for the Audacious plugin on Linux).
 
 All released files are available http://sourceforge.net/projects/asap/files/asap/[here].

@@ -9,6 +9,24 @@ image:http://sflogo.sourceforge.net/sflogo.php?group_id=154391&amp;type=13["Get 
 News
 ----
 
+ASAP 3.2.0 (2014-06-23)::
+
+- Reduced amplitude by half to avoid clipping on loud tunes.
+- Silence detection regarded GTIA and COVOX sounds as silence.
+- asapconv supports conversion to one WAV/RAW/MP3/XEX file per subsong.
+- File Information window in the foobar2000 plugin.
+- Updated the XBMC plugin for the new XBMC.
+- OS X VLC plugin no longer requires OS X 10.8.
+
+Android changes;;
+- Android 4.4 can now read the memory card.
+- Switch to the next song when the current one ends.
+- Playback couldn't be resumed after a while of pause.
+- Search files using on-screen keyboard.
+- Removed HTTP playback.
+- Files with duplicate titles were lost in the details view.
+
+
 ASAP 3.1.6 (2014-01-15)::
 
 Android;;
