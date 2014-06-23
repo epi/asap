@@ -301,7 +301,7 @@ Building the VLC plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install VLC as usual, it includes the SDK.
-`VLC_SDK_DIR` in `win32/win32.mk` is fine for the default installation
+`VLC_DIR` in `win32/win32.mk` is fine for the default installation
 directory on 64-bit Windows - edit it if necessary.
 
 Open the command prompt in the root directory of ASAP sources and run:

@@ -4,8 +4,8 @@ WIN32_CXX = $(DO)mingw32-g++ -static $(WIN32_CARGS)
 WIN32_WINDRES = $(DO)windres -o $@ $<
 GTK_DIR = ../porty/audacious/gtk
 AUDACIOUS_INCLUDE = ../porty/audacious/audacious-3.3.2/src
-AUDACIOUS_LIB = "C:/Program Files (x86)/audacious-3.3.4/bin"
-VLC_SDK_DIR = "C:/Program Files (x86)/VideoLAN/VLC/sdk"
+AUDACIOUS_LIB = "C:/Program Files (x86)/audacious-3.4/bin"
+VLC_DIR = "C:/Program Files (x86)/VideoLAN/VLC"
 GST_SDK_DIR = "C:/gstreamer-sdk/0.10/x86"
 
 # Microsoft compiler for Windows Media Player and foobar2000
@@ -167,7 +167,7 @@ CLEAN += win32/audacious/asapplug-res.o
 # VLC
 
 win32/libasap_plugin.dll: $(call src,vlc/libasap_plugin.c asap.[ch]) win32/libasap_plugin-res.o
-	$(WIN32_CC) -std=gnu99 -I$(VLC_SDK_DIR)/include/vlc/plugins -L$(VLC_SDK_DIR)/lib -lvlccore
+	$(WIN32_CC) -std=gnu99 -I$(VLC_DIR)/sdk/include/vlc/plugins -L$(VLC_DIR) -lvlccore
 CLEAN += win32/libasap_plugin.dll
 
 win32/libasap_plugin-res.o: $(call src,win32/gui.rc asap.h)
