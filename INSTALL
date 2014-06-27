@@ -138,8 +138,8 @@ sudo make install-moc MOC_PLUGIN_DIR=/path/to/moc/plugins
 Building the VLC plugin on Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Install `vlc-devel`. Verify paths at the top of `vlc/vlc.mk`.
-To compile, run the following command:
+Install `libvlccore-dev` (Debian/Ubuntu) or `vlc-devel` (Fedora).
+Verify paths at the top of `vlc/vlc.mk`. To compile, run the following command:
 --------------------------------------------------------------------------------
 make asap-vlc
 --------------------------------------------------------------------------------
