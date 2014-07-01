@@ -41,7 +41,7 @@ __declspec(dllexport) void APokeySound_PutByte(int addr, int data)
 
 __declspec(dllexport) int APokeySound_GetRandom(int addr, int cycle)
 {
-	return PokeyPair_GetRandom(pokeys, addr, cycle);
+	return PokeyPair_Peek(pokeys, addr, cycle);
 }
 
 __declspec(dllexport) int APokeySound_Generate(int cycles, unsigned char *buffer, int depth)

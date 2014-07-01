@@ -36,6 +36,7 @@ class PokeyChannel
 	int Audc;
 	int PeriodCycles;
 	int TickCycle;
+	int TimerCycle;
 
 	// Is channel muted?
 	const int MuteFrequency = 1;
@@ -53,6 +54,7 @@ class PokeyChannel
 		Audc = 0;
 		PeriodCycles = 28;
 		TickCycle = Pokey.NeverCycle;
+		TimerCycle = Pokey.NeverCycle;
 		Mute = MuteFrequency;
 		Out = 0;
 		Delta = 0;
@@ -147,6 +149,12 @@ class PokeyChannel
 				Delta = -data;
 		}
 	}
+
+	void EndFrame(int cycle)
+	{
+		if (TimerCycle != Pokey.NeverCycle)
+			TimerCycle -= cycle;
+	}
 }
 
 class Pokey
@@ -154,6 +162,7 @@ class Pokey
 	PokeyChannel()[4] Channels;
 	int Audctl;
 	int Skctl;
+	int Irqst;
 	bool Init;
 	int DivCycles;
 	int ReloadCycles1;
@@ -177,6 +186,7 @@ class Pokey
 			Channels[i].Initialize();
 		Audctl = 0;
 		Skctl = 3;
+		Irqst = 0xff;
 		Init = false;
 		DivCycles = 28;
 		ReloadCycles1 = 28;
@@ -275,7 +285,7 @@ class Pokey
 		Channels[3].SetMute(init && (audctl & 0x28) != 0x28, PokeyChannel.MuteInit, cycle);
 	}
 
-	void Poke(PokeyPair pokeys, int addr, int data, int cycle)
+	int Poke(PokeyPair pokeys, int addr, int data, int cycle)
 	{
 		macro DO_STORE(reg) {
 			if (data == reg)
@@ -284,6 +294,7 @@ class Pokey
 			reg = data;
 		}
 
+		int nextEventCycle = NeverCycle;
 		switch (addr & 0xf) {
 		case 0x00:
 			DO_STORE(Channels[0].Audf);
@@ -428,6 +439,25 @@ class Pokey
 			for (int i = 0; i < 4; i++)
 				Channels[i].DoStimer(cycle);
 			break;
+		case 0x0e:
+			Irqst |= data ^ 0xff;
+			for (int i = 3; ; i >>= 1) {
+				if ((data & Irqst & i + 1) != 0) {
+					if (Channels[i].TimerCycle == NeverCycle) {
+						int t = Channels[i].TickCycle;
+						while (t < cycle)
+							t += Channels[i].PeriodCycles;
+						Channels[i].TimerCycle = t;
+						if (nextEventCycle > t)
+							nextEventCycle = t;
+					}
+				}
+				else
+					Channels[i].TimerCycle = NeverCycle;
+				if (i == 0)
+					break;
+			}
+			break;
 		case 0x0f:
 			DO_STORE(Skctl);
 			bool init = (data & 3) == 0;
@@ -441,6 +471,23 @@ class Pokey
 		default:
 			break;
 		}
+		return nextEventCycle;
+	}
+
+	int CheckIrq(int cycle, int nextEventCycle)
+	{
+		for (int i = 3; ; i >>= 1) {
+			int timerCycle = Channels[i].TimerCycle;
+			if (cycle >= timerCycle) {
+				Irqst &= ~(i + 1);
+				Channels[i].TimerCycle = NeverCycle;
+			}
+			else if (nextEventCycle > timerCycle)
+				nextEventCycle = timerCycle;
+			if (i == 0)
+				break;
+		}
+		return nextEventCycle;
 	}
 }
 
@@ -452,10 +499,6 @@ class PokeyPair
 	byte[511] Poly9Lookup;
 	byte[16385] Poly17Lookup;
 	int ExtraPokeyMask;
-	int Timer1Cycle;
-	int Timer2Cycle;
-	int Timer4Cycle;
-	int Irqst;
 	Pokey() BasePokey;
 	Pokey() ExtraPokey;
 
@@ -495,10 +538,6 @@ class PokeyPair
 	void Initialize(bool ntsc, bool stereo)
 	{
 		ExtraPokeyMask = stereo ? 0x10 : 0;
-		Timer1Cycle = Pokey.NeverCycle;
-		Timer2Cycle = Pokey.NeverCycle;
-		Timer4Cycle = Pokey.NeverCycle;
-		Irqst = 0xff;
 		BasePokey.Initialize();
 		ExtraPokey.Initialize();
 
@@ -519,27 +558,34 @@ class PokeyPair
 #if APOKEYSND
 	public
 #endif
-	void Poke(int addr, int data, int cycle)
+	int Poke(int addr, int data, int cycle)
 	{
 		Pokey pokey = (addr & ExtraPokeyMask) != 0 ? ExtraPokey : BasePokey;
-		pokey.Poke(this, addr, data, cycle);
+		return pokey.Poke(this, addr, data, cycle);
 	}
 
 #if APOKEYSND
 	public
 #endif
-	int GetRandom(int addr, int cycle)
+	int Peek(int addr, int cycle)
 	{
 		Pokey pokey = (addr & ExtraPokeyMask) != 0 ? ExtraPokey : BasePokey;
-		if (pokey.Init)
+		switch (addr & 0xf) {
+		case 0x0a:
+			if (pokey.Init)
+				return 0xff;
+			int i = cycle + pokey.PolyIndex;
+			if ((pokey.Audctl & 0x80) != 0)
+				return Poly9Lookup[i % 511];
+			i %= 131071;
+			int j = i >> 3;
+			i &= 7;
+			return ((Poly17Lookup[j] >> i) + (Poly17Lookup[j + 1] << (8 - i))) & 0xff;
+		case 0x0e:
+			return pokey.Irqst;
+		default:
 			return 0xff;
-		int i = cycle + pokey.PolyIndex;
-		if ((pokey.Audctl & 0x80) != 0)
-			return Poly9Lookup[i % 511];
-		i %= 131071;
-		int j = i >> 3;
-		i &= 7;
-		return ((Poly17Lookup[j] >> i) + (Poly17Lookup[j + 1] << (8 - i))) & 0xff;
+		}
 	}
 
 #if APOKEYSND

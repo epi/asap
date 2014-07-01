@@ -134,9 +134,11 @@ struct PokeyChannel {
 	int out;
 	int periodCycles;
 	int tickCycle;
+	int timerCycle;
 };
 static void PokeyChannel_DoStimer(PokeyChannel *self, int cycle);
 static void PokeyChannel_DoTick(PokeyChannel *self, Pokey *pokey, PokeyPair const *pokeys, int cycle, int ch);
+static void PokeyChannel_EndFrame(PokeyChannel *self, int cycle);
 static void PokeyChannel_Initialize(PokeyChannel *self);
 static void PokeyChannel_MuteUltrasound(PokeyChannel *self, int cycle);
 static void PokeyChannel_SetAudc(PokeyChannel *self, Pokey *pokey, PokeyPair const *pokeys, int data, int cycle);
@@ -147,6 +149,7 @@ struct Pokey {
 	int audctl;
 	int divCycles;
 	cibool init;
+	int irqst;
 	int polyIndex;
 	int reloadCycles1;
 	int reloadCycles3;
@@ -155,26 +158,23 @@ struct Pokey {
 	int deltaBuffer[888];
 };
 static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int delta);
+static int Pokey_CheckIrq(Pokey *self, int cycle, int nextEventCycle);
 static void Pokey_EndFrame(Pokey *self, PokeyPair const *pokeys, int cycle);
 static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int cycleLimit);
 static void Pokey_InitMute(Pokey *self, int cycle);
 static void Pokey_Initialize(Pokey *self);
 static cibool Pokey_IsSilent(Pokey const *self);
 static void Pokey_Mute(Pokey *self, int mask);
-static void Pokey_Poke(Pokey *self, PokeyPair const *pokeys, int addr, int data, int cycle);
+static int Pokey_Poke(Pokey *self, PokeyPair const *pokeys, int addr, int data, int cycle);
 
 struct PokeyPair {
 	int extraPokeyMask;
 	int iirAccLeft;
 	int iirAccRight;
-	int irqst;
 	int readySamplesEnd;
 	int readySamplesStart;
 	int sampleFactor;
 	int sampleOffset;
-	int timer1Cycle;
-	int timer2Cycle;
-	int timer4Cycle;
 	unsigned char poly9Lookup[511];
 	Pokey basePokey;
 	Pokey extraPokey;
@@ -183,10 +183,10 @@ struct PokeyPair {
 static void PokeyPair_Construct(PokeyPair *self);
 static int PokeyPair_EndFrame(PokeyPair *self, int cycle);
 static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int bufferOffset, int blocks, ASAPSampleFormat format);
-static int PokeyPair_GetRandom(PokeyPair const *self, int addr, int cycle);
 static void PokeyPair_Initialize(PokeyPair *self, cibool ntsc, cibool stereo);
 static cibool PokeyPair_IsSilent(PokeyPair const *self);
-static void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
+static int PokeyPair_Peek(PokeyPair const *self, int addr, int cycle);
+static int PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
 static void PokeyPair_StartFrame(PokeyPair *self);
 
 struct ASAP {
@@ -1993,12 +1993,15 @@ static int ASAP_Do6502Frame(ASAP *self)
 	self->cycle -= cycles;
 	if (self->nextPlayerCycle != 8388608)
 		self->nextPlayerCycle -= cycles;
-	if (self->pokeys.timer1Cycle != 8388608)
-		self->pokeys.timer1Cycle -= cycles;
-	if (self->pokeys.timer2Cycle != 8388608)
-		self->pokeys.timer2Cycle -= cycles;
-	if (self->pokeys.timer4Cycle != 8388608)
-		self->pokeys.timer4Cycle -= cycles;
+	{
+		int i;
+		for (i = 3;; i >>= 1) {
+			PokeyChannel_EndFrame(&self->pokeys.basePokey.channels[i], cycles);
+			PokeyChannel_EndFrame(&self->pokeys.extraPokey.channels[i], cycles);
+			if (i == 0)
+				break;
+		}
+	}
 	return cycles;
 }
 
@@ -2156,24 +2159,8 @@ static void ASAP_HandleEvent(ASAP *self)
 		}
 	}
 	nextEventCycle = self->nextScanlineCycle;
-	if (cycle >= self->pokeys.timer1Cycle) {
-		self->pokeys.irqst &= ~1;
-		self->pokeys.timer1Cycle = 8388608;
-	}
-	else if (nextEventCycle > self->pokeys.timer1Cycle)
-		nextEventCycle = self->pokeys.timer1Cycle;
-	if (cycle >= self->pokeys.timer2Cycle) {
-		self->pokeys.irqst &= ~2;
-		self->pokeys.timer2Cycle = 8388608;
-	}
-	else if (nextEventCycle > self->pokeys.timer2Cycle)
-		nextEventCycle = self->pokeys.timer2Cycle;
-	if (cycle >= self->pokeys.timer4Cycle) {
-		self->pokeys.irqst &= ~4;
-		self->pokeys.timer4Cycle = 8388608;
-	}
-	else if (nextEventCycle > self->pokeys.timer4Cycle)
-		nextEventCycle = self->pokeys.timer4Cycle;
+	nextEventCycle = Pokey_CheckIrq(&self->pokeys.basePokey, cycle, nextEventCycle);
+	nextEventCycle = Pokey_CheckIrq(&self->pokeys.extraPokey, cycle, nextEventCycle);
 	self->nextEventCycle = nextEventCycle;
 }
 
@@ -2237,14 +2224,9 @@ static int ASAP_PeekHardware(ASAP const *self, int addr)
 		return ~self->consol & 15;
 	case 53770:
 	case 53786:
-		return PokeyPair_GetRandom(&self->pokeys, addr, self->cycle);
 	case 53774:
-		return self->pokeys.irqst;
 	case 53790:
-		if (self->pokeys.extraPokeyMask != 0) {
-			return 255;
-		}
-		return self->pokeys.irqst;
+		return PokeyPair_Peek(&self->pokeys, addr, self->cycle);
 	case 53772:
 	case 53788:
 	case 53775:
@@ -2349,47 +2331,9 @@ cibool ASAP_PlaySong(ASAP *self, int song, int duration)
 static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 {
 	if (addr >> 8 == 210) {
-		if ((addr & (self->pokeys.extraPokeyMask + 15)) == 14) {
-			self->pokeys.irqst |= data ^ 255;
-			if ((data & self->pokeys.irqst & 1) != 0) {
-				if (self->pokeys.timer1Cycle == 8388608) {
-					int t = self->pokeys.basePokey.channels[0].tickCycle;
-					while (t < self->cycle)
-						t += self->pokeys.basePokey.channels[0].periodCycles;
-					self->pokeys.timer1Cycle = t;
-					if (self->nextEventCycle > t)
-						self->nextEventCycle = t;
-				}
-			}
-			else
-				self->pokeys.timer1Cycle = 8388608;
-			if ((data & self->pokeys.irqst & 2) != 0) {
-				if (self->pokeys.timer2Cycle == 8388608) {
-					int t = self->pokeys.basePokey.channels[1].tickCycle;
-					while (t < self->cycle)
-						t += self->pokeys.basePokey.channels[1].periodCycles;
-					self->pokeys.timer2Cycle = t;
-					if (self->nextEventCycle > t)
-						self->nextEventCycle = t;
-				}
-			}
-			else
-				self->pokeys.timer2Cycle = 8388608;
-			if ((data & self->pokeys.irqst & 4) != 0) {
-				if (self->pokeys.timer4Cycle == 8388608) {
-					int t = self->pokeys.basePokey.channels[3].tickCycle;
-					while (t < self->cycle)
-						t += self->pokeys.basePokey.channels[3].periodCycles;
-					self->pokeys.timer4Cycle = t;
-					if (self->nextEventCycle > t)
-						self->nextEventCycle = t;
-				}
-			}
-			else
-				self->pokeys.timer4Cycle = 8388608;
-		}
-		else
-			PokeyPair_Poke(&self->pokeys, addr, data, self->cycle);
+		int t = PokeyPair_Poke(&self->pokeys, addr, data, self->cycle);
+		if (self->nextEventCycle > t)
+			self->nextEventCycle = t;
 	}
 	else if ((addr & 65295) == 54282) {
 		int x = self->cycle % 114;
@@ -5180,7 +5124,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 			ASAP_HandleEvent(asap);
 			pc = self->pc;
 			s = self->s;
-			if ((vdi & 4) == 0 && asap->pokeys.irqst != 255) {
+			if ((vdi & 4) == 0 && asap->pokeys.basePokey.irqst != 255) {
 				asap->memory[256 + s] = pc >> 8;
 				s = (s - 1) & 255;
 				asap->memory[256 + s] = (unsigned char) pc;
@@ -5374,7 +5318,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 			nz = ((vdi & 128) << 1) + (~vdi & 2);
 			c = vdi & 1;
 			vdi &= 76;
-			if ((vdi & 4) == 0 && asap->pokeys.irqst != 255) {
+			if ((vdi & 4) == 0 && asap->pokeys.basePokey.irqst != 255) {
 				asap->memory[256 + s] = pc >> 8;
 				s = (s - 1) & 255;
 				asap->memory[256 + s] = (unsigned char) pc;
@@ -5504,7 +5448,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 			s = (s + 1) & 255;
 			addr = asap->memory[256 + s];
 			pc += addr << 8;
-			if ((vdi & 4) == 0 && asap->pokeys.irqst != 255) {
+			if ((vdi & 4) == 0 && asap->pokeys.basePokey.irqst != 255) {
 				asap->memory[256 + s] = pc >> 8;
 				s = (s - 1) & 255;
 				asap->memory[256 + s] = (unsigned char) pc;
@@ -5603,7 +5547,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 			break;
 		case 88:
 			vdi &= 72;
-			if ((vdi & 4) == 0 && asap->pokeys.irqst != 255) {
+			if ((vdi & 4) == 0 && asap->pokeys.basePokey.irqst != 255) {
 				asap->memory[256 + s] = pc >> 8;
 				s = (s - 1) & 255;
 				asap->memory[256 + s] = (unsigned char) pc;
@@ -8147,6 +8091,25 @@ static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int 
 	self->deltaBuffer[i + 1] += delta2;
 }
 
+static int Pokey_CheckIrq(Pokey *self, int cycle, int nextEventCycle)
+{
+	{
+		int i;
+		for (i = 3;; i >>= 1) {
+			int timerCycle = self->channels[i].timerCycle;
+			if (cycle >= timerCycle) {
+				self->irqst &= ~(i + 1);
+				self->channels[i].timerCycle = 8388608;
+			}
+			else if (nextEventCycle > timerCycle)
+				nextEventCycle = timerCycle;
+			if (i == 0)
+				break;
+		}
+	}
+	return nextEventCycle;
+}
+
 static void Pokey_EndFrame(Pokey *self, PokeyPair const *pokeys, int cycle)
 {
 	int m;
@@ -8225,6 +8188,7 @@ static void Pokey_Initialize(Pokey *self)
 	}
 	self->audctl = 0;
 	self->skctl = 3;
+	self->irqst = 255;
 	self->init = FALSE;
 	self->divCycles = 28;
 	self->reloadCycles1 = 28;
@@ -8253,8 +8217,9 @@ static void Pokey_Mute(Pokey *self, int mask)
 	}
 }
 
-static void Pokey_Poke(Pokey *self, PokeyPair const *pokeys, int addr, int data, int cycle)
+static int Pokey_Poke(Pokey *self, PokeyPair const *pokeys, int addr, int data, int cycle)
 {
+	int nextEventCycle = 8388608;
 	switch (addr & 15) {
 		cibool init;
 	case 0:
@@ -8416,6 +8381,28 @@ static void Pokey_Poke(Pokey *self, PokeyPair const *pokeys, int addr, int data,
 				PokeyChannel_DoStimer(&self->channels[i], cycle);
 		}
 		break;
+	case 14:
+		self->irqst |= data ^ 255;
+		{
+			int i;
+			for (i = 3;; i >>= 1) {
+				if ((data & self->irqst & (i + 1)) != 0) {
+					if (self->channels[i].timerCycle == 8388608) {
+						int t = self->channels[i].tickCycle;
+						while (t < cycle)
+							t += self->channels[i].periodCycles;
+						self->channels[i].timerCycle = t;
+						if (nextEventCycle > t)
+							nextEventCycle = t;
+					}
+				}
+				else
+					self->channels[i].timerCycle = 8388608;
+				if (i == 0)
+					break;
+			}
+		}
+		break;
 	case 15:
 		if (data == self->skctl)
 			break;
@@ -8432,6 +8419,7 @@ static void Pokey_Poke(Pokey *self, PokeyPair const *pokeys, int addr, int data,
 	default:
 		break;
 	}
+	return nextEventCycle;
 }
 
 static void PokeyChannel_DoStimer(PokeyChannel *self, int cycle)
@@ -8474,12 +8462,19 @@ static void PokeyChannel_DoTick(PokeyChannel *self, Pokey *pokey, PokeyPair cons
 	PokeyChannel_Slope(self, pokey, pokeys, cycle);
 }
 
+static void PokeyChannel_EndFrame(PokeyChannel *self, int cycle)
+{
+	if (self->timerCycle != 8388608)
+		self->timerCycle -= cycle;
+}
+
 static void PokeyChannel_Initialize(PokeyChannel *self)
 {
 	self->audf = 0;
 	self->audc = 0;
 	self->periodCycles = 28;
 	self->tickCycle = 8388608;
+	self->timerCycle = 8388608;
 	self->mute = 1;
 	self->out = 0;
 	self->delta = 0;
@@ -8631,29 +8626,9 @@ static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int buffer
 	return blocks;
 }
 
-static int PokeyPair_GetRandom(PokeyPair const *self, int addr, int cycle)
-{
-	Pokey const *pokey = (addr & self->extraPokeyMask) != 0 ? &self->extraPokey : &self->basePokey;
-	int i;
-	int j;
-	if (pokey->init)
-		return 255;
-	i = cycle + pokey->polyIndex;
-	if ((pokey->audctl & 128) != 0)
-		return self->poly9Lookup[i % 511];
-	i %= 131071;
-	j = i >> 3;
-	i &= 7;
-	return ((self->poly17Lookup[j] >> i) + (self->poly17Lookup[j + 1] << (8 - i))) & 255;
-}
-
 static void PokeyPair_Initialize(PokeyPair *self, cibool ntsc, cibool stereo)
 {
 	self->extraPokeyMask = stereo ? 16 : 0;
-	self->timer1Cycle = 8388608;
-	self->timer2Cycle = 8388608;
-	self->timer4Cycle = 8388608;
-	self->irqst = 255;
 	Pokey_Initialize(&self->basePokey);
 	Pokey_Initialize(&self->extraPokey);
 	self->sampleFactor = ntsc ? 25837 : 26075;
@@ -8669,10 +8644,33 @@ static cibool PokeyPair_IsSilent(PokeyPair const *self)
 	return Pokey_IsSilent(&self->basePokey) && Pokey_IsSilent(&self->extraPokey);
 }
 
-static void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle)
+static int PokeyPair_Peek(PokeyPair const *self, int addr, int cycle)
+{
+	Pokey const *pokey = (addr & self->extraPokeyMask) != 0 ? &self->extraPokey : &self->basePokey;
+	switch (addr & 15) {
+		int i;
+		int j;
+	case 10:
+		if (pokey->init)
+			return 255;
+		i = cycle + pokey->polyIndex;
+		if ((pokey->audctl & 128) != 0)
+			return self->poly9Lookup[i % 511];
+		i %= 131071;
+		j = i >> 3;
+		i &= 7;
+		return ((self->poly17Lookup[j] >> i) + (self->poly17Lookup[j + 1] << (8 - i))) & 255;
+	case 14:
+		return pokey->irqst;
+	default:
+		return 255;
+	}
+}
+
+static int PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle)
 {
 	Pokey *pokey = (addr & self->extraPokeyMask) != 0 ? &self->extraPokey : &self->basePokey;
-	Pokey_Poke(pokey, self, addr, data, cycle);
+	return Pokey_Poke(pokey, self, addr, data, cycle);
 }
 
 static void PokeyPair_StartFrame(PokeyPair *self)

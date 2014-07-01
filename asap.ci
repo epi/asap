@@ -87,15 +87,9 @@ public class ASAP
 			return ~Consol & 0xf;
 		case 0xd20a:
 		case 0xd21a:
-			return Pokeys.GetRandom(addr, Cycle);
 		case 0xd20e:
-			return Pokeys.Irqst;
 		case 0xd21e:
-			if (Pokeys.ExtraPokeyMask != 0) {
-				// interrupts in the extra POKEY not emulated at the moment
-				return 0xff;
-			}
-			return Pokeys.Irqst;
+			return Pokeys.Peek(addr, Cycle);
 		case 0xd20c:
 		case 0xd21c:
 		case 0xd20f: // just because some SAP files rely on this
@@ -124,28 +118,9 @@ public class ASAP
 	void PokeHardware(int addr, int data)
 	{
 		if (addr >> 8 == 0xd2) {
-			if ((addr & (Pokeys.ExtraPokeyMask + 0xf)) == 0xe) {
-				Pokeys.Irqst |= data ^ 0xff;
-				macro SET_TIMER_IRQ(ch) {
-					if ((data & Pokeys.Irqst & ch) != 0) {
-						if (Pokeys.Timer##ch##Cycle == Pokey.NeverCycle) {
-							int t = Pokeys.BasePokey.Channels[ch - 1].TickCycle;
-							while (t < Cycle)
-								t += Pokeys.BasePokey.Channels[ch - 1].PeriodCycles;
-							Pokeys.Timer##ch##Cycle = t;
-							if (NextEventCycle > t)
-								NextEventCycle = t;
-						}
-					}
-					else
-						Pokeys.Timer##ch##Cycle = Pokey.NeverCycle;
-				}
-				SET_TIMER_IRQ(1);
-				SET_TIMER_IRQ(2);
-				SET_TIMER_IRQ(4);
-			}
-			else
-				Pokeys.Poke(addr, data, Cycle);
+			int t = Pokeys.Poke(addr, data, Cycle);
+			if (NextEventCycle > t)
+				NextEventCycle = t;
 		}
 		else if ((addr & 0xff0f) == 0xd40a) {
 			int x = Cycle % 114;
@@ -281,17 +256,8 @@ public class ASAP
 			}
 		}
 		int nextEventCycle = NextScanlineCycle;
-		macro CHECK_TIMER_IRQ(ch) {
-			if (cycle >= Pokeys.Timer##ch##Cycle) {
-				Pokeys.Irqst &= ~ch;
-				Pokeys.Timer##ch##Cycle = Pokey.NeverCycle;
-			}
-			else if (nextEventCycle > Pokeys.Timer##ch##Cycle)
-				nextEventCycle = Pokeys.Timer##ch##Cycle;
-		}
-		CHECK_TIMER_IRQ(1);
-		CHECK_TIMER_IRQ(2);
-		CHECK_TIMER_IRQ(4);
+		nextEventCycle = Pokeys.BasePokey.CheckIrq(cycle, nextEventCycle);
+		nextEventCycle = Pokeys.ExtraPokey.CheckIrq(cycle, nextEventCycle);
 		NextEventCycle = nextEventCycle;
 	}
 
@@ -305,12 +271,12 @@ public class ASAP
 		Cycle -= cycles;
 		if (NextPlayerCycle != Pokey.NeverCycle)
 			NextPlayerCycle -= cycles;
-		if (Pokeys.Timer1Cycle != Pokey.NeverCycle)
-			Pokeys.Timer1Cycle -= cycles;
-		if (Pokeys.Timer2Cycle != Pokey.NeverCycle)
-			Pokeys.Timer2Cycle -= cycles;
-		if (Pokeys.Timer4Cycle != Pokey.NeverCycle)
-			Pokeys.Timer4Cycle -= cycles;
+		for (int i = 3; ; i >>= 1) {
+			Pokeys.BasePokey.Channels[i].EndFrame(cycles);
+			Pokeys.ExtraPokey.Channels[i].EndFrame(cycles);
+			if (i == 0)
+				break;
+		}
 		return cycles;
 	}
 

@@ -1,6 +1,6 @@
 // cpu6502.ci - 6502 CPU emulator
 //
-// Copyright (C) 2010-2011  Piotr Fusik
+// Copyright (C) 2010-2014  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -273,7 +273,7 @@ class Cpu6502
 			}
 
 			macro CHECK_IRQ()  {
-				if ((vdi & IFlag) == 0 && asap.Pokeys.Irqst != 0xff) {
+				if ((vdi & IFlag) == 0 && asap.Pokeys.BasePokey.Irqst != 0xff) {
 					PHPC();
 					PHPB0();
 					vdi |= IFlag;
