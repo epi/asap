@@ -129,9 +129,9 @@ public class ASAP
 				macro SET_TIMER_IRQ(ch) {
 					if ((data & Pokeys.Irqst & ch) != 0) {
 						if (Pokeys.Timer##ch##Cycle == Pokey.NeverCycle) {
-							int t = Pokeys.BasePokey.TickCycle##ch;
+							int t = Pokeys.BasePokey.Channels[ch - 1].TickCycle;
 							while (t < Cycle)
-								t += Pokeys.BasePokey.PeriodCycles##ch;
+								t += Pokeys.BasePokey.Channels[ch - 1].PeriodCycles;
 							Pokeys.Timer##ch##Cycle = t;
 							if (NextEventCycle > t)
 								NextEventCycle = t;
@@ -665,16 +665,7 @@ public class ASAP
 		/// POKEY channel number (from 0 to 7).
 		int channel)
 	{
-		switch (channel) {
-		case 0: return Pokeys.BasePokey.Audc1 & 0xf;
-		case 1: return Pokeys.BasePokey.Audc2 & 0xf;
-		case 2: return Pokeys.BasePokey.Audc3 & 0xf;
-		case 3: return Pokeys.BasePokey.Audc4 & 0xf;
-		case 4: return Pokeys.ExtraPokey.Audc1 & 0xf;
-		case 5: return Pokeys.ExtraPokey.Audc2 & 0xf;
-		case 6: return Pokeys.ExtraPokey.Audc3 & 0xf;
-		case 7: return Pokeys.ExtraPokey.Audc4 & 0xf;
-		default: return 0;
-		}
+		Pokey pokey = (channel & 4) == 0 ? Pokeys.BasePokey : Pokeys.ExtraPokey;
+		return pokey.Channels[channel & 3].Audc & 0xf;
 	}
 }

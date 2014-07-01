@@ -1,7 +1,7 @@
 /*
  * asapscan.c - Atari 8-bit music analyzer
  *
- * Copyright (C) 2007-2013  Piotr Fusik
+ * Copyright (C) 2007-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -237,20 +237,18 @@ static void print_help(void)
 static cibool store_pokey(unsigned char *p, Pokey *pokey)
 {
 	cibool is_silence = TRUE;
-#define STORE_CHANNEL(ch) \
-	if ((pokey->audc##ch & 0xf) != 0) { \
-		is_silence = FALSE; \
-		p[ch * 2 - 2] = pokey->audf##ch; \
-		p[ch * 2 - 1] = pokey->audc##ch; \
-	} \
-	else { \
-		p[ch * 2 - 2] = 0; \
-		p[ch * 2 - 1] = 0; \
+	int i;
+	for (i = 0; i < 4; i++) {
+		if ((pokey->channels[i].audc & 0xf) != 0) {
+			is_silence = FALSE;
+			p[i * 2] = pokey->channels[i].audf;
+			p[i * 2 + 1] = pokey->channels[i].audc;
+		}
+		else {
+			p[i * 2] = 0;
+			p[i * 2 + 1] = 0;
+		}
 	}
-	STORE_CHANNEL(1)
-	STORE_CHANNEL(2)
-	STORE_CHANNEL(3)
-	STORE_CHANNEL(4)
 	p[8] = pokey->audctl;
 	return is_silence;
 }
@@ -341,21 +339,19 @@ static void compute_entrophy(int frames)
 
 static void print_pokey(const Pokey *pokey)
 {
-	printf(
-		"%02X %02X  %02X %02X  %02X %02X  %02X %02X  %02X",
-		pokey->audf1, pokey->audc1, pokey->audf2, pokey->audc2,
-		pokey->audf3, pokey->audc3, pokey->audf4, pokey->audc4, pokey->audctl
-	);
+	int i;
+	for (i = 0; i < 4; i++)
+		printf("%02X %02X  ", pokey->channels[i].audf, pokey->channels[i].audc);
+	printf("%02X", pokey->audctl);
 }
 
-static cibool is_ultrasound(int period_cycles, int audc)
+static cibool is_ultrasound(const PokeyChannel *ch)
 {
-	if (period_cycles > 112)
+	if (ch->periodCycles > 112)
 		return FALSE;
-	if ((audc & 0xf) == 0)
+	if ((ch->audc & 0xf) == 0)
 		return FALSE;
-	audc >>= 4;
-	return audc == 10 || audc == 14;
+	return (ch->audc & 0xb0) == 0xa0;
 }
 
 static void scan_song(int song)
@@ -389,16 +385,17 @@ static void scan_song(int song)
 				features |= FEATURE_15_KHZ;
 			if (((c1 | c2) & 6) != 0)
 				features |= FEATURE_HIPASS_FILTER;
-			if (((c1 & 0x40) != 0 && (asap->pokeys.basePokey.audc1 & 0xf) != 0)
-			|| ((c1 & 0x20) != 0 && (asap->pokeys.basePokey.audc3 & 0xf) != 0))
+			if (((c1 & 0x40) != 0 && (asap->pokeys.basePokey.channels[0].audc & 0xf) != 0)
+			|| ((c1 & 0x20) != 0 && (asap->pokeys.basePokey.channels[2].audc & 0xf) != 0))
 				features |= FEATURE_LOW_OF_16_BIT;
 			if (((c1 | c2) & 0x80) != 0)
 				features |= FEATURE_9_BIT_POLY;
-			if (is_ultrasound(asap->pokeys.basePokey.periodCycles1, asap->pokeys.basePokey.audc1)
-			 || is_ultrasound(asap->pokeys.basePokey.periodCycles2, asap->pokeys.basePokey.audc2)
-			 || is_ultrasound(asap->pokeys.basePokey.periodCycles3, asap->pokeys.basePokey.audc3)
-			 || is_ultrasound(asap->pokeys.basePokey.periodCycles4, asap->pokeys.basePokey.audc4))
-				features |= FEATURE_ULTRASOUND;
+			for (i = 0; i < 4; i++) {
+				if (is_ultrasound(&asap->pokeys.basePokey.channels[i])) {
+					features |= FEATURE_ULTRASOUND;
+					break;
+				}
+			}
 		}
 		if (detect_time) {
 			if (store_pokeys(frame)) {

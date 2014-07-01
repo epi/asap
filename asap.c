@@ -50,6 +50,7 @@ typedef enum {
 }
 NmiStatus;
 typedef struct Pokey Pokey;
+typedef struct PokeyChannel PokeyChannel;
 typedef struct PokeyPair PokeyPair;
 
 struct Cpu6502 {
@@ -125,50 +126,42 @@ static cibool ASAPInfo_ValidateFc(unsigned char const *module, int moduleLen);
 static cibool ASAPInfo_ValidateRmt(unsigned char const *module, int moduleLen);
 static cibool ASAPInfo_ValidateSap(unsigned char const *module, int moduleLen);
 
+struct PokeyChannel {
+	int audc;
+	int audf;
+	int delta;
+	int mute;
+	int out;
+	int periodCycles;
+	int tickCycle;
+};
+static void PokeyChannel_DoStimer(PokeyChannel *self, int cycle);
+static void PokeyChannel_DoTick(PokeyChannel *self, Pokey *pokey, PokeyPair const *pokeys, int cycle, int ch);
+static void PokeyChannel_Initialize(PokeyChannel *self);
+static void PokeyChannel_MuteUltrasound(PokeyChannel *self, int cycle);
+static void PokeyChannel_SetAudc(PokeyChannel *self, Pokey *pokey, PokeyPair const *pokeys, int data, int cycle);
+static void PokeyChannel_SetMute(PokeyChannel *self, cibool enable, int mask, int cycle);
+static void PokeyChannel_Slope(PokeyChannel *self, Pokey *pokey, PokeyPair const *pokeys, int cycle);
+
 struct Pokey {
-	int audc1;
-	int audc2;
-	int audc3;
-	int audc4;
 	int audctl;
-	int audf1;
-	int audf2;
-	int audf3;
-	int audf4;
-	int delta1;
-	int delta2;
-	int delta3;
-	int delta4;
 	int divCycles;
 	cibool init;
-	int mute1;
-	int mute2;
-	int mute3;
-	int mute4;
-	int out1;
-	int out2;
-	int out3;
-	int out4;
-	int periodCycles1;
-	int periodCycles2;
-	int periodCycles3;
-	int periodCycles4;
 	int polyIndex;
 	int reloadCycles1;
 	int reloadCycles3;
 	int skctl;
-	int tickCycle1;
-	int tickCycle2;
-	int tickCycle3;
-	int tickCycle4;
+	PokeyChannel channels[4];
 	int deltaBuffer[888];
 };
 static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int delta);
 static void Pokey_EndFrame(Pokey *self, PokeyPair const *pokeys, int cycle);
 static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int cycleLimit);
+static void Pokey_InitMute(Pokey *self, int cycle);
 static void Pokey_Initialize(Pokey *self);
 static cibool Pokey_IsSilent(Pokey const *self);
 static void Pokey_Mute(Pokey *self, int mask);
+static void Pokey_Poke(Pokey *self, PokeyPair const *pokeys, int addr, int data, int cycle);
 
 struct PokeyPair {
 	int extraPokeyMask;
@@ -2093,26 +2086,8 @@ ASAPInfo const *ASAP_GetInfo(ASAP const *self)
 
 int ASAP_GetPokeyChannelVolume(ASAP const *self, int channel)
 {
-	switch (channel) {
-	case 0:
-		return self->pokeys.basePokey.audc1 & 15;
-	case 1:
-		return self->pokeys.basePokey.audc2 & 15;
-	case 2:
-		return self->pokeys.basePokey.audc3 & 15;
-	case 3:
-		return self->pokeys.basePokey.audc4 & 15;
-	case 4:
-		return self->pokeys.extraPokey.audc1 & 15;
-	case 5:
-		return self->pokeys.extraPokey.audc2 & 15;
-	case 6:
-		return self->pokeys.extraPokey.audc3 & 15;
-	case 7:
-		return self->pokeys.extraPokey.audc4 & 15;
-	default:
-		return 0;
-	}
+	Pokey const *pokey = (channel & 4) == 0 ? &self->pokeys.basePokey : &self->pokeys.extraPokey;
+	return pokey->channels[channel & 3].audc & 15;
 }
 
 int ASAP_GetPosition(ASAP const *self)
@@ -2378,9 +2353,9 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 			self->pokeys.irqst |= data ^ 255;
 			if ((data & self->pokeys.irqst & 1) != 0) {
 				if (self->pokeys.timer1Cycle == 8388608) {
-					int t = self->pokeys.basePokey.tickCycle1;
+					int t = self->pokeys.basePokey.channels[0].tickCycle;
 					while (t < self->cycle)
-						t += self->pokeys.basePokey.periodCycles1;
+						t += self->pokeys.basePokey.channels[0].periodCycles;
 					self->pokeys.timer1Cycle = t;
 					if (self->nextEventCycle > t)
 						self->nextEventCycle = t;
@@ -2390,9 +2365,9 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 				self->pokeys.timer1Cycle = 8388608;
 			if ((data & self->pokeys.irqst & 2) != 0) {
 				if (self->pokeys.timer2Cycle == 8388608) {
-					int t = self->pokeys.basePokey.tickCycle2;
+					int t = self->pokeys.basePokey.channels[1].tickCycle;
 					while (t < self->cycle)
-						t += self->pokeys.basePokey.periodCycles2;
+						t += self->pokeys.basePokey.channels[1].periodCycles;
 					self->pokeys.timer2Cycle = t;
 					if (self->nextEventCycle > t)
 						self->nextEventCycle = t;
@@ -2402,9 +2377,9 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 				self->pokeys.timer2Cycle = 8388608;
 			if ((data & self->pokeys.irqst & 4) != 0) {
 				if (self->pokeys.timer4Cycle == 8388608) {
-					int t = self->pokeys.basePokey.tickCycle4;
+					int t = self->pokeys.basePokey.channels[3].tickCycle;
 					while (t < self->cycle)
-						t += self->pokeys.basePokey.periodCycles4;
+						t += self->pokeys.basePokey.channels[3].periodCycles;
 					self->pokeys.timer4Cycle = t;
 					if (self->nextEventCycle > t)
 						self->nextEventCycle = t;
@@ -8180,379 +8155,386 @@ static void Pokey_EndFrame(Pokey *self, PokeyPair const *pokeys, int cycle)
 	m = (self->audctl & 128) != 0 ? 237615 : 60948015;
 	if (self->polyIndex >= 2 * m)
 		self->polyIndex -= m;
-	if (self->tickCycle1 != 8388608)
-		self->tickCycle1 -= cycle;
-	if (self->tickCycle2 != 8388608)
-		self->tickCycle2 -= cycle;
-	if (self->tickCycle3 != 8388608)
-		self->tickCycle3 -= cycle;
-	if (self->tickCycle4 != 8388608)
-		self->tickCycle4 -= cycle;
+	{
+		int i;
+		for (i = 0; i < 4; i++) {
+			int tickCycle = self->channels[i].tickCycle;
+			if (tickCycle != 8388608)
+				self->channels[i].tickCycle = tickCycle - cycle;
+		}
+	}
 }
 
 static void Pokey_GenerateUntilCycle(Pokey *self, PokeyPair const *pokeys, int cycleLimit)
 {
 	for (;;) {
 		int cycle = cycleLimit;
-		static const unsigned char poly4Lookup[15] = { 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
-		static const unsigned char poly5Lookup[31] = { 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0,
-			1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1 };
-		if (cycle > self->tickCycle1)
-			cycle = self->tickCycle1;
-		if (cycle > self->tickCycle2)
-			cycle = self->tickCycle2;
-		if (cycle > self->tickCycle3)
-			cycle = self->tickCycle3;
-		if (cycle > self->tickCycle4)
-			cycle = self->tickCycle4;
+		{
+			int i;
+			for (i = 0; i < 4; i++) {
+				int tickCycle = self->channels[i].tickCycle;
+				if (cycle > tickCycle)
+					cycle = tickCycle;
+			}
+		}
 		if (cycle == cycleLimit)
 			break;
-		if (cycle == self->tickCycle3) {
-			self->tickCycle3 += self->periodCycles3;
-			if ((self->audctl & 4) != 0 && self->delta1 > 0 && self->mute1 == 0) {
-				self->delta1 = -self->delta1;
-				Pokey_AddDelta(self, pokeys, cycle, self->delta1);
-			}
-			if (self->init) {
-				switch (self->audc3 >> 4) {
-				case 10:
-				case 14:
-					self->out3 ^= 1;
-					self->delta3 = -self->delta3;
-					Pokey_AddDelta(self, pokeys, cycle, self->delta3);
-					break;
-				default:
-					break;
-				}
-			}
-			else {
-				int poly = cycle + self->polyIndex - 2;
-				int newOut = self->out3;
-				switch (self->audc3 >> 4) {
-				case 0:
-					if (poly5Lookup[poly % 31] != 0) {
-						if ((self->audctl & 128) != 0)
-							newOut = pokeys->poly9Lookup[poly % 511] & 1;
-						else {
-							poly %= 131071;
-							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-						}
-					}
-					break;
-				case 2:
-				case 6:
-					newOut ^= poly5Lookup[poly % 31];
-					break;
-				case 4:
-					if (poly5Lookup[poly % 31] != 0)
-						newOut = poly4Lookup[poly % 15];
-					break;
-				case 8:
-					if ((self->audctl & 128) != 0)
-						newOut = pokeys->poly9Lookup[poly % 511] & 1;
-					else {
-						poly %= 131071;
-						newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-					}
-					break;
-				case 10:
-				case 14:
-					newOut ^= 1;
-					break;
-				case 12:
-					newOut = poly4Lookup[poly % 15];
-					break;
-				default:
-					break;
-				}
-				if (newOut != self->out3) {
-					self->out3 = newOut;
-					self->delta3 = -self->delta3;
-					Pokey_AddDelta(self, pokeys, cycle, self->delta3);
-				}
-			}
+		if (cycle == self->channels[2].tickCycle) {
+			if ((self->audctl & 4) != 0 && self->channels[0].delta > 0 && self->channels[0].mute == 0)
+				PokeyChannel_Slope(&self->channels[0], self, pokeys, cycle);
+			PokeyChannel_DoTick(&self->channels[2], self, pokeys, cycle, 2);
 		}
-		if (cycle == self->tickCycle4) {
-			self->tickCycle4 += self->periodCycles4;
+		if (cycle == self->channels[3].tickCycle) {
 			if ((self->audctl & 8) != 0)
-				self->tickCycle3 = cycle + self->reloadCycles3;
-			if ((self->audctl & 2) != 0 && self->delta2 > 0 && self->mute2 == 0) {
-				self->delta2 = -self->delta2;
-				Pokey_AddDelta(self, pokeys, cycle, self->delta2);
-			}
-			if (self->init) {
-				switch (self->audc4 >> 4) {
-				case 10:
-				case 14:
-					self->out4 ^= 1;
-					self->delta4 = -self->delta4;
-					Pokey_AddDelta(self, pokeys, cycle, self->delta4);
-					break;
-				default:
-					break;
-				}
-			}
-			else {
-				int poly = cycle + self->polyIndex - 3;
-				int newOut = self->out4;
-				switch (self->audc4 >> 4) {
-				case 0:
-					if (poly5Lookup[poly % 31] != 0) {
-						if ((self->audctl & 128) != 0)
-							newOut = pokeys->poly9Lookup[poly % 511] & 1;
-						else {
-							poly %= 131071;
-							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-						}
-					}
-					break;
-				case 2:
-				case 6:
-					newOut ^= poly5Lookup[poly % 31];
-					break;
-				case 4:
-					if (poly5Lookup[poly % 31] != 0)
-						newOut = poly4Lookup[poly % 15];
-					break;
-				case 8:
-					if ((self->audctl & 128) != 0)
-						newOut = pokeys->poly9Lookup[poly % 511] & 1;
-					else {
-						poly %= 131071;
-						newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-					}
-					break;
-				case 10:
-				case 14:
-					newOut ^= 1;
-					break;
-				case 12:
-					newOut = poly4Lookup[poly % 15];
-					break;
-				default:
-					break;
-				}
-				if (newOut != self->out4) {
-					self->out4 = newOut;
-					self->delta4 = -self->delta4;
-					Pokey_AddDelta(self, pokeys, cycle, self->delta4);
-				}
-			}
+				self->channels[2].tickCycle = cycle + self->reloadCycles3;
+			if ((self->audctl & 2) != 0 && self->channels[1].delta > 0 && self->channels[1].mute == 0)
+				PokeyChannel_Slope(&self->channels[1], self, pokeys, cycle);
+			PokeyChannel_DoTick(&self->channels[3], self, pokeys, cycle, 3);
 		}
-		if (cycle == self->tickCycle1) {
-			self->tickCycle1 += self->periodCycles1;
+		if (cycle == self->channels[0].tickCycle) {
 			if ((self->skctl & 136) == 8)
-				self->tickCycle2 = cycle + self->periodCycles2;
-			if (self->init) {
-				switch (self->audc1 >> 4) {
-				case 10:
-				case 14:
-					self->out1 ^= 1;
-					self->delta1 = -self->delta1;
-					Pokey_AddDelta(self, pokeys, cycle, self->delta1);
-					break;
-				default:
-					break;
-				}
-			}
-			else {
-				int poly = cycle + self->polyIndex - 0;
-				int newOut = self->out1;
-				switch (self->audc1 >> 4) {
-				case 0:
-					if (poly5Lookup[poly % 31] != 0) {
-						if ((self->audctl & 128) != 0)
-							newOut = pokeys->poly9Lookup[poly % 511] & 1;
-						else {
-							poly %= 131071;
-							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-						}
-					}
-					break;
-				case 2:
-				case 6:
-					newOut ^= poly5Lookup[poly % 31];
-					break;
-				case 4:
-					if (poly5Lookup[poly % 31] != 0)
-						newOut = poly4Lookup[poly % 15];
-					break;
-				case 8:
-					if ((self->audctl & 128) != 0)
-						newOut = pokeys->poly9Lookup[poly % 511] & 1;
-					else {
-						poly %= 131071;
-						newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-					}
-					break;
-				case 10:
-				case 14:
-					newOut ^= 1;
-					break;
-				case 12:
-					newOut = poly4Lookup[poly % 15];
-					break;
-				default:
-					break;
-				}
-				if (newOut != self->out1) {
-					self->out1 = newOut;
-					self->delta1 = -self->delta1;
-					Pokey_AddDelta(self, pokeys, cycle, self->delta1);
-				}
-			}
+				self->channels[1].tickCycle = cycle + self->channels[1].periodCycles;
+			PokeyChannel_DoTick(&self->channels[0], self, pokeys, cycle, 0);
 		}
-		if (cycle == self->tickCycle2) {
-			self->tickCycle2 += self->periodCycles2;
+		if (cycle == self->channels[1].tickCycle) {
 			if ((self->audctl & 16) != 0)
-				self->tickCycle1 = cycle + self->reloadCycles1;
+				self->channels[0].tickCycle = cycle + self->reloadCycles1;
 			else if ((self->skctl & 8) != 0)
-				self->tickCycle1 = cycle + self->periodCycles1;
-			if (self->init) {
-				switch (self->audc2 >> 4) {
-				case 10:
-				case 14:
-					self->out2 ^= 1;
-					self->delta2 = -self->delta2;
-					Pokey_AddDelta(self, pokeys, cycle, self->delta2);
-					break;
-				default:
-					break;
-				}
-			}
-			else {
-				int poly = cycle + self->polyIndex - 1;
-				int newOut = self->out2;
-				switch (self->audc2 >> 4) {
-				case 0:
-					if (poly5Lookup[poly % 31] != 0) {
-						if ((self->audctl & 128) != 0)
-							newOut = pokeys->poly9Lookup[poly % 511] & 1;
-						else {
-							poly %= 131071;
-							newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-						}
-					}
-					break;
-				case 2:
-				case 6:
-					newOut ^= poly5Lookup[poly % 31];
-					break;
-				case 4:
-					if (poly5Lookup[poly % 31] != 0)
-						newOut = poly4Lookup[poly % 15];
-					break;
-				case 8:
-					if ((self->audctl & 128) != 0)
-						newOut = pokeys->poly9Lookup[poly % 511] & 1;
-					else {
-						poly %= 131071;
-						newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
-					}
-					break;
-				case 10:
-				case 14:
-					newOut ^= 1;
-					break;
-				case 12:
-					newOut = poly4Lookup[poly % 15];
-					break;
-				default:
-					break;
-				}
-				if (newOut != self->out2) {
-					self->out2 = newOut;
-					self->delta2 = -self->delta2;
-					Pokey_AddDelta(self, pokeys, cycle, self->delta2);
-				}
-			}
+				self->channels[0].tickCycle = cycle + self->channels[0].periodCycles;
+			PokeyChannel_DoTick(&self->channels[1], self, pokeys, cycle, 1);
 		}
 	}
 }
 
+static void Pokey_InitMute(Pokey *self, int cycle)
+{
+	cibool init = self->init;
+	int audctl = self->audctl;
+	PokeyChannel_SetMute(&self->channels[0], init && (audctl & 64) == 0, 2, cycle);
+	PokeyChannel_SetMute(&self->channels[1], init && (audctl & 80) != 80, 2, cycle);
+	PokeyChannel_SetMute(&self->channels[2], init && (audctl & 32) == 0, 2, cycle);
+	PokeyChannel_SetMute(&self->channels[3], init && (audctl & 40) != 40, 2, cycle);
+}
+
 static void Pokey_Initialize(Pokey *self)
 {
-	self->audf1 = 0;
-	self->audf2 = 0;
-	self->audf3 = 0;
-	self->audf4 = 0;
-	self->audc1 = 0;
-	self->audc2 = 0;
-	self->audc3 = 0;
-	self->audc4 = 0;
+	{
+		int i;
+		for (i = 0; i < 4; i++)
+			PokeyChannel_Initialize(&self->channels[i]);
+	}
 	self->audctl = 0;
 	self->skctl = 3;
 	self->init = FALSE;
 	self->divCycles = 28;
-	self->periodCycles1 = 28;
-	self->periodCycles2 = 28;
-	self->periodCycles3 = 28;
-	self->periodCycles4 = 28;
 	self->reloadCycles1 = 28;
 	self->reloadCycles3 = 28;
 	self->polyIndex = 60948015;
-	self->tickCycle1 = 8388608;
-	self->tickCycle2 = 8388608;
-	self->tickCycle3 = 8388608;
-	self->tickCycle4 = 8388608;
-	self->mute1 = 1;
-	self->mute2 = 1;
-	self->mute3 = 1;
-	self->mute4 = 1;
-	self->out1 = 0;
-	self->out2 = 0;
-	self->out3 = 0;
-	self->out4 = 0;
-	self->delta1 = 0;
-	self->delta2 = 0;
-	self->delta3 = 0;
-	self->delta4 = 0;
 	memset(self->deltaBuffer, 0, sizeof(self->deltaBuffer));
 }
 
 static cibool Pokey_IsSilent(Pokey const *self)
 {
-	return ((self->audc1 | self->audc2 | self->audc3 | self->audc4) & 15) == 0;
+	{
+		int i;
+		for (i = 0; i < 4; i++)
+			if ((self->channels[i].audc & 15) != 0)
+				return FALSE;
+	}
+	return TRUE;
 }
 
 static void Pokey_Mute(Pokey *self, int mask)
 {
-	if ((mask & 1) != 0) {
-		self->mute1 |= 4;
-		self->tickCycle1 = 8388608;
+	{
+		int i;
+		for (i = 0; i < 4; i++)
+			PokeyChannel_SetMute(&self->channels[i], (mask & (1 << i)) != 0, 4, 0);
+	}
+}
+
+static void Pokey_Poke(Pokey *self, PokeyPair const *pokeys, int addr, int data, int cycle)
+{
+	switch (addr & 15) {
+		cibool init;
+	case 0:
+		if (data == self->channels[0].audf)
+			break;
+		Pokey_GenerateUntilCycle(self, pokeys, cycle);
+		self->channels[0].audf = data;
+		switch (self->audctl & 80) {
+		case 0:
+			self->channels[0].periodCycles = self->divCycles * (data + 1);
+			break;
+		case 16:
+			self->channels[1].periodCycles = self->divCycles * (data + (self->channels[1].audf << 8) + 1);
+			self->reloadCycles1 = self->divCycles * (data + 1);
+			PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
+			break;
+		case 64:
+			self->channels[0].periodCycles = data + 4;
+			break;
+		case 80:
+			self->channels[1].periodCycles = data + (self->channels[1].audf << 8) + 7;
+			self->reloadCycles1 = data + 4;
+			PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
+			break;
+		}
+		PokeyChannel_MuteUltrasound(&self->channels[0], cycle);
+		break;
+	case 1:
+		PokeyChannel_SetAudc(&self->channels[0], self, pokeys, data, cycle);
+		break;
+	case 2:
+		if (data == self->channels[1].audf)
+			break;
+		Pokey_GenerateUntilCycle(self, pokeys, cycle);
+		self->channels[1].audf = data;
+		switch (self->audctl & 80) {
+		case 0:
+		case 64:
+			self->channels[1].periodCycles = self->divCycles * (data + 1);
+			break;
+		case 16:
+			self->channels[1].periodCycles = self->divCycles * (self->channels[0].audf + (data << 8) + 1);
+			break;
+		case 80:
+			self->channels[1].periodCycles = self->channels[0].audf + (data << 8) + 7;
+			break;
+		}
+		PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
+		break;
+	case 3:
+		PokeyChannel_SetAudc(&self->channels[1], self, pokeys, data, cycle);
+		break;
+	case 4:
+		if (data == self->channels[2].audf)
+			break;
+		Pokey_GenerateUntilCycle(self, pokeys, cycle);
+		self->channels[2].audf = data;
+		switch (self->audctl & 40) {
+		case 0:
+			self->channels[2].periodCycles = self->divCycles * (data + 1);
+			break;
+		case 8:
+			self->channels[3].periodCycles = self->divCycles * (data + (self->channels[3].audf << 8) + 1);
+			self->reloadCycles3 = self->divCycles * (data + 1);
+			PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
+			break;
+		case 32:
+			self->channels[2].periodCycles = data + 4;
+			break;
+		case 40:
+			self->channels[3].periodCycles = data + (self->channels[3].audf << 8) + 7;
+			self->reloadCycles3 = data + 4;
+			PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
+			break;
+		}
+		PokeyChannel_MuteUltrasound(&self->channels[2], cycle);
+		break;
+	case 5:
+		PokeyChannel_SetAudc(&self->channels[2], self, pokeys, data, cycle);
+		break;
+	case 6:
+		if (data == self->channels[3].audf)
+			break;
+		Pokey_GenerateUntilCycle(self, pokeys, cycle);
+		self->channels[3].audf = data;
+		switch (self->audctl & 40) {
+		case 0:
+		case 32:
+			self->channels[3].periodCycles = self->divCycles * (data + 1);
+			break;
+		case 8:
+			self->channels[3].periodCycles = self->divCycles * (self->channels[2].audf + (data << 8) + 1);
+			break;
+		case 40:
+			self->channels[3].periodCycles = self->channels[2].audf + (data << 8) + 7;
+			break;
+		}
+		PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
+		break;
+	case 7:
+		PokeyChannel_SetAudc(&self->channels[3], self, pokeys, data, cycle);
+		break;
+	case 8:
+		if (data == self->audctl)
+			break;
+		Pokey_GenerateUntilCycle(self, pokeys, cycle);
+		self->audctl = data;
+		self->divCycles = (data & 1) != 0 ? 114 : 28;
+		switch (data & 80) {
+		case 0:
+			self->channels[0].periodCycles = self->divCycles * (self->channels[0].audf + 1);
+			self->channels[1].periodCycles = self->divCycles * (self->channels[1].audf + 1);
+			break;
+		case 16:
+			self->channels[0].periodCycles = self->divCycles << 8;
+			self->channels[1].periodCycles = self->divCycles * (self->channels[0].audf + (self->channels[1].audf << 8) + 1);
+			self->reloadCycles1 = self->divCycles * (self->channels[0].audf + 1);
+			break;
+		case 64:
+			self->channels[0].periodCycles = self->channels[0].audf + 4;
+			self->channels[1].periodCycles = self->divCycles * (self->channels[1].audf + 1);
+			break;
+		case 80:
+			self->channels[0].periodCycles = 256;
+			self->channels[1].periodCycles = self->channels[0].audf + (self->channels[1].audf << 8) + 7;
+			self->reloadCycles1 = self->channels[0].audf + 4;
+			break;
+		}
+		PokeyChannel_MuteUltrasound(&self->channels[0], cycle);
+		PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
+		switch (data & 40) {
+		case 0:
+			self->channels[2].periodCycles = self->divCycles * (self->channels[2].audf + 1);
+			self->channels[3].periodCycles = self->divCycles * (self->channels[3].audf + 1);
+			break;
+		case 8:
+			self->channels[2].periodCycles = self->divCycles << 8;
+			self->channels[3].periodCycles = self->divCycles * (self->channels[2].audf + (self->channels[3].audf << 8) + 1);
+			self->reloadCycles3 = self->divCycles * (self->channels[2].audf + 1);
+			break;
+		case 32:
+			self->channels[2].periodCycles = self->channels[2].audf + 4;
+			self->channels[3].periodCycles = self->divCycles * (self->channels[3].audf + 1);
+			break;
+		case 40:
+			self->channels[2].periodCycles = 256;
+			self->channels[3].periodCycles = self->channels[2].audf + (self->channels[3].audf << 8) + 7;
+			self->reloadCycles3 = self->channels[2].audf + 4;
+			break;
+		}
+		PokeyChannel_MuteUltrasound(&self->channels[2], cycle);
+		PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
+		Pokey_InitMute(self, cycle);
+		break;
+	case 9:
+		{
+			int i;
+			for (i = 0; i < 4; i++)
+				PokeyChannel_DoStimer(&self->channels[i], cycle);
+		}
+		break;
+	case 15:
+		if (data == self->skctl)
+			break;
+		Pokey_GenerateUntilCycle(self, pokeys, cycle);
+		self->skctl = data;
+		init = (data & 3) == 0;
+		if (self->init && !init)
+			self->polyIndex = ((self->audctl & 128) != 0 ? 237614 : 60948014) - cycle;
+		self->init = init;
+		Pokey_InitMute(self, cycle);
+		PokeyChannel_SetMute(&self->channels[2], (data & 16) != 0, 8, cycle);
+		PokeyChannel_SetMute(&self->channels[3], (data & 16) != 0, 8, cycle);
+		break;
+	default:
+		break;
+	}
+}
+
+static void PokeyChannel_DoStimer(PokeyChannel *self, int cycle)
+{
+	if (self->tickCycle != 8388608)
+		self->tickCycle = cycle + self->periodCycles;
+}
+
+static void PokeyChannel_DoTick(PokeyChannel *self, Pokey *pokey, PokeyPair const *pokeys, int cycle, int ch)
+{
+	int audc;
+	self->tickCycle += self->periodCycles;
+	audc = self->audc;
+	if ((audc & 176) == 160)
+		self->out ^= 1;
+	else if ((audc & 16) != 0 || pokey->init)
+		return;
+	else {
+		int poly = cycle + pokey->polyIndex - ch;
+		static const unsigned char poly5Lookup[31] = { 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0,
+			1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1 };
+		if (audc < 128 && poly5Lookup[poly % 31] == 0)
+			return;
+		if ((audc & 32) != 0)
+			self->out ^= 1;
+		else {
+			int newOut;
+			if ((audc & 64) != 0) {
+				static const unsigned char poly4Lookup[15] = { 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
+				newOut = poly4Lookup[poly % 15];
+			}
+			else if (pokey->audctl < 128) {
+				poly %= 131071;
+				newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
+			}
+			else
+				newOut = pokeys->poly9Lookup[poly % 511] & 1;
+			if (self->out == newOut)
+				return;
+			self->out = newOut;
+		}
+	}
+	PokeyChannel_Slope(self, pokey, pokeys, cycle);
+}
+
+static void PokeyChannel_Initialize(PokeyChannel *self)
+{
+	self->audf = 0;
+	self->audc = 0;
+	self->periodCycles = 28;
+	self->tickCycle = 8388608;
+	self->mute = 1;
+	self->out = 0;
+	self->delta = 0;
+}
+
+static void PokeyChannel_MuteUltrasound(PokeyChannel *self, int cycle)
+{
+	PokeyChannel_SetMute(self, self->periodCycles <= 112 && (self->audc & 176) == 160, 1, cycle);
+}
+
+static void PokeyChannel_SetAudc(PokeyChannel *self, Pokey *pokey, PokeyPair const *pokeys, int data, int cycle)
+{
+	if (self->audc == data)
+		return;
+	Pokey_GenerateUntilCycle(pokey, pokeys, cycle);
+	self->audc = data;
+	if ((data & 16) != 0) {
+		data = (data & 15) << 20;
+		if ((self->mute & 4) == 0)
+			Pokey_AddDelta(pokey, pokeys, cycle, self->delta > 0 ? data - self->delta : data);
+		self->delta = data;
 	}
 	else {
-		self->mute1 &= ~4;
-		if (self->tickCycle1 == 8388608 && self->mute1 == 0)
-			self->tickCycle1 = 0;
+		data = (data & 15) << 20;
+		PokeyChannel_MuteUltrasound(self, cycle);
+		if (self->delta > 0) {
+			if ((self->mute & 4) == 0)
+				Pokey_AddDelta(pokey, pokeys, cycle, data - self->delta);
+			self->delta = data;
+		}
+		else
+			self->delta = -data;
 	}
-	if ((mask & 2) != 0) {
-		self->mute2 |= 4;
-		self->tickCycle2 = 8388608;
-	}
-	else {
-		self->mute2 &= ~4;
-		if (self->tickCycle2 == 8388608 && self->mute2 == 0)
-			self->tickCycle2 = 0;
-	}
-	if ((mask & 4) != 0) {
-		self->mute3 |= 4;
-		self->tickCycle3 = 8388608;
-	}
-	else {
-		self->mute3 &= ~4;
-		if (self->tickCycle3 == 8388608 && self->mute3 == 0)
-			self->tickCycle3 = 0;
-	}
-	if ((mask & 8) != 0) {
-		self->mute4 |= 4;
-		self->tickCycle4 = 8388608;
+}
+
+static void PokeyChannel_SetMute(PokeyChannel *self, cibool enable, int mask, int cycle)
+{
+	if (enable) {
+		self->mute |= mask;
+		self->tickCycle = 8388608;
 	}
 	else {
-		self->mute4 &= ~4;
-		if (self->tickCycle4 == 8388608 && self->mute4 == 0)
-			self->tickCycle4 = 0;
+		self->mute &= ~mask;
+		if (self->mute == 0 && self->tickCycle == 8388608)
+			self->tickCycle = cycle;
 	}
+}
+
+static void PokeyChannel_Slope(PokeyChannel *self, Pokey *pokey, PokeyPair const *pokeys, int cycle)
+{
+	self->delta = -self->delta;
+	Pokey_AddDelta(pokey, pokeys, cycle, self->delta);
 }
 
 static void PokeyPair_Construct(PokeyPair *self)
@@ -8693,480 +8675,7 @@ static cibool PokeyPair_IsSilent(PokeyPair const *self)
 static void PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle)
 {
 	Pokey *pokey = (addr & self->extraPokeyMask) != 0 ? &self->extraPokey : &self->basePokey;
-	switch (addr & 15) {
-		cibool init;
-	case 0:
-		if (data == pokey->audf1)
-			break;
-		Pokey_GenerateUntilCycle(pokey, self, cycle);
-		pokey->audf1 = data;
-		switch (pokey->audctl & 80) {
-		case 0:
-			pokey->periodCycles1 = pokey->divCycles * (data + 1);
-			break;
-		case 16:
-			pokey->periodCycles2 = pokey->divCycles * (data + (pokey->audf2 << 8) + 1);
-			pokey->reloadCycles1 = pokey->divCycles * (data + 1);
-			if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
-				pokey->mute2 |= 1;
-				pokey->tickCycle2 = 8388608;
-			}
-			else {
-				pokey->mute2 &= ~1;
-				if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-					pokey->tickCycle2 = cycle;
-			}
-			break;
-		case 64:
-			pokey->periodCycles1 = data + 4;
-			break;
-		case 80:
-			pokey->periodCycles2 = data + (pokey->audf2 << 8) + 7;
-			pokey->reloadCycles1 = data + 4;
-			if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
-				pokey->mute2 |= 1;
-				pokey->tickCycle2 = 8388608;
-			}
-			else {
-				pokey->mute2 &= ~1;
-				if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-					pokey->tickCycle2 = cycle;
-			}
-			break;
-		}
-		if (pokey->periodCycles1 <= 112 && (pokey->audc1 >> 4 == 10 || pokey->audc1 >> 4 == 14)) {
-			pokey->mute1 |= 1;
-			pokey->tickCycle1 = 8388608;
-		}
-		else {
-			pokey->mute1 &= ~1;
-			if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
-				pokey->tickCycle1 = cycle;
-		}
-		break;
-	case 1:
-		if (data == pokey->audc1)
-			break;
-		Pokey_GenerateUntilCycle(pokey, self, cycle);
-		pokey->audc1 = data;
-		if ((data & 16) != 0) {
-			data = (data & 15) << 20;
-			if ((pokey->mute1 & 4) == 0)
-				Pokey_AddDelta(pokey, self, cycle, pokey->delta1 > 0 ? data - pokey->delta1 : data);
-			pokey->delta1 = data;
-		}
-		else {
-			data = (data & 15) << 20;
-			if (pokey->periodCycles1 <= 112 && (pokey->audc1 >> 4 == 10 || pokey->audc1 >> 4 == 14)) {
-				pokey->mute1 |= 1;
-				pokey->tickCycle1 = 8388608;
-			}
-			else {
-				pokey->mute1 &= ~1;
-				if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
-					pokey->tickCycle1 = cycle;
-			}
-			if (pokey->delta1 > 0) {
-				if ((pokey->mute1 & 4) == 0)
-					Pokey_AddDelta(pokey, self, cycle, data - pokey->delta1);
-				pokey->delta1 = data;
-			}
-			else
-				pokey->delta1 = -data;
-		}
-		break;
-	case 2:
-		if (data == pokey->audf2)
-			break;
-		Pokey_GenerateUntilCycle(pokey, self, cycle);
-		pokey->audf2 = data;
-		switch (pokey->audctl & 80) {
-		case 0:
-		case 64:
-			pokey->periodCycles2 = pokey->divCycles * (data + 1);
-			break;
-		case 16:
-			pokey->periodCycles2 = pokey->divCycles * (pokey->audf1 + (data << 8) + 1);
-			break;
-		case 80:
-			pokey->periodCycles2 = pokey->audf1 + (data << 8) + 7;
-			break;
-		}
-		if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
-			pokey->mute2 |= 1;
-			pokey->tickCycle2 = 8388608;
-		}
-		else {
-			pokey->mute2 &= ~1;
-			if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-				pokey->tickCycle2 = cycle;
-		}
-		break;
-	case 3:
-		if (data == pokey->audc2)
-			break;
-		Pokey_GenerateUntilCycle(pokey, self, cycle);
-		pokey->audc2 = data;
-		if ((data & 16) != 0) {
-			data = (data & 15) << 20;
-			if ((pokey->mute2 & 4) == 0)
-				Pokey_AddDelta(pokey, self, cycle, pokey->delta2 > 0 ? data - pokey->delta2 : data);
-			pokey->delta2 = data;
-		}
-		else {
-			data = (data & 15) << 20;
-			if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
-				pokey->mute2 |= 1;
-				pokey->tickCycle2 = 8388608;
-			}
-			else {
-				pokey->mute2 &= ~1;
-				if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-					pokey->tickCycle2 = cycle;
-			}
-			if (pokey->delta2 > 0) {
-				if ((pokey->mute2 & 4) == 0)
-					Pokey_AddDelta(pokey, self, cycle, data - pokey->delta2);
-				pokey->delta2 = data;
-			}
-			else
-				pokey->delta2 = -data;
-		}
-		break;
-	case 4:
-		if (data == pokey->audf3)
-			break;
-		Pokey_GenerateUntilCycle(pokey, self, cycle);
-		pokey->audf3 = data;
-		switch (pokey->audctl & 40) {
-		case 0:
-			pokey->periodCycles3 = pokey->divCycles * (data + 1);
-			break;
-		case 8:
-			pokey->periodCycles4 = pokey->divCycles * (data + (pokey->audf4 << 8) + 1);
-			pokey->reloadCycles3 = pokey->divCycles * (data + 1);
-			if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
-				pokey->mute4 |= 1;
-				pokey->tickCycle4 = 8388608;
-			}
-			else {
-				pokey->mute4 &= ~1;
-				if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-					pokey->tickCycle4 = cycle;
-			}
-			break;
-		case 32:
-			pokey->periodCycles3 = data + 4;
-			break;
-		case 40:
-			pokey->periodCycles4 = data + (pokey->audf4 << 8) + 7;
-			pokey->reloadCycles3 = data + 4;
-			if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
-				pokey->mute4 |= 1;
-				pokey->tickCycle4 = 8388608;
-			}
-			else {
-				pokey->mute4 &= ~1;
-				if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-					pokey->tickCycle4 = cycle;
-			}
-			break;
-		}
-		if (pokey->periodCycles3 <= 112 && (pokey->audc3 >> 4 == 10 || pokey->audc3 >> 4 == 14)) {
-			pokey->mute3 |= 1;
-			pokey->tickCycle3 = 8388608;
-		}
-		else {
-			pokey->mute3 &= ~1;
-			if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-				pokey->tickCycle3 = cycle;
-		}
-		break;
-	case 5:
-		if (data == pokey->audc3)
-			break;
-		Pokey_GenerateUntilCycle(pokey, self, cycle);
-		pokey->audc3 = data;
-		if ((data & 16) != 0) {
-			data = (data & 15) << 20;
-			if ((pokey->mute3 & 4) == 0)
-				Pokey_AddDelta(pokey, self, cycle, pokey->delta3 > 0 ? data - pokey->delta3 : data);
-			pokey->delta3 = data;
-		}
-		else {
-			data = (data & 15) << 20;
-			if (pokey->periodCycles3 <= 112 && (pokey->audc3 >> 4 == 10 || pokey->audc3 >> 4 == 14)) {
-				pokey->mute3 |= 1;
-				pokey->tickCycle3 = 8388608;
-			}
-			else {
-				pokey->mute3 &= ~1;
-				if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-					pokey->tickCycle3 = cycle;
-			}
-			if (pokey->delta3 > 0) {
-				if ((pokey->mute3 & 4) == 0)
-					Pokey_AddDelta(pokey, self, cycle, data - pokey->delta3);
-				pokey->delta3 = data;
-			}
-			else
-				pokey->delta3 = -data;
-		}
-		break;
-	case 6:
-		if (data == pokey->audf4)
-			break;
-		Pokey_GenerateUntilCycle(pokey, self, cycle);
-		pokey->audf4 = data;
-		switch (pokey->audctl & 40) {
-		case 0:
-		case 32:
-			pokey->periodCycles4 = pokey->divCycles * (data + 1);
-			break;
-		case 8:
-			pokey->periodCycles4 = pokey->divCycles * (pokey->audf3 + (data << 8) + 1);
-			break;
-		case 40:
-			pokey->periodCycles4 = pokey->audf3 + (data << 8) + 7;
-			break;
-		}
-		if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
-			pokey->mute4 |= 1;
-			pokey->tickCycle4 = 8388608;
-		}
-		else {
-			pokey->mute4 &= ~1;
-			if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-				pokey->tickCycle4 = cycle;
-		}
-		break;
-	case 7:
-		if (data == pokey->audc4)
-			break;
-		Pokey_GenerateUntilCycle(pokey, self, cycle);
-		pokey->audc4 = data;
-		if ((data & 16) != 0) {
-			data = (data & 15) << 20;
-			if ((pokey->mute4 & 4) == 0)
-				Pokey_AddDelta(pokey, self, cycle, pokey->delta4 > 0 ? data - pokey->delta4 : data);
-			pokey->delta4 = data;
-		}
-		else {
-			data = (data & 15) << 20;
-			if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
-				pokey->mute4 |= 1;
-				pokey->tickCycle4 = 8388608;
-			}
-			else {
-				pokey->mute4 &= ~1;
-				if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-					pokey->tickCycle4 = cycle;
-			}
-			if (pokey->delta4 > 0) {
-				if ((pokey->mute4 & 4) == 0)
-					Pokey_AddDelta(pokey, self, cycle, data - pokey->delta4);
-				pokey->delta4 = data;
-			}
-			else
-				pokey->delta4 = -data;
-		}
-		break;
-	case 8:
-		if (data == pokey->audctl)
-			break;
-		Pokey_GenerateUntilCycle(pokey, self, cycle);
-		pokey->audctl = data;
-		pokey->divCycles = (data & 1) != 0 ? 114 : 28;
-		switch (data & 80) {
-		case 0:
-			pokey->periodCycles1 = pokey->divCycles * (pokey->audf1 + 1);
-			pokey->periodCycles2 = pokey->divCycles * (pokey->audf2 + 1);
-			break;
-		case 16:
-			pokey->periodCycles1 = pokey->divCycles << 8;
-			pokey->periodCycles2 = pokey->divCycles * (pokey->audf1 + (pokey->audf2 << 8) + 1);
-			pokey->reloadCycles1 = pokey->divCycles * (pokey->audf1 + 1);
-			break;
-		case 64:
-			pokey->periodCycles1 = pokey->audf1 + 4;
-			pokey->periodCycles2 = pokey->divCycles * (pokey->audf2 + 1);
-			break;
-		case 80:
-			pokey->periodCycles1 = 256;
-			pokey->periodCycles2 = pokey->audf1 + (pokey->audf2 << 8) + 7;
-			pokey->reloadCycles1 = pokey->audf1 + 4;
-			break;
-		}
-		if (pokey->periodCycles1 <= 112 && (pokey->audc1 >> 4 == 10 || pokey->audc1 >> 4 == 14)) {
-			pokey->mute1 |= 1;
-			pokey->tickCycle1 = 8388608;
-		}
-		else {
-			pokey->mute1 &= ~1;
-			if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
-				pokey->tickCycle1 = cycle;
-		}
-		if (pokey->periodCycles2 <= 112 && (pokey->audc2 >> 4 == 10 || pokey->audc2 >> 4 == 14)) {
-			pokey->mute2 |= 1;
-			pokey->tickCycle2 = 8388608;
-		}
-		else {
-			pokey->mute2 &= ~1;
-			if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-				pokey->tickCycle2 = cycle;
-		}
-		switch (data & 40) {
-		case 0:
-			pokey->periodCycles3 = pokey->divCycles * (pokey->audf3 + 1);
-			pokey->periodCycles4 = pokey->divCycles * (pokey->audf4 + 1);
-			break;
-		case 8:
-			pokey->periodCycles3 = pokey->divCycles << 8;
-			pokey->periodCycles4 = pokey->divCycles * (pokey->audf3 + (pokey->audf4 << 8) + 1);
-			pokey->reloadCycles3 = pokey->divCycles * (pokey->audf3 + 1);
-			break;
-		case 32:
-			pokey->periodCycles3 = pokey->audf3 + 4;
-			pokey->periodCycles4 = pokey->divCycles * (pokey->audf4 + 1);
-			break;
-		case 40:
-			pokey->periodCycles3 = 256;
-			pokey->periodCycles4 = pokey->audf3 + (pokey->audf4 << 8) + 7;
-			pokey->reloadCycles3 = pokey->audf3 + 4;
-			break;
-		}
-		if (pokey->periodCycles3 <= 112 && (pokey->audc3 >> 4 == 10 || pokey->audc3 >> 4 == 14)) {
-			pokey->mute3 |= 1;
-			pokey->tickCycle3 = 8388608;
-		}
-		else {
-			pokey->mute3 &= ~1;
-			if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-				pokey->tickCycle3 = cycle;
-		}
-		if (pokey->periodCycles4 <= 112 && (pokey->audc4 >> 4 == 10 || pokey->audc4 >> 4 == 14)) {
-			pokey->mute4 |= 1;
-			pokey->tickCycle4 = 8388608;
-		}
-		else {
-			pokey->mute4 &= ~1;
-			if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-				pokey->tickCycle4 = cycle;
-		}
-		if (pokey->init && (data & 64) == 0) {
-			pokey->mute1 |= 2;
-			pokey->tickCycle1 = 8388608;
-		}
-		else {
-			pokey->mute1 &= ~2;
-			if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
-				pokey->tickCycle1 = cycle;
-		}
-		if (pokey->init && (data & 80) != 80) {
-			pokey->mute2 |= 2;
-			pokey->tickCycle2 = 8388608;
-		}
-		else {
-			pokey->mute2 &= ~2;
-			if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-				pokey->tickCycle2 = cycle;
-		}
-		if (pokey->init && (data & 32) == 0) {
-			pokey->mute3 |= 2;
-			pokey->tickCycle3 = 8388608;
-		}
-		else {
-			pokey->mute3 &= ~2;
-			if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-				pokey->tickCycle3 = cycle;
-		}
-		if (pokey->init && (data & 40) != 40) {
-			pokey->mute4 |= 2;
-			pokey->tickCycle4 = 8388608;
-		}
-		else {
-			pokey->mute4 &= ~2;
-			if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-				pokey->tickCycle4 = cycle;
-		}
-		break;
-	case 9:
-		if (pokey->tickCycle1 != 8388608)
-			pokey->tickCycle1 = cycle + pokey->periodCycles1;
-		if (pokey->tickCycle2 != 8388608)
-			pokey->tickCycle2 = cycle + pokey->periodCycles2;
-		if (pokey->tickCycle3 != 8388608)
-			pokey->tickCycle3 = cycle + pokey->periodCycles3;
-		if (pokey->tickCycle4 != 8388608)
-			pokey->tickCycle4 = cycle + pokey->periodCycles4;
-		break;
-	case 15:
-		if (data == pokey->skctl)
-			break;
-		Pokey_GenerateUntilCycle(pokey, self, cycle);
-		pokey->skctl = data;
-		init = (data & 3) == 0;
-		if (pokey->init && !init)
-			pokey->polyIndex = ((pokey->audctl & 128) != 0 ? 237614 : 60948014) - cycle;
-		pokey->init = init;
-		if (pokey->init && (pokey->audctl & 64) == 0) {
-			pokey->mute1 |= 2;
-			pokey->tickCycle1 = 8388608;
-		}
-		else {
-			pokey->mute1 &= ~2;
-			if (pokey->tickCycle1 == 8388608 && pokey->mute1 == 0)
-				pokey->tickCycle1 = cycle;
-		}
-		if (pokey->init && (pokey->audctl & 80) != 80) {
-			pokey->mute2 |= 2;
-			pokey->tickCycle2 = 8388608;
-		}
-		else {
-			pokey->mute2 &= ~2;
-			if (pokey->tickCycle2 == 8388608 && pokey->mute2 == 0)
-				pokey->tickCycle2 = cycle;
-		}
-		if (pokey->init && (pokey->audctl & 32) == 0) {
-			pokey->mute3 |= 2;
-			pokey->tickCycle3 = 8388608;
-		}
-		else {
-			pokey->mute3 &= ~2;
-			if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-				pokey->tickCycle3 = cycle;
-		}
-		if (pokey->init && (pokey->audctl & 40) != 40) {
-			pokey->mute4 |= 2;
-			pokey->tickCycle4 = 8388608;
-		}
-		else {
-			pokey->mute4 &= ~2;
-			if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-				pokey->tickCycle4 = cycle;
-		}
-		if ((data & 16) != 0) {
-			pokey->mute3 |= 8;
-			pokey->tickCycle3 = 8388608;
-		}
-		else {
-			pokey->mute3 &= ~8;
-			if (pokey->tickCycle3 == 8388608 && pokey->mute3 == 0)
-				pokey->tickCycle3 = cycle;
-		}
-		if ((data & 16) != 0) {
-			pokey->mute4 |= 8;
-			pokey->tickCycle4 = 8388608;
-		}
-		else {
-			pokey->mute4 &= ~8;
-			if (pokey->tickCycle4 == 8388608 && pokey->mute4 == 0)
-				pokey->tickCycle4 = cycle;
-		}
-		break;
-	default:
-		break;
-	}
+	Pokey_Poke(pokey, self, addr, data, cycle);
 }
 
 static void PokeyPair_StartFrame(PokeyPair *self)
