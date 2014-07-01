@@ -8451,24 +8451,21 @@ static void PokeyChannel_DoTick(PokeyChannel *self, Pokey *pokey, PokeyPair cons
 		return;
 	else {
 		int poly = cycle + pokey->polyIndex - ch;
-		static const unsigned char poly5Lookup[31] = { 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0,
-			1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1 };
-		if (audc < 128 && poly5Lookup[poly % 31] == 0)
+		if (audc < 128 && (1706902752 & (1 << poly % 31)) == 0)
 			return;
 		if ((audc & 32) != 0)
 			self->out ^= 1;
 		else {
 			int newOut;
-			if ((audc & 64) != 0) {
-				static const unsigned char poly4Lookup[15] = { 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
-				newOut = poly4Lookup[poly % 15];
-			}
+			if ((audc & 64) != 0)
+				newOut = 21360 >> poly % 15;
 			else if (pokey->audctl < 128) {
 				poly %= 131071;
-				newOut = (pokeys->poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
+				newOut = pokeys->poly17Lookup[poly >> 3] >> (poly & 7);
 			}
 			else
-				newOut = pokeys->poly9Lookup[poly % 511] & 1;
+				newOut = pokeys->poly9Lookup[poly % 511];
+			newOut &= 1;
 			if (self->out == newOut)
 				return;
 			self->out = newOut;

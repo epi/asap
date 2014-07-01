@@ -74,25 +74,21 @@ class PokeyChannel
 			return;
 		else {
 			int poly = cycle + pokey.PolyIndex - ch;
-			const byte[31] poly5Lookup = {
-				0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1,
-				0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1 };
-			if (audc < 0x80 && poly5Lookup[poly % 31] == 0)
+			if (audc < 0x80 && (0x65bd44e0 & 1 << (poly % 31)) == 0) // 0000011100100010101111011010011
 				return;
 			if ((audc & 0x20) != 0)
 				Out ^= 1;
 			else {
 				int newOut;
-				if ((audc & 0x40) != 0) {
-					const byte[15] poly4Lookup = { 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1 };
-					newOut = poly4Lookup[poly % 15];
-				}
+				if ((audc & 0x40) != 0)
+					newOut = 0x5370 >> (poly % 15); // 000011101100101
 				else if (pokey.Audctl < 0x80) {
 					poly %= 131071;
-					newOut = (pokeys.Poly17Lookup[poly >> 3] >> (poly & 7)) & 1;
+					newOut = pokeys.Poly17Lookup[poly >> 3] >> (poly & 7);
 				}
 				else
-					newOut = pokeys.Poly9Lookup[poly % 511] & 1;
+					newOut = pokeys.Poly9Lookup[poly % 511];
+				newOut &= 1;
 				if (Out == newOut)
 					return;
 				Out = newOut;
