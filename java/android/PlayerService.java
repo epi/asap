@@ -361,7 +361,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 
 	public boolean isPlaying()
 	{
-		return action == ACTION_PLAY;
+		return action != ACTION_PAUSE;
 	}
 
 	public boolean canPause()
