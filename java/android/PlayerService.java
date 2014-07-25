@@ -440,7 +440,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
-			if (intent.getIntExtra("state", -1) == 0) {
+			if (!isInitialStickyBroadcast() && intent.getIntExtra("state", -1) == 0) {
 				pause();
 				showInfo(); // just to update the MediaController
 			}
