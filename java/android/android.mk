@@ -8,7 +8,7 @@ JAVA = $(DO)java
 AAPT = $(ANDROID_BUILD_TOOLS)/aapt
 DX = $(DO)java -jar "$(ANDROID_BUILD_TOOLS)/lib/dx.jar" --no-strict
 PROGUARD = $(DO)java -jar $(PROGUARD_JAR)
-JARSIGNER = $(DO)jarsigner -sigalg SHA1withDSA -digestalg SHA1
+JARSIGNER = $(DO)jarsigner -sigalg SHA1withRSA -digestalg SHA1
 ZIPALIGN = $(DO)$(ANDROID_SDK)/tools/zipalign
 ADB = $(ANDROID_SDK)/platform-tools/adb
 ANDROID = $(ANDROID_SDK)/tools/android.bat
@@ -75,7 +75,7 @@ $(ANDROID_RELEASE): java/android/AndroidASAP-unaligned.apk
 	$(ZIPALIGN) -f 4 $< $@
 
 java/android/AndroidASAP-unaligned.apk: java/android/AndroidASAP-unsigned.apk
-	$(JARSIGNER) -storepass walsie -signedjar $@ $< pfusik-android
+	$(JARSIGNER) -storepass walsie -signedjar $@ $< pfusik
 CLEAN += java/android/AndroidASAP-unaligned.apk
 
 java/android/AndroidASAP-unsigned.apk: java/android/AndroidASAP-resources.apk java/android/classes.dex
