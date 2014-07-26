@@ -1,10 +1,12 @@
+ASMA_DIR = ../asma
 ANDROID_SDK = C:/bin/android-sdk-windows
 ANDROID_JAR = $(ANDROID_SDK)/platforms/android-19/android.jar
 ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/19.0.1
 PROGUARD_JAR = C:/bin/proguard4.6/lib/proguard.jar
 
+JAVA = $(DO)java
 AAPT = $(ANDROID_BUILD_TOOLS)/aapt
-DX = java -jar "$(ANDROID_BUILD_TOOLS)/lib/dx.jar" --no-strict
+DX = $(DO)java -jar "$(ANDROID_BUILD_TOOLS)/lib/dx.jar" --no-strict
 PROGUARD = $(DO)java -jar $(PROGUARD_JAR)
 APKBUILDER = $(DO)java -classpath "$(ANDROID_SDK)/tools/lib/sdklib.jar" com.android.sdklib.build.ApkBuilderMain $@
 JARSIGNER = $(DO)jarsigner -sigalg SHA1withDSA -digestalg SHA1
@@ -103,9 +105,17 @@ java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android
 CLEANDIR += java/android/classes
 
 # Also generates java/android/gen/net/sf/asap/R.java
-java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/icon.png res/layout/fileinfo_list_item.xml res/layout/filename_list_item.xml res/layout/playing.xml res/menu/file_selector.xml res/menu/playing.xml res/values/strings.xml res/values/themes.xml) $(JAVA_OBX)
-	$(DO)mkdir -p java/android/gen && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -F $@ -J java/android/gen java/obx
+java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/icon.png res/layout/fileinfo_list_item.xml res/layout/filename_list_item.xml res/layout/playing.xml res/menu/file_selector.xml res/menu/playing.xml res/values/strings.xml res/values/themes.xml) $(ASMA_DIR)/index.txt $(JAVA_OBX)
+	$(DO)mkdir -p java/android/gen && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -A $(ASMA_DIR) --ignore-assets Docs:new.m3u -F $@ -J java/android/gen java/obx
 CLEAN += java/android/AndroidASAP-resources.apk java/android/gen/net/sf/asap/R.java
+
+$(ASMA_DIR)/index.txt: java/android/Indexer.class
+	$(JAVA) -classpath "java/android;java/classes" Indexer $(ASMA_DIR) | dos2unix >$@
+CLEAN += $(ASMA_DIR)/index.txt
+
+java/android/Indexer.class: $(srcdir)java/android/Indexer.java java/classes/net/sf/asap/ASAP.class
+	$(JAVAC) -d $(@D) -classpath java/classes $<
+CLEAN += java/android/Indexer.class
 
 android-push-asapconv: java/android/asapconv
 	$(ADB) -d push java/android/asapconv /data/local/tmp/
