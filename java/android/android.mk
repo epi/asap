@@ -8,7 +8,6 @@ JAVA = $(DO)java
 AAPT = $(ANDROID_BUILD_TOOLS)/aapt
 DX = $(DO)java -jar "$(ANDROID_BUILD_TOOLS)/lib/dx.jar" --no-strict
 PROGUARD = $(DO)java -jar $(PROGUARD_JAR)
-APKBUILDER = $(DO)java -classpath "$(ANDROID_SDK)/tools/lib/sdklib.jar" com.android.sdklib.build.ApkBuilderMain $@
 JARSIGNER = $(DO)jarsigner -sigalg SHA1withDSA -digestalg SHA1
 ZIPALIGN = $(DO)$(ANDROID_SDK)/tools/zipalign
 ADB = $(ANDROID_SDK)/platform-tools/adb
@@ -29,13 +28,10 @@ endif
 
 ANDROID_RELEASE = release/asap-$(VERSION)-android.apk
 
-android-debug: java/android/AndroidASAP-debug.apk
-.PHONY: android-debug
-
 android-release: $(ANDROID_RELEASE)
 .PHONY: android-release
 
-android-install-emu: java/android/AndroidASAP-debug.apk
+android-install-emu: $(ANDROID_RELEASE)
 	$(ADB) -e install -r $<
 .PHONY: android-install-emu
 
@@ -83,12 +79,8 @@ java/android/AndroidASAP-unaligned.apk: java/android/AndroidASAP-unsigned.apk
 CLEAN += java/android/AndroidASAP-unaligned.apk
 
 java/android/AndroidASAP-unsigned.apk: java/android/AndroidASAP-resources.apk java/android/classes.dex
-	$(APKBUILDER) -u -z $< -f java/android/classes.dex
+	$(DO)cp $< $@ && 7z a -mx=9 -bd -tzip $@ ./java/android/classes.dex
 CLEAN += java/android/AndroidASAP-unsigned.apk
-
-java/android/AndroidASAP-debug.apk: java/android/AndroidASAP-resources.apk java/android/classes.dex
-	$(APKBUILDER) -z $< -f java/android/classes.dex
-CLEAN += java/android/AndroidASAP-debug.apk
 
 java/android/classes.dex: java/android/classes/net/sf/asap/Player.class
 	$(DX) --dex --output=$@ java/android/classes
