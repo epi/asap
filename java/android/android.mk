@@ -56,7 +56,7 @@ android-shell-dev:
 .PHONY: android-shell-dev
 
 android-emu:
-	$(EMULATOR) -avd myavd &
+	$(EMULATOR) -avd kit &
 .PHONY: android-emu
 
 android-push-release: $(ANDROID_RELEASE)
@@ -68,7 +68,7 @@ android-push-sap:
 .PHONY: android-push-sap
 
 android-create-avd:
-	$(ANDROID) create avd -n myavd -t android-4 -c 16M
+	$(ANDROID) create avd -n kit -t android-19 -c 16M
 .PHONY: android-create-avd
 
 $(ANDROID_RELEASE): java/android/AndroidASAP-unaligned.apk
