@@ -60,7 +60,7 @@ release/asap-vlc-$(VERSION)-osx.dmg: release/osx/libasap_plugin.dylib release/os
 	$(DO)hdiutil create -volname asap-vlc-$(VERSION)-osx -srcfolder release/osx -format UDBZ -imagekey bzip2-level=3 -ov $@
 
 release/osx/libasap_plugin.dylib: libasap_plugin.dylib
-	$(COPY) && chmod 644 $@
+	$(DO)strip -o $@ -x $< && chmod 644 $@
 CLEANDIR += release/osx
 
 release/osx/plugins:
