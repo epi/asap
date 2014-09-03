@@ -1,7 +1,7 @@
-/*
+﻿/*
  * SilverASAP.cs - Silverlight version of ASAP
  *
- * Copyright (C) 2010-2013  Piotr Fusik
+ * Copyright (C) 2010-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,12 +26,20 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Net;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Browser;
 using System.Windows.Controls;
 using System.Windows.Media;
 
 using Sf.Asap;
+
+[assembly: AssemblyTitle("Silverlight ASAP")]
+[assembly: AssemblyCompany("Piotr Fusik")]
+[assembly: AssemblyProduct("ASAP")]
+[assembly: AssemblyCopyright("Copyright © 2010-2014")]
+[assembly: AssemblyVersion(ASAPInfo.Version + ".0")]
+[assembly: AssemblyFileVersion(ASAPInfo.Version + ".0")]
 
 class ASAPMediaStreamSource : MediaStreamSource
 {
