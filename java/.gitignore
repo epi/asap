@@ -1,6 +1,7 @@
 *.jad
 *.jar
 classes
-doc
-obx
-src
+/doc
+/obx
+/src
+/xex

@@ -10,6 +10,7 @@ $(error Use "Makefile" instead of "java.mk")
 endif
 
 JAVA_OBX = $(ASM6502_PLAYERS:%=java/obx/net/sf/asap/%.obx)
+JAVA_XEX = $(addprefix java/xex/net/sf/asap/,xexb.obx xexd.obx xexinfo.obx)
 JAR_COMMON = -C java/classes net $(ASM6502_PLAYERS:%=-C java/obx net/sf/asap/%.obx)
 
 java/asap2wav.jar: $(srcdir)java/asap2wav.MF java/classes/ASAP2WAV.class $(JAVA_OBX)
@@ -26,13 +27,17 @@ CLEAN += java/asap_applet.jar
 java/classes/ASAPApplet.class: $(srcdir)java/ASAPApplet.java java/classes/net/sf/asap/ASAP.class
 	$(JAVAC) -d $(@D) -source 1.2 -classpath "$(JRE)/lib/plugin.jar;java/classes" $<
 
-java/asap.jar: java/classes/net/sf/asap/ASAP.class $(JAVA_OBX)
-	$(JAR) cf $@ $(JAR_COMMON)
+java/asap.jar: java/classes/net/sf/asap/ASAP.class $(JAVA_OBX) $(JAVA_XEX)
+	$(JAR) cf $@ $(JAR_COMMON) $(JAVA_XEX:java/xex/%=-C java/xex %)
 CLEAN += java/asap.jar
 
 java/obx/net/sf/asap/%.obx: 6502/%.obx
 	$(COPY)
 CLEAN += $(JAVA_OBX)
+
+java/xex/net/sf/asap/%.obx: 6502/%.obx
+	$(COPY)
+CLEANDIR += java/xex
 
 java/classes/net/sf/asap/ASAP.class: $(srcdir)java/ASAPMusicRoutine.java java/src/net/sf/asap/ASAP.java
 	$(JAVAC) -d java/classes -source 1.2 $(srcdir)java/ASAPMusicRoutine.java java/src/net/sf/asap/*.java
