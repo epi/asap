@@ -25,13 +25,13 @@ csharp/winrt/obj/AppxManifest.xml: $(srcdir)csharp/winrt/AppxManifest.xml
 	$(COPY)
 
 csharp/winrt/obj/Logo.png: $(srcdir)csharp/winrt/logo.svg
-	$(CONVERT) -background none -density 600 $< -gravity Center -resize "75x75!" -extent 150x150 -quality 95 $@
+	$(CONVERT) -background none -density 600 $< -resize 64x64 -extent 150x150-43-30 -quality 95 -strip $@
 
 csharp/winrt/obj/SmallLogo.png: $(srcdir)csharp/winrt/logo.svg
-	$(CONVERT) -background none -density 600 $< -gravity Center -resize "28x28!" -extent 30x30 -quality 95 $@
+	$(CONVERT) -background none -density 600 $< -gravity Center -resize 28x28 -extent 30x30 -quality 95 -strip $@
 
 csharp/winrt/obj/SplashScreen.png: $(srcdir)csharp/winrt/logo.svg
-	$(CONVERT) -background none -density 600 $< -gravity Center -resize "280x280!" -extent 620x300 -quality 95 $@
+	$(CONVERT) -background none -density 600 $< -gravity Center -resize 280x280 -extent 620x300 -quality 95 -strip $@
 
 csharp/winrt/obj/FileLogo.png: $(srcdir)csharp/winrt/logo.svg
-	$(CONVERT) -background "#c02020" -density 600 $< -gravity Center -resize "36x36!" -extent 48x48 -quality 95 $@
+	$(CONVERT) -background "#c02020" -density 600 $< -gravity Center -resize 36x36 -extent 48x48 -quality 95 -strip $@
