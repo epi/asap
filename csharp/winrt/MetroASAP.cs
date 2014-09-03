@@ -1,7 +1,7 @@
-/*
- * MetroASAP.cs - Windows 8 Metro Interface version of ASAP
+﻿/*
+ * MetroASAP.cs - Windows Store version of ASAP
  *
- * Copyright (C) 2012  Piotr Fusik
+ * Copyright (C) 2012-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -22,6 +22,7 @@
  */
 
 using System;
+using System.Reflection;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,6 +39,13 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 
 using Sf.Asap;
+
+[assembly: AssemblyTitle("Windows Store ASAP")]
+[assembly: AssemblyCompany("Piotr Fusik")]
+[assembly: AssemblyProduct("ASAP")]
+[assembly: AssemblyCopyright("Copyright © 2012-2014")]
+[assembly: AssemblyVersion(ASAPInfo.Version + ".0")]
+[assembly: AssemblyFileVersion(ASAPInfo.Version + ".0")]
 
 class ASAPRandomAccessStream : IRandomAccessStream
 {
@@ -94,25 +102,12 @@ class ASAPRandomAccessStream : IRandomAccessStream
 
 	IAsyncOperationWithProgress<IBuffer, uint> IInputStream.ReadAsync(IBuffer buffer, uint count, InputStreamOptions options)
 	{
-#if true
-		return AsyncInfo.Run(async delegate (CancellationToken cancel, IProgress<uint> progress) {
-			cancel.ThrowIfCancellationRequested();
-			buffer.Length = Read(buffer, buffer.Length, count);
-			progress.Report(buffer.Length);
-			return buffer;
-		});
-#else
-		return AsyncInfo.Run((CancellationToken cancel, IProgress<uint> progress) => {
-			var task = new Task<IBuffer>(() => {
+		return AsyncInfo.Run<IBuffer, uint>((cancel, progress) => Task.Run(() => {
 				cancel.ThrowIfCancellationRequested();
 				buffer.Length = Read(buffer, buffer.Length, count);
 				progress.Report(buffer.Length);
 				return buffer;
-			}, cancel);
-			task.Start();
-			return task;
-		});
-#endif
+			}, cancel));
 	}
 
 	void IRandomAccessStream.Seek(ulong position)
@@ -240,49 +235,30 @@ class MetroASAP : Application
 		MediaControl.IsPlaying = true;
 	}
 
-	static void DispatchMediaControl(Func<bool> func)
-	{
-		Window.Current.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
-			MediaControl.IsPlaying = func();
-		});
-	}
-
 	void MediaControl_PlayPressed(object sender, object e)
 	{
-		DispatchMediaControl(() => {
-			this.MyMedia.Play();
-			return true;
-		});
+		this.MyMedia.Play();
+		MediaControl.IsPlaying = true;
 	}
 
 	void MediaControl_PausePressed(object sender, object e)
 	{
-		DispatchMediaControl(() => {
-			this.MyMedia.Pause();
-			return false;
-		});
+		this.MyMedia.Pause();
+		MediaControl.IsPlaying = false;
 	}
 
 	void MediaControl_PlayPauseTogglePressed(object sender, object e)
 	{
-		DispatchMediaControl(() => {
-			if (this.MyMedia.CurrentState == MediaElementState.Paused) {
-				this.MyMedia.Play();
-				return true;
-			}
-			else {
-				this.MyMedia.Pause();
-				return false;
-			}
-		});
+		if (this.MyMedia.CurrentState == MediaElementState.Paused)
+			MediaControl_PlayPressed(sender, e);
+		else
+			MediaControl_PausePressed(sender, e);
 	}
 
 	void MediaControl_StopPressed(object sender, object e)
 	{
-		DispatchMediaControl(() => {
-			this.MyMedia.Stop();
-			return false;
-		});
+		this.MyMedia.Stop();
+		MediaControl.IsPlaying = false;
 	}
 
 	protected override async void OnLaunched(LaunchActivatedEventArgs args)
