@@ -1,6 +1,5 @@
 AUDACIOUS_VERSION := $(shell pkg-config --modversion audacious 2>/dev/null)
-AUDACIOUS_CFLAGS = `pkg-config --cflags $(if $(filter 2.%,$(AUDACIOUS_VERSION)),gtk+-2.0 libmowgli,gtk+-3.0)`
-AUDACIOUS_INPUT_PLUGIN_DIR = `pkg-config --variable=input_plugin_dir audacious`
+AUDACIOUS_INPUT_PLUGIN_DIR = `pkg-config --variable=plugin_dir audacious`/Input
 
 # no user-configurable paths below this line
 
@@ -15,7 +14,7 @@ asapplug-$(AUDACIOUS_VERSION).so: $(call src,audacious/asapplug.c asap.[ch])
 ifndef AUDACIOUS_VERSION
 	$(error Please install audacious-dev or audacious-devel)
 endif
-	$(CC) $(AUDACIOUS_CFLAGS)
+	$(CC)
 CLEAN += asapplug-*.so
 
 install-audacious: asapplug-$(AUDACIOUS_VERSION).so
