@@ -39,7 +39,8 @@ $(srcdir)MANIFEST:
 
 release/asap-$(VERSION)-java.zip: release/COPYING.txt release/README_Java.html \
 	java/asap2wav.jar java/j2me/asap_midlet.jad java/j2me/asap_midlet.jar java/asap.jar
-	$(MAKEZIP)
+	# the leading dot and a wildcard make "src" a top-level directory in the ZIP
+	$(MAKEZIP) ./java/sr?
 
 release/asap-$(VERSION)-web.zip: release/COPYING.txt release/README_Web.html \
 	flash/asap.swf java/asap_applet.jar javascript/asap.js $(srcdir)javascript/asapweb.js $(srcdir)javascript/binaryHttpRequest.js csharp/SilverASAP.xap
