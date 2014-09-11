@@ -1,10 +1,7 @@
 *.a
 *.dll
 *.exe
-*.map
 *.o
-*.obj
-*.res
 /aatr.c
 /aatr.h
 /asap-asapscan.c

@@ -1,6 +1,7 @@
 *.exp
 *.lib
+*.obj
 *.res
-install_dsf.bat
-uninstall_dsf.bat
-x64
+/install_dsf.bat
+/uninstall_dsf.bat
+/x64
