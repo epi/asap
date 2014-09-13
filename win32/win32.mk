@@ -2,9 +2,8 @@
 WIN32_CC = $(DO)mingw32-gcc $(WIN32_CARGS)
 WIN32_CXX = $(DO)mingw32-g++ -static $(WIN32_CARGS)
 WIN32_WINDRES = $(DO)windres -o $@ $<
-GTK_DIR = ../porty/audacious/gtk
-AUDACIOUS_INCLUDE = ../porty/audacious/audacious-3.3.2/src
-AUDACIOUS_LIB = "C:/Program Files (x86)/audacious-3.4/bin"
+AUDACIOUS_INCLUDE = ../porty/audacious/audacious-3.5.1/src
+AUDACIOUS_LIB = "C:/Program Files (x86)/audacious-3.5.1/bin"
 VLC_DIR = "C:/Program Files (x86)/VideoLAN/VLC"
 GST_SDK_DIR = "C:/gstreamer-sdk/0.10/x86"
 
@@ -157,7 +156,7 @@ CLEAN += win32/apollo/ASAP_Apollo-res.o
 # Audacious
 
 win32/asapplug.dll: $(call src,audacious/asapplug.c asap.[ch]) win32/audacious/asapplug-res.o
-	$(WIN32_CC) -I$(GTK_DIR)/include/glib-2.0 -I$(GTK_DIR)/lib/glib-2.0/include -I$(AUDACIOUS_INCLUDE) -L$(AUDACIOUS_LIB) -laudcore -lglib-2.0-0 -lpthreadGC2
+	$(WIN32_CC) -I$(AUDACIOUS_INCLUDE) -L$(AUDACIOUS_LIB) -laudcore
 CLEAN += win32/asapplug.dll
 
 win32/audacious/asapplug-res.o: $(call src,win32/gui.rc asap.h)

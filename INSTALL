@@ -257,24 +257,12 @@ make win32/libgstasapdec.dll
 Building the Audacious plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Too bad Audacious doesn't provide an SDK for Windows.
-
-Unpack http://ftp.gnome.org/pub/gnome/binaries/win32/gtk+/2.24/gtk+-bundle_2.24.10-20120208_win32.zip[GTK+ 2 bundle]
-and make sure `GTK_DIR` in `win32/win32.mk` points to it.
-
-Install Audacious and make sure `AUDACIOUS_LIB` points inside it.
+Install Audacious and make sure `AUDACIOUS_LIB` in `win32\win32.mk` points inside it.
 
 Unpack Audacious source code and make sure `AUDACIOUS_INCLUDE` points inside it.
+Copy `src\libaudcore\audio.h.in` as `src\libaudcore\audio.h` and replace `@BIGENDIAN@` with `0`.
 
-Now comes the tricky part: configure Audacious for Windows.
-You'll need to install `gettext` and `libgnurx` in MinGW
-(that's probably not an exhaustive list, `configure` will complain about missing things).
-From the Audacious source directory run:
---------------------------------------------------------------------------------
-bash configure PKG_CONFIG=../gtk/bin/pkg-config
---------------------------------------------------------------------------------
-
-After it finishes with no errors (warnings are fine), go to ASAP and run:
+Open the command prompt in the root directory of ASAP sources and run:
 --------------------------------------------------------------------------------
 make win32/asapplug.dll
 --------------------------------------------------------------------------------
