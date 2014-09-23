@@ -1,6 +1,6 @@
 // asapwriter.ci - format conversions
 //
-// Copyright (C) 2011-2013  Piotr Fusik
+// Copyright (C) 2011-2014  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -732,7 +732,7 @@ public class ASAPWriter
 		/// Display information (xex output only).
 		bool tag)
 	{
-		macro ASAP_EXT(s) ( s[0] + (s[1] << 8) + (s[2] << 16) | 0x202020 )
+		macro ASAP_EXT(s) ( s.Length >> 1 == 1 ? s[0] + (s[1] << 8) + (s.Length == 3 ? s[2] << 16 : 0) | 0x202020 : 0 )
 		int destExt = ASAPInfo.GetPackedExt(targetFilename);
 		switch (destExt) {
 		case ASAP_EXT("SAP"):

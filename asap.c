@@ -4458,7 +4458,7 @@ cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const
 	default:
 		possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
 		if (possibleExt != NULL) {
-			int packedPossibleExt = (possibleExt[0] + (possibleExt[1] << 8) + (possibleExt[2] << 16)) | 2105376;
+			int packedPossibleExt = (int) strlen(possibleExt) >> 1 == 1 ? (possibleExt[0] + (possibleExt[1] << 8) + ((int) strlen(possibleExt) == 3 ? possibleExt[2] << 16 : 0)) | 2105376 : 0;
 			if (destExt == packedPossibleExt || (destExt == 3698036 && packedPossibleExt == 6516084)) {
 				return ASAPWriter_WriteNative(w, info, module, moduleLen);
 			}
