@@ -103,6 +103,7 @@ static cibool ASAPInfo_IsDltTrackEmpty(unsigned char const *module, int pos);
 static cibool ASAPInfo_IsFcSongEnd(unsigned char const *module, int const *trackPos);
 static cibool ASAPInfo_IsOurPackedExt(int ext);
 static cibool ASAPInfo_IsValidChar(int c);
+static int ASAPInfo_PackExt(const char *ext);
 static cibool ASAPInfo_ParseCmc(ASAPInfo *self, unsigned char const *module, int moduleLen, ASAPModuleType type);
 static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, int pos);
 static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int maxVal);
@@ -2561,7 +2562,7 @@ int ASAPInfo_GetDuration(ASAPInfo const *self, int song)
 
 const char *ASAPInfo_GetExtDescription(const char *ext)
 {
-	switch ((int) strlen(ext) >> 1 == 1 ? (ext[0] + (ext[1] << 8) + ((int) strlen(ext) == 3 ? ext[2] << 16 : 0)) | 2105376 : 0) {
+	switch (ASAPInfo_PackExt(ext)) {
 	case 7364979:
 		return "Slight Atari Player";
 	case 6516067:
@@ -2934,7 +2935,7 @@ cibool ASAPInfo_IsNtsc(ASAPInfo const *self)
 
 cibool ASAPInfo_IsOurExt(const char *ext)
 {
-	return ASAPInfo_IsOurPackedExt((int) strlen(ext) >> 1 == 1 ? (ext[0] + (ext[1] << 8) + ((int) strlen(ext) == 3 ? ext[2] << 16 : 0)) | 2105376 : 0);
+	return ASAPInfo_IsOurPackedExt(ASAPInfo_PackExt(ext));
 }
 
 cibool ASAPInfo_IsOurFile(const char *filename)
@@ -3056,6 +3057,11 @@ cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *
 	default:
 		return FALSE;
 	}
+}
+
+static int ASAPInfo_PackExt(const char *ext)
+{
+	return (int) strlen(ext) >> 1 == 1 ? (ext[0] + (ext[1] << 8) + ((int) strlen(ext) == 3 ? ext[2] << 16 : 0)) | 2105376 : 0;
 }
 
 static cibool ASAPInfo_ParseCmc(ASAPInfo *self, unsigned char const *module, int moduleLen, ASAPModuleType type)
@@ -4458,7 +4464,7 @@ cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const
 	default:
 		possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
 		if (possibleExt != NULL) {
-			int packedPossibleExt = (int) strlen(possibleExt) >> 1 == 1 ? (possibleExt[0] + (possibleExt[1] << 8) + ((int) strlen(possibleExt) == 3 ? possibleExt[2] << 16 : 0)) | 2105376 : 0;
+			int packedPossibleExt = ASAPInfo_PackExt(possibleExt);
 			if (destExt == packedPossibleExt || (destExt == 3698036 && packedPossibleExt == 6516084)) {
 				return ASAPWriter_WriteNative(w, info, module, moduleLen);
 			}

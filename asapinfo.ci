@@ -103,9 +103,7 @@ public class ASAPInfo
 	byte[MaxSongs] SongPos;
 
 	static bool IsValidChar(int c)
-	{
 		return c >= ' ' && c <= '|' && c != '`' && c != '{';
-	}
 
 	static void CheckValidChar(int c)
 	{
@@ -127,9 +125,7 @@ public class ASAPInfo
 	/// Multiple authors are separated with `" & "`.
 	/// An empty string means the author is unknown.
 	public string GetAuthor()
-	{
 		return Author;
-	}
 
 	/// Sets author's name.
 	/// A nickname may be included in parentheses after the real name.
@@ -144,9 +140,7 @@ public class ASAPInfo
 	/// Returns music title.
 	/// An empty string means the title is unknown.
 	public string GetTitle()
-	{
 		return Title;
-	}
 
 	/// Sets music title.
 	/// An empty string means the title is unknown.
@@ -159,9 +153,7 @@ public class ASAPInfo
 	/// Returns music title or filename.
 	/// If title is unknown returns filename without the path or extension.
 	public string GetTitleOrFilename()
-	{
 		return Title.Length > 0 ? Title : Filename;
-	}
 
 	/// Returns music creation date.
 	/// Some of the possible formats are:
@@ -172,9 +164,7 @@ public class ASAPInfo
 	///
 	/// An empty string means the date is unknown.
 	public string GetDate()
-	{
 		return Date;
-	}
 
 	/// Sets music creation date.
 	/// Some of the possible formats are:
@@ -219,9 +209,7 @@ public class ASAPInfo
 	}
 
 	int GetTwoDateDigits(int i)
-	{
 		return (Date[i] - '0') * 10 + Date[i + 1] - '0';
-	}
 
 	/// Returns music creation year.
 	/// -1 means the year is unknown.
@@ -255,22 +243,16 @@ public class ASAPInfo
 
 	/// Returns 1 for mono or 2 for stereo.
 	public int GetChannels()
-	{
 		return Channels;
-	}
 
 	/// Returns number of songs in the file.
 	public int GetSongs()
-	{
 		return Songs;
-	}
 
 	/// Returns 0-based index of the "main" song.
 	/// The specified song should be played by default.
 	public int GetDefaultSong()
-	{
 		return DefaultSong;
-	}
 
 	/// Sets the 0-based index of the "main" song.
 	public void SetDefaultSong(int song)
@@ -283,9 +265,7 @@ public class ASAPInfo
 	/// Returns length of the specified song.
 	/// The length is specified in milliseconds. -1 means the length is indeterminate.
 	public int GetDuration(int song)
-	{
 		return Durations[song];
-	}
 
 	/// Sets length of the specified song.
 	/// The length is specified in milliseconds. -1 means the length is indeterminate.
@@ -301,9 +281,7 @@ public class ASAPInfo
 	/// * `true` if the song loops
 	/// * `false` if the song stops
 	public bool GetLoop(int song)
-	{
 		return Loops[song];
-	}
 
 	/// Sets information whether the specified song loops.
 	/// Use:
@@ -318,9 +296,7 @@ public class ASAPInfo
 
 	/// Returns `true` for NTSC song and `false` for PAL song.
 	public bool IsNtsc()
-	{
 		return Ntsc;
-	}
 
 	public int GetTypeLetter()
 	{
@@ -334,9 +310,7 @@ public class ASAPInfo
 	}
 
 	public int GetPlayerRateScanlines()
-	{
 		return Fastplay;
-	}
 
 	public int GetPlayerRateHz()
 	{
@@ -345,9 +319,7 @@ public class ASAPInfo
 	}
 
 	public int GetMusicAddress()
-	{
 		return Music;
-	}
 
 	/// Causes music to be relocated.
 	/// Use only with `ASAPWriter.Write`.
@@ -359,24 +331,16 @@ public class ASAPInfo
 	}
 
 	public int GetInitAddress()
-	{
 		return Init;
-	}
 
 	public int GetPlayerAddress()
-	{
 		return Player;
-	}
 
 	public int GetCovoxAddress()
-	{
 		return CovoxAddr;
-	}
 
 	public int GetSapHeaderLength()
-	{
 		return HeaderLen;
-	}
 
 #if C
 	public string GetInstrumentName(byte[] module, int moduleLen, int i)
@@ -396,9 +360,7 @@ public class ASAPInfo
 #endif
 
 	static int GetWord(byte[] array, int i)
-	{
 		return array[i] + (array[i + 1] << 8);
-	}
 
 	void ParseModule(byte[] module, int moduleLen)
 	{
@@ -1438,9 +1400,7 @@ public class ASAPInfo
 	}
 
 	static bool ValidateSap(byte[] module, int moduleLen)
-	{
 		return moduleLen >= 30 && HasStringAt(module, 0, "SAP\r\n");
-	}
 
 	void ParseSap(byte[] module, int moduleLen)
 	{
@@ -1563,7 +1523,8 @@ public class ASAPInfo
 		HeaderLen = moduleIndex;
 	}
 
-	macro ASAP_EXT(s) ( s.Length >> 1 == 1 ? s[0] + (s[1] << 8) + (s.Length == 3 ? s[2] << 16 : 0) | 0x202020 : 0 )
+	static int PackExt(string ext)
+		return ext.Length >> 1 == 1 ? ext[0] + (ext[1] << 8) + (ext.Length == 3 ? ext[2] << 16 : 0) | 0x202020 : 0;
 
 	static int GetPackedExt(string filename)
 	{
@@ -1582,23 +1543,23 @@ public class ASAPInfo
 	static bool IsOurPackedExt(int ext)
 	{
 		switch (ext) {
-		case ASAP_EXT("SAP"):
+		case PackExt("SAP"):
 #if !ASAP_ONLY_SAP
-		case ASAP_EXT("CMC"):
-		case ASAP_EXT("CM3"):
-		case ASAP_EXT("CMR"):
-		case ASAP_EXT("CMS"):
-		case ASAP_EXT("DMC"):
-		case ASAP_EXT("DLT"):
-		case ASAP_EXT("MPT"):
-		case ASAP_EXT("MPD"):
-		case ASAP_EXT("RMT"):
-		case ASAP_EXT("TMC"):
-		case ASAP_EXT("TM8"):
-		case ASAP_EXT("TM2"):
-		case ASAP_EXT("FC"):
+		case PackExt("CMC"):
+		case PackExt("CM3"):
+		case PackExt("CMR"):
+		case PackExt("CMS"):
+		case PackExt("DMC"):
+		case PackExt("DLT"):
+		case PackExt("MPT"):
+		case PackExt("MPD"):
+		case PackExt("RMT"):
+		case PackExt("TMC"):
+		case PackExt("TM8"):
+		case PackExt("TM2"):
+		case PackExt("FC"):
 #if EXPERIMENTAL_XEX
-		case ASAP_EXT("XEX"):
+		case PackExt("XEX"):
 #endif
 #endif
 			return true;
@@ -1612,27 +1573,23 @@ public class ASAPInfo
 	public static bool IsOurFile(
 		/// Filename to check the extension of.
 		string filename)
-	{
 		return IsOurPackedExt(GetPackedExt(filename));
-	}
 
 	/// Checks whether the filename extension represents a module type supported by ASAP.
 	/// Returns `true` if the filename extension is supported by ASAP.
 	public static bool IsOurExt(
 		/// Filename extension without the leading dot.
 		string ext)
-	{
-		return IsOurPackedExt(ASAP_EXT(ext));
-	}
+		return IsOurPackedExt(PackExt(ext));
 
 	static int GuessPackedExt(byte[] module, int moduleLen)
 	{
 		if (ValidateSap(module, moduleLen))
-			return ASAP_EXT("SAP");
+			return PackExt("SAP");
 		if (ValidateFc(module, moduleLen))
-			return ASAP_EXT("FC");
+			return PackExt("FC");
 		if (ValidateRmt(module, moduleLen))
-			return ASAP_EXT("RMT");
+			return PackExt("RMT");
 		throw "Unknown format";
 	}
 
@@ -1690,52 +1647,52 @@ public class ASAPInfo
 		CovoxAddr = -1;
 		HeaderLen = 0;
 		switch (ext) {
-		case ASAP_EXT("SAP"):
+		case PackExt("SAP"):
 			ParseSap(module, moduleLen);
 			return;
 #if !ASAP_ONLY_SAP
-		case ASAP_EXT("CMC"):
+		case PackExt("CMC"):
 			ParseCmc(module, moduleLen, ASAPModuleType.Cmc);
 			return;
-		case ASAP_EXT("CM3"):
+		case PackExt("CM3"):
 			ParseCmc(module, moduleLen, ASAPModuleType.Cm3);
 			return;
-		case ASAP_EXT("CMR"):
+		case PackExt("CMR"):
 			ParseCmc(module, moduleLen, ASAPModuleType.Cmr);
 			return;
-		case ASAP_EXT("CMS"):
+		case PackExt("CMS"):
 			Channels = 2;
 			ParseCmc(module, moduleLen, ASAPModuleType.Cms);
 			return;
-		case ASAP_EXT("DMC"):
+		case PackExt("DMC"):
 			Fastplay = 156;
 			ParseCmc(module, moduleLen, ASAPModuleType.Cmc);
 			return;
-		case ASAP_EXT("DLT"):
+		case PackExt("DLT"):
 			ParseDlt(module, moduleLen);
 			return;
-		case ASAP_EXT("MPT"):
+		case PackExt("MPT"):
 			ParseMpt(module, moduleLen);
 			return;
-		case ASAP_EXT("MPD"):
+		case PackExt("MPD"):
 			Fastplay = 156;
 			ParseMpt(module, moduleLen);
 			return;
-		case ASAP_EXT("RMT"):
+		case PackExt("RMT"):
 			ParseRmt(module, moduleLen);
 			return;
-		case ASAP_EXT("TMC"):
-		case ASAP_EXT("TM8"):
+		case PackExt("TMC"):
+		case PackExt("TM8"):
 			ParseTmc(module, moduleLen);
 			return;
-		case ASAP_EXT("TM2"):
+		case PackExt("TM2"):
 			ParseTm2(module, moduleLen);
 			return;
-		case ASAP_EXT("FC"):
+		case PackExt("FC"):
 			ParseFc(module, moduleLen);
 			return;
 #if EXPERIMENTAL_XEX
-		case ASAP_EXT("XEX"):
+		case PackExt("XEX"):
 			if (moduleLen < 7 || module[0] != 0xff || module[1] != 0xff)
 				throw "Missing 0xff,0xff header";
 			Type = ASAPModuleType.Xex;
@@ -1754,22 +1711,22 @@ public class ASAPInfo
 		/// Filename extension without the leading dot.
 		string ext)
 	{
-		switch (ASAP_EXT(ext)) {
-		case ASAP_EXT("SAP"): return "Slight Atari Player";
-		case ASAP_EXT("CMC"): return "Chaos Music Composer";
-		case ASAP_EXT("CM3"): return "CMC \"3/4\"";
-		case ASAP_EXT("CMR"): return "CMC \"Rzog\"";
-		case ASAP_EXT("CMS"): return "Stereo Double CMC";
-		case ASAP_EXT("DMC"): return "DoublePlay CMC";
-		case ASAP_EXT("DLT"): return "Delta Music Composer";
-		case ASAP_EXT("MPT"): return "Music ProTracker";
-		case ASAP_EXT("MPD"): return "MPT DoublePlay";
-		case ASAP_EXT("RMT"): return "Raster Music Tracker";
-		case ASAP_EXT("TMC"):
-		case ASAP_EXT("TM8"): return "Theta Music Composer 1.x";
-		case ASAP_EXT("TM2"): return "Theta Music Composer 2.x";
-		case ASAP_EXT("FC"): return "Future Composer";
-		case ASAP_EXT("XEX"): return "Atari 8-bit executable";
+		switch (PackExt(ext)) {
+		case PackExt("SAP"): return "Slight Atari Player";
+		case PackExt("CMC"): return "Chaos Music Composer";
+		case PackExt("CM3"): return "CMC \"3/4\"";
+		case PackExt("CMR"): return "CMC \"Rzog\"";
+		case PackExt("CMS"): return "Stereo Double CMC";
+		case PackExt("DMC"): return "DoublePlay CMC";
+		case PackExt("DLT"): return "Delta Music Composer";
+		case PackExt("MPT"): return "Music ProTracker";
+		case PackExt("MPD"): return "MPT DoublePlay";
+		case PackExt("RMT"): return "Raster Music Tracker";
+		case PackExt("TMC"):
+		case PackExt("TM8"): return "Theta Music Composer 1.x";
+		case PackExt("TM2"): return "Theta Music Composer 2.x";
+		case PackExt("FC"): return "Future Composer";
+		case PackExt("XEX"): return "Atari 8-bit executable";
 		default: throw "Unknown extension";
 		}
 	}

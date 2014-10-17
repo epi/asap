@@ -1,6 +1,6 @@
 // flashpack.ci - Atari 8-bit executable compression
 //
-// Copyright (C) 2011-2013  Piotr Fusik
+// Copyright (C) 2011-2014  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -181,9 +181,7 @@ class FlashPack
 	}
 
 	bool IsLiteralPreferred()
-	{
 		return (ItemsCount & 7) == 7 && GetInnerFlags(ItemsCount - 7) == 0;
-	}
 
 	void CompressMemoryArea(int startAddress, int endAddress)
 	{

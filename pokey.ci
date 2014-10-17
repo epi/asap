@@ -532,6 +532,13 @@ class PokeyPair
 		}
 	}
 
+	// What we really need here is:
+	// return ((Pokey.SampleRate << SampleFactorShift) + (clock >> 1)) / clock;
+	// unfortunately cito provides only 32-bit arithmetic for the moment,
+	// so I shift by 5 to avoid overflow.
+	static int GetSampleFactor(int clock)
+		return ((Pokey.SampleRate << SampleFactorShift - 5) + (clock >> 6)) / (clock >> 5);
+
 #if APOKEYSND
 	public
 #endif
@@ -540,14 +547,7 @@ class PokeyPair
 		ExtraPokeyMask = stereo ? 0x10 : 0;
 		BasePokey.Initialize();
 		ExtraPokey.Initialize();
-
-		// What we really need here is:
-		// macro SAMPLE_FACTOR(clock) (((Pokey.SampleRate << SampleFactorShift) + (clock >> 1)) / clock)
-		// unfortunately cito provides only 32-bit arithmetic for the moment,
-		// so I shift by 5 to avoid overflow.
-		macro SAMPLE_FACTOR(clock) (((Pokey.SampleRate << SampleFactorShift - 5) + (clock >> 6)) / (clock >> 5))
-		SampleFactor = ntsc ? SAMPLE_FACTOR(1789772) : SAMPLE_FACTOR(1773447);
-
+		SampleFactor = ntsc ? GetSampleFactor(1789772) : GetSampleFactor(1773447);
 		SampleOffset = 0;
 		ReadySamplesStart = 0;
 		ReadySamplesEnd = 0;
@@ -687,7 +687,5 @@ class PokeyPair
 	}
 
 	bool IsSilent()
-	{
 		return BasePokey.IsSilent() && ExtraPokey.IsSilent();
-	}
 }

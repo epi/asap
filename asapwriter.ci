@@ -732,14 +732,13 @@ public class ASAPWriter
 		/// Display information (xex output only).
 		bool tag)
 	{
-		macro ASAP_EXT(s) ( s.Length >> 1 == 1 ? s[0] + (s[1] << 8) + (s.Length == 3 ? s[2] << 16 : 0) | 0x202020 : 0 )
 		int destExt = ASAPInfo.GetPackedExt(targetFilename);
 		switch (destExt) {
-		case ASAP_EXT("SAP"):
+		case ASAPInfo.PackExt("SAP"):
 			// * -> SAP
 			WriteExecutable(w, null, info, module, moduleLen);
 			return;
-		case ASAP_EXT("XEX"):
+		case ASAPInfo.PackExt("XEX"):
 			// * -> XEX
 			{
 #if FLASHPACK
@@ -797,9 +796,9 @@ public class ASAPWriter
 		default:
 			string possibleExt = info.GetOriginalModuleExt(module, moduleLen);
 			if (possibleExt != null) {
-				int packedPossibleExt = ASAP_EXT(possibleExt);
+				int packedPossibleExt = ASAPInfo.PackExt(possibleExt);
 				if (destExt == packedPossibleExt
-				 || (destExt == ASAP_EXT("tm8") && packedPossibleExt == ASAP_EXT("tmc"))) {
+				 || (destExt == ASAPInfo.PackExt("TM8") && packedPossibleExt == ASAPInfo.PackExt("TMC"))) {
 					// * -> native
 					WriteNative(w, info, module, moduleLen);
 					return;

@@ -337,9 +337,7 @@ public class ASAP
 
 	/// Returns information about the loaded module.
 	public ASAPInfo GetInfo()
-	{
 		return ModuleInfo;
-	}
 
 	void Do6502Init(int pc, int a, int x, int y)
 	{
@@ -456,20 +454,14 @@ public class ASAP
 	/// Returns current playback position in blocks.
 	/// A block is one sample or a pair of samples for stereo.
 	public int GetBlocksPlayed()
-	{
 		return BlocksPlayed;
-	}
 
 	/// Returns current playback position in milliseconds.
 	public int GetPosition()
-	{
 		return BlocksPlayed * 10 / (SampleRate / 100);
-	}
 
 	static int MillisecondsToBlocks(int milliseconds)
-	{
 		return milliseconds * (SampleRate / 100) / 10;
-	}
 
 	/// Changes the playback position.
 	public void SeekSample(
@@ -502,7 +494,8 @@ public class ASAP
 		buffer[offset + 3] = (value >> 24).LowByte;
 	}
 
-	macro FOUR_CC(s) ( s[0] + (s[1] << 8) + (s[2] << 16) + (s[3] << 24) )
+	static int FourCC(string s)
+		return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
 
 	static void PutLittleEndians(byte[] buffer, int offset, int value1, int value2)
 	{
@@ -541,8 +534,8 @@ public class ASAP
 		int bytesPerSecond = SampleRate * blockSize;
 		int totalBlocks = MillisecondsToBlocks(CurrentDuration);
 		int nBytes = (totalBlocks - BlocksPlayed) * blockSize;
-		PutLittleEndian(buffer, 8, FOUR_CC("WAVE"));
-		PutLittleEndians(buffer, 12, FOUR_CC("fmt "), 16);
+		PutLittleEndian(buffer, 8, FourCC("WAVE"));
+		PutLittleEndians(buffer, 12, FourCC("fmt "), 16);
 		buffer[20] = 1;
 		buffer[21] = 0;
 		buffer[22] = ModuleInfo.Channels;
@@ -556,11 +549,11 @@ public class ASAP
 		if (metadata) {
 			int year = ModuleInfo.GetYear();
 			if (ModuleInfo.Title.Length > 0 || ModuleInfo.Author.Length > 0 || year > 0) {
-				PutLittleEndian(buffer, 44, FOUR_CC("INFO"));
-				i = PutWavMetadata(buffer, 48, FOUR_CC("INAM"), ModuleInfo.Title);
-				i = PutWavMetadata(buffer, i, FOUR_CC("IART"), ModuleInfo.Author);
+				PutLittleEndian(buffer, 44, FourCC("INFO"));
+				i = PutWavMetadata(buffer, 48, FourCC("INAM"), ModuleInfo.Title);
+				i = PutWavMetadata(buffer, i, FourCC("IART"), ModuleInfo.Author);
 				if (year > 0) {
-					PutLittleEndians(buffer, i, FOUR_CC("ICRD"), 6);
+					PutLittleEndians(buffer, i, FourCC("ICRD"), 6);
 					for (int j = 3; j >= 0; j--) {
 						buffer[i + 8 + j] = '0' + year % 10;
 						year /= 10;
@@ -569,11 +562,11 @@ public class ASAP
 					buffer[i + 13] =  0;
 					i += 14;
 				}
-				PutLittleEndians(buffer, 36, FOUR_CC("LIST"), i - 44);
+				PutLittleEndians(buffer, 36, FourCC("LIST"), i - 44);
 			}
 		}
-		PutLittleEndians(buffer, 0, FOUR_CC("RIFF"), i + nBytes);
-		PutLittleEndians(buffer, i, FOUR_CC("data"), nBytes);
+		PutLittleEndians(buffer, 0, FourCC("RIFF"), i + nBytes);
+		PutLittleEndians(buffer, i, FourCC("data"), nBytes);
 		return i + 8;
 	}
 
@@ -622,9 +615,7 @@ public class ASAP
 		int bufferLen,
 		/// Format of samples.
 		ASAPSampleFormat format)
-	{
 		return GenerateAt(buffer, 0, bufferLen, format);
-	}
 
 	/// Returns POKEY channel volume - an integer between 0 and 15.
 	public int GetPokeyChannelVolume(
