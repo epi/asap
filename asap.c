@@ -35,15 +35,6 @@ typedef enum {
 FlashPackItemType;
 
 typedef enum {
-	FlashPackLoadState_START_LOW_BYTE,
-	FlashPackLoadState_START_HIGH_BYTE,
-	FlashPackLoadState_END_LOW_BYTE,
-	FlashPackLoadState_END_HIGH_BYTE,
-	FlashPackLoadState_CONTENT
-}
-FlashPackLoadState;
-
-typedef enum {
 	NmiStatus_RESET,
 	NmiStatus_ON_V_BLANK,
 	NmiStatus_WAS_V_BLANK
@@ -1799,31 +1790,37 @@ static const unsigned char CiBinaryResource_tmc_obx[2671] = { 255, 255, 0, 5, 10
 	7, 157, 34, 5, 168, 185, 60, 6, 157, 244, 7, 169, 0, 157, 44, 8,
 	157, 100, 8, 157, 108, 8, 157, 148, 8, 169, 1, 157, 188, 7, 96 };
 
+struct ASAPWriter {
+	int outputEnd;
+	int outputOffset;
+	unsigned char *output;
+};
 static int ASAPWriter_FormatXexInfoText(unsigned char *dest, int destLen, int endColumn, const char *src, cibool author);
 static int ASAPWriter_PadXexInfo(unsigned char *dest, int offset, int endColumn);
 static cibool ASAPWriter_SecondsToString(unsigned char *result, int offset, int value);
 static void ASAPWriter_TwoDigitsToString(unsigned char *result, int offset, int value);
-static void ASAPWriter_WriteBytes(ByteWriter w, unsigned char const *array, int startIndex, int endIndex);
-static void ASAPWriter_WriteCmcInit(ByteWriter w, int *initAndPlayer, ASAPInfo const *info);
-static void ASAPWriter_WriteDec(ByteWriter w, int value);
-static void ASAPWriter_WriteDecSapTag(ByteWriter w, const char *tag, int value);
-static cibool ASAPWriter_WriteExecutable(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, unsigned char const *module, int moduleLen);
-static void ASAPWriter_WriteExecutableFromSap(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int type, unsigned char const *module, int moduleLen);
-static void ASAPWriter_WriteExecutableHeader(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int type, int init, int player);
-static int ASAPWriter_WriteExecutableHeaderForSongPos(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int player, int codeForOneSong, int codeForManySongs, int playerOffset);
-static void ASAPWriter_WriteHexSapTag(ByteWriter w, const char *tag, int value);
-static cibool ASAPWriter_WriteNative(ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen);
-static int ASAPWriter_WriteNativeHeader(ByteWriter w, ASAPInfo const *info, unsigned char const *module);
-static void ASAPWriter_WritePlaTaxLda0(ByteWriter w);
-static void ASAPWriter_WriteRelocatedBytes(ByteWriter w, int diff, unsigned char const *module, int lowOffset, int highOffset, int len, int shift);
-static void ASAPWriter_WriteRelocatedLowHigh(ByteWriter w, int diff, unsigned char const *module, int lowOffset, int len);
-static void ASAPWriter_WriteRelocatedWords(ByteWriter w, int diff, unsigned char const *module, int offset, int len);
-static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int type, int init, int player);
-static void ASAPWriter_WriteString(ByteWriter w, const char *s);
-static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value);
-static void ASAPWriter_WriteWord(ByteWriter w, int value);
-static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info);
-static void ASAPWriter_WriteXexInfoTextDl(ByteWriter w, int address, int len, int verticalScrollAt);
+static cibool ASAPWriter_WriteByte(ASAPWriter *self, int value);
+static cibool ASAPWriter_WriteBytes(ASAPWriter *self, unsigned char const *array, int startIndex, int endIndex);
+static cibool ASAPWriter_WriteCmcInit(ASAPWriter *self, int *initAndPlayer, ASAPInfo const *info);
+static cibool ASAPWriter_WriteDec(ASAPWriter *self, int value);
+static cibool ASAPWriter_WriteDecSapTag(ASAPWriter *self, const char *tag, int value);
+static cibool ASAPWriter_WriteExecutable(ASAPWriter *self, int *initAndPlayer, ASAPInfo const *info, unsigned char const *module, int moduleLen);
+static cibool ASAPWriter_WriteExecutableFromSap(ASAPWriter *self, int *initAndPlayer, ASAPInfo const *info, int type, unsigned char const *module, int moduleLen);
+static cibool ASAPWriter_WriteExecutableHeader(ASAPWriter *self, int *initAndPlayer, ASAPInfo const *info, int type, int init, int player);
+static int ASAPWriter_WriteExecutableHeaderForSongPos(ASAPWriter *self, int *initAndPlayer, ASAPInfo const *info, int player, int codeForOneSong, int codeForManySongs, int playerOffset);
+static cibool ASAPWriter_WriteHexSapTag(ASAPWriter *self, const char *tag, int value);
+static cibool ASAPWriter_WriteNative(ASAPWriter *self, ASAPInfo const *info, unsigned char const *module, int moduleLen);
+static int ASAPWriter_WriteNativeHeader(ASAPWriter *self, ASAPInfo const *info, unsigned char const *module);
+static cibool ASAPWriter_WritePlaTaxLda0(ASAPWriter *self);
+static cibool ASAPWriter_WriteRelocatedBytes(ASAPWriter *self, int diff, unsigned char const *module, int lowOffset, int highOffset, int len, int shift);
+static cibool ASAPWriter_WriteRelocatedLowHigh(ASAPWriter *self, int diff, unsigned char const *module, int lowOffset, int len);
+static cibool ASAPWriter_WriteRelocatedWords(ASAPWriter *self, int diff, unsigned char const *module, int offset, int len);
+static cibool ASAPWriter_WriteSapHeader(ASAPWriter *self, ASAPInfo const *info, int type, int init, int player);
+static cibool ASAPWriter_WriteString(ASAPWriter *self, const char *s);
+static cibool ASAPWriter_WriteTextSapTag(ASAPWriter *self, const char *tag, const char *value);
+static cibool ASAPWriter_WriteWord(ASAPWriter *self, int value);
+static cibool ASAPWriter_WriteXexInfo(ASAPWriter *self, ASAPInfo const *info);
+static cibool ASAPWriter_WriteXexInfoTextDl(ASAPWriter *self, int address, int len, int verticalScrollAt);
 static const unsigned char CiBinaryResource_xexb_obx[183] = { 255, 255, 36, 1, 223, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212, 208,
 	251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 162, 8, 157, 16,
 	210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31, 210, 141, 0, 210, 169,
@@ -1866,20 +1863,15 @@ static int FlashPackItem_WriteValueTo(FlashPackItem const *self, unsigned char *
 struct FlashPack {
 	int compressedLength;
 	int itemsCount;
-	int loadAddress;
-	int loadEndAddress;
-	FlashPackLoadState loadState;
 	FlashPackItem items[64];
 	unsigned char compressed[65536];
 	int memory[65536];
 };
-static void FlashPack_Construct(FlashPack *self);
-static cibool FlashPack_Compress(FlashPack *self, ByteWriter w);
+static cibool FlashPack_Compress(FlashPack *self, ASAPWriter *w);
 static void FlashPack_CompressMemoryArea(FlashPack *self, int startAddress, int endAddress);
 static int FlashPack_FindHole(FlashPack const *self);
 static int FlashPack_GetInnerFlags(FlashPack const *self, int index);
 static cibool FlashPack_IsLiteralPreferred(FlashPack const *self);
-static void FlashPack_LoadByte(FlashPack *self, int data);
 static void FlashPack_PutItem(FlashPack *self, FlashPackItemType type, int value);
 static void FlashPack_PutItems(FlashPack *self);
 static void FlashPack_PutPoke(FlashPack *self, int address, int value);
@@ -4301,6 +4293,17 @@ static cibool ASAPInfo_ValidateSap(unsigned char const *module, int moduleLen)
 	return moduleLen >= 30 && ASAPInfo_HasStringAt(module, 0, "SAP\r\n");
 }
 
+ASAPWriter *ASAPWriter_New(void)
+{
+	ASAPWriter *self = (ASAPWriter *) malloc(sizeof(ASAPWriter));
+	return self;
+}
+
+void ASAPWriter_Delete(ASAPWriter *self)
+{
+	free(self);
+}
+
 int ASAPWriter_DurationToString(unsigned char *result, int value)
 {
 	if (!ASAPWriter_SecondsToString(result, 0, value))
@@ -4396,129 +4399,182 @@ static cibool ASAPWriter_SecondsToString(unsigned char *result, int offset, int 
 	return TRUE;
 }
 
+void ASAPWriter_SetOutput(ASAPWriter *self, unsigned char *output, int startIndex, int endIndex)
+{
+	self->output = output;
+	self->outputOffset = startIndex;
+	self->outputEnd = endIndex;
+}
+
 static void ASAPWriter_TwoDigitsToString(unsigned char *result, int offset, int value)
 {
 	result[offset] = 48 + value / 10;
 	result[offset + 1] = 48 + value % 10;
 }
 
-cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen, cibool tag)
+int ASAPWriter_Write(ASAPWriter *self, const char *targetFilename, ASAPInfo const *info, unsigned char const *module, int moduleLen, cibool tag)
 {
 	int destExt = ASAPInfo_GetPackedExt(targetFilename);
 	switch (destExt) {
 		const char *possibleExt;
 	case 7364979:
-		return ASAPWriter_WriteExecutable(w, NULL, info, module, moduleLen);
+		return ASAPWriter_WriteExecutable(self, NULL, info, module, moduleLen) ? self->outputOffset : -1;
 	case 7890296:
 		{
-			FlashPack flashPack;
-			ByteWriter resultWriter;
 			int initAndPlayer[2];
-			FlashPack_Construct(&flashPack);
-			resultWriter = w;
-			
-					w.obj = &flashPack;
-					w.func = (void (*)(void *, int)) FlashPack_LoadByte;
-				;
-			if (!ASAPWriter_WriteExecutable(w, initAndPlayer, info, module, moduleLen))
-				return FALSE;
+			FlashPack flashPack;
+			if (!ASAPWriter_WriteExecutable(self, initAndPlayer, info, module, moduleLen))
+				return -1;
 			switch (info->type) {
 			case ASAPModuleType_SAP_D:
 				if (info->fastplay != 312)
-					return FALSE;
-				ASAPWriter_WriteBytes(w, CiBinaryResource_xexd_obx, 2, 117);
-				ASAPWriter_WriteWord(w, initAndPlayer[0]);
+					return -1;
+				if (!ASAPWriter_WriteBytes(self, CiBinaryResource_xexd_obx, 2, 117))
+					return -1;
+				if (!ASAPWriter_WriteWord(self, initAndPlayer[0]))
+					return -1;
 				if (initAndPlayer[1] < 0) {
-					w.func(w.obj, 96);
-					w.func(w.obj, 96);
-					w.func(w.obj, 96);
+					if (!ASAPWriter_WriteByte(self, 96))
+						return -1;
+					if (!ASAPWriter_WriteByte(self, 96))
+						return -1;
+					if (!ASAPWriter_WriteByte(self, 96))
+						return -1;
 				}
 				else {
-					w.func(w.obj, 76);
-					ASAPWriter_WriteWord(w, initAndPlayer[1]);
+					if (!ASAPWriter_WriteByte(self, 76))
+						return -1;
+					if (!ASAPWriter_WriteWord(self, initAndPlayer[1]))
+						return -1;
 				}
-				w.func(w.obj, info->defaultSong);
+				if (!ASAPWriter_WriteByte(self, info->defaultSong))
+					return -1;
 				break;
 			case ASAPModuleType_SAP_S:
-				return FALSE;
+				return -1;
 			default:
-				ASAPWriter_WriteBytes(w, CiBinaryResource_xexb_obx, 2, 183);
-				ASAPWriter_WriteWord(w, initAndPlayer[0]);
-				w.func(w.obj, 76);
-				ASAPWriter_WriteWord(w, initAndPlayer[1]);
-				w.func(w.obj, info->defaultSong);
-				w.func(w.obj, info->fastplay & 1);
-				w.func(w.obj, (info->fastplay >> 1) % 156);
-				w.func(w.obj, (info->fastplay >> 1) % 131);
-				w.func(w.obj, info->fastplay / 312);
-				w.func(w.obj, info->fastplay / 262);
+				if (!ASAPWriter_WriteBytes(self, CiBinaryResource_xexb_obx, 2, 183))
+					return -1;
+				if (!ASAPWriter_WriteWord(self, initAndPlayer[0]))
+					return -1;
+				if (!ASAPWriter_WriteByte(self, 76))
+					return -1;
+				if (!ASAPWriter_WriteWord(self, initAndPlayer[1]))
+					return -1;
+				if (!ASAPWriter_WriteByte(self, info->defaultSong))
+					return -1;
+				if (!ASAPWriter_WriteByte(self, info->fastplay & 1))
+					return -1;
+				if (!ASAPWriter_WriteByte(self, (info->fastplay >> 1) % 156))
+					return -1;
+				if (!ASAPWriter_WriteByte(self, (info->fastplay >> 1) % 131))
+					return -1;
+				if (!ASAPWriter_WriteByte(self, info->fastplay / 312))
+					return -1;
+				if (!ASAPWriter_WriteByte(self, info->fastplay / 262))
+					return -1;
 				break;
 			}
 			if (tag)
-				ASAPWriter_WriteXexInfo(w, info);
-			ASAPWriter_WriteWord(w, 736);
-			ASAPWriter_WriteWord(w, 737);
-			ASAPWriter_WriteWord(w, tag ? 256 : 292);
-			return FlashPack_Compress(&flashPack, resultWriter);
+				if (!ASAPWriter_WriteXexInfo(self, info))
+					return -1;
+			if (!ASAPWriter_WriteWord(self, 736))
+				return -1;
+			if (!ASAPWriter_WriteWord(self, 737))
+				return -1;
+			if (!ASAPWriter_WriteWord(self, tag ? 256 : 292))
+				return -1;
+			return FlashPack_Compress(&flashPack, self) ? self->outputOffset : -1;
 		}
 	default:
 		possibleExt = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
 		if (possibleExt != NULL) {
 			int packedPossibleExt = ASAPInfo_PackExt(possibleExt);
 			if (destExt == packedPossibleExt || (destExt == 3698036 && packedPossibleExt == 6516084)) {
-				return ASAPWriter_WriteNative(w, info, module, moduleLen);
+				return ASAPWriter_WriteNative(self, info, module, moduleLen) ? self->outputOffset : -1;
 			}
 		}
-		return FALSE;
+		return -1;
 	}
 }
 
-static void ASAPWriter_WriteBytes(ByteWriter w, unsigned char const *array, int startIndex, int endIndex)
+static cibool ASAPWriter_WriteByte(ASAPWriter *self, int value)
 {
-	while (startIndex < endIndex)
-		w.func(w.obj, array[startIndex++]);
+	if (self->outputOffset >= self->outputEnd)
+		return FALSE;
+	self->output[self->outputOffset++] = value;
+	return TRUE;
 }
 
-static void ASAPWriter_WriteCmcInit(ByteWriter w, int *initAndPlayer, ASAPInfo const *info)
+static cibool ASAPWriter_WriteBytes(ASAPWriter *self, unsigned char const *array, int startIndex, int endIndex)
+{
+	int length = endIndex - startIndex;
+	if (self->outputOffset + length > self->outputEnd)
+		return FALSE;
+	memcpy(self->output + self->outputOffset, array + startIndex, length);
+	self->outputOffset += length;
+	return TRUE;
+}
+
+static cibool ASAPWriter_WriteCmcInit(ASAPWriter *self, int *initAndPlayer, ASAPInfo const *info)
 {
 	if (initAndPlayer == NULL)
-		return;
-	ASAPWriter_WriteWord(w, 4064);
-	ASAPWriter_WriteWord(w, 4080);
-	w.func(w.obj, 72);
-	w.func(w.obj, 162);
-	w.func(w.obj, info->music & 255);
-	w.func(w.obj, 160);
-	w.func(w.obj, info->music >> 8);
-	w.func(w.obj, 169);
-	w.func(w.obj, 112);
-	w.func(w.obj, 32);
-	ASAPWriter_WriteWord(w, initAndPlayer[1] + 3);
-	ASAPWriter_WritePlaTaxLda0(w);
-	w.func(w.obj, 76);
-	ASAPWriter_WriteWord(w, initAndPlayer[1] + 3);
+		return TRUE;
+	if (!ASAPWriter_WriteWord(self, 4064))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(self, 4080))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 72))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 162))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, info->music & 255))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 160))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, info->music >> 8))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 169))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 112))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 32))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(self, initAndPlayer[1] + 3))
+		return FALSE;
+	if (!ASAPWriter_WritePlaTaxLda0(self))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 76))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(self, initAndPlayer[1] + 3))
+		return FALSE;
 	initAndPlayer[0] = 4064;
 	initAndPlayer[1] += 6;
+	return TRUE;
 }
 
-static void ASAPWriter_WriteDec(ByteWriter w, int value)
+static cibool ASAPWriter_WriteDec(ASAPWriter *self, int value)
 {
 	if (value >= 10) {
-		ASAPWriter_WriteDec(w, value / 10);
+		if (!ASAPWriter_WriteDec(self, value / 10))
+			return FALSE;
 		value %= 10;
 	}
-	w.func(w.obj, 48 + value);
+	return ASAPWriter_WriteByte(self, 48 + value);
 }
 
-static void ASAPWriter_WriteDecSapTag(ByteWriter w, const char *tag, int value)
+static cibool ASAPWriter_WriteDecSapTag(ASAPWriter *self, const char *tag, int value)
 {
-	ASAPWriter_WriteString(w, tag);
-	ASAPWriter_WriteDec(w, value);
-	w.func(w.obj, 13);
-	w.func(w.obj, 10);
+	if (!ASAPWriter_WriteString(self, tag))
+		return FALSE;
+	if (!ASAPWriter_WriteDec(self, value))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 13))
+		return FALSE;
+	return ASAPWriter_WriteByte(self, 10);
 }
 
-static cibool ASAPWriter_WriteExecutable(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, unsigned char const *module, int moduleLen)
+static cibool ASAPWriter_WriteExecutable(ASAPWriter *self, int *initAndPlayer, ASAPInfo const *info, unsigned char const *module, int moduleLen)
 {
 	unsigned char const *playerRoutine = ASAP6502_GetPlayerRoutine(info);
 	int player = -1;
@@ -4535,258 +4591,408 @@ static cibool ASAPWriter_WriteExecutable(ByteWriter w, int *initAndPlayer, ASAPI
 		int player2;
 		static const int tmcInitOffset[4] = { -14, -16, -17, -17 };
 	case ASAPModuleType_SAP_B:
-		ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 66, module, moduleLen);
+		if (!ASAPWriter_WriteExecutableFromSap(self, initAndPlayer, info, 66, module, moduleLen))
+			return FALSE;
 		break;
 	case ASAPModuleType_SAP_C:
-		ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 67, module, moduleLen);
-		ASAPWriter_WriteCmcInit(w, initAndPlayer, info);
+		if (!ASAPWriter_WriteExecutableFromSap(self, initAndPlayer, info, 67, module, moduleLen))
+			return FALSE;
+		if (!ASAPWriter_WriteCmcInit(self, initAndPlayer, info))
+			return FALSE;
 		break;
 	case ASAPModuleType_SAP_D:
-		ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 68, module, moduleLen);
+		if (!ASAPWriter_WriteExecutableFromSap(self, initAndPlayer, info, 68, module, moduleLen))
+			return FALSE;
 		break;
 	case ASAPModuleType_SAP_S:
-		ASAPWriter_WriteExecutableFromSap(w, initAndPlayer, info, 83, module, moduleLen);
+		if (!ASAPWriter_WriteExecutableFromSap(self, initAndPlayer, info, 83, module, moduleLen))
+			return FALSE;
 		break;
 	case ASAPModuleType_CMC:
 	case ASAPModuleType_CM3:
 	case ASAPModuleType_CMR:
 	case ASAPModuleType_CMS:
-		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 67, -1, player);
-		w.func(w.obj, 255);
-		w.func(w.obj, 255);
-		ASAPWriter_WriteBytes(w, module, 2, moduleLen);
-		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
-		ASAPWriter_WriteCmcInit(w, initAndPlayer, info);
+		if (!ASAPWriter_WriteExecutableHeader(self, initAndPlayer, info, 67, -1, player))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, 65535))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 2, moduleLen))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, playerRoutine, 2, playerLastByte - player + 7))
+			return FALSE;
+		if (!ASAPWriter_WriteCmcInit(self, initAndPlayer, info))
+			return FALSE;
 		break;
 	case ASAPModuleType_DLT:
-		startAddr = ASAPWriter_WriteExecutableHeaderForSongPos(w, initAndPlayer, info, player, 5, 7, 259);
+		if ((startAddr = ASAPWriter_WriteExecutableHeaderForSongPos(self, initAndPlayer, info, player, 5, 7, 259)) == -1)
+			return FALSE;
 		if (moduleLen == 11270) {
-			ASAPWriter_WriteBytes(w, module, 0, 4);
-			ASAPWriter_WriteWord(w, 19456);
-			ASAPWriter_WriteBytes(w, module, 6, moduleLen);
-			w.func(w.obj, 0);
+			if (!ASAPWriter_WriteBytes(self, module, 0, 4))
+				return FALSE;
+			if (!ASAPWriter_WriteWord(self, 19456))
+				return FALSE;
+			if (!ASAPWriter_WriteBytes(self, module, 6, moduleLen))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
 		}
 		else
-			ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-		ASAPWriter_WriteWord(w, startAddr);
-		ASAPWriter_WriteWord(w, playerLastByte);
+			if (!ASAPWriter_WriteBytes(self, module, 0, moduleLen))
+				return FALSE;
+		if (!ASAPWriter_WriteWord(self, startAddr))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, playerLastByte))
+			return FALSE;
 		if (info->songs != 1) {
-			ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
-			w.func(w.obj, 170);
-			w.func(w.obj, 188);
-			ASAPWriter_WriteWord(w, startAddr);
+			if (!ASAPWriter_WriteBytes(self, info->songPos, 0, info->songs))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 170))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 188))
+				return FALSE;
+			if (!ASAPWriter_WriteWord(self, startAddr))
+				return FALSE;
 		}
 		else {
-			w.func(w.obj, 160);
-			w.func(w.obj, 0);
+			if (!ASAPWriter_WriteByte(self, 160))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
 		}
-		w.func(w.obj, 76);
-		ASAPWriter_WriteWord(w, player + 256);
-		ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+		if (!ASAPWriter_WriteByte(self, 76))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, player + 256))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, playerRoutine, 6, playerLastByte - player + 7))
+			return FALSE;
 		break;
 	case ASAPModuleType_MPT:
-		startAddr = ASAPWriter_WriteExecutableHeaderForSongPos(w, initAndPlayer, info, player, 13, 17, 3);
-		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-		ASAPWriter_WriteWord(w, startAddr);
-		ASAPWriter_WriteWord(w, playerLastByte);
+		if ((startAddr = ASAPWriter_WriteExecutableHeaderForSongPos(self, initAndPlayer, info, player, 13, 17, 3)) == -1)
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 0, moduleLen))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, startAddr))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, playerLastByte))
+			return FALSE;
 		if (info->songs != 1) {
-			ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
-			w.func(w.obj, 72);
+			if (!ASAPWriter_WriteBytes(self, info->songPos, 0, info->songs))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 72))
+				return FALSE;
 		}
-		w.func(w.obj, 160);
-		w.func(w.obj, info->music & 255);
-		w.func(w.obj, 162);
-		w.func(w.obj, info->music >> 8);
-		w.func(w.obj, 169);
-		w.func(w.obj, 0);
-		w.func(w.obj, 32);
-		ASAPWriter_WriteWord(w, player);
+		if (!ASAPWriter_WriteByte(self, 160))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, info->music & 255))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 162))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, info->music >> 8))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 169))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 0))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 32))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, player))
+			return FALSE;
 		if (info->songs != 1) {
-			w.func(w.obj, 104);
-			w.func(w.obj, 168);
-			w.func(w.obj, 190);
-			ASAPWriter_WriteWord(w, startAddr);
+			if (!ASAPWriter_WriteByte(self, 104))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 168))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 190))
+				return FALSE;
+			if (!ASAPWriter_WriteWord(self, startAddr))
+				return FALSE;
 		}
 		else {
-			w.func(w.obj, 162);
-			w.func(w.obj, 0);
+			if (!ASAPWriter_WriteByte(self, 162))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
 		}
-		w.func(w.obj, 169);
-		w.func(w.obj, 2);
-		ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+		if (!ASAPWriter_WriteByte(self, 169))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 2))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, playerRoutine, 6, playerLastByte - player + 7))
+			return FALSE;
 		break;
 	case ASAPModuleType_RMT:
-		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, 3200, 1539);
-		ASAPWriter_WriteBytes(w, module, 0, ASAPInfo_GetWord(module, 4) - info->music + 7);
-		ASAPWriter_WriteWord(w, 3200);
+		if (!ASAPWriter_WriteExecutableHeader(self, initAndPlayer, info, 66, 3200, 1539))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 0, ASAPInfo_GetWord(module, 4) - info->music + 7))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, 3200))
+			return FALSE;
 		if (info->songs != 1) {
-			ASAPWriter_WriteWord(w, 3210 + info->songs);
-			w.func(w.obj, 168);
-			w.func(w.obj, 185);
-			ASAPWriter_WriteWord(w, 3211);
+			if (!ASAPWriter_WriteWord(self, 3210 + info->songs))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 168))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 185))
+				return FALSE;
+			if (!ASAPWriter_WriteWord(self, 3211))
+				return FALSE;
 		}
 		else {
-			ASAPWriter_WriteWord(w, 3208);
-			w.func(w.obj, 169);
-			w.func(w.obj, 0);
+			if (!ASAPWriter_WriteWord(self, 3208))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 169))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
 		}
-		w.func(w.obj, 162);
-		w.func(w.obj, info->music & 255);
-		w.func(w.obj, 160);
-		w.func(w.obj, info->music >> 8);
-		w.func(w.obj, 76);
-		ASAPWriter_WriteWord(w, 1536);
+		if (!ASAPWriter_WriteByte(self, 162))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, info->music & 255))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 160))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, info->music >> 8))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 76))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, 1536))
+			return FALSE;
 		if (info->songs != 1)
-			ASAPWriter_WriteBytes(w, info->songPos, 0, info->songs);
-		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
+			if (!ASAPWriter_WriteBytes(self, info->songPos, 0, info->songs))
+				return FALSE;
+		if (!ASAPWriter_WriteBytes(self, playerRoutine, 2, playerLastByte - player + 7))
+			return FALSE;
 		break;
 	case ASAPModuleType_TMC:
 		player2 = player + tmcPlayerOffset[module[37] - 1];
 		startAddr = player2 + tmcInitOffset[module[37] - 1];
 		if (info->songs != 1)
 			startAddr -= 3;
-		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, startAddr, player2);
-		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-		ASAPWriter_WriteWord(w, startAddr);
-		ASAPWriter_WriteWord(w, playerLastByte);
+		if (!ASAPWriter_WriteExecutableHeader(self, initAndPlayer, info, 66, startAddr, player2))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 0, moduleLen))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, startAddr))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, playerLastByte))
+			return FALSE;
 		if (info->songs != 1)
-			w.func(w.obj, 72);
-		w.func(w.obj, 160);
-		w.func(w.obj, info->music & 255);
-		w.func(w.obj, 162);
-		w.func(w.obj, info->music >> 8);
-		w.func(w.obj, 169);
-		w.func(w.obj, 112);
-		w.func(w.obj, 32);
-		ASAPWriter_WriteWord(w, player);
-		if (info->songs != 1)
-			ASAPWriter_WritePlaTaxLda0(w);
+			if (!ASAPWriter_WriteByte(self, 72))
+				return FALSE;
+		if (!ASAPWriter_WriteByte(self, 160))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, info->music & 255))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 162))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, info->music >> 8))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 169))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 112))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 32))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, player))
+			return FALSE;
+		if (info->songs != 1) {
+
+				if (!ASAPWriter_WritePlaTaxLda0(self))
+					return FALSE;
+		}
 		else {
-			w.func(w.obj, 169);
-			w.func(w.obj, 96);
+			if (!ASAPWriter_WriteByte(self, 169))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 96))
+				return FALSE;
 		}
 		switch (module[37]) {
 		case 2:
-			w.func(w.obj, 6);
-			w.func(w.obj, 0);
-			w.func(w.obj, 76);
-			ASAPWriter_WriteWord(w, player);
-			w.func(w.obj, 165);
-			w.func(w.obj, 0);
-			w.func(w.obj, 230);
-			w.func(w.obj, 0);
-			w.func(w.obj, 74);
-			w.func(w.obj, 144);
-			w.func(w.obj, 5);
-			w.func(w.obj, 176);
-			w.func(w.obj, 6);
+			if (!ASAPWriter_WriteByte(self, 6))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 76))
+				return FALSE;
+			if (!ASAPWriter_WriteWord(self, player))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 165))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 230))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 74))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 144))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 5))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 176))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 6))
+				return FALSE;
 			break;
 		case 3:
 		case 4:
-			w.func(w.obj, 160);
-			w.func(w.obj, 1);
-			w.func(w.obj, 132);
-			w.func(w.obj, 0);
-			w.func(w.obj, 208);
-			w.func(w.obj, 10);
-			w.func(w.obj, 198);
-			w.func(w.obj, 0);
-			w.func(w.obj, 208);
-			w.func(w.obj, 12);
-			w.func(w.obj, 160);
-			w.func(w.obj, module[37]);
-			w.func(w.obj, 132);
-			w.func(w.obj, 0);
-			w.func(w.obj, 208);
-			w.func(w.obj, 3);
+			if (!ASAPWriter_WriteByte(self, 160))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 1))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 132))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 208))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 10))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 198))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 208))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 12))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 160))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, module[37]))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 132))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 208))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 3))
+				return FALSE;
 			break;
 		}
-		ASAPWriter_WriteBytes(w, playerRoutine, 6, playerLastByte - player + 7);
+		if (!ASAPWriter_WriteBytes(self, playerRoutine, 6, playerLastByte - player + 7))
+			return FALSE;
 		break;
 	case ASAPModuleType_TM2:
-		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, 4992, 2051);
-		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-		ASAPWriter_WriteWord(w, 4992);
+		if (!ASAPWriter_WriteExecutableHeader(self, initAndPlayer, info, 66, 4992, 2051))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 0, moduleLen))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, 4992))
+			return FALSE;
 		if (info->songs != 1) {
-			ASAPWriter_WriteWord(w, 5008);
-			w.func(w.obj, 72);
+			if (!ASAPWriter_WriteWord(self, 5008))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 72))
+				return FALSE;
 		}
 		else
-			ASAPWriter_WriteWord(w, 5006);
-		w.func(w.obj, 160);
-		w.func(w.obj, info->music & 255);
-		w.func(w.obj, 162);
-		w.func(w.obj, info->music >> 8);
-		w.func(w.obj, 169);
-		w.func(w.obj, 112);
-		w.func(w.obj, 32);
-		ASAPWriter_WriteWord(w, 2048);
-		if (info->songs != 1)
-			ASAPWriter_WritePlaTaxLda0(w);
-		else {
-			w.func(w.obj, 169);
-			w.func(w.obj, 0);
-			w.func(w.obj, 170);
+			if (!ASAPWriter_WriteWord(self, 5006))
+				return FALSE;
+		if (!ASAPWriter_WriteByte(self, 160))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, info->music & 255))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 162))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, info->music >> 8))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 169))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 112))
+			return FALSE;
+		if (!ASAPWriter_WriteByte(self, 32))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, 2048))
+			return FALSE;
+		if (info->songs != 1) {
+
+				if (!ASAPWriter_WritePlaTaxLda0(self))
+					return FALSE;
 		}
-		w.func(w.obj, 76);
-		ASAPWriter_WriteWord(w, 2048);
-		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
+		else {
+			if (!ASAPWriter_WriteByte(self, 169))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 0))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 170))
+				return FALSE;
+		}
+		if (!ASAPWriter_WriteByte(self, 76))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, 2048))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, playerRoutine, 2, playerLastByte - player + 7))
+			return FALSE;
 		break;
 	case ASAPModuleType_FC:
-		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, player, player + 3);
-		ASAPWriter_WriteWord(w, 65535);
-		ASAPWriter_WriteWord(w, info->music);
-		ASAPWriter_WriteWord(w, info->music + moduleLen - 1);
-		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
-		ASAPWriter_WriteBytes(w, playerRoutine, 2, playerLastByte - player + 7);
+		if (!ASAPWriter_WriteExecutableHeader(self, initAndPlayer, info, 66, player, player + 3))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, 65535))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, info->music))
+			return FALSE;
+		if (!ASAPWriter_WriteWord(self, info->music + moduleLen - 1))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 0, moduleLen))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, playerRoutine, 2, playerLastByte - player + 7))
+			return FALSE;
 		break;
 	}
 	return TRUE;
 }
 
-static void ASAPWriter_WriteExecutableFromSap(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int type, unsigned char const *module, int moduleLen)
+static cibool ASAPWriter_WriteExecutableFromSap(ASAPWriter *self, int *initAndPlayer, ASAPInfo const *info, int type, unsigned char const *module, int moduleLen)
 {
-	ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, type, info->init, info->player);
-	ASAPWriter_WriteBytes(w, module, info->headerLen, moduleLen);
+	if (!ASAPWriter_WriteExecutableHeader(self, initAndPlayer, info, type, info->init, info->player))
+		return FALSE;
+	return ASAPWriter_WriteBytes(self, module, info->headerLen, moduleLen);
 }
 
-static void ASAPWriter_WriteExecutableHeader(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int type, int init, int player)
+static cibool ASAPWriter_WriteExecutableHeader(ASAPWriter *self, int *initAndPlayer, ASAPInfo const *info, int type, int init, int player)
 {
-	if (initAndPlayer == NULL)
-		ASAPWriter_WriteSapHeader(w, info, type, init, player);
+	if (initAndPlayer == NULL) {
+
+			if (!ASAPWriter_WriteSapHeader(self, info, type, init, player))
+				return FALSE;
+	}
 	else {
 		initAndPlayer[0] = init;
 		initAndPlayer[1] = player;
 	}
+	return TRUE;
 }
 
-static int ASAPWriter_WriteExecutableHeaderForSongPos(ByteWriter w, int *initAndPlayer, ASAPInfo const *info, int player, int codeForOneSong, int codeForManySongs, int playerOffset)
+static int ASAPWriter_WriteExecutableHeaderForSongPos(ASAPWriter *self, int *initAndPlayer, ASAPInfo const *info, int player, int codeForOneSong, int codeForManySongs, int playerOffset)
 {
 	if (info->songs != 1) {
-		ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, player - codeForManySongs, player + playerOffset);
-		return player - codeForManySongs - info->songs;
+		return ASAPWriter_WriteExecutableHeader(self, initAndPlayer, info, 66, player - codeForManySongs, player + playerOffset) ? player - codeForManySongs - info->songs : -1;
 	}
-	ASAPWriter_WriteExecutableHeader(w, initAndPlayer, info, 66, player - codeForOneSong, player + playerOffset);
-	return player - codeForOneSong;
+	return ASAPWriter_WriteExecutableHeader(self, initAndPlayer, info, 66, player - codeForOneSong, player + playerOffset) ? player - codeForOneSong : -1;
 }
 
-static void ASAPWriter_WriteHexSapTag(ByteWriter w, const char *tag, int value)
+static cibool ASAPWriter_WriteHexSapTag(ASAPWriter *self, const char *tag, int value)
 {
 	if (value < 0)
-		return;
-	ASAPWriter_WriteString(w, tag);
+		return TRUE;
+	if (!ASAPWriter_WriteString(self, tag))
+		return FALSE;
 	{
 		int i;
 		for (i = 12; i >= 0; i -= 4) {
 			int digit = (value >> i) & 15;
-			w.func(w.obj, digit + (digit < 10 ? 48 : 55));
+			if (!ASAPWriter_WriteByte(self, digit + (digit < 10 ? 48 : 55)))
+				return FALSE;
 		}
 	}
-	w.func(w.obj, 13);
-	w.func(w.obj, 10);
+	if (!ASAPWriter_WriteByte(self, 13))
+		return FALSE;
+	return ASAPWriter_WriteByte(self, 10);
 }
 
-static cibool ASAPWriter_WriteNative(ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen)
+static cibool ASAPWriter_WriteNative(ASAPWriter *self, ASAPInfo const *info, unsigned char const *module, int moduleLen)
 {
 	int diff;
 	switch (info->type) {
@@ -4802,93 +5008,127 @@ static cibool ASAPWriter_WriteNative(ByteWriter w, ASAPInfo const *info, unsigne
 	case ASAPModuleType_SAP_C:
 		offset = ASAPInfo_GetRmtSapOffset(info, module, moduleLen);
 		if (offset > 0) {
-			w.func(w.obj, 255);
-			w.func(w.obj, 255);
-			ASAPWriter_WriteBytes(w, module, offset, moduleLen);
+			if (!ASAPWriter_WriteWord(self, 65535))
+				return FALSE;
+			if (!ASAPWriter_WriteBytes(self, module, offset, moduleLen))
+				return FALSE;
 			break;
 		}
 		blockLen = ASAPInfo_GetWord(module, info->headerLen + 4) - ASAPInfo_GetWord(module, info->headerLen + 2) + 7;
 		if (blockLen < 7 || info->headerLen + blockLen >= moduleLen)
 			return FALSE;
-		if (info->init == 1024 && info->player == 1027)
-			ASAPWriter_WriteBytes(w, module, info->headerLen + 6, info->headerLen + blockLen);
+		if (info->init == 1024 && info->player == 1027) {
+
+				if (!ASAPWriter_WriteBytes(self, module, info->headerLen + 6, info->headerLen + blockLen))
+					return FALSE;
+		}
 		else
-			ASAPWriter_WriteBytes(w, module, info->headerLen, info->headerLen + blockLen);
+			if (!ASAPWriter_WriteBytes(self, module, info->headerLen, info->headerLen + blockLen))
+				return FALSE;
 		break;
 	case ASAPModuleType_CMC:
 	case ASAPModuleType_CM3:
 	case ASAPModuleType_CMR:
 	case ASAPModuleType_CMS:
-		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+		if ((diff = ASAPWriter_WriteNativeHeader(self, info, module)) == -1)
 			return FALSE;
-		ASAPWriter_WriteBytes(w, module, 6, 26);
-		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 26, 64);
-		ASAPWriter_WriteBytes(w, module, 154, moduleLen);
+		if (!ASAPWriter_WriteBytes(self, module, 6, 26))
+			return FALSE;
+		if (!ASAPWriter_WriteRelocatedLowHigh(self, diff, module, 26, 64))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 154, moduleLen))
+			return FALSE;
 		break;
 	case ASAPModuleType_DLT:
-		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+		if ((diff = ASAPWriter_WriteNativeHeader(self, info, module)) == -1)
 			return FALSE;
-		ASAPWriter_WriteBytes(w, module, 6, moduleLen);
+		if (!ASAPWriter_WriteBytes(self, module, 6, moduleLen))
+			return FALSE;
 		break;
 	case ASAPModuleType_MPT:
-		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+		if ((diff = ASAPWriter_WriteNativeHeader(self, info, module)) == -1)
 			return FALSE;
-		ASAPWriter_WriteRelocatedWords(w, diff, module, 6, 192);
-		ASAPWriter_WriteBytes(w, module, 198, 454);
-		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 454, 4);
-		ASAPWriter_WriteBytes(w, module, 462, moduleLen);
+		if (!ASAPWriter_WriteRelocatedWords(self, diff, module, 6, 192))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 198, 454))
+			return FALSE;
+		if (!ASAPWriter_WriteRelocatedLowHigh(self, diff, module, 454, 4))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 462, moduleLen))
+			return FALSE;
 		break;
 	case ASAPModuleType_RMT:
-		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+		if ((diff = ASAPWriter_WriteNativeHeader(self, info, module)) == -1)
 			return FALSE;
-		ASAPWriter_WriteBytes(w, module, 6, 14);
+		if (!ASAPWriter_WriteBytes(self, module, 6, 14))
+			return FALSE;
 		music = ASAPInfo_GetWord(module, 2);
 		patternLowAddress = ASAPInfo_GetWord(module, 16);
 		pointersAndInstrumentsLen = patternLowAddress - music - 8;
-		ASAPWriter_WriteRelocatedWords(w, diff, module, 14, pointersAndInstrumentsLen);
+		if (!ASAPWriter_WriteRelocatedWords(self, diff, module, 14, pointersAndInstrumentsLen))
+			return FALSE;
 		patterns = ASAPInfo_GetWord(module, 18) - patternLowAddress;
-		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 14 + pointersAndInstrumentsLen, patterns);
+		if (!ASAPWriter_WriteRelocatedLowHigh(self, diff, module, 14 + pointersAndInstrumentsLen, patterns))
+			return FALSE;
 		songOffset = 6 + ASAPInfo_GetWord(module, 20) - music;
-		ASAPWriter_WriteBytes(w, module, 14 + pointersAndInstrumentsLen + (patterns << 1), songOffset);
+		if (!ASAPWriter_WriteBytes(self, module, 14 + pointersAndInstrumentsLen + (patterns << 1), songOffset))
+			return FALSE;
 		songEnd = 7 + ASAPInfo_GetWord(module, 4) - music;
 		while (songOffset + 3 < songEnd) {
 			int nextSongOffset = songOffset + module[9] - 48;
 			if (module[songOffset] == 254) {
-				w.func(w.obj, 254);
-				w.func(w.obj, module[songOffset + 1]);
-				ASAPWriter_WriteWord(w, ASAPInfo_GetWord(module, songOffset + 2) + diff);
+				if (!ASAPWriter_WriteByte(self, 254))
+					return FALSE;
+				if (!ASAPWriter_WriteByte(self, module[songOffset + 1]))
+					return FALSE;
+				if (!ASAPWriter_WriteWord(self, ASAPInfo_GetWord(module, songOffset + 2) + diff))
+					return FALSE;
 				songOffset += 4;
 			}
 			if (nextSongOffset > songEnd)
 				nextSongOffset = songEnd;
-			ASAPWriter_WriteBytes(w, module, songOffset, nextSongOffset);
+			if (!ASAPWriter_WriteBytes(self, module, songOffset, nextSongOffset))
+				return FALSE;
 			songOffset = nextSongOffset;
 		}
-		ASAPWriter_WriteBytes(w, module, songOffset, songEnd);
+		if (!ASAPWriter_WriteBytes(self, module, songOffset, songEnd))
+			return FALSE;
 		if (moduleLen >= songEnd + 5) {
-			ASAPWriter_WriteRelocatedWords(w, diff, module, songEnd, 4);
-			ASAPWriter_WriteBytes(w, module, songEnd + 4, moduleLen);
+			if (!ASAPWriter_WriteRelocatedWords(self, diff, module, songEnd, 4))
+				return FALSE;
+			if (!ASAPWriter_WriteBytes(self, module, songEnd + 4, moduleLen))
+				return FALSE;
 		}
 		break;
 	case ASAPModuleType_TMC:
-		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+		if ((diff = ASAPWriter_WriteNativeHeader(self, info, module)) == -1)
 			return FALSE;
-		ASAPWriter_WriteBytes(w, module, 6, 38);
-		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 38, 64);
-		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 166, 128);
-		ASAPWriter_WriteBytes(w, module, 422, moduleLen);
+		if (!ASAPWriter_WriteBytes(self, module, 6, 38))
+			return FALSE;
+		if (!ASAPWriter_WriteRelocatedLowHigh(self, diff, module, 38, 64))
+			return FALSE;
+		if (!ASAPWriter_WriteRelocatedLowHigh(self, diff, module, 166, 128))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 422, moduleLen))
+			return FALSE;
 		break;
 	case ASAPModuleType_TM2:
-		if ((diff = ASAPWriter_WriteNativeHeader(w, info, module)) == -1)
+		if ((diff = ASAPWriter_WriteNativeHeader(self, info, module)) == -1)
 			return FALSE;
-		ASAPWriter_WriteBytes(w, module, 6, 134);
-		ASAPWriter_WriteRelocatedBytes(w, diff, module, 134, 774, 128, 0);
-		ASAPWriter_WriteRelocatedLowHigh(w, diff, module, 262, 256);
-		ASAPWriter_WriteRelocatedBytes(w, diff, module, 134, 774, 128, 8);
-		ASAPWriter_WriteBytes(w, module, 902, moduleLen);
+		if (!ASAPWriter_WriteBytes(self, module, 6, 134))
+			return FALSE;
+		if (!ASAPWriter_WriteRelocatedBytes(self, diff, module, 134, 774, 128, 0))
+			return FALSE;
+		if (!ASAPWriter_WriteRelocatedLowHigh(self, diff, module, 262, 256))
+			return FALSE;
+		if (!ASAPWriter_WriteRelocatedBytes(self, diff, module, 134, 774, 128, 8))
+			return FALSE;
+		if (!ASAPWriter_WriteBytes(self, module, 902, moduleLen))
+			return FALSE;
 		break;
 	case ASAPModuleType_FC:
-		ASAPWriter_WriteBytes(w, module, 0, moduleLen);
+		if (!ASAPWriter_WriteBytes(self, module, 0, moduleLen))
+			return FALSE;
 		break;
 	default:
 		return FALSE;
@@ -4896,28 +5136,31 @@ static cibool ASAPWriter_WriteNative(ByteWriter w, ASAPInfo const *info, unsigne
 	return TRUE;
 }
 
-static int ASAPWriter_WriteNativeHeader(ByteWriter w, ASAPInfo const *info, unsigned char const *module)
+static int ASAPWriter_WriteNativeHeader(ASAPWriter *self, ASAPInfo const *info, unsigned char const *module)
 {
 	int diff = info->music - ASAPInfo_GetWord(module, 2);
 	int last = ASAPInfo_GetWord(module, 4) + diff;
 	if (last > 65535)
 		return -1;
-	w.func(w.obj, 255);
-	w.func(w.obj, 255);
-	ASAPWriter_WriteWord(w, info->music);
-	ASAPWriter_WriteWord(w, last);
-	return diff;
+	if (!ASAPWriter_WriteWord(self, 65535))
+		return -1;
+	if (!ASAPWriter_WriteWord(self, info->music))
+		return -1;
+	return ASAPWriter_WriteWord(self, last) ? diff : -1;
 }
 
-static void ASAPWriter_WritePlaTaxLda0(ByteWriter w)
+static cibool ASAPWriter_WritePlaTaxLda0(ASAPWriter *self)
 {
-	w.func(w.obj, 104);
-	w.func(w.obj, 170);
-	w.func(w.obj, 169);
-	w.func(w.obj, 0);
+	if (!ASAPWriter_WriteByte(self, 104))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 170))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 169))
+		return FALSE;
+	return ASAPWriter_WriteByte(self, 0);
 }
 
-static void ASAPWriter_WriteRelocatedBytes(ByteWriter w, int diff, unsigned char const *module, int lowOffset, int highOffset, int len, int shift)
+static cibool ASAPWriter_WriteRelocatedBytes(ASAPWriter *self, int diff, unsigned char const *module, int lowOffset, int highOffset, int len, int shift)
 {
 	{
 		int i;
@@ -4925,18 +5168,21 @@ static void ASAPWriter_WriteRelocatedBytes(ByteWriter w, int diff, unsigned char
 			int address = module[lowOffset + i] + (module[highOffset + i] << 8);
 			if (address != 0 && address != 65535)
 				address += diff;
-			w.func(w.obj, (address >> shift) & 255);
+			if (!ASAPWriter_WriteByte(self, (address >> shift) & 255))
+				return FALSE;
 		}
 	}
+	return TRUE;
 }
 
-static void ASAPWriter_WriteRelocatedLowHigh(ByteWriter w, int diff, unsigned char const *module, int lowOffset, int len)
+static cibool ASAPWriter_WriteRelocatedLowHigh(ASAPWriter *self, int diff, unsigned char const *module, int lowOffset, int len)
 {
-	ASAPWriter_WriteRelocatedBytes(w, diff, module, lowOffset, lowOffset + len, len, 0);
-	ASAPWriter_WriteRelocatedBytes(w, diff, module, lowOffset, lowOffset + len, len, 8);
+	if (!ASAPWriter_WriteRelocatedBytes(self, diff, module, lowOffset, lowOffset + len, len, 0))
+		return FALSE;
+	return ASAPWriter_WriteRelocatedBytes(self, diff, module, lowOffset, lowOffset + len, len, 8);
 }
 
-static void ASAPWriter_WriteRelocatedWords(ByteWriter w, int diff, unsigned char const *module, int offset, int len)
+static cibool ASAPWriter_WriteRelocatedWords(ASAPWriter *self, int diff, unsigned char const *module, int offset, int len)
 {
 	{
 		int i;
@@ -4944,82 +5190,115 @@ static void ASAPWriter_WriteRelocatedWords(ByteWriter w, int diff, unsigned char
 			int address = module[offset + i] + (module[offset + i + 1] << 8);
 			if (address != 0 && address != 65535)
 				address += diff;
-			ASAPWriter_WriteWord(w, address);
+			if (!ASAPWriter_WriteWord(self, address))
+				return FALSE;
 		}
 	}
+	return TRUE;
 }
 
-static void ASAPWriter_WriteSapHeader(ByteWriter w, ASAPInfo const *info, int type, int init, int player)
+static cibool ASAPWriter_WriteSapHeader(ASAPWriter *self, ASAPInfo const *info, int type, int init, int player)
 {
-	ASAPWriter_WriteString(w, "SAP\r\n");
-	ASAPWriter_WriteTextSapTag(w, "AUTHOR ", info->author);
-	ASAPWriter_WriteTextSapTag(w, "NAME ", info->title);
-	ASAPWriter_WriteTextSapTag(w, "DATE ", info->date);
+	if (!ASAPWriter_WriteString(self, "SAP\r\n"))
+		return FALSE;
+	if (!ASAPWriter_WriteTextSapTag(self, "AUTHOR ", info->author))
+		return FALSE;
+	if (!ASAPWriter_WriteTextSapTag(self, "NAME ", info->title))
+		return FALSE;
+	if (!ASAPWriter_WriteTextSapTag(self, "DATE ", info->date))
+		return FALSE;
 	if (info->songs > 1) {
-		ASAPWriter_WriteDecSapTag(w, "SONGS ", info->songs);
+		if (!ASAPWriter_WriteDecSapTag(self, "SONGS ", info->songs))
+			return FALSE;
 		if (info->defaultSong > 0)
-			ASAPWriter_WriteDecSapTag(w, "DEFSONG ", info->defaultSong);
+			if (!ASAPWriter_WriteDecSapTag(self, "DEFSONG ", info->defaultSong))
+				return FALSE;
 	}
 	if (info->channels > 1)
-		ASAPWriter_WriteString(w, "STEREO\r\n");
+		if (!ASAPWriter_WriteString(self, "STEREO\r\n"))
+			return FALSE;
 	if (info->ntsc)
-		ASAPWriter_WriteString(w, "NTSC\r\n");
-	ASAPWriter_WriteString(w, "TYPE ");
-	w.func(w.obj, type);
-	w.func(w.obj, 13);
-	w.func(w.obj, 10);
+		if (!ASAPWriter_WriteString(self, "NTSC\r\n"))
+			return FALSE;
+	if (!ASAPWriter_WriteString(self, "TYPE "))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, type))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 13))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 10))
+		return FALSE;
 	if (info->fastplay != 312 || info->ntsc)
-		ASAPWriter_WriteDecSapTag(w, "FASTPLAY ", info->fastplay);
+		if (!ASAPWriter_WriteDecSapTag(self, "FASTPLAY ", info->fastplay))
+			return FALSE;
 	if (type == 67)
-		ASAPWriter_WriteHexSapTag(w, "MUSIC ", info->music);
-	ASAPWriter_WriteHexSapTag(w, "INIT ", init);
-	ASAPWriter_WriteHexSapTag(w, "PLAYER ", player);
-	ASAPWriter_WriteHexSapTag(w, "COVOX ", info->covoxAddr);
+		if (!ASAPWriter_WriteHexSapTag(self, "MUSIC ", info->music))
+			return FALSE;
+	if (!ASAPWriter_WriteHexSapTag(self, "INIT ", init))
+		return FALSE;
+	if (!ASAPWriter_WriteHexSapTag(self, "PLAYER ", player))
+		return FALSE;
+	if (!ASAPWriter_WriteHexSapTag(self, "COVOX ", info->covoxAddr))
+		return FALSE;
 	{
 		int song;
 		for (song = 0; song < info->songs; song++) {
 			unsigned char s[9];
 			if (info->durations[song] < 0)
 				break;
-			ASAPWriter_WriteString(w, "TIME ");
-			ASAPWriter_WriteBytes(w, s, 0, ASAPWriter_DurationToString(s, info->durations[song]));
+			if (!ASAPWriter_WriteString(self, "TIME "))
+				return FALSE;
+			if (!ASAPWriter_WriteBytes(self, s, 0, ASAPWriter_DurationToString(s, info->durations[song])))
+				return FALSE;
 			if (info->loops[song])
-				ASAPWriter_WriteString(w, " LOOP");
-			w.func(w.obj, 13);
-			w.func(w.obj, 10);
+				if (!ASAPWriter_WriteString(self, " LOOP"))
+					return FALSE;
+			if (!ASAPWriter_WriteByte(self, 13))
+				return FALSE;
+			if (!ASAPWriter_WriteByte(self, 10))
+				return FALSE;
 		}
 	}
+	return TRUE;
 }
 
-static void ASAPWriter_WriteString(ByteWriter w, const char *s)
+static cibool ASAPWriter_WriteString(ASAPWriter *self, const char *s)
 {
 	int n = (int) strlen(s);
 	{
 		int i;
 		for (i = 0; i < n; i++)
-			w.func(w.obj, s[i]);
+			if (!ASAPWriter_WriteByte(self, s[i]))
+				return FALSE;
 	}
+	return TRUE;
 }
 
-static void ASAPWriter_WriteTextSapTag(ByteWriter w, const char *tag, const char *value)
+static cibool ASAPWriter_WriteTextSapTag(ASAPWriter *self, const char *tag, const char *value)
 {
-	ASAPWriter_WriteString(w, tag);
-	w.func(w.obj, 34);
+	if (!ASAPWriter_WriteString(self, tag))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 34))
+		return FALSE;
 	if (value[0] == '\0')
 		value = "<?>";
-	ASAPWriter_WriteString(w, value);
-	w.func(w.obj, 34);
-	w.func(w.obj, 13);
-	w.func(w.obj, 10);
+	if (!ASAPWriter_WriteString(self, value))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 34))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 13))
+		return FALSE;
+	return ASAPWriter_WriteByte(self, 10);
 }
 
-static void ASAPWriter_WriteWord(ByteWriter w, int value)
+static cibool ASAPWriter_WriteWord(ASAPWriter *self, int value)
 {
-	w.func(w.obj, value & 255);
-	w.func(w.obj, (value >> 8) & 255);
+	if (!ASAPWriter_WriteByte(self, value & 255))
+		return FALSE;
+	return ASAPWriter_WriteByte(self, value >> 8);
 }
 
-static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info)
+static cibool ASAPWriter_WriteXexInfo(ASAPWriter *self, ASAPInfo const *info)
 {
 	unsigned char title[256];
 	int titleLen = ASAPWriter_FormatXexInfoText(title, 0, 0, info->title[0] == '\0' ? "(untitled)" : info->title, FALSE);
@@ -5051,48 +5330,66 @@ static void ASAPWriter_WriteXexInfo(ByteWriter w, ASAPInfo const *info)
 	totalLines = totalCharacters / 32;
 	otherAddress = 64592 - otherLen;
 	titleAddress = otherAddress - authorLen - 8 - titleLen;
-	ASAPWriter_WriteWord(w, titleAddress);
-	ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 4, 6);
-	ASAPWriter_WriteBytes(w, title, 0, titleLen);
+	if (!ASAPWriter_WriteWord(self, titleAddress))
+		return FALSE;
+	if (!ASAPWriter_WriteBytes(self, CiBinaryResource_xexinfo_obx, 4, 6))
+		return FALSE;
+	if (!ASAPWriter_WriteBytes(self, title, 0, titleLen))
+		return FALSE;
 	{
 		int i;
 		for (i = 0; i < 8; i++)
-			w.func(w.obj, 85);
+			if (!ASAPWriter_WriteByte(self, 85))
+				return FALSE;
 	}
-	ASAPWriter_WriteBytes(w, author, 0, authorLen);
-	ASAPWriter_WriteBytes(w, other, 0, otherLen);
+	if (!ASAPWriter_WriteBytes(self, author, 0, authorLen))
+		return FALSE;
+	if (!ASAPWriter_WriteBytes(self, other, 0, otherLen))
+		return FALSE;
 	{
 		int i;
 		for (i = totalLines; i < 26; i++)
-			w.func(w.obj, 112);
+			if (!ASAPWriter_WriteByte(self, 112))
+				return FALSE;
 	}
-	w.func(w.obj, 48);
-	ASAPWriter_WriteXexInfoTextDl(w, titleAddress, titleLen, titleLen - 32);
-	w.func(w.obj, 8);
-	w.func(w.obj, 0);
+	if (!ASAPWriter_WriteByte(self, 48))
+		return FALSE;
+	if (!ASAPWriter_WriteXexInfoTextDl(self, titleAddress, titleLen, titleLen - 32))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 8))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(self, 0))
+		return FALSE;
 	{
 		int i;
 		for (i = 0; i < authorLen; i += 32)
-			w.func(w.obj, 2);
+			if (!ASAPWriter_WriteByte(self, 2))
+				return FALSE;
 	}
-	w.func(w.obj, 16);
+	if (!ASAPWriter_WriteByte(self, 16))
+		return FALSE;
 	{
 		int i;
 		for (i = 0; i < otherLen; i += 32)
-			w.func(w.obj, 2);
+			if (!ASAPWriter_WriteByte(self, 2))
+				return FALSE;
 	}
-	ASAPWriter_WriteBytes(w, CiBinaryResource_xexinfo_obx, 6, 178);
+	return ASAPWriter_WriteBytes(self, CiBinaryResource_xexinfo_obx, 6, 178);
 }
 
-static void ASAPWriter_WriteXexInfoTextDl(ByteWriter w, int address, int len, int verticalScrollAt)
+static cibool ASAPWriter_WriteXexInfoTextDl(ASAPWriter *self, int address, int len, int verticalScrollAt)
 {
-	w.func(w.obj, verticalScrollAt == 0 ? 98 : 66);
-	ASAPWriter_WriteWord(w, address);
+	if (!ASAPWriter_WriteByte(self, verticalScrollAt == 0 ? 98 : 66))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(self, address))
+		return FALSE;
 	{
 		int i;
 		for (i = 32; i < len; i += 32)
-			w.func(w.obj, i == verticalScrollAt ? 34 : 2);
+			if (!ASAPWriter_WriteByte(self, i == verticalScrollAt ? 34 : 2))
+				return FALSE;
 	}
+	return TRUE;
 }
 
 static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
@@ -6254,22 +6551,38 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 	self->vdi = vdi;
 }
 
-static void FlashPack_Construct(FlashPack *self)
-{
-	{
-		int i;
-		for (i = 0; i < 65536; i++)
-			self->memory[i] = -1;
-	}
-	self->loadState = FlashPackLoadState_START_LOW_BYTE;
-}
-
-static cibool FlashPack_Compress(FlashPack *self, ByteWriter w)
+static cibool FlashPack_Compress(FlashPack *self, ASAPWriter *w)
 {
 	int runAddress;
 	int depackerEndAddress;
 	int depackerStartAddress;
 	int compressedStartAddress;
+	{
+		int i;
+		for (i = 0; i < 65536; i++)
+			self->memory[i] = -1;
+	}
+	{
+		int i;
+		for (i = 0; i + 5 <= w->outputOffset;) {
+			int startAddress = w->output[i] + (w->output[i + 1] << 8);
+			int endAddress;
+			if (startAddress == 65535) {
+				i += 2;
+				startAddress = w->output[i] + (w->output[i + 1] << 8);
+			}
+			endAddress = w->output[i + 2] + (w->output[i + 3] << 8);
+			if (startAddress > endAddress)
+				return FALSE;
+			i += 4;
+			if (i + endAddress - startAddress >= w->outputOffset)
+				return FALSE;
+			while (startAddress <= endAddress)
+				self->memory[startAddress++] = w->output[i++];
+		}
+	}
+	if (self->memory[736] < 0 || self->memory[737] < 0)
+		return FALSE;
 	if (self->memory[252] >= 0 || self->memory[253] >= 0 || self->memory[254] >= 0 || self->memory[255] >= 0)
 		return FALSE;
 	runAddress = self->memory[736] + (self->memory[737] << 8);
@@ -6291,96 +6604,182 @@ static cibool FlashPack_Compress(FlashPack *self, ByteWriter w)
 	compressedStartAddress = depackerStartAddress - self->compressedLength;
 	if (compressedStartAddress < 8192)
 		return FALSE;
-	w.func(w.obj, 255);
-	w.func(w.obj, 255);
-	ASAPWriter_WriteWord(w, 54017);
-	ASAPWriter_WriteWord(w, 54017);
-	w.func(w.obj, 255);
-	ASAPWriter_WriteWord(w, compressedStartAddress);
-	ASAPWriter_WriteWord(w, depackerEndAddress);
-	ASAPWriter_WriteBytes(w, self->compressed, 0, self->compressedLength);
-	w.func(w.obj, 173);
-	ASAPWriter_WriteWord(w, compressedStartAddress);
-	w.func(w.obj, 238);
-	ASAPWriter_WriteWord(w, depackerStartAddress + 1);
-	w.func(w.obj, 208);
-	w.func(w.obj, 3);
-	w.func(w.obj, 238);
-	ASAPWriter_WriteWord(w, depackerStartAddress + 2);
-	w.func(w.obj, 96);
-	w.func(w.obj, 76);
-	ASAPWriter_WriteWord(w, runAddress);
-	w.func(w.obj, 133);
-	w.func(w.obj, 254);
-	w.func(w.obj, 138);
-	w.func(w.obj, 42);
-	w.func(w.obj, 170);
-	w.func(w.obj, 240);
-	w.func(w.obj, 246);
-	w.func(w.obj, 177);
-	w.func(w.obj, 254);
-	w.func(w.obj, 153);
-	w.func(w.obj, 128);
-	w.func(w.obj, 128);
-	w.func(w.obj, 200);
-	w.func(w.obj, 208);
-	w.func(w.obj, 9);
-	w.func(w.obj, 152);
-	w.func(w.obj, 56);
-	w.func(w.obj, 101);
-	w.func(w.obj, 255);
-	w.func(w.obj, 133);
-	w.func(w.obj, 255);
-	w.func(w.obj, 141);
-	ASAPWriter_WriteWord(w, depackerStartAddress + 26);
-	w.func(w.obj, 202);
-	w.func(w.obj, 208);
-	w.func(w.obj, 236);
-	w.func(w.obj, 6);
-	w.func(w.obj, 253);
-	w.func(w.obj, 208);
-	w.func(w.obj, 21);
-	w.func(w.obj, 6);
-	w.func(w.obj, 252);
-	w.func(w.obj, 208);
-	w.func(w.obj, 7);
-	w.func(w.obj, 56);
-	w.func(w.obj, 32);
-	ASAPWriter_WriteWord(w, depackerStartAddress);
-	w.func(w.obj, 42);
-	w.func(w.obj, 133);
-	w.func(w.obj, 252);
-	w.func(w.obj, 169);
-	w.func(w.obj, 1);
-	w.func(w.obj, 144);
-	w.func(w.obj, 4);
-	w.func(w.obj, 32);
-	ASAPWriter_WriteWord(w, depackerStartAddress);
-	w.func(w.obj, 42);
-	w.func(w.obj, 133);
-	w.func(w.obj, 253);
-	w.func(w.obj, 32);
-	ASAPWriter_WriteWord(w, depackerStartAddress);
-	w.func(w.obj, 162);
-	w.func(w.obj, 1);
-	w.func(w.obj, 144);
-	w.func(w.obj, 206);
-	w.func(w.obj, 74);
-	w.func(w.obj, 208);
-	w.func(w.obj, 194);
-	w.func(w.obj, 32);
-	ASAPWriter_WriteWord(w, depackerStartAddress);
-	w.func(w.obj, 176);
-	w.func(w.obj, 193);
-	w.func(w.obj, 168);
-	w.func(w.obj, 32);
-	ASAPWriter_WriteWord(w, depackerStartAddress);
-	w.func(w.obj, 144);
-	w.func(w.obj, 202);
-	ASAPWriter_WriteWord(w, 736);
-	ASAPWriter_WriteWord(w, 737);
-	ASAPWriter_WriteWord(w, depackerStartAddress + 50);
-	return TRUE;
+	w->outputOffset = 0;
+	if (!ASAPWriter_WriteWord(w, 65535))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, 54017))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, 54017))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 255))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, compressedStartAddress))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, depackerEndAddress))
+		return FALSE;
+	if (!ASAPWriter_WriteBytes(w, self->compressed, 0, self->compressedLength))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 173))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, compressedStartAddress))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 238))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, depackerStartAddress + 1))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 208))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 3))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 238))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, depackerStartAddress + 2))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 96))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 76))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, runAddress))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 133))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 254))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 138))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 42))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 170))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 240))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 246))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 177))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 254))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 153))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 128))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 128))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 200))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 208))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 9))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 152))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 56))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 101))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 255))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 133))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 255))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 141))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, depackerStartAddress + 26))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 202))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 208))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 236))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 6))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 253))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 208))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 21))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 6))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 252))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 208))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 7))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 56))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 32))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, depackerStartAddress))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 42))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 133))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 252))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 169))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 1))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 144))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 4))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 32))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, depackerStartAddress))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 42))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 133))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 253))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 32))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, depackerStartAddress))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 162))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 1))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 144))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 206))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 74))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 208))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 194))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 32))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, depackerStartAddress))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 176))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 193))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 168))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 32))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, depackerStartAddress))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 144))
+		return FALSE;
+	if (!ASAPWriter_WriteByte(w, 202))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, 736))
+		return FALSE;
+	if (!ASAPWriter_WriteWord(w, 737))
+		return FALSE;
+	return ASAPWriter_WriteWord(w, depackerStartAddress + 50);
 }
 
 static void FlashPack_CompressMemoryArea(FlashPack *self, int startAddress, int endAddress)
@@ -6525,35 +6924,6 @@ static int FlashPack_GetInnerFlags(FlashPack const *self, int index)
 static cibool FlashPack_IsLiteralPreferred(FlashPack const *self)
 {
 	return (self->itemsCount & 7) == 7 && FlashPack_GetInnerFlags(self, self->itemsCount - 7) == 0;
-}
-
-static void FlashPack_LoadByte(FlashPack *self, int data)
-{
-	switch (self->loadState) {
-	case FlashPackLoadState_START_LOW_BYTE:
-		self->loadAddress = data;
-		self->loadState = FlashPackLoadState_START_HIGH_BYTE;
-		break;
-	case FlashPackLoadState_START_HIGH_BYTE:
-		self->loadAddress += data << 8;
-		self->loadState = self->loadAddress == 65535 ? FlashPackLoadState_START_LOW_BYTE : FlashPackLoadState_END_LOW_BYTE;
-		break;
-	case FlashPackLoadState_END_LOW_BYTE:
-		self->loadEndAddress = data;
-		self->loadState = FlashPackLoadState_END_HIGH_BYTE;
-		break;
-	case FlashPackLoadState_END_HIGH_BYTE:
-		self->loadEndAddress += data << 8;
-		self->loadState = FlashPackLoadState_CONTENT;
-		break;
-	case FlashPackLoadState_CONTENT:
-		self->memory[self->loadAddress] = data;
-		if (self->loadAddress == self->loadEndAddress)
-			self->loadState = FlashPackLoadState_START_LOW_BYTE;
-		else
-			self->loadAddress = (self->loadAddress + 1) & 65535;
-		break;
-	}
 }
 
 static void FlashPack_PutItem(FlashPack *self, FlashPackItemType type, int value)

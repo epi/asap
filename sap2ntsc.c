@@ -1,7 +1,7 @@
 /*
  * sap2ntsc.c - convert PAL SAP files to NTSC
  *
- * Copyright (C) 2012  Piotr Fusik
+ * Copyright (C) 2012-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -40,11 +40,6 @@ static void fatal_error(const char *format, ...)
 	exit(1);
 }
 
-static void write_byte(void *obj, int data)
-{
-	putc(data, (FILE *) obj);
-}
-
 static void process_file(const char *filename)
 {
 	const char *ext;
@@ -52,8 +47,10 @@ static void process_file(const char *filename)
 	static unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
 	ASAPInfo *info;
-	ByteWriter bw;
 	int i;
+	ASAPWriter *writer;
+	static unsigned char output[ASAPInfo_MAX_MODULE_LENGTH];
+	int output_len;
 	int warnings;
 
 	/* check filename */
@@ -82,6 +79,9 @@ static void process_file(const char *filename)
 		fatal_error("%s: uses FASTPLAY", filename);
 
 	/* do the conversion */
+	writer = ASAPWriter_New();
+	if (writer == NULL)
+		fatal_error("out of memory");
 	info->ntsc = TRUE;
 	info->fastplay = 262;
 	for (i = 0; i < ASAPInfo_GetSongs(info); i++) {
@@ -89,14 +89,17 @@ static void process_file(const char *filename)
 		if (duration > 0)
 			ASAPInfo_SetDuration(info, i, (int) (duration * (1773447 / 1789772.5 * 262 / 312)));
 	}
+	ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
+	output_len = ASAPWriter_Write(writer, filename, info, module, module_len, TRUE);
+	ASAPWriter_Delete(writer);
+	if (output_len < 0)
+		fatal_error("%s: conversion error", filename);
 
 	/* write file */
 	fp = fopen(filename, "wb");
 	if (fp == NULL)
 		fatal_error("cannot write %s", filename);
-	bw.obj = fp;
-	bw.func = write_byte;
-	if (!ASAPWriter_Write(filename, bw, info, module, module_len, TRUE)) {
+	if (fwrite(output, output_len, 1, fp) != 1) {
 		fclose(fp);
 		remove(filename); /* "unlink" is less portable */
 		fatal_error("%s: write error", filename);

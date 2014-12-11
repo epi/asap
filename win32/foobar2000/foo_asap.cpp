@@ -75,7 +75,6 @@ class input_asap
 	BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
 	ASAP *asap;
-	abort_callback *p_abort;
 
 	int get_song_duration(int song, bool play)
 	{
@@ -102,17 +101,6 @@ class input_asap
 	static const char *empty_if_null(const char *s)
 	{
 		return s != NULL ? s : "";
-	}
-
-	void write(int data)
-	{
-		BYTE b = static_cast<BYTE>(data);
-		m_file->write(&b, 1, *p_abort);
-	}
-
-	static void static_write(void *obj, int data)
-	{
-		static_cast<input_asap *>(obj)->write(data);
 	}
 
 public:
@@ -271,12 +259,19 @@ public:
 
 	void retag_commit(abort_callback &p_abort)
 	{
+		ASAPWriter *writer = ASAPWriter_New();
+		if (writer == NULL)
+			throw exception_io_data();
+		BYTE output[ASAPInfo_MAX_MODULE_LENGTH];
+		ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
+		int output_len = ASAPWriter_Write(writer, url, ASAP_GetInfo(asap), module, module_len, FALSE);
+		ASAPWriter_Delete(writer);
+		if (output_len < 0)
+			throw exception_io_unsupported_format();
+
 		m_file.release();
 		filesystem::g_open(m_file, url, filesystem::open_mode_write_new, p_abort);
-		this->p_abort = &p_abort;
-		ByteWriter bw = { this, static_write };
-		if (!ASAPWriter_Write(url, bw, ASAP_GetInfo(asap), module, module_len, FALSE))
-			throw exception_io_unsupported_format();
+		m_file->write(output, output_len, p_abort);
 	}
 };
 

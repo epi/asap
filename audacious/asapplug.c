@@ -1,7 +1,7 @@
 /*
  * asapplug.c - ASAP plugin for Audacious
  *
- * Copyright (C) 2010-2013  Piotr Fusik
+ * Copyright (C) 2010-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -167,14 +167,6 @@ static bool_t play_start(const char *filename, VFSFile *file)
 	return TRUE;
 }
 
-#pragma GCC diagnostic ignored "-Wunused-result"
-static void write_byte(void *obj, int data)
-{
-	VFSFile *file = (VFSFile *) obj;
-	const char buf[1] = { data };
-	vfs_fwrite(buf, 1, 1, file);
-}
-
 static bool_t update_song_tuple(const char *filename, VFSFile *file, const Tuple *tuple)
 {
 	/* read file */
@@ -182,8 +174,9 @@ static bool_t update_song_tuple(const char *filename, VFSFile *file, const Tuple
 	int module_len = load_module(filename, file, module);
 	ASAPInfo *info;
 	int year;
-	ByteWriter bw;
-	bool_t ok;
+	ASAPWriter *writer;
+	unsigned char output[ASAPInfo_MAX_MODULE_LENGTH];
+
 	if (module_len <= 0)
 		return FALSE;
 	info = ASAPInfo_New();
@@ -231,13 +224,23 @@ static bool_t update_song_tuple(const char *filename, VFSFile *file, const Tuple
 		}
 	}
 
-	/* write file */
-	vfs_fseek(file, 0, SEEK_SET);
-	bw.obj = file;
-	bw.func = write_byte;
-	ok = ASAPWriter_Write(filename, bw, info, module, module_len, TRUE) && vfs_ftruncate(file, vfs_ftell(file)) == 0;
+	/* get updated module */
+	writer = ASAPWriter_New();
+	if (writer == NULL) {
+		ASAPInfo_Delete(info);
+		return FALSE;
+	}
+	ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
+	module_len = ASAPWriter_Write(writer, filename, info, module, module_len, TRUE);
+	ASAPWriter_Delete(writer);
 	ASAPInfo_Delete(info);
-	return ok;
+	if (module_len < 0)
+		return FALSE;
+
+	/* write file */
+	return vfs_fseek(file, 0, SEEK_SET) == 0
+		&& vfs_fwrite(output, module_len, 1, file) == 1
+		&& vfs_ftruncate(file, module_len) == 0;
 }
 
 static const char *exts[] = { "sap", "cmc", "cm3", "cmr", "cms", "dmc", "dlt", "mpt", "mpd", "rmt", "tmc", "tm8", "tm2", "fc", NULL };

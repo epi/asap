@@ -427,20 +427,25 @@ static void toggleCalendar(HWND hDlg)
 	}
 }
 
-static void saveByte(void *obj, int data)
-{
-	putc(data, (FILE *) obj);
-}
-
 static BOOL doSaveFile(LPCTSTR filename, BOOL tag)
 {
-	FILE *fp = _tfopen(filename, _T("wb"));
-	ByteWriter bw;
+	ASAPWriter *writer = ASAPWriter_New();
+	byte output[ASAPInfo_MAX_MODULE_LENGTH];
+	int output_len;
+	FILE *fp;
+
+	if (writer == NULL)
+		return FALSE;
+	ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
+	output_len = ASAPWriter_Write(writer, filename, edited_info, saved_module, saved_module_len, tag);
+	ASAPWriter_Delete(writer);
+	if (output_len < 0)
+		return FALSE;
+
+	fp = _tfopen(filename, _T("wb"));
 	if (fp == NULL)
 		return FALSE;
-	bw.obj = fp;
-	bw.func = saveByte;
-	if (!ASAPWriter_Write(filename, bw, edited_info, saved_module, saved_module_len, tag)) {
+	if (fwrite(output, output_len, 1, fp) != 1) {
 		fclose(fp);
 		DeleteFile(filename);
 		return FALSE;

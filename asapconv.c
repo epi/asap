@@ -334,7 +334,8 @@ static int play_song(const char *input_file, ASAP *asap)
 static void write_output_file(FILE *fp, unsigned char *buffer, int n_bytes)
 {
 	if (fwrite(buffer, 1, n_bytes, fp) != n_bytes) {
-		fclose(fp);
+		if (fp != stdout)
+			fclose(fp);
 		fatal_error("error writing to %s", output_file);
 	}
 }
@@ -511,15 +512,11 @@ static void convert_to_mp3(const char *input_file, const unsigned char *module, 
 
 #endif /* HAVE_LIBMP3LAME */
 
-static void write_byte(void *obj, int data)
-{
-	putc(data, (FILE *) obj);
-}
-
 static void convert_to_module(const char *input_file, const unsigned char *module, int module_len, cibool output_xex)
 {
 	const char *input_ext = strrchr(input_file, '.');
 	ASAPInfo *info;
+	ASAPWriter *writer;
 	FILE *fp;
 
 	if (input_ext == NULL)
@@ -530,29 +527,28 @@ static void convert_to_module(const char *input_file, const unsigned char *modul
 		fatal_error("out of memory");
 	if (!ASAPInfo_Load(info, input_file, module, module_len))
 		fatal_error("%s: unsupported file", input_file);
+	writer = ASAPWriter_New();
+	if (writer == NULL)
+		fatal_error("out of memory");
 	apply_tags(input_file, info);
 	if (arg_music_address >= 0)
 		ASAPInfo_SetMusicAddress(info, arg_music_address);
 
 	while ((fp = open_output_file(input_file, module, module_len, info, output_xex)) != NULL) {
-		ByteWriter bw;
+		unsigned char output[ASAPInfo_MAX_MODULE_LENGTH];
 		if (output_xex)
 			ASAPInfo_SetDefaultSong(info, current_song);
 		if (arg_duration >= 0)
 			ASAPInfo_SetDuration(info, current_song, arg_duration);
-		bw.obj = fp;
-		bw.func = write_byte;
-		/* FIXME: stdout */
-		if (!ASAPWriter_Write(output_file, bw, info, module, module_len, arg_tag)) {
-			if (fp != stdout) {
-				fclose(fp);
-				remove(output_file); /* "unlink" is less portable */
-			}
+		ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
+		int output_len = ASAPWriter_Write(writer, output_file, info, module, module_len, arg_tag);
+		if (output_len < 0)
 			fatal_error("%s: conversion error", input_file);
-		}
+		write_output_file(fp, output, output_len);
 		close_output_file(fp);
 	}
 
+	ASAPWriter_Delete(writer);
 	ASAPInfo_Delete(info);
 }
 

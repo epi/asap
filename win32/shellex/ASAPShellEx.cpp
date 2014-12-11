@@ -1,7 +1,7 @@
 /*
  * ASAPShellEx.cpp - ASAP Column Handler and Property Handler shell extensions
  *
- * Copyright (C) 2010-2013  Piotr Fusik
+ * Copyright (C) 2010-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -168,29 +168,6 @@ public:
 	~CMyLock()
 	{
 		LeaveCriticalSection(m_pLock);
-	}
-};
-
-class CMemoryByteWriter
-{
-	static void WriteByte(void *obj, int value)
-	{
-		CMemoryByteWriter *self = (CMemoryByteWriter *) obj;
-		if (self->length < ASAPInfo_MAX_MODULE_LENGTH)
-			self->module[self->length++] = (byte) value;
-	}
-
-public:
-
-	byte module[ASAPInfo_MAX_MODULE_LENGTH];
-	int length;
-
-	CMemoryByteWriter() : length(0) { }
-
-	ByteWriter GetByteWriter()
-	{
-		ByteWriter bw = { this, WriteByte };
-		return bw;
 	}
 };
 
@@ -597,20 +574,28 @@ public:
 			int module_len;
 			hr = m_pstream->Read(module, ASAPInfo_MAX_MODULE_LENGTH, (ULONG *) &module_len);
 			if (SUCCEEDED(hr)) {
-				hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, NULL);
-				if (SUCCEEDED(hr)) {
-					CMemoryByteWriter mbw;
-					if (!ASAPWriter_Write("dummy.sap", mbw.GetByteWriter(), m_pinfo, module, module_len, FALSE))
+				ASAPWriter *writer = ASAPWriter_New();
+				if (writer == NULL)
+					hr = E_OUTOFMEMORY;
+				else {
+					byte output[ASAPInfo_MAX_MODULE_LENGTH];
+					ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
+					module_len = ASAPWriter_Write(writer, "dummy.sap", m_pinfo, module, module_len, FALSE);
+					ASAPWriter_Delete(writer);
+					if (module_len < 0)
 						hr = E_FAIL;
 					else {
-						ULARGE_INTEGER liSize;
-						liSize.LowPart = mbw.length;
-						liSize.HighPart = 0;
-						hr = m_pstream->SetSize(liSize);
+						hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, NULL);
 						if (SUCCEEDED(hr)) {
-							hr = m_pstream->Write(mbw.module, mbw.length, NULL);
-							if (SUCCEEDED(hr))
-								hr = m_pstream->Commit(STGC_DEFAULT);
+							ULARGE_INTEGER liSize;
+							liSize.LowPart = module_len;
+							liSize.HighPart = 0;
+							hr = m_pstream->SetSize(liSize);
+							if (SUCCEEDED(hr)) {
+								hr = m_pstream->Write(output, module_len, NULL);
+								if (SUCCEEDED(hr))
+									hr = m_pstream->Commit(STGC_DEFAULT);
+							}
 						}
 					}
 				}

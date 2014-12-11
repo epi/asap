@@ -1,7 +1,7 @@
 /*
  * ASAPMusicRoutine.java - music embeddable in an Atari program
  *
- * Copyright (C) 2011-2012  Piotr Fusik
+ * Copyright (C) 2011-2014  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,8 +23,6 @@
 
 package net.sf.asap;
 
-import java.io.ByteArrayOutputStream;
-
 /**
  * Music embeddable in an Atari program.
  * Use this class to transform music into a routine
@@ -35,7 +33,8 @@ import java.io.ByteArrayOutputStream;
  */
 public class ASAPMusicRoutine
 {
-	private final byte[] binary;
+	private final byte[] binary = new byte[ASAPInfo.MAX_MODULE_LENGTH];
+	private final int binaryLen;
 	private final int initAddress;
 	private final boolean fulltime;
 	private final int playerAddress;
@@ -52,12 +51,11 @@ public class ASAPMusicRoutine
 	{
 		ASAPInfo info = new ASAPInfo();
 		info.load(filename, module, moduleLen);
-		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ASAPWriter writer = new ASAPWriter();
+		writer.setOutput(binary, 0, binary.length);
 		int[] initAndPlayer = new int[2];
-		ASAPWriter.writeExecutable(
-			new ByteWriter() { public void run(int data) { baos.write(data); } },
-			initAndPlayer, info, module, moduleLen);
-		binary = baos.toByteArray();
+		writer.writeExecutable(initAndPlayer, info, module, moduleLen);
+		binaryLen = writer.outputOffset;
 		initAddress = initAndPlayer[0];
 		// TODO: SAP_S
 		fulltime = info.type == ASAPModuleType.SAP_D;
@@ -73,8 +71,15 @@ public class ASAPMusicRoutine
 	 * It is not a complete program, there is no init or run address.
 	 * Currently the loading addresses can be as low as <code>0x200</code>
 	 * which normally conflicts with the Atari operating system.
+	 * @see #getBinaryLength()
 	 */
-	public byte[] getBinary() { return binary; }
+	public byte[] getBinaryContent() { return binary; }
+
+	/**
+	 * Returns length of music data.
+	 * @see #getBinaryContent()
+	 */
+	public int getBinaryLength() { return binaryLen; }
 
 	/**
 	 * Returns address of the initialization routine.

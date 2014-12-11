@@ -108,7 +108,7 @@ CLEAN += asap-asapscan.c asap-asapscan.h
 $(srcdir)asap.h: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(ASM6502_OBX) | $(srcdir)asap.c
 
 $(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(ASM6502_OBX)
-	$(CITO) -D C -D FLASHPACK
+	$(CITO) -D C
 
 # aatr.[ch]
 

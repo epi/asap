@@ -32,13 +32,7 @@ typedef enum {
 	ASAPSampleFormat_S16_B_E
 }
 ASAPSampleFormat;
-
-typedef struct 
-{
-	void *obj;
-	void (*func)(void *obj, int data);
-}
-ByteWriter;
+typedef struct ASAPWriter ASAPWriter;
 
 typedef struct 
 {
@@ -394,6 +388,9 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
  */
 #define ASAPInfo_YEARS  "2005-2014"
 
+ASAPWriter *ASAPWriter_New(void);
+void ASAPWriter_Delete(ASAPWriter *self);
+
 /**
  * Writes text representation of the given duration.
  * Returns the number of bytes written to <code>result</code>.
@@ -417,16 +414,17 @@ void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsign
  */
 #define ASAPWriter_MAX_DURATION_LENGTH  9
 
+void ASAPWriter_SetOutput(ASAPWriter *self, unsigned char *output, int startIndex, int endIndex);
+
 /**
  * Writes the given module in a possibly different file format.
  * @param targetFilename Output filename, used to determine the format.
- * @param w Receives output file contents.
  * @param info File information got from the source file with data updated for the output file.
  * @param module Contents of the source file.
  * @param moduleLen Length of the source file.
  * @param tag Display information (xex output only).
  */
-cibool ASAPWriter_Write(const char *targetFilename, ByteWriter w, ASAPInfo const *info, unsigned char const *module, int moduleLen, cibool tag);
+int ASAPWriter_Write(ASAPWriter *self, const char *targetFilename, ASAPInfo const *info, unsigned char const *module, int moduleLen, cibool tag);
 
 #ifdef __cplusplus
 }
