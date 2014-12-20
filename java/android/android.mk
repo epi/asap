@@ -1,7 +1,7 @@
 ASMA_DIR = ../asma
 ANDROID_SDK = C:/bin/android-sdk-windows
 ANDROID_JAR = $(ANDROID_SDK)/platforms/android-19/android.jar
-ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/19.0.1
+ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/21.1.2
 PROGUARD_JAR = C:/bin/proguard4.6/lib/proguard.jar
 
 JAVA = $(DO)java
@@ -9,7 +9,7 @@ AAPT = $(ANDROID_BUILD_TOOLS)/aapt
 DX = $(DO)java -jar "$(ANDROID_BUILD_TOOLS)/lib/dx.jar" --no-strict
 PROGUARD = $(DO)java -jar $(PROGUARD_JAR)
 JARSIGNER = $(DO)jarsigner -sigalg SHA1withRSA -digestalg SHA1
-ZIPALIGN = $(DO)$(ANDROID_SDK)/tools/zipalign
+ZIPALIGN = $(DO)$(ANDROID_BUILD_TOOLS)/zipalign
 ADB = $(ANDROID_SDK)/platform-tools/adb
 ANDROID = $(ANDROID_SDK)/tools/android.bat
 EMULATOR = $(ANDROID_SDK)/tools/emulator
