@@ -1750,6 +1750,43 @@ public class ASAPInfo
 		return offset;
 	}
 
+	ASAPModuleType GetOriginalModuleType(
+		byte[] module,
+		int moduleLen)
+	{
+		switch (Type) {
+		case ASAPModuleType.SapB:
+			if ((Init == 0x3fb || Init == 0x3f9) && Player == 0x503)
+				return ASAPModuleType.Dlt;
+			if (((Init == 0x4f3 || Init == 0x4ef) && Player == 0x503) || (Init == 0xf4f3 && Player == 0xf503))
+				return ASAPModuleType.Mpt;
+			if (Init == RmtInit || GetRmtSapOffset(module, moduleLen) > 0)
+				return ASAPModuleType.Rmt;
+			if ((Init == 0x4f5 || Init == 0xf4f5 || Init == 0x4f2)
+			 || ((Init == 0x4e7 || Init == 0xf4e7 || Init == 0x4e4) && Fastplay == 156)
+			 || ((Init == 0x4e5 || Init == 0xf4e5 || Init == 0x4e2) && (Fastplay == 104 || Fastplay == 78)))
+				return ASAPModuleType.Tmc;
+			if ((Init == 0x1080 && Player == 0x503) || (Init == 0x1380 && Player == 0x803))
+				return ASAPModuleType.Tm2;
+			if (Init == 0x400 && Player == 0x403)
+				return ASAPModuleType.Fc;
+			return Type;
+		case ASAPModuleType.SapC:
+			if ((Player == 0x500 || Player == 0xf500) && moduleLen >= 1024) {
+				if (Channels > 1)
+					return ASAPModuleType.Cms;
+				if (module[moduleLen - 170] == 0x1e)
+					return ASAPModuleType.Cmr;
+				if (module[moduleLen - 909] == 0x30)
+					return ASAPModuleType.Cm3;
+				return ASAPModuleType.Cmc;
+			}
+			return Type;
+		default:
+			return Type;
+		}
+	}
+
 	/// Returns the extension of the original module format.
 	/// For native modules it simply returns their extension.
 	/// For the SAP format it attempts to detect the original module format.
@@ -1759,36 +1796,7 @@ public class ASAPInfo
 		/// Length of the file.
 		int moduleLen)
 	{
-		switch (Type) {
-		case ASAPModuleType.SapB:
-			if ((Init == 0x3fb || Init == 0x3f9) && Player == 0x503)
-				return "dlt";
-			if (((Init == 0x4f3 || Init == 0x4ef) && Player == 0x503) || (Init == 0xf4f3 && Player == 0xf503))
-				return Fastplay == 156 ? "mpd" : "mpt";
-			if (Init == RmtInit || GetRmtSapOffset(module, moduleLen) > 0)
-				return "rmt";
-			if ((Init == 0x4f5 || Init == 0xf4f5 || Init == 0x4f2)
-			 || ((Init == 0x4e7 || Init == 0xf4e7 || Init == 0x4e4) && Fastplay == 156)
-			 || ((Init == 0x4e5 || Init == 0xf4e5 || Init == 0x4e2) && (Fastplay == 104 || Fastplay == 78)))
-				return "tmc";
-			if ((Init == 0x1080 && Player == 0x503) || (Init == 0x1380 && Player == 0x803))
-				return "tm2";
-			if (Init == 0x400 && Player == 0x403)
-				return "fc";
-			return null;
-		case ASAPModuleType.SapC:
-			if ((Player == 0x500 || Player == 0xf500) && moduleLen >= 1024) {
-				if (Fastplay == 156)
-					return "dmc";
-				if (Channels > 1)
-					return "cms";
-				if (module[moduleLen - 170] == 0x1e)
-					return "cmr";
-				if (module[moduleLen - 909] == 0x30)
-					return "cm3";
-				return "cmc";
-			}
-			return null;
+		switch (GetOriginalModuleType(module, moduleLen)) {
 		case ASAPModuleType.Cmc:
 			return Fastplay == 156 ? "dmc" : "cmc";
 		case ASAPModuleType.Cm3:

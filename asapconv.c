@@ -101,7 +101,7 @@ static void print_help(void)
 		"Options for SAP output:\n"
 		"-s SONG     --song=SONG        Select subsong to set length of\n"
 		"-t TIME     --time=TIME        Set subsong length (MM:SS format)\n"
-		"Options for native modules (output format same as input format):\n"
+		"Options for native module output:\n"
 		"            --address=HEXNUM   Relocate music to the given address\n"
 	);
 }
