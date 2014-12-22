@@ -21,6 +21,7 @@ typedef enum {
 }
 ASAPModuleType;
 typedef struct Cpu6502 Cpu6502;
+typedef struct DurationParser DurationParser;
 typedef struct FlashPack FlashPack;
 typedef struct FlashPackItem FlashPackItem;
 
@@ -82,6 +83,7 @@ static int ASAPInfo_CheckDate(ASAPInfo const *self);
 static cibool ASAPInfo_CheckTwoDateDigits(ASAPInfo const *self, int i);
 static cibool ASAPInfo_CheckValidChar(int c);
 static cibool ASAPInfo_CheckValidText(const char *s);
+static int ASAPInfo_GetFcTrackCommand(unsigned char const *module, int const *trackPos, int n);
 static int ASAPInfo_GetPackedExt(const char *filename);
 static int ASAPInfo_GetRmtInstrumentFrames(unsigned char const *module, int instrument, int volume, int volumeFrame, cibool onExtraPokey);
 static int ASAPInfo_GetRmtSapOffset(ASAPInfo const *self, unsigned char const *module, int moduleLen);
@@ -97,7 +99,7 @@ static cibool ASAPInfo_IsValidChar(int c);
 static int ASAPInfo_PackExt(const char *ext);
 static cibool ASAPInfo_ParseCmc(ASAPInfo *self, unsigned char const *module, int moduleLen, ASAPModuleType type);
 static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, int pos);
-static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int maxVal);
+static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int minVal, int maxVal);
 static cibool ASAPInfo_ParseDlt(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseDltSong(ASAPInfo *self, unsigned char const *module, cibool *seen, int pos);
 static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int moduleLen);
@@ -1854,6 +1856,14 @@ static const unsigned char CiBinaryResource_xexinfo_obx[178] = { 255, 255, 112, 
 	232, 153, 0, 255, 104, 153, 0, 254, 104, 153, 0, 253, 200, 208, 223, 32,
 	115, 252 };
 
+struct DurationParser {
+	int length;
+	int position;
+	const char *source;
+};
+static int DurationParser_Parse(DurationParser *self, const char *s);
+static int DurationParser_ParseDigit(DurationParser *self, int max);
+
 struct FlashPackItem {
 	FlashPackItemType type;
 	int value;
@@ -2589,6 +2599,11 @@ const char *ASAPInfo_GetExtDescription(const char *ext)
 	}
 }
 
+static int ASAPInfo_GetFcTrackCommand(unsigned char const *module, int const *trackPos, int n)
+{
+	return module[3 + (n << 8) + trackPos[n]];
+}
+
 int ASAPInfo_GetInitAddress(ASAPInfo const *self)
 {
 	return self->init;
@@ -2906,7 +2921,7 @@ static cibool ASAPInfo_IsFcSongEnd(unsigned char const *module, int const *track
 		for (n = 0; n < 3; n++) {
 			if (trackPos[n] >= 256)
 				return TRUE;
-			switch (module[3 + (n << 8) + trackPos[n]]) {
+			switch (ASAPInfo_GetFcTrackCommand(module, trackPos, n)) {
 			case 254:
 				return TRUE;
 			case 255:
@@ -3177,7 +3192,7 @@ static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, i
 	ASAPInfo_AddSong(self, playerCalls);
 }
 
-static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int maxVal)
+static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int minVal, int maxVal)
 {
 	if (module[moduleIndex] == 13)
 		return -1;
@@ -3185,8 +3200,11 @@ static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int m
 		int r;
 		for (r = 0;;) {
 			int c = module[moduleIndex++];
-			if (c == 13)
+			if (c == 13) {
+				if (r < minVal)
+					return -1;
 				return r;
+			}
 			if (c < 48 || c > 57)
 				return -1;
 			r = 10 * r + c - 48;
@@ -3262,69 +3280,8 @@ static void ASAPInfo_ParseDltSong(ASAPInfo *self, unsigned char const *module, c
 
 int ASAPInfo_ParseDuration(const char *s)
 {
-	int i = 0;
-	int n = (int) strlen(s);
-	int d;
-	int r;
-	if (i >= n)
-		return -1;
-	d = s[i] - 48;
-	if (d < 0 || d > 9)
-		return -1;
-	i++;
-	r = d;
-	if (i < n) {
-		d = s[i] - 48;
-		if (d >= 0 && d <= 9) {
-			i++;
-			r = 10 * r + d;
-		}
-		if (i < n && s[i] == 58) {
-			i++;
-			if (i >= n)
-				return -1;
-			d = s[i] - 48;
-			if (d < 0 || d > 5)
-				return -1;
-			i++;
-			r = (6 * r + d) * 10;
-			if (i >= n)
-				return -1;
-			d = s[i] - 48;
-			if (d < 0 || d > 9)
-				return -1;
-			i++;
-			r += d;
-		}
-	}
-	r *= 1000;
-	if (i >= n)
-		return r;
-	if (s[i] != 46)
-		return -1;
-	i++;
-	if (i >= n)
-		return -1;
-	d = s[i] - 48;
-	if (d < 0 || d > 9)
-		return -1;
-	i++;
-	r += 100 * d;
-	if (i >= n)
-		return r;
-	d = s[i] - 48;
-	if (d < 0 || d > 9)
-		return -1;
-	i++;
-	r += 10 * d;
-	if (i >= n)
-		return r;
-	d = s[i] - 48;
-	if (d < 0 || d > 9)
-		return -1;
-	i++;
-	r += d;
-	return r;
+	DurationParser parser;
+	return DurationParser_Parse(&parser, s);
 }
 
 static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int moduleLen)
@@ -3375,10 +3332,10 @@ static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int 
 				{
 					int n;
 					for (n = 0; n < 3; n++) {
-						int trackCmd = module[3 + (n << 8) + trackPos[n]];
+						int trackCmd = ASAPInfo_GetFcTrackCommand(module, trackPos, n);
 						if (trackCmd != 255 && patternDelay[n]-- <= 0) {
 							while (trackPos[n] < 256) {
-								trackCmd = module[3 + (n << 8) + trackPos[n]];
+								trackCmd = ASAPInfo_GetFcTrackCommand(module, trackPos, n);
 								if (trackCmd < 64) {
 									int patternCmd = module[patternOffsets[trackCmd] + patternPos[n]++];
 									if (patternCmd < 64) {
@@ -3808,16 +3765,14 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 				((char *) memcpy(self->date, module + moduleIndex + 5 + 1, len))[len] = '\0';
 		}
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "SONGS ")) {
-			if ((self->songs = ASAPInfo_ParseDec(module, moduleIndex + 6, 32)) == -1)
-				return FALSE;
-			if (self->songs < 1)
-				return FALSE;
+
+				if ((self->songs = ASAPInfo_ParseDec(module, moduleIndex + 6, 1, 32)) == -1)
+					return FALSE;
 		}
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "DEFSONG ")) {
-			if ((self->defaultSong = ASAPInfo_ParseDec(module, moduleIndex + 8, 31)) == -1)
-				return FALSE;
-			if (self->defaultSong < 0)
-				return FALSE;
+
+				if ((self->defaultSong = ASAPInfo_ParseDec(module, moduleIndex + 8, 0, 31)) == -1)
+					return FALSE;
 		}
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "STEREO\r"))
 			self->channels = 2;
@@ -3846,22 +3801,24 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "TYPE "))
 			type = module[moduleIndex + 5];
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "FASTPLAY ")) {
-			if ((self->fastplay = ASAPInfo_ParseDec(module, moduleIndex + 9, 32767)) == -1)
-				return FALSE;
-			if (self->fastplay < 1)
-				return FALSE;
+
+				if ((self->fastplay = ASAPInfo_ParseDec(module, moduleIndex + 9, 1, 32767)) == -1)
+					return FALSE;
 		}
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "MUSIC ")) {
-			if ((self->music = ASAPInfo_ParseHex(module, moduleIndex + 6)) == -1)
-				return FALSE;
+
+				if ((self->music = ASAPInfo_ParseHex(module, moduleIndex + 6)) == -1)
+					return FALSE;
 		}
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "INIT ")) {
-			if ((self->init = ASAPInfo_ParseHex(module, moduleIndex + 5)) == -1)
-				return FALSE;
+
+				if ((self->init = ASAPInfo_ParseHex(module, moduleIndex + 5)) == -1)
+					return FALSE;
 		}
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "PLAYER ")) {
-			if ((self->player = ASAPInfo_ParseHex(module, moduleIndex + 7)) == -1)
-				return FALSE;
+
+				if ((self->player = ASAPInfo_ParseHex(module, moduleIndex + 7)) == -1)
+					return FALSE;
 		}
 		else if (ASAPInfo_HasStringAt(module, moduleIndex, "COVOX ")) {
 			if ((self->covoxAddr = ASAPInfo_ParseHex(module, moduleIndex + 6)) == -1)
@@ -6549,6 +6506,54 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 	self->c = c;
 	self->s = s;
 	self->vdi = vdi;
+}
+
+static int DurationParser_Parse(DurationParser *self, const char *s)
+{
+	int result;
+	self->source = s;
+	self->position = 0;
+	self->length = (int) strlen(s);
+	if ((result = DurationParser_ParseDigit(self, 9)) == -1)
+		return -1;
+	if (self->position < self->length) {
+		int digit = s[self->position] - 48;
+		if (digit >= 0 && digit <= 9) {
+			self->position++;
+			result = result * 10 + digit;
+		}
+		if (self->position < self->length && s[self->position] == 58) {
+			self->position++;
+			result = (result * 6 + DurationParser_ParseDigit(self, 5)) * 10;
+			if ((result += DurationParser_ParseDigit(self, 9)) == -1)
+				return -1;
+		}
+	}
+	result *= 1000;
+	if (self->position >= self->length)
+		return result;
+	if (s[self->position++] != 46)
+		return -1;
+	result += DurationParser_ParseDigit(self, 9) * 100;
+	if (self->position >= self->length)
+		return result;
+	result += DurationParser_ParseDigit(self, 9) * 10;
+	if (self->position >= self->length)
+		return result;
+	if ((result += DurationParser_ParseDigit(self, 9)) == -1)
+		return -1;
+	return result;
+}
+
+static int DurationParser_ParseDigit(DurationParser *self, int max)
+{
+	int digit;
+	if (self->position >= self->length)
+		return -1;
+	digit = self->source[self->position++] - 48;
+	if (digit < 0 || digit > max)
+		return -1;
+	return digit;
 }
 
 static cibool FlashPack_Compress(FlashPack *self, ASAPWriter *w)
