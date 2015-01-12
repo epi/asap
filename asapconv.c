@@ -536,12 +536,13 @@ static void convert_to_module(const char *input_file, const unsigned char *modul
 
 	while ((fp = open_output_file(input_file, module, module_len, info, output_xex)) != NULL) {
 		unsigned char output[ASAPInfo_MAX_MODULE_LENGTH];
+		int output_len;
 		if (output_xex)
 			ASAPInfo_SetDefaultSong(info, current_song);
 		if (arg_duration >= 0)
 			ASAPInfo_SetDuration(info, current_song, arg_duration);
 		ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
-		int output_len = ASAPWriter_Write(writer, output_file, info, module, module_len, arg_tag);
+		output_len = ASAPWriter_Write(writer, output_file, info, module, module_len, arg_tag);
 		if (output_len < 0)
 			fatal_error("%s: conversion error", input_file);
 		write_output_file(fp, output, output_len);
