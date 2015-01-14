@@ -1,7 +1,7 @@
 /*
  * PlayerService.java - ASAP for Android
  *
- * Copyright (C) 2010-2014  Piotr Fusik
+ * Copyright (C) 2010-2015  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -125,10 +125,10 @@ public class PlayerService extends Service implements Runnable, MediaController.
 				}
 			};
 		try {
-			container.list(uri, false, true);
+			container.list(this, uri, false, true);
 			if (shuffle)
 				Collections.shuffle(playlist);
-			else if (!Util.endsWithIgnoreCase(uri.toString(), ".m3u"))
+			else if (!Util.isAsma(uri) && !Util.endsWithIgnoreCase(uri.toString(), ".m3u"))
 				Collections.sort(playlist);
 		}
 		catch (IOException ex) {
@@ -189,33 +189,41 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	private boolean load()
 	{
 		// read file
-		if (!"file".equals(uri.getScheme())) {
-			showError(R.string.error_reading_file);
-			return false;
-		}
-		String filename = uri.getPath();
+		String filename;
 		byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 		int moduleLen;
 		try {
-			if (Util.endsWithIgnoreCase(filename, ".zip")) {
-				String zipFilename = filename;
-				filename = uri.getFragment();
-				moduleLen = Util.readAndClose(new ZipInputStream(zipFilename, filename), module);
+			String scheme = uri.getScheme();
+			if ("asma".equals(scheme)) {
+				filename = uri.getSchemeSpecificPart();
+				moduleLen = Util.readAndClose(getAssets().open(filename), module);
 			}
-			else if (Util.endsWithIgnoreCase(filename, ".atr")) {
-				AATRStream stream = new AATRStream(filename);
-				filename = uri.getFragment();
-				try {
-					moduleLen = stream.open().readFile(filename, module, module.length);
+			else if ("file".equals(scheme)) {
+				filename = uri.getPath();
+				if (Util.endsWithIgnoreCase(filename, ".zip")) {
+					String zipFilename = filename;
+					filename = uri.getFragment();
+					moduleLen = Util.readAndClose(new ZipInputStream(zipFilename, filename), module);
 				}
-				finally {
-					stream.close();
+				else if (Util.endsWithIgnoreCase(filename, ".atr")) {
+					AATRStream stream = new AATRStream(filename);
+					filename = uri.getFragment();
+					try {
+						moduleLen = stream.open().readFile(filename, module, module.length);
+					}
+					finally {
+						stream.close();
+					}
+					if (moduleLen < 0)
+						throw new FileNotFoundException(filename);
 				}
-				if (moduleLen < 0)
-					throw new FileNotFoundException(filename);
+				else {
+					moduleLen = Util.readAndClose(new FileInputStream(filename), module);
+				}
 			}
 			else {
-				moduleLen = Util.readAndClose(new FileInputStream(filename), module);
+				showError(R.string.error_reading_file);
+				return false;
 			}
 		}
 		catch (IOException ex) {
@@ -475,13 +483,12 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		String playlistUri = intent.getStringExtra(EXTRA_PLAYLIST);
 		if (playlistUri != null)
 			setPlaylist(Uri.parse(playlistUri), false);
-		else if ("file".equals(uri.getScheme())) {
-			if (ASAPInfo.isOurFile(uri.toString()))
-				setPlaylist(Util.getParent(uri), false);
-			else {
-				setPlaylist(uri, true);
-				uri = playlist.get(0);
-			}
+		else if (ASAPInfo.isOurFile(uri.toString()))
+			setPlaylist(Util.getParent(uri), false);
+		else {
+			// shuffle
+			setPlaylist(uri, true);
+			uri = playlist.get(0);
 		}
 		setAction(ACTION_LOAD);
 	}
