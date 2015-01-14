@@ -1,6 +1,6 @@
 <application xmlns="http://ns.adobe.com/air/application/1.5">
 	<id>net.sf.asap.AIRASAP</id>
-	<version>3.2.0</version>
+	<version>4.0.0</version>
 	<filename>AIRASAP</filename>
 	<initialWindow>
 		<content>airasap.html</content>

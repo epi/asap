@@ -5,7 +5,7 @@ GREP = @grep -H
 
 # no user-configurable paths below this line
 
-VERSION = 3.2.0
+VERSION = 4.0.0
 
 ifndef DO
 $(error Use "Makefile" instead of "release.mk")
