@@ -140,7 +140,7 @@ void ASAPInfo_Delete(ASAPInfo *self);
 /**
  * Short credits for ASAP.
  */
-#define ASAPInfo_CREDITS  "Another Slight Atari Player (C) 2005-2014 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\nFC player (C) 2011 Jerzy Kut\n"
+#define ASAPInfo_CREDITS  "Another Slight Atari Player (C) 2005-2015 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\nFC player (C) 2011 Jerzy Kut\n"
 
 /**
  * Returns author's name.
@@ -366,12 +366,12 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
 /**
  * ASAP version as a string.
  */
-#define ASAPInfo_VERSION  "3.2.0"
+#define ASAPInfo_VERSION  "4.0.0"
 
 /**
  * ASAP version - major part.
  */
-#define ASAPInfo_VERSION_MAJOR  3
+#define ASAPInfo_VERSION_MAJOR  4
 
 /**
  * ASAP version - micro part.
@@ -381,12 +381,12 @@ cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
 /**
  * ASAP version - minor part.
  */
-#define ASAPInfo_VERSION_MINOR  2
+#define ASAPInfo_VERSION_MINOR  0
 
 /**
  * Years ASAP was created in.
  */
-#define ASAPInfo_YEARS  "2005-2014"
+#define ASAPInfo_YEARS  "2005-2015"
 
 ASAPWriter *ASAPWriter_New(void);
 void ASAPWriter_Delete(ASAPWriter *self);
