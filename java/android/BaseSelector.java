@@ -41,13 +41,6 @@ abstract class BaseSelector extends ListActivity
 	protected Uri uri;
 	private boolean isSearch;
 
-	protected FileInfo getShuffleAll()
-	{
-		FileInfo info = new FileInfo(null);
-		info.title = getString(R.string.shuffle_all);
-		return info;
-	}
-
 	protected static class FileInfoAdapter extends ArrayAdapter<FileInfo>
 	{
 		private LayoutInflater layoutInflater;
