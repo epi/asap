@@ -193,17 +193,9 @@ static FILE *open_output_file(const char *input_file, const unsigned char *modul
 	cibool file_per_song = FALSE;
 	const char *pattern_ptr;
 	char *output_ptr;
-	FILE *fp;
+	FILE *fp = NULL;
 	if (output_ext == arg_output) {
 		/* .EXT */
-	}
-	else if (output_ext == arg_output + 1 && arg_output[0] == '-') {
-		/* -.EXT */
-		strcpy(output_file, "stdout");
-#ifdef _WIN32
-		_setmode(_fileno(stdout), _O_BINARY);
-#endif
-		return stdout;
 	}
 	else if (output_ext[-1] == '/' || output_ext[-1] == '\\') {
 		/* DIR/.EXT */
@@ -213,7 +205,14 @@ static FILE *open_output_file(const char *input_file, const unsigned char *modul
 				input_file = p + 1;
 	}
 	else {
-		/* FILE.EXT */
+		/* FILE.EXT or -.EXT */
+		if (output_ext == arg_output + 1 && arg_output[0] == '-') {
+			/* -.EXT */
+#ifdef _WIN32
+			_setmode(_fileno(stdout), _O_BINARY);
+#endif
+			fp = stdout;
+		}
 		output_ext = NULL; /* don't insert input_file */
 	}
 
@@ -311,9 +310,11 @@ static FILE *open_output_file(const char *input_file, const unsigned char *modul
 			current_song = arg_song;
 	}
 
-	fp = fopen(output_file, "wb");
-	if (fp == NULL)
-		fatal_error("cannot write %s", output_file);
+	if (fp == NULL) {
+		fp = fopen(output_file, "wb");
+		if (fp == NULL)
+			fatal_error("cannot write %s", output_file);
+	}
 	return fp;
 }
 
