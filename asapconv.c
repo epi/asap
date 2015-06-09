@@ -304,7 +304,7 @@ static FILE *open_output_file(const char *input_file, const unsigned char *modul
 		else if (arg_song >= ASAPInfo_GetSongs(info)) {
 			fatal_error("you have requested subsong %d ...\n"
 				"... but %s contains only %d subsongs",
-				arg_song, input_file, ASAPInfo_GetSongs(info));
+				arg_song + 1, input_file, ASAPInfo_GetSongs(info));
 		}
 		else
 			current_song = arg_song;
