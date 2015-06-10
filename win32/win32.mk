@@ -78,7 +78,7 @@ CLEAN += win32/x64/asapconv.exe
 # lib
 
 win32/libasap.a: win32/asap.o
-	$(AR)
+	$(DO_AR)
 CLEAN += win32/libasap.a
 
 win32/asap.o: $(call src,asap.[ch])

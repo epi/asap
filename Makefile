@@ -2,8 +2,14 @@ prefix := /usr/local
 srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
 bindir = $(prefix)/bin
 libdir = $(prefix)/lib$(shell test -d $(prefix)/lib64 -a `uname -i` = x86_64 && echo 64)
-CC = $(DO)gcc -s -O2 -Wall -o $@ $(if $(filter %.so,$@),-shared -fPIC) $(INCLUDEOPTS) $(filter %.c,$^)
-AR = $(DO)ar rc $@ $^
+CC = gcc
+CFLAGS = -O2 -Wall
+CPPFLAGS =
+LDFLAGS = -s
+AR = ar
+ARFLAGS = rc
+DO_CC = $(DO)$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(if $(filter %.so,$@),-shared -fPIC) $(INCLUDEOPTS) $(filter %.c,$^) $(LDFLAGS)
+DO_AR = $(DO)$(AR) $(ARFLAGS) $@ $^
 CITO = $(DO)cito -o $@ $(patsubst %,-I %,$(sort $(dir $(filter-out %.ci,$^)))) $(filter %.ci,$^)
 INSTALL = install
 INSTALL_PROGRAM = mkdir -p $(DESTDIR)$(2) && $(INSTALL) $(1) $(DESTDIR)$(2)/$(or $(3),$(1))
@@ -44,7 +50,7 @@ include $(srcdir)test/test.mk
 # asapconv
 
 asapconv: $(call src,asapconv.c asap.[ch])
-	$(CC)
+	$(DO_CC)
 CLEAN += asapconv
 
 install-asapconv: asapconv
@@ -61,11 +67,11 @@ lib: libasap.a
 .PHONY: lib
 
 libasap.a: asap.o
-	$(AR)
+	$(DO_AR)
 CLEAN += libasap.a
 
 asap.o: $(call src,asap.[ch])
-	$(CC) -c
+	$(DO_CC) -c
 CLEAN += asap.o
 
 install-lib: libasap.a $(srcdir)asap.h
@@ -80,7 +86,7 @@ uninstall-lib:
 # SDL
 
 asap-sdl: $(call src,asap-sdl.c asap.[ch])
-	$(CC) $(SDL_CFLAGS) $(SDL_LIBS)
+	$(DO_CC) $(SDL_CFLAGS) $(SDL_LIBS)
 CLEAN += asap-sdl
 
 install-sdl: asap-sdl
@@ -94,7 +100,7 @@ uninstall-sdl:
 # asapscan
 
 asapscan: $(srcdir)asapscan.c asap-asapscan.h
-	$(CC)
+	$(DO_CC)
 CLEAN += asapscan asapscan.exe
 
 asap-asapscan.h: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX) | asap-asapscan.c

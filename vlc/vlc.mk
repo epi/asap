@@ -20,7 +20,7 @@ asap-vlc: libasap_plugin.so
 .PHONY: asap-vlc
 
 libasap_plugin.so: $(call src,vlc/libasap_plugin.c asap.[ch])
-	$(CC) $(VLC_CFLAGS)
+	$(DO_CC) $(VLC_CFLAGS)
 CLEAN += libasap_plugin.so
 
 install-vlc: libasap_plugin.so

@@ -12,7 +12,7 @@ asap-xbmc: xbmc_asap-i486-linux.so
 .PHONY: asap-xbmc
 
 xbmc_asap-i486-linux.so: $(call src,xbmc/xbmc_asap.c asap.[ch] xbmc/wrapper.c)
-	$(CC) $(XBMC_WRAP_FUNCTIONS:%=-Wl,-wrap,%)
+	$(DO_CC) $(XBMC_WRAP_FUNCTIONS:%=-Wl,-wrap,%)
 CLEAN += xbmc_asap-i486-linux.so
 
 install-xbmc: xbmc_asap-i486-linux.so

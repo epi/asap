@@ -35,7 +35,7 @@ test/%.xex: $(srcdir)test/%.asx
 CLEAN += test/*.sap test/*.xex
 
 test/timevsnative: $(call src,test/timevsnative.c asap.[ch])
-	$(CC)
+	$(DO_CC)
 CLEAN += test/timevsnative
 
 test/loadsap.exe: $(call src,test/loadsap.cs csharp/asap.cs)

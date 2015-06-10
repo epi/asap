@@ -14,7 +14,7 @@ asapplug-$(AUDACIOUS_VERSION).so: $(call src,audacious/asapplug.c asap.[ch])
 ifndef AUDACIOUS_VERSION
 	$(error Please install audacious-dev or audacious-devel)
 endif
-	$(CC)
+	$(DO_CC)
 CLEAN += asapplug-*.so
 
 install-audacious: asapplug-$(AUDACIOUS_VERSION).so

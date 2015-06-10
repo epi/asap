@@ -11,7 +11,7 @@ asap-gstreamer: libgstasapdec.so
 .PHONY: asap-gstreamer
 
 libgstasapdec.so: $(call src,gstreamer/gstasapdec.c asap.[ch])
-	$(CC) $(GSTREAMER_CFLAGS)
+	$(DO_CC) $(GSTREAMER_CFLAGS)
 CLEAN += libgstasapdec.so
 
 install-gstreamer: libgstasapdec.so

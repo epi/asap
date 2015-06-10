@@ -11,7 +11,7 @@ asap-moc: libasap_decoder.so
 .PHONY: asap-moc
 
 libasap_decoder.so: $(call src,moc/libasap_decoder.c asap.[ch])
-	$(CC) -I$(MOC_INCLUDE)
+	$(DO_CC) -I$(MOC_INCLUDE)
 CLEAN += libasap_decoder.so
 
 install-moc: libasap_decoder.so

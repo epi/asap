@@ -13,7 +13,7 @@ asap-xmms: libasap-xmms.so
 .PHONY: asap-xmms
 
 libasap-xmms.so: $(call src,xmms/libasap-xmms.c asap.[ch])
-	$(CC) $(XMMS_CFLAGS) -Wl,--version-script=$(srcdir)xmms/libasap-xmms.map $(XMMS_LIBS)
+	$(DO_CC) $(XMMS_CFLAGS) -Wl,--version-script=$(srcdir)xmms/libasap-xmms.map $(XMMS_LIBS)
 CLEAN += libasap-xmms.so
 
 install-xmms: libasap-xmms.so
