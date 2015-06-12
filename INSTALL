@@ -115,8 +115,14 @@ sudo make install-gstreamer
 Building the MOC plugin on Unix-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You need source code of MOC. The plugin is compatible with MOC 2.4.x
-and MOC 2.5.0 alpha.
+You need the source code of MOC.
+The plugin is compatible with MOC 2.4.x and MOC 2.5.0. Run:
+
+--------------------------------------------------------------------------------
+./configure
+--------------------------------------------------------------------------------
+
+in the directory with MOC sources. Make sure it finishes successfully.
 
 Check `MOC_INCLUDE` and `MOC_PLUGIN_DIR` in the `moc/moc.mk` file.
 These should be the directory with MOC sources

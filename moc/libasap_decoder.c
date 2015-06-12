@@ -1,7 +1,7 @@
 /*
  * libasap_decoder.c - ASAP plugin for MOC (Music On Console)
  *
- * Copyright (C) 2007-2013  Piotr Fusik
+ * Copyright (C) 2007-2015  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
 #include "common.h"
 #include "decoder.h"
 #include "files.h"

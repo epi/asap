@@ -1,4 +1,4 @@
-MOC_INCLUDE = ../moc-2.4.4
+MOC_INCLUDE = ../moc-2.5.0
 MOC_PLUGIN_DIR = /usr/local/lib/moc/decoder_plugins
 
 # no user-configurable paths below this line
