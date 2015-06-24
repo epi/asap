@@ -1,6 +1,6 @@
 // aatr.ci - another ATR file extractor
 //
-// Copyright (C) 2012-2013  Piotr Fusik
+// Copyright (C) 2012-2015  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -68,8 +68,11 @@ public class AATR
 
 	bool ReadSector(int sectorNo, byte[] buffer, int length)
 	{
-		if (sectorNo < 4)
-			return false;
+		if (sectorNo < 4) {
+			if (sectorNo < 1 || length > 128)
+				return false;
+			return Content((sectorNo << 7) - 0x70, buffer, length);
+		}
 		return Content(Sector4Offset + (sectorNo - 4) * BytesPerSector, buffer, length);
 	}
 
@@ -109,6 +112,10 @@ public class AATR
 			switch (DirectorySector[directoryOffset] & 0xd7) { // mask out readonly and unused bits
 			case 0x00:
 				return null; // end of directory
+			case 0x40: // DOS 1 file
+				if (BytesPerSector != 128)
+					continue;
+				break;
 			case 0x42: // DOS 2 file
 			case 0x46: // MyDOS file
 			case 0x03: // DOS 2.5 file
@@ -143,12 +150,21 @@ public class AATR
 		int result = 0;
 		int directoryOffset = (FileNo & 7) << 4;
 		int sectorNo = DirectorySector[directoryOffset + 3] | DirectorySector[directoryOffset + 4] << 8;
-		bool myDos = (DirectorySector[directoryOffset] & 4) != 0;
+		int fileType = DirectorySector[directoryOffset] & 6;
 		byte[256] sector;
 		while (sectorNo != 0 && length > 0) {
 			if (!ReadSector(sectorNo, sector, BytesPerSector))
 				return -1;
 			int used = sector[BytesPerSector - 1];
+			if (fileType < 2) {
+				// DOS 1
+				if (used < 128)
+					used = 125;
+				else
+					used -= 128;
+			}
+			else if (used > BytesPerSector)
+				return -1;
 			if (used > length)
 				used = length;
 			if (buffer != null)
@@ -156,7 +172,7 @@ public class AATR
 			result += used;
 			length -= used;
 			sectorNo = sector[BytesPerSector - 3];
-			if (!myDos)
+			if (fileType < 4) // not MyDOS
 				sectorNo &= 3;
 			sectorNo = sectorNo << 8 | sector[BytesPerSector - 2];
 		}
