@@ -1,7 +1,7 @@
 /*
  * info_dlg.c - file information dialog box
  *
- * Copyright (C) 2007-2014  Piotr Fusik
+ * Copyright (C) 2007-2015  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -72,9 +72,18 @@ BOOL loadModule(LPCTSTR filename, BYTE *module, int *module_len)
 	LPCTSTR hash = atrFilenameHash(filename);
 	if (hash != NULL && hash < filename + MAX_PATH) {
 		_TCHAR atr_filename[MAX_PATH];
+		AATR *disk;
 		memcpy(atr_filename, filename, (hash - filename) * sizeof(_TCHAR));
 		atr_filename[hash - filename] = '\0';
-		*module_len = AATRStdio_ReadFile(atr_filename, hash + 1, module, ASAPInfo_MAX_MODULE_LENGTH);
+		disk = AATRStdio_New(atr_filename);
+		if (disk == NULL)
+			return FALSE;
+		if (!AATR_FindFile(disk, hash + 1)) {
+			AATRStdio_Delete(disk);
+			return FALSE;
+		}
+		*module_len = AATR_ReadCurrentFile(disk, module, ASAPInfo_MAX_MODULE_LENGTH);
+		AATRStdio_Delete(disk);
 		return *module_len >= 0;
 	}
 #endif

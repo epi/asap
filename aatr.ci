@@ -66,6 +66,9 @@ public class AATR
 		return true;
 	}
 
+	public RandomAccessInputStream GetContent()
+		return Content;
+
 	bool ReadSector(int sectorNo, byte[] buffer, int length)
 	{
 		if (sectorNo < 4) {
@@ -139,6 +142,21 @@ public class AATR
 		}
 	}
 
+	/// Advances to the specified file.
+	/// Returns whether the file is found.
+	public bool FindFile(
+		/// The name of the file to find.
+		string filename)
+	{
+		for (;;) {
+			string currentFilename = NextFile();
+			if (currentFilename == null)
+				return false;
+			if (currentFilename == filename)
+				return true;
+		}
+	}
+
 	/// Reads the current file.
 	/// Returns the number of bytes read or -1 on error.
 	public int ReadCurrentFile(
@@ -147,54 +165,117 @@ public class AATR
 		/// Maximum number of bytes to read.
 		int length)
 	{
-		int result = 0;
-		int directoryOffset = (FileNo & 7) << 4;
-		int sectorNo = DirectorySector[directoryOffset + 3] | DirectorySector[directoryOffset + 4] << 8;
-		int fileType = DirectorySector[directoryOffset] & 6;
-		byte[256] sector;
-		while (sectorNo != 0 && length > 0) {
-			if (!ReadSector(sectorNo, sector, BytesPerSector))
-				return -1;
-			int used = sector[BytesPerSector - 1];
-			if (fileType < 2) {
-				// DOS 1
-				if (used < 128)
-					used = 125;
-				else
-					used -= 128;
-			}
-			else if (used > BytesPerSector)
-				return -1;
-			if (used > length)
-				used = length;
-			if (buffer != null)
-				sector.CopyTo(0, buffer, result, used);
-			result += used;
-			length -= used;
-			sectorNo = sector[BytesPerSector - 3];
-			if (fileType < 4) // not MyDOS
-				sectorNo &= 3;
-			sectorNo = sectorNo << 8 | sector[BytesPerSector - 2];
-		}
-		return result;
+		AATRFileStream() stream;
+		stream.Open(this);
+		return stream.Read(buffer, 0, length);
+	}
+}
+
+/// Contents of a file on an ATR disk image.
+public class AATRFileStream
+{
+	AATR Disk;
+	int FirstSector;
+	int FileType;
+	int Position;
+	int NextSector;
+	byte[256] Sector;
+	int SectorOffset;
+
+	void Rewind()
+	{
+		Position = 0;
+		NextSector = FirstSector;
+		SectorOffset = 255;
 	}
 
-	/// Reads the given file from the open disk image.
-	/// Returns the number of bytes read or -1 on error.
-	public int ReadFile(
-		/// Name of file to read.
-		string filename,
+	/// Opens the current file on the disk image.
+	/// The file must be selected with `NextFile()`.
+	public void Open(
+		/// The disk image.
+		AATR disk)
+	{
+		Disk = disk;
+		int directoryOffset = (disk.FileNo & 7) << 4;
+		FirstSector = disk.DirectorySector[directoryOffset + 3] | disk.DirectorySector[directoryOffset + 4] << 8;
+		FileType = disk.DirectorySector[directoryOffset] & 6;
+		Rewind();
+	}
+
+	/// Reads from the open file.
+	/// Returns the number of bytes read.
+	public int Read(
 		/// Destination buffer.
 		byte[] buffer,
+		/// Start offset in buffer at which the data is written.
+		int offset,
 		/// Maximum number of bytes to read.
 		int length)
 	{
-		for (;;) {
-			string currentFilename = NextFile();
-			if (currentFilename == null)
-				return -1;
-			if (currentFilename == filename)
-				return ReadCurrentFile(buffer, length);
+		int totalRead = 0;
+		int bytesPerSector = Disk.BytesPerSector;
+		while (length > 0) {
+			int got;
+			for (;;) {
+				got = Sector[bytesPerSector - 1];
+				if (FileType == 0) {
+					// DOS 1
+					if (got < 128)
+						got = 125;
+					else
+						got -= 128;
+				}
+				else if (got > bytesPerSector)
+					return -1;
+				got -= SectorOffset;
+				if (got > 0)
+					break;
+				if (!Disk.ReadSector(NextSector, Sector, bytesPerSector))
+					return totalRead;
+				SectorOffset = 0;
+				int sectorHi = Sector[bytesPerSector - 3];
+				if (FileType != 6) // not MyDOS
+					sectorHi &= 3;
+				NextSector = sectorHi << 8 | Sector[bytesPerSector - 2];
+			}
+			if (got > length)
+				got = length;
+			if (buffer != null)
+				Sector.CopyTo(SectorOffset, buffer, offset + totalRead, got);
+			Position += got;
+			SectorOffset += got;
+			totalRead += got;
+			length -= got;
 		}
+		return totalRead;
+	}
+
+	public AATR GetDisk()
+		return Disk;
+
+	/// Returns the current position in the open file.
+	public int GetPosition()
+		return Position;
+
+	/// Sets the current position in the open file.
+	/// Returns `true` on success.
+	public bool SetPosition(
+		/// Requested position.
+		int position)
+	{
+		int toSkip = position - Position;
+		if (toSkip >= 0)
+			return Read(null, 0, toSkip) == toSkip;
+		Rewind();
+		return Read(null, 0, position) == position;
+	}
+
+	/// Returns the length of the open file.
+	public int GetLength()
+	{
+		int position = GetPosition();
+		int length = position + Read(null, 0, 0x7fffffff - position);
+		SetPosition(position);
+		return length;
 	}
 }

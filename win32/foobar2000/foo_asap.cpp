@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000
  *
- * Copyright (C) 2006-2014  Piotr Fusik
+ * Copyright (C) 2006-2015  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -562,6 +562,84 @@ static mainmenu_commands_factory_t<info_menu> g_info_menu_factory;
 
 /* ATR filesystem -------------------------------------------------------- */
 
+class file_atr : public file_readonly
+{
+	AATRFileStream *stream;
+
+public:
+
+	file_atr(const char *atr_filename, const char *inside_filename) : stream(NULL)
+	{
+		AATR *disk = AATRStdio_New(atr_filename);
+		if (disk == NULL)
+			throw exception_io_data();
+		if (!AATR_FindFile(disk, inside_filename)) {
+			AATRStdio_Delete(disk);
+			throw exception_io_not_found();
+		}
+		stream = AATRFileStream_New();
+		if (stream == NULL) {
+			AATRStdio_Delete(disk);
+			throw exception_out_of_resources();
+		}
+		AATRFileStream_Open(stream, disk);
+	}
+
+	~file_atr()
+	{
+		if (stream != NULL) {
+			AATR *disk = (AATR *) AATRFileStream_GetDisk(stream);
+			AATRFileStream_Delete(stream);
+			AATRStdio_Delete(disk);
+		}
+	}
+
+	virtual t_size read(void *p_buffer, t_size p_bytes, abort_callback &p_abort)
+	{
+		int result = AATRFileStream_Read(stream, (byte *) p_buffer, 0, p_bytes);
+		if (result < 0)
+			throw exception_io_data();
+		return result;
+	}
+
+	virtual t_filesize get_size(abort_callback &p_abort)
+	{
+		return AATRFileStream_GetLength(stream);
+	}
+
+	virtual t_filesize get_position(abort_callback &p_abort)
+	{
+		return AATRFileStream_GetPosition(stream);
+	}
+
+	virtual void seek(t_filesize p_position, abort_callback &p_abort)
+	{
+		int position = (int) p_position;
+		if (position != p_position || !AATRFileStream_SetPosition(stream, position))
+			throw exception_io_seek_out_of_range();
+	}
+
+	virtual bool can_seek()
+	{
+		return true;
+	}
+
+	virtual bool get_content_type(pfc::string_base &p_out)
+	{
+		return false;
+	}
+
+	virtual void reopen(abort_callback &p_abort)
+	{
+		AATRFileStream_SetPosition(stream, 0);
+	}
+
+	virtual bool is_remote()
+	{
+		return false;
+	}
+};
+
 class archive_atr : public archive_impl
 {
 public:
@@ -578,52 +656,38 @@ public:
 
 	virtual t_filestats get_stats_in_archive(const char *p_archive, const char *p_file, abort_callback &p_abort)
 	{
-		int module_len = AATRStdio_ReadFile(p_archive, p_file, NULL, ASAPInfo_MAX_MODULE_LENGTH);
-		if (module_len < 0)
-			throw exception_io_not_found();
-		t_filestats stats = { module_len, filetimestamp_invalid };
+		service_impl_single_t<file_atr> f(p_archive, p_file);
+		t_filestats stats = { f.get_size(abort_callback_dummy()), filetimestamp_invalid };
 		return stats;
 	}
 
 	virtual void open_archive(service_ptr_t<file> &p_out, const char *archive, const char *file, abort_callback &p_abort)
 	{
-		BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
-		int module_len = AATRStdio_ReadFile(archive, file, module, sizeof(module));
-		if (module_len < 0)
-			throw exception_io_not_found();
-		p_out = new service_impl_t<reader_membuffer_simple>(module, module_len);
+		p_out = new service_impl_t<file_atr>(archive, file);
 	}
 
 	virtual void archive_list(const char *path, const service_ptr_t<file> &p_reader, archive_callback &p_out, bool p_want_readers)
 	{
 		if (!_extract_native_path_ptr(path))
 			throw exception_io_data();
-		FILE *fp = fopen(path, "rb");
-		if (fp == NULL)
+		AATR *disk = AATRStdio_New(path);
+		if (disk == NULL)
 			throw exception_io_data();
-		AATR *aatr = AATRStdio_New(fp);
-		if (aatr == NULL) {
-			fclose(fp);
-			throw exception_io_data();
-		}
 		pfc::string8_fastalloc url;
 		for (;;) {
-			const char *fn = AATR_NextFile(aatr);
+			const char *fn = AATR_NextFile(disk);
 			if (fn == NULL)
 				break;
 			t_filestats stats = { filesize_invalid, filetimestamp_invalid };
 			service_ptr_t<file> p_file;
 			if (p_want_readers) {
-				BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
-				int module_len = AATR_ReadCurrentFile(aatr, module, sizeof(module));
-				p_file = new service_impl_t<reader_membuffer_simple>(module, module_len);
+				p_file = new service_impl_t<file_atr>(path, fn);
 			}
 			archive_impl::g_make_unpack_path(url, path, fn, "atr");
 			if (!p_out.on_entry(this, url, stats, p_file))
 				break;
 		}
-		AATR_Delete(aatr);
-		fclose(fp);
+		AATRStdio_Delete(disk);
 	}
 };
 

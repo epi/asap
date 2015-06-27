@@ -178,20 +178,13 @@ abstract class FileContainer
 	{
 		AATRStream stream = new AATRStream(filename);
 		try {
-			AATR aatr = stream.open();
+			AATR disk = stream.open();
 			for (;;) {
-				String name = aatr.nextFile();
+				String name = disk.nextFile();
 				if (name == null)
 					break;
-				if (ASAPInfo.isOurFile(name)) {
-					if (inputStreams) {
-						byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
-						int moduleLen = aatr.readCurrentFile(module, ASAPInfo.MAX_MODULE_LENGTH);
-						onSongFile(name, new ByteArrayInputStream(module, 0, moduleLen));
-					}
-					else
-						onSongFile(name, null);
-				}
+				if (ASAPInfo.isOurFile(name))
+					onSongFile(name, inputStreams ? new AATRFileInputStream(disk) : null);
 			}
 		}
 		finally {

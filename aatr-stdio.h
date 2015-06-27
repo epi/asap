@@ -1,7 +1,7 @@
 /*
  * aatr-stdio.h - another ATR file extractor
  *
- * Copyright (C) 2012-2013  Piotr Fusik
+ * Copyright (C) 2012-2015  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -24,7 +24,6 @@
 #ifndef _AATR_STDIO_H_
 #define _AATR_STDIO_H_
 
-#include <stdio.h>
 #include "aatr.h"
 
 #ifdef __cplusplus
@@ -33,9 +32,8 @@ extern "C" {
 
 typedef struct AATR AATR;
 
-AATR *AATRStdio_New(FILE *fp);
-int AATRStdio_ReadFile(const char *atr_filename, const char *inside_filename, unsigned char *buffer, int length);
-
+AATR *AATRStdio_New(const char *filename);
+void AATRStdio_Delete(AATR *self);
 
 #ifdef __cplusplus
 }

@@ -1,7 +1,7 @@
 /*
  * in_asap.c - ASAP plugin for Winamp
  *
- * Copyright (C) 2005-2012  Piotr Fusik
+ * Copyright (C) 2005-2015  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -150,42 +150,38 @@ static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
 		}
 	}
 	else if (isATR(fi.file)) {
-		FILE *fp = fopen(fi.file, "rb");
-		if (fp != NULL) {
-			AATR *aatr = AATRStdio_New(fp);
-			if (aatr != NULL) {
-				size_t atr_fn_len = strlen(fi.file);
-				BOOL found = FALSE;
-				fi.file[atr_fn_len++] = '#';
-				for (;;) {
-					const char *inside_fn = AATR_NextFile(aatr);
-					if (inside_fn == NULL)
-						break;
-					if (ASAPInfo_IsOurFile(inside_fn)) {
-						module_len = AATR_ReadCurrentFile(aatr, module, sizeof(module));
-						if (ASAPInfo_Load(info, inside_fn, module, module_len)) {
-							size_t inside_fn_len = strlen(inside_fn);
-							if (atr_fn_len + inside_fn_len + 4 <= sizeof(fi.file)) {
-								memcpy(fi.file + atr_fn_len, inside_fn, inside_fn_len + 1);
-								if (!found) {
-									found = TRUE;
-									SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
-								}
-								addFileSongs(playlistWnd, &fi, info, &index);
+		AATR *disk = AATRStdio_New(fi.file);
+		if (disk != NULL) {
+			size_t atr_fn_len = strlen(fi.file);
+			BOOL found = FALSE;
+			fi.file[atr_fn_len++] = '#';
+			for (;;) {
+				const char *inside_fn = AATR_NextFile(disk);
+				if (inside_fn == NULL)
+					break;
+				if (ASAPInfo_IsOurFile(inside_fn)) {
+					module_len = AATR_ReadCurrentFile(disk, module, sizeof(module));
+					if (ASAPInfo_Load(info, inside_fn, module, module_len)) {
+						size_t inside_fn_len = strlen(inside_fn);
+						if (atr_fn_len + inside_fn_len + 4 <= sizeof(fi.file)) {
+							memcpy(fi.file + atr_fn_len, inside_fn, inside_fn_len + 1);
+							if (!found) {
+								found = TRUE;
+								SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
 							}
+							addFileSongs(playlistWnd, &fi, info, &index);
 						}
 					}
 				}
-				AATR_Delete(aatr);
-				/* Prevent Winamp crash:
-				   1. Play anything.
-				   2. Open an ATR with no songs.
-				   3. If the ATR deletes itself, Winamp crashes (tested with 5.581).
-				   Solution: leave the ATR on playlist. */
-				if (!found && SendMessage(mod.hMainWindow, WM_WA_IPC, 0, IPC_GETLISTLENGTH) > 1)
-					SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
 			}
-			fclose(fp);
+			AATRStdio_Delete(disk);
+			/* Prevent Winamp crash:
+			   1. Play anything.
+			   2. Open an ATR with no songs.
+			   3. If the ATR deletes itself, Winamp crashes (tested with 5.581).
+			   Solution: leave the ATR on playlist. */
+			if (!found && SendMessage(mod.hMainWindow, WM_WA_IPC, 0, IPC_GETLISTLENGTH) > 1)
+				SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
 		}
 	}
 }

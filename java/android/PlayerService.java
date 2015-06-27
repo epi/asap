@@ -194,37 +194,32 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		int moduleLen;
 		try {
 			String scheme = uri.getScheme();
+			InputStream stream;
 			if ("asma".equals(scheme)) {
 				filename = uri.getSchemeSpecificPart();
-				moduleLen = Util.readAndClose(getAssets().open(filename), module);
+				stream = getAssets().open(filename);
 			}
 			else if ("file".equals(scheme)) {
 				filename = uri.getPath();
 				if (Util.endsWithIgnoreCase(filename, ".zip")) {
 					String zipFilename = filename;
 					filename = uri.getFragment();
-					moduleLen = Util.readAndClose(new ZipInputStream(zipFilename, filename), module);
+					stream = new ZipInputStream(zipFilename, filename);
 				}
 				else if (Util.endsWithIgnoreCase(filename, ".atr")) {
-					AATRStream stream = new AATRStream(filename);
+					AATRStream atrStream = new AATRStream(filename);
 					filename = uri.getFragment();
-					try {
-						moduleLen = stream.open().readFile(filename, module, module.length);
-					}
-					finally {
-						stream.close();
-					}
-					if (moduleLen < 0)
-						throw new FileNotFoundException(filename);
+					stream = new AATRFileInputStream(atrStream, filename);
 				}
 				else {
-					moduleLen = Util.readAndClose(new FileInputStream(filename), module);
+					stream = new FileInputStream(filename);
 				}
 			}
 			else {
 				showError(R.string.error_reading_file);
 				return false;
 			}
+			moduleLen = Util.readAndClose(stream, module);
 		}
 		catch (IOException ex) {
 			showError(R.string.error_reading_file);
