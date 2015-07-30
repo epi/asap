@@ -75,16 +75,26 @@ BOOL loadModule(LPCTSTR filename, BYTE *module, int *module_len)
 		AATR *disk;
 		memcpy(atr_filename, filename, (hash - filename) * sizeof(_TCHAR));
 		atr_filename[hash - filename] = '\0';
+		ok = FALSE;
 		disk = AATRStdio_New(atr_filename);
-		if (disk == NULL)
-			return FALSE;
-		if (!AATR_FindFile(disk, hash + 1)) {
+		if (disk != NULL) {
+			AATRDirectory *directory = AATRDirectory_New();
+			if (directory != NULL) {
+				AATRDirectory_OpenRoot(directory, disk);
+				if (AATRDirectory_FindEntryRecursively(directory, hash + 1) && !AATRDirectory_IsEntryDirectory(directory)) {
+					AATRFileStream *stream = AATRFileStream_New();
+					if (stream != NULL) {
+						AATRFileStream_Open(stream, directory);
+						*module_len = AATRFileStream_Read(stream, module, 0, ASAPInfo_MAX_MODULE_LENGTH);
+						ok = *module_len >= 0;
+						AATRFileStream_Delete(stream);
+					}
+				}
+				AATRDirectory_Delete(directory);
+			}
 			AATRStdio_Delete(disk);
-			return FALSE;
 		}
-		*module_len = AATR_ReadCurrentFile(disk, module, ASAPInfo_MAX_MODULE_LENGTH);
-		AATRStdio_Delete(disk);
-		return *module_len >= 0;
+		return ok;
 	}
 #endif
 	fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);

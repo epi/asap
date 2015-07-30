@@ -34,23 +34,23 @@ static cibool AATRStdio_Read(void *obj, int offset, const unsigned char *buffer,
 AATR *AATRStdio_New(const char *filename)
 {
 	FILE *fp = fopen(filename, "rb");
-	AATR *aatr;
+	AATR *self;
 	RandomAccessInputStream content;
 	if (fp == NULL)
 		return NULL;
-	aatr = AATR_New();
-	if (aatr == NULL) {
+	self = AATR_New();
+	if (self == NULL) {
 		fclose(fp);
 		return NULL;
 	}
 	content.obj = fp;
 	content.func = AATRStdio_Read;
-	if (!AATR_Open(aatr, content)) {
-		AATR_Delete(aatr);
+	if (!AATR_Open(self, content)) {
+		AATR_Delete(self);
 		fclose(fp);
 		return NULL;
 	}
-	return aatr;
+	return self;
 }
 
 void AATRStdio_Delete(AATR *self)
@@ -62,20 +62,18 @@ void AATRStdio_Delete(AATR *self)
 #if 0
 int main(int argc, char **argv)
 {
-	FILE *fp = fopen("C:\\0\\a8\\asap\\TMC2.atr", "rb");
-	AATR *aatr;
-	if (fp == NULL)
+	AATR *disk = AATRStdio_New("C:\\0\\a8\\SV2K12_STUFF_AtariDOS.atr");
+	AATRRecursiveLister *lister = AATRRecursiveLister_New();
+	AATRFileStream *stream = AATRFileStream_New();
+	if (disk == NULL || lister == NULL || stream == NULL)
 		return 1;
-	aatr = AATRStdio_New(fp);
-	if (aatr == NULL)
-		return 1;
+	AATRRecursiveLister_Open(lister, disk);
 	for (;;) {
-		const char *current_filename = AATR_NextFile(aatr);
-		int length;
+		const char *current_filename = AATRRecursiveLister_NextFile(lister);
 		if (current_filename == NULL)
 			break;
-		length = AATR_ReadCurrentFile(aatr, NULL, 60000);
-		printf("%s (%d)\n", current_filename, length);
+		AATRFileStream_Open(stream, AATRRecursiveLister_GetDirectory(lister));
+		printf("%s (%d)\n", current_filename, AATRFileStream_GetLength(stream));
 	}
 	return 0;
 }

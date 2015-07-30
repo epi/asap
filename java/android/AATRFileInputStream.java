@@ -33,18 +33,19 @@ public class AATRFileInputStream extends InputStream
 	private final AATRFileStream fileStream = new AATRFileStream();
 	private byte[] byteBuffer = null;
 
-	public AATRFileInputStream(AATR disk)
+	public AATRFileInputStream(AATRDirectory directory)
 	{
 		atrStream = null;
-		fileStream.open(disk);
+		fileStream.open(directory);
 	}
 
 	public AATRFileInputStream(AATRStream atrStream, String filename) throws IOException
 	{
-		AATR disk = atrStream.open();
-		if (!disk.findFile(filename))
+		AATRDirectory directory = new AATRDirectory();
+		directory.openRoot(atrStream.open());
+		if (!directory.findEntryRecursively(filename) || directory.isEntryDirectory())
 			throw new FileNotFoundException(filename);
-		fileStream.open(disk);
+		fileStream.open(directory);
 		this.atrStream = atrStream;
 	}
 

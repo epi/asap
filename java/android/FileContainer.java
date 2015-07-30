@@ -174,17 +174,27 @@ abstract class FileContainer
 		}
 	}
 
-	void listAtr(String filename, boolean inputStreams) throws IOException
+	private void listAtr(String atrFilename, String atrPath, boolean inputStreams) throws IOException
 	{
-		AATRStream stream = new AATRStream(filename);
+		AATRStream stream = new AATRStream(atrFilename);
 		try {
-			AATR disk = stream.open();
+			AATRDirectory directory = new AATRDirectory();
+			directory.openRoot(stream.open());
+			if (atrPath != null) {
+				if (atrPath.endsWith("/"))
+					atrPath = atrPath.substring(0, atrPath.length() - 1);
+				if (!directory.findEntryRecursively(atrPath) || !directory.isEntryDirectory())
+					throw new FileNotFoundException();
+				directory.open(directory);
+			}
 			for (;;) {
-				String name = disk.nextFile();
+				String name = directory.nextEntry();
 				if (name == null)
 					break;
-				if (ASAPInfo.isOurFile(name))
-					onSongFile(name, inputStreams ? new AATRFileInputStream(disk) : null);
+				if (directory.isEntryDirectory())
+					onContainer(name + '/');
+				else if (ASAPInfo.isOurFile(name))
+					onSongFile(name, inputStreams ? new AATRFileInputStream(directory) : null);
 			}
 		}
 		finally {
@@ -206,7 +216,7 @@ abstract class FileContainer
 			else if (Util.endsWithIgnoreCase(path, ".zip"))
 				listZipDirectory(file, uri.getFragment(), inputStreams, recurseZip);
 			else if (Util.endsWithIgnoreCase(path, ".atr"))
-				listAtr(path, inputStreams);
+				listAtr(path, uri.getFragment(), inputStreams);
 		}
 	}
 }

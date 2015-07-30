@@ -573,16 +573,25 @@ public:
 		AATR *disk = AATRStdio_New(atr_filename);
 		if (disk == NULL)
 			throw exception_io_data();
-		if (!AATR_FindFile(disk, inside_filename)) {
+		AATRDirectory *directory = AATRDirectory_New();
+		if (directory == NULL) {
+			AATRStdio_Delete(disk);
+			throw exception_out_of_resources();
+		}
+		AATRDirectory_OpenRoot(directory, disk);
+		if (!AATRDirectory_FindEntryRecursively(directory, inside_filename) || AATRDirectory_IsEntryDirectory(directory)) {
+			AATRDirectory_Delete(directory);
 			AATRStdio_Delete(disk);
 			throw exception_io_not_found();
 		}
 		stream = AATRFileStream_New();
 		if (stream == NULL) {
+			AATRDirectory_Delete(directory);
 			AATRStdio_Delete(disk);
 			throw exception_out_of_resources();
 		}
-		AATRFileStream_Open(stream, disk);
+		AATRFileStream_Open(stream, directory);
+		AATRDirectory_Delete(directory);
 	}
 
 	~file_atr()
@@ -673,9 +682,15 @@ public:
 		AATR *disk = AATRStdio_New(path);
 		if (disk == NULL)
 			throw exception_io_data();
+		AATRRecursiveLister *lister = AATRRecursiveLister_New();
+		if (lister == NULL) {
+			AATRStdio_Delete(disk);
+			throw exception_out_of_resources();
+		}
+		AATRRecursiveLister_Open(lister, disk);
 		pfc::string8_fastalloc url;
 		for (;;) {
-			const char *fn = AATR_NextFile(disk);
+			const char *fn = AATRRecursiveLister_NextFile(lister);
 			if (fn == NULL)
 				break;
 			t_filestats stats = { filesize_invalid, filetimestamp_invalid };
@@ -687,6 +702,7 @@ public:
 			if (!p_out.on_entry(this, url, stats, p_file))
 				break;
 		}
+		AATRRecursiveLister_Delete(lister);
 		AATRStdio_Delete(disk);
 	}
 };

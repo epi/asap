@@ -152,27 +152,37 @@ static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
 	else if (isATR(fi.file)) {
 		AATR *disk = AATRStdio_New(fi.file);
 		if (disk != NULL) {
-			size_t atr_fn_len = strlen(fi.file);
 			BOOL found = FALSE;
-			fi.file[atr_fn_len++] = '#';
-			for (;;) {
-				const char *inside_fn = AATR_NextFile(disk);
-				if (inside_fn == NULL)
-					break;
-				if (ASAPInfo_IsOurFile(inside_fn)) {
-					module_len = AATR_ReadCurrentFile(disk, module, sizeof(module));
-					if (ASAPInfo_Load(info, inside_fn, module, module_len)) {
-						size_t inside_fn_len = strlen(inside_fn);
-						if (atr_fn_len + inside_fn_len + 4 <= sizeof(fi.file)) {
-							memcpy(fi.file + atr_fn_len, inside_fn, inside_fn_len + 1);
-							if (!found) {
-								found = TRUE;
-								SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
+			AATRRecursiveLister *lister = AATRRecursiveLister_New();
+			if (lister != NULL) {
+				AATRFileStream *stream = AATRFileStream_New();
+				if (stream != NULL) {
+					size_t atr_fn_len = strlen(fi.file);
+					fi.file[atr_fn_len++] = '#';
+					AATRRecursiveLister_Open(lister, disk);
+					for (;;) {
+						const char *inside_fn = AATRRecursiveLister_NextFile(lister);
+						if (inside_fn == NULL)
+							break;
+						if (ASAPInfo_IsOurFile(inside_fn)) {
+							AATRFileStream_Open(stream, AATRRecursiveLister_GetDirectory(lister));
+							module_len = AATRFileStream_Read(stream, module, 0, sizeof(module));
+							if (ASAPInfo_Load(info, inside_fn, module, module_len)) {
+								size_t inside_fn_len = strlen(inside_fn);
+								if (atr_fn_len + inside_fn_len + 4 <= sizeof(fi.file)) {
+									memcpy(fi.file + atr_fn_len, inside_fn, inside_fn_len + 1);
+									if (!found) {
+										found = TRUE;
+										SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
+									}
+									addFileSongs(playlistWnd, &fi, info, &index);
+								}
 							}
-							addFileSongs(playlistWnd, &fi, info, &index);
 						}
 					}
+					AATRFileStream_Delete(stream);
 				}
+				AATRRecursiveLister_Delete(lister);
 			}
 			AATRStdio_Delete(disk);
 			/* Prevent Winamp crash:
