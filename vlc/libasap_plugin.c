@@ -173,7 +173,7 @@ static int Open(vlc_object_t *obj)
 	uint8_t *module = (uint8_t *) malloc(module_len);
 	if (unlikely(module == NULL))
 		return VLC_ENOMEM;
-	if (stream_Read(demux->s, module, module_len) < module_len) {
+	if (vlc_stream_Read(demux->s, module, module_len) < module_len) {
 		free(module);
 		return VLC_EGENERIC;
 	}
