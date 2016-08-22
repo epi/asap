@@ -1,7 +1,7 @@
 /*
  * libasap_plugin.c - ASAP plugin for VLC
  *
- * Copyright (C) 2012  Piotr Fusik
+ * Copyright (C) 2012-2016  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -173,7 +173,13 @@ static int Open(vlc_object_t *obj)
 	uint8_t *module = (uint8_t *) malloc(module_len);
 	if (unlikely(module == NULL))
 		return VLC_ENOMEM;
-	if (vlc_stream_Read(demux->s, module, module_len) < module_len) {
+	if (
+#ifdef vlc_stream_MemoryNew /* VLC 3.0+ */
+		vlc_stream_Read
+#else
+		stream_Read
+#endif
+			(demux->s, module, module_len) < module_len) {
 		free(module);
 		return VLC_EGENERIC;
 	}
