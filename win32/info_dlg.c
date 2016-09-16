@@ -1,7 +1,7 @@
 /*
  * info_dlg.c - file information dialog box
  *
- * Copyright (C) 2007-2015  Piotr Fusik
+ * Copyright (C) 2007-2016  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,23 +21,12 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#define _WIN32_WINNT 0x0600
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
 #include <tchar.h>
-#ifndef _WIN32_IE
-#define _WIN32_IE 0x400
-#endif
 #include <commctrl.h>
-
-#ifndef MCM_SETCURRENTVIEW
-/* missing in MinGW */
-#define MCMV_MONTH      0
-#define MCMV_YEAR       1
-#define MCMV_DECADE     2
-#define MCM_SETCURRENTVIEW 0x1020
-#define MonthCal_SetCurrentView(hmc, dwNewView)  (BOOL) SNDMSG(hmc, MCM_SETCURRENTVIEW, 0, (LPARAM)(dwNewView))
-#endif
 
 #include "asap.h"
 #include "astil.h"

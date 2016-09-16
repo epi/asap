@@ -1,7 +1,7 @@
 # MinGW for most ports
-WIN32_CC = $(DO)mingw32-gcc $(WIN32_CARGS)
-WIN32_CXX = $(DO)mingw32-g++ -static $(WIN32_CARGS)
-WIN32_WINDRES = $(DO)windres -o $@ $<
+WIN32_CC = $(DO)i686-w64-mingw32-gcc $(WIN32_CARGS)
+WIN32_CXX = $(DO)i686-w64-mingw32-g++ -static $(WIN32_CARGS)
+WIN32_WINDRES = $(DO)i686-w64-mingw32-windres -o $@ $<
 AUDACIOUS_INCLUDE = ../porty/audacious/audacious-3.5.1/src
 AUDACIOUS_LIB = "C:/Program Files (x86)/audacious-3.5.1/bin"
 VLC_DIR = "C:/Program Files (x86)/VideoLAN/VLC"

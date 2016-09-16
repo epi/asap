@@ -25,7 +25,7 @@ For all builds you will need:
 GNU Make::
 On Linux this program is called `make`. On other systems it may be called `gmake`
 (if this is the case, type `gmake` instead of `make` in the following instructions).
-On Windows you may install GNU Make from http://cygwin.com/[Cygwin] or http://www.mingw.org/[MinGW].
+On Windows you may install GNU Make from http://cygwin.com/[Cygwin].
 
 Standard Unix tools::
 I mean `sh`, `cat`, `cp`, `rm`, `mkdir`. On Windows you can find them in Cygwin.
@@ -221,7 +221,8 @@ remove it in order to avoid conflicts.
 Building asapconv, WASAP, Winamp/GSPlayer/Apollo/XMPlay/BASS/XBMC plugins, RMT DLL, asapscan, shell extension and libasap on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Install the C and C++ compilers from http://www.mingw.org/[MinGW].
+In https://www.cygwin.com/[Cygwin setup] select `bash, coreutils, dos2unix, git, make, tar,
+mingw64-{i686,x86_64}-{gcc-core,gcc-g++,headers,runtime}`.
 
 Open the command prompt in the root directory of ASAP sources and run:
 --------------------------------------------------------------------------------

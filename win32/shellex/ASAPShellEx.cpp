@@ -1,7 +1,7 @@
 /*
  * ASAPShellEx.cpp - ASAP Column Handler and Property Handler shell extensions
  *
- * Copyright (C) 2010-2014  Piotr Fusik
+ * Copyright (C) 2010-2016  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -36,66 +36,6 @@
 extern "C" const FMTID FMTID_AudioSummaryInformation =
 	{ 0x64440490, 0x4c8b, 0x11d1, { 0x8b, 0x70, 0x08, 0x00, 0x36, 0xb1, 0x1a, 0x03 } };
 
-#ifndef __MINGW64__
-/* missing just in 32-bit MinGW */
-extern "C" const FMTID FMTID_MUSIC =
-	{ 0x56a3372e, 0xce9c, 0x11d2, { 0x9f, 0x0e, 0x00, 0x60, 0x97, 0xc6, 0x86, 0xf6 } };
-extern "C" const FMTID FMTID_SummaryInformation =
-	{ 0xf29f85e0, 0x4ff9, 0x1068, { 0xab, 0x91, 0x08, 0x00, 0x2b, 0x27, 0xb3, 0xd9 } };
-#define PIDSI_ARTIST          2
-#define PIDSI_YEAR            5
-#define PIDASI_TIMELENGTH     3
-#define PIDASI_CHANNEL_COUNT  7
-#define SHCDF_UPDATEITEM      1
-
-typedef SHCOLUMNID PROPERTYKEY;
-#define REFPROPERTYKEY const PROPERTYKEY &
-#define REFPROPVARIANT const PROPVARIANT &
-
-#undef INTERFACE
-
-static const IID IID_IInitializeWithStream =
-	{ 0xb824b49d, 0x22ac, 0x4161, { 0xac, 0x8a, 0x99, 0x16, 0xe8, 0xfa, 0x3f, 0x7f } };
-#define INTERFACE IInitializeWithStream
-DECLARE_INTERFACE_(IInitializeWithStream, IUnknown)
-{
-	STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID *) PURE;
-	STDMETHOD_(ULONG, AddRef)(THIS) PURE;
-	STDMETHOD_(ULONG, Release)(THIS) PURE;
-	STDMETHOD(Initialize)(THIS_ IStream *, DWORD) PURE;
-};
-#undef INTERFACE
-
-static const IID IID_IPropertyStore =
-	{ 0x886d8eeb, 0x8cf2, 0x4446, { 0x8d, 0x02, 0xcd, 0xba, 0x1d, 0xbd, 0xcf, 0x99 } };
-#define INTERFACE IPropertyStore
-DECLARE_INTERFACE_(IPropertyStore, IUnknown)
-{
-	STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID *) PURE;
-	STDMETHOD_(ULONG, AddRef)(THIS) PURE;
-	STDMETHOD_(ULONG, Release)(THIS) PURE;
-	STDMETHOD(GetCount)(THIS_ DWORD *) PURE;
-	STDMETHOD(GetAt)(THIS_ DWORD, PROPERTYKEY *) PURE;
-	STDMETHOD(GetValue)(THIS_ REFPROPERTYKEY, PROPVARIANT *) PURE;
-	STDMETHOD(SetValue)(THIS_ REFPROPERTYKEY, REFPROPVARIANT) PURE;
-	STDMETHOD(Commit)(THIS) PURE;
-};
-#undef INTERFACE
-
-static const IID IID_IPropertyStoreCapabilities =
-    { 0xc8e2d566, 0x186e, 0x4d49, { 0xbf, 0x41, 0x69, 0x09, 0xea, 0xd5, 0x6a, 0xcc } };
-#define INTERFACE IPropertyStoreCapabilities
-DECLARE_INTERFACE_(IPropertyStoreCapabilities, IUnknown)
-{
-	STDMETHOD(QueryInterface)(THIS_ REFIID, PVOID *) PURE;
-	STDMETHOD_(ULONG, AddRef)(THIS) PURE;
-	STDMETHOD_(ULONG, Release)(THIS) PURE;
-	STDMETHOD(IsPropertyWritable)(THIS_ REFPROPERTYKEY) PURE;
-};
-#undef INTERFACE
-
-#endif
-/* end missing in MinGW */
 #endif
 
 #include "asap-infowriter.h"
