@@ -1,7 +1,7 @@
 /*
  * Util.java - ASAP for Android
  *
- * Copyright (C) 2010-2015  Piotr Fusik
+ * Copyright (C) 2010-2016  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -29,7 +29,6 @@ import android.net.Uri;
 import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
 
 class Util
 {
@@ -107,21 +106,6 @@ class Util
 			is.close();
 		}
 		return got;
-	}
-
-	static boolean invokeMethod(Object thiz, String name, Object... args)
-	{
-		Class[] classes = new Class[args.length];
-		for (int i = 0; i < args.length; i++)
-			classes[i] = args[i].getClass();
-		try {
-			Method method = thiz.getClass().getMethod(name, classes);
-			method.invoke(thiz, args);
-		}
-		catch (Exception ex) {
-			return false;
-		}
-		return true;
 	}
 
 	static void showAbout(Activity activity)

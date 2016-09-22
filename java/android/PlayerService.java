@@ -1,7 +1,7 @@
 /*
  * PlayerService.java - ASAP for Android
  *
- * Copyright (C) 2010-2015  Piotr Fusik
+ * Copyright (C) 2010-2016  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -24,7 +24,6 @@
 package net.sf.asap;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -54,33 +53,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 {
 	// User interface -----------------------------------------------------------------------------------------
 
-	private NotificationManager notMan;
 	private static final int NOTIFICATION_ID = 1;
-
-	@Override
-	public void onCreate()
-	{
-		notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-	}
-
-	private void startForegroundCompat(int id, Notification notification)
-	{
-		if (!Util.invokeMethod(this, "startForeground", id, notification)) {
-			// Fall back on the old API.
-			Util.invokeMethod(this, "setForeground", true);
-			notMan.notify(id, notification);
-		}
-	}
-
-	private void stopForegroundCompat(int id)
-	{
-		if (!Util.invokeMethod(this, "stopForeground", true)) {
-			// Fall back on the old API.
-			// Cancel before changing the foreground state, since we could be killed at that point.
-			notMan.cancel(id);
-			Util.invokeMethod(this, "setForeground", false);
-		}
-	}
 
 	private final Handler toastHandler = new Handler();
 
@@ -100,12 +73,15 @@ public class PlayerService extends Service implements Runnable, MediaController.
 
 	private void showNotification()
 	{
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
-		String title = info.getTitleOrFilename();
-		Notification notification = new Notification(R.drawable.icon, title, System.currentTimeMillis());
-		notification.flags |= Notification.FLAG_ONGOING_EVENT;
-		notification.setLatestEventInfo(this, title, info.getAuthor(), contentIntent);
-		startForegroundCompat(NOTIFICATION_ID, notification);
+		PendingIntent intent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
+		Notification notification = new Notification.Builder(this)
+			.setSmallIcon(R.drawable.icon)
+			.setContentTitle(info.getTitleOrFilename())
+			.setContentText(info.getAuthor())
+			.setContentIntent(intent)
+			.setOngoing(true)
+			.getNotification();
+		startForeground(NOTIFICATION_ID, notification);
 	}
 
 
@@ -354,7 +330,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 			showNotification();
 			playLoop();
 		}
-		stopForegroundCompat(NOTIFICATION_ID);
+		stopForeground(true);
 	}
 
 	private boolean isPaused()
@@ -450,20 +426,16 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		}
 	};
 
-	private void registerMediaButtonEventReceiver(String methodName)
-	{
-		Object audioManager = getSystemService(AUDIO_SERVICE);
-		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
-		Util.invokeMethod(audioManager, methodName, eventReceiver);
-	}
-
 	@Override
 	public void onStart(Intent intent, int startId)
 	{
 		super.onStart(intent, startId);
 
 		registerReceiver(headsetReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
-		registerMediaButtonEventReceiver("registerMediaButtonEventReceiver");
+
+		AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
+		audioManager.registerMediaButtonEventReceiver(eventReceiver);
 
 		TelephonyManager telephony = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 		telephony.listen(new PhoneStateListener() {
@@ -493,7 +465,11 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	{
 		super.onDestroy();
 		stop();
-		registerMediaButtonEventReceiver("unregisterMediaButtonEventReceiver");
+
+		AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
+		audioManager.unregisterMediaButtonEventReceiver(eventReceiver);
+
 		unregisterReceiver(headsetReceiver);
 	}
 

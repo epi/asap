@@ -1,8 +1,8 @@
 ASMA_DIR = ../asma
-ANDROID_SDK = C:/bin/android-sdk-windows
-ANDROID_JAR = $(ANDROID_SDK)/platforms/android-19/android.jar
-ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/21.1.2
-PROGUARD_JAR = C:/bin/proguard4.6/lib/proguard.jar
+ANDROID_SDK = C:/bin/android-sdk
+ANDROID_JAR = $(ANDROID_SDK)/platforms/android-24/android.jar
+ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/24.0.2
+PROGUARD_JAR = $(ANDROID_SDK)/tools/proguard/lib/proguard.jar
 
 JAVA = $(DO)java
 AAPT = $(ANDROID_BUILD_TOOLS)/aapt
@@ -79,7 +79,7 @@ java/android/AndroidASAP-unaligned.apk: java/android/AndroidASAP-unsigned.apk
 CLEAN += java/android/AndroidASAP-unaligned.apk
 
 java/android/AndroidASAP-unsigned.apk: java/android/AndroidASAP-resources.apk java/android/classes.dex
-	$(DO)cp $< $@ && 7z a -mx=9 -bd -tzip $@ ./java/android/classes.dex
+	$(DO)cp $< $@ && $(SEVENZIP) -tzip $@ ./java/android/classes.dex
 CLEAN += java/android/AndroidASAP-unsigned.apk
 
 java/android/classes.dex: java/android/classes/net/sf/asap/Player.class
