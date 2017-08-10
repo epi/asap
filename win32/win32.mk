@@ -224,10 +224,10 @@ CLEAN += win32/uninstall_dsf.bat
 FOOBAR2000_RUNTIME = win32/foobar2000/foobar2000_SDK.lib win32/foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
 
 win32/foo_asap.dll: $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] astil.[ch] aatr-stdio.[ch] aatr.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch]) win32/foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME)
-	$(WIN32_CL) -DFOOBAR2000 -DWIN32 -EHsc -I$(FOOBAR2000_SDK_DIR) comctl32.lib comdlg32.lib shlwapi.lib user32.lib $(WIN32_LINKOPT)
+	$(WIN32_CL) -DFOOBAR2000 -DWIN32 -EHsc -I$(FOOBAR2000_SDK_DIR) comctl32.lib comdlg32.lib ole32.lib shlwapi.lib user32.lib $(WIN32_LINKOPT)
 CLEAN += win32/foo_asap.dll win32/foo_asap.exp win32/foo_asap.lib
 
-win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,component_client abort_callback audio_chunk audio_chunk_channel_config console file_info filesystem filesystem_helper guids mem_block_container metadb_handle metadb_handle_list playable_location playlist preferences_page replaygain_info service titleformat)
+win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,component_client abort_callback audio_chunk audio_chunk_channel_config cfg_var console file_info file_info_impl file_info_merge filesystem guids input metadb_handle metadb_handle_list playable_location playlist preferences_page replaygain_info service titleformat)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/foobar2000_SDK.lib
 
@@ -238,12 +238,12 @@ win32/foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
 	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc -D_WIN32_IE=0x550 -I$(FOOBAR2000_SDK_DIR)
 CLEAN += win32/foobar2000/*.obj
 
-win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,bsearch cfg_var guid other pathUtils sort string stringNew string_conv threads utf8)
+win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,audio_math audio_sample bsearch guid other pathUtils sort stringNew string_base string_conv threads timers utf8 win-objects)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/pfc.lib
 
 win32/foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/pfc/%.cpp
-	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc
+	$(WIN32_CL) -DWIN32 -DUNICODE -D_UNICODE -EHsc
 
 win32/foobar2000/foo_asap.res: $(call src,win32/gui.rc asap.h win32/settings_dlg.h)
 	$(WIN32_WINDRES) -DFOOBAR2000
