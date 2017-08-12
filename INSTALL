@@ -189,7 +189,7 @@ If you have another XMMS plugin that supports Atari 8-bit music,
 remove it in order to avoid conflicts.
 
 
-Building asapconv, WASAP, Winamp/GSPlayer/Apollo/XMPlay/BASS/XBMC plugins, RMT DLL, asapscan, shell extension and libasap on Windows
+Building asapconv, WASAP, Winamp/Apollo/XMPlay/BASS/XBMC plugins, RMT DLL, asapscan, shell extension and libasap on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In https://www.cygwin.com/[Cygwin setup] select `bash, coreutils, dos2unix, git, make, tar,
@@ -200,7 +200,7 @@ Open the command prompt in the root directory of ASAP sources and run:
 make mingw
 --------------------------------------------------------------------------------
 
-You should get `asapconv.exe`, `wasap.exe`, `in_asap.dll`, `gspasap.dll`,
+You should get `asapconv.exe`, `wasap.exe`, `in_asap.dll`,
 `ASAP_Apollo.dll`, `xmp-asap.dll`, `bass_asap.dll`, `xbmc_asap.dll`,
 `apokeysnd.dll`, `asapscan.exe`, `ASAPShellEx.dll` and `libasap.a`.
 
@@ -252,10 +252,10 @@ make win32/libasap_plugin.dll
 You will get `libasap_plugin.dll`.
 
 
-Building WASAP, GSPlayer and Windows Media Player plugins for Windows CE
+Building WASAP and Windows Media Player plugins for Windows CE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For WASAP and GSPlayer plugins you need http://cegcc.sourceforge.net/[CeGCC].
+For WASAP you need http://cegcc.sourceforge.net/[CeGCC].
 For the Windows Media Player plugin you need Visual Studio 2008
 (2005 might work, but wasn't checked, 2010 won't work).
 
@@ -265,7 +265,7 @@ Open the command prompt in the root directory of ASAP sources and run:
 make wince
 --------------------------------------------------------------------------------
 
-This should produce `wasap.exe`, `gspasap.dll` and `asap_dsf.dll`
+This should produce `wasap.exe` and `asap_dsf.dll`
 in the `win32/wince` directory.
 
 

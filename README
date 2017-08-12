@@ -36,7 +36,7 @@ http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-android.apk/dow
 Android application.
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-wince-arm.cab/download[asap-3.2.0-wince-arm.cab]::
-WASAP, Windows Media Player and GSPlayer plugins for Windows Mobile.
+WASAP and Windows Media Player plugin for Windows Mobile.
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-web.zip/download[asap-3.2.0-web.zip]::
 Embed ASAP on your web page.
@@ -155,7 +155,7 @@ This remarkable portability is possible thanks to the http://cito.sourceforge.ne
 ASAP includes the following programs:
 
 - plugins for Windows/Linux players: http://www.videolan.org/vlc/[VLC], http://xbmc.org/[XBMC]
-- plugins for Windows players: http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player], http://www.winamp.com/[Winamp], http://foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo], http://hp.vector.co.jp/authors/VA032810/[GSPlayer]
+- plugins for Windows players: http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player], http://www.winamp.com/[Winamp], http://foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo]
 - plugins for Linux players: http://xmms.org/[XMMS], http://moc.daper.net/[MOC]
 - add-on for Windows library http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players])
 - asapconv - portable command-line converter
@@ -209,10 +209,6 @@ endif::asapweb[]
 ifdef::asapwin[]
 include::win32/USAGE[]
 endif::asapwin[]
-
-ifdef::asapwince[]
-include::win32/wince/USAGE[]
-endif::asapwince[]
 
 include::CREDITS[]
 

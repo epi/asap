@@ -44,10 +44,10 @@ WIN32_CARGS = -s -O2 -Wall -Wl,--nxcompat -o $@ $(if $(filter %.dll,$@),-shared 
 WIN32_CLDO = $(DO)$(if $(filter-out %.obj,$@),mkdir -p win32/obj/$@ && )
 WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@ -Fowin32/obj/$@/) $(if $(filter %.dll,$@),-LD) $(INCLUDEOPTS) $(filter-out %.h,$^)
 
-mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe ASAP_Apollo.dll bass_asap.dll gspasap.dll in_asap.dll xbmc_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
+mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe ASAP_Apollo.dll bass_asap.dll in_asap.dll xbmc_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
 .PHONY: mingw
 
-wince: $(addprefix win32/wince/,wasap.exe gspasap.dll asap_dsf.dll)
+wince: $(addprefix win32/wince/,wasap.exe asap_dsf.dll)
 .PHONY: wince
 
 # asapconv
@@ -236,24 +236,6 @@ win32/foobar2000/foo_asap.res: $(call src,win32/gui.rc asap.h win32/settings_dlg
 	$(WIN32_WINDRES) -DFOOBAR2000
 CLEAN += win32/foobar2000/foo_asap.res
 
-# GSPlayer
-
-win32/gspasap.dll: $(call src,win32/gsplayer/gspasap.c asap.[ch] win32/settings_dlg.[ch]) win32/gsplayer/gspasap-res.o
-	$(WIN32_CC) -Wl,--kill-at -DGSPLAYER
-CLEAN += win32/gspasap.dll
-
-win32/gsplayer/gspasap-res.o: $(call src,win32/gui.rc asap.h win32/settings_dlg.h)
-	$(WIN32_WINDRES) -DGSPLAYER
-CLEAN += win32/gsplayer/gspasap-res.o
-
-win32/wince/gspasap.dll: $(call src,win32/gsplayer/gspasap.c asap.[ch] win32/settings_dlg.[ch]) win32/wince/gspasap-res.obj
-	$(WINCE_CL) -DGSPLAYER coredll.lib corelibc.lib $(WINCE_LINKOPT)
-CLEAN += win32/wince/gspasap.dll win32/wince/gspasap.exp win32/wince/gspasap.lib win32/wince/gspasap.obj win32/wince/asap.obj
-
-win32/wince/gspasap-res.obj: $(call src,win32/gui.rc asap.h win32/settings_dlg.h)
-	$(WINCE_WINDRES) -DGSPLAYER
-CLEAN += win32/wince/gspasap-res.obj
-
 # Winamp
 
 win32/in_asap.dll: $(call src,win32/winamp/in_asap.c asap.[ch] astil.[ch] aatr-stdio.[ch] aatr.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/winamp/in2.h win32/winamp/out.h win32/winamp/ipc_pe.h win32/winamp/wa_ipc.h) win32/winamp/in_asap-res.o
@@ -331,7 +313,7 @@ win32/setup: release/asap-$(VERSION)-win32.msi
 
 release/asap-$(VERSION)-win32.msi: win32/setup/asap.wixobj release/README_WindowsSetup.html \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/setup/Website.url win32/diff-sap.js win32/shellex/ASAPShellEx.propdesc) \
-	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll gspasap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll asap_dsf.dll foo_asap.dll xbmc_asap.dll libasap_plugin.dll)
+	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll asap_dsf.dll foo_asap.dll xbmc_asap.dll libasap_plugin.dll)
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b release -b $(srcdir)win32/setup -b $(srcdir)win32 $<
 
 win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs
@@ -352,6 +334,6 @@ win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs
 CLEAN += win32/x64/asap.wixobj
 
 release/asap-$(VERSION)-wince-arm.cab: $(srcdir)win32/wince/asap.inf \
-	$(addprefix win32/wince/,wasap.exe gspasap.dll asap_dsf.dll)
+	$(addprefix win32/wince/,wasap.exe asap_dsf.dll)
 	$(DO)cd win32/wince && $(WINCE_CABWIZ) '$(shell cygpath -wa $<)' /cpu ARM
 	@mv win32/wince/asap.ARM.CAB $@

@@ -455,11 +455,6 @@
 						</Component>
 					</Directory>
 				</Directory>
-				<Directory Id="GSP.DIR" Name="GSPlayer">
-					<Component Id="gspasap.dll">
-						<File Name="gspasap.dll" Source="gspasap.dll" Checksum="yes" KeyPath="yes" />
-					</Component>
-				</Directory>
 				<Directory Id="RMT.DIR" Name="RMT">
 					<Component Id="apokeysnd.dll">
 						<File Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
@@ -597,9 +592,6 @@
 				<Condition Level="9">AIMP.EXE</Condition>
 				<ComponentRef Id="aimp_asap.ext" />
 			</Feature>
-		</Feature>
-		<Feature Id="gspasap" Title="GSPlayer plugin" Level="9" ConfigurableDirectory="GSP.DIR" Description="Plugin for GSPlayer (desktop Windows only)." AllowAdvertise="no">
-			<ComponentRef Id="gspasap.dll" />
 		</Feature>
 		<Feature Id="libasap_plugin" Title="VLC plugin" Level="9" ConfigurableDirectory="VLC.DIR" Description="Plugin for VLC (SAP format only)." AllowAdvertise="no">
 			<Condition Level="1">VLC.DIR</Condition>

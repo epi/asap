@@ -1,7 +1,7 @@
 /*
  * gui.rc - Windows resources
  *
- * Copyright (C) 2005-2014  Piotr Fusik
+ * Copyright (C) 2005-2017  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,7 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) || defined(XMPLAY)
+#if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY)
 #include <windows.h>
 #define IDC_STATIC  -1
 #endif
@@ -90,9 +90,6 @@ IDR_TRAYMENU MENU
 #elif defined(FOOBAR2000)
 #  define APP_NAME "foobar2000"
 #  define INTERNAL_NAME "foo_asap"
-#elif defined(GSPLAYER)
-#  define APP_NAME "GSPlayer"
-#  define INTERNAL_NAME "gspasap"
 #elif defined(DSHOW)
 #  define INTERNAL_NAME "asap_dsf"
 #  define FILE_DESCRIPTION "ASAP DirectShow source filter"
@@ -127,7 +124,7 @@ IDR_TRAYMENU MENU
 #  define FILE_TYPE 2
 #endif
 
-#if defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) || defined(XMPLAY)
+#if defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY)
 
 #include "settings_dlg.h"
 
@@ -194,7 +191,7 @@ FONT 8, "MS Sans Serif"
 #endif
 }
 
-#endif /* defined(WINAMP) || defined(FOOBAR2000) || defined(GSPLAYER) || defined(APOLLO) || defined(XMPLAY) */
+#endif /* defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY) */
 
 #if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY)
 

@@ -20,20 +20,15 @@ ProcessorType = %arm_cpu%
 
 [SourceDisksFiles]
 "wasap.exe" = 1
-"gspasap.dll" = 1
 "asap_dsf.dll" = 1
 
 [DestinationDirs]
 Files.App = 0,%InstallDir%
-Files.GSPlayer = 0,"%CE1%\GreenSoftware"
 Files.DShow = 0,%InstallDir%
 Shortcuts = 0,%CE11%
 
 [Files.App]
 "wasap.exe",,,1
-
-[Files.GSPlayer]
-"gspasap.dll",,,
 
 [Files.DShow]
 "asap_dsf.dll",,,1
@@ -110,6 +105,6 @@ HKCR,.tm2,,,"asap.file"
 HKCR,.fc,,,"asap.file"
 
 [DefaultInstall]
-CopyFiles = Files.App, Files.GSPlayer, Files.DShow
+CopyFiles = Files.App, Files.DShow
 CEShortcuts = Shortcuts
 AddReg = Reg.DShow, Reg.Ext

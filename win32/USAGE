@@ -23,9 +23,6 @@ available in the menu which appears when you right-click the icon.
 {asapsetup%}foobar2000 plugin::
 {asapsetup%}Extract `foo_asap.dll` to the `components` directory of your foobar2000 installation.
 
-{asapsetup%}GSPlayer plugin::
-{asapsetup%}Put `gspasap.dll` in the directory which contains the GSPlayer executable.
-
 Winamp plugin::
 {asapsetup%}Extract `in_asap.dll` to the `Plugins` directory of your Winamp installation.
 It is recommended that you remove other plugins that support Atari 8-bit music.

@@ -69,23 +69,6 @@
 		<lang>C, C++</lang>
 		<a href="http://foobar2000.org/">foobar2000</a>
 	</port>
-	<port name="GSPlayer">
-		<bin>Windows CE, Windows</bin>
-		<platform>Windows CE, Windows</platform>
-		<interface>player plugin</interface>
-		<since>0.3.0</since>
-		<status>stable</status>
-		<output>16-bit sound</output>
-		<subsongs>no</subsongs>
-		<file-info>AUTHOR, NAME</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>yes</config-time>
-		<mute-pokey>yes</mute-pokey>
-		<stil>no</stil>
-		<lang>C</lang>
-		<a href="http://hp.vector.co.jp/authors/VA032810/">GSPlayer</a>
-	</port>
 	<port name="Java applet">
 		<bin>Web</bin>
 		<platform>web browser</platform>
@@ -389,6 +372,23 @@
 		<comment class="bad">SAP, FC, RMT formats only</comment>
 		<lang>C</lang>
 		<a href="http://www.videolan.org/vlc/">VLC</a>
+	</port>
+	<port name="GSPlayer">
+		<bin>Windows CE, Windows</bin>
+		<platform>Windows CE, Windows</platform>
+		<interface>player plugin</interface>
+		<since>0.3.0</since>
+		<status>discontinued</status>
+		<output>16-bit sound</output>
+		<subsongs>no</subsongs>
+		<file-info>AUTHOR, NAME</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
+		<lang>C</lang>
+		<a href="http://hp.vector.co.jp/authors/VA032810/">GSPlayer</a>
 	</port>
 	<port name="Audacious plugin">
 		<bin>Windows</bin>

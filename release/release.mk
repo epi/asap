@@ -47,11 +47,11 @@ release/asap-$(VERSION)-web.zip: release/COPYING.txt release/README_Web.html \
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-win32.zip: release/COPYING.txt release/README_Windows.html \
-	$(addprefix win32/,asapconv.exe asapscan.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll install_dsf.bat uninstall_dsf.bat ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll libasap_plugin.dll)
+	$(addprefix win32/,asapconv.exe asapscan.exe wasap.exe in_asap.dll foo_asap.dll asap_dsf.dll install_dsf.bat uninstall_dsf.bat ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll libasap_plugin.dll)
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-wince-arm.zip: release/COPYING.txt release/README_WindowsCE.html \
-	win32/wince/wasap.exe win32/wince/gspasap.dll
+	win32/wince/wasap.exe
 	$(MAKEZIP)
 
 release/foo_asap-$(VERSION).fb2k-component: win32/foo_asap.dll
@@ -91,7 +91,7 @@ release/README_Windows.html: $(call src,README win32/USAGE CREDITS)
 	$(call ASCIIDOC,-a asapwin)
 CLEAN += release/README_Windows.html
 
-release/README_WindowsCE.html: $(call src,README win32/wince/USAGE CREDITS)
+release/README_WindowsCE.html: $(call src,README CREDITS)
 	$(call ASCIIDOC,-a asapwince)
 CLEAN += release/README_WindowsCE.html
 
