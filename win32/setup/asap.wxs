@@ -140,14 +140,9 @@
 
 			<?if $(sys.BUILDARCH) = x86?>
 			<!-- handle mutually exclusive file associations, conditions generated with wix_mutex.pl -->
-			<?foreach MUTEXCOND in (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3) OR $in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)));
-(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
-(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
-(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
-(($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3) OR $foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)));
-(($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3) OR $xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
-(($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
-(($asap_dsf.ext=3 OR ($asap_dsf.ext=-1 AND ?asap_dsf.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
+			<?foreach MUTEXCOND in (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3) OR $foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)));
+(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3) OR $xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
+(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3) OR $libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
 (($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
 (($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
 (($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
@@ -266,37 +261,6 @@
 					<Component Id="path" Guid="D7247D41-0B9A-42D3-9847-06C37F88E2ED">
 						<Environment Id="path" Action="set" Name="Path" Part="last" Permanent="no" System="yes" Value="[ASAP.DIR]" />
 						<CreateFolder />
-					</Component>
-					<?endif?>
-
-					<Component Id="asap_dsf.dll" Win64="$(var.WIN64)">
-						<File Name="asap_dsf.dll" Source="$(var.SRC_DIR)asap_dsf.dll" Checksum="yes" KeyPath="yes">
-							<Class Id="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Context="InprocServer32" Description="ASAP source filter" ThreadingModel="both" />
-						</File>
-						<RegistryValue Root="HKCR" Key="CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance\{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Name="FriendlyName" Value="ASAP source filter" Type="string" Action="write" />
-						<RegistryValue Root="HKCR" Key="CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance\{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Name="CLSID" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
-						<RegistryValue Root="HKCR" Key="CLSID\{083863F1-70DE-11D0-BD40-00A0C911CE86}\Instance\{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Name="FilterData" Value="02000000000060000100000000000000307069330800000000000000010000000000000000000000307479330000000038000000480000006175647300001000800000AA00389B710100000000001000800000AA00389B71" Type="binary" Action="write" />
-						<?foreach EXT in $(var.ASAP_EXTS)?>
-							<RegistryValue Root="HKCR" Key="Media Type\Extensions\.$(var.EXT)" Name="Source Filter" Value="{8E6205A0-19E2-4037-AF32-B29A9B9D0C93}" Type="string" Action="write" />
-						<?endforeach?>
-						<?foreach EXT in $(var.ASAP_EXTS)?>
-							<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.$(var.EXT)" Name="Permissions" Value="15" Type="integer" Action="write" /><!-- 143 = transcoding -->
-							<RegistryValue Root="HKLM" Key="Software\Microsoft\Multimedia\WMPlayer\Extensions\.$(var.EXT)" Name="Runtime" Value="7" Type="integer" Action="write" />
-						<?endforeach?>
-						<RegistryValue Root="HKLM" Key="Software\Microsoft\MediaPlayer\Player\Extensions\MUIDescriptions" Name="ASAP" Value="ASAP files ($(var.EXT_FILTER))" Type="string" Action="write" />
-						<RegistryValue Root="HKLM" Key="Software\Microsoft\MediaPlayer\Player\Extensions\Types" Name="ASAP" Value="$(var.EXT_FILTER)" Type="string" Action="write" />
-					</Component>
-					<?if $(sys.BUILDARCH) = x86?>
-					<Component Id="asap_dsf.ext">
-						<RegistryValue Root="HKCR" Key="asap.file" Name="asap_dsf" Type="integer" Value="1" KeyPath="yes" />
-						<ProgId Id="asap.file">
-							<Extension Id="sap">
-								<Verb Id="open" TargetProperty="WMP.EXE" Argument='"%1"' />
-							</Extension>
-							<?foreach EXT in $(var.NATIVE_EXTS)?>
-								<Extension Id="$(var.EXT)" />
-							<?endforeach?>
-						</ProgId>
 					</Component>
 					<?endif?>
 
@@ -525,15 +489,6 @@
 			</Feature>
 		</Feature>
 		<?endif?>
-		<Feature Id="asap_dsf" Title="Windows Media Player plugin" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Plugin for Windows Media Player." AllowAdvertise="no">
-			<ComponentRef Id="asap_dsf.dll" />
-			<?if $(sys.BUILDARCH) = x86?>
-			<Feature Id="asap_dsf.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) Windows Media Player." AllowAdvertise="no">
-				<Condition Level="9">WMP.EXE</Condition>
-				<ComponentRef Id="asap_dsf.ext" />
-			</Feature>
-			<?endif?>
-		</Feature>
 		<?if $(sys.BUILDARCH) = x86?>
 		<Feature Id="in_asap" Title="Winamp plugin" Level="9" ConfigurableDirectory="WINAMPPLUG.DIR" Description="Plugin for Winamp." AllowAdvertise="no">
 			<Condition Level="1">WINAMP.DIR</Condition>

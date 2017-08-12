@@ -4,8 +4,7 @@ WIN32_CXX = $(DO)i686-w64-mingw32-g++ -static $(WIN32_CARGS)
 WIN32_WINDRES = $(DO)i686-w64-mingw32-windres -o $@ $<
 VLC_DIR = "C:/Program Files (x86)/VideoLAN/VLC"
 
-# Microsoft compiler for Windows Media Player and foobar2000
-DSHOW_BASECLASSES_DIR = "C:/Program Files/Microsoft SDKs/Windows/v7.1/Samples/multimedia/directshow/baseclasses"
+# Microsoft compiler for foobar2000
 FOOBAR2000_SDK_DIR = ../foobar2000_SDK
 WIN32_CL = $(WIN32_CLDO)cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS)
 WIN32_LINKOPT = -link -release
@@ -23,11 +22,7 @@ WINCE_CC = $(DO)arm-mingw32ce-gcc -s -O2 -Wall -o $@ $(INCLUDEOPTS) $(filter-out
 WINCE_WINDRES = $(DO)arm-mingw32ce-windres -o $@ -D_WIN32_WCE $<
 
 # Microsoft compiler for Windows Mobile
-WINCE_VC = "C:/Program Files (x86)/Microsoft Visual Studio 9.0/VC/ce"
-WINCE_CL = $(WIN32_CLDO)$(WINCE_VC)/bin/x86_arm/cl -DUNICODE -D_UNICODE -DUNDER_CE -D_ARM_ -I$(WINCE_SDK)/Include/Armv4i $(WIN32_CLARGS)
-WINCE_SDK = "C:/Program Files (x86)/Windows Mobile 5.0 SDK R2/PocketPC"
 WINCE_CABWIZ = "C:/Program Files (x86)/Windows Mobile 6 SDK/Tools/CabWiz/cabwiz.exe"
-WINCE_LINKOPT = -link -subsystem:windowsce,4.02 -release -libpath:$(WINCE_VC)/lib/armv4i -libpath:$(WINCE_SDK)/Lib/ARMV4I
 
 # Windows Installer XML
 CANDLE = $(DO)candle -nologo -o $@
@@ -47,7 +42,7 @@ WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@ -Fowin
 mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe ASAP_Apollo.dll bass_asap.dll in_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
 .PHONY: mingw
 
-wince: $(addprefix win32/wince/,wasap.exe asap_dsf.dll)
+wince: $(addprefix win32/wince/,wasap.exe)
 .PHONY: wince
 
 # asapconv
@@ -170,42 +165,6 @@ win32/bass/bass_asap-res.o: $(call src,win32/gui.rc asap.h)
 	$(WIN32_WINDRES) -DBASS
 CLEAN += win32/bass/bass_asap-res.o
 
-# DirectShow
-
-DSHOW_BASECLASSES = $(patsubst %,$(DSHOW_BASECLASSES_DIR)/%.cpp,amfilter combase dllentry dllsetup mtype source wxlist wxutil)
-
-win32/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/dshow/asap_dsf.res
-	$(WIN32_CL) $(DSHOW_BASECLASSES) -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib shlwapi.lib strmiids.lib user32.lib winmm.lib $(WIN32_LINKOPT)
-CLEAN += win32/asap_dsf.dll win32/asap_dsf.exp win32/asap_dsf.lib win32/dshow/*.obj
-
-win32/dshow/asap_dsf.res: $(call src,win32/gui.rc asap.h)
-	$(WIN32_WINDRES) -DDSHOW
-CLEAN += win32/dshow/asap_dsf.res
-
-win32/wince/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/wince/asap_dsf-res.obj
-	$(WINCE_CL) -Zc:wchar_t- ole32.lib oleaut32.lib strmbase.lib strmiids.lib uuid.lib $(WINCE_LINKOPT)
-CLEAN += win32/wince/asap_dsf.dll win32/wince/asap_dsf.exp win32/wince/asap_dsf.lib win32/wince/asap_dsf.obj win32/wince/asap.obj
-
-win32/wince/asap_dsf-res.obj: $(call src,win32/gui.rc asap.h)
-	$(WINCE_WINDRES) -DDSHOW
-CLEAN += win32/wince/asap_dsf-res.obj
-
-win32/x64/asap_dsf.dll: $(call src,win32/dshow/asap_dsf.cpp asap.[ch] win32/dshow/asap_dsf.def) win32/x64/asap_dsf.res
-	$(WIN64_CL) $(DSHOW_BASECLASSES) -DDSHOW -I$(DSHOW_BASECLASSES_DIR) advapi32.lib ole32.lib oleaut32.lib shlwapi.lib strmiids.lib user32.lib winmm.lib $(WIN64_LINKOPT)
-CLEAN += win32/x64/asap_dsf.dll win32/x64/asap_dsf.exp win32/x64/asap_dsf.lib win32/x64/*.obj
-
-win32/x64/asap_dsf.res: $(call src,win32/gui.rc asap.h)
-	$(WIN64_WINDRES) -DDSHOW
-CLEAN += win32/x64/asap_dsf.res
-
-win32/install_dsf.bat:
-	$(DO)echo regsvr32 asap_dsf.dll >$@
-CLEAN += win32/install_dsf.bat
-
-win32/uninstall_dsf.bat:
-	$(DO)echo regsvr32 /u asap_dsf.dll >$@
-CLEAN += win32/uninstall_dsf.bat
-
 # foobar2000
 
 FOOBAR2000_RUNTIME = win32/foobar2000/foobar2000_SDK.lib win32/foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
@@ -303,7 +262,7 @@ win32/setup: release/asap-$(VERSION)-win32.msi
 
 release/asap-$(VERSION)-win32.msi: win32/setup/asap.wixobj release/README_WindowsSetup.html \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/setup/Website.url win32/diff-sap.js win32/shellex/ASAPShellEx.propdesc) \
-	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll asap_dsf.dll foo_asap.dll libasap_plugin.dll)
+	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll)
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b release -b $(srcdir)win32/setup -b $(srcdir)win32 $<
 
 win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs
@@ -316,7 +275,7 @@ CLEAN += release/README_WindowsSetup.html
 
 release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/shellex/ASAPShellEx.propdesc) \
-	win32/x64/asap_dsf.dll win32/x64/ASAPShellEx.dll
+	win32/x64/ASAPShellEx.dll
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b $(srcdir)/win32/setup -b $(srcdir)win32 $<
 
 win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs
@@ -324,6 +283,6 @@ win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs
 CLEAN += win32/x64/asap.wixobj
 
 release/asap-$(VERSION)-wince-arm.cab: $(srcdir)win32/wince/asap.inf \
-	$(addprefix win32/wince/,wasap.exe asap_dsf.dll)
+	$(addprefix win32/wince/,wasap.exe)
 	$(DO)cd win32/wince && $(WINCE_CABWIZ) '$(shell cygpath -wa $<)' /cpu ARM
 	@mv win32/wince/asap.ARM.CAB $@

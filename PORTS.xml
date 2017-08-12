@@ -119,24 +119,6 @@
 		<lang>C</lang>
 		<a href="http://moc.daper.net/">MOC</a>
 	</port>
-	<port name="Windows Media Player plugin">
-		<bin>Windows, Windows CE</bin>
-		<platform>Windows, Windows CE</platform>
-		<interface>player plugin</interface>
-		<since>1.2.0</since>
-		<status>stable</status>
-		<output>16-bit sound</output>
-		<subsongs>experi&#173;mental</subsongs>
-		<file-info>AUTHOR, NAME (experi&#173;mental)</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>no</config-time>
-		<mute-pokey>no</mute-pokey>
-		<stil>no</stil>
-		<comment class="partial">No subsongs or file infor&#173;mation in the standard Windows Media Player</comment>
-		<lang>C, C++</lang>
-		<a href="http://www.microsoft.com/windows/windowsmedia/player/">Windows Media Player</a>
-	</port>
 	<port name="Apollo plugin">
 		<bin>Windows</bin>
 		<platform>Windows</platform>
@@ -372,6 +354,24 @@
 		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://hp.vector.co.jp/authors/VA032810/">GSPlayer</a>
+	</port>
+	<port name="Windows Media Player plugin">
+		<bin>Windows, Windows CE</bin>
+		<platform>Windows, Windows CE</platform>
+		<interface>player plugin</interface>
+		<since>1.2.0</since>
+		<status>discontinued</status>
+		<output>16-bit sound</output>
+		<subsongs>experi&#173;mental</subsongs>
+		<file-info>AUTHOR, NAME (experi&#173;mental)</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<comment class="partial">No subsongs or file infor&#173;mation in the standard Windows Media Player</comment>
+		<lang>C, C++</lang>
+		<a href="http://www.microsoft.com/windows/windowsmedia/player/">Windows Media Player</a>
 	</port>
 	<port name="XBMC plugin">
 		<bin>Windows</bin>

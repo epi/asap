@@ -36,7 +36,7 @@ http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-android.apk/dow
 Android application.
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-wince-arm.cab/download[asap-3.2.0-wince-arm.cab]::
-WASAP and Windows Media Player plugin for Windows Mobile.
+WASAP for Windows Mobile.
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-web.zip/download[asap-3.2.0-web.zip]::
 Embed ASAP on your web page.
@@ -48,7 +48,7 @@ http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-air.air/downloa
 Desktop player in JavaScript (requires http://www.adobe.com/products/air/[Adobe AIR]).
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-win64.msi/download[asap-3.2.0-win64.msi]::
-View and edit SAP file tags in your 64-bit Windows Explorer. Listen in 64-bit Windows Media Player.
+View and edit SAP file tags in your 64-bit Windows Explorer.
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-win32.zip/download[asap-3.2.0-win32.zip]::
 For Windows people allergic to installers.
@@ -155,7 +155,7 @@ This remarkable portability is possible thanks to the http://cito.sourceforge.ne
 ASAP includes the following programs:
 
 - plugins for Windows/macOS/Linux player http://www.videolan.org/vlc/[VLC]
-- plugins for Windows players: http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player], http://www.winamp.com/[Winamp], http://foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo]
+- plugins for Windows players: http://www.winamp.com/[Winamp], http://foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo]
 - plugins for Linux players: http://xmms.org/[XMMS], http://moc.daper.net/[MOC]
 - add-on for Windows library http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players])
 - asapconv - portable command-line converter

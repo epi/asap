@@ -90,9 +90,6 @@ IDR_TRAYMENU MENU
 #elif defined(FOOBAR2000)
 #  define APP_NAME "foobar2000"
 #  define INTERNAL_NAME "foo_asap"
-#elif defined(DSHOW)
-#  define INTERNAL_NAME "asap_dsf"
-#  define FILE_DESCRIPTION "ASAP DirectShow source filter"
 #elif defined(APOLLO)
 #  define APP_NAME "Apollo"
 #  define INTERNAL_NAME "ASAP_Apollo"

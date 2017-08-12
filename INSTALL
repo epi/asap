@@ -191,23 +191,6 @@ You should get `asapconv.exe`, `wasap.exe`, `in_asap.dll`,
 `apokeysnd.dll`, `asapscan.exe`, `ASAPShellEx.dll` and `libasap.a`.
 
 
-Building Windows Media Player plugin and asap.lib on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You additionally need Windows SDK
-(install native C++ compiler, headers, libraries and samples).
-Set `Path`, `INCLUDE` and `LIB` environment variables
-to point to the right locations in the Windows SDK.
-Make sure `DSHOW_BASECLASSES_DIR` is set correctly in `win32\win32.mk`.
-
-Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make win32/asap_dsf.dll win32/asap.lib
---------------------------------------------------------------------------------
-
-You will get `asap_dsf.dll` and `asap.lib`.
-
-
 Building the foobar2000 plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -238,12 +221,10 @@ make win32/libasap_plugin.dll
 You will get `libasap_plugin.dll`.
 
 
-Building WASAP and Windows Media Player plugins for Windows CE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building WASAP for Windows CE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For WASAP you need http://cegcc.sourceforge.net/[CeGCC].
-For the Windows Media Player plugin you need Visual Studio 2008
-(2005 might work, but wasn't checked, 2010 won't work).
 
 Edit the `WINCE_...` paths at the top of `win32/win32.mk` so that they point to your installed tools.
 Open the command prompt in the root directory of ASAP sources and run:
@@ -251,8 +232,7 @@ Open the command prompt in the root directory of ASAP sources and run:
 make wince
 --------------------------------------------------------------------------------
 
-This should produce `wasap.exe` and `asap_dsf.dll`
-in the `win32/wince` directory.
+This should produce `wasap.exe` in the `win32/wince` directory.
 
 
 Building Java ASAP2WAV and Java applet
