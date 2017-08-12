@@ -48,7 +48,7 @@
 						<ul>
 							<li><span class="good">stable</span> - complete</li>
 							<li><span class="partial">in development</span> - working, but incomplete or buggy</li>
-							<li><span class="bad">experimental</span> - initial implementation</li>
+							<li><span class="bad">discontinued</span> - present in previous releases, no longer supported</li>
 							<li><span class="bad">sample</span> - sample code for developers, not recommended for end-users</li>
 						</ul>
 					</li>
@@ -68,7 +68,7 @@
 				<xsl:attribute name="class">
 					<xsl:choose>
 						<xsl:when test="status = 'stable'">good</xsl:when>
-						<xsl:when test="status = 'experi&#173;mental' or status = 'sample'">bad</xsl:when>
+						<xsl:when test="status = 'discontinued' or status = 'sample'">bad</xsl:when>
 						<xsl:otherwise>partial</xsl:otherwise>
 					</xsl:choose>
 				</xsl:attribute>
