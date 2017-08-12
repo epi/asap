@@ -83,21 +83,6 @@ The latter command installs the command-line converter and the C library
 in `/usr/local`.
 
 
-Building the Audacious plugin on Unix-like systems
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Install `audacious-dev` or `audacious-devel`.
-To compile, run the following command:
---------------------------------------------------------------------------------
-make asap-audacious
---------------------------------------------------------------------------------
-
-To install:
---------------------------------------------------------------------------------
-sudo make install-audacious
---------------------------------------------------------------------------------
-
-
 Building the MOC plugin on Unix-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -235,22 +220,6 @@ make win32/asap_dsf.dll win32/asap.lib
 --------------------------------------------------------------------------------
 
 You will get `asap_dsf.dll` and `asap.lib`.
-
-
-Building the Audacious plugin on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Install Audacious and make sure `AUDACIOUS_LIB` in `win32\win32.mk` points inside it.
-
-Unpack Audacious source code and make sure `AUDACIOUS_INCLUDE` points inside it.
-Copy `src\libaudcore\audio.h.in` as `src\libaudcore\audio.h` and replace `@BIGENDIAN@` with `0`.
-
-Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make win32/asapplug.dll
---------------------------------------------------------------------------------
-
-Put the DLL in `lib/audacious/Input` of the Windows binary distribution of Audacious.
 
 
 Building the foobar2000 plugin on Windows

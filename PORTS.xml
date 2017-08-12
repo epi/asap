@@ -323,23 +323,6 @@
 		<lang>C#</lang>
 		<a href="http://asap.sourceforge.net/silverlight.html">online demo</a>
 	</port>
-	<port name="Audacious plugin">
-		<bin>Windows</bin>
-		<platform>Linux, Windows</platform>
-		<interface>player plugin</interface>
-		<since>2.1.2</since>
-		<status>stable</status>
-		<output>16-bit sound</output>
-		<subsongs>yes</subsongs>
-		<file-info>yes</file-info>
-		<edit-info>AUTHOR, NAME, DATE (year)</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>no</config-time>
-		<mute-pokey>no</mute-pokey>
-		<stil>no</stil>
-		<lang>C</lang>
-		<a href="http://audacious-media-player.org/">Audacious</a>
-	</port>
 	<port name="WASAP (Windows CE)">
 		<bin>Windows CE</bin>
 		<platform>Windows CE</platform>
@@ -406,6 +389,23 @@
 		<comment class="bad">SAP, FC, RMT formats only</comment>
 		<lang>C</lang>
 		<a href="http://www.videolan.org/vlc/">VLC</a>
+	</port>
+	<port name="Audacious plugin">
+		<bin>Windows</bin>
+		<platform>Linux, Windows</platform>
+		<interface>player plugin</interface>
+		<since>2.1.2</since>
+		<status>discontinued</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>AUTHOR, NAME, DATE (year)</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<lang>C</lang>
+		<a href="http://audacious-media-player.org/">Audacious</a>
 	</port>
 	<port name="GStreamer plugin">
 		<bin>Linux, Windows</bin>

@@ -48,8 +48,5 @@ assign a shortcut to it from XMPlay options.
 {asapsetup%}DLL for Raster Music Tracker::
 {asapsetup%}Extract `apokeysnd.dll` to the directory which contains `Rmt.exe`.
 
-{asapsetup%}Audacious plugin::
-{asapsetup%}Extract `asapplug.dll` to `lib/audacious/Input` inside the Audacious directory.
-
 {asapsetup%}VLC plugin::
 {asapsetup%}Extract `libasap_plugin.dll` to `plugins/demux` inside the VLC directory.

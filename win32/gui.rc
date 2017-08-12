@@ -114,9 +114,6 @@ IDR_TRAYMENU MENU
 #elif defined(SHELLEX)
 #  define INTERNAL_NAME "ASAPShellEx"
 #  define FILE_DESCRIPTION "ASAP Windows Explorer extension"
-#elif defined(AUDACIOUS)
-#  define APP_NAME "Audacious"
-#  define INTERNAL_NAME "asapplug"
 #elif defined(VLC)
 #  define APP_NAME "VLC"
 #  define INTERNAL_NAME "libasap_plugin"

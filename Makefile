@@ -138,7 +138,6 @@ clean:
 
 .DELETE_ON_ERROR:
 
-include $(srcdir)audacious/audacious.mk
 include $(srcdir)moc/moc.mk
 include $(srcdir)vlc/vlc.mk
 include $(srcdir)xbmc/xbmc.mk
