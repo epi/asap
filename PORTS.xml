@@ -339,8 +339,8 @@
 		<lang>JavaScript</lang>
 	</port>
 	<port name="VLC plugin">
-		<bin>Windows, OS X, Linux</bin>
-		<platform>Windows, OS X, Linux</platform>
+		<bin>Windows, macOS, Linux</bin>
+		<platform>Windows, macOS, Linux</platform>
 		<interface>player plugin</interface>
 		<since>3.1.2</since>
 		<status>stable</status>

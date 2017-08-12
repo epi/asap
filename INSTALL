@@ -127,8 +127,8 @@ sudo make install-vlc
 --------------------------------------------------------------------------------
 
 
-Building the VLC plugin on OS X
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building the VLC plugin on macOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install Xcode Command Line Tools.
 

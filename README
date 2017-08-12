@@ -57,7 +57,7 @@ http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-wince-arm.zip/d
 For Windows Mobile people allergic to installers.
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-vlc-3.2.0-osx.dmg/download[asap-vlc-3.2.0-osx.dmg]::
-VLC plugin for OS X (Intel 32-bit and 64-bit). Drag `libasap_plugin.dylib` to `plugins`.
+VLC plugin for macOS. Drag `libasap_plugin.dylib` to `plugins`.
 
 asap_3.2.0-1_\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap_3.2.0-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap_3.2.0-1_amd64.deb/download[amd64]\}.deb::
 Linux binary of asapconv.
@@ -154,7 +154,7 @@ This remarkable portability is possible thanks to the http://cito.sourceforge.ne
 
 ASAP includes the following programs:
 
-- plugins for Windows/Linux player: http://www.videolan.org/vlc/[VLC]
+- plugins for Windows/macOS/Linux player http://www.videolan.org/vlc/[VLC]
 - plugins for Windows players: http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player], http://www.winamp.com/[Winamp], http://foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo]
 - plugins for Linux players: http://xmms.org/[XMMS], http://moc.daper.net/[MOC]
 - add-on for Windows library http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players])
@@ -184,7 +184,7 @@ There are other projects which use ASAP:
 - Game Music Gear MX - player for PlayStation Portable
 - http://yoyofr.blogspot.com/p/modizer.html[Modizer] - player for iPhone, iPod and iPad
 - http://www.chipamp.org/[Chipamp] - bundle of plugins for Winamp
-- http://atari-sounds.fatmagnus.ppa.pl/[Atari Sounds For The Masses] - GUI frontend to asapconv for Mac OS X
+- http://atari-sounds.fatmagnus.ppa.pl/[Atari Sounds For The Masses] - GUI frontend to asapconv for macOS
 - http://dangerousprototypes.com/forum/viewtopic.php?t=3944[Atari POKEY 8-bit Computer Sound on PIC32] - ASAP on a microcontroller
 - http://mxplay.atari.org/[mxPlay] - audio player for Atari Falcon
 - https://github.com/epi/enotracker[enotracker] - POKEY music editor for PC

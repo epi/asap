@@ -3,7 +3,7 @@
 VLC_CFLAGS = -std=gnu99 -I/usr/include/vlc/plugins
 VLC_DEMUX_PLUGIN_DIR = $(libdir)/vlc/plugins/demux
 
-# OS X
+# macOS
 
 VLC_OSX_CFLAGS = -std=gnu99 -I../plugins -dynamiclib -flat_namespace
 VLC_OSX_PLUGIN_DIR = /Applications/VLC.app/Contents/MacOS/plugins
@@ -31,7 +31,7 @@ uninstall-vlc:
 	$(RM) $(DESTDIR)$(VLC_DEMUX_PLUGIN_DIR)/libasap_plugin.so
 .PHONY: uninstall-vlc
 
-# OS X
+# macOS
 
 asap-vlc-osx: libasap_plugin.dylib
 .PHONY: asap-vlc-osx
