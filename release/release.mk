@@ -47,7 +47,7 @@ release/asap-$(VERSION)-web.zip: release/COPYING.txt release/README_Web.html \
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-win32.zip: release/COPYING.txt release/README_Windows.html \
-	$(addprefix win32/,asapconv.exe asapscan.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll install_dsf.bat uninstall_dsf.bat ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll asapplug.dll libasap_plugin.dll libgstasapdec.dll)
+	$(addprefix win32/,asapconv.exe asapscan.exe wasap.exe in_asap.dll foo_asap.dll gspasap.dll asap_dsf.dll install_dsf.bat uninstall_dsf.bat ASAP_Apollo.dll apokeysnd.dll xbmc_asap.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll asapplug.dll libasap_plugin.dll)
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-wince-arm.zip: release/COPYING.txt release/README_WindowsCE.html \

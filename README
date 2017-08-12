@@ -65,12 +65,6 @@ Linux binary of asapconv.
 asap-3.2.0-1.\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-1.i686.rpm/download[i686],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-1.x86_64.rpm/download[x86_64]\}.rpm::
 Linux binary of asapconv.
 
-asap-gstreamer0.10_3.2.0-1_\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-gstreamer0.10_3.2.0-1_i686.rpm/download[i686],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-gstreamer0.10_3.2.0-1_amd64.deb/download[amd64]\}.deb::
-Linux binary of the GStreamer 0.10 plugin.
-
-asap-gstreamer0.10-3.2.0-1.\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-gstreamer0.10-3.2.0-1.i686.rpm/download[i686],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-gstreamer0.10-3.2.0-1.x86_64.rpm/download[x86_64]\}.rpm::
-Linux binary of the GStreamer 0.10 plugin.
-
 asap-vlc_3.2.0-1_\{http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-vlc_3.2.0-1_i386.deb/download[i386],http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-vlc_3.2.0-1_amd64.deb/download[amd64]\}.deb::
 Linux binary of the VLC plugin.
 
@@ -160,7 +154,7 @@ This remarkable portability is possible thanks to the http://cito.sourceforge.ne
 
 ASAP includes the following programs:
 
-- plugins for Windows/Linux players: http://audacious-media-player.org/[Audacious], http://www.videolan.org/vlc/[VLC], http://xbmc.org/[XBMC], http://gstreamer.freedesktop.org/[GStreamer]
+- plugins for Windows/Linux players: http://audacious-media-player.org/[Audacious], http://www.videolan.org/vlc/[VLC], http://xbmc.org/[XBMC]
 - plugins for Windows players: http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player], http://www.winamp.com/[Winamp], http://foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo], http://hp.vector.co.jp/authors/VA032810/[GSPlayer]
 - plugins for Linux players: http://xmms.org/[XMMS], http://moc.daper.net/[MOC]
 - add-on for Windows library http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players])

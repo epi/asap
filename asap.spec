@@ -33,17 +33,6 @@ Provides playback of Atari 8-bit music in XMMS.
 Supports the following file formats:
 SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2, FC.
 
-%package gstreamer0.10
-Summary: ASAP plugin for GStreamer 0.10
-Group: Applications/Multimedia
-Requires: gstreamer >= 0.10.36
-Requires: gstreamer < 0.11
-BuildRequires: gstreamer-devel
-# 0.10.36 is the first version to properly recognize SAP files. This isn't required for the build.
-
-%description gstreamer0.10
-Provides playback of Atari 8-bit music in the SAP format in GStreamer-based players.
-
 %package vlc
 Summary: ASAP plugin for VLC
 Group: Applications/Multimedia
@@ -58,11 +47,11 @@ Supports the following file formats: SAP, RMT, FC.
 %setup -q
 
 %build
-make asapconv libasap.a asap-xmms asap-gstreamer asap-vlc
+make asapconv libasap.a asap-xmms asap-vlc
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make DESTDIR=$RPM_BUILD_ROOT prefix=%{_prefix} install install-xmms install-gstreamer install-vlc
+make DESTDIR=$RPM_BUILD_ROOT prefix=%{_prefix} install install-xmms install-vlc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -81,15 +70,14 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_libdir}/xmms/Input/libasap-xmms.so
 
-%files gstreamer0.10
-%defattr(-,root,root)
-%{_libdir}/gstreamer-0.10/libgstasapdec.so
-
 %files vlc
 %defattr(-,root,root)
 %{_libdir}/vlc/plugins/demux/libasap_plugin.so
 
 %changelog
+* Sat Aug 12 2017 Piotr Fusik <fox@scene.pl>
+- Discontinued GStreamer
+
 * Mon Jun 23 2014 Piotr Fusik <fox@scene.pl>
 - 3.2.0-1
 

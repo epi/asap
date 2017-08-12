@@ -98,20 +98,6 @@ sudo make install-audacious
 --------------------------------------------------------------------------------
 
 
-Building the GStreamer plugin on Unix-like systems
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To compile, run the following command:
---------------------------------------------------------------------------------
-make asap-gstreamer
---------------------------------------------------------------------------------
-
-To install in `/usr/lib/gstreamer-0.10`:
---------------------------------------------------------------------------------
-sudo make install-gstreamer
---------------------------------------------------------------------------------
-
-
 Building the MOC plugin on Unix-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -250,16 +236,6 @@ make win32/asap_dsf.dll win32/asap.lib
 
 You will get `asap_dsf.dll` and `asap.lib`.
 
-
-Building the GStreamer plugin on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Install http://www.gstreamer.com/[GStreamer SDK] 32-bit development files.
-
-Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make win32/libgstasapdec.dll
---------------------------------------------------------------------------------
 
 Building the Audacious plugin on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -5,7 +5,6 @@ WIN32_WINDRES = $(DO)i686-w64-mingw32-windres -o $@ $<
 AUDACIOUS_INCLUDE = ../porty/audacious/audacious-3.5.1/src
 AUDACIOUS_LIB = "C:/Program Files (x86)/audacious-3.5.1/bin"
 VLC_DIR = "C:/Program Files (x86)/VideoLAN/VLC"
-GST_SDK_DIR = "C:/gstreamer-sdk/0.10/x86"
 
 # Microsoft compiler for Windows Media Player and foobar2000
 DSHOW_BASECLASSES_DIR = "C:/Program Files/Microsoft SDKs/Windows/v7.1/Samples/multimedia/directshow/baseclasses"
@@ -296,12 +295,6 @@ CLEAN += win32/xmp-asap.dll
 win32/xmplay/xmp-asap-res.o: $(call src,win32/gui.rc asap.h win32/info_dlg.h win32/settings_dlg.h)
 	$(WIN32_WINDRES) -DXMPLAY
 CLEAN += win32/xmplay/xmp-asap-res.o
-
-# GStreamer
-
-win32/libgstasapdec.dll: $(call src,gstreamer/gstasapdec.c asap.[ch])
-	$(WIN32_CC) -I$(GST_SDK_DIR)/include/gstreamer-0.10 -I$(GST_SDK_DIR)/include/glib-2.0 -I$(GST_SDK_DIR)/lib/glib-2.0/include -I$(GST_SDK_DIR)/include/libxml2 -L$(GST_SDK_DIR)/lib -lgstreamer-0.10 -lglib-2.0 -lgobject-2.0
-CLEAN += win32/libgstasapdec.dll
 
 # Raster Music Tracker
 
