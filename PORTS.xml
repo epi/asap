@@ -154,23 +154,6 @@
 		<lang>C, C++</lang>
 		<a href="http://koti.welho.com/hylinen/apollo/">Apollo</a>
 	</port>
-	<port name="XBMC plugin">
-		<bin>Windows</bin>
-		<platform>Windows, Linux</platform>
-		<interface>player plugin</interface>
-		<since>1.2.1</since>
-		<status>stable</status>
-		<output>16-bit sound</output>
-		<subsongs>yes</subsongs>
-		<file-info>yes</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>no</config-time>
-		<mute-pokey>no</mute-pokey>
-		<stil>no</stil>
-		<lang>C</lang>
-		<a href="http://xbmc.org/">XBMC</a>
-	</port>
 	<port name="POKEY DLL for RMT">
 		<bin>Windows</bin>
 		<platform>Windows</platform>
@@ -389,6 +372,23 @@
 		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://hp.vector.co.jp/authors/VA032810/">GSPlayer</a>
+	</port>
+	<port name="XBMC plugin">
+		<bin>Windows</bin>
+		<platform>Windows, Linux</platform>
+		<interface>player plugin</interface>
+		<since>1.2.1</since>
+		<status>discontinued</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<lang>C</lang>
+		<a href="http://xbmc.org/">XBMC</a>
 	</port>
 	<port name="Audacious plugin">
 		<bin>Windows</bin>

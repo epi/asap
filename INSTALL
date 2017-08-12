@@ -150,20 +150,6 @@ make install-vlc-osx
 --------------------------------------------------------------------------------
 
 
-Building the XBMC plugin on Linux
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Your XBMC must include support for ASAP.
-Unfortunately it's disabled in the official Linux build.
-
-Anyway, to build the ASAP plugin, run:
---------------------------------------------------------------------------------
-make asap-xbmc
---------------------------------------------------------------------------------
-
-You should get `xbmc_asap-i486-linux.so`.
-
-
 Building the XMMS plugin on Unix-like systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -189,7 +175,7 @@ If you have another XMMS plugin that supports Atari 8-bit music,
 remove it in order to avoid conflicts.
 
 
-Building asapconv, WASAP, Winamp/Apollo/XMPlay/BASS/XBMC plugins, RMT DLL, asapscan, shell extension and libasap on Windows
+Building asapconv, WASAP, Winamp/Apollo/XMPlay/BASS plugins, RMT DLL, asapscan, shell extension and libasap on Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In https://www.cygwin.com/[Cygwin setup] select `bash, coreutils, dos2unix, git, make, tar,
@@ -201,7 +187,7 @@ make mingw
 --------------------------------------------------------------------------------
 
 You should get `asapconv.exe`, `wasap.exe`, `in_asap.dll`,
-`ASAP_Apollo.dll`, `xmp-asap.dll`, `bass_asap.dll`, `xbmc_asap.dll`,
+`ASAP_Apollo.dll`, `xmp-asap.dll`, `bass_asap.dll`,
 `apokeysnd.dll`, `asapscan.exe`, `ASAPShellEx.dll` and `libasap.a`.
 
 

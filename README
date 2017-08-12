@@ -154,7 +154,7 @@ This remarkable portability is possible thanks to the http://cito.sourceforge.ne
 
 ASAP includes the following programs:
 
-- plugins for Windows/Linux players: http://www.videolan.org/vlc/[VLC], http://xbmc.org/[XBMC]
+- plugins for Windows/Linux player: http://www.videolan.org/vlc/[VLC]
 - plugins for Windows players: http://www.microsoft.com/windows/windowsmedia/player/[Windows Media Player], http://www.winamp.com/[Winamp], http://foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo]
 - plugins for Linux players: http://xmms.org/[XMMS], http://moc.daper.net/[MOC]
 - add-on for Windows library http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players])

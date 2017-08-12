@@ -202,9 +202,6 @@
 				<FileSearch Name="foobar2000.exe" />
 			</RegistrySearch>
 		</Property>
-		<Property Id="XBMC.DIR">
-			<RegistrySearch Id="xbmc.installdir" Root="HKCU" Key="SOFTWARE\XBMC" Type="directory" />
-		</Property>
 		<Property Id="APOLLO.DIR">
 			<RegistrySearch Id="apollo.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Apollo_is1" Name="InstallLocation" Type="directory" />
 		</Property>
@@ -392,17 +389,6 @@
 						</Component>
 					</Directory>
 				</Directory>
-				<Directory Id="XBMC.DIR" Name="XBMC">
-					<Directory Id="XBMCSYS.DIR" Name="system">
-						<Directory Id="XBMCPLS.DIR" Name="players">
-							<Directory Id="XBMCPAPL.DIR" Name="paplayer">
-								<Component Id="xbmc_asap.dll">
-									<File Name="xbmc_asap.dll" Source="xbmc_asap.dll" Checksum="yes" KeyPath="yes" />
-								</Component>
-							</Directory>
-						</Directory>
-					</Directory>
-				</Directory>
 				<Directory Id="APOLLO.DIR" Name="Apollo">
 					<Directory Id="APOLLOPLUG.DIR" Name="Plug-ins">
 						<Component Id="ASAP_Apollo.dll">
@@ -564,10 +550,6 @@
 				<Condition Level="9">FOO.EXE</Condition>
 				<ComponentRef Id="foo_asap.ext" />
 			</Feature>
-		</Feature>
-		<Feature Id="xbmc_asap" Title="XBMC plugin" Level="9" ConfigurableDirectory="XBMCPAPL.DIR" Description="Plugin for XBMC." AllowAdvertise="no">
-			<Condition Level="1">XBMC.DIR</Condition>
-			<ComponentRef Id="xbmc_asap.dll" />
 		</Feature>
 		<Feature Id="ASAP_Apollo" Title="Apollo plugin" Level="9" ConfigurableDirectory="APOLLOPLUG.DIR" Description="Plugin for Apollo." AllowAdvertise="no">
 			<Condition Level="1">APOLLO.DIR</Condition>

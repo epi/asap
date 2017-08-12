@@ -96,9 +96,6 @@ IDR_TRAYMENU MENU
 #elif defined(APOLLO)
 #  define APP_NAME "Apollo"
 #  define INTERNAL_NAME "ASAP_Apollo"
-#elif defined(XBMC)
-#  define APP_NAME "XBMC"
-#  define INTERNAL_NAME "xbmc_asap"
 #elif defined(XMPLAY)
 #  define APP_NAME "XMPlay"
 #  define INTERNAL_NAME "xmp-asap"

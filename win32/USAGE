@@ -33,9 +33,6 @@ It is recommended that you remove other plugins that support Atari 8-bit music.
 {asapsetup%}+
 {asapsetup%}To uninstall: run `uninstall_dsf.bat`, then delete the files.
 
-XBMC plugin::
-{asapsetup%}Put `xbmc_asap.dll` in the `system/players/paplayer` directory.
-
 XMPlay plugin::
 {asapsetup%}Extract `xmp-asap.dll` to your XMPlay directory.
 {asapsetup%}+
