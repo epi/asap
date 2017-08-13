@@ -1,20 +1,12 @@
 How to embed ASAP on your website
 ---------------------------------
 
-There are three independent web-enabled versions of ASAP:
+There are two independent web-enabled versions of ASAP:
 
 - Flash Player (`asap.swf`)
-- Silverlight (`SilverASAP.xap`)
 - JavaScript (`asap.js` and `asapweb.js`)
 
-Flash Player is the most likely one to work in today's web browsers.
-Silverlight uses least processor time, however many of your visitors
-may have no Silverlight installed.
-JavaScript seems to be the future and even now works fine
-if you have a modern browser and a powerful processor.
-Choose for yourself. :)
-
-All four versions were tested against Internet Explorer 6 and 9, Firefox 13, Chrome 19.
+Both were tested against Internet Explorer 6 and 9, Firefox 13, Chrome 19.
 
 You can embed Atari music using just HTML markup. For more control:
 pause, stop, changing music without reloading the page, displaying titles,
@@ -57,54 +49,6 @@ The player contains the following methods that can be called from JavaScript:
 - `getAuthor() : String` - returns the AUTHOR tag of the playing song
 - `getTitle() : String` - returns the NAME tag of the playing song
 - `getDate() : String` - returns the DATE tag of the playing song
-
-
-Silverlight
-~~~~~~~~~~~
-
-To embed the player in your web page, use the following XHTML syntax:
-
----------------------------------------------------------------------------
-<object width="0" height="0" type="application/x-silverlight-2" data="data:application/x-silverlight-2,">
-    <param name="source" value="SilverASAP.xap" />
-    <param name="initParams" value="file=File.sap" />
-    <a href="http://go.microsoft.com/fwlink/?LinkID=124807" style="text-decoration: none;">
-        <img src="http://go.microsoft.com/fwlink/?LinkId=108181" alt="Get Microsoft Silverlight" style="border-style: none" />
-    </a>
-</object>
----------------------------------------------------------------------------
-
-The player will play the specified file. It doesn't display anything.
-
-The player understands the following parameters (in ampersand-separated `initParams`):
-
-- `file` - URL of the file to play.
-- `song` - zero-based subsong number.
-- `onLoad` - JavaScript code to be executed when file is loaded.
-This is a safe place to access `Title` etc - see below.
-Playback starts after the JavaScript code returns.
-- `onPlaybackEnd` - JavaScript code to be executed when song playback ends.
-Will not be called as a result of `Stop()`.
-
-All the above parameters are optional.
-
-The player contains the following methods that can be called from JavaScript:
-
-- `void Play(string filename, int song)` - plays the specified song (-1 for the default)
-- `void Stop()` - stops playback
-- `bool Pause()` - toggles pause and returns `true` if pause has been enabled
-
-and the following properties:
-
-- `string Author` - returns the AUTHOR tag of the playing song
-- `string Title` - returns the NAME tag of the playing song
-- `string Date` - returns the DATE tag of the playing song
-
-The above methods and properties are available in the `ASAP` object.
-That is, for Silverlight you need JavaScript code such as:
----------------------------------------------------------------------------
-`document.getElementById('asap').Content.ASAP.Stop()`.
----------------------------------------------------------------------------
 
 
 JavaScript

@@ -1,6 +1,5 @@
 CSC = $(DO)"C:/Windows/Microsoft.NET/Framework/v2.0.50727/csc.exe" -nologo -o+ -out:$@ $(if $(filter %.dll,$@),-t:library) $(subst /,\\,$^)
 NDOC = $(DO)"C:/Program Files (x86)/NDoc3/bin/NDoc3Console.exe"
-SL = "C:/Program Files (x86)/Reference Assemblies/Microsoft/Framework/Silverlight/v3.0"
 
 # no user-configurable paths below this line
 
@@ -8,7 +7,7 @@ ifndef DO
 $(error Use "Makefile" instead of "csharp.mk")
 endif
 
-csharp: csharp/asap2wav.exe csharp/asapplay.exe csharp/SilverASAP.xap
+csharp: csharp/asap2wav.exe csharp/asapplay.exe
 .PHONY: csharp
 
 csharp/asap2wav.exe: $(srcdir)csharp/asap2wav.cs csharp/asap.cs
@@ -18,14 +17,6 @@ CLEAN += csharp/asap2wav.exe
 csharp/asapplay.exe: $(srcdir)csharp/asapplay.cs csharp/asap.cs
 	$(CSC)
 CLEAN += csharp/asapplay.exe
-
-csharp/SilverASAP.xap: csharp/SilverASAP.dll $(srcdir)csharp/AppManifest.xaml
-	$(MAKEZIP)
-CLEAN += csharp/SilverASAP.xap
-
-csharp/SilverASAP.dll: $(srcdir)csharp/SilverASAP.cs csharp/asap.cs
-	$(CSC) -nostdlib -noconfig -r:$(SL)/mscorlib.dll -r:$(SL)/system.dll -r:$(SL)/System.Net.dll -r:$(SL)/System.Windows.dll -r:$(SL)/System.Windows.Browser.dll
-CLEAN += csharp/SilverASAP.dll
 
 csharp/asap.cs: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
 	$(CITO) -n Sf.Asap

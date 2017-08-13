@@ -252,18 +252,17 @@ AndroidASAP integrates with file managers.
 It reads phone state only to pause playback on incoming phone calls.
 
 
-Building C# ASAP2WAV, asapplay and SilverASAP on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building C# ASAP2WAV and asapplay on Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You need the .NET Framework, of course.
-For SilverASAP you need Silverlight and 7-Zip.
 
 Open the command prompt in the root directory of ASAP sources and run:
 --------------------------------------------------------------------------------
 make csharp
 --------------------------------------------------------------------------------
 
-This should produce `asap2wav.exe`, `asapplay.exe` and `SilverASAP.xap`.
+This should produce `asap2wav.exe` and `asapplay.exe`.
 
 
 Building JavaScript command-line ASAP2WAV and the web browser player

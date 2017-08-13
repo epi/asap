@@ -221,23 +221,6 @@
 		<stil>no</stil>
 		<lang>C, C++</lang>
 	</port>
-	<port name="SilverASAP">
-		<bin>Web</bin>
-		<platform>Silverlight</platform>
-		<interface>via HTML or JavaScript</interface>
-		<since>2.1.2</since>
-		<status>stable</status>
-		<output>16-bit sound</output>
-		<subsongs>yes</subsongs>
-		<file-info>yes</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>no</config-time>
-		<mute-pokey>no</mute-pokey>
-		<stil>no</stil>
-		<lang>C#</lang>
-		<a href="http://asap.sourceforge.net/silverlight.html">online demo</a>
-	</port>
 	<port name="AndroidASAP">
 		<bin>Android</bin>
 		<platform>Android</platform>
@@ -373,6 +356,23 @@
 		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://xbmc.org/">XBMC</a>
+	</port>
+	<port name="SilverASAP">
+		<bin>Web</bin>
+		<platform>Silverlight</platform>
+		<interface>via HTML or JavaScript</interface>
+		<since>2.1.2</since>
+		<status>discontinued</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<lang>C#</lang>
+		<a href="http://asap.sourceforge.net/silverlight.html">online demo</a>
 	</port>
 	<port name="Audacious plugin">
 		<bin>Windows</bin>
