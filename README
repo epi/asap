@@ -178,10 +178,6 @@ ifdef::asapsrc[]
 include::INSTALL[]
 endif::asapsrc[]
 
-ifdef::asapjava[]
-include::java/USAGE[]
-endif::asapjava[]
-
 ifdef::asapjavascript[]
 include::javascript/USAGE[]
 endif::asapjavascript[]

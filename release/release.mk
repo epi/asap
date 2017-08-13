@@ -13,7 +13,6 @@ endif
 
 dist: \
 	release/asap-$(VERSION)-android.apk \
-	release/asap-$(VERSION)-java.zip \
 	release/asap-$(VERSION)-web.zip \
 	release/asap-$(VERSION)-win32.msi \
 	release/asap-$(VERSION)-win32.zip \
@@ -33,11 +32,6 @@ $(srcdir)MANIFEST:
 			&& for obx in $(ASM6502_OBX); do echo $$obx; done) | sort -u >$@; \
 	fi
 .PHONY: $(srcdir)MANIFEST
-
-release/asap-$(VERSION)-java.zip: release/COPYING.txt release/README_Java.html \
-	java/asap2wav.jar java/asap.jar
-	# the leading dot and a wildcard make "src" a top-level directory in the ZIP
-	$(MAKEZIP) ./java/sr?
 
 release/asap-$(VERSION)-web.zip: release/COPYING.txt release/README_Web.html \
 	javascript/asap.js $(srcdir)javascript/asapweb.js $(srcdir)javascript/binaryHttpRequest.js
