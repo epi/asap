@@ -574,12 +574,7 @@ public class ASAP
 	{
 		if (SilenceCycles > 0 && SilenceCyclesCounter <= 0)
 			return 0;
-		int blockShift =
-#if FLASH
-			0;
-#else
-			(ModuleInfo.Channels - 1) + (format != ASAPSampleFormat.U8 ? 1 : 0);
-#endif
+		int blockShift = (ModuleInfo.Channels - 1) + (format != ASAPSampleFormat.U8 ? 1 : 0);
 		int bufferBlocks = bufferLen >> blockShift;
 		if (CurrentDuration > 0) {
 			int totalBlocks = MillisecondsToBlocks(CurrentDuration);

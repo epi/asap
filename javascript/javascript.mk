@@ -20,5 +20,3 @@ CLEAN += javascript/asap2wav.js
 javascript/asap.js: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
 	$(CITO)
 CLEAN += javascript/asap.js
-
-include $(srcdir)javascript/air/air.mk

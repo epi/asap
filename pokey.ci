@@ -629,21 +629,6 @@ class PokeyPair
 		int accRight = IirAccRight;
 		for (; i < samplesEnd; i++) {
 			accLeft += BasePokey.DeltaBuffer[i] - (accLeft * 3 >> 10);
-#if FLASH
-			native {
-				var sample
-//#if ACTIONSCRIPT
-//					: Number
-//#endif
-					= accLeft / 67106816;
-				buffer.writeFloat(sample);
-				if (this.extraPokeyMask != 0) {
-					accRight += this.extraPokey.deltaBuffer[i] - (accRight * 3 >> 10);
-					sample = accRight / 67106816;
-				}
-				buffer.writeFloat(sample);
-			}
-#else
 			int sample = accLeft >> 11;
 			macro STORE_SAMPLE() {
 				if (sample < -32767)
@@ -670,7 +655,6 @@ class PokeyPair
 				sample = accRight >> 11;
 				STORE_SAMPLE();
 			}
-#endif // FLASH
 		}
 		if (i == ReadySamplesEnd) {
 			accLeft += BasePokey.DeltaBuffer[i] + BasePokey.DeltaBuffer[i + 1];

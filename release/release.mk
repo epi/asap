@@ -12,7 +12,6 @@ $(error Use "Makefile" instead of "release.mk")
 endif
 
 dist: \
-	release/asap-$(VERSION)-air.air \
 	release/asap-$(VERSION)-android.apk \
 	release/asap-$(VERSION)-java.zip \
 	release/asap-$(VERSION)-web.zip \
@@ -103,6 +102,5 @@ version:
 	$(GREP) "VERSION =" $(srcdir)chksap.pl
 	$(GREP) android:versionName $(srcdir)java/android/AndroidManifest.xml
 	$(GREP) about_title $(srcdir)java/android/res/values/strings.xml
-	$(GREP) version $(srcdir)javascript/air/AIRASAP-app.xml
 	$(GREP) ", v" $(srcdir)win32/rmt/apokeysnd_dll.c
 .PHONY: version

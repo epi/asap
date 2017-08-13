@@ -221,22 +221,6 @@
 		<comment class="good">Plays from ZIP archives, M3U playlists and ATR disk images</comment>
 		<lang>Java</lang>
 	</port>
-	<port name="AIRASAP">
-		<bin>AIR</bin>
-		<platform>Adobe AIR</platform>
-		<interface>GUI</interface>
-		<since>3.0.0</since>
-		<status>in develop&#173;ment</status>
-		<output>32-bit floating-point sound</output>
-		<subsongs>yes</subsongs>
-		<file-info>yes</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>no</config-time>
-		<mute-pokey>no</mute-pokey>
-		<stil>no</stil>
-		<lang>JavaScript</lang>
-	</port>
 	<port name="VLC plugin">
 		<bin>Windows, macOS, Linux</bin>
 		<platform>Windows, macOS, Linux</platform>
@@ -406,6 +390,22 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>C</lang>
+	</port>
+	<port name="AIRASAP">
+		<bin>AIR</bin>
+		<platform>Adobe AIR</platform>
+		<interface>GUI</interface>
+		<since>3.0.0</since>
+		<status>discontinued</status>
+		<output>32-bit floating-point sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<lang>JavaScript</lang>
 	</port>
 	<port name="GStreamer plugin">
 		<bin>Linux, Windows</bin>
