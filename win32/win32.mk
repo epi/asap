@@ -2,7 +2,8 @@
 WIN32_CC = $(DO)i686-w64-mingw32-gcc $(WIN32_CARGS)
 WIN32_CXX = $(DO)i686-w64-mingw32-g++ -static $(WIN32_CARGS)
 WIN32_WINDRES = $(DO)i686-w64-mingw32-windres -o $@ $<
-VLC_DIR = "C:/Program Files (x86)/VideoLAN/VLC"
+VLC_INCLUDE = ../vlc/include
+VLC_LIB = "C:/Program Files (x86)/VideoLAN/VLC"
 
 # Microsoft compiler for foobar2000
 FOOBAR2000_SDK_DIR = ../foobar2000_SDK
@@ -130,7 +131,7 @@ CLEAN += win32/apollo/ASAP_Apollo-res.o
 # VLC
 
 win32/libasap_plugin.dll: $(call src,vlc/libasap_plugin.c asap.[ch]) win32/libasap_plugin-res.o
-	$(WIN32_CC) -std=gnu99 -I$(VLC_DIR)/sdk/include/vlc/plugins -L$(VLC_DIR) -lvlccore
+	$(WIN32_CC) -std=gnu99 -I$(VLC_INCLUDE) -L$(VLC_LIB) -lvlccore
 CLEAN += win32/libasap_plugin.dll
 
 win32/libasap_plugin-res.o: $(call src,win32/gui.rc asap.h)
