@@ -41,7 +41,7 @@ release/asap-$(VERSION)-java.zip: release/COPYING.txt release/README_Java.html \
 	$(MAKEZIP) ./java/sr?
 
 release/asap-$(VERSION)-web.zip: release/COPYING.txt release/README_Web.html \
-	flash/asap.swf java/asap_applet.jar javascript/asap.js $(srcdir)javascript/asapweb.js $(srcdir)javascript/binaryHttpRequest.js csharp/SilverASAP.xap
+	flash/asap.swf javascript/asap.js $(srcdir)javascript/asapweb.js $(srcdir)javascript/binaryHttpRequest.js csharp/SilverASAP.xap
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-win32.zip: release/COPYING.txt release/README_Windows.html \

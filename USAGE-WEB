@@ -1,16 +1,15 @@
 How to embed ASAP on your website
 ---------------------------------
 
-There are four independent web-enabled versions of ASAP:
+There are three independent web-enabled versions of ASAP:
 
 - Flash Player (`asap.swf`)
-- Java applet (`asap_applet.jar`)
 - Silverlight (`SilverASAP.xap`)
 - JavaScript (`asap.js` and `asapweb.js`)
 
 Flash Player is the most likely one to work in today's web browsers.
-Java and Silverlight use least processor time, however many of your visitors
-may have no Java nor Silverlight installed.
+Silverlight uses least processor time, however many of your visitors
+may have no Silverlight installed.
 JavaScript seems to be the future and even now works fine
 if you have a modern browser and a powerful processor.
 Choose for yourself. :)
@@ -58,56 +57,6 @@ The player contains the following methods that can be called from JavaScript:
 - `getAuthor() : String` - returns the AUTHOR tag of the playing song
 - `getTitle() : String` - returns the NAME tag of the playing song
 - `getDate() : String` - returns the DATE tag of the playing song
-
-
-Java applet
-~~~~~~~~~~~
-
-To embed the applet in a web page, use the following HTML syntax:
-
----------------------------------------------------------------------------
-<applet width="40" height="45" archive="asap_applet.jar" code="ASAPApplet">
-    <param name="file" value="File.sap" />
-</applet>
----------------------------------------------------------------------------
-
-or the following XHTML:
-
----------------------------------------------------------------------------
-<object width="40" height="45" type="application/x-java-applet">
-    <param name="archive" value="asap_applet.jar" />
-    <param name="code" value="ASAPApplet" />
-    <param name="file" value="File.sap" />
-</object>
----------------------------------------------------------------------------
-
-The applet will play the specified file and display POKEY channel volume
-meters scaled to the applet area (you can specify a different size).
-There are four volume meters for mono music and eight for stereo.
-
-The applet understands the following parameters:
-
-- `file` - URL of the file to play.
-- `song` - zero-based subsong number.
-- `background` - background color specified as six hexadecimal digits (`"rrggbb"`).
-- `foreground` - volume bars color specified as six hexadecimal digits (`"rrggbb"`).
-- `onLoad` - JavaScript code to be executed when file is loaded.
-This is a safe place to call `getTitle()` etc - see below.
-Playback starts after the JavaScript code returns.
-- `onPlaybackEnd` - JavaScript code to be executed when playback ends.
-Will not be called as a result of `stop()`.
-
-All the above parameters are optional. For `onLoad` and `onPlaybackEnd` to work,
-add the `mayscript` attribute to the `applet` element.
-
-The applet contains the following methods that can be called from JavaScript:
-
-- `void play(String filename, int song)` - plays the specified song (-1 for default)
-- `void stop()` - stops playback
-- `boolean togglePause()` - toggles pause and returns `true` if pause has been enabled
-- `String getAuthor()` - returns the AUTHOR tag of the playing song
-- `String getTitle()` - returns the NAME tag of the playing song
-- `String getDate()` - returns the DATE tag of the playing song
 
 
 Silverlight

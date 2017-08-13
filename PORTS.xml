@@ -69,23 +69,6 @@
 		<lang>C, C++</lang>
 		<a href="http://www.foobar2000.org/">foobar2000</a>
 	</port>
-	<port name="Java applet">
-		<bin>Web</bin>
-		<platform>web browser</platform>
-		<interface>via HTML or JavaScript</interface>
-		<since>1.0.0</since>
-		<status>stable</status>
-		<output>16-bit sound</output>
-		<subsongs>yes</subsongs>
-		<file-info>yes</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>no</config-time>
-		<mute-pokey>no</mute-pokey>
-		<stil>no</stil>
-		<lang>Java</lang>
-		<a href="http://asap.sourceforge.net/applet.html">online demo</a>
-	</port>
 	<port name="MOC plugin">
 		<bin></bin>
 		<platform>Linux</platform>
@@ -322,6 +305,23 @@
 		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://hp.vector.co.jp/authors/VA032810/">GSPlayer</a>
+	</port>
+	<port name="Java applet">
+		<bin>Web</bin>
+		<platform>web browser</platform>
+		<interface>via HTML or JavaScript</interface>
+		<since>1.0.0</since>
+		<status>discontinued</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<lang>Java</lang>
+		<a href="http://asap.sourceforge.net/applet.html">online demo</a>
 	</port>
 	<port name="Java midlet">
 		<bin>Java</bin>
