@@ -36,7 +36,7 @@ $(srcdir)MANIFEST:
 .PHONY: $(srcdir)MANIFEST
 
 release/asap-$(VERSION)-java.zip: release/COPYING.txt release/README_Java.html \
-	java/asap2wav.jar java/j2me/asap_midlet.jad java/j2me/asap_midlet.jar java/asap.jar
+	java/asap2wav.jar java/asap.jar
 	# the leading dot and a wildcard make "src" a top-level directory in the ZIP
 	$(MAKEZIP) ./java/sr?
 
@@ -103,7 +103,6 @@ version:
 	$(GREP) "VERSION =" $(srcdir)chksap.pl
 	$(GREP) android:versionName $(srcdir)java/android/AndroidManifest.xml
 	$(GREP) about_title $(srcdir)java/android/res/values/strings.xml
-	$(GREP) MIDlet-Version $(srcdir)java/j2me/MANIFEST.MF
 	$(GREP) version $(srcdir)javascript/air/AIRASAP-app.xml
 	$(GREP) ", v" $(srcdir)win32/rmt/apokeysnd_dll.c
 .PHONY: version

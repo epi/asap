@@ -52,4 +52,3 @@ java/doc: java/src/net/sf/asap/ASAP.java $(srcdir)java/ASAPMusicRoutine.java
 CLEANDIR += java/doc
 
 include $(srcdir)java/android/android.mk
-include $(srcdir)java/j2me/j2me.mk

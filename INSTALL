@@ -235,20 +235,6 @@ make java/asap2wav.jar java/asap_applet.jar
 This should produce `asap2wav.jar` and `asap_applet.jar`.
 
 
-Building Java midlet
-~~~~~~~~~~~~~~~~~~~~
-
-You need a Java ME SDK - I use Oracle Java ME SDK.
-
-Edit the WTK path at the top of `java/j2me/j2me.mk` so that they point to your installed Java ME SDK.
-Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make java/j2me/asap_midlet.jad
---------------------------------------------------------------------------------
-
-This should produce `asap_midlet.jar` and `asap_midlet.jad`.
-
-
 Building AndroidASAP
 ~~~~~~~~~~~~~~~~~~~~
 

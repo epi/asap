@@ -38,9 +38,6 @@ Android application.
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-web.zip/download[asap-3.2.0-web.zip]::
 Embed ASAP on your web page.
 
-http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-java.zip/download[asap-3.2.0-java.zip]::
-Java midlet for mobile phones.
-
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-air.air/download[asap-3.2.0-air.air]::
 Desktop player in JavaScript (requires http://www.adobe.com/products/air/[Adobe AIR]).
 
@@ -158,7 +155,6 @@ ASAP includes the following programs:
 - Windows Explorer extension - shows and edits metadata
 - AIRASAP - simple desktop player in the http://www.adobe.com/products/air/[Adobe AIR] technology
 - AndroidASAP - player for mobile devices
-- Java midlet - player for mobile phones
 - Flash player - for web pages {asapwww?(see link:flash.html[online demo])}
 - Java applet - for web pages {asapwww?(see link:applet.html[online demo])}
 - JavaScript player - for web pages {asapwww?(see link:javascript.html[online demo])}
