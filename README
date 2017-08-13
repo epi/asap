@@ -30,13 +30,10 @@ http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-win32.msi/downl
 Installer for all versions of desktop Windows (32-bit and 64-bit).
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/foo_asap-3.2.0.fb2k-component/download[foo_asap-3.2.0.fb2k-component]::
-If you only want the http://foobar2000.org/[foobar2000] plugin.
+If you only want the http://www.foobar2000.org/[foobar2000] plugin.
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-android.apk/download[asap-3.2.0-android.apk]::
 Android application.
-
-http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-wince-arm.cab/download[asap-3.2.0-wince-arm.cab]::
-WASAP for Windows Mobile.
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-web.zip/download[asap-3.2.0-web.zip]::
 Embed ASAP on your web page.
@@ -52,9 +49,6 @@ View and edit SAP file tags in your 64-bit Windows Explorer.
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-win32.zip/download[asap-3.2.0-win32.zip]::
 For Windows people allergic to installers.
-
-http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-3.2.0-wince-arm.zip/download[asap-3.2.0-wince-arm.zip]::
-For Windows Mobile people allergic to installers.
 
 http://sourceforge.net/projects/asap/files/asap/3.2.0/asap-vlc-3.2.0-osx.dmg/download[asap-vlc-3.2.0-osx.dmg]::
 VLC plugin for macOS. Drag `libasap_plugin.dylib` to `plugins`.
@@ -155,11 +149,11 @@ This remarkable portability is possible thanks to the http://cito.sourceforge.ne
 ASAP includes the following programs:
 
 - plugins for Windows/macOS/Linux player http://www.videolan.org/vlc/[VLC]
-- plugins for Windows players: http://www.winamp.com/[Winamp], http://foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo]
-- plugins for Linux players: http://xmms.org/[XMMS], http://moc.daper.net/[MOC]
+- plugins for Windows players: http://www.winamp.com/[Winamp], http://www.foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo]
+- plugins for Linux players: http://www.xmms.org/[XMMS], http://moc.daper.net/[MOC]
 - add-on for Windows library http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players])
 - asapconv - portable command-line converter
-- WASAP - tiny player for Windows (desktop and mobile)
+- WASAP - tiny player for desktop Windows
 - POKEY sound emulation DLL for http://raster.infos.cz/atari/rmt/rmt.htm[Raster Music Tracker]
 - Windows Explorer extension - shows and edits metadata
 - AIRASAP - simple desktop player in the http://www.adobe.com/products/air/[Adobe AIR] technology

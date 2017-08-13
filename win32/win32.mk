@@ -17,13 +17,6 @@ WIN64_CC = $(DO)x86_64-w64-mingw32-gcc $(WIN32_CARGS)
 WIN64_CXX = $(DO)x86_64-w64-mingw32-g++ -static $(WIN32_CARGS)
 WIN64_WINDRES = $(DO)x86_64-w64-mingw32-windres -o $@ $<
 
-# gcc for Windows Mobile
-WINCE_CC = $(DO)arm-mingw32ce-gcc -s -O2 -Wall -o $@ $(INCLUDEOPTS) $(filter-out %.h,$^)
-WINCE_WINDRES = $(DO)arm-mingw32ce-windres -o $@ -D_WIN32_WCE $<
-
-# Microsoft compiler for Windows Mobile
-WINCE_CABWIZ = "C:/Program Files (x86)/Windows Mobile 6 SDK/Tools/CabWiz/cabwiz.exe"
-
 # Windows Installer XML
 CANDLE = $(DO)candle -nologo -o $@
 LIGHT = $(DO)light -nologo -o $@ -spdb
@@ -41,9 +34,6 @@ WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@ -Fowin
 
 mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe ASAP_Apollo.dll bass_asap.dll in_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
 .PHONY: mingw
-
-wince: $(addprefix win32/wince/,wasap.exe)
-.PHONY: wince
 
 # asapconv
 
@@ -118,14 +108,6 @@ CLEAN += win32/wasap.exe
 win32/wasap/wasap-res.o: $(call src,win32/gui.rc asap.h win32/info_dlg.h win32/wasap/wasap.h win32/wasap/wasap.ico win32/wasap/play.ico win32/wasap/stop.ico)
 	$(WIN32_WINDRES) -DWASAP
 CLEAN += win32/wasap/wasap-res.o
-
-win32/wince/wasap.exe: $(call src,win32/wasap/wasap.[ch] asap.[ch] win32/info_dlg.[ch]) win32/wince/wasap-res.o
-	$(WINCE_CC) -DWASAP
-CLEAN += win32/wince/wasap.exe
-
-win32/wince/wasap-res.o: $(call src,win32/gui.rc asap.h win32/info_dlg.h win32/wasap/wasap.h win32/wasap/wasap.ico win32/wasap/play.ico win32/wasap/stop.ico)
-	$(WINCE_WINDRES) -DWASAP
-CLEAN += win32/wince/wasap-res.o
 
 win32/x64/wasap.exe: $(call src,win32/wasap/wasap.[ch] asap.[ch] astil.[ch] win32/info_dlg.[ch]) win32/x64/wasap-res.o
 	$(WIN64_CC) -Wl,-subsystem,windows -DWASAP -lcomctl32 -lcomdlg32 -lwinmm
@@ -281,8 +263,3 @@ release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
 win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs
 	$(CANDLE) -arch x64 -dVERSION=$(VERSION) $<
 CLEAN += win32/x64/asap.wixobj
-
-release/asap-$(VERSION)-wince-arm.cab: $(srcdir)win32/wince/asap.inf \
-	$(addprefix win32/wince/,wasap.exe)
-	$(DO)cd win32/wince && $(WINCE_CABWIZ) '$(shell cygpath -wa $<)' /cpu ARM
-	@mv win32/wince/asap.ARM.CAB $@

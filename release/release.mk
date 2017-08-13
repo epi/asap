@@ -19,8 +19,6 @@ dist: \
 	release/asap-$(VERSION)-win32.msi \
 	release/asap-$(VERSION)-win32.zip \
 	release/asap-$(VERSION)-win64.msi \
-	release/asap-$(VERSION)-wince-arm.cab \
-	release/asap-$(VERSION)-wince-arm.zip \
 	release/foo_asap-$(VERSION).fb2k-component \
 	srcdist
 .PHONY: dist

@@ -49,7 +49,7 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>C</lang>
-		<a href="http://xmms.org/">XMMS</a>
+		<a href="http://www.xmms.org/">XMMS</a>
 	</port>
 	<port name="foobar2000 plugin">
 		<bin>Windows, foo_asap</bin>
@@ -67,7 +67,7 @@
 		<stil>yes</stil>
 		<comment class="good">Plays all foobar2000-supported formats from ATR disk images</comment>
 		<lang>C, C++</lang>
-		<a href="http://foobar2000.org/">foobar2000</a>
+		<a href="http://www.foobar2000.org/">foobar2000</a>
 	</port>
 	<port name="Java applet">
 		<bin>Web</bin>
@@ -271,22 +271,6 @@
 		<lang>C#</lang>
 		<a href="http://asap.sourceforge.net/silverlight.html">online demo</a>
 	</port>
-	<port name="WASAP (Windows CE)">
-		<bin>Windows CE</bin>
-		<platform>Windows CE</platform>
-		<interface>GUI</interface>
-		<since>2.1.2</since>
-		<status>stable</status>
-		<output>16-bit sound</output>
-		<subsongs>yes</subsongs>
-		<file-info>no</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>no</config-time>
-		<mute-pokey>no</mute-pokey>
-		<stil>no</stil>
-		<lang>C</lang>
-	</port>
 	<port name="AndroidASAP">
 		<bin>Android</bin>
 		<platform>Android</platform>
@@ -406,6 +390,22 @@
 		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://audacious-media-player.org/">Audacious</a>
+	</port>
+	<port name="WASAP (Windows CE)">
+		<bin>Windows CE</bin>
+		<platform>Windows CE</platform>
+		<interface>GUI</interface>
+		<since>2.1.2</since>
+		<status>discontinued</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<lang>C</lang>
 	</port>
 	<port name="GStreamer plugin">
 		<bin>Linux, Windows</bin>
