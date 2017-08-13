@@ -240,7 +240,7 @@
 		<a href="http://www.videolan.org/vlc/">VLC</a>
 	</port>
 	<port name="GSPlayer">
-		<bin>Windows CE, Windows</bin>
+		<bin></bin>
 		<platform>Windows CE, Windows</platform>
 		<interface>player plugin</interface>
 		<since>0.3.0</since>
@@ -257,7 +257,7 @@
 		<a href="http://hp.vector.co.jp/authors/VA032810/">GSPlayer</a>
 	</port>
 	<port name="Java applet">
-		<bin>Web</bin>
+		<bin></bin>
 		<platform>web browser</platform>
 		<interface>via HTML or JavaScript</interface>
 		<since>1.0.0</since>
@@ -271,10 +271,9 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>Java</lang>
-		<a href="http://asap.sourceforge.net/applet.html">online demo</a>
 	</port>
 	<port name="Java midlet">
-		<bin>Java</bin>
+		<bin></bin>
 		<platform>mobile devices</platform>
 		<interface>GUI</interface>
 		<since>1.0.0</since>
@@ -290,7 +289,7 @@
 		<lang>Java</lang>
 	</port>
 	<port name="Windows Media Player plugin">
-		<bin>Windows, Windows CE</bin>
+		<bin></bin>
 		<platform>Windows, Windows CE</platform>
 		<interface>player plugin</interface>
 		<since>1.2.0</since>
@@ -308,7 +307,7 @@
 		<a href="http://www.microsoft.com/windows/windowsmedia/player/">Windows Media Player</a>
 	</port>
 	<port name="XBMC plugin">
-		<bin>Windows</bin>
+		<bin></bin>
 		<platform>Windows, Linux</platform>
 		<interface>player plugin</interface>
 		<since>1.2.1</since>
@@ -325,7 +324,7 @@
 		<a href="http://xbmc.org/">XBMC</a>
 	</port>
 	<port name="Flash player">
-		<bin>Web</bin>
+		<bin></bin>
 		<platform>Flash Player</platform>
 		<interface>via HTML or JavaScript</interface>
 		<since>2.0.0</since>
@@ -339,10 +338,9 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>Action&#173;Script 3</lang>
-		<a href="http://asap.sourceforge.net/flash.html">online demo</a>
 	</port>
 	<port name="SilverASAP">
-		<bin>Web</bin>
+		<bin></bin>
 		<platform>Silverlight</platform>
 		<interface>via HTML or JavaScript</interface>
 		<since>2.1.2</since>
@@ -356,10 +354,9 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>C#</lang>
-		<a href="http://asap.sourceforge.net/silverlight.html">online demo</a>
 	</port>
 	<port name="Audacious plugin">
-		<bin>Windows</bin>
+		<bin></bin>
 		<platform>Linux, Windows</platform>
 		<interface>player plugin</interface>
 		<since>2.1.2</since>
@@ -376,7 +373,7 @@
 		<a href="http://audacious-media-player.org/">Audacious</a>
 	</port>
 	<port name="WASAP (Windows CE)">
-		<bin>Windows CE</bin>
+		<bin></bin>
 		<platform>Windows CE</platform>
 		<interface>GUI</interface>
 		<since>2.1.2</since>
@@ -392,7 +389,7 @@
 		<lang>C</lang>
 	</port>
 	<port name="AIRASAP">
-		<bin>AIR</bin>
+		<bin></bin>
 		<platform>Adobe AIR</platform>
 		<interface>GUI</interface>
 		<since>3.0.0</since>
@@ -408,7 +405,7 @@
 		<lang>JavaScript</lang>
 	</port>
 	<port name="GStreamer plugin">
-		<bin>Linux, Windows</bin>
+		<bin></bin>
 		<platform>Linux, Windows</platform>
 		<interface>library plugin</interface>
 		<since>3.0.1</since>
@@ -442,7 +439,7 @@
 		<lang>C#</lang>
 	</port>
 	<port name="ASAP2WAV (Java)">
-		<bin>Java</bin>
+		<bin></bin>
 		<platform>desktop operating systems</platform>
 		<interface>command line</interface>
 		<since>1.0.0</since>
