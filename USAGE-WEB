@@ -1,58 +1,9 @@
 How to embed ASAP on your website
 ---------------------------------
 
-There are two independent web-enabled versions of ASAP:
-
-- Flash Player (`asap.swf`)
-- JavaScript (`asap.js` and `asapweb.js`)
-
-Both were tested against Internet Explorer 6 and 9, Firefox 13, Chrome 19.
-
 You can embed Atari music using just HTML markup. For more control:
 pause, stop, changing music without reloading the page, displaying titles,
 you need some JavaScript code.
-
-
-Flash Player
-~~~~~~~~~~~~
-
-To embed the player in your web page, use the following XHTML syntax:
-
----------------------------------------------------------------------------
-<object width="0" height="0" type="application/x-shockwave-flash" data="asap.swf">
-    <param name="movie" value="asap.swf" />
-    <param name="wmode" value="transparent" />
-    <param name="FlashVars" value="file=File.sap" />
-</object>
----------------------------------------------------------------------------
-
-The player will play the specified file. It doesn't display anything.
-The `wmove` parameter prevents a single white pixel in Internet Explorer.
-
-The player understands the following parameters (in ampersand-separated `FlashVars`):
-
-- `file` - URL of the file to play.
-- `song` - zero-based subsong number.
-- `onLoad` - JavaScript code or function name to be executed when file is loaded.
-This is a safe place to call `getTitle()` etc - see below.
-Playback starts after the JavaScript code returns.
-- `onPlaybackEnd` - JavaScript code or function name to be executed when song playback ends.
-Will not be called as a result of `asapStop()`.
-
-All the above parameters are optional.
-
-The player contains the following methods that can be called from JavaScript:
-
-- `asapPlay(filename : String, song : int = -1) : void` - plays the specified song (-1 for the default)
-- `asapStop() : void` - stops playback
-- `asapPause() : Boolean` - toggles pause and returns `true` if pause has been enabled
-- `getAuthor() : String` - returns the AUTHOR tag of the playing song
-- `getTitle() : String` - returns the NAME tag of the playing song
-- `getDate() : String` - returns the DATE tag of the playing song
-
-
-JavaScript
-~~~~~~~~~~
 
 To embed the player in your web page, use the following XHTML syntax:
 

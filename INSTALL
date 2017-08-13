@@ -277,20 +277,6 @@ make javascript
 `asapweb.js` plus `asap.js` are the browser player (you'll probably need `binaryHttpRequest.js` as well).
 
 
-Building Flash player version of ASAP
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You need http://opensource.adobe.com/wiki/display/flexsdk/Flex+SDK[Flex SDK].
-Add its `bin` directory to your `PATH`.
-
-Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make flash/asap.swf
---------------------------------------------------------------------------------
-
-You should get `asap.swf`.
-
-
 Building Perl command-line ASAP2WAV
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

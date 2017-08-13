@@ -144,7 +144,6 @@ include $(srcdir)xmms/xmms.mk
 
 include $(srcdir)csharp/csharp.mk
 include $(srcdir)d/d.mk
-include $(srcdir)flash/flash.mk
 include $(srcdir)java/java.mk
 include $(srcdir)javascript/javascript.mk
 include $(srcdir)perl/perl.mk

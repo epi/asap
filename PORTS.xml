@@ -137,23 +137,6 @@
 		<lang>JavaScript</lang>
 		<a href="http://asap.sourceforge.net/javascript.html">online demo</a>
 	</port>
-	<port name="Flash player">
-		<bin>Web</bin>
-		<platform>Flash Player</platform>
-		<interface>via HTML or JavaScript</interface>
-		<since>2.0.0</since>
-		<status>stable</status>
-		<output>32-bit floating-point sound</output>
-		<subsongs>yes</subsongs>
-		<file-info>yes</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>no</config-time>
-		<mute-pokey>no</mute-pokey>
-		<stil>no</stil>
-		<lang>Action&#173;Script 3</lang>
-		<a href="http://asap.sourceforge.net/flash.html">online demo</a>
-	</port>
 	<port name="asapconv">
 		<bin>Windows, Linux</bin>
 		<platform>desktop operating systems</platform>
@@ -356,6 +339,23 @@
 		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://xbmc.org/">XBMC</a>
+	</port>
+	<port name="Flash player">
+		<bin>Web</bin>
+		<platform>Flash Player</platform>
+		<interface>via HTML or JavaScript</interface>
+		<since>2.0.0</since>
+		<status>discontinued</status>
+		<output>32-bit floating-point sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<lang>Action&#173;Script 3</lang>
+		<a href="http://asap.sourceforge.net/flash.html">online demo</a>
 	</port>
 	<port name="SilverASAP">
 		<bin>Web</bin>

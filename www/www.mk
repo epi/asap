@@ -2,7 +2,7 @@ ifndef DO
 $(error Use "Makefile" instead of "www.mk")
 endif
 
-www: www/index.html www/NEWS.html www/flash.html www/javascript.html www/apokeysnd.dll \
+www: www/index.html www/NEWS.html www/javascript.html www/apokeysnd.dll \
 	www/asap.swf www/asap.js www/asapweb.js www/binaryHttpRequest.js \
 	www/favicon.ico www/PORTS.xml www/PORTS.xsl
 .PHONY: www
@@ -13,16 +13,10 @@ www/index.html: $(call src,README CREDITS)
 www/NEWS.html: $(srcdir)NEWS
 	$(call ASCIIDOC,)
 
-www/flash.html: $(srcdir)www/flash.txt
-	$(call ASCIIDOC,)
-
 www/javascript.html: $(srcdir)www/javascript.txt
 	$(DO)asciidoc -o - $< | sed -e "s/527bbd;/c02020;/" | xmllint --dropdtd --nonet -o $@ -
 
 www/apokeysnd.dll: win32/apokeysnd.dll
-	$(COPY)
-
-www/asap.swf: flash/asap.swf
 	$(COPY)
 
 www/asap.js: javascript/asap.js

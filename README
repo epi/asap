@@ -155,7 +155,6 @@ ASAP includes the following programs:
 - Windows Explorer extension - shows and edits metadata
 - AIRASAP - simple desktop player in the http://www.adobe.com/products/air/[Adobe AIR] technology
 - AndroidASAP - player for mobile devices
-- Flash player - for web pages {asapwww?(see link:flash.html[online demo])}
 - JavaScript player - for web pages {asapwww?(see link:javascript.html[online demo])}
 - ASAP2WAV - command-line converters to WAV files implemented in Java, C#, JavaScript, Perl and http://dlang.org/[D]
 - simple command-line players implemented in C/SDL, C# and D
