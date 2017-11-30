@@ -1,7 +1,7 @@
 /*
  * ASAP_Apollo.cpp - ASAP plugin for Apollo
  *
- * Copyright (C) 2008-2012  Piotr Fusik
+ * Copyright (C) 2008-2017  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -33,7 +33,7 @@
 
 ASAP *asap;
 
-class CASAPDecoder : public CInputDecoder
+class CASAPDecoder final : public CInputDecoder
 {
 	BYTE buf[8192];
 
@@ -65,7 +65,7 @@ public:
 	}
 };
 
-class CASAPPlugin : public CInputPlugin
+class CASAPPlugin final : public CInputPlugin
 {
 	HINSTANCE hInstance;
 

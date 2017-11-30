@@ -1,7 +1,7 @@
 /*
  * ASAPShellEx.cpp - ASAP Column Handler and Property Handler shell extensions
  *
- * Copyright (C) 2010-2016  Piotr Fusik
+ * Copyright (C) 2010-2017  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -111,7 +111,7 @@ public:
 	}
 };
 
-class CASAPMetadataHandler : IColumnProvider, IInitializeWithStream, IPropertyStore, IPropertyStoreCapabilities
+class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IPropertyStore, IPropertyStoreCapabilities
 {
 	LONG m_cRef;
 	CRITICAL_SECTION m_lock;
