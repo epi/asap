@@ -82,10 +82,6 @@ release/README_Windows.html: $(call src,README win32/USAGE CREDITS)
 	$(call ASCIIDOC,-a asapwin)
 CLEAN += release/README_Windows.html
 
-release/README_WindowsCE.html: $(call src,README CREDITS)
-	$(call ASCIIDOC,-a asapwince)
-CLEAN += release/README_WindowsCE.html
-
 version:
 	@echo ./release/release.mk: VERSION=$(VERSION)
 	$(GREP) -m 1 ^ASAP $(srcdir)NEWS
