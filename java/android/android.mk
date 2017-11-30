@@ -1,7 +1,7 @@
 ASMA_DIR = ../asma
 ANDROID_SDK = C:/bin/android-sdk
-ANDROID_JAR = $(ANDROID_SDK)/platforms/android-24/android.jar
-ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/25.0.3
+ANDROID_JAR = $(ANDROID_SDK)/platforms/android-26/android.jar
+ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/27.0.0
 PROGUARD_JAR = $(ANDROID_SDK)/tools/proguard/lib/proguard.jar
 
 JAVA = $(DO)java
