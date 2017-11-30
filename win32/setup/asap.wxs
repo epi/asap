@@ -214,15 +214,11 @@
 			</RegistrySearch>
 		</Property>
 		<Property Id="AIMP.DIR">
-			<RegistrySearch Id="aimp2.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AIMP2" Name="InstallPath" Type="directory" />
-			<RegistrySearch Id="aimp3.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AIMP3" Name="UninstallString" Type="file" />
+			<RegistrySearch Id="aimp.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AIMP" Name="InstallPath" Type="directory" />
 		</Property>
 		<Property Id="AIMP.EXE">
-			<RegistrySearch Id="aimp2.exe" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AIMP2" Name="InstallPath" Type="directory">
-				<FileSearch Name="AIMP2.exe" />
-			</RegistrySearch>
-			<DirectorySearch Id="aimp3.exe" Path="[AIMP.DIR]">
-				<FileSearch Name="AIMP3.exe" />
+			<DirectorySearch Id="aimp.exe" Path="[AIMP.DIR]">
+				<FileSearch Name="AIMP.exe" />
 			</DirectorySearch>
 		</Property>
 		<Property Id="VLC.DIR">
@@ -383,22 +379,24 @@
 						</ProgId>
 					</Component>
 				</Directory>
-				<Directory Id="AIMP.DIR" Name="AIMP3">
+				<Directory Id="AIMP.DIR" Name="AIMP">
 					<Directory Id="AIMPPLUG.DIR" Name="Plugins">
-						<Component Id="bass_asap.dll">
-							<File Name="bass_asap.dll" Source="bass_asap.dll" Checksum="yes" KeyPath="yes" />
-						</Component>
-						<Component Id="aimp_asap.ext">
-							<RegistryValue Root="HKCR" Key="asap.file" Name="aimp" Type="integer" Value="1" KeyPath="yes" />
-							<ProgId Id="AIMP.ASAP">
-								<Extension Id="sap">
-									<Verb Id="open" Command="Open with AIMP" TargetProperty="AIMP.EXE" Argument='"%1"' />
-								</Extension>
-								<?foreach EXT in $(var.NATIVE_EXTS)?>
-									<Extension Id="$(var.EXT)" />
-								<?endforeach?>
-							</ProgId>
-						</Component>
+						<Directory Id="AIMPASAP.DIR" Name="bass_asap">
+							<Component Id="bass_asap.dll">
+								<File Name="bass_asap.dll" Source="bass_asap.dll" Checksum="yes" KeyPath="yes" />
+							</Component>
+							<Component Id="aimp_asap.ext">
+								<RegistryValue Root="HKCR" Key="asap.file" Name="aimp" Type="integer" Value="1" KeyPath="yes" />
+								<ProgId Id="AIMP.ASAP">
+									<Extension Id="sap">
+										<Verb Id="open" Command="Open with AIMP" TargetProperty="AIMP.EXE" Argument='"%1"' />
+									</Extension>
+									<?foreach EXT in $(var.NATIVE_EXTS)?>
+										<Extension Id="$(var.EXT)" />
+									<?endforeach?>
+								</ProgId>
+							</Component>
+						</Directory>
 					</Directory>
 				</Directory>
 				<Directory Id="RMT.DIR" Name="RMT">
@@ -499,7 +497,7 @@
 				<ComponentRef Id="xmp_asap.ext" />
 			</Feature>
 		</Feature>
-		<Feature Id="aimp_asap" Title="AIMP plugin" Level="9" ConfigurableDirectory="AIMPPLUG.DIR" Description="Plugin for AIMP." AllowAdvertise="no">
+		<Feature Id="aimp_asap" Title="AIMP plugin" Level="9" ConfigurableDirectory="AIMPASAP.DIR" Description="Plugin for AIMP." AllowAdvertise="no">
 			<Condition Level="1">AIMP.DIR</Condition>
 			<ComponentRef Id="bass_asap.dll" />
 			<Feature Id="aimp_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) AIMP." AllowAdvertise="no">
