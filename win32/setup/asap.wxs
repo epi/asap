@@ -310,10 +310,6 @@
 					<Component Id="diff_sap_tgit.reg">
 						<RegistryValue Root="HKCU" Key="Software\TortoiseGit\DiffTools" Name=".sap" Value="wscript.exe &quot;[#diff_sap.js]&quot; %base %mine %bname %yname //E:javascript" Type="string" Action="write" KeyPath="yes" />
 					</Component>
-
-					<Component Id="README_WindowsSetup.html">
-						<File Name="README_WindowsSetup.html" Source="README_WindowsSetup.html" KeyPath="yes" />
-					</Component>
 					<?endif?>
 				</Directory>
 
@@ -436,29 +432,10 @@
 
 			<?if $(sys.BUILDARCH) = x86?>
 			<Directory Id="ProgramMenuFolder" Name="Programs">
-				<Directory Id="menu.dir" Name="ASAP">
-					<Component Id="WASAP.lnk">
-						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuWASAP" Type="integer" Value="1" KeyPath="yes" />
-						<Shortcut Id="WASAP.lnk" Name="WASAP" Target="[#wasap.exe]" />
-					</Component>
-					<Component Id="Documentation.lnk">
-						<RemoveFolder Id="menu.dir" On="uninstall" />
-						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuDoc" Type="integer" Value="1" KeyPath="yes" />
-						<Shortcut Id="Documentation.lnk" Name="Documentation" Target="[#README_WindowsSetup.html]" />
-					</Component>
-					<Component Id="Website.url" Guid="07CB02BE-17AE-49AA-87B1-D0315CF2D47A">
-						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuWebsite" Type="integer" Value="1" KeyPath="yes" />
-						<!-- <util:InternetShortcut Id="Website.url" Name="Website" Target="http://asap.sourceforge.net/" /> = 150 kB overhead on MSI -->
-						<!-- <IniFile Id="Website.url" Name="Website.url" Directory="menu.dir" Action="addLine" Section="InternetShortcut" Key="URL" Value="http://asap.sourceforge.net/" /> = 0.5 kB bigger MSI than with File -->
-						<File Name="Website.url" Source="Website.url" />
-					</Component>
-					<!--
-					<Component Id="uninstall.lnk">
-						<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuUninstall" Type="integer" Value="1" KeyPath="yes" />
-						<Shortcut Id="uninstall.lnk" Name="Uninstall" Target="[System64Folder]msiexec.exe" Arguments="/x [ProductCode]" />
-					</Component>
-					-->
-				</Directory>
+				<Component Id="WASAP.lnk">
+					<RegistryValue Root="HKCU" Key="Software\ASAP" Name="ProgramsMenuWASAP" Type="integer" Value="1" KeyPath="yes" />
+					<Shortcut Id="WASAP.lnk" Name="WASAP" Target="[#wasap.exe]" />
+				</Component>
 			</Directory>
 			<Directory Id="DesktopFolder" Name="Desktop">
 				<Component Id="WASAP.desktop">
@@ -564,18 +541,6 @@
 			<ComponentRef Id="diff_sap_tgit.reg" />
 		</Feature>
 
-		<Feature Id="docs" Title="Documentation" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Documentation file." AllowAdvertise="no">
-			<ComponentRef Id="README_WindowsSetup.html" />
-			<Feature Id="docs.lnk" Title="Start menu shortcuts" Level="1" Description="Adds documentation and website links to the Programs menu." AllowAdvertise="no">
-				<ComponentRef Id="Documentation.lnk" />
-				<ComponentRef Id="Website.url" />
-			</Feature>
-		</Feature>
-		<!--
-		<Feature Id="uninstall" Title="Uninstall shortcut" Level="1" Description="Adds uninstall link to the Programs menu (in addition to the Control Panel which is always available)." AllowAdvertise="no">
-			<ComponentRef Id="uninstall.lnk" />
-		</Feature>
-		-->
 		<?endif?>
 
 		<CustomAction Id="InstallPropertySchema" DllEntry="InstallPropertySchema" FileKey="ASAPShellEx.dll" Execute="deferred" Impersonate="no" />

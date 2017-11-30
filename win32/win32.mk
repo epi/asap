@@ -10,8 +10,6 @@ FOOBAR2000_SDK_DIR = ../foobar2000_SDK
 WIN32_CL = $(WIN32_CLDO)cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS)
 WIN32_LINKOPT = -link -release
 WIN32_MKLIB = $(DO)lib -nologo -ltcg -out:$@ $^
-WIN64_CL = $(WIN32_CLDO)"C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/bin/x86_amd64/cl" -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS)
-WIN64_LINKOPT = -link -release -libpath:"C:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib/x64" -libpath:"C:/Program Files (x86)/Microsoft Visual Studio 10.0/VC/lib/amd64"
 
 # MinGW x64
 WIN64_CC = $(DO)x86_64-w64-mingw32-gcc $(WIN32_CARGS)
@@ -243,18 +241,14 @@ CLEAN += win32/shellex/asap-infowriter.c win32/shellex/asap-infowriter.h
 win32/setup: release/asap-$(VERSION)-win32.msi
 .PHONY: win32/setup
 
-release/asap-$(VERSION)-win32.msi: win32/setup/asap.wixobj release/README_WindowsSetup.html \
-	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/setup/Website.url win32/diff-sap.js win32/shellex/ASAPShellEx.propdesc) \
+release/asap-$(VERSION)-win32.msi: win32/setup/asap.wixobj \
+	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/diff-sap.js win32/shellex/ASAPShellEx.propdesc) \
 	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll)
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b release -b $(srcdir)win32/setup -b $(srcdir)win32 $<
 
 win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs
 	$(CANDLE) -dVERSION=$(VERSION) $<
 CLEAN += win32/setup/asap.wixobj
-
-release/README_WindowsSetup.html: $(call src,README win32/USAGE CREDITS)
-	$(call ASCIIDOC,-a asapwin -a asapsetup)
-CLEAN += release/README_WindowsSetup.html
 
 release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/shellex/ASAPShellEx.propdesc) \
