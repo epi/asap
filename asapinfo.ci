@@ -1,6 +1,6 @@
 // asapinfo.ci - module parser
 //
-// Copyright (C) 2010-2015  Piotr Fusik
+// Copyright (C) 2010-2017  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -104,7 +104,7 @@ public class ASAPInfo
 	public const string Version = VersionMajor + "." + VersionMinor + "." + VersionMicro;
 
 	/// Years ASAP was created in.
-	public const string Years = "2005-2015";
+	public const string Years = "2005-2017";
 
 	/// Short credits for ASAP.
 	public const string Credits =
@@ -1223,9 +1223,7 @@ public class ASAPInfo
 	}
 
 	static int GetFcTrackCommand(byte[] module, int[] trackPos, int n)
-	{
 		return module[3 + (n << 8) + trackPos[n]];
-	}
 
 	static bool IsFcSongEnd(byte[] module, int[] trackPos)
 	{
