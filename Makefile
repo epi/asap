@@ -125,9 +125,6 @@ $(srcdir)aatr.c: $(srcdir)aatr.ci
 
 # other
 
-$(srcdir)README.html: $(call src,README INSTALL CREDITS)
-	$(call ASCIIDOC,-a toc -a asapsrc -a asapports)
-
 sap-format.html: $(srcdir)sap-format.txt
 	$(call ASCIIDOC,-a toc)
 
