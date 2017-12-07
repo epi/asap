@@ -1,7 +1,7 @@
 /*
  * asapscan.c - Atari 8-bit music analyzer
  *
- * Copyright (C) 2007-2014  Piotr Fusik
+ * Copyright (C) 2007-2017  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -60,7 +60,7 @@ static int features = 0;
 #define CPU_TRACE_UNOFFICIAL   2
 #define CPU_TRACE_PC_TIME      4
 static int cpu_trace = 0;
-static void trace_cpu(const ASAP *asap, int pc, int a, int x, int y, int s, int nz, int vdi, int c);
+static void trace_cpu(void);
 
 static int print_time_at_pc = -1;
 
@@ -148,31 +148,31 @@ static char cpu_opcodes[256] = {
 	0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1
 };
 
-static void show_instruction(const ASAP *asap, int pc)
+static void show_instruction(int pc)
 {
 	int addr = pc;
 	int opcode;
 	const char *mnemonic;
 	const char *p;
 
-	opcode = asap->memory[pc++];
+	opcode = asap->cpu.memory[pc++];
 	mnemonic = cpu_mnemonics[opcode];
 	for (p = mnemonic + 3; *p != '\0'; p++) {
 		if (*p == '1') {
-			int value = asap->memory[pc];
+			int value = asap->cpu.memory[pc];
 			printf("%04X: %02X %02X     %.*s$%02X%s\n",
 			       addr, opcode, value, (int) (p - mnemonic), mnemonic, value, p + 1);
 			return;
 		}
 		if (*p == '2') {
-			int lo = asap->memory[pc];
-			int hi = asap->memory[pc + 1];
+			int lo = asap->cpu.memory[pc];
+			int hi = asap->cpu.memory[pc + 1];
 			printf("%04X: %02X %02X %02X  %.*s$%02X%02X%s\n",
 			       addr, opcode, lo, hi, (int) (p - mnemonic), mnemonic, hi, lo, p + 1);
 			return;
 		}
 		if (*p == '0') {
-			int offset = asap->memory[pc++];
+			int offset = asap->cpu.memory[pc++];
 			int target = (pc + (signed char) offset) & 0xffff;
 			printf("%04X: %02X %02X     %.4s$%04X\n", addr, opcode, offset, mnemonic, target);
 			return;
@@ -181,19 +181,23 @@ static void show_instruction(const ASAP *asap, int pc)
 	printf("%04X: %02X        %s\n", addr, opcode, mnemonic);
 }
 
-static void trace_cpu(const ASAP *asap, int pc, int a, int x, int y, int s, int nz, int vdi, int c)
+static void trace_cpu(void)
 {
+	int pc = asap->cpu.pc;
 	if ((cpu_trace & CPU_TRACE_PRINT) != 0) {
+		int nz = asap->cpu.nz;
+		int vdi = asap->cpu.vdi;
 		printf("%3d %3d A=%02X X=%02X Y=%02X S=%02X P=%c%c*-%c%c%c%c PC=",
-			asap->cycle / 114, asap->cycle % 114, a, x, y, s,
+			asap->cpu.cycle / 114, asap->cpu.cycle % 114,
+			asap->cpu.a, asap->cpu.x, asap->cpu.y, asap->cpu.s,
 			nz >= 0x80 ? 'N' : '-', (vdi & 0x40) != 0 ? 'V' : '-', (vdi & 8) != 0 ? 'D' : '-',
-			(vdi & 4) != 0 ? 'I' : '-', (nz & 0xff) == 0 ? 'Z' : '-', c != 0 ? 'C' : '-');
-		show_instruction(asap, pc);
+			(vdi & 4) != 0 ? 'I' : '-', (nz & 0xff) == 0 ? 'Z' : '-', asap->cpu.c != 0 ? 'C' : '-');
+		show_instruction(pc);
 	}
 	if (pc == print_time_at_pc)
 		print_time(frame, TRUE);
 	if (pc != 0xd200 && pc != 0xd203) /* don't count 0xd2 used by Do6502Init() and Call6502() */
-		cpu_opcodes[asap->memory[pc]] |= CPU_OPCODE_USED;
+		cpu_opcodes[asap->cpu.memory[pc]] |= CPU_OPCODE_USED;
 }
 
 static void print_unofficial_mnemonic(int opcode)
@@ -464,16 +468,16 @@ static void scan_song(int song)
 #define set_color(x)
 #endif
 		for (i = 0x1000; i <= 0x17ff; i++) {
-			unsigned char c = asap->memory[i];
+			unsigned char c = asap->cpu.memory[i];
 			if (c == 0)
 				break;
-			if (memcmp(asap->memory + i, "Pass", 4) == 0)
+			if (memcmp(asap->cpu.memory + i, "Pass", 4) == 0)
 				set_color((csbi.wAttributes & ~0xf) | 10);
-			else if (memcmp(asap->memory + i, "FAIL", 4) == 0) {
+			else if (memcmp(asap->cpu.memory + i, "FAIL", 4) == 0) {
 				exit_code = 1;
 				set_color((csbi.wAttributes & ~0xf) | 12);
 			}
-			else if (memcmp(asap->memory + i, "Skipped", 7) == 0) {
+			else if (memcmp(asap->cpu.memory + i, "Skipped", 7) == 0) {
 				exit_code = 1;
 				set_color((csbi.wAttributes & ~0xf) | 14);
 			}
@@ -481,7 +485,7 @@ static void scan_song(int song)
 				c = '\n';
 			putchar(c);
 		}
-		if (asap->memory[i - 1] != 0x9b) {
+		if (asap->cpu.memory[i - 1] != 0x9b) {
 			set_color((csbi.wAttributes & ~0xf) | 13);
 			printf("NO RESPONSE\n");
 			exit_code = 1;

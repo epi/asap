@@ -1,6 +1,6 @@
 // asap.ci - emulation engine
 //
-// Copyright (C) 2010-2014  Piotr Fusik
+// Copyright (C) 2010-2017  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -33,10 +33,7 @@ public class ASAP
 	/// Output sample rate.
 	public const int SampleRate = Pokey.SampleRate;
 
-	int Cycle;
 	int NextEventCycle;
-
-	byte[65536] Memory;
 
 	Cpu6502() Cpu;
 
@@ -66,6 +63,7 @@ public class ASAP
 	public ASAP()
 	{
 		SilenceCycles = 0;
+		Cpu.Asap = this;
 	}
 
 	/// Enables silence detection.
@@ -89,7 +87,7 @@ public class ASAP
 		case 0xd21a:
 		case 0xd20e:
 		case 0xd21e:
-			return Pokeys.Peek(addr, Cycle);
+			return Pokeys.Peek(addr, Cpu.Cycle);
 		case 0xd20c:
 		case 0xd21c:
 		case 0xd20f: // just because some SAP files rely on this
@@ -97,9 +95,10 @@ public class ASAP
 			return 0xff;
 		case 0xd40b:
 		case 0xd41b:
-			if (Cycle > (ModuleInfo.Ntsc ? 262 * 114 : 312 * 114))
+			int cycle = Cpu.Cycle;
+			if (cycle > (ModuleInfo.Ntsc ? 262 * 114 : 312 * 114))
 				return 0;
-			return Cycle / 228;
+			return cycle / 228;
 		case 0xd40f:
 		case 0xd41f:
 			switch (Nmist) {
@@ -108,26 +107,26 @@ public class ASAP
 			case NmiStatus.WasVBlank:
 				return 0x5f;
 			default: // case NmiStatus.OnVBlank:
-				return Cycle < 28291 ? 0x1f : 0x5f;
+				return Cpu.Cycle < 28291 ? 0x1f : 0x5f;
 			}
 		default:
-			return Memory[addr];
+			return Cpu.Memory[addr];
 		}
 	}
 
 	void PokeHardware(int addr, int data)
 	{
 		if (addr >> 8 == 0xd2) {
-			int t = Pokeys.Poke(addr, data, Cycle);
+			int t = Pokeys.Poke(addr, data, Cpu.Cycle);
 			if (NextEventCycle > t)
 				NextEventCycle = t;
 		}
 		else if ((addr & 0xff0f) == 0xd40a) {
-			int x = Cycle % 114;
-			Cycle += (x <= 106 ? 106 : 106 + 114) - x;
+			int x = Cpu.Cycle % 114;
+			Cpu.Cycle += (x <= 106 ? 106 : 106 + 114) - x;
 		}
 		else if ((addr & 0xff0f) == 0xd40f) {
-			Nmist = Cycle < 28292 ? NmiStatus.OnVBlank : NmiStatus.Reset;
+			Nmist = Cpu.Cycle < 28292 ? NmiStatus.OnVBlank : NmiStatus.Reset;
 		}
 		else if ((addr & 0xff00) == ModuleInfo.CovoxAddr) {
 			Pokey pokey;
@@ -139,7 +138,7 @@ public class ASAP
 			int delta = data - Covox[addr];
 			if (delta != 0) {
 				const int DeltaShiftCOVOX = 17;
-				pokey.AddDelta(Pokeys, Cycle, delta << DeltaShiftCOVOX);
+				pokey.AddDelta(Pokeys, Cpu.Cycle, delta << DeltaShiftCOVOX);
 				Covox[addr] = data;
 				GtiaOrCovoxPlayedThisFrame = true;
 			}
@@ -149,23 +148,24 @@ public class ASAP
 			// NOT data - Consol; reverse to the POKEY sound
 			int delta = ((Consol & 8) - (data & 8)) << DeltaShiftGTIA;
 			if (delta != 0) {
-				Pokeys.BasePokey.AddDelta(Pokeys, Cycle, delta);
-				Pokeys.ExtraPokey.AddDelta(Pokeys, Cycle, delta);
+				int cycle = Cpu.Cycle;
+				Pokeys.BasePokey.AddDelta(Pokeys, cycle, delta);
+				Pokeys.ExtraPokey.AddDelta(Pokeys, cycle, delta);
 				GtiaOrCovoxPlayedThisFrame = true;
 			}
 			Consol = data;
 		}
 		else
-			Memory[addr] = data;
+			Cpu.Memory[addr] = data;
 	}
 
 	void Call6502(int addr)
 	{
 		const int codeAddr = 0xd200;
-		Memory[codeAddr] = 0x20; // JSR
-		Memory[codeAddr + 1] = addr.LowByte;
-		Memory[codeAddr + 2] = addr >> 8;
-		Memory[codeAddr + 3] = 0xd2; // escape
+		Cpu.Memory[codeAddr] = 0x20; // JSR
+		Cpu.Memory[codeAddr + 1] = addr.LowByte;
+		Cpu.Memory[codeAddr + 2] = addr >> 8;
+		Cpu.Memory[codeAddr + 3] = 0xd2; // escape
 		Cpu.Pc = codeAddr;
 	}
 
@@ -187,35 +187,31 @@ public class ASAP
 			break;
 		case ASAPModuleType.SapD:
 			if (player >= 0) {
-				int s = Cpu.S;
-				Memory[0x100 + s] = Cpu.Pc >> 8;
-				s = s - 1 & 0xff;
-				Memory[0x100 + s] = Cpu.Pc.LowByte;
-				Cpu.S = s - 1 & 0xff;
+				Cpu.PushPc();
 				const int codeAddr = 0xd200;
-				Memory[codeAddr] = 0x08; // PHP
-				Memory[codeAddr + 1] = 0x48; // PHA
-				Memory[codeAddr + 2] = 0x8a; // TXA
-				Memory[codeAddr + 3] = 0x48; // PHA
-				Memory[codeAddr + 4] = 0x98; // TYA
-				Memory[codeAddr + 5] = 0x48; // PHA
-				Memory[codeAddr + 6] = 0x20; // JSR
-				Memory[codeAddr + 7] = player.LowByte;
-				Memory[codeAddr + 8] = player >> 8;
-				Memory[codeAddr + 9] = 0x68; // PLA
-				Memory[codeAddr + 10] = 0xa8; // TAY
-				Memory[codeAddr + 11] = 0x68; // PLA
-				Memory[codeAddr + 12] = 0xaa; // TAX
-				Memory[codeAddr + 13] = 0x68; // PLA
-				Memory[codeAddr + 14] = 0x40; // RTI
+				Cpu.Memory[codeAddr] = 0x08; // PHP
+				Cpu.Memory[codeAddr + 1] = 0x48; // PHA
+				Cpu.Memory[codeAddr + 2] = 0x8a; // TXA
+				Cpu.Memory[codeAddr + 3] = 0x48; // PHA
+				Cpu.Memory[codeAddr + 4] = 0x98; // TYA
+				Cpu.Memory[codeAddr + 5] = 0x48; // PHA
+				Cpu.Memory[codeAddr + 6] = 0x20; // JSR
+				Cpu.Memory[codeAddr + 7] = player.LowByte;
+				Cpu.Memory[codeAddr + 8] = player >> 8;
+				Cpu.Memory[codeAddr + 9] = 0x68; // PLA
+				Cpu.Memory[codeAddr + 10] = 0xa8; // TAY
+				Cpu.Memory[codeAddr + 11] = 0x68; // PLA
+				Cpu.Memory[codeAddr + 12] = 0xaa; // TAX
+				Cpu.Memory[codeAddr + 13] = 0x68; // PLA
+				Cpu.Memory[codeAddr + 14] = 0x40; // RTI
 				Cpu.Pc = codeAddr;
 			}
 			break;
 		case ASAPModuleType.SapS:
-			int i = Memory[0x45] - 1;
-			Memory[0x45] = i.LowByte;
+			int i = Cpu.Memory[0x45] - 1;
+			Cpu.Memory[0x45] = i.LowByte;
 			if (i == 0)
-				Memory[0xb07b] = (Memory[0xb07b] + 1).LowByte;
+				Cpu.Memory[0xb07b] = (Cpu.Memory[0xb07b] + 1).LowByte;
 			break;
 #if !ASAP_ONLY_SAP
 		case ASAPModuleType.Dlt:
@@ -229,7 +225,7 @@ public class ASAP
 			break;
 		case ASAPModuleType.Tmc:
 			if (--TmcPerFrameCounter <= 0) {
-				TmcPerFrameCounter = Memory[ModuleInfo.Music + 0x1f];
+				TmcPerFrameCounter = Cpu.Memory[ModuleInfo.Music + 0x1f];
 				Call6502(player + 3);
 			}
 			else
@@ -245,10 +241,10 @@ public class ASAP
 
 	void HandleEvent()
 	{
-		int cycle = Cycle;
+		int cycle = Cpu.Cycle;
 		if (cycle >= NextScanlineCycle) {
 			if (cycle - NextScanlineCycle < 50) // not WSYNC
-				Cycle = cycle += 9;
+				Cpu.Cycle = cycle += 9;
 			NextScanlineCycle += 114;
 			if (cycle >= NextPlayerCycle) {
 				Call6502Player();
@@ -267,8 +263,8 @@ public class ASAP
 		NextScanlineCycle = 0;
 		Nmist = Nmist == NmiStatus.Reset ? NmiStatus.OnVBlank : NmiStatus.WasVBlank;
 		int cycles = ModuleInfo.Ntsc ? 262 * 114 : 312 * 114;
-		Cpu.DoFrame(this, cycles);
-		Cycle -= cycles;
+		Cpu.DoFrame(cycles);
+		Cpu.Cycle -= cycles;
 		if (NextPlayerCycle != Pokey.NeverCycle)
 			NextPlayerCycle -= cycles;
 		for (int i = 3; ; i >>= 1) {
@@ -306,18 +302,18 @@ public class ASAP
 			int playerLastByte = ASAPInfo.GetWord(playerRoutine, 4);
 			if (ModuleInfo.Music <= playerLastByte)
 				throw "Module address conflicts with the player routine";
-			Memory[0x4c00] = 0; // for 11270-byte DLT
+			Cpu.Memory[0x4c00] = 0; // for 11270-byte DLT
 			if (ModuleInfo.Type == ASAPModuleType.Fc)
-				module.CopyTo(0, Memory, ModuleInfo.Music, moduleLen);
+				module.CopyTo(0, Cpu.Memory, ModuleInfo.Music, moduleLen);
 			else
-				module.CopyTo(6, Memory, ModuleInfo.Music, moduleLen - 6);
-			playerRoutine.CopyTo(6, Memory, player, playerLastByte + 1 - player);
+				module.CopyTo(6, Cpu.Memory, ModuleInfo.Music, moduleLen - 6);
+			playerRoutine.CopyTo(6, Cpu.Memory, player, playerLastByte + 1 - player);
 			if (ModuleInfo.Player < 0)
 				ModuleInfo.Player = player;
 			return;
 		}
 #endif
-		Memory.Clear();
+		Cpu.Memory.Clear();
 		int moduleIndex = ModuleInfo.HeaderLen + 2;
 		while (moduleIndex + 5 <= moduleLen) {
 			int startAddr = ASAPInfo.GetWord(module, moduleIndex);
@@ -325,7 +321,7 @@ public class ASAP
 			if (blockLen <= 0 || moduleIndex + blockLen > moduleLen)
 				throw "Invalid binary block";
 			moduleIndex += 4;
-			module.CopyTo(moduleIndex, Memory, startAddr, blockLen);
+			module.CopyTo(moduleIndex, Cpu.Memory, startAddr, blockLen);
 			moduleIndex += blockLen;
 			if (moduleIndex == moduleLen)
 				return;
@@ -346,9 +342,9 @@ public class ASAP
 		Cpu.X = x & 0xff;
 		Cpu.Y = y & 0xff;
 		const int escapeAddr = 0xd200;
-		Memory[escapeAddr] = 0xd2; // escape code
-		Memory[0x1fe] = (escapeAddr - 1).LowByte; // return address points to the escape code
-		Memory[0x1ff] = (escapeAddr - 1) >> 8;
+		Cpu.Memory[escapeAddr] = 0xd2; // escape code
+		Cpu.Memory[0x1fe] = (escapeAddr - 1).LowByte; // return address points to the escape code
+		Cpu.Memory[0x1ff] = (escapeAddr - 1) >> 8;
 		Cpu.S = 0xfd;
 		for (int frame = 0; frame < 50; frame++) {
 			Do6502Frame();
@@ -382,7 +378,7 @@ public class ASAP
 		BlocksPlayed = 0;
 		SilenceCyclesCounter = SilenceCycles;
 
-		Cycle = 0;
+		Cpu.Cycle = 0;
 		Cpu.Nz = 0;
 		Cpu.C = 0;
 		Cpu.Vdi = 0;
@@ -438,7 +434,7 @@ public class ASAP
 			break;
 #if EXPERIMENTAL_XEX
 		case ASAPModuleType.Xex:
-			Cpu.Pc = ASAPInfo.GetWord(Memory, 0x2e0);
+			Cpu.Pc = ASAPInfo.GetWord(Cpu.Memory, 0x2e0);
 			Cpu.A = song;
 			Cpu.X = 0x00;
 			Cpu.Y = 0x00;

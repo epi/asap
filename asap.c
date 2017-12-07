@@ -49,14 +49,36 @@ typedef struct PokeyPair PokeyPair;
 struct Cpu6502 {
 	int a;
 	int c;
+	int cycle;
 	int nz;
 	int pc;
 	int s;
 	int vdi;
 	int x;
 	int y;
+	ASAP *asap;
+	unsigned char memory[65536];
 };
-static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit);
+static void Cpu6502_AddWithCarry(Cpu6502 *self, int data);
+static int Cpu6502_ArithmeticShiftLeft(Cpu6502 *self, int addr);
+static void Cpu6502_CheckIrq(Cpu6502 *self);
+static int Cpu6502_Decrement(Cpu6502 *self, int addr);
+static void Cpu6502_DoFrame(Cpu6502 *self, int cycleLimit);
+static void Cpu6502_ExecuteIrq(Cpu6502 *self, int b);
+static int Cpu6502_Increment(Cpu6502 *self, int addr);
+static int Cpu6502_LogicalShiftRight(Cpu6502 *self, int addr);
+static int Cpu6502_Peek(Cpu6502 const *self, int addr);
+static int Cpu6502_PeekReadModifyWrite(Cpu6502 *self, int addr);
+static void Cpu6502_Poke(Cpu6502 *self, int addr, int data);
+static int Cpu6502_Pull(Cpu6502 *self);
+static void Cpu6502_PullFlags(Cpu6502 *self);
+static void Cpu6502_Push(Cpu6502 *self, int data);
+static void Cpu6502_PushFlags(Cpu6502 *self, int b);
+static void Cpu6502_PushPc(Cpu6502 *self);
+static int Cpu6502_RotateLeft(Cpu6502 *self, int addr);
+static int Cpu6502_RotateRight(Cpu6502 *self, int addr);
+static void Cpu6502_Shx(Cpu6502 *self, int addr, int data);
+static void Cpu6502_SubtractWithCarry(Cpu6502 *self, int data);
 
 struct ASAPInfo {
 	int channels;
@@ -191,7 +213,6 @@ struct ASAP {
 	unsigned char covox[4];
 	int currentDuration;
 	int currentSong;
-	int cycle;
 	cibool gtiaOrCovoxPlayedThisFrame;
 	int nextEventCycle;
 	int nextPlayerCycle;
@@ -200,10 +221,9 @@ struct ASAP {
 	int silenceCycles;
 	int silenceCyclesCounter;
 	int tmcPerFrameCounter;
-	Cpu6502 cpu;
 	ASAPInfo moduleInfo;
 	PokeyPair pokeys;
-	unsigned char memory[65536];
+	Cpu6502 cpu;
 };
 static void ASAP_Construct(ASAP *self);
 static void ASAP_Call6502(ASAP *self, int addr);
@@ -1902,6 +1922,7 @@ static void ASAP_Construct(ASAP *self)
 {
 	PokeyPair_Construct(&self->pokeys);
 	self->silenceCycles = 0;
+	self->cpu.asap = self;
 }
 
 ASAP *ASAP_New(void)
@@ -1919,10 +1940,10 @@ void ASAP_Delete(ASAP *self)
 
 static void ASAP_Call6502(ASAP *self, int addr)
 {
-	self->memory[53760] = 32;
-	self->memory[53761] = (unsigned char) addr;
-	self->memory[53762] = addr >> 8;
-	self->memory[53763] = 210;
+	self->cpu.memory[53760] = 32;
+	self->cpu.memory[53761] = (unsigned char) addr;
+	self->cpu.memory[53762] = addr >> 8;
+	self->cpu.memory[53763] = 210;
 	self->cpu.pc = 53760;
 }
 
@@ -1943,34 +1964,30 @@ static void ASAP_Call6502Player(ASAP *self)
 		break;
 	case ASAPModuleType_SAP_D:
 		if (player >= 0) {
-			int s = self->cpu.s;
-			self->memory[256 + s] = self->cpu.pc >> 8;
-			s = (s - 1) & 255;
-			self->memory[256 + s] = (unsigned char) self->cpu.pc;
-			self->cpu.s = (s - 1) & 255;
-			self->memory[53760] = 8;
-			self->memory[53761] = 72;
-			self->memory[53762] = 138;
-			self->memory[53763] = 72;
-			self->memory[53764] = 152;
-			self->memory[53765] = 72;
-			self->memory[53766] = 32;
-			self->memory[53767] = (unsigned char) player;
-			self->memory[53768] = player >> 8;
-			self->memory[53769] = 104;
-			self->memory[53770] = 168;
-			self->memory[53771] = 104;
-			self->memory[53772] = 170;
-			self->memory[53773] = 104;
-			self->memory[53774] = 64;
+			Cpu6502_PushPc(&self->cpu);
+			self->cpu.memory[53760] = 8;
+			self->cpu.memory[53761] = 72;
+			self->cpu.memory[53762] = 138;
+			self->cpu.memory[53763] = 72;
+			self->cpu.memory[53764] = 152;
+			self->cpu.memory[53765] = 72;
+			self->cpu.memory[53766] = 32;
+			self->cpu.memory[53767] = (unsigned char) player;
+			self->cpu.memory[53768] = player >> 8;
+			self->cpu.memory[53769] = 104;
+			self->cpu.memory[53770] = 168;
+			self->cpu.memory[53771] = 104;
+			self->cpu.memory[53772] = 170;
+			self->cpu.memory[53773] = 104;
+			self->cpu.memory[53774] = 64;
 			self->cpu.pc = 53760;
 		}
 		break;
 	case ASAPModuleType_SAP_S:
-		i = self->memory[69] - 1;
-		self->memory[69] = (unsigned char) i;
+		i = self->cpu.memory[69] - 1;
+		self->cpu.memory[69] = (unsigned char) i;
 		if (i == 0)
-			self->memory[45179] = (unsigned char) (self->memory[45179] + 1);
+			self->cpu.memory[45179] = (unsigned char) (self->cpu.memory[45179] + 1);
 		break;
 	case ASAPModuleType_DLT:
 		ASAP_Call6502(self, player + 259);
@@ -1983,7 +2000,7 @@ static void ASAP_Call6502Player(ASAP *self)
 		break;
 	case ASAPModuleType_TMC:
 		if (--self->tmcPerFrameCounter <= 0) {
-			self->tmcPerFrameCounter = self->memory[self->moduleInfo.music + 31];
+			self->tmcPerFrameCounter = self->cpu.memory[self->moduleInfo.music + 31];
 			ASAP_Call6502(self, player + 3);
 		}
 		else
@@ -2004,8 +2021,8 @@ static int ASAP_Do6502Frame(ASAP *self)
 	self->nextScanlineCycle = 0;
 	self->nmist = self->nmist == NmiStatus_RESET ? NmiStatus_ON_V_BLANK : NmiStatus_WAS_V_BLANK;
 	cycles = self->moduleInfo.ntsc ? 29868 : 35568;
-	Cpu6502_DoFrame(&self->cpu, self, cycles);
-	self->cycle -= cycles;
+	Cpu6502_DoFrame(&self->cpu, cycles);
+	self->cpu.cycle -= cycles;
 	if (self->nextPlayerCycle != 8388608)
 		self->nextPlayerCycle -= cycles;
 	{
@@ -2026,9 +2043,9 @@ static cibool ASAP_Do6502Init(ASAP *self, int pc, int a, int x, int y)
 	self->cpu.a = a & 255;
 	self->cpu.x = x & 255;
 	self->cpu.y = y & 255;
-	self->memory[53760] = 210;
-	self->memory[510] = 255;
-	self->memory[511] = 209;
+	self->cpu.memory[53760] = 210;
+	self->cpu.memory[510] = 255;
+	self->cpu.memory[511] = 209;
 	self->cpu.s = 253;
 	{
 		int frame;
@@ -2162,11 +2179,11 @@ int ASAP_GetWavHeader(ASAP const *self, unsigned char *buffer, ASAPSampleFormat 
 
 static void ASAP_HandleEvent(ASAP *self)
 {
-	int cycle = self->cycle;
+	int cycle = self->cpu.cycle;
 	int nextEventCycle;
 	if (cycle >= self->nextScanlineCycle) {
 		if (cycle - self->nextScanlineCycle < 50)
-			self->cycle = cycle += 9;
+			self->cpu.cycle = cycle += 9;
 		self->nextScanlineCycle += 114;
 		if (cycle >= self->nextPlayerCycle) {
 			ASAP_Call6502Player(self);
@@ -2191,17 +2208,17 @@ cibool ASAP_Load(ASAP *self, const char *filename, unsigned char const *module, 
 		int playerLastByte = ASAPInfo_GetWord(playerRoutine, 4);
 		if (self->moduleInfo.music <= playerLastByte)
 			return FALSE;
-		self->memory[19456] = 0;
+		self->cpu.memory[19456] = 0;
 		if (self->moduleInfo.type == ASAPModuleType_FC)
-			memcpy(self->memory + self->moduleInfo.music, module + 0, moduleLen);
+			memcpy(self->cpu.memory + self->moduleInfo.music, module + 0, moduleLen);
 		else
-			memcpy(self->memory + self->moduleInfo.music, module + 6, moduleLen - 6);
-		memcpy(self->memory + player, playerRoutine + 6, playerLastByte + 1 - player);
+			memcpy(self->cpu.memory + self->moduleInfo.music, module + 6, moduleLen - 6);
+		memcpy(self->cpu.memory + player, playerRoutine + 6, playerLastByte + 1 - player);
 		if (self->moduleInfo.player < 0)
 			self->moduleInfo.player = player;
 		return TRUE;
 	}
-	memset(self->memory, 0, sizeof(self->memory));
+	memset(self->cpu.memory, 0, sizeof(self->cpu.memory));
 	moduleIndex = self->moduleInfo.headerLen + 2;
 	while (moduleIndex + 5 <= moduleLen) {
 		int startAddr = ASAPInfo_GetWord(module, moduleIndex);
@@ -2209,7 +2226,7 @@ cibool ASAP_Load(ASAP *self, const char *filename, unsigned char const *module, 
 		if (blockLen <= 0 || moduleIndex + blockLen > moduleLen)
 			return FALSE;
 		moduleIndex += 4;
-		memcpy(self->memory + startAddr, module + moduleIndex, blockLen);
+		memcpy(self->cpu.memory + startAddr, module + moduleIndex, blockLen);
 		moduleIndex += blockLen;
 		if (moduleIndex == moduleLen)
 			return TRUE;
@@ -2233,6 +2250,7 @@ void ASAP_MutePokeyChannels(ASAP *self, int mask)
 static int ASAP_PeekHardware(ASAP const *self, int addr)
 {
 	switch (addr & 65311) {
+		int cycle;
 	case 53268:
 		return self->moduleInfo.ntsc ? 15 : 1;
 	case 53279:
@@ -2241,7 +2259,7 @@ static int ASAP_PeekHardware(ASAP const *self, int addr)
 	case 53786:
 	case 53774:
 	case 53790:
-		return PokeyPair_Peek(&self->pokeys, addr, self->cycle);
+		return PokeyPair_Peek(&self->pokeys, addr, self->cpu.cycle);
 	case 53772:
 	case 53788:
 	case 53775:
@@ -2249,9 +2267,10 @@ static int ASAP_PeekHardware(ASAP const *self, int addr)
 		return 255;
 	case 54283:
 	case 54299:
-		if (self->cycle > (self->moduleInfo.ntsc ? 29868 : 35568))
+		cycle = self->cpu.cycle;
+		if (cycle > (self->moduleInfo.ntsc ? 29868 : 35568))
 			return 0;
-		return self->cycle / 228;
+		return cycle / 228;
 	case 54287:
 	case 54303:
 		switch (self->nmist) {
@@ -2260,10 +2279,10 @@ static int ASAP_PeekHardware(ASAP const *self, int addr)
 		case NmiStatus_WAS_V_BLANK:
 			return 95;
 		default:
-			return self->cycle < 28291 ? 31 : 95;
+			return self->cpu.cycle < 28291 ? 31 : 95;
 		}
 	default:
-		return self->memory[addr];
+		return self->cpu.memory[addr];
 	}
 }
 
@@ -2276,7 +2295,7 @@ cibool ASAP_PlaySong(ASAP *self, int song, int duration)
 	self->nextPlayerCycle = 8388608;
 	self->blocksPlayed = 0;
 	self->silenceCyclesCounter = self->silenceCycles;
-	self->cycle = 0;
+	self->cpu.cycle = 0;
 	self->cpu.nz = 0;
 	self->cpu.c = 0;
 	self->cpu.vdi = 0;
@@ -2346,16 +2365,16 @@ cibool ASAP_PlaySong(ASAP *self, int song, int duration)
 static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 {
 	if (addr >> 8 == 210) {
-		int t = PokeyPair_Poke(&self->pokeys, addr, data, self->cycle);
+		int t = PokeyPair_Poke(&self->pokeys, addr, data, self->cpu.cycle);
 		if (self->nextEventCycle > t)
 			self->nextEventCycle = t;
 	}
 	else if ((addr & 65295) == 54282) {
-		int x = self->cycle % 114;
-		self->cycle += (x <= 106 ? 106 : 220) - x;
+		int x = self->cpu.cycle % 114;
+		self->cpu.cycle += (x <= 106 ? 106 : 220) - x;
 	}
 	else if ((addr & 65295) == 54287) {
-		self->nmist = self->cycle < 28292 ? NmiStatus_ON_V_BLANK : NmiStatus_RESET;
+		self->nmist = self->cpu.cycle < 28292 ? NmiStatus_ON_V_BLANK : NmiStatus_RESET;
 	}
 	else if ((addr & 65280) == self->moduleInfo.covoxAddr) {
 		Pokey *pokey;
@@ -2367,7 +2386,7 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 			pokey = &self->pokeys.extraPokey;
 		delta = data - self->covox[addr];
 		if (delta != 0) {
-			Pokey_AddDelta(pokey, &self->pokeys, self->cycle, delta << 17);
+			Pokey_AddDelta(pokey, &self->pokeys, self->cpu.cycle, delta << 17);
 			self->covox[addr] = data;
 			self->gtiaOrCovoxPlayedThisFrame = TRUE;
 		}
@@ -2375,14 +2394,15 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 	else if ((addr & 65311) == 53279) {
 		int delta = ((self->consol & 8) - (data & 8)) << 20;
 		if (delta != 0) {
-			Pokey_AddDelta(&self->pokeys.basePokey, &self->pokeys, self->cycle, delta);
-			Pokey_AddDelta(&self->pokeys.extraPokey, &self->pokeys, self->cycle, delta);
+			int cycle = self->cpu.cycle;
+			Pokey_AddDelta(&self->pokeys.basePokey, &self->pokeys, cycle, delta);
+			Pokey_AddDelta(&self->pokeys.extraPokey, &self->pokeys, cycle, delta);
 			self->gtiaOrCovoxPlayedThisFrame = TRUE;
 		}
 		self->consol = data;
 	}
 	else
-		self->memory[addr] = data;
+		self->cpu.memory[addr] = data;
 }
 
 static void ASAP_PutLittleEndian(unsigned char *buffer, int offset, int value)
@@ -5365,19 +5385,65 @@ static cibool ASAPWriter_WriteXexInfoTextDl(ASAPWriter *self, int address, int l
 	return TRUE;
 }
 
-static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
+static void Cpu6502_AddWithCarry(Cpu6502 *self, int data)
 {
-	int pc = self->pc;
-	int nz = self->nz;
 	int a = self->a;
-	int x = self->x;
-	int y = self->y;
-	int c = self->c;
-	int s = self->s;
 	int vdi = self->vdi;
-	while (asap->cycle < cycleLimit) {
+	int tmp = a + data + self->c;
+	self->nz = tmp & 255;
+	if ((vdi & 8) == 0) {
+		self->vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+		self->c = tmp >> 8;
+		self->a = self->nz;
+	}
+	else {
+		int al = (a & 15) + (data & 15) + self->c;
+		if (al >= 10) {
+			tmp += al < 26 ? 6 : -10;
+			if (self->nz != 0)
+				self->nz = (tmp & 128) + 1;
+		}
+		self->vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+		if (tmp >= 160) {
+			self->c = 1;
+			self->a = (tmp - 160) & 255;
+		}
+		else {
+			self->c = 0;
+			self->a = tmp;
+		}
+	}
+}
+
+static int Cpu6502_ArithmeticShiftLeft(Cpu6502 *self, int addr)
+{
+	int data = Cpu6502_PeekReadModifyWrite(self, addr);
+	self->c = data >> 7;
+	data = (data << 1) & 255;
+	Cpu6502_Poke(self, addr, data);
+	return data;
+}
+
+static void Cpu6502_CheckIrq(Cpu6502 *self)
+{
+	if ((self->vdi & 4) == 0 && self->asap->pokeys.basePokey.irqst != 255) {
+		self->cycle += 7;
+		Cpu6502_ExecuteIrq(self, 32);
+	}
+}
+
+static int Cpu6502_Decrement(Cpu6502 *self, int addr)
+{
+	int data = (Cpu6502_PeekReadModifyWrite(self, addr) - 1) & 255;
+	Cpu6502_Poke(self, addr, data);
+	return data;
+}
+
+static void Cpu6502_DoFrame(Cpu6502 *self, int cycleLimit)
+{
+	while (self->cycle < cycleLimit) {
 		int data;
-		static const int opcodeCycles[256] = { 7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6,
+		static const unsigned char opcodeCycles[256] = { 7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6,
 			2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
 			6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6,
 			2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
@@ -5394,38 +5460,18 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 			2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6,
 			2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7 };
 		int addr;
-		if (asap->cycle >= asap->nextEventCycle) {
-			self->pc = pc;
-			self->s = s;
-			ASAP_HandleEvent(asap);
-			pc = self->pc;
-			s = self->s;
-			if ((vdi & 4) == 0 && asap->pokeys.basePokey.irqst != 255) {
-				asap->memory[256 + s] = pc >> 8;
-				s = (s - 1) & 255;
-				asap->memory[256 + s] = (unsigned char) pc;
-				s = (s - 1) & 255;
-				asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32;
-				s = (s - 1) & 255;
-				vdi |= 4;
-				pc = asap->memory[65534] + (asap->memory[65535] << 8);
-				asap->cycle += 7;
-			}
+		if (self->cycle >= self->asap->nextEventCycle) {
+			ASAP_HandleEvent(self->asap);
+			Cpu6502_CheckIrq(self);
 		}
-		data = asap->memory[pc++];
-		asap->cycle += opcodeCycles[data];
+		data = self->memory[self->pc++];
+		self->cycle += opcodeCycles[data];
 		addr = 0;
 		switch (data) {
+			int zp;
 		case 0:
-			pc++;
-			asap->memory[256 + s] = pc >> 8;
-			s = (s - 1) & 255;
-			asap->memory[256 + s] = (unsigned char) pc;
-			s = (s - 1) & 255;
-			asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 48;
-			s = (s - 1) & 255;
-			vdi |= 4;
-			pc = asap->memory[65534] + (asap->memory[65535] << 8);
+			self->pc++;
+			Cpu6502_ExecuteIrq(self, 48);
 			continue;
 		case 1:
 		case 3:
@@ -5443,8 +5489,8 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 195:
 		case 225:
 		case 227:
-			addr = (asap->memory[pc++] + x) & 255;
-			addr = asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8);
+			addr = (self->memory[self->pc++] + self->x) & 255;
+			addr = self->memory[addr] + (self->memory[(addr + 1) & 255] << 8);
 			break;
 		case 2:
 		case 18:
@@ -5458,8 +5504,8 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 178:
 		case 210:
 		case 242:
-			pc--;
-			asap->cycle = asap->nextEventCycle;
+			self->pc--;
+			self->cycle = self->asap->nextEventCycle;
 			continue;
 		case 4:
 		case 68:
@@ -5475,7 +5521,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 137:
 		case 194:
 		case 226:
-			pc++;
+			self->pc++;
 			continue;
 		case 5:
 		case 6:
@@ -5506,11 +5552,10 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 229:
 		case 230:
 		case 231:
-			addr = asap->memory[pc++];
+			addr = self->memory[self->pc++];
 			break;
 		case 8:
-			asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 48;
-			s = (s - 1) & 255;
+			Cpu6502_PushFlags(self, 48);
 			continue;
 		case 9:
 		case 41:
@@ -5524,19 +5569,19 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 224:
 		case 233:
 		case 235:
-			addr = pc++;
+			addr = self->pc++;
 			break;
 		case 10:
-			c = a >> 7;
-			nz = a = (a << 1) & 255;
+			self->c = self->a >> 7;
+			self->nz = self->a = (self->a << 1) & 255;
 			continue;
 		case 11:
 		case 43:
-			nz = a &= asap->memory[pc++];
-			c = nz >> 7;
+			self->nz = self->a &= self->memory[self->pc++];
+			self->c = self->nz >> 7;
 			continue;
 		case 12:
-			pc += 2;
+			self->pc += 2;
 			continue;
 		case 13:
 		case 14:
@@ -5568,13 +5613,13 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 237:
 		case 238:
 		case 239:
-			addr = asap->memory[pc++];
-			addr += asap->memory[pc++] << 8;
+			addr = self->memory[self->pc++];
+			addr += self->memory[self->pc++] << 8;
 			break;
 		case 16:
-			if (nz < 128)
+			if (self->nz < 128)
 				break;
-			pc++;
+			self->pc++;
 			continue;
 		case 17:
 		case 49:
@@ -5584,10 +5629,11 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 179:
 		case 209:
 		case 241:
-			addr = asap->memory[pc++];
-			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
-			if ((addr & 255) < y)
-				asap->cycle++;
+			zp = self->memory[self->pc++];
+			addr = self->memory[zp] + self->y;
+			if (addr >= 256)
+				self->cycle++;
+			addr = (addr + (self->memory[(zp + 1) & 255] << 8)) & 65535;
 			break;
 		case 19:
 		case 51:
@@ -5596,8 +5642,8 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 145:
 		case 211:
 		case 243:
-			addr = asap->memory[pc++];
-			addr = (asap->memory[addr] + (asap->memory[(addr + 1) & 255] << 8) + y) & 65535;
+			addr = self->memory[self->pc++];
+			addr = (self->memory[addr] + (self->memory[(addr + 1) & 255] << 8) + self->y) & 65535;
 			break;
 		case 21:
 		case 22:
@@ -5621,10 +5667,10 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 245:
 		case 246:
 		case 247:
-			addr = (asap->memory[pc++] + x) & 255;
+			addr = (self->memory[self->pc++] + self->x) & 255;
 			break;
 		case 24:
-			c = 0;
+			self->c = 0;
 			continue;
 		case 25:
 		case 57:
@@ -5636,10 +5682,10 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 191:
 		case 217:
 		case 249:
-			addr = asap->memory[pc++];
-			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
-			if ((addr & 255) < y)
-				asap->cycle++;
+			addr = self->memory[self->pc++] + self->y;
+			if (addr >= 256)
+				self->cycle++;
+			addr = (addr + (self->memory[self->pc++] << 8)) & 65535;
 			break;
 		case 27:
 		case 59:
@@ -5648,8 +5694,8 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 153:
 		case 219:
 		case 251:
-			addr = asap->memory[pc++];
-			addr = (addr + (asap->memory[pc++] << 8) + y) & 65535;
+			addr = self->memory[self->pc++] + self->y;
+			addr = (addr + (self->memory[self->pc++] << 8)) & 65535;
 			break;
 		case 28:
 		case 60:
@@ -5657,9 +5703,9 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 124:
 		case 220:
 		case 252:
-			if (asap->memory[pc++] + x >= 256)
-				asap->cycle++;
-			pc++;
+			if (self->memory[self->pc++] + self->x >= 256)
+				self->cycle++;
+			self->pc++;
 			continue;
 		case 29:
 		case 61:
@@ -5669,10 +5715,10 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 189:
 		case 221:
 		case 253:
-			addr = asap->memory[pc++];
-			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
-			if ((addr & 255) < x)
-				asap->cycle++;
+			addr = self->memory[self->pc++] + self->x;
+			if (addr >= 256)
+				self->cycle++;
+			addr = (addr + (self->memory[self->pc++] << 8)) & 65535;
 			break;
 		case 30:
 		case 31:
@@ -5687,301 +5733,196 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 223:
 		case 254:
 		case 255:
-			addr = asap->memory[pc++];
-			addr = (addr + (asap->memory[pc++] << 8) + x) & 65535;
+			addr = self->memory[self->pc++] + self->x;
+			addr = (addr + (self->memory[self->pc++] << 8)) & 65535;
 			break;
 		case 32:
-			addr = asap->memory[pc++];
-			asap->memory[256 + s] = pc >> 8;
-			s = (s - 1) & 255;
-			asap->memory[256 + s] = (unsigned char) pc;
-			s = (s - 1) & 255;
-			pc = addr + (asap->memory[pc] << 8);
+			addr = self->memory[self->pc++];
+			Cpu6502_PushPc(self);
+			self->pc = addr + (self->memory[self->pc] << 8);
 			continue;
 		case 40:
-			s = (s + 1) & 255;
-			vdi = asap->memory[256 + s];
-			nz = ((vdi & 128) << 1) + (~vdi & 2);
-			c = vdi & 1;
-			vdi &= 76;
-			if ((vdi & 4) == 0 && asap->pokeys.basePokey.irqst != 255) {
-				asap->memory[256 + s] = pc >> 8;
-				s = (s - 1) & 255;
-				asap->memory[256 + s] = (unsigned char) pc;
-				s = (s - 1) & 255;
-				asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32;
-				s = (s - 1) & 255;
-				vdi |= 4;
-				pc = asap->memory[65534] + (asap->memory[65535] << 8);
-				asap->cycle += 7;
-			}
+			Cpu6502_PullFlags(self);
+			Cpu6502_CheckIrq(self);
 			continue;
 		case 42:
-			a = (a << 1) + c;
-			c = a >> 8;
-			nz = a &= 255;
+			self->a = (self->a << 1) + self->c;
+			self->c = self->a >> 8;
+			self->nz = self->a &= 255;
 			continue;
 		case 48:
-			if (nz >= 128)
+			if (self->nz >= 128)
 				break;
-			pc++;
+			self->pc++;
 			continue;
 		case 56:
-			c = 1;
+			self->c = 1;
 			continue;
 		case 64:
-			s = (s + 1) & 255;
-			vdi = asap->memory[256 + s];
-			nz = ((vdi & 128) << 1) + (~vdi & 2);
-			c = vdi & 1;
-			vdi &= 76;
-			s = (s + 1) & 255;
-			pc = asap->memory[256 + s];
-			s = (s + 1) & 255;
-			addr = asap->memory[256 + s];
-			pc += addr << 8;
-			if ((vdi & 4) == 0 && asap->pokeys.basePokey.irqst != 255) {
-				asap->memory[256 + s] = pc >> 8;
-				s = (s - 1) & 255;
-				asap->memory[256 + s] = (unsigned char) pc;
-				s = (s - 1) & 255;
-				asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32;
-				s = (s - 1) & 255;
-				vdi |= 4;
-				pc = asap->memory[65534] + (asap->memory[65535] << 8);
-				asap->cycle += 7;
-			}
+			Cpu6502_PullFlags(self);
+			self->pc = Cpu6502_Pull(self);
+			self->pc += Cpu6502_Pull(self) << 8;
+			Cpu6502_CheckIrq(self);
 			continue;
 		case 72:
-			asap->memory[256 + s] = a;
-			s = (s - 1) & 255;
+			Cpu6502_Push(self, self->a);
 			continue;
 		case 74:
-			c = a & 1;
-			nz = a >>= 1;
+			self->c = self->a & 1;
+			self->nz = self->a >>= 1;
 			continue;
 		case 75:
-			a &= asap->memory[pc++];
-			c = a & 1;
-			nz = a >>= 1;
+			self->a &= self->memory[self->pc++];
+			self->c = self->a & 1;
+			self->nz = self->a >>= 1;
 			continue;
 		case 76:
-			addr = asap->memory[pc++];
-			pc = addr + (asap->memory[pc] << 8);
+			addr = self->memory[self->pc++];
+			self->pc = addr + (self->memory[self->pc] << 8);
 			continue;
 		case 80:
-			if ((vdi & 64) == 0)
+			if ((self->vdi & 64) == 0)
 				break;
-			pc++;
+			self->pc++;
 			continue;
 		case 88:
-			vdi &= 72;
-			if ((vdi & 4) == 0 && asap->pokeys.basePokey.irqst != 255) {
-				asap->memory[256 + s] = pc >> 8;
-				s = (s - 1) & 255;
-				asap->memory[256 + s] = (unsigned char) pc;
-				s = (s - 1) & 255;
-				asap->memory[256 + s] = ((nz | (nz >> 1)) & 128) + vdi + ((nz & 255) == 0 ? 2 : 0) + c + 32;
-				s = (s - 1) & 255;
-				vdi |= 4;
-				pc = asap->memory[65534] + (asap->memory[65535] << 8);
-				asap->cycle += 7;
-			}
+			self->vdi &= 72;
+			Cpu6502_CheckIrq(self);
 			continue;
 		case 96:
-			s = (s + 1) & 255;
-			pc = asap->memory[256 + s];
-			s = (s + 1) & 255;
-			addr = asap->memory[256 + s];
-			pc += (addr << 8) + 1;
+			self->pc = Cpu6502_Pull(self);
+			self->pc += (Cpu6502_Pull(self) << 8) + 1;
 			continue;
 		case 104:
-			s = (s + 1) & 255;
-			a = asap->memory[256 + s];
-			nz = a;
+			self->nz = self->a = Cpu6502_Pull(self);
 			continue;
 		case 106:
-			nz = (c << 7) + (a >> 1);
-			c = a & 1;
-			a = nz;
+			self->nz = (self->c << 7) + (self->a >> 1);
+			self->c = self->a & 1;
+			self->a = self->nz;
 			continue;
 		case 107:
-			data = a & asap->memory[pc++];
-			nz = a = (data >> 1) + (c << 7);
-			vdi = (vdi & 12) + ((a ^ data) & 64);
-			if ((vdi & 8) == 0)
-				c = data >> 7;
+			data = self->a & self->memory[self->pc++];
+			self->nz = self->a = (data >> 1) + (self->c << 7);
+			self->vdi = (self->vdi & 12) + ((self->a ^ data) & 64);
+			if ((self->vdi & 8) == 0)
+				self->c = data >> 7;
 			else {
 				if ((data & 15) >= 5)
-					a = (a & 240) + ((a + 6) & 15);
+					self->a = (self->a & 240) + ((self->a + 6) & 15);
 				if (data >= 80) {
-					a = (a + 96) & 255;
-					c = 1;
+					self->a = (self->a + 96) & 255;
+					self->c = 1;
 				}
 				else
-					c = 0;
+					self->c = 0;
 			}
 			continue;
 		case 112:
-			if ((vdi & 64) != 0)
+			if ((self->vdi & 64) != 0)
 				break;
-			pc++;
+			self->pc++;
 			continue;
 		case 120:
-			vdi |= 4;
+			self->vdi |= 4;
 			continue;
 		case 136:
-			nz = y = (y - 1) & 255;
+			self->nz = self->y = (self->y - 1) & 255;
 			continue;
 		case 138:
-			nz = a = x;
+			self->nz = self->a = self->x;
 			continue;
 		case 139:
-			data = asap->memory[pc++];
-			a &= (data | 239) & x;
-			nz = a & data;
+			data = self->memory[self->pc++];
+			self->a &= (data | 239) & self->x;
+			self->nz = self->a & data;
 			continue;
 		case 144:
-			if (c == 0)
+			if (self->c == 0)
 				break;
-			pc++;
+			self->pc++;
 			continue;
 		case 147:
 			{
 				int hi;
-				addr = asap->memory[pc++];
-				hi = asap->memory[(addr + 1) & 255];
-				addr = asap->memory[addr];
-				data = (hi + 1) & a & x;
-				addr += y;
+				addr = self->memory[self->pc++];
+				hi = self->memory[(addr + 1) & 255];
+				addr = self->memory[addr];
+				data = (hi + 1) & self->a & self->x;
+				addr += self->y;
 				if (addr >= 256)
 					hi = data - 1;
 				addr += hi << 8;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, data);
-				else
-					asap->memory[addr] = data;
+				Cpu6502_Poke(self, addr, data);
 			}
 			continue;
 		case 150:
 		case 151:
 		case 182:
 		case 183:
-			addr = (asap->memory[pc++] + y) & 255;
+			addr = (self->memory[self->pc++] + self->y) & 255;
 			break;
 		case 152:
-			nz = a = y;
+			self->nz = self->a = self->y;
 			continue;
 		case 154:
-			s = x;
+			self->s = self->x;
 			continue;
 		case 155:
-			s = a & x;
-			{
-				int hi;
-				addr = asap->memory[pc++];
-				hi = asap->memory[pc++];
-				data = (hi + 1) & s;
-				addr += y;
-				if (addr >= 256)
-					hi = data - 1;
-				addr += hi << 8;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, data);
-				else
-					asap->memory[addr] = data;
-			}
+			self->s = self->a & self->x;
+			Cpu6502_Shx(self, self->y, self->s);
 			continue;
 		case 156:
-			{
-				int hi;
-				addr = asap->memory[pc++];
-				hi = asap->memory[pc++];
-				data = (hi + 1) & y;
-				addr += x;
-				if (addr >= 256)
-					hi = data - 1;
-				addr += hi << 8;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, data);
-				else
-					asap->memory[addr] = data;
-			}
+			Cpu6502_Shx(self, self->x, self->y);
 			continue;
 		case 158:
-			{
-				int hi;
-				addr = asap->memory[pc++];
-				hi = asap->memory[pc++];
-				data = (hi + 1) & x;
-				addr += y;
-				if (addr >= 256)
-					hi = data - 1;
-				addr += hi << 8;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, data);
-				else
-					asap->memory[addr] = data;
-			}
+			Cpu6502_Shx(self, self->y, self->x);
 			continue;
 		case 159:
-			{
-				int hi;
-				addr = asap->memory[pc++];
-				hi = asap->memory[pc++];
-				data = (hi + 1) & a & x;
-				addr += y;
-				if (addr >= 256)
-					hi = data - 1;
-				addr += hi << 8;
-				if ((addr & 63744) == 53248)
-					ASAP_PokeHardware(asap, addr, data);
-				else
-					asap->memory[addr] = data;
-			}
+			Cpu6502_Shx(self, self->y, self->a & self->x);
 			continue;
 		case 168:
-			nz = y = a;
+			self->nz = self->y = self->a;
 			continue;
 		case 170:
-			nz = x = a;
+			self->nz = self->x = self->a;
 			continue;
 		case 171:
-			nz = x = a &= asap->memory[pc++];
+			self->nz = self->x = self->a &= self->memory[self->pc++];
 			continue;
 		case 176:
-			if (c != 0)
+			if (self->c != 0)
 				break;
-			pc++;
+			self->pc++;
 			continue;
 		case 184:
-			vdi &= 12;
+			self->vdi &= 12;
 			continue;
 		case 186:
-			nz = x = s;
+			self->nz = self->x = self->s;
 			continue;
 		case 200:
-			nz = y = (y + 1) & 255;
+			self->nz = self->y = (self->y + 1) & 255;
 			continue;
 		case 202:
-			nz = x = (x - 1) & 255;
+			self->nz = self->x = (self->x - 1) & 255;
 			continue;
 		case 203:
-			nz = asap->memory[pc++];
-			x &= a;
-			c = x >= nz ? 1 : 0;
-			nz = x = (x - nz) & 255;
+			self->nz = self->memory[self->pc++];
+			self->x &= self->a;
+			self->c = self->x >= self->nz ? 1 : 0;
+			self->nz = self->x = (self->x - self->nz) & 255;
 			continue;
 		case 208:
-			if ((nz & 255) != 0)
+			if ((self->nz & 255) != 0)
 				break;
-			pc++;
+			self->pc++;
 			continue;
 		case 216:
-			vdi &= 68;
+			self->vdi &= 68;
 			continue;
 		case 232:
-			nz = x = (x + 1) & 255;
+			self->nz = self->x = (self->x + 1) & 255;
 			continue;
 		case 234:
 		case 26:
@@ -5992,12 +5933,12 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 250:
 			continue;
 		case 240:
-			if ((nz & 255) == 0)
+			if ((self->nz & 255) == 0)
 				break;
-			pc++;
+			self->pc++;
 			continue;
 		case 248:
-			vdi |= 8;
+			self->vdi |= 8;
 			continue;
 		default:
 			continue;
@@ -6011,7 +5952,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 21:
 		case 25:
 		case 29:
-			nz = a |= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			self->nz = self->a |= Cpu6502_Peek(self, addr);
 			break;
 		case 3:
 		case 7:
@@ -6020,40 +5961,13 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 23:
 		case 27:
 		case 31:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			c = nz >> 7;
-			nz = (nz << 1) & 255;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
-			nz = a |= nz;
+			self->nz = self->a |= Cpu6502_ArithmeticShiftLeft(self, addr);
 			break;
 		case 6:
 		case 14:
 		case 22:
 		case 30:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			c = nz >> 7;
-			nz = (nz << 1) & 255;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
+			self->nz = Cpu6502_ArithmeticShiftLeft(self, addr);
 			break;
 		case 16:
 		case 48:
@@ -6063,13 +5977,11 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 176:
 		case 208:
 		case 240:
-			addr = (signed char) asap->memory[pc];
-			pc++;
-			addr += pc;
-			if ((addr ^ pc) >> 8 != 0)
-				asap->cycle++;
-			asap->cycle++;
-			pc = addr;
+			addr = (signed char) self->memory[self->pc];
+			self->pc++;
+			addr += self->pc;
+			self->cycle += (addr ^ self->pc) >> 8 != 0 ? 2 : 1;
+			self->pc = addr;
 			break;
 		case 33:
 		case 37:
@@ -6079,7 +5991,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 53:
 		case 57:
 		case 61:
-			nz = a &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			self->nz = self->a &= Cpu6502_Peek(self, addr);
 			break;
 		case 35:
 		case 39:
@@ -6088,48 +6000,19 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 55:
 		case 59:
 		case 63:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			nz = (nz << 1) + c;
-			c = nz >> 8;
-			nz &= 255;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
-			nz = a &= nz;
+			self->nz = self->a &= Cpu6502_RotateLeft(self, addr);
 			break;
 		case 36:
 		case 44:
-			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-			vdi = (vdi & 12) + (nz & 64);
-			nz = ((nz & 128) << 1) + (nz & a);
+			self->nz = Cpu6502_Peek(self, addr);
+			self->vdi = (self->vdi & 12) + (self->nz & 64);
+			self->nz = ((self->nz & 128) << 1) + (self->nz & self->a);
 			break;
 		case 38:
 		case 46:
 		case 54:
 		case 62:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			nz = (nz << 1) + c;
-			c = nz >> 8;
-			nz &= 255;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
+			self->nz = Cpu6502_RotateLeft(self, addr);
 			break;
 		case 65:
 		case 69:
@@ -6139,7 +6022,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 85:
 		case 89:
 		case 93:
-			nz = a ^= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			self->nz = self->a ^= Cpu6502_Peek(self, addr);
 			break;
 		case 67:
 		case 71:
@@ -6148,40 +6031,13 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 87:
 		case 91:
 		case 95:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			c = nz & 1;
-			nz >>= 1;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
-			nz = a ^= nz;
+			self->nz = self->a ^= Cpu6502_LogicalShiftRight(self, addr);
 			break;
 		case 70:
 		case 78:
 		case 86:
 		case 94:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			c = nz & 1;
-			nz >>= 1;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
+			self->nz = Cpu6502_LogicalShiftRight(self, addr);
 			break;
 		case 97:
 		case 101:
@@ -6191,33 +6047,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 117:
 		case 121:
 		case 125:
-			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-			{
-				int tmp = a + data + c;
-				nz = tmp & 255;
-				if ((vdi & 8) == 0) {
-					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >> 8;
-					a = nz;
-				}
-				else {
-					int al = (a & 15) + (data & 15) + c;
-					if (al >= 10) {
-						tmp += al < 26 ? 6 : -10;
-						if (nz != 0)
-							nz = (tmp & 128) + 1;
-					}
-					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-					if (tmp >= 160) {
-						c = 1;
-						a = (tmp + 96) & 255;
-					}
-					else {
-						c = 0;
-						a = tmp;
-					}
-				}
-			}
+			Cpu6502_AddWithCarry(self, Cpu6502_Peek(self, addr));
 			break;
 		case 99:
 		case 103:
@@ -6226,74 +6056,19 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 119:
 		case 123:
 		case 127:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			nz += c << 8;
-			c = nz & 1;
-			nz >>= 1;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
-			data = nz;
-			{
-				int tmp = a + data + c;
-				nz = tmp & 255;
-				if ((vdi & 8) == 0) {
-					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-					c = tmp >> 8;
-					a = nz;
-				}
-				else {
-					int al = (a & 15) + (data & 15) + c;
-					if (al >= 10) {
-						tmp += al < 26 ? 6 : -10;
-						if (nz != 0)
-							nz = (tmp & 128) + 1;
-					}
-					vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
-					if (tmp >= 160) {
-						c = 1;
-						a = (tmp + 96) & 255;
-					}
-					else {
-						c = 0;
-						a = tmp;
-					}
-				}
-			}
+			Cpu6502_AddWithCarry(self, Cpu6502_RotateRight(self, addr));
 			break;
 		case 102:
 		case 110:
 		case 118:
 		case 126:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			nz += c << 8;
-			c = nz & 1;
-			nz >>= 1;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
+			self->nz = Cpu6502_RotateRight(self, addr);
 			break;
 		case 108:
-			if ((addr & 255) == 255)
-				pc = asap->memory[addr] + (asap->memory[addr - 255] << 8);
-			else
-				pc = asap->memory[addr] + (asap->memory[addr + 1] << 8);
+			self->pc = self->memory[addr];
+			if ((++addr & 255) == 0)
+				addr -= 255;
+			self->pc += self->memory[addr] << 8;
 			break;
 		case 129:
 		case 133:
@@ -6302,43 +6077,30 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 149:
 		case 153:
 		case 157:
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, a);
-			else
-				asap->memory[addr] = a;
+			Cpu6502_Poke(self, addr, self->a);
 			break;
 		case 131:
 		case 135:
 		case 143:
 		case 151:
-			data = a & x;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, data);
-			else
-				asap->memory[addr] = data;
+			Cpu6502_Poke(self, addr, self->a & self->x);
 			break;
 		case 132:
 		case 140:
 		case 148:
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, y);
-			else
-				asap->memory[addr] = y;
+			Cpu6502_Poke(self, addr, self->y);
 			break;
 		case 134:
 		case 142:
 		case 150:
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, x);
-			else
-				asap->memory[addr] = x;
+			Cpu6502_Poke(self, addr, self->x);
 			break;
 		case 160:
 		case 164:
 		case 172:
 		case 180:
 		case 188:
-			nz = y = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			self->nz = self->y = Cpu6502_Peek(self, addr);
 			break;
 		case 161:
 		case 165:
@@ -6348,14 +6110,14 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 181:
 		case 185:
 		case 189:
-			nz = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			self->nz = self->a = Cpu6502_Peek(self, addr);
 			break;
 		case 162:
 		case 166:
 		case 174:
 		case 182:
 		case 190:
-			nz = x = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			self->nz = self->x = Cpu6502_Peek(self, addr);
 			break;
 		case 163:
 		case 167:
@@ -6363,17 +6125,17 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 179:
 		case 183:
 		case 191:
-			nz = x = a = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			self->nz = self->x = self->a = Cpu6502_Peek(self, addr);
 			break;
 		case 187:
-			nz = x = a = s &= (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
+			self->nz = self->x = self->a = self->s &= Cpu6502_Peek(self, addr);
 			break;
 		case 192:
 		case 196:
 		case 204:
-			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-			c = y >= nz ? 1 : 0;
-			nz = (y - nz) & 255;
+			self->nz = Cpu6502_Peek(self, addr);
+			self->c = self->y >= self->nz ? 1 : 0;
+			self->nz = (self->y - self->nz) & 255;
 			break;
 		case 193:
 		case 197:
@@ -6383,9 +6145,9 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 213:
 		case 217:
 		case 221:
-			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-			c = a >= nz ? 1 : 0;
-			nz = (a - nz) & 255;
+			self->nz = Cpu6502_Peek(self, addr);
+			self->c = self->a >= self->nz ? 1 : 0;
+			self->nz = (self->a - self->nz) & 255;
 			break;
 		case 195:
 		case 199:
@@ -6394,46 +6156,22 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 215:
 		case 219:
 		case 223:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			nz = (nz - 1) & 255;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
-			c = a >= nz ? 1 : 0;
-			nz = (a - nz) & 255;
+			data = Cpu6502_Decrement(self, addr);
+			self->c = self->a >= data ? 1 : 0;
+			self->nz = (self->a - data) & 255;
 			break;
 		case 198:
 		case 206:
 		case 214:
 		case 222:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			nz = (nz - 1) & 255;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
+			self->nz = Cpu6502_Decrement(self, addr);
 			break;
 		case 224:
 		case 228:
 		case 236:
-			nz = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-			c = x >= nz ? 1 : 0;
-			nz = (x - nz) & 255;
+			self->nz = Cpu6502_Peek(self, addr);
+			self->c = self->x >= self->nz ? 1 : 0;
+			self->nz = (self->x - self->nz) & 255;
 			break;
 		case 225:
 		case 229:
@@ -6444,20 +6182,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 245:
 		case 249:
 		case 253:
-			data = (addr & 63744) == 53248 ? ASAP_PeekHardware(asap, addr) : asap->memory[addr];
-			{
-				int tmp = a - data - 1 + c;
-				int al = (a & 15) - (data & 15) - 1 + c;
-				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-				c = tmp >= 0 ? 1 : 0;
-				nz = a = tmp & 255;
-				if ((vdi & 8) != 0) {
-					if (al < 0)
-						a += al < -10 ? 10 : -6;
-					if (c == 0)
-						a = (a - 96) & 255;
-				}
-			}
+			Cpu6502_SubtractWithCarry(self, Cpu6502_Peek(self, addr));
 			break;
 		case 227:
 		case 231:
@@ -6466,62 +6191,154 @@ static void Cpu6502_DoFrame(Cpu6502 *self, ASAP *asap, int cycleLimit)
 		case 247:
 		case 251:
 		case 255:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			nz = (nz + 1) & 255;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
-			data = nz;
-			{
-				int tmp = a - data - 1 + c;
-				int al = (a & 15) - (data & 15) - 1 + c;
-				vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
-				c = tmp >= 0 ? 1 : 0;
-				nz = a = tmp & 255;
-				if ((vdi & 8) != 0) {
-					if (al < 0)
-						a += al < -10 ? 10 : -6;
-					if (c == 0)
-						a = (a - 96) & 255;
-				}
-			}
+			Cpu6502_SubtractWithCarry(self, Cpu6502_Increment(self, addr));
 			break;
 		case 230:
 		case 238:
 		case 246:
 		case 254:
-			if (addr >> 8 == 210) {
-				asap->cycle--;
-				nz = ASAP_PeekHardware(asap, addr);
-				ASAP_PokeHardware(asap, addr, nz);
-				asap->cycle++;
-			}
-			else
-				nz = asap->memory[addr];
-			nz = (nz + 1) & 255;
-			if ((addr & 63744) == 53248)
-				ASAP_PokeHardware(asap, addr, nz);
-			else
-				asap->memory[addr] = nz;
+			self->nz = Cpu6502_Increment(self, addr);
 			break;
 		}
 	}
-	self->pc = pc;
-	self->nz = nz;
-	self->a = a;
-	self->x = x;
-	self->y = y;
-	self->c = c;
+}
+
+static void Cpu6502_ExecuteIrq(Cpu6502 *self, int b)
+{
+	Cpu6502_PushPc(self);
+	Cpu6502_PushFlags(self, b);
+	self->vdi |= 4;
+	self->pc = self->memory[65534] + (self->memory[65535] << 8);
+}
+
+static int Cpu6502_Increment(Cpu6502 *self, int addr)
+{
+	int data = (Cpu6502_PeekReadModifyWrite(self, addr) + 1) & 255;
+	Cpu6502_Poke(self, addr, data);
+	return data;
+}
+
+static int Cpu6502_LogicalShiftRight(Cpu6502 *self, int addr)
+{
+	int data = Cpu6502_PeekReadModifyWrite(self, addr);
+	self->c = data & 1;
+	data >>= 1;
+	Cpu6502_Poke(self, addr, data);
+	return data;
+}
+
+static int Cpu6502_Peek(Cpu6502 const *self, int addr)
+{
+	if ((addr & 63744) == 53248)
+		return ASAP_PeekHardware(self->asap, addr);
+	else
+		return self->memory[addr];
+}
+
+static int Cpu6502_PeekReadModifyWrite(Cpu6502 *self, int addr)
+{
+	if (addr >> 8 == 210) {
+		int data;
+		self->cycle--;
+		data = ASAP_PeekHardware(self->asap, addr);
+		ASAP_PokeHardware(self->asap, addr, data);
+		self->cycle++;
+		return data;
+	}
+	return self->memory[addr];
+}
+
+static void Cpu6502_Poke(Cpu6502 *self, int addr, int data)
+{
+	if ((addr & 63744) == 53248)
+		ASAP_PokeHardware(self->asap, addr, data);
+	else
+		self->memory[addr] = data;
+}
+
+static int Cpu6502_Pull(Cpu6502 *self)
+{
+	int s = (self->s + 1) & 255;
 	self->s = s;
-	self->vdi = vdi;
+	return self->memory[256 + s];
+}
+
+static void Cpu6502_PullFlags(Cpu6502 *self)
+{
+	int data = Cpu6502_Pull(self);
+	self->nz = ((data & 128) << 1) + (~data & 2);
+	self->c = data & 1;
+	self->vdi = data & 76;
+}
+
+static void Cpu6502_Push(Cpu6502 *self, int data)
+{
+	int s = self->s;
+	self->memory[256 + s] = data;
+	self->s = (s - 1) & 255;
+}
+
+static void Cpu6502_PushFlags(Cpu6502 *self, int b)
+{
+	int nz = self->nz;
+	b += ((nz | (nz >> 1)) & 128) + self->vdi + self->c;
+	if ((nz & 255) == 0)
+		b += 2;
+	Cpu6502_Push(self, b);
+}
+
+static void Cpu6502_PushPc(Cpu6502 *self)
+{
+	Cpu6502_Push(self, self->pc >> 8);
+	Cpu6502_Push(self, self->pc & 255);
+}
+
+static int Cpu6502_RotateLeft(Cpu6502 *self, int addr)
+{
+	int data = (Cpu6502_PeekReadModifyWrite(self, addr) << 1) + self->c;
+	self->c = data >> 8;
+	data &= 255;
+	Cpu6502_Poke(self, addr, data);
+	return data;
+}
+
+static int Cpu6502_RotateRight(Cpu6502 *self, int addr)
+{
+	int data = (self->c << 8) + Cpu6502_PeekReadModifyWrite(self, addr);
+	self->c = data & 1;
+	data >>= 1;
+	Cpu6502_Poke(self, addr, data);
+	return data;
+}
+
+static void Cpu6502_Shx(Cpu6502 *self, int addr, int data)
+{
+	int hi;
+	addr += self->memory[self->pc++];
+	hi = self->memory[self->pc++];
+	data &= hi + 1;
+	if (addr >= 256)
+		hi = data - 1;
+	addr += hi << 8;
+	Cpu6502_Poke(self, addr, data);
+}
+
+static void Cpu6502_SubtractWithCarry(Cpu6502 *self, int data)
+{
+	int a = self->a;
+	int vdi = self->vdi;
+	int borrow = self->c - 1;
+	int tmp = a - data + borrow;
+	int al = (a & 15) - (data & 15) + borrow;
+	self->vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+	self->c = tmp >= 0 ? 1 : 0;
+	self->nz = self->a = tmp & 255;
+	if ((vdi & 8) != 0) {
+		if (al < 0)
+			self->a += al < -10 ? 10 : -6;
+		if (self->c == 0)
+			self->a = (self->a - 96) & 255;
+	}
 }
 
 static int DurationParser_Parse(DurationParser *self, const char *s)
