@@ -1,7 +1,7 @@
 /*
  * Player.java - ASAP for Android
  *
- * Copyright (C) 2010-2013  Piotr Fusik
+ * Copyright (C) 2010-2017  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -33,8 +33,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.net.Uri;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -157,24 +155,5 @@ public class Player extends Activity
 		super.onDestroy();
 		unregisterReceiver(receiver);
 		unbindService(connection);
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu)
-	{
-		getMenuInflater().inflate(R.menu.playing, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item)
-	{
-		switch (item.getItemId()) {
-		case R.id.menu_about:
-			Util.showAbout(this);
-			return true;
-		default:
-			return false;
-		}
 	}
 }

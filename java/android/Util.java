@@ -1,7 +1,7 @@
 /*
  * Util.java - ASAP for Android
  *
- * Copyright (C) 2010-2016  Piotr Fusik
+ * Copyright (C) 2010-2017  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,8 +23,6 @@
 
 package net.sf.asap;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.net.Uri;
 import java.io.File;
 import java.io.InputStream;
@@ -106,10 +104,5 @@ class Util
 			is.close();
 		}
 		return got;
-	}
-
-	static void showAbout(Activity activity)
-	{
-		new AlertDialog.Builder(activity).setTitle(R.string.about_title).setIcon(R.drawable.icon).setMessage(R.string.about_message).show();
 	}
 }

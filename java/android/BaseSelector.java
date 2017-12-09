@@ -1,7 +1,7 @@
 /*
  * BaseSelector.java - ASAP for Android
  *
- * Copyright (C) 2010-2015  Piotr Fusik
+ * Copyright (C) 2010-2017  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -118,9 +118,6 @@ abstract class BaseSelector extends ListActivity
 				imm.showSoftInput(getListView(), 0);
 				isSearch = true;
 			}
-			return true;
-		case R.id.menu_about:
-			Util.showAbout(this);
 			return true;
 		default:
 			return false;

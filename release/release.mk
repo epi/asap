@@ -71,6 +71,5 @@ version:
 	$(GREP) "int Version" $(srcdir)asapinfo.ci
 	$(GREP) "VERSION =" $(srcdir)chksap.pl
 	$(GREP) android:versionName $(srcdir)java/android/AndroidManifest.xml
-	$(GREP) about_title $(srcdir)java/android/res/values/strings.xml
 	$(GREP) ", v" $(srcdir)win32/rmt/apokeysnd_dll.c
 .PHONY: version
