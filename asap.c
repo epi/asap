@@ -123,18 +123,17 @@ static cibool ASAPInfo_IsValidChar(int c);
 static int ASAPInfo_PackExt(const char *ext);
 static cibool ASAPInfo_ParseCmc(ASAPInfo *self, unsigned char const *module, int moduleLen, ASAPModuleType type);
 static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, int pos);
-static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int minVal, int maxVal);
+static int ASAPInfo_ParseDec(const char *s, int minVal, int maxVal);
 static cibool ASAPInfo_ParseDlt(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseDltSong(ASAPInfo *self, unsigned char const *module, cibool *seen, int pos);
 static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int moduleLen);
-static int ASAPInfo_ParseHex(unsigned char const *module, int moduleIndex);
+static int ASAPInfo_ParseHex(const char *s);
 static cibool ASAPInfo_ParseModule(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static cibool ASAPInfo_ParseMpt(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseMptSong(ASAPInfo *self, unsigned char const *module, cibool *globalSeen, int songLen, int pos);
 static cibool ASAPInfo_ParseRmt(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseRmtSong(ASAPInfo *self, unsigned char const *module, cibool *globalSeen, int songLen, int posShift, int pos);
 static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int moduleLen);
-static int ASAPInfo_ParseText(unsigned char const *module, int moduleIndex);
 static cibool ASAPInfo_ParseTm2(ASAPInfo *self, unsigned char const *module, int moduleLen);
 static void ASAPInfo_ParseTm2Song(ASAPInfo *self, unsigned char const *module, int pos);
 static cibool ASAPInfo_ParseTmc(ASAPInfo *self, unsigned char const *module, int moduleLen);
@@ -3230,26 +3229,24 @@ static void ASAPInfo_ParseCmcSong(ASAPInfo *self, unsigned char const *module, i
 	ASAPInfo_AddSong(self, playerCalls);
 }
 
-static int ASAPInfo_ParseDec(unsigned char const *module, int moduleIndex, int minVal, int maxVal)
+static int ASAPInfo_ParseDec(const char *s, int minVal, int maxVal)
 {
-	if (module[moduleIndex] == 13)
-		return -1;
+	int r = 0;
+	int len = (int) strlen(s);
 	{
-		int r;
-		for (r = 0;;) {
-			int c = module[moduleIndex++];
-			if (c == 13) {
-				if (r < minVal)
-					return -1;
-				return r;
-			}
+		int i;
+		for (i = 0; i < len; i++) {
+			int c = s[i];
 			if (c < 48 || c > 57)
 				return -1;
-			r = 10 * r + c - 48;
+			r = r * 10 + c - 48;
 			if (r > maxVal)
 				return -1;
 		}
 	}
+	if (r < minVal)
+		return -1;
+	return r;
 }
 
 static cibool ASAPInfo_ParseDlt(ASAPInfo *self, unsigned char const *module, int moduleLen)
@@ -3426,18 +3423,17 @@ static cibool ASAPInfo_ParseFc(ASAPInfo *self, unsigned char const *module, int 
 	return TRUE;
 }
 
-static int ASAPInfo_ParseHex(unsigned char const *module, int moduleIndex)
+static int ASAPInfo_ParseHex(const char *s)
 {
-	if (module[moduleIndex] == 13)
-		return -1;
+	int r = 0;
+	int len = (int) strlen(s);
 	{
-		int r;
-		for (r = 0;;) {
-			int c = module[moduleIndex++];
-			if (c == 13)
-				return r;
+		int i;
+		for (i = 0; i < len; i++) {
+			int c;
 			if (r > 4095)
 				return -1;
+			c = s[i];
 			r <<= 4;
 			if (c >= 48 && c <= 57)
 				r += c - 48;
@@ -3449,6 +3445,7 @@ static int ASAPInfo_ParseHex(unsigned char const *module, int moduleIndex)
 				return -1;
 		}
 	}
+	return r;
 }
 
 static cibool ASAPInfo_ParseModule(ASAPInfo *self, unsigned char const *module, int moduleLen)
@@ -3779,98 +3776,106 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 	moduleIndex = 5;
 	durationIndex = 0;
 	while (module[moduleIndex] != 255) {
-		if (moduleIndex + 8 >= moduleLen)
-			return FALSE;
-		if (ASAPInfo_HasStringAt(module, moduleIndex, "AUTHOR ")) {
-			int len;
-			if ((len = ASAPInfo_ParseText(module, moduleIndex + 7)) == -1)
+		int lineStart = moduleIndex;
+		int tagLen;
+		int argStart;
+		int argLen;
+		while (module[moduleIndex] > 32) {
+			if (++moduleIndex >= moduleLen)
 				return FALSE;
-			if (len > 0)
-				((char *) memcpy(self->author, module + moduleIndex + 7 + 1, len))[len] = '\0';
 		}
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "NAME ")) {
-			int len;
-			if ((len = ASAPInfo_ParseText(module, moduleIndex + 5)) == -1)
-				return FALSE;
-			if (len > 0)
-				((char *) memcpy(self->title, module + moduleIndex + 5 + 1, len))[len] = '\0';
-		}
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "DATE ")) {
-			int len;
-			if ((len = ASAPInfo_ParseText(module, moduleIndex + 5)) == -1)
-				return FALSE;
-			if (len > 0)
-				((char *) memcpy(self->date, module + moduleIndex + 5 + 1, len))[len] = '\0';
-		}
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "SONGS ")) {
-
-				if ((self->songs = ASAPInfo_ParseDec(module, moduleIndex + 6, 1, 32)) == -1)
+		tagLen = moduleIndex - lineStart;
+		argStart = -1;
+		argLen = -1;
+		for (;;) {
+			int c = module[moduleIndex];
+			if (c > 32) {
+				if (!ASAPInfo_CheckValidChar(c))
 					return FALSE;
-		}
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "DEFSONG ")) {
-
-				if ((self->defaultSong = ASAPInfo_ParseDec(module, moduleIndex + 8, 0, 31)) == -1)
-					return FALSE;
-		}
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "STEREO\r"))
-			self->channels = 2;
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "NTSC\r"))
-			self->ntsc = TRUE;
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "TIME ")) {
-			int len;
-			char s[10];
-			int duration;
-			if (durationIndex >= 32)
-				return FALSE;
-			moduleIndex += 5;
-			for (len = 0; module[moduleIndex + len] != 13; len++) {
+				if (argStart < 0)
+					argStart = moduleIndex;
+				argLen = -1;
 			}
-			if (len > 5 && ASAPInfo_HasStringAt(module, moduleIndex + len - 5, " LOOP")) {
-				self->loops[durationIndex] = TRUE;
-				len -= 5;
+			else {
+				if (argLen < 0)
+					argLen = moduleIndex - argStart;
+				if (c == 10)
+					break;
 			}
-			if (len > 9)
-				return FALSE;
-			((char *) memcpy(s, module + moduleIndex, len))[len] = '\0';
-			if ((duration = ASAPInfo_ParseDuration(s)) == -1)
-				return FALSE;
-			self->durations[durationIndex++] = duration;
-		}
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "TYPE "))
-			type = module[moduleIndex + 5];
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "FASTPLAY ")) {
-
-				if ((self->fastplay = ASAPInfo_ParseDec(module, moduleIndex + 9, 1, 32767)) == -1)
-					return FALSE;
-		}
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "MUSIC ")) {
-
-				if ((self->music = ASAPInfo_ParseHex(module, moduleIndex + 6)) == -1)
-					return FALSE;
-		}
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "INIT ")) {
-
-				if ((self->init = ASAPInfo_ParseHex(module, moduleIndex + 5)) == -1)
-					return FALSE;
-		}
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "PLAYER ")) {
-
-				if ((self->player = ASAPInfo_ParseHex(module, moduleIndex + 7)) == -1)
-					return FALSE;
-		}
-		else if (ASAPInfo_HasStringAt(module, moduleIndex, "COVOX ")) {
-			if ((self->covoxAddr = ASAPInfo_ParseHex(module, moduleIndex + 6)) == -1)
-				return FALSE;
-			if (self->covoxAddr != 54784)
-				return FALSE;
-			self->channels = 2;
-		}
-		while (module[moduleIndex++] != 13) {
-			if (moduleIndex >= moduleLen)
+			if (++moduleIndex >= moduleLen)
 				return FALSE;
 		}
-		if (module[moduleIndex++] != 10)
+		if (++moduleIndex + 6 >= moduleLen)
 			return FALSE;
+		if (tagLen <= 8) {
+			char tag[9];
+			((char *) memcpy(tag, module + lineStart, tagLen))[tagLen] = '\0';
+			if (argStart >= 0 && argLen <= 129) {
+				char arg[130];
+				((char *) memcpy(arg, module + argStart, argLen))[argLen] = '\0';
+				if (argLen >= 3 && arg[0] == 34 && arg[argLen - 1] == 34 && strcmp(arg, "\"<?>\"") != 0) {
+					if (strcmp(tag, "AUTHOR") == 0)
+						((char *) memcpy(self->author, arg + 1, argLen - 2))[argLen - 2] = '\0';
+					else if (strcmp(tag, "NAME") == 0)
+						((char *) memcpy(self->title, arg + 1, argLen - 2))[argLen - 2] = '\0';
+					else if (strcmp(tag, "DATE") == 0)
+						((char *) memcpy(self->date, arg + 1, argLen - 2))[argLen - 2] = '\0';
+				}
+				else if (strcmp(tag, "SONGS") == 0) {
+
+						if ((self->songs = ASAPInfo_ParseDec(arg, 1, 32)) == -1)
+							return FALSE;
+				}
+				else if (strcmp(tag, "DEFSONG") == 0) {
+
+						if ((self->defaultSong = ASAPInfo_ParseDec(arg, 0, 31)) == -1)
+							return FALSE;
+				}
+				else if (strcmp(tag, "TIME") == 0) {
+					if (durationIndex >= 32)
+						return FALSE;
+					if (argLen > 5 && ASAPInfo_HasStringAt(module, argStart + argLen - 5, " LOOP")) {
+						self->loops[durationIndex] = TRUE;
+						((char *) memcpy(arg, arg + 0, argLen - 5))[argLen - 5] = '\0';
+					}
+					if ((self->durations[durationIndex++] = ASAPInfo_ParseDuration(arg)) == -1)
+						return FALSE;
+				}
+				else if (strcmp(tag, "TYPE") == 0)
+					type = arg[0];
+				else if (strcmp(tag, "FASTPLAY") == 0) {
+
+						if ((self->fastplay = ASAPInfo_ParseDec(arg, 1, 32767)) == -1)
+							return FALSE;
+				}
+				else if (strcmp(tag, "MUSIC") == 0) {
+
+						if ((self->music = ASAPInfo_ParseHex(arg)) == -1)
+							return FALSE;
+				}
+				else if (strcmp(tag, "INIT") == 0) {
+
+						if ((self->init = ASAPInfo_ParseHex(arg)) == -1)
+							return FALSE;
+				}
+				else if (strcmp(tag, "PLAYER") == 0) {
+
+						if ((self->player = ASAPInfo_ParseHex(arg)) == -1)
+							return FALSE;
+				}
+				else if (strcmp(tag, "COVOX") == 0) {
+					if ((self->covoxAddr = ASAPInfo_ParseHex(arg)) == -1)
+						return FALSE;
+					if (self->covoxAddr != 54784)
+						return FALSE;
+					self->channels = 2;
+				}
+			}
+			else if (strcmp(tag, "STEREO") == 0)
+				self->channels = 2;
+			else if (strcmp(tag, "NTSC") == 0)
+				self->ntsc = TRUE;
+		}
 	}
 	if (self->defaultSong >= self->songs)
 		return FALSE;
@@ -3910,24 +3915,6 @@ static cibool ASAPInfo_ParseSap(ASAPInfo *self, unsigned char const *module, int
 		return FALSE;
 	self->headerLen = moduleIndex;
 	return TRUE;
-}
-
-static int ASAPInfo_ParseText(unsigned char const *module, int moduleIndex)
-{
-	if (module[moduleIndex] != 34)
-		return -1;
-	if (ASAPInfo_HasStringAt(module, moduleIndex + 1, "<?>\"\r"))
-		return 0;
-	{
-		int len;
-		for (len = 0;; len++) {
-			int c = module[moduleIndex + 1 + len];
-			if (c == 34 && module[moduleIndex + 2 + len] == 13)
-				return len;
-			if (!ASAPInfo_CheckValidChar(c))
-				return -1;
-		}
-	}
 }
 
 static cibool ASAPInfo_ParseTm2(ASAPInfo *self, unsigned char const *module, int moduleLen)

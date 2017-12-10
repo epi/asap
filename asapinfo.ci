@@ -1348,49 +1348,31 @@ public class ASAPInfo
 		return true;
 	}
 
-	static int ParseText(byte[] module, int moduleIndex)
+	static int ParseDec(string s, int minVal, int maxVal)
 	{
-		if (module[moduleIndex] != '"')
-			throw "Missing quote";
-		if (HasStringAt(module, moduleIndex + 1, "<?>\"\r"))
-			return 0;
-		for (int len = 0; ; len++) {
-			int c = module[moduleIndex + 1 + len];
-			if (c == '"' && module[moduleIndex + 2 + len] == '\r')
-				return len;
-			CheckValidChar(c);
-		}
-	}
-
-	static int ParseDec(byte[] module, int moduleIndex, int minVal, int maxVal)
-	{
-		if (module[moduleIndex] == '\r')
-			throw "Missing number";
-		for (int r = 0;;) {
-			int c = module[moduleIndex++];
-			if (c == '\r') {
-				if (r < minVal)
-					throw "Number too small";
-				return r;
-			}
+		int r = 0;
+		int len = s.Length;
+		for (int i = 0; i < len; i++) {
+			int c = s[i];
 			if (c < '0' || c > '9')
 				throw "Invalid number";
-			r = 10 * r + c - '0';
+			r = r * 10 + c - '0';
 			if (r > maxVal)
 				throw "Number too big";
 		}
+		if (r < minVal)
+			throw "Number too small";
+		return r;
 	}
 
-	static int ParseHex(byte[] module, int moduleIndex)
+	static int ParseHex(string s)
 	{
-		if (module[moduleIndex] == '\r')
-			throw "Missing number";
-		for (int r = 0;;) {
-			int c = module[moduleIndex++];
-			if (c == '\r')
-				return r;
+		int r = 0;
+		int len = s.Length;
+		for (int i = 0; i < len; i++) {
 			if (r > 0xfff)
 				throw "Number too big";
+			int c = s[i];
 			r <<= 4;
 			if (c >= '0' && c <= '9')
 				r += c - '0';
@@ -1401,6 +1383,7 @@ public class ASAPInfo
 			else
 				throw "Invalid number";
 		}
+		return r;
 	}
 
 	/// Returns the number of milliseconds represented by the given string.
@@ -1424,71 +1407,89 @@ public class ASAPInfo
 		int moduleIndex = 5;
 		int durationIndex = 0;
 		while (module[moduleIndex] != 0xff) {
-			if (moduleIndex + 8 >= moduleLen)
-				throw "Missing binary part";
-			macro TAG_IS(s)               ( HasStringAt(module, moduleIndex, s) )
-			macro SET_TEXT(v, i) {
-				int len = ParseText(module, moduleIndex + i);
-				if (len > 0)
-					v = module.ToString(moduleIndex + i + 1, len);
+			// find where the tag ends
+			int lineStart = moduleIndex;
+			while (module[moduleIndex] > ' ') {
+				if (++moduleIndex >= moduleLen)
+					throw "Invalid SAP file";
 			}
-			if (TAG_IS("AUTHOR ")) {
-				SET_TEXT(Author, 7);
-			}
-			else if (TAG_IS("NAME ")) {
-				SET_TEXT(Title, 5);
-			}
-			else if (TAG_IS("DATE ")) {
-				SET_TEXT(Date, 5);
-			}
-			else if (TAG_IS("SONGS "))
-				Songs = ParseDec(module, moduleIndex + 6, 1, MaxSongs);
-			else if (TAG_IS("DEFSONG "))
-				DefaultSong = ParseDec(module, moduleIndex + 8, 0, MaxSongs - 1);
-			else if (TAG_IS("STEREO\r"))
-				Channels = 2;
-			else if (TAG_IS("NTSC\r"))
-				Ntsc = true;
-			else if (TAG_IS("TIME ")) {
-				if (durationIndex >= MaxSongs)
-					throw "Too many TIME tags";
-				moduleIndex += 5;
-				int len;
-				for (len = 0; module[moduleIndex + len] != '\r'; len++) { }
-				if (len > 5 && HasStringAt(module, moduleIndex + len - 5, " LOOP")) {
-					Loops[durationIndex] = true;
-					len -= 5;
-				}
-				if (len > 9)
-					throw "Invalid TIME tag";
-				string(9) s = module.ToString(moduleIndex, len);
-				int duration = ParseDuration(s);
-				Durations[durationIndex++] = duration;
-			}
-			else if (TAG_IS("TYPE "))
-				type = module[moduleIndex + 5];
-			else if (TAG_IS("FASTPLAY "))
-				Fastplay = ParseDec(module, moduleIndex + 9, 1, 32767);
-			else if (TAG_IS("MUSIC "))
-				Music = ParseHex(module, moduleIndex + 6);
-			else if (TAG_IS("INIT "))
-				Init = ParseHex(module, moduleIndex + 5);
-			else if (TAG_IS("PLAYER "))
-				Player = ParseHex(module, moduleIndex + 7);
-			else if (TAG_IS("COVOX ")) {
-				CovoxAddr = ParseHex(module, moduleIndex + 6);
-				if (CovoxAddr != 0xd600)
-					throw "COVOX should be D600";
-				Channels = 2;
-			}
+			int tagLen = moduleIndex - lineStart;
 
-			while (module[moduleIndex++] != '\r') {
-				if (moduleIndex >= moduleLen)
-					throw "Malformed SAP header";
+			// find where is the argument, if any
+			int argStart = -1;
+			int argLen = -1;
+			for (;;) {
+				int c = module[moduleIndex];
+				if (c > ' ') {
+					CheckValidChar(c);
+					if (argStart < 0)
+						argStart = moduleIndex;
+					argLen = -1;
+				}
+				else {
+					if (argLen < 0)
+						argLen = moduleIndex - argStart;
+					if (c == '\n')
+						break;
+				}
+				if (++moduleIndex >= moduleLen)
+					throw "Invalid SAP file";
 			}
-			if (module[moduleIndex++] != '\n')
-				throw "Malformed SAP header";
+			if (++moduleIndex + 6 >= moduleLen)
+				throw "Invalid SAP file";
+
+			// handle tags, ignore unknown
+			const int maxTagLen = "FASTPLAY".Length;
+			if (tagLen <= maxTagLen) {
+				string(maxTagLen) tag = module.ToString(lineStart, tagLen);
+				if (argStart >= 0 && argLen <= MaxTextLength + 2) {
+					string(MaxTextLength + 2) arg = module.ToString(argStart, argLen);
+					if (argLen >= 3 && arg[0] == '"' && arg[argLen - 1] == '"'
+					 && arg != "\"<?>\"") {
+						if (tag == "AUTHOR")
+							Author = arg.Substring(1, argLen - 2);
+						else if (tag == "NAME")
+							Title = arg.Substring(1, argLen - 2);
+						else if (tag == "DATE")
+							Date = arg.Substring(1, argLen - 2);
+					}
+					else if (tag == "SONGS")
+						Songs = ParseDec(arg, 1, MaxSongs);
+					else if (tag == "DEFSONG")
+						DefaultSong = ParseDec(arg, 0, MaxSongs - 1);
+					else if (tag == "TIME") {
+						if (durationIndex >= MaxSongs)
+							throw "Too many TIME tags";
+						if (argLen > 5 && HasStringAt(module, argStart + argLen - 5, " LOOP")) {
+							Loops[durationIndex] = true;
+							arg = arg.Substring(0, argLen - 5);
+						}
+						Durations[durationIndex++] = ParseDuration(arg);
+					}
+					else if (tag == "TYPE")
+						type = arg[0];
+					else if (tag == "FASTPLAY")
+						Fastplay = ParseDec(arg, 1, 32767);
+					else if (tag == "MUSIC")
+						Music = ParseHex(arg);
+					else if (tag == "INIT")
+						Init = ParseHex(arg);
+					else if (tag == "PLAYER")
+						Player = ParseHex(arg);
+					else if (tag == "COVOX") {
+						CovoxAddr = ParseHex(arg);
+						if (CovoxAddr != 0xd600)
+							throw "COVOX should be D600";
+						Channels = 2;
+					}
+				}
+				else if (tag == "STEREO")
+					Channels = 2;
+				else if (tag == "NTSC")
+					Ntsc = true;
+			}
 		}
+
 		if (DefaultSong >= Songs)
 			throw "DEFSONG too big";
 		switch (type) {
