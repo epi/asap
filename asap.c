@@ -165,6 +165,7 @@ static void PokeyChannel_Slope(PokeyChannel *self, Pokey *pokey, PokeyPair const
 struct Pokey {
 	int audctl;
 	int divCycles;
+	int iirAcc;
 	cibool init;
 	int irqst;
 	int polyIndex;
@@ -174,6 +175,7 @@ struct Pokey {
 	PokeyChannel channels[4];
 	int deltaBuffer[888];
 };
+static void Pokey_AccumulateTrailing(Pokey *self, int i);
 static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int delta);
 static int Pokey_CheckIrq(Pokey *self, int cycle, int nextEventCycle);
 static void Pokey_EndFrame(Pokey *self, PokeyPair const *pokeys, int cycle);
@@ -183,11 +185,10 @@ static void Pokey_Initialize(Pokey *self);
 static cibool Pokey_IsSilent(Pokey const *self);
 static void Pokey_Mute(Pokey *self, int mask);
 static int Pokey_Poke(Pokey *self, PokeyPair const *pokeys, int addr, int data, int cycle);
+static int Pokey_StoreSample(Pokey *self, unsigned char *buffer, int bufferOffset, int i, ASAPSampleFormat format);
 
 struct PokeyPair {
 	int extraPokeyMask;
-	int iirAccLeft;
-	int iirAccRight;
 	int readySamplesEnd;
 	int readySamplesStart;
 	int sampleFactor;
@@ -205,7 +206,6 @@ static cibool PokeyPair_IsSilent(PokeyPair const *self);
 static int PokeyPair_Peek(PokeyPair const *self, int addr, int cycle);
 static int PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
 static void PokeyPair_StartFrame(PokeyPair *self);
-static int PokeyPair_StoreSample(unsigned char *buffer, int bufferOffset, int sample, ASAPSampleFormat format);
 
 struct ASAP {
 	int blocksPlayed;
@@ -6823,6 +6823,11 @@ static int FlashPackItem_WriteValueTo(FlashPackItem const *self, unsigned char *
 	}
 }
 
+static void Pokey_AccumulateTrailing(Pokey *self, int i)
+{
+	self->iirAcc += self->deltaBuffer[i] + self->deltaBuffer[i + 1];
+}
+
 static void Pokey_AddDelta(Pokey *self, PokeyPair const *pokeys, int cycle, int delta)
 {
 	int i = cycle * pokeys->sampleFactor + pokeys->sampleOffset;
@@ -6936,6 +6941,7 @@ static void Pokey_Initialize(Pokey *self)
 	self->reloadCycles3 = 28;
 	self->polyIndex = 60948015;
 	memset(self->deltaBuffer, 0, sizeof(self->deltaBuffer));
+	self->iirAcc = 0;
 }
 
 static cibool Pokey_IsSilent(Pokey const *self)
@@ -7163,6 +7169,31 @@ static int Pokey_Poke(Pokey *self, PokeyPair const *pokeys, int addr, int data, 
 	return nextEventCycle;
 }
 
+static int Pokey_StoreSample(Pokey *self, unsigned char *buffer, int bufferOffset, int i, ASAPSampleFormat format)
+{
+	int sample;
+	self->iirAcc += self->deltaBuffer[i] - (self->iirAcc * 3 >> 10);
+	sample = self->iirAcc >> 11;
+	if (sample < -32767)
+		sample = -32767;
+	else if (sample > 32767)
+		sample = 32767;
+	switch (format) {
+	case ASAPSampleFormat_U8:
+		buffer[bufferOffset++] = (sample >> 8) + 128;
+		break;
+	case ASAPSampleFormat_S16_L_E:
+		buffer[bufferOffset++] = (unsigned char) sample;
+		buffer[bufferOffset++] = (unsigned char) (sample >> 8);
+		break;
+	case ASAPSampleFormat_S16_B_E:
+		buffer[bufferOffset++] = (unsigned char) (sample >> 8);
+		buffer[bufferOffset++] = (unsigned char) sample;
+		break;
+	}
+	return bufferOffset;
+}
+
 static void PokeyChannel_DoStimer(PokeyChannel *self, int cycle)
 {
 	if (self->tickCycle != 8388608)
@@ -7306,29 +7337,20 @@ static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int buffer
 {
 	int i = self->readySamplesStart;
 	int samplesEnd = self->readySamplesEnd;
-	int accLeft;
-	int accRight;
 	if (blocks < samplesEnd - i)
 		samplesEnd = i + blocks;
 	else
 		blocks = samplesEnd - i;
-	accLeft = self->iirAccLeft;
-	accRight = self->iirAccRight;
 	for (; i < samplesEnd; i++) {
-		accLeft += self->basePokey.deltaBuffer[i] - (accLeft * 3 >> 10);
-		bufferOffset = PokeyPair_StoreSample(buffer, bufferOffset, accLeft, format);
-		if (self->extraPokeyMask != 0) {
-			accRight += self->extraPokey.deltaBuffer[i] - (accRight * 3 >> 10);
-			bufferOffset = PokeyPair_StoreSample(buffer, bufferOffset, accRight, format);
-		}
+		bufferOffset = Pokey_StoreSample(&self->basePokey, buffer, bufferOffset, i, format);
+		if (self->extraPokeyMask != 0)
+			bufferOffset = Pokey_StoreSample(&self->extraPokey, buffer, bufferOffset, i, format);
 	}
 	if (i == self->readySamplesEnd) {
-		accLeft += self->basePokey.deltaBuffer[i] + self->basePokey.deltaBuffer[i + 1];
-		accRight += self->extraPokey.deltaBuffer[i] + self->extraPokey.deltaBuffer[i + 1];
+		Pokey_AccumulateTrailing(&self->basePokey, i);
+		Pokey_AccumulateTrailing(&self->extraPokey, i);
 	}
 	self->readySamplesStart = i;
-	self->iirAccLeft = accLeft;
-	self->iirAccRight = accRight;
 	return blocks;
 }
 
@@ -7341,8 +7363,6 @@ static void PokeyPair_Initialize(PokeyPair *self, cibool ntsc, cibool stereo)
 	self->sampleOffset = 0;
 	self->readySamplesStart = 0;
 	self->readySamplesEnd = 0;
-	self->iirAccLeft = 0;
-	self->iirAccRight = 0;
 }
 
 static cibool PokeyPair_IsSilent(PokeyPair const *self)
@@ -7384,27 +7404,4 @@ static void PokeyPair_StartFrame(PokeyPair *self)
 	memset(self->basePokey.deltaBuffer, 0, sizeof(self->basePokey.deltaBuffer));
 	if (self->extraPokeyMask != 0)
 		memset(self->extraPokey.deltaBuffer, 0, sizeof(self->extraPokey.deltaBuffer));
-}
-
-static int PokeyPair_StoreSample(unsigned char *buffer, int bufferOffset, int sample, ASAPSampleFormat format)
-{
-	sample >>= 11;
-	if (sample < -32767)
-		sample = -32767;
-	else if (sample > 32767)
-		sample = 32767;
-	switch (format) {
-	case ASAPSampleFormat_U8:
-		buffer[bufferOffset++] = (sample >> 8) + 128;
-		break;
-	case ASAPSampleFormat_S16_L_E:
-		buffer[bufferOffset++] = (unsigned char) sample;
-		buffer[bufferOffset++] = (unsigned char) (sample >> 8);
-		break;
-	case ASAPSampleFormat_S16_B_E:
-		buffer[bufferOffset++] = (unsigned char) (sample >> 8);
-		buffer[bufferOffset++] = (unsigned char) sample;
-		break;
-	}
-	return bufferOffset;
 }

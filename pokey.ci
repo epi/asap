@@ -180,6 +180,8 @@ class Pokey
 	// as we emulate whole 6502 instructions and interpolate samples.
 	int[SampleRate * 312 * 114 / 1773447 + 4] DeltaBuffer;
 
+	int IirAcc;
+
 	void Initialize()
 	{
 		for (int i = 0; i < 4; i++)
@@ -193,6 +195,7 @@ class Pokey
 		ReloadCycles3 = 28;
 		PolyIndex = 15 * 31 * 131071;
 		DeltaBuffer.Clear();
+		IirAcc = 0;
 	}
 
 	void AddDelta(PokeyPair pokeys, int cycle, int delta)
@@ -500,6 +503,35 @@ class Pokey
 		}
 		return nextEventCycle;
 	}
+
+	int StoreSample(byte[] buffer, int bufferOffset, int i, ASAPSampleFormat format)
+	{
+		IirAcc += DeltaBuffer[i] - (IirAcc * 3 >> 10);
+		int sample = IirAcc >> 11;
+		if (sample < -32767)
+			sample = -32767;
+		else if (sample > 32767)
+			sample = 32767;
+		switch (format) {
+		case ASAPSampleFormat.U8:
+			buffer[bufferOffset++] = (sample >> 8) + 128;
+			break;
+		case ASAPSampleFormat.S16LE:
+			buffer[bufferOffset++] = sample.LowByte;
+			buffer[bufferOffset++] = (sample >> 8).LowByte;
+			break;
+		case ASAPSampleFormat.S16BE:
+			buffer[bufferOffset++] = (sample >> 8).LowByte;
+			buffer[bufferOffset++] = sample.LowByte;
+			break;
+		}
+		return bufferOffset;
+	}
+
+	void AccumulateTrailing(int i)
+	{
+		IirAcc += DeltaBuffer[i] + DeltaBuffer[i + 1];
+	}
 }
 
 #if APOKEYSND
@@ -522,9 +554,6 @@ class PokeyPair
 
 	int ReadySamplesStart;
 	int ReadySamplesEnd;
-
-	int IirAccLeft;
-	int IirAccRight;
 
 #if APOKEYSND
 	public
@@ -562,8 +591,6 @@ class PokeyPair
 		SampleOffset = 0;
 		ReadySamplesStart = 0;
 		ReadySamplesEnd = 0;
-		IirAccLeft = 0;
-		IirAccRight = 0;
 	}
 
 #if APOKEYSND
@@ -624,29 +651,6 @@ class PokeyPair
 		return ReadySamplesEnd;
 	}
 
-	static int StoreSample(byte[] buffer, int bufferOffset, int sample, ASAPSampleFormat format)
-	{
-		sample >>= 11;
-		if (sample < -32767)
-			sample = -32767;
-		else if (sample > 32767)
-			sample = 32767;
-		switch (format) {
-		case ASAPSampleFormat.U8:
-			buffer[bufferOffset++] = (sample >> 8) + 128;
-			break;
-		case ASAPSampleFormat.S16LE:
-			buffer[bufferOffset++] = sample.LowByte;
-			buffer[bufferOffset++] = (sample >> 8).LowByte;
-			break;
-		case ASAPSampleFormat.S16BE:
-			buffer[bufferOffset++] = (sample >> 8).LowByte;
-			buffer[bufferOffset++] = sample.LowByte;
-			break;
-		}
-		return bufferOffset;
-	}
-
 	/// Fills buffer with samples from `DeltaBuffer`.
 #if APOKEYSND
 	public
@@ -659,23 +663,16 @@ class PokeyPair
 			samplesEnd = i + blocks;
 		else
 			blocks = samplesEnd - i;
-		int accLeft = IirAccLeft;
-		int accRight = IirAccRight;
 		for (; i < samplesEnd; i++) {
-			accLeft += BasePokey.DeltaBuffer[i] - (accLeft * 3 >> 10);
-			bufferOffset = StoreSample(buffer, bufferOffset, accLeft, format);
-			if (ExtraPokeyMask != 0) {
-				accRight += ExtraPokey.DeltaBuffer[i] - (accRight * 3 >> 10);
-				bufferOffset = StoreSample(buffer, bufferOffset, accRight, format);
-			}
+			bufferOffset = BasePokey.StoreSample(buffer, bufferOffset, i, format);
+			if (ExtraPokeyMask != 0)
+				bufferOffset = ExtraPokey.StoreSample(buffer, bufferOffset, i, format);
 		}
 		if (i == ReadySamplesEnd) {
-			accLeft += BasePokey.DeltaBuffer[i] + BasePokey.DeltaBuffer[i + 1];
-			accRight += ExtraPokey.DeltaBuffer[i] + ExtraPokey.DeltaBuffer[i + 1];
+			BasePokey.AccumulateTrailing(i);
+			ExtraPokey.AccumulateTrailing(i);
 		}
 		ReadySamplesStart = i;
-		IirAccLeft = accLeft;
-		IirAccRight = accRight;
 #if APOKEYSND
 		return bufferOffset;
 #else
