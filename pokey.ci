@@ -1,6 +1,6 @@
 // pokey.ci - POKEY chip emulator
 //
-// Copyright (C) 2010-2014  Piotr Fusik
+// Copyright (C) 2010-2017  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -287,17 +287,13 @@ class Pokey
 
 	int Poke(PokeyPair pokeys, int addr, int data, int cycle)
 	{
-		macro DO_STORE(reg) {
-			if (data == reg)
-				break;
-			GenerateUntilCycle(pokeys, cycle);
-			reg = data;
-		}
-
 		int nextEventCycle = NeverCycle;
 		switch (addr & 0xf) {
 		case 0x00:
-			DO_STORE(Channels[0].Audf);
+			if (data == Channels[0].Audf)
+				break;
+			GenerateUntilCycle(pokeys, cycle);
+			Channels[0].Audf = data;
 			switch (Audctl & 0x50) {
 			case 0x00:
 				Channels[0].PeriodCycles = DivCycles * (data + 1);
@@ -322,7 +318,10 @@ class Pokey
 			Channels[0].SetAudc(this, pokeys, data, cycle);
 			break;
 		case 0x02:
-			DO_STORE(Channels[1].Audf);
+			if (data == Channels[1].Audf)
+				break;
+			GenerateUntilCycle(pokeys, cycle);
+			Channels[1].Audf = data;
 			switch (Audctl & 0x50) {
 			case 0x00:
 			case 0x40:
@@ -341,7 +340,10 @@ class Pokey
 			Channels[1].SetAudc(this, pokeys, data, cycle);
 			break;
 		case 0x04:
-			DO_STORE(Channels[2].Audf);
+			if (data == Channels[2].Audf)
+				break;
+			GenerateUntilCycle(pokeys, cycle);
+			Channels[2].Audf = data;
 			switch (Audctl & 0x28) {
 			case 0x00:
 				Channels[2].PeriodCycles = DivCycles * (data + 1);
@@ -366,7 +368,10 @@ class Pokey
 			Channels[2].SetAudc(this, pokeys, data, cycle);
 			break;
 		case 0x06:
-			DO_STORE(Channels[3].Audf);
+			if (data == Channels[3].Audf)
+				break;
+			GenerateUntilCycle(pokeys, cycle);
+			Channels[3].Audf = data;
 			switch (Audctl & 0x28) {
 			case 0x00:
 			case 0x20:
@@ -385,7 +390,10 @@ class Pokey
 			Channels[3].SetAudc(this, pokeys, data, cycle);
 			break;
 		case 0x08:
-			DO_STORE(Audctl);
+			if (data == Audctl)
+				break;
+			GenerateUntilCycle(pokeys, cycle);
+			Audctl = data;
 			DivCycles = (data & 1) != 0 ? 114 : 28;
 			// TODO: TickCycles
 			switch (data & 0x50) {
@@ -459,7 +467,10 @@ class Pokey
 			}
 			break;
 		case 0x0f:
-			DO_STORE(Skctl);
+			if (data == Skctl)
+				break;
+			GenerateUntilCycle(pokeys, cycle);
+			Skctl = data;
 			bool init = (data & 3) == 0;
 			if (Init && !init)
 				PolyIndex = ((Audctl & 0x80) != 0 ? 15 * 31 * 511 - 1 : 15 * 31 * 131071 - 1) - cycle;
@@ -613,6 +624,29 @@ class PokeyPair
 		return ReadySamplesEnd;
 	}
 
+	static int StoreSample(byte[] buffer, int bufferOffset, int sample, ASAPSampleFormat format)
+	{
+		sample >>= 11;
+		if (sample < -32767)
+			sample = -32767;
+		else if (sample > 32767)
+			sample = 32767;
+		switch (format) {
+		case ASAPSampleFormat.U8:
+			buffer[bufferOffset++] = (sample >> 8) + 128;
+			break;
+		case ASAPSampleFormat.S16LE:
+			buffer[bufferOffset++] = sample.LowByte;
+			buffer[bufferOffset++] = (sample >> 8).LowByte;
+			break;
+		case ASAPSampleFormat.S16BE:
+			buffer[bufferOffset++] = (sample >> 8).LowByte;
+			buffer[bufferOffset++] = sample.LowByte;
+			break;
+		}
+		return bufferOffset;
+	}
+
 	/// Fills buffer with samples from `DeltaBuffer`.
 #if APOKEYSND
 	public
@@ -629,31 +663,10 @@ class PokeyPair
 		int accRight = IirAccRight;
 		for (; i < samplesEnd; i++) {
 			accLeft += BasePokey.DeltaBuffer[i] - (accLeft * 3 >> 10);
-			int sample = accLeft >> 11;
-			macro STORE_SAMPLE() {
-				if (sample < -32767)
-					sample = -32767;
-				else if (sample > 32767)
-					sample = 32767;
-				switch (format) {
-				case ASAPSampleFormat.U8:
-					buffer[bufferOffset++] = (sample >> 8) + 128;
-					break;
-				case ASAPSampleFormat.S16LE:
-					buffer[bufferOffset++] = sample.LowByte;
-					buffer[bufferOffset++] = (sample >> 8).LowByte;
-					break;
-				case ASAPSampleFormat.S16BE:
-					buffer[bufferOffset++] = (sample >> 8).LowByte;
-					buffer[bufferOffset++] = sample.LowByte;
-					break;
-				}
-			}
-			STORE_SAMPLE();
+			bufferOffset = StoreSample(buffer, bufferOffset, accLeft, format);
 			if (ExtraPokeyMask != 0) {
 				accRight += ExtraPokey.DeltaBuffer[i] - (accRight * 3 >> 10);
-				sample = accRight >> 11;
-				STORE_SAMPLE();
+				bufferOffset = StoreSample(buffer, bufferOffset, accRight, format);
 			}
 		}
 		if (i == ReadySamplesEnd) {

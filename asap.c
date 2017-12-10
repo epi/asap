@@ -205,6 +205,7 @@ static cibool PokeyPair_IsSilent(PokeyPair const *self);
 static int PokeyPair_Peek(PokeyPair const *self, int addr, int cycle);
 static int PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
 static void PokeyPair_StartFrame(PokeyPair *self);
+static int PokeyPair_StoreSample(unsigned char *buffer, int bufferOffset, int sample, ASAPSampleFormat format);
 
 struct ASAP {
 	int blocksPlayed;
@@ -7314,46 +7315,11 @@ static int PokeyPair_Generate(PokeyPair *self, unsigned char *buffer, int buffer
 	accLeft = self->iirAccLeft;
 	accRight = self->iirAccRight;
 	for (; i < samplesEnd; i++) {
-		int sample;
 		accLeft += self->basePokey.deltaBuffer[i] - (accLeft * 3 >> 10);
-		sample = accLeft >> 11;
-		if (sample < -32767)
-			sample = -32767;
-		else if (sample > 32767)
-			sample = 32767;
-		switch (format) {
-		case ASAPSampleFormat_U8:
-			buffer[bufferOffset++] = (sample >> 8) + 128;
-			break;
-		case ASAPSampleFormat_S16_L_E:
-			buffer[bufferOffset++] = (unsigned char) sample;
-			buffer[bufferOffset++] = (unsigned char) (sample >> 8);
-			break;
-		case ASAPSampleFormat_S16_B_E:
-			buffer[bufferOffset++] = (unsigned char) (sample >> 8);
-			buffer[bufferOffset++] = (unsigned char) sample;
-			break;
-		}
+		bufferOffset = PokeyPair_StoreSample(buffer, bufferOffset, accLeft, format);
 		if (self->extraPokeyMask != 0) {
 			accRight += self->extraPokey.deltaBuffer[i] - (accRight * 3 >> 10);
-			sample = accRight >> 11;
-			if (sample < -32767)
-				sample = -32767;
-			else if (sample > 32767)
-				sample = 32767;
-			switch (format) {
-			case ASAPSampleFormat_U8:
-				buffer[bufferOffset++] = (sample >> 8) + 128;
-				break;
-			case ASAPSampleFormat_S16_L_E:
-				buffer[bufferOffset++] = (unsigned char) sample;
-				buffer[bufferOffset++] = (unsigned char) (sample >> 8);
-				break;
-			case ASAPSampleFormat_S16_B_E:
-				buffer[bufferOffset++] = (unsigned char) (sample >> 8);
-				buffer[bufferOffset++] = (unsigned char) sample;
-				break;
-			}
+			bufferOffset = PokeyPair_StoreSample(buffer, bufferOffset, accRight, format);
 		}
 	}
 	if (i == self->readySamplesEnd) {
@@ -7418,4 +7384,27 @@ static void PokeyPair_StartFrame(PokeyPair *self)
 	memset(self->basePokey.deltaBuffer, 0, sizeof(self->basePokey.deltaBuffer));
 	if (self->extraPokeyMask != 0)
 		memset(self->extraPokey.deltaBuffer, 0, sizeof(self->extraPokey.deltaBuffer));
+}
+
+static int PokeyPair_StoreSample(unsigned char *buffer, int bufferOffset, int sample, ASAPSampleFormat format)
+{
+	sample >>= 11;
+	if (sample < -32767)
+		sample = -32767;
+	else if (sample > 32767)
+		sample = 32767;
+	switch (format) {
+	case ASAPSampleFormat_U8:
+		buffer[bufferOffset++] = (sample >> 8) + 128;
+		break;
+	case ASAPSampleFormat_S16_L_E:
+		buffer[bufferOffset++] = (unsigned char) sample;
+		buffer[bufferOffset++] = (unsigned char) (sample >> 8);
+		break;
+	case ASAPSampleFormat_S16_B_E:
+		buffer[bufferOffset++] = (unsigned char) (sample >> 8);
+		buffer[bufferOffset++] = (unsigned char) sample;
+		break;
+	}
+	return bufferOffset;
 }
