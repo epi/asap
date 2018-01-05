@@ -104,7 +104,7 @@ public class ASAPInfo
 	public const string Version = VersionMajor + "." + VersionMinor + "." + VersionMicro;
 
 	/// Years ASAP was created in.
-	public const string Years = "2005-2017";
+	public const string Years = "2005-2018";
 
 	/// Short credits for ASAP.
 	public const string Credits =
