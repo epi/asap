@@ -128,7 +128,7 @@ void ASAPInfo_Delete(ASAPInfo *self);
  * Short license notice.
  * Display after the credits.
  */
-#define ASAPInfo_COPYRIGHT  "This program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published\nby the Free Software Foundation; either version 2 of the License,\nor (at your option) any later version."
+#define ASAPInfo_COPYRIGHT  "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version."
 
 /**
  * Short credits for ASAP.

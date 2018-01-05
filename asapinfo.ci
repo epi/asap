@@ -118,9 +118,9 @@ public class ASAPInfo
 	/// Short license notice.
 	/// Display after the credits.
 	public const string Copyright =
-		"This program is free software; you can redistribute it and/or modify\n" +
-		"it under the terms of the GNU General Public License as published\n" +
-		"by the Free Software Foundation; either version 2 of the License,\n" +
+		"This program is free software; you can redistribute it and/or modify it " +
+		"under the terms of the GNU General Public License as published " +
+		"by the Free Software Foundation; either version 2 of the License, " +
 		"or (at your option) any later version.";
 
 	/// Maximum length of a supported input file.
