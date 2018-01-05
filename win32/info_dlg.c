@@ -1,7 +1,7 @@
 /*
  * info_dlg.c - file information dialog box
  *
- * Copyright (C) 2007-2016  Piotr Fusik
+ * Copyright (C) 2007-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -495,19 +495,17 @@ static BOOL saveInfo(void)
 	return saveFile(filename, FALSE);
 }
 
-static void addFilterExt(void *obj, const char *ext)
-{
-	LPTSTR p = *(LPTSTR *) obj;
-	p += _stprintf(p, _T("%s (*.%s)"), ASAPInfo_GetExtDescription(ext), ext) + 1;
-	p += _stprintf(p, _T("*.%s"), ext) + 1;
-	*p = '\0';
-	*(LPTSTR *) obj = p;
-}
-
 static void setSaveFilters(LPTSTR p)
 {
-	StringConsumer sc = { &p, addFilterExt };
-	ASAPWriter_EnumSaveExts(sc, edited_info, saved_module, saved_module_len);
+	const char *exts[ASAPWriter_MAX_SAVE_EXTS];
+	int exts_len = ASAPWriter_GetSaveExts(exts, edited_info, saved_module, saved_module_len);
+	int i;
+	for (i = 0; i < exts_len; i++) {
+		const char *ext = exts[i];
+		p += _stprintf(p, _T("%s (*.%s)"), ASAPInfo_GetExtDescription(ext), ext) + 1;
+		p += _stprintf(p, _T("*.%s"), ext) + 1;
+	}
+	*p = '\0';
 }
 
 static BOOL saveInfoAs(void)
@@ -538,13 +536,13 @@ static BOOL saveInfoAs(void)
 	};
 	LPTSTR ext;
 	BOOL tag = FALSE;
+	setSaveFilters(filter);
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
 	ext = _tcsrchr(filename, '.');
 	if (ext != NULL) {
 		*ext = '\0';
 		ofn.lpstrDefExt = ext + 1;
 	}
-	setSaveFilters(filter);
 	if (!GetSaveFileName(&ofn))
 		return FALSE;
 	if (isExt(filename, _T(".xex"))) {

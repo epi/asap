@@ -34,13 +34,6 @@ typedef enum {
 ASAPSampleFormat;
 typedef struct ASAPWriter ASAPWriter;
 
-typedef struct 
-{
-	void *obj;
-	void (*func)(void *obj, const char *s);
-}
-StringConsumer;
-
 ASAP *ASAP_New(void);
 void ASAP_Delete(ASAP *self);
 
@@ -401,18 +394,21 @@ int ASAPWriter_DurationToString(unsigned char *result, int value);
 
 /**
  * Enumerates possible file types the given module can be written as.
- * @param output Receives filename extensions without the leading dot.
+ * Returns the number of extensions written to <code>exts</code>.
+ * @param exts Receives filename extensions without the leading dot.
  * @param info File information.
  * @param module Contents of the file.
  * @param moduleLen Length of the file.
  */
-void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsigned char const *module, int moduleLen);
+int ASAPWriter_GetSaveExts(const char **exts, ASAPInfo const *info, unsigned char const *module, int moduleLen);
 
 /**
  * Maximum length of text representation of a duration.
  * Corresponds to the longest format which is <code>"mm:ss.xxx"</code>.
  */
 #define ASAPWriter_MAX_DURATION_LENGTH  9
+
+#define ASAPWriter_MAX_SAVE_EXTS  3
 
 void ASAPWriter_SetOutput(ASAPWriter *self, unsigned char *output, int startIndex, int endIndex);
 

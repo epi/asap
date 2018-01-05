@@ -1,6 +1,6 @@
 // pokey.ci - POKEY chip emulator
 //
-// Copyright (C) 2010-2017  Piotr Fusik
+// Copyright (C) 2010-2018  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -194,7 +194,11 @@ class Pokey
 		ReloadCycles1 = 28;
 		ReloadCycles3 = 28;
 		PolyIndex = 15 * 31 * 131071;
+#if CI1
+		DeltaBuffer.Fill(0);
+#else
 		DeltaBuffer.Clear();
+#endif
 		IirAcc = 0;
 	}
 
@@ -577,7 +581,12 @@ class PokeyPair
 	// unfortunately cito provides only 32-bit arithmetic for the moment,
 	// so I shift by 5 to avoid overflow.
 	static int GetSampleFactor(int clock)
-		return ((Pokey.SampleRate << SampleFactorShift - 5) + (clock >> 6)) / (clock >> 5);
+#if CI1
+		=>
+#else
+		return
+#endif
+			((Pokey.SampleRate << SampleFactorShift - 5) + (clock >> 6)) / (clock >> 5);
 
 #if APOKEYSND
 	public
@@ -681,5 +690,10 @@ class PokeyPair
 	}
 
 	bool IsSilent()
-		return BasePokey.IsSilent() && ExtraPokey.IsSilent();
+#if CI1
+		=>
+#else
+		return
+#endif
+			BasePokey.IsSilent() && ExtraPokey.IsSilent();
 }

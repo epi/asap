@@ -4453,34 +4453,6 @@ int ASAPWriter_DurationToString(unsigned char *result, int value)
 	return 9;
 }
 
-void ASAPWriter_EnumSaveExts(StringConsumer output, ASAPInfo const *info, unsigned char const *module, int moduleLen)
-{
-	switch (info->type) {
-		const char *ext;
-	case ASAPModuleType_SAP_B:
-	case ASAPModuleType_SAP_C:
-		output.func(output.obj, "sap");
-		ext = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
-		if (ext != NULL)
-			output.func(output.obj, ext);
-		output.func(output.obj, "xex");
-		break;
-	case ASAPModuleType_SAP_D:
-		output.func(output.obj, "sap");
-		if (info->fastplay == 312)
-			output.func(output.obj, "xex");
-		break;
-	case ASAPModuleType_SAP_S:
-		output.func(output.obj, "sap");
-		break;
-	default:
-		output.func(output.obj, ASAPInfo_GetOriginalModuleExt(info, module, moduleLen));
-		output.func(output.obj, "sap");
-		output.func(output.obj, "xex");
-		break;
-	}
-}
-
 static int ASAPWriter_FormatXexInfoText(unsigned char *dest, int destLen, int endColumn, const char *src, cibool author)
 {
 	int srcLen = (int) strlen(src);
@@ -4512,6 +4484,36 @@ static int ASAPWriter_FormatXexInfoText(unsigned char *dest, int destLen, int en
 		}
 	}
 	return ASAPWriter_PadXexInfo(dest, destLen, endColumn);
+}
+
+int ASAPWriter_GetSaveExts(const char **exts, ASAPInfo const *info, unsigned char const *module, int moduleLen)
+{
+	int i = 0;
+	switch (info->type) {
+		const char *ext;
+	case ASAPModuleType_SAP_B:
+	case ASAPModuleType_SAP_C:
+		exts[i++] = "sap";
+		ext = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
+		if (ext != NULL)
+			exts[i++] = ext;
+		exts[i++] = "xex";
+		break;
+	case ASAPModuleType_SAP_D:
+		exts[i++] = "sap";
+		if (info->fastplay == 312)
+			exts[i++] = "xex";
+		break;
+	case ASAPModuleType_SAP_S:
+		exts[i++] = "sap";
+		break;
+	default:
+		exts[i++] = ASAPInfo_GetOriginalModuleExt(info, module, moduleLen);
+		exts[i++] = "sap";
+		exts[i++] = "xex";
+		break;
+	}
+	return i;
 }
 
 static int ASAPWriter_PadXexInfo(unsigned char *dest, int offset, int endColumn)

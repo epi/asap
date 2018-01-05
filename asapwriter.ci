@@ -1,6 +1,6 @@
 // asapwriter.ci - format conversions
 //
-// Copyright (C) 2011-2014  Piotr Fusik
+// Copyright (C) 2011-2018  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -19,8 +19,6 @@
 // along with ASAP; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-public delegate void StringConsumer(string s);
-
 class ASAPNativeModuleWriter
 {
 	ASAPWriter Writer;
@@ -29,10 +27,20 @@ class ASAPNativeModuleWriter
 	int AddressDiff;
 
 	int GetByte(int offset)
-		return SourceModule[SourceOffset + offset];
+#if CI1
+		=>
+#else
+		return
+#endif
+			SourceModule[SourceOffset + offset];
 
 	int GetWord(int offset)
-		return ASAPInfo.GetWord(SourceModule, SourceOffset + offset);
+#if CI1
+		=>
+#else
+		return
+#endif
+			ASAPInfo.GetWord(SourceModule, SourceOffset + offset);
 
 	void Copy(int endOffset)
 	{
@@ -147,10 +155,14 @@ class ASAPNativeModuleWriter
 /// Static methods for writing modules in different formats.
 public class ASAPWriter
 {
+	public const int MaxSaveExts = 3;
+
 	/// Enumerates possible file types the given module can be written as.
-	public static void EnumSaveExts(
+	/// Returns the number of extensions written to `exts`.
+	public static int GetSaveExts(
 		/// Receives filename extensions without the leading dot.
-		StringConsumer output,
+		/// Must be `MaxSaveExts` long.
+		string[] exts,
 		/// File information.
 		ASAPInfo info,
 		/// Contents of the file.
@@ -158,29 +170,31 @@ public class ASAPWriter
 		/// Length of the file.
 		int moduleLen)
 	{
+		int i = 0;
 		switch (info.Type) {
 		case ASAPModuleType.SapB:
 		case ASAPModuleType.SapC:
-			output("sap");
+			exts[i++] = "sap";
 			string ext = info.GetOriginalModuleExt(module, moduleLen);
 			if (ext != null)
-				output(ext);
-			output("xex");
+				exts[i++] = ext;
+			exts[i++] = "xex";
 			break;
 		case ASAPModuleType.SapD:
-			output("sap");
+			exts[i++] = "sap";
 			if (info.Fastplay == 312)
-				output("xex");
+				exts[i++] = "xex";
 			break;
 		case ASAPModuleType.SapS:
-			output("sap");
+			exts[i++] = "sap";
 			break;
 		default:
-			output(info.GetOriginalModuleExt(module, moduleLen));
-			output("sap");
-			output("xex");
+			exts[i++] = info.GetOriginalModuleExt(module, moduleLen);
+			exts[i++] = "sap";
+			exts[i++] = "xex";
 			break;
 		}
+		return i;
 	}
 
 	static void TwoDigitsToString(byte[] result, int offset, int value)

@@ -1,6 +1,6 @@
 // asap.ci - emulation engine
 //
-// Copyright (C) 2010-2017  Piotr Fusik
+// Copyright (C) 2010-2018  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -333,7 +333,12 @@ public class ASAP
 
 	/// Returns information about the loaded module.
 	public ASAPInfo GetInfo()
-		return ModuleInfo;
+#if CI1
+		=>
+#else
+		return
+#endif
+			ModuleInfo;
 
 	void Do6502Init(int pc, int a, int x, int y)
 	{
@@ -450,14 +455,29 @@ public class ASAP
 	/// Returns current playback position in blocks.
 	/// A block is one sample or a pair of samples for stereo.
 	public int GetBlocksPlayed()
-		return BlocksPlayed;
+#if CI1
+		=>
+#else
+		return
+#endif
+			BlocksPlayed;
 
 	/// Returns current playback position in milliseconds.
 	public int GetPosition()
-		return BlocksPlayed * 10 / (SampleRate / 100);
+#if CI1
+		=>
+#else
+		return
+#endif
+			BlocksPlayed * 10 / (SampleRate / 100);
 
 	static int MillisecondsToBlocks(int milliseconds)
-		return milliseconds * (SampleRate / 100) / 10;
+#if CI1
+		=>
+#else
+		return
+#endif
+			milliseconds * (SampleRate / 100) / 10;
 
 	/// Changes the playback position.
 	public void SeekSample(
@@ -491,7 +511,12 @@ public class ASAP
 	}
 
 	static int FourCC(string s)
-		return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
+#if CI1
+		=>
+#else
+		return
+#endif
+			s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
 
 	static void PutLittleEndians(byte[] buffer, int offset, int value1, int value2)
 	{
@@ -606,7 +631,12 @@ public class ASAP
 		int bufferLen,
 		/// Format of samples.
 		ASAPSampleFormat format)
-		return GenerateAt(buffer, 0, bufferLen, format);
+#if CI1
+		=>
+#else
+		return
+#endif
+			GenerateAt(buffer, 0, bufferLen, format);
 
 	/// Returns POKEY channel volume - an integer between 0 and 15.
 	public int GetPokeyChannelVolume(
