@@ -1,6 +1,6 @@
 // asap6502.ci - player routines for the 6502 CPU
 //
-// Copyright (C) 2011  Piotr Fusik
+// Copyright (C) 2011-2018  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -24,6 +24,18 @@ class ASAP6502
 	static byte[] GetPlayerRoutine(ASAPInfo info)
 	{
 		switch (info.Type) {
+#if CI1
+		case ASAPModuleType.Cmc: return resource<byte[]>("cmc.obx");
+		case ASAPModuleType.Cm3: return resource<byte[]>("cm3.obx");
+		case ASAPModuleType.Cmr: return resource<byte[]>("cmr.obx");
+		case ASAPModuleType.Cms: return resource<byte[]>("cms.obx");
+		case ASAPModuleType.Dlt: return resource<byte[]>("dlt.obx");
+		case ASAPModuleType.Mpt: return resource<byte[]>("mpt.obx");
+		case ASAPModuleType.Rmt: return info.Channels == 1 ? resource<byte[]>("rmt4.obx") : resource<byte[]>("rmt8.obx");
+		case ASAPModuleType.Tmc: return resource<byte[]>("tmc.obx");
+		case ASAPModuleType.Tm2: return resource<byte[]>("tm2.obx");
+		case ASAPModuleType.Fc:  return resource<byte[]>("fc.obx");
+#else
 		case ASAPModuleType.Cmc: return BinaryResource("cmc.obx");
 		case ASAPModuleType.Cm3: return BinaryResource("cm3.obx");
 		case ASAPModuleType.Cmr: return BinaryResource("cmr.obx");
@@ -34,6 +46,7 @@ class ASAP6502
 		case ASAPModuleType.Tmc: return BinaryResource("tmc.obx");
 		case ASAPModuleType.Tm2: return BinaryResource("tm2.obx");
 		case ASAPModuleType.Fc:  return BinaryResource("fc.obx");
+#endif
 		default: return null;
 		}
 	}

@@ -163,7 +163,12 @@ public class ASAP
 	{
 		const int codeAddr = 0xd200;
 		Cpu.Memory[codeAddr] = 0x20; // JSR
-		Cpu.Memory[codeAddr + 1] = addr.LowByte;
+		Cpu.Memory[codeAddr + 1] = addr
+#if CI1
+			& 0xff;
+#else
+			.LowByte;
+#endif
 		Cpu.Memory[codeAddr + 2] = addr >> 8;
 		Cpu.Memory[codeAddr + 3] = 0xd2; // escape
 		Cpu.Pc = codeAddr;
@@ -196,7 +201,12 @@ public class ASAP
 				Cpu.Memory[codeAddr + 4] = 0x98; // TYA
 				Cpu.Memory[codeAddr + 5] = 0x48; // PHA
 				Cpu.Memory[codeAddr + 6] = 0x20; // JSR
-				Cpu.Memory[codeAddr + 7] = player.LowByte;
+				Cpu.Memory[codeAddr + 7] = player
+#if CI1
+					& 0xff;
+#else
+					.LowByte;
+#endif
 				Cpu.Memory[codeAddr + 8] = player >> 8;
 				Cpu.Memory[codeAddr + 9] = 0x68; // PLA
 				Cpu.Memory[codeAddr + 10] = 0xa8; // TAY
@@ -209,9 +219,19 @@ public class ASAP
 			break;
 		case ASAPModuleType.SapS:
 			int i = Cpu.Memory[0x45] - 1;
-			Cpu.Memory[0x45] = i.LowByte;
+			Cpu.Memory[0x45] = i
+#if CI1
+				& 0xff;
+#else
+				.LowByte;
+#endif
 			if (i == 0)
-				Cpu.Memory[0xb07b] = (Cpu.Memory[0xb07b] + 1).LowByte;
+				Cpu.Memory[0xb07b] = (Cpu.Memory[0xb07b] + 1)
+#if CI1
+					& 0xff;
+#else
+					.LowByte;
+#endif
 			break;
 #if !ASAP_ONLY_SAP
 		case ASAPModuleType.Dlt:
@@ -313,7 +333,11 @@ public class ASAP
 			return;
 		}
 #endif
+#if CI1
+		Cpu.Memory.Fill(0);
+#else
 		Cpu.Memory.Clear();
+#endif
 		int moduleIndex = ModuleInfo.HeaderLen + 2;
 		while (moduleIndex + 5 <= moduleLen) {
 			int startAddr = ASAPInfo.GetWord(module, moduleIndex);
@@ -347,8 +371,15 @@ public class ASAP
 		Cpu.X = x & 0xff;
 		Cpu.Y = y & 0xff;
 		const int escapeAddr = 0xd200;
-		Cpu.Memory[escapeAddr] = 0xd2; // escape code
-		Cpu.Memory[0x1fe] = (escapeAddr - 1).LowByte; // return address points to the escape code
+		// escape code
+		Cpu.Memory[escapeAddr] = 0xd2;
+		// return address points to the escape code
+		Cpu.Memory[0x1fe] = (escapeAddr - 1)
+#if CI1
+			& 0xff;
+#else
+			.LowByte;
+#endif
 		Cpu.Memory[0x1ff] = (escapeAddr - 1) >> 8;
 		Cpu.S = 0xfd;
 		for (int frame = 0; frame < 50; frame++) {
@@ -504,10 +535,17 @@ public class ASAP
 
 	static void PutLittleEndian(byte[] buffer, int offset, int value)
 	{
+#if CI1
+		buffer[offset] = value & 0xff;
+		buffer[offset + 1] = value >> 8 & 0xff;
+		buffer[offset + 2] = value >> 16 & 0xff;
+		buffer[offset + 3] = value >> 24 & 0xff;
+#else
 		buffer[offset] = value.LowByte;
 		buffer[offset + 1] = (value >> 8).LowByte;
 		buffer[offset + 2] = (value >> 16).LowByte;
 		buffer[offset + 3] = (value >> 24).LowByte;
+#endif
 	}
 
 	static int FourCC(string s)

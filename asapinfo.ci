@@ -548,7 +548,12 @@ public class ASAPInfo
 
 	void AddSong(int playerCalls)
 	{
-		Durations[Songs++] = (playerCalls * Fastplay).MulDiv(114000 / 3, 1773447 / 3);
+		Durations[Songs++] =
+#if CI1
+			playerCalls * Fastplay * long(114000 / 3) / (1773447 / 3);
+#else
+			(playerCalls * Fastplay).MulDiv(114000 / 3, 1773447 / 3);
+#endif
 	}
 
 	// TODO: enum + 0
