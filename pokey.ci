@@ -521,12 +521,22 @@ class Pokey
 			buffer[bufferOffset++] = (sample >> 8) + 128;
 			break;
 		case ASAPSampleFormat.S16LE:
+#if CI1
+			buffer[bufferOffset++] = sample & 0xff;
+			buffer[bufferOffset++] = sample >> 8;
+#else
 			buffer[bufferOffset++] = sample.LowByte;
 			buffer[bufferOffset++] = (sample >> 8).LowByte;
+#endif
 			break;
 		case ASAPSampleFormat.S16BE:
+#if CI1
+			buffer[bufferOffset++] = sample >> 8;
+			buffer[bufferOffset++] = sample & 0xff;
+#else
 			buffer[bufferOffset++] = (sample >> 8).LowByte;
 			buffer[bufferOffset++] = sample.LowByte;
+#endif
 			break;
 		}
 		return bufferOffset;
@@ -567,12 +577,20 @@ class PokeyPair
 		int reg = 0x1ff;
 		for (int i = 0; i < 511; i++) {
 			reg = (((reg >> 5 ^ reg) & 1) << 8) + (reg >> 1);
+#if CI1
+			Poly9Lookup[i] = reg & 0xff;
+#else
 			Poly9Lookup[i] = reg.LowByte;
+#endif
 		}
 		reg = 0x1ffff;
 		for (int i = 0; i < 16385; i++) {
 			reg = (((reg >> 5 ^ reg) & 0xff) << 9) + (reg >> 8);
+#if CI1
+			Poly17Lookup[i] = reg >> 1 & 0xff;
+#else
 			Poly17Lookup[i] = (reg >> 1).LowByte;
+#endif
 		}
 	}
 
@@ -640,9 +658,15 @@ class PokeyPair
 #endif
 	void StartFrame()
 	{
+#if CI1
+		BasePokey.DeltaBuffer.Fill(0);
+		if (ExtraPokeyMask != 0)
+			ExtraPokey.DeltaBuffer.Fill(0);
+#else
 		BasePokey.DeltaBuffer.Clear();
 		if (ExtraPokeyMask != 0)
 			ExtraPokey.DeltaBuffer.Clear();
+#endif
 	}
 
 #if APOKEYSND

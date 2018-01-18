@@ -1,6 +1,6 @@
 // cpu6502.ci - 6502 CPU emulator
 //
-// Copyright (C) 2010-2017  Piotr Fusik
+// Copyright (C) 2010-2018  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -812,7 +812,11 @@ class Cpu6502
 			case 0xb0: // BCS
 			case 0xd0: // BNE
 			case 0xf0: // BEQ
+#if CI1
+				addr = (Memory[Pc] ^ 0x80) - 0x80;
+#else
 				addr = Memory[Pc].SByte;
+#endif
 				Pc++;
 				addr += Pc;
 				Cycle += (addr ^ Pc) >> 8 != 0 ? 2 : 1;

@@ -679,7 +679,13 @@ public class ASAPWriter
 		int titleAddress = otherAddress - authorLen - 8 - titleLen;
 #endif
 		WriteWord(titleAddress);
-		WriteBytes(BinaryResource("xexinfo.obx"), 4, 6);
+		WriteBytes(
+#if CI1
+			resource<byte[]>("xexinfo.obx"),
+#else
+			BinaryResource("xexinfo.obx"),
+#endif
+			4, 6);
 		WriteBytes(title, 0, titleLen);
 		for (int i = 0; i < 8; i++)
 			WriteByte(0x55);
@@ -727,7 +733,11 @@ public class ASAPWriter
 		for (int i = 0; i < otherLen; i += XexInfoCharactersPerLine)
 			WriteByte(2);
 #endif
+#if CI1
+		WriteBytes(resource<byte[]>("xexinfo.obx"), 6, resource<byte[]>("xexinfo.obx").Length);
+#else
 		WriteBytes(BinaryResource("xexinfo.obx"), 6, BinaryResource("xexinfo.obx").Length);
+#endif
 	}
 
 	void WriteNative(ASAPInfo info, byte[] module, int moduleLen)
@@ -798,7 +808,11 @@ public class ASAPWriter
 				case ASAPModuleType.SapD:
 					if (info.Fastplay != 312)
 						throw "Impossible conversion";
+#if CI1
+					WriteBytes(resource<byte[]>("xexd.obx"), 2, resource<byte[]>("xexd.obx").Length);
+#else
 					WriteBytes(BinaryResource("xexd.obx"), 2, BinaryResource("xexd.obx").Length);
+#endif
 					WriteWord(initAndPlayer[0]);
 					if (initAndPlayer[1] < 0) {
 						WriteByte(0x60); // RTS
@@ -814,7 +828,11 @@ public class ASAPWriter
 				case ASAPModuleType.SapS:
 					throw "Impossible conversion";
 				default:
+#if CI1
+					WriteBytes(resource<byte[]>("xexb.obx"), 2, resource<byte[]>("xexb.obx").Length);
+#else
 					WriteBytes(BinaryResource("xexb.obx"), 2, BinaryResource("xexb.obx").Length);
+#endif
 					WriteWord(initAndPlayer[0]);
 					WriteByte(0x4c); // JMP
 					WriteWord( initAndPlayer[1]);

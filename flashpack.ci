@@ -53,7 +53,11 @@ class FlashPackItem
 		case FlashPackItemType.SetAddress:
 			int value = Value - 0x80;
 			buffer[index] = 0;
+#if CI1
+			buffer[index + 1] = value & 0xff;
+#else
 			buffer[index + 1] = value.LowByte;
+#endif
 			buffer[index + 2] = value >> 8;
 			return 3;
 		default: // case FlashPackItemType.EndOfStream:
