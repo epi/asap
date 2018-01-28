@@ -31,9 +31,18 @@ enum FlashPackItemType
 
 class FlashPackItem
 {
-	FlashPackItemType Type;
-	int Value;
+#if CI1
+	internal
+#endif
+		FlashPackItemType Type;
+#if CI1
+	internal
+#endif
+		int Value;
 
+#if CI1
+	internal
+#endif
 	int WriteValueTo(byte[] buffer, int index)
 	{
 		switch (Type) {
@@ -75,6 +84,9 @@ class FlashPack
 	const int MinLoadAddress = 0x2000; // safe for most of Atari DOSes
 
 	int FindHole()
+#if CI1
+		throws
+#endif
 	{
 		const int holeSize = 0x400; // FIXME: just a guess
 		int end = 0xbc1f; // below the Display List for standard text mode
@@ -258,7 +270,13 @@ class FlashPack
 		PutItem(FlashPackItemType.Literal, value);
 	}
 
+#if CI1
+	internal
+#endif
 	void Compress(ASAPWriter w)
+#if CI1
+		throws
+#endif
 	{
 		// Load executable from w.Output up to w.OutputOffset into Memory
 		for (int i = 0; i < 65536; i++)

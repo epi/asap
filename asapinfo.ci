@@ -48,6 +48,9 @@ class DurationParser
 	int Length;
 
 	int ParseDigit(int max)
+#if CI1
+		throws
+#endif
 	{
 		if (Position >= Length)
 			throw "Invalid duration";
@@ -57,7 +60,13 @@ class DurationParser
 		return digit;
 	}
 
+#if CI1
+	internal
+#endif
 	int Parse(string s)
+#if CI1
+		throws
+#endif
 	{
 		Source = s;
 		Position = 0;
@@ -159,14 +168,26 @@ public class ASAPInfo
 	int[MaxSongs] Durations;
 	bool[MaxSongs] Loops;
 	bool Ntsc;
-	ASAPModuleType Type;
+#if CI1
+	internal
+#endif
+		ASAPModuleType Type;
 	int Fastplay;
 	int Music;
 	int Init;
-	int Player;
+#if CI1
+	internal
+#endif
+		int Player;
 	int CovoxAddr;
-	int HeaderLen;
-	byte[MaxSongs] SongPos;
+#if CI1
+	internal
+#endif
+		int HeaderLen;
+#if CI1
+	internal
+#endif
+		byte[MaxSongs] SongPos;
 
 	static bool IsValidChar(int c)
 #if CI1
@@ -177,12 +198,18 @@ public class ASAPInfo
 			c >= ' ' && c <= '|' && c != '`' && c != '{';
 
 	static void CheckValidChar(int c)
+#if CI1
+		throws
+#endif
 	{
 		if (!IsValidChar(c))
 			throw "Invalid character";
 	}
 
 	static void CheckValidText(string s)
+#if CI1
+		throws
+#endif
 	{
 		int n = s.Length;
 		if (n > MaxTextLength)
@@ -208,6 +235,9 @@ public class ASAPInfo
 	/// Multiple authors are separated with `" & "`.
 	/// An empty string means the author is unknown.
 	public void SetAuthor(string value)
+#if CI1
+		throws
+#endif
 	{
 		CheckValidText(value);
 		Author = value;
@@ -226,6 +256,9 @@ public class ASAPInfo
 	/// Sets music title.
 	/// An empty string means the title is unknown.
 	public void SetTitle(string value)
+#if CI1
+		throws
+#endif
 	{
 		CheckValidText(value);
 		Title = value;
@@ -266,6 +299,9 @@ public class ASAPInfo
 	///
 	/// An empty string means the date is unknown.
 	public void SetDate(string value)
+#if CI1
+		throws
+#endif
 	{
 		CheckValidText(value);
 		Date = value;
@@ -367,6 +403,9 @@ public class ASAPInfo
 
 	/// Sets the 0-based index of the "main" song.
 	public void SetDefaultSong(int song)
+#if CI1
+		throws
+#endif
 	{
 		if (song < 0 || song >= Songs)
 			throw "Song out of range";
@@ -386,6 +425,9 @@ public class ASAPInfo
 	/// Sets length of the specified song.
 	/// The length is specified in milliseconds. -1 means the length is indeterminate.
 	public void SetDuration(int song, int duration)
+#if CI1
+		throws
+#endif
 	{
 		if (song < 0 || song >= Songs)
 			throw "Song out of range";
@@ -409,6 +451,9 @@ public class ASAPInfo
 	/// * `true` if the song loops
 	/// * `false` if the song stops
 	public void SetLoop(int song, bool loop)
+#if CI1
+		throws
+#endif
 	{
 		if (song < 0 || song >= Songs)
 			throw "Song out of range";
@@ -460,6 +505,9 @@ public class ASAPInfo
 	/// Causes music to be relocated.
 	/// Use only with `ASAPWriter.Write`.
 	public void SetMusicAddress(int address)
+#if CI1
+		throws
+#endif
 	{
 		if (address < 0 || address >= 0xffff)
 			throw "Invalid music address";
@@ -515,15 +563,19 @@ public class ASAPInfo
 	}
 #endif
 
-	static int GetWord(byte[] array, int i)
 #if CI1
+	internal static int GetWord(byte[] array, int i)
 		=>
 #else
+	static int GetWord(byte[] array, int i)
 		return
 #endif
 			array[i] + (array[i + 1] << 8);
 
 	void ParseModule(byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		if ((module[0] != 0xff || module[1] != 0xff)
 		 && (module[0] != 0 || module[1] != 0)) // some CMC and clones start with zeros
@@ -650,6 +702,9 @@ public class ASAPInfo
 	const int CmrBassTableOffset = 0x70f;
 
 	void ParseCmc(byte[] module, int moduleLen, ASAPModuleType type)
+#if CI1
+		throws
+#endif
 	{
 		if (moduleLen < 0x306)
 			throw "Module too short";
@@ -730,6 +785,9 @@ public class ASAPInfo
 	}
 
 	void ParseDlt(byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		if (moduleLen != 0x2c06 && moduleLen != 0x2c07)
 			throw "Invalid module length";
@@ -818,6 +876,9 @@ public class ASAPInfo
 	}
 
 	void ParseMpt(byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		if (moduleLen < 0x1d0)
 			throw "Module too short";
@@ -1019,6 +1080,9 @@ public class ASAPInfo
 	}
 
 	void ParseRmt(byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		if (!ValidateRmt(module, moduleLen))
 			throw "Invalid RMT file";
@@ -1062,13 +1126,18 @@ public class ASAPInfo
 		byte[MaxTextLength] title;
 		int titleLen;
 		for (titleLen = 0; titleLen < MaxTextLength && 10 + blockLen + titleLen < moduleLen; titleLen++) {
-			byte c = module[10 + blockLen + titleLen];
+			int c = module[10 + blockLen + titleLen];
 			if (c == 0)
 				break;
 			// RMT only allows entering characters we consider valid, but let's check just in case
 			title[titleLen] = IsValidChar(c) ? c : ' ';
 		}
-		Title = title.ToString(0, titleLen);
+		Title =
+#if CI1
+			Encoding.UTF8.GetString(title, 0, titleLen);
+#else
+			title.ToString(0, titleLen);
+#endif
 	}
 
 	void ParseTmcSong(byte[] module, int pos)
@@ -1172,6 +1241,9 @@ public class ASAPInfo
 	}
 
 	void ParseTmc(byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		if (moduleLen < 0x1d0)
 			throw "Module too short";
@@ -1205,7 +1277,12 @@ public class ASAPInfo
 		Fastplay = 312 / i;
 		byte[MaxTextLength] title;
 		int titleLen = ParseTmcTitle(title, 0, module, 6);
-		Title = title.ToString(0, titleLen);
+		Title =
+#if CI1
+			Encoding.UTF8.GetString(title, 0, titleLen);
+#else
+			title.ToString(0, titleLen);
+#endif
 	}
 
 	void ParseTm2Song(byte[] module, int pos)
@@ -1281,6 +1358,9 @@ public class ASAPInfo
 	}
 
 	void ParseTm2(byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		if (moduleLen < 0x3a4)
 			throw "Module too short";
@@ -1326,10 +1406,18 @@ public class ASAPInfo
 		int titleLen = ParseTmcTitle(title, 0, module, 0x27);
 		titleLen = ParseTmcTitle(title, titleLen, module, 0x47);
 		titleLen = ParseTmcTitle(title, titleLen, module, 0x67);
-		Title = title.ToString(0, titleLen);
+		Title =
+#if CI1
+			Encoding.UTF8.GetString(title, 0, titleLen);
+#else
+			title.ToString(0, titleLen);
+#endif
 	}
 
 	static int AfterFF(byte[] module, int moduleLen, int currentOffset)
+#if CI1
+		throws
+#endif
 	{
 		while (currentOffset < moduleLen) {
 			if (module[currentOffset++] == 0xff)
@@ -1376,6 +1464,9 @@ public class ASAPInfo
 	}
 
 	void ParseFc(byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		if (!ValidateFc(module, moduleLen))
 			throw "Invalid FC file";
@@ -1470,6 +1561,9 @@ public class ASAPInfo
 	}
 
 	static int ParseDec(string s, int minVal, int maxVal)
+#if CI1
+		throws
+#endif
 	{
 		int r = 0;
 		int len = s.Length;
@@ -1487,6 +1581,9 @@ public class ASAPInfo
 	}
 
 	static int ParseHex(string s)
+#if CI1
+		throws
+#endif
 	{
 		int r = 0;
 		int len = s.Length;
@@ -1511,6 +1608,9 @@ public class ASAPInfo
 	public static int ParseDuration(
 		/// Time in the `"mm:ss.xxx"` format.
 		string s)
+#if CI1
+		throws
+#endif
 	{
 		DurationParser() parser;
 		return parser.Parse(s);
@@ -1525,6 +1625,9 @@ public class ASAPInfo
 			moduleLen >= 30 && HasStringAt(module, 0, "SAP\r\n");
 
 	void ParseSap(byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		if (!ValidateSap(module, moduleLen))
 			throw "Invalid SAP file";
@@ -1567,9 +1670,17 @@ public class ASAPInfo
 			// handle tags, ignore unknown
 			const int maxTagLen = "FASTPLAY".Length;
 			if (tagLen <= maxTagLen) {
+#if CI1
+				string() tag = Encoding.UTF8.GetString(module, lineStart, tagLen);
+#else
 				string(maxTagLen) tag = module.ToString(lineStart, tagLen);
+#endif
 				if (argStart >= 0 && argLen <= MaxTextLength + 2) {
+#if CI1
+					string() arg = Encoding.UTF8.GetString(module, argStart, argLen);
+#else
 					string(MaxTextLength + 2) arg = module.ToString(argStart, argLen);
+#endif
 					if (argLen >= 3 && arg[0] == '"' && arg[argLen - 1] == '"'
 					 && arg != "\"<?>\"") {
 						if (tag == "AUTHOR")
@@ -1655,14 +1766,18 @@ public class ASAPInfo
 		HeaderLen = moduleIndex;
 	}
 
-	static int PackExt(string ext)
 #if CI1
+	internal static int PackExt(string ext)
 		=>
 #else
+	static int PackExt(string ext)
 		return
 #endif
 			ext.Length >> 1 == 1 ? ext[0] + (ext[1] << 8) + (ext.Length == 3 ? ext[2] << 16 : 0) | 0x202020 : 0;
 
+#if CI1
+	internal
+#endif
 	static int GetPackedExt(string filename)
 	{
 		int ext = 0;
@@ -1730,6 +1845,9 @@ public class ASAPInfo
 			IsOurPackedExt(PackExt(ext));
 
 	static int GuessPackedExt(byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		if (ValidateSap(module, moduleLen))
 			return PackExt("SAP");
@@ -1748,6 +1866,9 @@ public class ASAPInfo
 		byte[] module,
 		/// Length of the file.
 		int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		int ext;
 		if (filename != null) {
@@ -1857,6 +1978,9 @@ public class ASAPInfo
 	public static string GetExtDescription(
 		/// Filename extension without the leading dot.
 		string ext)
+#if CI1
+		throws
+#endif
 	{
 		switch (PackExt(ext)) {
 		case PackExt("SAP"): return "Slight Atari Player";
@@ -1880,6 +2004,9 @@ public class ASAPInfo
 
 	const int RmtInit = 0xc80;
 
+#if CI1
+	internal
+#endif
 	int GetRmtSapOffset(byte[] module, int moduleLen)
 	{
 		if (Player != 0x3403)
@@ -1890,6 +2017,9 @@ public class ASAPInfo
 		return offset;
 	}
 
+#if CI1
+	internal
+#endif
 	ASAPModuleType GetOriginalModuleType(
 		byte[] module,
 		int moduleLen)

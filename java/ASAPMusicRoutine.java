@@ -1,7 +1,7 @@
 /*
  * ASAPMusicRoutine.java - music embeddable in an Atari program
  *
- * Copyright (C) 2011-2014  Piotr Fusik
+ * Copyright (C) 2011-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -60,7 +60,7 @@ public class ASAPMusicRoutine
 		// TODO: SAP_S
 		fulltime = info.type == ASAPModuleType.SAP_D;
 		playerAddress = initAndPlayer[1];
-		playerRate = info.fastplay;
+		playerRate = info.getPlayerRateScanlines();
 	}
 
 	/**

@@ -21,9 +21,18 @@
 
 class ASAPNativeModuleWriter
 {
-	ASAPWriter Writer;
-	byte[] SourceModule;
-	int SourceOffset;
+#if CI1
+	internal
+#endif
+		ASAPWriter Writer;
+#if CI1
+	internal
+#endif
+		byte[] SourceModule;
+#if CI1
+	internal
+#endif
+		int SourceOffset;
 	int AddressDiff;
 
 	int GetByte(int offset)
@@ -34,20 +43,27 @@ class ASAPNativeModuleWriter
 #endif
 			SourceModule[SourceOffset + offset];
 
-	int GetWord(int offset)
 #if CI1
+	internal int GetWord(int offset)
 		=>
 #else
+	int GetWord(int offset)
 		return
 #endif
 			ASAPInfo.GetWord(SourceModule, SourceOffset + offset);
 
 	void Copy(int endOffset)
+#if CI1
+		throws
+#endif
 	{
 		Writer.WriteBytes(SourceModule, SourceOffset + Writer.OutputOffset, SourceOffset + endOffset);
 	}
 
 	void RelocateBytes(int lowOffset, int highOffset, int count, int shift)
+#if CI1
+		throws
+#endif
 	{
 		lowOffset += SourceOffset;
 		highOffset += SourceOffset;
@@ -60,6 +76,9 @@ class ASAPNativeModuleWriter
 	}
 
 	void RelocateLowHigh(int count)
+#if CI1
+		throws
+#endif
 	{
 		int lowOffset = Writer.OutputOffset;
 		RelocateBytes(lowOffset, lowOffset + count, count, 0);
@@ -67,6 +86,9 @@ class ASAPNativeModuleWriter
 	}
 
 	void RelocateWords(int count)
+#if CI1
+		throws
+#endif
 	{
 		while (--count >= 0) {
 			int address = GetWord(Writer.OutputOffset);
@@ -76,10 +98,16 @@ class ASAPNativeModuleWriter
 		}
 	}
 
+#if CI1
+	internal
+#endif
 	void Write(ASAPInfo info, ASAPModuleType type, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		int startAddr = GetWord(2);
-		AddressDiff = info.Music < 0 ? 0 : info.Music - startAddr;
+		AddressDiff = info.GetMusicAddress() < 0 ? 0 : info.GetMusicAddress() - startAddr;
 		if (GetWord(4) + AddressDiff > 0xffff)
 			throw "Address set too high";
 		switch (type) {
@@ -182,7 +210,7 @@ public class ASAPWriter
 			break;
 		case ASAPModuleType.SapD:
 			exts[i++] = "sap";
-			if (info.Fastplay == 312)
+			if (info.GetPlayerRateScanlines() == 312)
 				exts[i++] = "xex";
 			break;
 		case ASAPModuleType.SapS:
@@ -240,8 +268,14 @@ public class ASAPWriter
 		return 9;
 	}
 
-	byte[] Output;
-	int OutputOffset;
+#if CI1
+	internal
+#endif
+		byte[] Output;
+#if CI1
+	internal
+#endif
+		int OutputOffset;
 	int OutputEnd;
 
 	public void SetOutput(byte[] output, int startIndex, int endIndex)
@@ -251,20 +285,38 @@ public class ASAPWriter
 		OutputEnd = endIndex;
 	}
 
+#if CI1
+	internal
+#endif
 	void WriteByte(int value)
+#if CI1
+		throws
+#endif
 	{
 		if (OutputOffset >= OutputEnd)
 			throw "Output full";
 		Output[OutputOffset++] = value;
 	}
 
+#if CI1
+	internal
+#endif
 	void WriteWord(int value)
+#if CI1
+		throws
+#endif
 	{
 		WriteByte(value & 0xff);
 		WriteByte(value >> 8);
 	}
 
+#if CI1
+	internal
+#endif
 	void WriteBytes(byte[] array, int startIndex, int endIndex)
+#if CI1
+		throws
+#endif
 	{
 		int length = endIndex - startIndex;
 		if (OutputOffset + length > OutputEnd)
@@ -274,6 +326,9 @@ public class ASAPWriter
 	}
 
 	void WriteString(string s)
+#if CI1
+		throws
+#endif
 	{
 		int n = s.Length;
 		for (int i = 0; i < n; i++)
@@ -281,6 +336,9 @@ public class ASAPWriter
 	}
 
 	void WriteDec(int value)
+#if CI1
+		throws
+#endif
 	{
 		if (value >= 10) {
 			WriteDec(value / 10);
@@ -290,6 +348,9 @@ public class ASAPWriter
 	}
 
 	void WriteTextSapTag(string tag, string value)
+#if CI1
+		throws
+#endif
 	{
 		WriteString(tag);
 		WriteByte('"');
@@ -302,6 +363,9 @@ public class ASAPWriter
 	}
 
 	void WriteDecSapTag(string tag, int value)
+#if CI1
+		throws
+#endif
 	{
 		WriteString(tag);
 		WriteDec(value);
@@ -310,6 +374,9 @@ public class ASAPWriter
 	}
 
 	void WriteHexSapTag(string tag, int value)
+#if CI1
+		throws
+#endif
 	{
 		if (value < 0)
 			return;
@@ -323,38 +390,41 @@ public class ASAPWriter
 	}
 
 	void WriteSapHeader(ASAPInfo info, int type, int init, int player)
+#if CI1
+		throws
+#endif
 	{
 		WriteString("SAP\r\n");
-		WriteTextSapTag("AUTHOR ", info.Author);
-		WriteTextSapTag("NAME ", info.Title);
-		WriteTextSapTag("DATE ", info.Date);
-		if (info.Songs > 1) {
-			WriteDecSapTag("SONGS ", info.Songs);
-			if (info.DefaultSong > 0)
-				WriteDecSapTag("DEFSONG ", info.DefaultSong);
+		WriteTextSapTag("AUTHOR ", info.GetAuthor());
+		WriteTextSapTag("NAME ", info.GetTitle());
+		WriteTextSapTag("DATE ", info.GetDate());
+		if (info.GetSongs() > 1) {
+			WriteDecSapTag("SONGS ", info.GetSongs());
+			if (info.GetDefaultSong() > 0)
+				WriteDecSapTag("DEFSONG ", info.GetDefaultSong());
 		}
-		if (info.Channels > 1)
+		if (info.GetChannels() > 1)
 			WriteString("STEREO\r\n");
-		if (info.Ntsc)
+		if (info.IsNtsc())
 			WriteString("NTSC\r\n");
 		WriteString("TYPE ");
 		WriteByte(type);
 		WriteByte('\r');
 		WriteByte('\n');
-		if (info.Fastplay != 312 || info.Ntsc)
-			WriteDecSapTag("FASTPLAY ", info.Fastplay);
+		if (info.GetPlayerRateScanlines() != 312 || info.IsNtsc())
+			WriteDecSapTag("FASTPLAY ", info.GetPlayerRateScanlines());
 		if (type == 'C')
-			WriteHexSapTag("MUSIC ", info.Music);
+			WriteHexSapTag("MUSIC ", info.GetMusicAddress());
 		WriteHexSapTag("INIT ", init);
 		WriteHexSapTag("PLAYER ", player);
-		WriteHexSapTag("COVOX ", info.CovoxAddr);
-		for (int song = 0; song < info.Songs; song++) {
-			if (info.Durations[song] < 0)
+		WriteHexSapTag("COVOX ", info.GetCovoxAddress());
+		for (int song = 0; song < info.GetSongs(); song++) {
+			if (info.GetDuration(song) < 0)
 				break;
 			WriteString("TIME ");
 			byte[MaxDurationLength] s;
-			WriteBytes(s, 0, DurationToString(s, info.Durations[song]));
-			if (info.Loops[song])
+			WriteBytes(s, 0, DurationToString(s, info.GetDuration(song)));
+			if (info.GetLoop(song))
 				WriteString(" LOOP");
 			WriteByte('\r');
 			WriteByte('\n');
@@ -362,6 +432,9 @@ public class ASAPWriter
 	}
 
 	void WriteExecutableHeader(int[] initAndPlayer, ASAPInfo info, int type, int init, int player)
+#if CI1
+		throws
+#endif
 	{
 		if (initAndPlayer == null)
 			WriteSapHeader(info, type, init, player);
@@ -372,6 +445,9 @@ public class ASAPWriter
 	}
 
 	void WritePlaTaxLda0()
+#if CI1
+		throws
+#endif
 	{
 		WriteByte(0x68);
 		WriteByte(0xaa);
@@ -380,6 +456,9 @@ public class ASAPWriter
 	}
 
 	void WriteCmcInit(int[] initAndPlayer, ASAPInfo info)
+#if CI1
+		throws
+#endif
 	{
 		if (initAndPlayer == null)
 			return; // to SAP
@@ -387,8 +466,9 @@ public class ASAPWriter
 		WriteWord(initCmc);
 		WriteWord(initCmc + 16);
 		WriteByte(0x48); // PHA
-		WriteByte(0xa2); WriteByte(info.Music & 0xff); // LDX #<MUSIC
-		WriteByte(0xa0); WriteByte(info.Music >> 8); // LDY #>MUSIC
+		int music = info.GetMusicAddress();
+		WriteByte(0xa2); WriteByte(music & 0xff); // LDX #<MUSIC
+		WriteByte(0xa0); WriteByte(music >> 8); // LDY #>MUSIC
 		WriteByte(0xa9); WriteByte(0x70); // LDA #$70
 		WriteByte(0x20); WriteWord(initAndPlayer[1] + 3); // JSR PLAYER+3
 		WritePlaTaxLda0(); // PLA; TAX; LDA #0
@@ -398,30 +478,40 @@ public class ASAPWriter
 	}
 
 	void WriteExecutableFromSap(int[] initAndPlayer, ASAPInfo info, int type, byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
-		WriteExecutableHeader(initAndPlayer, info, type, info.Init, info.Player);
+		WriteExecutableHeader(initAndPlayer, info, type, info.GetInitAddress(), info.Player);
 		WriteBytes(module, info.HeaderLen, moduleLen);
 	}
 
 	int WriteExecutableHeaderForSongPos(int[] initAndPlayer, ASAPInfo info, int player, int codeForOneSong, int codeForManySongs, int playerOffset)
+#if CI1
+		throws
+#endif
 	{
-		if (info.Songs != 1) {
+		if (info.GetSongs() != 1) {
 			WriteExecutableHeader(initAndPlayer, info, 'B', player - codeForManySongs, player + playerOffset);
-			return player - codeForManySongs - info.Songs;
+			return player - codeForManySongs - info.GetSongs();
 		}
 		WriteExecutableHeader(initAndPlayer, info, 'B', player - codeForOneSong, player + playerOffset);
 		return player - codeForOneSong;
 	}
 
 	internal void WriteExecutable(int[] initAndPlayer, ASAPInfo info, byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		byte[] playerRoutine = ASAP6502.GetPlayerRoutine(info);
 		int player = -1;
 		int playerLastByte = -1;
+		int music = info.GetMusicAddress();
 		if (playerRoutine != null) {
 			player = ASAPInfo.GetWord(playerRoutine, 2);
 			playerLastByte = ASAPInfo.GetWord(playerRoutine, 4);
-			if (info.Music <= playerLastByte)
+			if (music <= playerLastByte)
 				throw "Module address conflicts with the player routine";
 		}
 		int startAddr;
@@ -462,8 +552,8 @@ public class ASAPWriter
 				WriteBytes(module, 0, moduleLen);
 			WriteWord(startAddr);
 			WriteWord(playerLastByte);
-			if (info.Songs != 1) {
-				WriteBytes(info.SongPos, 0, info.Songs);
+			if (info.GetSongs() != 1) {
+				WriteBytes(info.SongPos, 0, info.GetSongs());
 				WriteByte(0xaa); // TAX
 				WriteByte(0xbc); WriteWord(startAddr); // LDY SONG2POS,X
 			}
@@ -478,15 +568,15 @@ public class ASAPWriter
 			WriteBytes(module, 0, moduleLen);
 			WriteWord(startAddr);
 			WriteWord(playerLastByte);
-			if (info.Songs != 1) {
-				WriteBytes(info.SongPos, 0, info.Songs);
+			if (info.GetSongs() != 1) {
+				WriteBytes(info.SongPos, 0, info.GetSongs());
 				WriteByte(0x48); // PHA
 			}
-			WriteByte(0xa0); WriteByte(info.Music & 0xff); // LDY #<MUSIC
-			WriteByte(0xa2); WriteByte(info.Music >> 8); // LDX #>MUSIC
+			WriteByte(0xa0); WriteByte(music & 0xff); // LDY #<MUSIC
+			WriteByte(0xa2); WriteByte(music >> 8); // LDX #>MUSIC
 			WriteByte(0xa9); WriteByte(0); // LDA #0
 			WriteByte(0x20); WriteWord(player); // JSR PLAYER
-			if (info.Songs != 1) {
+			if (info.GetSongs() != 1) {
 				WriteByte(0x68); WriteByte(0xa8); // PLA; TAY
 				WriteByte(0xbe); WriteWord(startAddr); // LDX SONG2POS,Y
 			}
@@ -498,10 +588,10 @@ public class ASAPWriter
 			break;
 		case ASAPModuleType.Rmt:
 			WriteExecutableHeader(initAndPlayer, info, 'B', ASAPInfo.RmtInit, 0x603);
-			WriteBytes(module, 0, ASAPInfo.GetWord(module, 4) - info.Music + 7);
+			WriteBytes(module, 0, ASAPInfo.GetWord(module, 4) - music + 7);
 			WriteWord(ASAPInfo.RmtInit);
-			if (info.Songs != 1) {
-				WriteWord(ASAPInfo.RmtInit + 10 + info.Songs);
+			if (info.GetSongs() != 1) {
+				WriteWord(ASAPInfo.RmtInit + 10 + info.GetSongs());
 				WriteByte(0xa8); // TAY
 				WriteByte(0xb9); WriteWord(ASAPInfo.RmtInit + 11); // LDA SONG2POS,Y
 			}
@@ -509,11 +599,11 @@ public class ASAPWriter
 				WriteWord(ASAPInfo.RmtInit + 8);
 				WriteByte(0xa9); WriteByte(0); // LDA #0
 			}
-			WriteByte(0xa2); WriteByte(info.Music & 0xff); // LDX #<MUSIC
-			WriteByte(0xa0); WriteByte(info.Music >> 8); // LDY #>MUSIC
+			WriteByte(0xa2); WriteByte(music & 0xff); // LDX #<MUSIC
+			WriteByte(0xa0); WriteByte(music >> 8); // LDY #>MUSIC
 			WriteByte(0x4c); WriteWord(0x600); // JMP PLAYER
-			if (info.Songs != 1)
-				WriteBytes(info.SongPos, 0, info.Songs);
+			if (info.GetSongs() != 1)
+				WriteBytes(info.SongPos, 0, info.GetSongs());
 			WriteBytes(playerRoutine, 2, playerLastByte - player + 7);
 			break;
 		case ASAPModuleType.Tmc:
@@ -521,19 +611,19 @@ public class ASAPWriter
 			int player2 = player + tmcPlayerOffset[module[0x25] - 1];
 			const int[4] tmcInitOffset = { -14, -16, -17, -17 };
 			startAddr = player2 + tmcInitOffset[module[0x25] - 1];
-			if (info.Songs != 1)
+			if (info.GetSongs() != 1)
 				startAddr -= 3;
 			WriteExecutableHeader(initAndPlayer, info, 'B', startAddr, player2);
 			WriteBytes(module, 0, moduleLen);
 			WriteWord(startAddr);
 			WriteWord(playerLastByte);
-			if (info.Songs != 1)
+			if (info.GetSongs() != 1)
 				WriteByte(0x48); // PHA
-			WriteByte(0xa0); WriteByte(info.Music & 0xff); // LDY #<MUSIC
-			WriteByte(0xa2); WriteByte(info.Music >> 8); // LDX #>MUSIC
+			WriteByte(0xa0); WriteByte(music & 0xff); // LDY #<MUSIC
+			WriteByte(0xa2); WriteByte(music >> 8); // LDX #>MUSIC
 			WriteByte(0xa9); WriteByte(0x70); // LDA #$70
 			WriteByte(0x20); WriteWord(player); // JSR PLAYER
-			if (info.Songs != 1)
+			if (info.GetSongs() != 1)
 				WritePlaTaxLda0(); // PLA; TAX; LDA #0
 			else {
 				WriteByte(0xa9); WriteByte(0x60); // LDA #$60
@@ -567,17 +657,17 @@ public class ASAPWriter
 			WriteExecutableHeader(initAndPlayer, info, 'B', tm2Init, 0x803);
 			WriteBytes(module, 0, moduleLen);
 			WriteWord(tm2Init);
-			if (info.Songs != 1) {
+			if (info.GetSongs() != 1) {
 				WriteWord(tm2Init + 16);
 				WriteByte(0x48); // PHA
 			}
 			else
 				WriteWord(tm2Init + 14);
-			WriteByte(0xa0); WriteByte(info.Music & 0xff); // LDY #<MUSIC
-			WriteByte(0xa2); WriteByte(info.Music >> 8); // LDX #>MUSIC
+			WriteByte(0xa0); WriteByte(music & 0xff); // LDY #<MUSIC
+			WriteByte(0xa2); WriteByte(music >> 8); // LDX #>MUSIC
 			WriteByte(0xa9); WriteByte(0x70); // LDA #$70
 			WriteByte(0x20); WriteWord(0x800); // JSR PLAYER
-			if (info.Songs != 1)
+			if (info.GetSongs() != 1)
 				WritePlaTaxLda0(); // PLA; TAX; LDA #0
 			else {
 				WriteByte(0xa9); WriteByte(0); // LDA #0
@@ -589,8 +679,8 @@ public class ASAPWriter
 		case ASAPModuleType.Fc:
 			WriteExecutableHeader(initAndPlayer, info, 'B', player, player + 3);
 			WriteWord(0xffff);
-			WriteWord(info.Music);
-			WriteWord(info.Music + moduleLen - 1);
+			WriteWord(music);
+			WriteWord(music + moduleLen - 1);
 			WriteBytes(module, 0, moduleLen);
 			WriteBytes(playerRoutine, 2, playerLastByte - player + 7);
 			break;
@@ -637,6 +727,9 @@ public class ASAPWriter
 	}
 
 	void WriteXexInfoTextDl(int address, int len, int verticalScrollAt)
+#if CI1
+		throws
+#endif
 	{
 		WriteByte(verticalScrollAt == 0 ? 0x62 : 0x42);
 		WriteWord(address);
@@ -645,23 +738,26 @@ public class ASAPWriter
 	}
 
 	void WriteXexInfo(ASAPInfo info)
+#if CI1
+		throws
+#endif
 	{
 		byte[256] title;
-		int titleLen = FormatXexInfoText(title, 0, 0, info.Title.Length == 0 ? "(untitled)" : info.Title, false);
+		int titleLen = FormatXexInfoText(title, 0, 0, info.GetTitle().Length == 0 ? "(untitled)" : info.GetTitle(), false);
 		byte[256] author;
 		int authorLen;
-		if (info.Author.Length > 0) {
+		if (info.GetAuthor().Length > 0) {
 			author[0] = 'b';
 			author[1] = 'y';
 			author[2] = ' ';
-			authorLen = FormatXexInfoText(author, 3, 0, info.Author, true);
+			authorLen = FormatXexInfoText(author, 3, 0, info.GetAuthor(), true);
 		}
 		else
 			authorLen = 0;
 		byte[256] other;
-		int otherLen = FormatXexInfoText(other, 0, XexInfoCharactersPerLine - 13, info.Date, false);
-		otherLen = FormatXexInfoText(other, otherLen, XexInfoCharactersPerLine - 5, info.Channels > 1 ? " STEREO" : "   MONO", false);
-		int duration = info.Durations[info.DefaultSong];
+		int otherLen = FormatXexInfoText(other, 0, XexInfoCharactersPerLine - 13, info.GetDate(), false);
+		otherLen = FormatXexInfoText(other, otherLen, XexInfoCharactersPerLine - 5, info.GetChannels() > 1 ? " STEREO" : "   MONO", false);
+		int duration = info.GetDuration(info.GetDefaultSong());
 		if (duration > 0 && SecondsToString(other, otherLen, duration + 999)) // round up to full seconds
 			otherLen += 5;
 		else
@@ -679,13 +775,12 @@ public class ASAPWriter
 		int titleAddress = otherAddress - authorLen - 8 - titleLen;
 #endif
 		WriteWord(titleAddress);
-		WriteBytes(
 #if CI1
-			resource<byte[]>("xexinfo.obx"),
+		WriteBytes(resource<byte[]>("xexinfo.obx"), 4, 6);
 #else
-			BinaryResource("xexinfo.obx"),
+		WriteBytes(BinaryResource("xexinfo.obx"), 4, 6);
 #endif
-			4, 6);
+
 		WriteBytes(title, 0, titleLen);
 		for (int i = 0; i < 8; i++)
 			WriteByte(0x55);
@@ -741,6 +836,9 @@ public class ASAPWriter
 	}
 
 	void WriteNative(ASAPInfo info, byte[] module, int moduleLen)
+#if CI1
+		throws
+#endif
 	{
 		ASAPNativeModuleWriter() nativeWriter;
 		nativeWriter.Writer = this;
@@ -792,6 +890,9 @@ public class ASAPWriter
 		int moduleLen,
 		/// Display information (xex output only).
 		bool tag)
+#if CI1
+		throws
+#endif
 	{
 		int destExt = ASAPInfo.GetPackedExt(targetFilename);
 		switch (destExt) {
@@ -806,7 +907,7 @@ public class ASAPWriter
 				WriteExecutable(initAndPlayer, info, module, moduleLen);
 				switch (info.Type) {
 				case ASAPModuleType.SapD:
-					if (info.Fastplay != 312)
+					if (info.GetPlayerRateScanlines() != 312)
 						throw "Impossible conversion";
 #if CI1
 					WriteBytes(resource<byte[]>("xexd.obx"), 2, resource<byte[]>("xexd.obx").Length);
@@ -823,7 +924,7 @@ public class ASAPWriter
 						WriteByte(0x4c); // JMP
 						WriteWord(initAndPlayer[1]);
 					}
-					WriteByte(info.DefaultSong);
+					WriteByte(info.GetDefaultSong());
 					break;
 				case ASAPModuleType.SapS:
 					throw "Impossible conversion";
@@ -835,13 +936,14 @@ public class ASAPWriter
 #endif
 					WriteWord(initAndPlayer[0]);
 					WriteByte(0x4c); // JMP
-					WriteWord( initAndPlayer[1]);
-					WriteByte(info.DefaultSong);
-					WriteByte(info.Fastplay & 1);
-					WriteByte((info.Fastplay >> 1) % 156);
-					WriteByte((info.Fastplay >> 1) % 131);
-					WriteByte(info.Fastplay / 312);
-					WriteByte(info.Fastplay / 262);
+					WriteWord(initAndPlayer[1]);
+					WriteByte(info.GetDefaultSong());
+					int fastplay = info.GetPlayerRateScanlines();
+					WriteByte(fastplay & 1);
+					WriteByte((fastplay >> 1) % 156);
+					WriteByte((fastplay >> 1) % 131);
+					WriteByte(fastplay / 312);
+					WriteByte(fastplay / 262);
 					break;
 				}
 				if (tag)

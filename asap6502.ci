@@ -19,8 +19,14 @@
 // along with ASAP; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+#if CI1
+static
+#endif
 class ASAP6502
 {
+#if CI1
+	internal
+#endif
 	static byte[] GetPlayerRoutine(ASAPInfo info)
 	{
 		switch (info.Type) {
@@ -31,7 +37,7 @@ class ASAP6502
 		case ASAPModuleType.Cms: return resource<byte[]>("cms.obx");
 		case ASAPModuleType.Dlt: return resource<byte[]>("dlt.obx");
 		case ASAPModuleType.Mpt: return resource<byte[]>("mpt.obx");
-		case ASAPModuleType.Rmt: return info.Channels == 1 ? resource<byte[]>("rmt4.obx") : resource<byte[]>("rmt8.obx");
+		case ASAPModuleType.Rmt: return info.GetChannels() == 1 ? resource<byte[]>("rmt4.obx") : resource<byte[]>("rmt8.obx");
 		case ASAPModuleType.Tmc: return resource<byte[]>("tmc.obx");
 		case ASAPModuleType.Tm2: return resource<byte[]>("tm2.obx");
 		case ASAPModuleType.Fc:  return resource<byte[]>("fc.obx");

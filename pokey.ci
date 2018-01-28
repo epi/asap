@@ -32,22 +32,46 @@ public enum ASAPSampleFormat
 
 class PokeyChannel
 {
-	int Audf;
-	int Audc;
-	int PeriodCycles;
-	int TickCycle;
-	int TimerCycle;
+#if CI1
+	internal
+#endif
+		int Audf;
+#if CI1
+	internal
+#endif
+		int Audc;
+#if CI1
+	internal
+#endif
+		int PeriodCycles;
+#if CI1
+	internal
+#endif
+		int TickCycle;
+#if CI1
+	internal
+#endif
+		int TimerCycle;
 
 	// Is channel muted?
 	const int MuteFrequency = 1;
 	const int MuteInit = 2;
 	const int MuteUser = 4;
 	const int MuteSerialInput = 8;
-	int Mute;
+#if CI1
+	internal
+#endif
+		int Mute;
 
 	int Out;
-	int Delta;
+#if CI1
+	internal
+#endif
+		int Delta;
 
+#if CI1
+	internal
+#endif
 	void Initialize()
 	{
 		Audf = 0;
@@ -60,12 +84,18 @@ class PokeyChannel
 		Delta = 0;
 	}
 
+#if CI1
+	internal
+#endif
 	void Slope(Pokey pokey, PokeyPair pokeys, int cycle)
 	{
 		Delta = -Delta;
 		pokey.AddDelta(pokeys, cycle, Delta);
 	}
 
+#if CI1
+	internal
+#endif
 	void DoTick(Pokey pokey, PokeyPair pokeys, int cycle, int ch)
 	{
 		TickCycle += PeriodCycles;
@@ -99,12 +129,18 @@ class PokeyChannel
 		Slope(pokey, pokeys, cycle);
 	}
 
+#if CI1
+	internal
+#endif
 	void DoStimer(int cycle)
 	{
 		if (TickCycle != Pokey.NeverCycle)
 			TickCycle = cycle + PeriodCycles;
 	}
 
+#if CI1
+	internal
+#endif
 	void SetMute(bool enable, int mask, int cycle)
 	{
 		if (enable) {
@@ -118,12 +154,18 @@ class PokeyChannel
 		}
 	}
 
+#if CI1
+	internal
+#endif
 	void MuteUltrasound(int cycle)
 	{
 		const int UltrasoundCycles = 112;
 		SetMute(PeriodCycles <= UltrasoundCycles && (Audc & 0xb0) == 0xa0, MuteFrequency, cycle);
 	}
 
+#if CI1
+	internal
+#endif
 	void SetAudc(Pokey pokey, PokeyPair pokeys, int data, int cycle)
 	{
 		if (Audc == data)
@@ -150,6 +192,9 @@ class PokeyChannel
 		}
 	}
 
+#if CI1
+	internal
+#endif
 	void EndFrame(int cycle)
 	{
 		if (TimerCycle != Pokey.NeverCycle)
@@ -159,15 +204,30 @@ class PokeyChannel
 
 class Pokey
 {
-	PokeyChannel()[4] Channels;
-	int Audctl;
+#if CI1
+	internal
+#endif
+		PokeyChannel()[4] Channels;
+#if CI1
+	internal
+#endif
+		int Audctl;
 	int Skctl;
-	int Irqst;
-	bool Init;
+#if CI1
+	internal
+#endif
+		int Irqst;
+#if CI1
+	internal
+#endif
+		bool Init;
 	int DivCycles;
 	int ReloadCycles1;
 	int ReloadCycles3;
-	int PolyIndex;
+#if CI1
+	internal
+#endif
+		int PolyIndex;
 	const int NeverCycle = 0x800000;
 
 	// Sample rates from 32000 to 50000 should be fine,
@@ -182,6 +242,21 @@ class Pokey
 
 	int IirAcc;
 
+#if CI1
+	internal
+#endif
+	void StartFrame()
+	{
+#if CI1
+		DeltaBuffer.Fill(0);
+#else
+		DeltaBuffer.Clear();
+#endif
+	}
+
+#if CI1
+	internal
+#endif
 	void Initialize()
 	{
 		for (int i = 0; i < 4; i++)
@@ -194,14 +269,13 @@ class Pokey
 		ReloadCycles1 = 28;
 		ReloadCycles3 = 28;
 		PolyIndex = 15 * 31 * 131071;
-#if CI1
-		DeltaBuffer.Fill(0);
-#else
-		DeltaBuffer.Clear();
-#endif
 		IirAcc = 0;
+		StartFrame();
 	}
 
+#if CI1
+	internal
+#endif
 	void AddDelta(PokeyPair pokeys, int cycle, int delta)
 	{
 		int i = cycle * pokeys.SampleFactor + pokeys.SampleOffset;
@@ -215,6 +289,9 @@ class Pokey
 	}
 
 	/// Fills `DeltaBuffer` up to `cycleLimit` basing on current Audf/Audc/Audctl values.
+#if CI1
+	internal
+#endif
 	void GenerateUntilCycle(PokeyPair pokeys, int cycleLimit)
 	{
 		for (;;) {
@@ -254,6 +331,9 @@ class Pokey
 		}
 	}
 
+#if CI1
+	internal
+#endif
 	void EndFrame(PokeyPair pokeys, int cycle)
 	{
 		GenerateUntilCycle(pokeys, cycle);
@@ -268,6 +348,9 @@ class Pokey
 		}
 	}
 
+#if CI1
+	internal
+#endif
 	bool IsSilent()
 	{
 		for (int i = 0; i < 4; i++)
@@ -276,6 +359,9 @@ class Pokey
 		return true;
 	}
 
+#if CI1
+	internal
+#endif
 	void Mute(int mask)
 	{
 		for (int i = 0; i < 4; i++)
@@ -292,6 +378,9 @@ class Pokey
 		Channels[3].SetMute(init && (audctl & 0x28) != 0x28, PokeyChannel.MuteInit, cycle);
 	}
 
+#if CI1
+	internal
+#endif
 	int Poke(PokeyPair pokeys, int addr, int data, int cycle)
 	{
 		int nextEventCycle = NeverCycle;
@@ -492,6 +581,9 @@ class Pokey
 		return nextEventCycle;
 	}
 
+#if CI1
+	internal
+#endif
 	int CheckIrq(int cycle, int nextEventCycle)
 	{
 		for (int i = 3; ; i >>= 1) {
@@ -508,6 +600,9 @@ class Pokey
 		return nextEventCycle;
 	}
 
+#if CI1
+	internal
+#endif
 	int StoreSample(byte[] buffer, int bufferOffset, int i, ASAPSampleFormat format)
 	{
 		IirAcc += DeltaBuffer[i] - (IirAcc * 3 >> 10);
@@ -542,6 +637,9 @@ class Pokey
 		return bufferOffset;
 	}
 
+#if CI1
+	internal
+#endif
 	void AccumulateTrailing(int i)
 	{
 		IirAcc += DeltaBuffer[i] + DeltaBuffer[i + 1];
@@ -553,21 +651,45 @@ public
 #endif
 class PokeyPair
 {
-	byte[511] Poly9Lookup;
-	byte[16385] Poly17Lookup;
+#if CI1
+	internal
+#endif
+		byte[511] Poly9Lookup;
+#if CI1
+	internal
+#endif
+		byte[16385] Poly17Lookup;
 	int ExtraPokeyMask;
-	Pokey() BasePokey;
-	Pokey() ExtraPokey;
+#if CI1
+	internal
+#endif
+		Pokey() BasePokey;
+#if CI1
+	internal
+#endif
+		Pokey() ExtraPokey;
 
 	// DeltaBuffer.Length << SampleFactorShift shouldn't overflow int.
 	// SampleFactorShift could be 21, but that wouldn't improve
 	// accuracy because SampleFactor would be even.
 	const int SampleFactorShift = 20;
-	int SampleFactor;
-	int SampleOffset;
+#if CI1
+	internal
+#endif
+		int SampleFactor;
+#if CI1
+	internal
+#endif
+		int SampleOffset;
 
-	int ReadySamplesStart;
-	int ReadySamplesEnd;
+#if CI1
+	internal
+#endif
+		int ReadySamplesStart;
+#if CI1
+	internal
+#endif
+		int ReadySamplesEnd;
 
 #if APOKEYSND
 	public
@@ -608,6 +730,8 @@ class PokeyPair
 
 #if APOKEYSND
 	public
+#elif CI1
+	internal
 #endif
 	void Initialize(bool ntsc, bool stereo)
 	{
@@ -622,6 +746,8 @@ class PokeyPair
 
 #if APOKEYSND
 	public
+#elif CI1
+	internal
 #endif
 	int Poke(int addr, int data, int cycle)
 	{
@@ -631,6 +757,8 @@ class PokeyPair
 
 #if APOKEYSND
 	public
+#elif CI1
+	internal
 #endif
 	int Peek(int addr, int cycle)
 	{
@@ -655,22 +783,20 @@ class PokeyPair
 
 #if APOKEYSND
 	public
+#elif CI1
+	internal
 #endif
 	void StartFrame()
 	{
-#if CI1
-		BasePokey.DeltaBuffer.Fill(0);
+		BasePokey.StartFrame();
 		if (ExtraPokeyMask != 0)
-			ExtraPokey.DeltaBuffer.Fill(0);
-#else
-		BasePokey.DeltaBuffer.Clear();
-		if (ExtraPokeyMask != 0)
-			ExtraPokey.DeltaBuffer.Clear();
-#endif
+			ExtraPokey.StartFrame();
 	}
 
 #if APOKEYSND
 	public
+#elif CI1
+	internal
 #endif
 	int EndFrame(int cycle)
 	{
@@ -687,6 +813,8 @@ class PokeyPair
 	/// Fills buffer with samples from `DeltaBuffer`.
 #if APOKEYSND
 	public
+#elif CI1
+	internal
 #endif
 	int Generate(byte[] buffer, int bufferOffset, int blocks, ASAPSampleFormat format)
 	{
@@ -713,10 +841,11 @@ class PokeyPair
 #endif
 	}
 
-	bool IsSilent()
 #if CI1
+	internal bool IsSilent()
 		=>
 #else
+	bool IsSilent()
 		return
 #endif
 			BasePokey.IsSilent() && ExtraPokey.IsSilent();

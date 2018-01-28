@@ -44,15 +44,39 @@
 
 class Cpu6502
 {
-	ASAP Asap;
-	byte[65536] Memory;
-	int Cycle;
+#if CI1
+	internal
+#endif
+		ASAP Asap;
+#if CI1
+	internal
+#endif
+		byte[65536] Memory;
+#if CI1
+	internal
+#endif
+		int Cycle;
 
-	int Pc;
-	int A;
-	int X;
-	int Y;
-	int S;
+#if CI1
+	internal
+#endif
+		int Pc;
+#if CI1
+	internal
+#endif
+		int A;
+#if CI1
+	internal
+#endif
+		int X;
+#if CI1
+	internal
+#endif
+		int Y;
+#if CI1
+	internal
+#endif
+		int S;
 	int Nz;
 	int C;
 	int Vdi;
@@ -61,6 +85,17 @@ class Cpu6502
 	const int DFlag = 0x08;
 	const int IFlag = 0x04;
 	const int ZFlag = 0x02;
+
+#if CI1
+	internal
+#endif
+	void Reset()
+	{
+		Cycle = 0;
+		Nz = 0;
+		C = 0;
+		Vdi = 0;
+	}
 
 	int Peek(int addr)
 	{
@@ -112,6 +147,9 @@ class Cpu6502
 		S = (s - 1) & 0xff;
 	}
 
+#if CI1
+	internal
+#endif
 	void PushPc()
 	{
 		Push(Pc >> 8);
@@ -239,7 +277,7 @@ class Cpu6502
 
 	void CheckIrq()
 	{
-		if ((Vdi & IFlag) == 0 && Asap.Pokeys.BasePokey.Irqst != 0xff) {
+		if ((Vdi & IFlag) == 0 && Asap.IsIrq()) {
 			Cycle += 7;
 			ExecuteIrq(0x20); // B flag clear
 		}
@@ -258,6 +296,9 @@ class Cpu6502
 
 	/// Runs 6502 emulation for the specified number of Atari scanlines.
 	/// Each scanline is 114 cycles of which 9 is taken by ANTIC for memory refresh.
+#if CI1
+	internal
+#endif
 	void DoFrame(int cycleLimit)
 	{
 		while (Cycle < cycleLimit) {
