@@ -285,7 +285,7 @@ function setSong(s)
 
 function setTime(s)
 {
-	duration = ASAP.parseDuration(s);
+	duration = ASAPInfo.parseDuration(s);
 }
 
 function setMuteMask(s)
@@ -342,15 +342,15 @@ for (var i = 0; i < arguments.length; i++) {
 		noInputFiles = false;
 	}
 	else if (arg == "-o")
-		outputFilename = arguments(++i);
+		outputFilename = arguments[++i];
 	else if (arg.substring(0, 9) == "--output=")
 		outputFilename = arg.substring(9, arg.length);
 	else if (arg == "-s")
-		setSong(arguments(++i));
+		setSong(arguments[++i]);
 	else if (arg.substring(0, 7) == "--song=")
 		setSong(arg.substring(7, arg.length));
 	else if (arg == "-t")
-		setTime(arguments(++i));
+		setTime(arguments[++i]);
 	else if (arg.substring(0, 7) ==  "--time=")
 		setTime(arg.substring(7, arg.length));
 	else if (arg == "-b" || arg == "--byte-samples")
@@ -360,7 +360,7 @@ for (var i = 0; i < arguments.length; i++) {
 	else if (arg == "--raw")
 		outputHeader = false;
 	else if (arg == "-m")
-		setMuteMask(arguments(++i));
+		setMuteMask(arguments[++i]);
 	else if (arg.substring(0, 7) == "--mute=")
 		setMuteMask(arg.substring(7, arg.length));
 	else if (arg == "-h" || arg == "--help") {
