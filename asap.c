@@ -101,6 +101,7 @@ struct ASAPInfo {
 	cibool loops[32];
 	char title[128];
 };
+static void ASAPInfo_Construct(ASAPInfo *self);
 static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls);
 static int ASAPInfo_AfterFF(unsigned char const *module, int moduleLen, int currentOffset);
 static int ASAPInfo_CheckDate(ASAPInfo const *self);
@@ -1923,6 +1924,7 @@ static void FlashPack_PutPoke(FlashPack *self, int address, int value);
 
 static void ASAP_Construct(ASAP *self)
 {
+	ASAPInfo_Construct(&self->moduleInfo);
 	PokeyPair_Construct(&self->pokeys);
 	self->silenceCycles = 0;
 	self->cpu.asap = self;
@@ -2494,9 +2496,15 @@ static unsigned char const *ASAP6502_GetPlayerRoutine(ASAPInfo const *info)
 	}
 }
 
+static void ASAPInfo_Construct(ASAPInfo *self)
+{
+}
+
 ASAPInfo *ASAPInfo_New(void)
 {
 	ASAPInfo *self = (ASAPInfo *) malloc(sizeof(ASAPInfo));
+	if (self != NULL)
+		ASAPInfo_Construct(self);
 	return self;
 }
 

@@ -189,6 +189,10 @@ public class ASAPInfo
 #endif
 		byte[MaxSongs] SongPos;
 
+	public ASAPInfo()
+	{
+	}
+
 	static bool IsValidChar(int c)
 #if CI1
 		=>

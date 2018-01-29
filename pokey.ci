@@ -618,7 +618,7 @@ class Pokey
 		case ASAPSampleFormat.S16LE:
 #if CI1
 			buffer[bufferOffset++] = sample & 0xff;
-			buffer[bufferOffset++] = sample >> 8;
+			buffer[bufferOffset++] = sample >> 8 & 0xff;
 #else
 			buffer[bufferOffset++] = sample.LowByte;
 			buffer[bufferOffset++] = (sample >> 8).LowByte;
@@ -626,7 +626,7 @@ class Pokey
 			break;
 		case ASAPSampleFormat.S16BE:
 #if CI1
-			buffer[bufferOffset++] = sample >> 8;
+			buffer[bufferOffset++] = sample >> 8 & 0xff;
 			buffer[bufferOffset++] = sample & 0xff;
 #else
 			buffer[bufferOffset++] = (sample >> 8).LowByte;
