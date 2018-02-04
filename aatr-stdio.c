@@ -1,7 +1,7 @@
 /*
  * aatr-stdio.c - another ATR file extractor
  *
- * Copyright (C) 2012-2015  Piotr Fusik
+ * Copyright (C) 2012-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,10 +23,16 @@
 
 #include <stdio.h>
 #include "aatr-stdio.h"
+#include "aatr.c"
 
-static cibool AATRStdio_Read(void *obj, int offset, const unsigned char *buffer, int length)
+typedef struct {
+	AATR base;
+	FILE *fp;
+} AATRStdio;
+
+static cibool AATRStdio_Read(AATR *self, int offset, const unsigned char *buffer, int length)
 {
-	FILE *fp = (FILE *) obj;
+	FILE *fp = ((AATRStdio *) self)->fp;
 	return fseek(fp, offset, SEEK_SET) == 0
 		&& fread((void *) buffer, length, 1, fp) == 1;
 }
@@ -34,29 +40,30 @@ static cibool AATRStdio_Read(void *obj, int offset, const unsigned char *buffer,
 AATR *AATRStdio_New(const char *filename)
 {
 	FILE *fp = fopen(filename, "rb");
-	AATR *self;
-	RandomAccessInputStream content;
+	AATRStdio *self;
+	static const AATRVtbl vtbl = { AATRStdio_Read };
 	if (fp == NULL)
 		return NULL;
-	self = AATR_New();
+	self = (AATRStdio *) malloc(sizeof(AATRStdio));
 	if (self == NULL) {
 		fclose(fp);
 		return NULL;
 	}
-	content.obj = fp;
-	content.func = AATRStdio_Read;
-	if (!AATR_Open(self, content)) {
-		AATR_Delete(self);
+	AATR_Construct(&self->base, &vtbl);
+	self->fp = fp;
+	if (!AATR_Open(&self->base)) {
+		free(self);
 		fclose(fp);
 		return NULL;
 	}
-	return self;
+	return &self->base;
 }
 
 void AATRStdio_Delete(AATR *self)
 {
-	fclose((FILE *) AATR_GetContent(self).obj);
-	AATR_Delete(self);
+	FILE *fp = ((AATRStdio *) self)->fp;
+	free(self);
+	fclose(fp);
 }
 
 #if 0

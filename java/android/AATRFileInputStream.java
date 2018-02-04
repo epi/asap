@@ -1,7 +1,7 @@
 /*
  * AATRFileInputStream.java - ASAP for Android
  *
- * Copyright (C) 2015  Piotr Fusik
+ * Copyright (C) 2015-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -29,24 +29,24 @@ import java.io.IOException;
 
 public class AATRFileInputStream extends InputStream
 {
-	private final AATRStream atrStream;
+	private final JavaAATR atr;
 	private final AATRFileStream fileStream = new AATRFileStream();
 	private byte[] byteBuffer = null;
 
 	public AATRFileInputStream(AATRDirectory directory)
 	{
-		atrStream = null;
+		atr = null;
 		fileStream.open(directory);
 	}
 
-	public AATRFileInputStream(AATRStream atrStream, String filename) throws IOException
+	public AATRFileInputStream(JavaAATR atr, String filename) throws IOException
 	{
 		AATRDirectory directory = new AATRDirectory();
-		directory.openRoot(atrStream.open());
+		directory.openRoot(atr);
 		if (!directory.findEntryRecursively(filename) || directory.isEntryDirectory())
 			throw new FileNotFoundException(filename);
 		fileStream.open(directory);
-		this.atrStream = atrStream;
+		this.atr = atr;
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class AATRFileInputStream extends InputStream
 	@Override
 	public void close() throws IOException
 	{
-		if (atrStream != null)
-			atrStream.close();
+		if (atr != null)
+			atr.close();
 	}
 }

@@ -1,7 +1,7 @@
 /*
- * AATRStream.java - ASAP for Android
+ * JavaAATR.java - ASAP for Android
  *
- * Copyright (C) 2013  Piotr Fusik
+ * Copyright (C) 2013-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,34 +23,35 @@
 
 package net.sf.asap;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-class AATRStream extends RandomAccessFile implements RandomAccessInputStream
+class JavaAATR extends AATR
 {
-	AATRStream(String filename) throws FileNotFoundException
-	{
-		super(filename, "r");
-	}
+	private final RandomAccessFile stream;
 
-	AATR open() throws IOException
+	JavaAATR(String filename) throws IOException
 	{
-		AATR aatr = new AATR();
-		if (!aatr.open(this))
+		stream = new RandomAccessFile(filename, "r");
+		if (!open())
 			throw new IOException("Invalid ATR file");
-		return aatr;
 	}
 
-	public boolean run(int offset, byte[] buffer, int length)
+	@Override
+	protected boolean read(int offset, byte[] buffer, int length)
 	{
 		try {
-			seek(offset);
-			readFully(buffer, 0, length);
+			stream.seek(offset);
+			stream.readFully(buffer, 0, length);
 			return true;
 		}
 		catch (IOException ex) {
 			return false;
 		}
+	}
+
+	void close() throws IOException
+	{
+		stream.close();
 	}
 }

@@ -1,7 +1,7 @@
 /*
  * PlayerService.java - ASAP for Android
  *
- * Copyright (C) 2010-2016  Piotr Fusik
+ * Copyright (C) 2010-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -183,9 +183,9 @@ public class PlayerService extends Service implements Runnable, MediaController.
 					stream = new ZipInputStream(zipFilename, filename);
 				}
 				else if (Util.endsWithIgnoreCase(filename, ".atr")) {
-					AATRStream atrStream = new AATRStream(filename);
+					JavaAATR atr = new JavaAATR(filename);
 					filename = uri.getFragment();
-					stream = new AATRFileInputStream(atrStream, filename);
+					stream = new AATRFileInputStream(atr, filename);
 				}
 				else {
 					stream = new FileInputStream(filename);

@@ -92,8 +92,8 @@ CLEAN += java/android/classes.dex
 java/android/classes.jar: $(srcdir)java/android/proguard.cfg java/android/classes/net/sf/asap/Player.class
 	$(PROGUARD) -injars java/android/classes -outjars $@ -libraryjars $(ANDROID_JAR) @$<
 
-java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,AATRFileInputStream.java AATRStream.java ArchiveSelector.java BaseSelector.java FileContainer.java FileInfo.java FileSelector.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
-	$(JAVAC) -d java/android/classes -bootclasspath $(ANDROID_JAR) $(addprefix $(srcdir)java/android/,AATRFileInputStream.java AATRStream.java ArchiveSelector.java BaseSelector.java FileContainer.java FileInfo.java FileSelector.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/gen/net/sf/asap/R.java java/src/net/sf/asap/*.java
+java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,AATRFileInputStream.java ArchiveSelector.java BaseSelector.java FileContainer.java FileInfo.java FileSelector.java JavaAATR.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
+	$(JAVAC) -d java/android/classes -bootclasspath $(ANDROID_JAR) $(addprefix $(srcdir)java/android/,AATRFileInputStream.java ArchiveSelector.java BaseSelector.java FileContainer.java FileInfo.java FileSelector.java JavaAATR.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/gen/net/sf/asap/R.java java/src/net/sf/asap/*.java
 CLEANDIR += java/android/classes
 
 # Also generates java/android/gen/net/sf/asap/R.java

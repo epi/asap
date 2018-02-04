@@ -1,6 +1,6 @@
 // aatr.ci - another ATR file extractor
 //
-// Copyright (C) 2012-2015  Piotr Fusik
+// Copyright (C) 2012-2018  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -19,22 +19,24 @@
 // along with ASAP; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-public delegate bool RandomAccessInputStream(int offset, byte[] buffer, int length);
-
 /// ATR disk image reader.
-public class AATR
+public abstract class AATR
 {
-	RandomAccessInputStream Content;
+#if CI1
+	protected abstract bool Read(int offset, byte[]! buffer, int length);
+#else
+	abstract bool Read(int offset, byte[] buffer, int length);
+#endif
+
 	int BytesPerSector;
 	int Sector4Offset;
 
 	/// Opens an ATR disk image.
 	/// Returns `true` on success.
-	public bool Open(RandomAccessInputStream content)
+	public bool Open()
 	{
 		byte[6] header;
-		content(0, header, 6);
-		if (header[0] != 0x96 || header[1] != 2)
+		if (!Read(0, header, 6) || header[0] != 0x96 || header[1] != 2)
 			return false;
 		BytesPerSector = header[4] | header[5] << 8;
 		Sector4Offset = 0x190;
@@ -58,32 +60,50 @@ public class AATR
 		default:
 			return false;
 		}
-		Content = content;
 		return true;
 	}
 
-	public RandomAccessInputStream GetContent()
-		return Content;
+	public int GetBytesPerSector()
+#if CI1
+		=>
+#else
+		return
+#endif
+			BytesPerSector;
 
+#if CI1
+	internal bool ReadSector(int sectorNo, byte[]! buffer, int length)
+#else
 	bool ReadSector(int sectorNo, byte[] buffer, int length)
+#endif
 	{
+		int offset;
 		if (sectorNo < 4) {
 			if (sectorNo < 1 || length > 128)
 				return false;
-			return Content((sectorNo << 7) - 0x70, buffer, length);
+			offset = (sectorNo << 7) - 0x70;
 		}
-		return Content(Sector4Offset + (sectorNo - 4) * BytesPerSector, buffer, length);
+		else
+			offset = Sector4Offset + (sectorNo - 4) * BytesPerSector;
+		return Read(offset, buffer, length);
 	}
 }
 
 /// Forward-only iterator over a directory on an ATR disk image.
 public class AATRDirectory
 {
-	AATR Disk;
+#if CI1
+	internal
+#endif
+		AATR Disk;
 	int FirstSector;
 	int FileNo;
 	byte[128] Sector;
-	string(12) Filename;
+	string(
+#if !CI1
+		12
+#endif
+		) Filename;
 
 	/// Opens the root directory of the specified disk image.
 	public void OpenRoot(
@@ -132,7 +152,7 @@ public class AATRDirectory
 			case 0x00:
 				return null; // end of directory
 			case 0x40: // DOS 1 file
-				if (Disk.BytesPerSector != 128)
+				if (Disk.GetBytesPerSector() != 128)
 					continue;
 				break;
 			case 0x42: // DOS 2 file
@@ -149,16 +169,27 @@ public class AATRDirectory
 			int extLength = GetFilenamePart(sectorOffset + 13, 3);
 			if (extLength < 0 || (filenameLength == 0 && extLength == 0))
 				continue;
+#if CI1
+			Filename = Encoding.UTF8.GetString(Sector, sectorOffset + 5, filenameLength);
+#else
 			Filename = Sector.ToString(sectorOffset + 5, filenameLength);
+#endif
 			if (extLength > 0) {
 				Sector[sectorOffset + 12] = '.';
+#if CI1
+				string() ext = Encoding.UTF8.GetString(Sector, sectorOffset + 12, 1 + extLength);
+#else
 				string(4) ext = Sector.ToString(sectorOffset + 12, 1 + extLength);
+#endif
 				Filename += ext;
 			}
 			return Filename;
 		}
 	}
 
+#if CI1
+	internal
+#endif
 	int GetEntryType()
 	{
 		int sectorOffset = (FileNo & 7) << 4;
@@ -167,8 +198,16 @@ public class AATRDirectory
 
 	/// Returns `true` if the current entry is a directory.
 	public bool IsEntryDirectory()
-		return GetEntryType() == 0x10;
+#if CI1
+		=>
+#else
+		return
+#endif
+			GetEntryType() == 0x10;
 
+#if CI1
+	internal
+#endif
 	int GetEntryFirstSector()
 	{
 		int sectorOffset = (FileNo & 7) << 4;
@@ -212,7 +251,11 @@ public class AATRDirectory
 			if (path[j] == '/') {
 				if (j - i > 12)
 					return false;
-				string(12) dirname = path.Substring(i, j - i);
+				string(
+#if !CI1
+					12
+#endif
+					) dirname = path.Substring(i, j - i);
 				if (!FindEntry(dirname) || !IsEntryDirectory())
 					return false;
 				Open(this);
@@ -221,7 +264,11 @@ public class AATRDirectory
 		}
 		if (pathLength - i > 12)
 			return false;
-		string(12) filename = path.Substring(i, pathLength - i);
+		string(
+#if !CI1
+			12
+#endif
+			) filename = path.Substring(i, pathLength - i);
 		return FindEntry(filename);
 	}
 }
@@ -232,8 +279,16 @@ public class AATRRecursiveLister
 	const int MaxDepth = 20;
 	AATRDirectory()[MaxDepth] Directories;
 	int Depth;
-	string(MaxDepth * "FILENAME.EXT/".Length) DirectoryPath;
-	string(MaxDepth * "FILENAME.EXT/".Length + "FILENAME.EXT".Length) FilePath;
+	string(
+#if !CI1
+		MaxDepth * "FILENAME.EXT/".Length
+#endif
+		) DirectoryPath;
+	string(
+#if !CI1
+		MaxDepth * "FILENAME.EXT/".Length + "FILENAME.EXT".Length
+#endif
+		) FilePath;
 
 	/// Opens a disk image.
 	public void Open(
@@ -279,7 +334,12 @@ public class AATRRecursiveLister
 
 	/// Returns the directory iterator pointing at the file found by `NextFile`.
 	public AATRDirectory GetDirectory()
-		return Directories[Depth];
+#if CI1
+		=>
+#else
+		return
+#endif
+			Directories[Depth];
 }
 
 /// Contents of a file on an ATR disk image.
@@ -315,14 +375,18 @@ public class AATRFileStream
 	/// Returns the number of bytes read.
 	public int Read(
 		/// Destination buffer.
-		byte[] buffer,
+		byte[]
+#if CI1
+			!
+#endif
+			buffer,
 		/// Start offset in buffer at which the data is written.
 		int offset,
 		/// Maximum number of bytes to read.
 		int length)
 	{
 		int totalRead = 0;
-		int bytesPerSector = Disk.BytesPerSector;
+		int bytesPerSector = Disk.GetBytesPerSector();
 		while (length > 0) {
 			int got;
 			for (;;) {
@@ -361,11 +425,21 @@ public class AATRFileStream
 
 	/// Returns the disk image containing this file.
 	public AATR GetDisk()
-		return Disk;
+#if CI1
+		=>
+#else
+		return
+#endif
+			Disk;
 
 	/// Returns the current position in the open file.
 	public int GetPosition()
-		return Position;
+#if CI1
+		=>
+#else
+		return
+#endif
+			Position;
 
 	/// Sets the current position in the open file.
 	/// Returns `true` on success.

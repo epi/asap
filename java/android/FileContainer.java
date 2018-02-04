@@ -1,7 +1,7 @@
 /*
  * FileContainer.java - ASAP for Android
  *
- * Copyright (C) 2013-2015  Piotr Fusik
+ * Copyright (C) 2013-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -176,10 +176,10 @@ abstract class FileContainer
 
 	private void listAtr(String atrFilename, String atrPath, boolean inputStreams) throws IOException
 	{
-		AATRStream stream = new AATRStream(atrFilename);
+		JavaAATR atr = new JavaAATR(atrFilename);
 		try {
 			AATRDirectory directory = new AATRDirectory();
-			directory.openRoot(stream.open());
+			directory.openRoot(atr);
 			if (atrPath != null) {
 				if (atrPath.endsWith("/"))
 					atrPath = atrPath.substring(0, atrPath.length() - 1);
@@ -198,7 +198,7 @@ abstract class FileContainer
 			}
 		}
 		finally {
-			stream.close();
+			atr.close();
 		}
 	}
 
