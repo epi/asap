@@ -1,7 +1,7 @@
 /*
  * FileSelector.java - ASAP for Android
  *
- * Copyright (C) 2010-2015  Piotr Fusik
+ * Copyright (C) 2010-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,6 +26,7 @@ package net.sf.asap;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
@@ -101,7 +102,7 @@ public class FileSelector extends BaseSelector
 	{
 		uri = getIntent().getData();
 		if (uri == null)
-			uri = Uri.parse("file:///");
+			uri = Uri.fromFile(Environment.getExternalStorageDirectory());
 
 		String title = uri.getPath();
 		String fragment = uri.getFragment();
