@@ -129,6 +129,7 @@ public class FileSelector extends BaseSelector
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+		getActionBar().setDisplayHomeAsUpEnabled(true);
 		getListView().setTextFilterEnabled(true);
 		isDetails = getPreferences(MODE_PRIVATE).getBoolean("fileDetails", false);
 		reload();
@@ -145,6 +146,9 @@ public class FileSelector extends BaseSelector
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
 		switch (item.getItemId()) {
+		case android.R.id.home:
+			finish();
+			return true;
 		case R.id.menu_toggle_details:
 			isDetails = !isDetails;
 			getPreferences(MODE_PRIVATE).edit().putBoolean("fileDetails", isDetails).commit();
