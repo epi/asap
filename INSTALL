@@ -1,321 +1,254 @@
-﻿// This file is in AsciiDoc format. It is converted to README.html.
-
-Using asapconv
---------------
-
-Run the program from the command line to see the syntax.
-The `-o`/`--output` option selects the output format and is mandatory.
-
-
-Using libasap
--------------
-
-The library is documented in the `asap.h` header file.
-Be warned there might be breaking changes in the future versions of the library.
-
-
-Compilation instructions
-------------------------
+﻿Build instructions
+==================
 
 Required tools
-~~~~~~~~~~~~~~
+--------------
 
-For all builds you will need:
-
-GNU Make::
-On Linux this program is called `make`. On other systems it may be called `gmake`
-(if this is the case, type `gmake` instead of `make` in the following instructions).
-On Windows you may install GNU Make from http://cygwin.com/[Cygwin].
-
-Standard Unix tools::
-I mean `sh`, `cat`, `cp`, `rm`, `mkdir`. On Windows you can find them in Cygwin.
-
-xasm and MADS::
-If you are compiling latest source code from Git, install
-http://xasm.atari.org/[xasm] and http://mads.atari8.info/[MADS].
-
-Ć Translator::
-The core of ASAP is written in the Ć programming language.
-You'll need http://cito.sourceforge.net[cito].
+1. The core of ASAP is written in the Ć programming language.
+You'll need 'cito' (http://cito.sourceforge.net).
 For your convenience, this is not needed for most of the C and C++ ports.
 
-Make sure these tools are on your `PATH`.
+2. GNU Make.
+On Windows, install from Cygwin (http://cygwin.com).
+
+3. If compiling from Git:
+xasm (https://github.com/pfusik/xasm)
+and MADS (http://mads.atari8.info).
+
+Make sure these tools are on your 'PATH'.
 
 
-Getting officially released source code
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Getting the source code
+-----------------------
 
-If you want to compile an official release of ASAP, download a source distribution
-(`asap-*.tar.gz`) and uncompress it to a directory of your choice.
+a. Download and uncompress 'asap-*.tar.gz'
 
-On Unix-like systems:
---------------------------------------------------------------------------------
-tar zxf asap-*.tar.gz
---------------------------------------------------------------------------------
-
-On Windows you may use http://7-zip.org/[7-Zip].
-
-
-Getting latest source code
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Alternatively you may get the latest version from the Git repository.
-To do this using a command-line Git client:
---------------------------------------------------------------------------------
-git clone git://git.code.sf.net/p/asap/code asap-code
---------------------------------------------------------------------------------
-
-This will fetch the latest code into a new directory called `asap-code`.
+b. git clone git://git.code.sf.net/p/asap/code asap-code
 
 
 Building asapconv and libasap on Unix-like systems
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------
 
-From your shell prompt navigate to the directory which contains `asap.c`.
+From a directory which contains 'asap.c' run:
 
-To compile and install, run the following commands:
---------------------------------------------------------------------------------
-make
-sudo make install
---------------------------------------------------------------------------------
+    make
+	sudo make install
 
 The latter command installs the command-line converter and the C library
-in `/usr/local`.
+in '/usr/local'.  Add '--prefix=DIR' to install somewhere else.
 
 
 Building the MOC plugin on Unix-like systems
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------
 
 You need the source code of MOC.
-The plugin is compatible with MOC 2.4.x and MOC 2.5.0. Run:
+The plugin is compatible with MOC 2.4.x and MOC 2.5.0.
+From the directory with MOC sources run:
 
---------------------------------------------------------------------------------
-./configure
---------------------------------------------------------------------------------
+    ./configure
 
-in the directory with MOC sources. Make sure it finishes successfully.
+Make sure it finishes successfully.
 
-Check `MOC_INCLUDE` and `MOC_PLUGIN_DIR` in the `moc/moc.mk` file.
+Check MOC_INCLUDE and MOC_PLUGIN_DIR in the 'moc/moc.mk' file.
 These should be the directory with MOC sources
 and the directory with the installed MOC plugins, respectively.
 
 If the defaults are correct, use the following commands:
---------------------------------------------------------------------------------
-make asap-moc
-sudo make install-moc
---------------------------------------------------------------------------------
+
+    make asap-moc
+    sudo make install-moc
 
 If you need to specify different directories, use:
---------------------------------------------------------------------------------
-make asap-moc MOC_INCLUDE=path/to/moc/sources
-sudo make install-moc MOC_PLUGIN_DIR=/path/to/moc/plugins
---------------------------------------------------------------------------------
+
+    make asap-moc MOC_INCLUDE=path/to/moc/sources
+    sudo make install-moc MOC_PLUGIN_DIR=/path/to/moc/plugins
 
 
 Building the VLC plugin on Linux
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 
-Install `libvlccore-dev` (Debian/Ubuntu) or `vlc-devel` (Fedora).
-Verify paths at the top of `vlc/vlc.mk`. To compile, run the following command:
---------------------------------------------------------------------------------
-make asap-vlc
---------------------------------------------------------------------------------
+Install 'libvlccore-dev' (Debian/Ubuntu) or 'vlc-devel' (Fedora).
+Verify the paths at the top of 'vlc/vlc.mk'.  Run:
 
-To install:
---------------------------------------------------------------------------------
-sudo make install-vlc
---------------------------------------------------------------------------------
+    make asap-vlc
+    sudo make install-vlc
 
 
 Building the VLC plugin on macOS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 
-Install Xcode Command Line Tools.
+Install the Xcode Command Line Tools.
 
-You need `vlc_plugin.h` and other header files.
+You need 'vlc_plugin.h' and other header files.
 Unfortunately they are not installed with the VLC on Mac.
-You can find them in VLC source code. I copied them from my Windows VLC
-(`C:\Program Files (x86)\VideoLAN\VLC\sdk\include\vlc\plugins`). ;)
-Make sure `VLC_OSX_CFLAGS` in `vlc/vlc.mk` points to the directory
+You can find them in VLC source code.
+Make sure 'VLC_OSX_CFLAGS' in 'vlc/vlc.mk' points to the directory
 with these header files.
+Run:
 
-To compile, run the following command:
---------------------------------------------------------------------------------
-make asap-vlc-osx
---------------------------------------------------------------------------------
-
-To install:
---------------------------------------------------------------------------------
-make install-vlc-osx
---------------------------------------------------------------------------------
+    make asap-vlc-osx
+    make install-vlc-osx
 
 
 Building the XMMS plugin on Unix-like systems
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------
 
-You need `xmms` and `xmms-devel` packages.
+You need 'xmms' and 'xmms-devel' packages.
+Compile:
 
-To compile, run the following command:
---------------------------------------------------------------------------------
-make asap-xmms
---------------------------------------------------------------------------------
+   make asap-xmms
 
-If the compilation finished successfully, you can install the plugin
-in your home directory:
---------------------------------------------------------------------------------
-make install-xmms-user
---------------------------------------------------------------------------------
+Install the plugin in your home directory:
+
+    make install-xmms-user
 
 or for all users:
---------------------------------------------------------------------------------
-sudo make install-xmms
---------------------------------------------------------------------------------
+
+    sudo make install-xmms
 
 If you have another XMMS plugin that supports Atari 8-bit music,
 remove it in order to avoid conflicts.
 
 
-Building asapconv, WASAP, Winamp/Apollo/XMPlay/BASS plugins, RMT DLL, asapscan, shell extension and libasap on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building asapconv, WASAP, Winamp/Apollo/XMPlay/BASS plugins, RMT DLL,
+asapscan, shell extension and libasap on Windows
+---------------------------------------------------------------------
 
-In https://www.cygwin.com/[Cygwin setup] select `bash, coreutils, dos2unix, git, make, tar,
-mingw64-{i686,x86_64}-{gcc-core,gcc-g++,headers,runtime}`.
+In Cygwin setup (https://www.cygwin.com/) select: bash, coreutils, dos2unix,
+git, make, tar, mingw64-{i686,x86_64}-{gcc-core,gcc-g++,headers,runtime}.
 
 Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make mingw
---------------------------------------------------------------------------------
 
-You should get `asapconv.exe`, `wasap.exe`, `in_asap.dll`,
-`ASAP_Apollo.dll`, `xmp-asap.dll`, `bass_asap.dll`,
-`apokeysnd.dll`, `asapscan.exe`, `ASAPShellEx.dll` and `libasap.a`.
+    make mingw
 
 
 Building the foobar2000 plugin on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------
 
-In addition to the common prerequisites and Windows SDK you need
-foobar2000 SDK - extract it to a new directory called
-`foobar2000_SDK` next to (not inside!) the ASAP directory.
+In addition to the common prerequisites you need:
+1. A Microsoft C++ compiler and a Windows SDK.
+   I use Visual Studio Community 2017
+2. foobar2000 SDK (http://www.foobar2000.org/SDK).
+   Extract it to a new directory called 'foobar2000_SDK'
+   next to (not inside!) the ASAP directory.
 
 Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make win32/foo_asap.dll
---------------------------------------------------------------------------------
 
-This should produce `foo_asap.dll`.
+    make win32/foo_asap.dll
 
 
 Building the VLC plugin on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------
 
-Install VLC as usual, it includes the SDK.
-`VLC_DIR` in `win32/win32.mk` is fine for the default installation
-directory on 64-bit Windows - edit it if necessary.
+TODO: where to get VLC SDK.
 
 Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make win32/libasap_plugin.dll
---------------------------------------------------------------------------------
 
-You will get `libasap_plugin.dll`.
+    make win32/libasap_plugin.dll
 
 
 Building Java ASAP2WAV
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 You need Java Development Kit (JDK).
 
-If necessary, edit the paths at the top of `java/java.mk` so that they point to your installed tools.
-Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make java/asap2wav.jar
---------------------------------------------------------------------------------
+If necessary, edit the paths at the top of 'java/java.mk'
+so that they point to your installed tools.
 
-This should produce `asap2wav.jar`.
+Open the command prompt in the root directory of ASAP sources and run:
+
+    make java/asap2wav.jar
 
 
 Building AndroidASAP
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
-Install http://developer.android.com/sdk/[Android SDK]
+Install Android SDK (http://developer.android.com/sdk/)
 with an Android platform(s).
 
-Edit the paths at the top of `java/android/android.mk` so that they point to your installed SDK.
+Edit the paths at the top of 'java/android/android.mk'
+so that they point to your installed SDK.
 Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make android-debug
---------------------------------------------------------------------------------
 
-This should produce `AndroidASAP-debug.apk`.
+    make android-debug
+
 AndroidASAP integrates with file managers.
 It reads phone state only to pause playback on incoming phone calls.
 
 
 Building C# ASAP2WAV and asapplay on Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You need the .NET Framework, of course.
+--------------------------------------------
 
 Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make csharp
---------------------------------------------------------------------------------
 
-This should produce `asap2wav.exe` and `asapplay.exe`.
+    make csharp
 
 
 Building JavaScript command-line ASAP2WAV and the web browser player
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------------------------
 
 Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make javascript
---------------------------------------------------------------------------------
 
-`asap2wav.js` is the command-line script.
-`asapweb.js` plus `asap.js` are the browser player (you'll probably need `binaryHttpRequest.js` as well).
+    make javascript
+
+'asap2wav.js' is the command-line script.
+'asapweb.js' plus 'asap.js' are the browser player
+(you'll probably need 'binaryHttpRequest.js' as well).
 
 
 Building Perl command-line ASAP2WAV
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make perl
---------------------------------------------------------------------------------
 
-`asap2wav.pl` is the Perl script which uses the `Asap.pm` module you have just built.
+    make perl
+
+'asap2wav.pl' is the Perl script which uses the 'Asap.pm' module
+you have just built.
 
 
 Building D ASAP2WAV and asapplay on Windows and Linux
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------
 
 You need DMD 2.054 or compatible D compiler.
-To build asapplay on Windows, you need http://www.dsource.org/projects/bindings/wiki/WindowsApi[D Windows API bindings].
+To build asapplay on Windows, you need
+D Windows API bindings (http://www.dsource.org/projects/bindings/wiki/WindowsApi).
 On Linux, you need ALSA development libraries (e.g. libasound2-dev package in Ubuntu).
 D bindings for ALSA are currently included in ASAP sources.
 
 Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make d
---------------------------------------------------------------------------------
 
-This should produce `asap2wav.exe` and `asapplay.exe`.
+    make d
 
 
 Building Android command-line asapconv
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------
 
-You need http://developer.android.com/tools/sdk/ndk/index.html[Android NDK].
+You need Android NDK (http://developer.android.com/tools/sdk/ndk/index.html).
 
-Edit the paths at the top of `java/android/android.mk` so that they point to your installed NDK.
+Edit the paths at the top of 'java/android/android.mk'
+so that they point to your installed NDK.
 Open the command prompt in the root directory of ASAP sources and run:
---------------------------------------------------------------------------------
-make java/android/asapconv
---------------------------------------------------------------------------------
 
-Now you need to put the binary (`java/android/asapconv`) on your device and make it executable.
-It's not possible on a FAT-formatted SD card. I was able to do that in `/data/local/tmp/`.
-If you use USB debugging, `make android-push-asapconv` will copy the file,
-but you have to do the `chmod` part.
+    make java/android/asapconv
+
+Now you need to put the binary ('java/android/asapconv')
+on your device and make it executable.
+It's not possible on a FAT-formatted SD card.
+I was able to do that in '/data/local/tmp/'.
+If you use USB debugging, 'make android-push-asapconv' will copy the file,
+but you have to do the 'chmod' part.
+
+
+Using asapconv
+--------------
+
+Run the program from the command line to see the syntax.
+The '-o/--output' option selects the output format and is mandatory.
+
+
+Using libasap
+-------------
+
+The library is documented in the 'asap.h' header file.
+Be warned there might be breaking changes in the future versions of the library.
