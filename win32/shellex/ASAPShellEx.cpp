@@ -1,7 +1,7 @@
 /*
  * ASAPShellEx.cpp - ASAP Column Handler and Property Handler shell extensions
  *
- * Copyright (C) 2010-2017  Piotr Fusik
+ * Copyright (C) 2010-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -42,7 +42,6 @@ extern "C" const FMTID FMTID_AudioSummaryInformation =
 
 static const char extensions[][5] =
 	{ ".sap", ".cmc", ".cm3", ".cmr", ".cms", ".dmc", ".dlt", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2", ".fc" };
-#define N_EXTS (int) (sizeof(extensions) / sizeof(extensions[0]))
 
 static HINSTANCE g_hDll;
 static LONG g_cRef = 0;
@@ -91,7 +90,7 @@ static const CMyPropertyDef g_propertyDefs[] = {
 	{ { CLSID_ASAPMetadataHandler, 1 }, 8, SHCOLSTATE_TYPE_INT | SHCOLSTATE_SLOW, L"Subsongs" },
 	{ { CLSID_ASAPMetadataHandler, 2 }, 8, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, L"PAL/NTSC" }
 };
-#define N_PROPERTYDEFS (sizeof(g_propertyDefs) / sizeof(g_propertyDefs[0]))
+#define N_PROPERTYDEFS ARRAYSIZE(g_propertyDefs)
 
 class CMyLock
 {
@@ -172,6 +171,13 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		return S_OK;
 	}
 
+	static HRESULT GetInt(PROPVARIANT *pvarData, int i)
+	{
+		pvarData->vt = VT_UI4;
+		pvarData->ulVal = (ULONG) i;
+		return S_OK;
+	}
+
 	static HRESULT GetString(PROPVARIANT *pvarData, const char *s)
 	{
 		pvarData->vt = VT_BSTR;
@@ -245,9 +251,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 					pvarData->vt = VT_EMPTY;
 					return S_OK;
 				}
-				pvarData->vt = VT_UI8;
-				pvarData->ulVal = (ULONG) year;
-				return S_OK;
+				return GetInt(pvarData, year);
 			}
 		}
 		else if (pscid->fmtid == FMTID_AudioSummaryInformation) {
@@ -269,18 +273,12 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 					return S_OK;
 				}
 			}
-			if (pscid->pid == PIDASI_CHANNEL_COUNT) {
-				pvarData->vt = VT_UI4;
-				pvarData->ulVal = (ULONG) ASAPInfo_GetChannels(m_pinfo);
-				return S_OK;
-			}
+			if (pscid->pid == PIDASI_CHANNEL_COUNT)
+				return GetInt(pvarData, ASAPInfo_GetChannels(m_pinfo));
 		}
 		else if (pscid->fmtid == CLSID_ASAPMetadataHandler) {
-			if (pscid->pid == 1) {
-				pvarData->vt = VT_UI4;
-				pvarData->ulVal = (ULONG) ASAPInfo_GetSongs(m_pinfo);
-				return S_OK;
-			}
+			if (pscid->pid == 1)
+				return GetInt(pvarData, ASAPInfo_GetSongs(m_pinfo));
 			if (pscid->pid == 2)
 				return GetString(pvarData, ASAPInfo_IsNtsc(m_pinfo) ? "NTSC" : "PAL");
 		}
@@ -654,8 +652,8 @@ STDAPI __declspec(dllexport) DllRegisterServer(void)
 	if (g_windowsVer == WINDOWS_VISTA) {
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", 0, KEY_WRITE, &hk1) != ERROR_SUCCESS)
 			return E_FAIL;
-		for (int i = 0; i < N_EXTS; i++) {
-			if (RegCreateKeyEx(hk1, extensions[i], 0, NULL, 0, KEY_WRITE, NULL, &hk2, NULL) != ERROR_SUCCESS) {
+		for (LPCSTR ext : extensions) {
+			if (RegCreateKeyEx(hk1, ext, 0, NULL, 0, KEY_WRITE, NULL, &hk2, NULL) != ERROR_SUCCESS) {
 				RegCloseKey(hk1);
 				return E_FAIL;
 			}
@@ -694,8 +692,8 @@ STDAPI __declspec(dllexport) DllUnregisterServer(void)
 	}
 	if (g_windowsVer == WINDOWS_VISTA) {
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", 0, DELETE, &hk1) == ERROR_SUCCESS) {
-			for (int i = 0; i < N_EXTS; i++)
-				RegDeleteKey(hk1, extensions[i]);
+			for (LPCSTR ext : extensions)
+				RegDeleteKey(hk1, ext);
 			RegCloseKey(hk1);
 		}
 	}
