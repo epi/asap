@@ -1,7 +1,7 @@
 /*
  * gui.rc - Windows resources
  *
- * Copyright (C) 2005-2017  Piotr Fusik
+ * Copyright (C) 2005-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -54,15 +54,12 @@ IDR_TRAYMENU MENU
 #ifndef _UNICODE /* TODO */
 		MENUITEM "File &information...", IDM_FILE_INFO, GRAYED
 #endif
-#ifndef _WIN32_WCE /* disabled just because of limited computing power */
 		MENUITEM "Save as &WAV...", IDM_SAVE_WAV, GRAYED
-#endif
 		MENUITEM "&About WASAP...", IDM_ABOUT
 		MENUITEM "&Exit", IDM_EXIT
 	}
 }
 
-#ifndef _WIN32_WCE
 #ifdef _WIN64
 #define PROCESSOR_ARCHITECTURE  "amd64"
 #else
@@ -72,15 +69,22 @@ IDR_TRAYMENU MENU
 {
 	"<?xml version=""1.0""?>"
 	"<assembly xmlns=""urn:schemas-microsoft-com:asm.v1"" manifestVersion=""1.0"">"
-	"<assemblyIdentity version=""" ASAPInfo_VERSION ".0"" "
-		"processorArchitecture=""" PROCESSOR_ARCHITECTURE """ name=""WASAP"" type=""win32"" />"
-	"<dependency><dependentAssembly>"
-	"<assemblyIdentity type=""win32"" name=""Microsoft.Windows.Common-Controls"" "
-		"version=""6.0.0.0"" processorArchitecture=""" PROCESSOR_ARCHITECTURE """ publicKeyToken=""6595b64144ccf1df"" language=""*"" />"
-	"</dependentAssembly></dependency>"
+		"<assemblyIdentity version=""" ASAPInfo_VERSION ".0"" "
+			"processorArchitecture=""" PROCESSOR_ARCHITECTURE """ name=""WASAP"" type=""win32"" />"
+	"<dependency>"
+		"<dependentAssembly>"
+		"<assemblyIdentity type=""win32"" name=""Microsoft.Windows.Common-Controls"" "
+			"version=""6.0.0.0"" processorArchitecture=""" PROCESSOR_ARCHITECTURE """ "
+			"publicKeyToken=""6595b64144ccf1df"" language=""*"" />"
+		"</dependentAssembly>"
+	"</dependency>"
+	"<application xmlns=""urn:schemas-microsoft-com:asm.v3"">"
+		"<windowsSettings>"
+			"<dpiAware xmlns=""http://schemas.microsoft.com/SMI/2005/WindowsSettings"">true</dpiAware>"
+		"</windowsSettings>"
+	"</application>"
 	"</assembly>"
 }
-#endif
 
 #endif /* WASAP */
 
@@ -122,22 +126,14 @@ IDR_TRAYMENU MENU
 
 #include "settings_dlg.h"
 
-#ifndef _WIN32_WCE
 IDD_SETTINGS DIALOG 0, 0, 184, 216
-#else
-IDD_SETTINGS DIALOG 0, 0, 268, 142
-#endif
 #ifdef FOOBAR2000
 STYLE WS_CHILD
 #else
-#  ifdef _WIN32_WCE
-STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | WS_POPUP
-#  else
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | WS_POPUPWINDOW
-#  endif
 CAPTION "ASAP Settings"
 #endif
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg 2"
 {
 	AUTORADIOBUTTON "Play endlessly", IDC_UNLIMITED, 16, 16, 152, 12, BS_AUTORADIOBUTTON | WS_TABSTOP | WS_GROUP
 	AUTORADIOBUTTON "Finish after", IDC_LIMITED, 16, 30, 48, 12
@@ -150,7 +146,6 @@ FONT 8, "MS Sans Serif"
 	LTEXT "seconds of silence", IDC_STATIC, 88, 50, 64, 12
 	AUTORADIOBUTTON "Play as above", IDC_LOOPS, 16, 84, 152, 12, BS_AUTORADIOBUTTON | WS_TABSTOP | WS_GROUP
 	AUTORADIOBUTTON "Play just once", IDC_NOLOOPS, 16, 98, 152, 12
-#ifndef _WIN32_WCE
 	AUTOCHECKBOX "Channel 1", IDC_MUTE1, 24, 132, 48, 12
 	AUTOCHECKBOX "Channel 2", IDC_MUTE1 + 1, 24, 144, 48, 12
 	AUTOCHECKBOX "Channel 3", IDC_MUTE1 + 2, 24, 156, 48, 12
@@ -167,22 +162,6 @@ FONT 8, "MS Sans Serif"
 	DEFPUSHBUTTON "OK", IDOK, 38, 194, 50, 14
 	PUSHBUTTON "Cancel", IDCANCEL, 96, 194, 50, 14
 #  endif
-#else
-	AUTOCHECKBOX "Channel 1", IDC_MUTE1, 196, 14, 48, 12
-	AUTOCHECKBOX "Channel 2", IDC_MUTE1 + 1, 196, 26, 48, 12
-	AUTOCHECKBOX "Channel 3", IDC_MUTE1 + 2, 196, 38, 48, 12
-	AUTOCHECKBOX "Channel 4", IDC_MUTE1 + 3, 196, 50, 48, 12
-	AUTOCHECKBOX "Channel 1", IDC_MUTE1 + 4, 196, 82, 48, 12
-	AUTOCHECKBOX "Channel 2", IDC_MUTE1 + 5, 196, 94, 48, 12
-	AUTOCHECKBOX "Channel 3", IDC_MUTE1 + 6, 196, 106, 48, 12
-	AUTOCHECKBOX "Channel 4", IDC_MUTE1 + 7, 196, 118, 48, 12
-	GROUPBOX "Unknown song length", IDC_STATIC, 8, 4, 168, 64
-	GROUPBOX "Loops", IDC_STATIC, 8, 72, 168, 46
-	GROUPBOX "Mute base POKEY", IDC_STATIC, 180, 4, 80, 64
-	GROUPBOX "Mute extra POKEY", IDC_STATIC, 180, 72, 80, 64
-	DEFPUSHBUTTON "OK", IDOK, 38, 122, 50, 14
-	PUSHBUTTON "Cancel", IDCANCEL, 96, 122, 50, 14
-#endif
 }
 
 #endif /* defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY) */
@@ -202,7 +181,7 @@ FONT 8, "MS Sans Serif"
 IDD_INFO DIALOG 0, 0, 54 + INFO_W, 214 + INFO_Y
 STYLE DS_3DLOOK | DS_CENTER | DS_MODALFRAME | WS_POPUPWINDOW | WS_VISIBLE
 CAPTION "File information"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg 2"
 {
 #ifdef PLAYING_INFO
 	AUTOCHECKBOX "Show information about the currently &playing file", IDC_PLAYING, 46, 8, 284, 12
@@ -237,7 +216,6 @@ FONT 8, "MS Sans Serif"
 #endif /* defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY) */
 
 #if defined(WASAP) || defined(WINAMP)
-#ifndef _WIN32_WCE /* disabled just because of limited computing power */
 
 #include <commctrl.h>
 
@@ -254,7 +232,6 @@ FONT 8, "MS Sans Serif"
 	CONTROL "", IDC_PROGRESS, PROGRESS_CLASS, 0, 8, 24, 144, 12
 }
 
-#endif /* _WIN32_WCE */
 #endif /* defined(WASAP) || defined(WINAMP) */
 
 1 VERSIONINFO
