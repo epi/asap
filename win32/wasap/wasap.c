@@ -1,7 +1,7 @@
 /*
  * wasap.c - Another Slight Atari Player for Win32 systems
  *
- * Copyright (C) 2005-2013  Piotr Fusik
+ * Copyright (C) 2005-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,14 +26,6 @@
 #include <stdio.h>
 #include <shellapi.h>
 #include <tchar.h>
-
-#ifdef _WIN32_WCE
-/* missing in wince: */
-#define SetMenuDefaultItem(hMenu, uItem, fByPos)
-/* workaround for a bug in mingw32ce: */
-#undef Shell_NotifyIcon
-BOOL WINAPI Shell_NotifyIcon(DWORD,PNOTIFYICONDATAW);
-#endif
 
 #include "asap.h"
 #include "info_dlg.h"
@@ -217,14 +209,6 @@ static void ShowError(LPCTSTR message)
 
 static void ShowAbout(void)
 {
-#ifdef _WIN32_WCE
-	popupShown = TRUE;
-	MessageBox(hWnd,
-		_T("Another Slight Atari Player (C) " ASAPInfo_YEARS " Piotr Fusik\n"
-		"This program is free software, see GNU General Public License."),
-		APP_TITLE " " ASAPInfo_VERSION,
-		MB_OK);
-#else
 	MSGBOXPARAMS mbp = {
 		sizeof(MSGBOXPARAMS),
 		hWnd,
@@ -241,15 +225,12 @@ static void ShowAbout(void)
 	};
 	popupShown = TRUE;
 	MessageBoxIndirect(&mbp);
-#endif
 	popupShown = FALSE;
 }
 
 static void SetSongsMenu(int n)
 {
-	static int count = 1; /* GetMenuItemCount unavailable on wince */
-	int i = count;
-	count = n;
+	int i = GetMenuItemCount(hSongMenu);
 	while (i > n)
 		DeleteMenu(hSongMenu, --i, MF_BYPOSITION);
 	while (++i <= n) {
@@ -349,11 +330,7 @@ static void SelectAndLoadFile(void)
 		0,
 		_T("All supported\0"
 		"*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2;*.fc\0"
-#ifdef _WIN32_WCE
-#define ASAP_FILTER(description, masks) description "\0" masks "\0"
-#else
 #define ASAP_FILTER(description, masks) description " (" masks ")\0" masks "\0"
-#endif
 		ASAP_FILTER("Slight Atari Player", "*.sap")
 		ASAP_FILTER("Chaos Music Composer", "*.cmc;*.cm3;*.cmr;*.cms;*.dmc")
 		ASAP_FILTER("Delta Music Composer", "*.dlt")
@@ -372,10 +349,7 @@ static void SelectAndLoadFile(void)
 		0,
 		NULL,
 		OPEN_TITLE,
-#ifndef _WIN32_WCE
-		OFN_ENABLESIZING | OFN_EXPLORER |
-#endif
-		OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
+		OFN_ENABLESIZING | OFN_EXPLORER | OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
 		0,
 		0,
 		NULL,
@@ -384,15 +358,11 @@ static void SelectAndLoadFile(void)
 		NULL
 	};
 	popupShown = TRUE;
-#ifndef _WIN32_WCE
 	ofn.hwndOwner = hWnd;
-#endif
 	if (GetOpenFileName(&ofn))
 		LoadAndPlay(-1);
 	popupShown = FALSE;
 }
-
-#ifndef _WIN32_WCE /* disabled just because of limited computing power */
 
 /* Defined so that the progress bar is responsive, but isn't updated too often and doesn't overflow (65535 limit) */
 #define WAV_PROGRESS_DURATION_SHIFT 10
@@ -458,10 +428,7 @@ static void SaveWav(void)
 		0,
 		NULL,
 		_T("Select output file"),
-#ifndef _WIN32_WCE
-		OFN_ENABLESIZING | OFN_EXPLORER |
-#endif
-		OFN_OVERWRITEPROMPT,
+		OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT,
 		0,
 		0,
 		_T("wav"),
@@ -498,8 +465,6 @@ static void SaveWav(void)
 	popupShown = FALSE;
 }
 
-#endif /* _WIN32_WCE */
-
 static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	int idc;
@@ -519,11 +484,9 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 			showInfoDialog(hInst, hWnd, current_filename, current_song);
 			break;
 #endif
-#ifndef _WIN32_WCE /* disabled just because of limited computing power */
 		case IDM_SAVE_WAV:
 			SaveWav();
 			break;
-#endif
 		case IDM_ABOUT:
 			ShowAbout();
 			break;
@@ -546,14 +509,12 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		}
 		switch (lParam) {
 		case WM_LBUTTONDOWN:
-#ifndef _WIN32_WCE
 			SelectAndLoadFile();
 			break;
 		case WM_MBUTTONDOWN:
 			if (songs > 1)
 				OpenMenu(hWnd, hSongMenu);
 			break;
-#endif
 		case WM_RBUTTONUP:
 			OpenMenu(hWnd, hTrayMenu);
 			break;
@@ -564,13 +525,11 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 	case WM_COPYDATA:
 		pcds = (PCOPYDATASTRUCT) lParam;
 		if (pcds->dwData == 'O' && pcds->cbData <= sizeof(current_filename)) {
-#ifndef _WIN32_WCE
 			if (errorShown) {
 				HWND hChild = GetLastActivePopup(hWnd);
 				if (hChild != hWnd)
 					SendMessage(hChild, WM_CLOSE, 0, 0);
 			}
-#endif
 			memcpy(current_filename, pcds->lpData, pcds->cbData);
 			LoadAndPlay(-1);
 		}
@@ -612,14 +571,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLin
 			SendMessage(hWnd, WM_COPYDATA, (WPARAM) NULL, (LPARAM) &cds);
 		}
 		else {
-			/* wince: open menu; desktop: open file */
-#ifdef _WIN32_WCE
-			HWND hChild = FindWindow(NULL, OPEN_TITLE);
-			if (hChild != NULL)
-				SetForegroundWindow(hChild);
-#else
 			SetForegroundWindow(hWnd);
-#endif
 			PostMessage(hWnd, MYWM_NOTIFYICON, 15, WM_LBUTTONDOWN);
 		}
 		return 0;
