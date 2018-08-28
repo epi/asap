@@ -1,7 +1,7 @@
 /*
  * astil.c - another SID/SAP Tune Information List parser
  *
- * Copyright (C) 2011-2012  Piotr Fusik
+ * Copyright (C) 2011-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -193,7 +193,7 @@ static void ASTILCover_Load(ASTILCover *self, FILE *fp, char *line)
 	self->endSeconds = -1;
 	ts = strrchr(line, '(');
 	if (ts != NULL) {
-		int i = ts - line + 1;
+		int i = (int) (ts - line) + 1;
 		int startSeconds = ASTILCover_ParseTimestamp(line, &i);
 		int endSeconds = -1;
 		if (startSeconds >= 0 && line[i] == '-') {
@@ -201,7 +201,7 @@ static void ASTILCover_Load(ASTILCover *self, FILE *fp, char *line)
 			endSeconds = ASTILCover_ParseTimestamp(line, &i);
 		}
 		if (line[i] == ')' && line[i + 1] == '\0') {
-			int len = ts - line;
+			int len = (int) (ts - line);
 			if (line[len - 1] == ' ')
 				len--;
 			line[len] = '\0';
@@ -238,7 +238,7 @@ static void ASTIL_ReadStilBlock(ASTIL *self, FILE *fp, char *line)
 
 cibool ASTIL_Load(ASTIL *self, const char *filename, int song)
 {
-	int lastSlash = ASTIL_FindPreviousSlash(filename, strlen(filename));
+	int lastSlash = ASTIL_FindPreviousSlash(filename, (int) strlen(filename));
 	int rootSlash;
 	FILE *fp;
 	char line[ASTIL_MAX_TEXT_LENGTH + 1];

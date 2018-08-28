@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000
  *
- * Copyright (C) 2006-2015  Piotr Fusik
+ * Copyright (C) 2006-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#define _WINSOCKAPI_ /* prevents compilation errors */
 #include <windows.h>
 #include <string.h>
 
@@ -36,6 +37,9 @@
 #define BUFFERED_BLOCKS    1024
 
 /* Configuration --------------------------------------------------------- */
+
+static const GUID preferences_guid =
+	{ 0xf7c0a763, 0x7c20, 0x4b64, { 0x92, 0xbf, 0x11, 0xe5, 0x5d, 0x8, 0xe5, 0x53 } };
 
 static const GUID song_length_guid =
 	{ 0x810e12f0, 0xa695, 0x42d2, { 0xab, 0xc0, 0x14, 0x1e, 0xe5, 0xf3, 0xb3, 0xb7 } };
@@ -122,6 +126,28 @@ public:
 		return ASAPInfo_IsOurFile(p_path) != 0;
 	}
 
+	static GUID g_get_guid()
+	{
+		static const GUID guid =
+			{ 0xe8790443, 0x3a6b, 0x47d9, { 0x80, 0x4c, 0x1, 0x58, 0x93, 0xbf, 0xfe, 0x96 } };
+		return guid;
+	}
+
+	static const char *g_get_name()
+	{
+		return "ASAP";
+	}
+
+	static GUID g_get_preferences_guid()
+	{
+		return preferences_guid;
+	}
+
+	static bool g_is_low_merit()
+	{
+		return false;
+	}
+
 	input_asap()
 	{
 		if (head != NULL)
@@ -149,7 +175,7 @@ public:
 	{
 		switch (p_reason) {
 		case input_open_info_write: {
-				int len = strlen(p_path);
+				size_t len = strlen(p_path);
 				if (len < 4 || _stricmp(p_path + len - 4, ".sap") != 0)
 					throw exception_io_unsupported_format();
 			}
@@ -164,7 +190,7 @@ public:
 		if (p_filehint.is_empty())
 			filesystem::g_open(p_filehint, p_path, filesystem::open_mode_read, p_abort);
 		m_file = p_filehint;
-		module_len = m_file->read(module, sizeof(module), p_abort);
+		module_len = static_cast<int>(m_file->read(module, sizeof(module), p_abort));
 		if (!ASAP_Load(asap, p_path, module, module_len))
 			throw exception_io_unsupported_format();
 	}
@@ -273,6 +299,10 @@ public:
 		filesystem::g_open(m_file, url, filesystem::open_mode_write_new, p_abort);
 		m_file->write(output, output_len, p_abort);
 	}
+
+	typedef input_decoder interface_decoder_t;
+	typedef input_info_reader interface_info_reader_t;
+	typedef input_info_writer interface_info_writer_t;
 };
 
 input_asap *input_asap::head = NULL;
@@ -429,9 +459,7 @@ public:
 
 	virtual GUID get_guid()
 	{
-		static const GUID a_guid =
-			{ 0xf7c0a763, 0x7c20, 0x4b64, { 0x92, 0xbf, 0x11, 0xe5, 0x5d, 0x8, 0xe5, 0x53 } };
-		return a_guid;
+		return preferences_guid;
 	}
 
 	virtual GUID get_parent_guid()
@@ -597,7 +625,7 @@ public:
 	~file_atr()
 	{
 		if (stream != NULL) {
-			AATR *disk = (AATR *) AATRFileStream_GetDisk(stream);
+			AATR *disk = const_cast<AATR *>(AATRFileStream_GetDisk(stream));
 			AATRFileStream_Delete(stream);
 			AATRStdio_Delete(disk);
 		}
@@ -605,7 +633,8 @@ public:
 
 	virtual t_size read(void *p_buffer, t_size p_bytes, abort_callback &p_abort)
 	{
-		int result = AATRFileStream_Read(stream, (byte *) p_buffer, 0, p_bytes);
+		int length = p_bytes < INT_MAX ? (int) p_bytes : INT_MAX;
+		int result = AATRFileStream_Read(stream, reinterpret_cast<byte *>(p_buffer), 0, length);
 		if (result < 0)
 			throw exception_io_data();
 		return result;

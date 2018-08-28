@@ -37,7 +37,7 @@
 
 void combineFilenameExt(LPTSTR dest, LPCTSTR filename, LPCTSTR ext)
 {
-	int filenameChars = _tcsrchr(filename, '.') + 1 - filename;
+	size_t filenameChars = _tcsrchr(filename, '.') + 1 - filename;
 	memcpy(dest, filename, filenameChars * sizeof(_TCHAR));
 	_tcscpy(dest + filenameChars, ext);
 }
@@ -625,7 +625,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			updateSaveButtons(0, TRUE);
 			return TRUE;
 		case MAKEWPARAM(IDC_SONGNO, CBN_SELCHANGE):
-			setEditedSong(SendDlgItemMessage(hDlg, IDC_SONGNO, CB_GETCURSEL, 0, 0));
+			setEditedSong((int) SendDlgItemMessage(hDlg, IDC_SONGNO, CB_GETCURSEL, 0, 0));
 			updateSaveButtons(INVALID_FIELD_TIME | INVALID_FIELD_TIME_SHOW, TRUE);
 			return TRUE;
 		case MAKEWPARAM(IDC_SAVE, BN_CLICKED):
