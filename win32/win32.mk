@@ -155,7 +155,7 @@ win32/foo_asap.dll: $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] astil.[ch
 CLEAN += win32/foo_asap.dll win32/foo_asap.exp win32/foo_asap.lib
 
 win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,component_client abort_callback audio_chunk audio_chunk_channel_config \
-	cfg_var console file_info file_info_impl file_info_merge filesystem filesystem_helper guids input \
+	cfg_var console file_info file_info_impl file_info_merge filesystem filesystem_helper foosort guids input \
 	main_thread_callback metadb_handle metadb_handle_list playable_location playlist preferences_page replaygain_info service titleformat utility)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/foobar2000_SDK.lib
