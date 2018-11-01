@@ -282,6 +282,7 @@
 							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="InfoTip" Value="prop:System.ItemType;System.Size;System.Media.Duration" Type="string" />
 							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="ExtendedTileInfo" Value="prop:System.ItemType;System.Size;System.Media.Duration" Type="string" />
 							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="PreviewDetails" Value="prop:*System.Title;*System.Media.Duration;*System.Size;*System.Author;*System.Media.Year" Type="string" />
+							<RegistryValue Root="HKCR" Key=".$(var.EXT)" Name="PerceivedType" Value="audio" Type="string" />
 						<?endforeach?>
 						<?define FULLDETAILS_COMMON=System.PropGroup.Audio;System.Media.Duration;System.Audio.ChannelCount;ASAP.Subsongs;ASAP.PALNTSC;System.PropGroup.FileSystem;System.ItemNameDisplay;System.ItemType;System.ItemFolderPathDisplay;System.Size;System.DateCreated;System.DateModified;System.FileAttributes?>
 						<RegistryValue Root="HKCR" Key=".sap" Name="FullDetails" Value="prop:System.PropGroup.Description;System.Author;System.Title;System.Media.Year;$(var.FULLDETAILS_COMMON)" Type="string" />
