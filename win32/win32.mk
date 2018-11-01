@@ -129,7 +129,7 @@ CLEAN += win32/apollo/ASAP_Apollo-res.o
 # VLC
 
 win32/libasap_plugin.dll: $(call src,vlc/libasap_plugin.c asap.[ch]) win32/libasap_plugin-res.o
-	$(WIN32_CC) -std=gnu99 -I$(VLC_INCLUDE) -L$(VLC_LIB) -lvlccore
+	$(WIN32_CC) -I$(VLC_INCLUDE) -static-libgcc -L$(VLC_LIB) -lvlccore
 CLEAN += win32/libasap_plugin.dll
 
 win32/libasap_plugin-res.o: $(call src,win32/gui.rc asap.h)
