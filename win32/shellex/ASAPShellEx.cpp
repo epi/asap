@@ -734,8 +734,11 @@ static HRESULT DoPropertySchema(LPCSTR funcName)
 			if (propsysDll != NULL) {
 				typedef HRESULT (__stdcall *FuncType)(PCWSTR);
 				FuncType func = (FuncType) GetProcAddress(propsysDll, funcName);
-				if (func != NULL)
+				if (func != NULL) {
 					hr = func(szSchemaPath);
+					if (hr == INPLACE_S_TRUNCATED) // returned on Windows 10, no idea why
+						hr = S_OK;
+				}
 				FreeLibrary(propsysDll);
 			}
 		}
