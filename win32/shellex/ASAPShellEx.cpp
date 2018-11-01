@@ -627,9 +627,9 @@ STDAPI_(BOOL) __declspec(dllexport) DllMain(HINSTANCE hInstance, DWORD dwReason,
 	return TRUE;
 }
 
-static LSTATUS RegSetString(HKEY hKey, LPCSTR lpValueName, LPCSTR lpData, DWORD cbData)
+static LSTATUS RegSetString(HKEY hKey, LPCSTR lpValueName, LPCSTR lpStr)
 {
-	return RegSetValueEx(hKey, lpValueName, 0, REG_SZ, reinterpret_cast<const BYTE *>(lpData), cbData);
+	return RegSetValueEx(hKey, lpValueName, 0, REG_SZ, reinterpret_cast<const BYTE *>(lpStr), strlen(lpStr) + 1);
 }
 
 STDAPI __declspec(dllexport) DllRegisterServer(void)
@@ -643,16 +643,16 @@ STDAPI __declspec(dllexport) DllRegisterServer(void)
 		return E_FAIL;
 	}
 	char szModulePath[MAX_PATH];
-	DWORD nModulePathLen = GetModuleFileName(g_hDll, szModulePath, MAX_PATH);
-	static const char szThreadingModel[] = "Both";
-	if (RegSetString(hk2, nullptr, szModulePath, nModulePathLen + 1) != ERROR_SUCCESS
-	 || RegSetString(hk2, "ThreadingModel", szThreadingModel, sizeof(szThreadingModel)) != ERROR_SUCCESS) {
+	if (GetModuleFileName(g_hDll, szModulePath, MAX_PATH) == 0
+	 || RegSetString(hk2, nullptr, szModulePath) != ERROR_SUCCESS
+	 || RegSetString(hk2, "ThreadingModel", "Both") != ERROR_SUCCESS) {
 		RegCloseKey(hk2);
 		RegCloseKey(hk1);
 		return E_FAIL;
 	}
 	RegCloseKey(hk2);
 	RegCloseKey(hk1);
+
 	if (g_windowsVer == WINDOWS_VISTA) {
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", 0, KEY_WRITE, &hk1) != ERROR_SUCCESS)
 			return E_FAIL;
@@ -661,8 +661,7 @@ STDAPI __declspec(dllexport) DllRegisterServer(void)
 				RegCloseKey(hk1);
 				return E_FAIL;
 			}
-			static const char CLSID_ASAPMetadataHandler_str2[] = CLSID_ASAPMetadataHandler_str;
-			if (RegSetString(hk2, nullptr, CLSID_ASAPMetadataHandler_str2, sizeof(CLSID_ASAPMetadataHandler_str2)) != ERROR_SUCCESS) {
+			if (RegSetString(hk2, nullptr, CLSID_ASAPMetadataHandler_str) != ERROR_SUCCESS) {
 				RegCloseKey(hk2);
 				RegCloseKey(hk1);
 				return E_FAIL;
@@ -676,10 +675,10 @@ STDAPI __declspec(dllexport) DllRegisterServer(void)
 			return E_FAIL;
 		RegCloseKey(hk1);
 	}
+
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved", 0, KEY_SET_VALUE, &hk1) != ERROR_SUCCESS)
 		return E_FAIL;
-	static const char szDescription[] = "ASAP Metadata Handler";
-	if (RegSetString(hk1, CLSID_ASAPMetadataHandler_str, szDescription, sizeof(szDescription)) != ERROR_SUCCESS) {
+	if (RegSetString(hk1, CLSID_ASAPMetadataHandler_str, "ASAP Metadata Handler") != ERROR_SUCCESS) {
 		RegCloseKey(hk1);
 		return E_FAIL;
 	}
