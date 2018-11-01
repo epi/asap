@@ -645,7 +645,7 @@ STDAPI __declspec(dllexport) DllRegisterServer(void)
 	char szModulePath[MAX_PATH];
 	DWORD nModulePathLen = GetModuleFileName(g_hDll, szModulePath, MAX_PATH);
 	static const char szThreadingModel[] = "Both";
-	if (RegSetString(hk2, nullptr, szModulePath, nModulePathLen) != ERROR_SUCCESS
+	if (RegSetString(hk2, nullptr, szModulePath, nModulePathLen + 1) != ERROR_SUCCESS
 	 || RegSetString(hk2, "ThreadingModel", szThreadingModel, sizeof(szThreadingModel)) != ERROR_SUCCESS) {
 		RegCloseKey(hk2);
 		RegCloseKey(hk1);
