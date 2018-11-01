@@ -63,10 +63,10 @@ static const GUID CLSID_ASAPMetadataHandler =
 
 struct CMyPropertyDef
 {
-	SHCOLUMNID scid;
-	UINT cChars;
-	DWORD csFlags;
-	LPCWSTR wszTitle;
+	const SHCOLUMNID scid;
+	const UINT cChars;
+	const DWORD csFlags;
+	const LPCWSTR wszTitle;
 
 	void CopyTo(SHCOLUMNINFO *psci) const
 	{
@@ -94,13 +94,12 @@ static const CMyPropertyDef g_propertyDefs[] = {
 
 class CMyLock
 {
-	PCRITICAL_SECTION m_pLock;
+	const PCRITICAL_SECTION m_pLock;
 
 public:
 
-	CMyLock(PCRITICAL_SECTION pLock)
+	CMyLock(PCRITICAL_SECTION pLock) : m_pLock(pLock)
 	{
-		m_pLock = pLock;
 		EnterCriticalSection(pLock);
 	}
 
@@ -112,17 +111,17 @@ public:
 
 class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IPropertyStore, IPropertyStoreCapabilities
 {
-	LONG m_cRef;
+	LONG m_cRef = 1;
 	CRITICAL_SECTION m_lock;
 	WCHAR m_filename[MAX_PATH];
-	BOOL m_hasInfo;
-	IStream *m_pstream;
+	bool m_hasInfo = false;
+	IStream *m_pstream = nullptr;
 	ASAPInfo *m_pinfo;
 
 	~CASAPMetadataHandler()
 	{
 		ASAPInfo_Delete(m_pinfo);
-		if (m_pstream != NULL)
+		if (m_pstream != nullptr)
 			m_pstream->Release();
 		DeleteCriticalSection(&m_lock);
 		DllRelease();
@@ -130,29 +129,29 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 
 	HRESULT LoadFile(LPCWSTR wszFile, IStream *pstream, DWORD grfMode)
 	{
-		m_hasInfo = FALSE;
-		if (m_pstream != NULL) {
+		m_hasInfo = false;
+		if (m_pstream != nullptr) {
 			m_pstream->Release();
-			m_pstream = NULL;
+			m_pstream = nullptr;
 		}
 
-		int cbFilename = WideCharToMultiByte(CP_ACP, 0, wszFile, -1, NULL, 0, NULL, NULL);
+		int cbFilename = WideCharToMultiByte(CP_ACP, 0, wszFile, -1, nullptr, 0, nullptr, nullptr);
 		char filename[cbFilename];
-		if (WideCharToMultiByte(CP_ACP, 0, wszFile, -1, filename, cbFilename, NULL, NULL) <= 0)
+		if (WideCharToMultiByte(CP_ACP, 0, wszFile, -1, filename, cbFilename, nullptr, nullptr) <= 0)
 			return HRESULT_FROM_WIN32(GetLastError());
 
 		byte module[ASAPInfo_MAX_MODULE_LENGTH];
 		int module_len;
-		if (pstream != NULL) {
-			HRESULT hr = pstream->Read(module, ASAPInfo_MAX_MODULE_LENGTH, (ULONG *) &module_len);
+		if (pstream != nullptr) {
+			HRESULT hr = pstream->Read(module, ASAPInfo_MAX_MODULE_LENGTH, reinterpret_cast<ULONG *>(&module_len));
 			if (FAILED(hr))
 				return hr;
 		}
 		else {
-			HANDLE fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+			HANDLE fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 			if (fh == INVALID_HANDLE_VALUE)
 				return HRESULT_FROM_WIN32(GetLastError());
-			if (!ReadFile(fh, module, ASAPInfo_MAX_MODULE_LENGTH, (LPDWORD) &module_len, NULL)) {
+			if (!ReadFile(fh, module, ASAPInfo_MAX_MODULE_LENGTH, reinterpret_cast<LPDWORD>(&module_len), nullptr)) {
 				HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
 				CloseHandle(fh);
 				return hr;
@@ -163,7 +162,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		m_hasInfo = ASAPInfo_Load(m_pinfo, filename, module, module_len);
 		if (m_hasInfo && (grfMode & STGM_READWRITE) != 0) {
 			const char *ext = strrchr(filename, '.');
-			if (ext != NULL && _stricmp(ext, ".sap") == 0) {
+			if (ext != nullptr && _stricmp(ext, ".sap") == 0) {
 				m_pstream = pstream;
 				pstream->AddRef();
 			}
@@ -174,7 +173,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 	static HRESULT GetInt(PROPVARIANT *pvarData, int i)
 	{
 		pvarData->vt = VT_UI4;
-		pvarData->ulVal = (ULONG) i;
+		pvarData->ulVal = static_cast<ULONG>(i);
 		return S_OK;
 	}
 
@@ -182,16 +181,16 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 	{
 		pvarData->vt = VT_BSTR;
 		// pvarData->bstrVal = A2BSTR(s); - just don't want dependency on ATL
-		int cch = MultiByteToWideChar(CP_ACP, 0, s, -1, NULL, 0);
-		pvarData->bstrVal = SysAllocStringLen(NULL, cch - 1);
-		if (pvarData->bstrVal == NULL)
+		int cch = MultiByteToWideChar(CP_ACP, 0, s, -1, nullptr, 0);
+		pvarData->bstrVal = SysAllocStringLen(nullptr, cch - 1);
+		if (pvarData->bstrVal == nullptr)
 			return E_OUTOFMEMORY;
 		if (MultiByteToWideChar(CP_ACP, 0, s, -1, pvarData->bstrVal, cch) <= 0)
 			return HRESULT_FROM_WIN32(GetLastError());
 		return S_OK;
 	}
 
-	HRESULT GetAuthors(PROPVARIANT *pvarData, BOOL vista)
+	HRESULT GetAuthors(PROPVARIANT *pvarData, bool vista)
 	{
 		const char *author = ASAPInfo_GetAuthor(m_pinfo);
 		if (!vista)
@@ -205,33 +204,33 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		const char *s = author;
 		for (i = 1; ; i++) {
 			s = strstr(s, " & ");
-			if (s == NULL)
+			if (s == nullptr)
 				break;
 			s += 3;
 		}
 		pvarData->vt = VT_VECTOR | VT_LPSTR;
 		pvarData->calpstr.cElems = i;
-		LPSTR *pElems = (LPSTR *) CoTaskMemAlloc(i * sizeof(LPSTR));
+		LPSTR *pElems = static_cast<LPSTR *>(CoTaskMemAlloc(i * sizeof(LPSTR)));
 		pvarData->calpstr.pElems = pElems;
-		if (pElems == NULL)
+		if (pElems == nullptr)
 			return E_OUTOFMEMORY;
 		s = author;
 		for (i = 0; ; i++) {
 			const char *e = strstr(s, " & ");
-			size_t len = e != NULL ? e - s : strlen(s);
-			pElems[i] = (LPSTR) CoTaskMemAlloc(len + 1);
-			if (pElems[i] == NULL)
+			size_t len = e != nullptr ? e - s : strlen(s);
+			pElems[i] = static_cast<LPSTR>(CoTaskMemAlloc(len + 1));
+			if (pElems[i] == nullptr)
 				return E_OUTOFMEMORY;
 			memcpy(pElems[i], s, len);
 			pElems[i][len] = '\0';
-			if (e == NULL)
+			if (e == nullptr)
 				break;
 			s = e + 3;
 		}
 		return S_OK;
 	}
 
-	HRESULT GetData(LPCSHCOLUMNID pscid, PROPVARIANT *pvarData, BOOL vista)
+	HRESULT GetData(LPCSHCOLUMNID pscid, PROPVARIANT *pvarData, bool vista)
 	{
 		if (!m_hasInfo)
 			return S_FALSE;
@@ -296,7 +295,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 			WCHAR c = *wszVal++;
 			if (c < ' ' || c > 'z')
 				return E_FAIL;
-			dest[i++] = (char) c;
+			dest[i++] = static_cast<char>(c);
 		}
 		dest[i] = '\0';
 		*offset = i;
@@ -345,7 +344,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 
 public:
 
-	CASAPMetadataHandler() : m_cRef(1), m_hasInfo(FALSE), m_pstream(NULL)
+	CASAPMetadataHandler()
 	{
 		DllAddRef();
 		InitializeCriticalSection(&m_lock);
@@ -356,26 +355,26 @@ public:
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
 	{
 		if (riid == IID_IUnknown || riid == IID_IColumnProvider) {
-			*ppv = (IColumnProvider *) this;
+			*ppv = static_cast<IColumnProvider *>(this);
 			AddRef();
 			return S_OK;
 		}
 		if (riid == IID_IInitializeWithStream) {
-			*ppv = (IInitializeWithStream *) this;
+			*ppv = static_cast<IInitializeWithStream *>(this);
 			AddRef();
 			return S_OK;
 		}
 		if (riid == IID_IPropertyStore) {
-			*ppv = (IPropertyStore *) this;
+			*ppv = static_cast<IPropertyStore *>(this);
 			AddRef();
 			return S_OK;
 		}
 		if (riid == IID_IPropertyStoreCapabilities) {
-			*ppv = (IPropertyStoreCapabilities *) this;
+			*ppv = static_cast<IPropertyStoreCapabilities *>(this);
 			AddRef();
 			return S_OK;
 		}
-		*ppv = NULL;
+		*ppv = nullptr;
 		return E_NOINTERFACE;
 	}
 
@@ -417,7 +416,7 @@ public:
 			WCHAR c = pscd->pwszExt[1 + i];
 			if (c <= ' ' || c > 'z')
 				return S_FALSE;
-			ext[i] = (char) c;
+			ext[i] = static_cast<char>(c);
 		}
 		if (pscd->pwszExt[5] != '\0')
 			return S_FALSE;
@@ -428,11 +427,11 @@ public:
 		CMyLock lck(&m_lock);
 		if ((pscd->dwFlags & SHCDF_UPDATEITEM) != 0 || lstrcmpW(m_filename, pscd->wszFile) != 0) {
 			lstrcpyW(m_filename, pscd->wszFile);
-			HRESULT hr = LoadFile(pscd->wszFile, NULL, STGM_READ);
+			HRESULT hr = LoadFile(pscd->wszFile, nullptr, STGM_READ);
 			if (FAILED(hr))
 				return hr;
 		}
-		return GetData(pscid, (PROPVARIANT *) pvarData, FALSE);
+		return GetData(pscid, reinterpret_cast<PROPVARIANT *>(pvarData), false);
 	}
 
 	// IInitializeWithStream
@@ -470,7 +469,7 @@ public:
 	STDMETHODIMP GetValue(REFPROPERTYKEY key, PROPVARIANT *pv)
 	{
 		CMyLock lck(&m_lock);
-		HRESULT hr = GetData(&key, pv, TRUE);
+		HRESULT hr = GetData(&key, pv, true);
 		if (hr == S_FALSE) {
 			pv->vt = VT_EMPTY;
 			return S_OK;
@@ -481,7 +480,7 @@ public:
 	STDMETHODIMP SetValue(REFPROPERTYKEY key, REFPROPVARIANT propvar)
 	{
 		CMyLock lck(&m_lock);
-		if (m_pstream == NULL)
+		if (m_pstream == nullptr)
 			return STG_E_ACCESSDENIED;
 		if (key.fmtid == FMTID_SummaryInformation) {
 			if (key.pid == PIDSI_TITLE)
@@ -501,19 +500,19 @@ public:
 	STDMETHODIMP Commit(void)
 	{
 		CMyLock lck(&m_lock);
-		if (m_pstream == NULL)
+		if (m_pstream == nullptr)
 			return STG_E_ACCESSDENIED;
 		LARGE_INTEGER liZero;
 		liZero.LowPart = 0;
 		liZero.HighPart = 0;
-		HRESULT hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, NULL);
+		HRESULT hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, nullptr);
 		if (SUCCEEDED(hr)) {
 			byte module[ASAPInfo_MAX_MODULE_LENGTH];
 			int module_len;
-			hr = m_pstream->Read(module, ASAPInfo_MAX_MODULE_LENGTH, (ULONG *) &module_len);
+			hr = m_pstream->Read(module, ASAPInfo_MAX_MODULE_LENGTH, reinterpret_cast<ULONG *>(&module_len));
 			if (SUCCEEDED(hr)) {
 				ASAPWriter *writer = ASAPWriter_New();
-				if (writer == NULL)
+				if (writer == nullptr)
 					hr = E_OUTOFMEMORY;
 				else {
 					byte output[ASAPInfo_MAX_MODULE_LENGTH];
@@ -523,14 +522,14 @@ public:
 					if (module_len < 0)
 						hr = E_FAIL;
 					else {
-						hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, NULL);
+						hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, nullptr);
 						if (SUCCEEDED(hr)) {
 							ULARGE_INTEGER liSize;
 							liSize.LowPart = module_len;
 							liSize.HighPart = 0;
 							hr = m_pstream->SetSize(liSize);
 							if (SUCCEEDED(hr)) {
-								hr = m_pstream->Write(output, module_len, NULL);
+								hr = m_pstream->Write(output, module_len, nullptr);
 								if (SUCCEEDED(hr))
 									hr = m_pstream->Commit(STGC_DEFAULT);
 							}
@@ -540,7 +539,7 @@ public:
 			}
 		}
 		m_pstream->Release();
-		m_pstream = NULL;
+		m_pstream = nullptr;
 		return hr;
 	}
 
@@ -567,11 +566,11 @@ public:
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
 	{
 		if (riid == IID_IUnknown || riid == IID_IClassFactory) {
-			*ppv = (IClassFactory *) this;
+			*ppv = static_cast<IClassFactory *>(this);
 			DllAddRef();
 			return S_OK;
 		}
-		*ppv = NULL;
+		*ppv = nullptr;
 		return E_NOINTERFACE;
 	}
 
@@ -589,11 +588,11 @@ public:
 
 	STDMETHODIMP CreateInstance(LPUNKNOWN punkOuter, REFIID riid, void **ppv)
 	{
-		*ppv = NULL;
-		if (punkOuter != NULL)
+		*ppv = nullptr;
+		if (punkOuter != nullptr)
 			return CLASS_E_NOAGGREGATION;
 		CASAPMetadataHandler *punk = new CASAPMetadataHandler;
-		if (punk == NULL)
+		if (punk == nullptr)
 			return E_OUTOFMEMORY;
 		HRESULT hr = punk->QueryInterface(riid, ppv);
 		punk->Release();
@@ -628,21 +627,26 @@ STDAPI_(BOOL) __declspec(dllexport) DllMain(HINSTANCE hInstance, DWORD dwReason,
 	return TRUE;
 }
 
+static LSTATUS RegSetString(HKEY hKey, LPCSTR lpValueName, LPCSTR lpData, DWORD cbData)
+{
+	return RegSetValueEx(hKey, lpValueName, 0, REG_SZ, reinterpret_cast<const BYTE *>(lpData), cbData);
+}
+
 STDAPI __declspec(dllexport) DllRegisterServer(void)
 {
 	HKEY hk1;
-	if (RegCreateKeyEx(HKEY_CLASSES_ROOT, "CLSID\\" CLSID_ASAPMetadataHandler_str, 0, NULL, 0, KEY_WRITE, NULL, &hk1, NULL) != ERROR_SUCCESS)
+	if (RegCreateKeyEx(HKEY_CLASSES_ROOT, "CLSID\\" CLSID_ASAPMetadataHandler_str, 0, nullptr, 0, KEY_WRITE, nullptr, &hk1, nullptr) != ERROR_SUCCESS)
 		return E_FAIL;
 	HKEY hk2;
-	if (RegCreateKeyEx(hk1, "InProcServer32", 0, NULL, 0, KEY_WRITE, NULL, &hk2, NULL) != ERROR_SUCCESS) {
+	if (RegCreateKeyEx(hk1, "InProcServer32", 0, nullptr, 0, KEY_WRITE, nullptr, &hk2, nullptr) != ERROR_SUCCESS) {
 		RegCloseKey(hk1);
 		return E_FAIL;
 	}
 	char szModulePath[MAX_PATH];
 	DWORD nModulePathLen = GetModuleFileName(g_hDll, szModulePath, MAX_PATH);
 	static const char szThreadingModel[] = "Both";
-	if (RegSetValueEx(hk2, NULL, 0, REG_SZ, (CONST BYTE *) szModulePath, nModulePathLen) != ERROR_SUCCESS
-	 || RegSetValueEx(hk2, "ThreadingModel", 0, REG_SZ, (CONST BYTE *) szThreadingModel, sizeof(szThreadingModel)) != ERROR_SUCCESS) {
+	if (RegSetString(hk2, nullptr, szModulePath, nModulePathLen) != ERROR_SUCCESS
+	 || RegSetString(hk2, "ThreadingModel", szThreadingModel, sizeof(szThreadingModel)) != ERROR_SUCCESS) {
 		RegCloseKey(hk2);
 		RegCloseKey(hk1);
 		return E_FAIL;
@@ -653,12 +657,12 @@ STDAPI __declspec(dllexport) DllRegisterServer(void)
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", 0, KEY_WRITE, &hk1) != ERROR_SUCCESS)
 			return E_FAIL;
 		for (LPCSTR ext : extensions) {
-			if (RegCreateKeyEx(hk1, ext, 0, NULL, 0, KEY_WRITE, NULL, &hk2, NULL) != ERROR_SUCCESS) {
+			if (RegCreateKeyEx(hk1, ext, 0, nullptr, 0, KEY_WRITE, nullptr, &hk2, nullptr) != ERROR_SUCCESS) {
 				RegCloseKey(hk1);
 				return E_FAIL;
 			}
 			static const char CLSID_ASAPMetadataHandler_str2[] = CLSID_ASAPMetadataHandler_str;
-			if (RegSetValueEx(hk2, NULL, 0, REG_SZ, (CONST BYTE *) CLSID_ASAPMetadataHandler_str2, sizeof(CLSID_ASAPMetadataHandler_str2)) != ERROR_SUCCESS) {
+			if (RegSetString(hk2, nullptr, CLSID_ASAPMetadataHandler_str2, sizeof(CLSID_ASAPMetadataHandler_str2)) != ERROR_SUCCESS) {
 				RegCloseKey(hk2);
 				RegCloseKey(hk1);
 				return E_FAIL;
@@ -668,14 +672,14 @@ STDAPI __declspec(dllexport) DllRegisterServer(void)
 		RegCloseKey(hk1);
 	}
 	else {
-		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, "Folder\\shellex\\ColumnHandlers\\" CLSID_ASAPMetadataHandler_str, 0, NULL, 0, KEY_WRITE, NULL, &hk1, NULL) != ERROR_SUCCESS)
+		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, "Folder\\shellex\\ColumnHandlers\\" CLSID_ASAPMetadataHandler_str, 0, nullptr, 0, KEY_WRITE, nullptr, &hk1, nullptr) != ERROR_SUCCESS)
 			return E_FAIL;
 		RegCloseKey(hk1);
 	}
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved", 0, KEY_SET_VALUE, &hk1) != ERROR_SUCCESS)
 		return E_FAIL;
 	static const char szDescription[] = "ASAP Metadata Handler";
-	if (RegSetValueEx(hk1, CLSID_ASAPMetadataHandler_str, 0, REG_SZ, (CONST BYTE *) szDescription, sizeof(szDescription)) != ERROR_SUCCESS) {
+	if (RegSetString(hk1, CLSID_ASAPMetadataHandler_str, szDescription, sizeof(szDescription)) != ERROR_SUCCESS) {
 		RegCloseKey(hk1);
 		return E_FAIL;
 	}
@@ -706,24 +710,24 @@ STDAPI __declspec(dllexport) DllUnregisterServer(void)
 
 STDAPI __declspec(dllexport) DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 {
-	if (ppv == NULL)
+	if (ppv == nullptr)
 		return E_INVALIDARG;
 	if (rclsid == CLSID_ASAPMetadataHandler) {
 		static CASAPMetadataHandlerFactory g_ClassFactory;
 		return g_ClassFactory.QueryInterface(riid, ppv);
 	}
-	*ppv = NULL;
+	*ppv = nullptr;
 	return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 STDAPI __declspec(dllexport) DllCanUnloadNow(void)
 {
-    return g_cRef == 0 ? S_OK : S_FALSE;
+	return g_cRef == 0 ? S_OK : S_FALSE;
 }
 
 static HRESULT DoPropertySchema(LPCSTR funcName)
 {
-	HRESULT hr = CoInitialize(NULL);
+	HRESULT hr = CoInitialize(nullptr);
 	if (SUCCEEDED(hr)) {
 		WCHAR szSchemaPath[MAX_PATH];
 		hr = E_FAIL;
@@ -731,10 +735,10 @@ static HRESULT DoPropertySchema(LPCSTR funcName)
 		 && PathRemoveFileSpecW(szSchemaPath)
 		 && PathAppendW(szSchemaPath, L"ASAPShellEx.propdesc")) {
 			HMODULE propsysDll = LoadLibrary("propsys.dll");
-			if (propsysDll != NULL) {
+			if (propsysDll != nullptr) {
 				typedef HRESULT (__stdcall *FuncType)(PCWSTR);
-				FuncType func = (FuncType) GetProcAddress(propsysDll, funcName);
-				if (func != NULL) {
+				FuncType func = reinterpret_cast<FuncType>(GetProcAddress(propsysDll, funcName));
+				if (func != nullptr) {
 					hr = func(szSchemaPath);
 					if (hr == INPLACE_S_TRUNCATED) // returned on Windows 10, no idea why
 						hr = S_OK;
@@ -751,7 +755,7 @@ STDAPI __declspec(dllexport) InstallPropertySchema(void)
 {
 	HRESULT hr = DoPropertySchema("PSRegisterPropertySchema");
 	if (SUCCEEDED(hr))
-		SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
+		SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);
 	return hr;
 }
 
