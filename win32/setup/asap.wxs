@@ -221,6 +221,7 @@
 				<FileSearch Name="AIMP.exe" />
 			</DirectorySearch>
 		</Property>
+		<?endif?>
 		<Property Id="VLC.DIR">
 			<RegistrySearch Id="vlc.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VLC media player" Name="InstallLocation" Type="directory" />
 		</Property>
@@ -229,7 +230,6 @@
 				<FileSearch Name="vlc.exe" />
 			</RegistrySearch>
 		</Property>
-		<?endif?>
 
 		<Directory Id="TARGETDIR" Name="SourceDir">
 			<Directory Id="$(var.PROGRAM_FILES_FOLDER)">
@@ -307,6 +307,28 @@
 						<RegistryValue Root="HKCU" Key="Software\TortoiseGit\DiffTools" Name=".sap" Value="wscript.exe &quot;[#diff_sap.js]&quot; %base %mine %bname %yname //E:javascript" Type="string" Action="write" KeyPath="yes" />
 					</Component>
 					<?endif?>
+				</Directory>
+
+				<Directory Id="VIDEOLAN.DIR" Name="VideoLAN">
+					<Directory Id="VLC.DIR" Name="VLC">
+						<Directory Id="VLCPLUGINS.DIR" Name="plugins">
+							<Directory Id="VLCDEMUX.DIR" Name="demux">
+								<Component Id="libasap_plugin.dll" Win64="$(var.WIN64)">
+									<File Name="libasap_plugin.dll" Source="$(var.SRC_DIR)libasap_plugin.dll" Checksum="yes" KeyPath="yes" />
+								</Component>
+								<Component Id="libasap_plugin.ext" Win64="$(var.WIN64)">
+									<RegistryValue Root="HKCR" Key="asap.file" Name="vlc" Type="integer" Value="1" KeyPath="yes" />
+									<ProgId Id="VLC.sap">
+										<Extension Id="sap">
+											<Verb Id="open" TargetProperty="VLC.EXE" Argument='--started-from-file "%1"' />
+										</Extension>
+										<Extension Id="fc" />
+										<Extension Id="rmt" />
+									</ProgId>
+								</Component>
+							</Directory>
+						</Directory>
+					</Directory>
 				</Directory>
 
 				<?if $(sys.BUILDARCH) = x86?>
@@ -404,27 +426,6 @@
 						<File Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
 					</Component>
 				</Directory>
-				<Directory Id="VIDEOLAN.DIR" Name="VideoLAN">
-					<Directory Id="VLC.DIR" Name="VLC">
-						<Directory Id="VLCPLUGINS.DIR" Name="plugins">
-							<Directory Id="VLCDEMUX.DIR" Name="demux">
-								<Component Id="libasap_plugin.dll">
-									<File Name="libasap_plugin.dll" Source="libasap_plugin.dll" Checksum="yes" KeyPath="yes" />
-								</Component>
-								<Component Id="libasap_plugin.ext">
-									<RegistryValue Root="HKCR" Key="asap.file" Name="vlc" Type="integer" Value="1" KeyPath="yes" />
-									<ProgId Id="VLC.sap">
-										<Extension Id="sap">
-											<Verb Id="open" TargetProperty="VLC.EXE" Argument='--started-from-file "%1"' />
-										</Extension>
-										<Extension Id="fc" />
-										<Extension Id="rmt" />
-									</ProgId>
-								</Component>
-							</Directory>
-						</Directory>
-					</Directory>
-				</Directory>
 				<?endif?>
 			</Directory>
 
@@ -505,7 +506,12 @@
 				<ComponentRef Id="aimp_asap.ext" />
 			</Feature>
 		</Feature>
-		<Feature Id="libasap_plugin" Title="VLC plugin" Level="9" ConfigurableDirectory="VLC.DIR" Description="Plugin for VLC (SAP format only)." AllowAdvertise="no">
+		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
+			<ComponentRef Id="apokeysnd.dll" />
+		</Feature>
+		<?endif?>
+
+		<Feature Id="libasap_plugin" Title="VLC plugin" Level="9" ConfigurableDirectory="VLC.DIR" Description="Plugin for VLC 3 (SAP format only)." AllowAdvertise="no">
 			<Condition Level="1">VLC.DIR</Condition>
 			<ComponentRef Id="libasap_plugin.dll" />
 			<Feature Id="libasap_plugin.ext" Title="Associate file types" Level="0" Description="Double-click SAP file in Windows Explorer to play it in VLC." AllowAdvertise="no">
@@ -513,11 +519,6 @@
 				<ComponentRef Id="libasap_plugin.ext" />
 			</Feature>
 		</Feature>
-		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">
-			<ComponentRef Id="apokeysnd.dll" />
-		</Feature>
-		<?endif?>
-
 		<Feature Id="ASAPShellEx" Title="Windows Explorer extension" Level="$(var.SHELL_EX_LEVEL)" ConfigurableDirectory="ASAP.DIR" Description="Shows metadata (title, author, year, duration, subsongs) in Windows Explorer." AllowAdvertise="no">
 			<ComponentRef Id="ASAPShellEx.dll" />
 			<ComponentRef Id="ASAPShellEx.propdesc" />

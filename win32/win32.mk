@@ -3,7 +3,8 @@ WIN32_CC = $(DO)i686-w64-mingw32-gcc $(WIN32_CARGS)
 WIN32_CXX = $(DO)i686-w64-mingw32-g++ -static $(WIN32_CARGS)
 WIN32_WINDRES = $(DO)i686-w64-mingw32-windres -o $@ $<
 VLC_INCLUDE = ../vlc/include
-VLC_LIB = "C:/Program Files (x86)/VideoLAN/VLC"
+VLC_LIB32 = "C:/Program Files (x86)/VideoLAN/VLC"
+VLC_LIB64 = "C:/Program Files/VideoLAN/VLC"
 
 # Microsoft compiler for foobar2000
 FOOBAR2000_SDK_DIR = ../foobar2000_SDK
@@ -129,12 +130,20 @@ CLEAN += win32/apollo/ASAP_Apollo-res.o
 # VLC
 
 win32/libasap_plugin.dll: $(call src,vlc/libasap_plugin.c asap.[ch]) win32/libasap_plugin-res.o
-	$(WIN32_CC) -I$(VLC_INCLUDE) -static-libgcc -L$(VLC_LIB) -lvlccore
+	$(WIN32_CC) -I$(VLC_INCLUDE) -static-libgcc -L$(VLC_LIB32) -lvlccore
 CLEAN += win32/libasap_plugin.dll
 
 win32/libasap_plugin-res.o: $(call src,win32/gui.rc asap.h)
 	$(WIN32_WINDRES) -DVLC
 CLEAN += win32/libasap_plugin-res.o
+
+win32/x64/libasap_plugin.dll: $(call src,vlc/libasap_plugin.c asap.[ch]) win32/x64/libasap_plugin-res.o
+	$(WIN64_CC) -I$(VLC_INCLUDE) -static-libgcc -L$(VLC_LIB64) -lvlccore
+CLEAN += win32/x64/libasap_plugin.dll
+
+win32/x64/libasap_plugin-res.o: $(call src,win32/gui.rc asap.h)
+	$(WIN64_WINDRES) -DVLC
+CLEAN += win32/x64/libasap_plugin-res.o
 
 # BASS
 
@@ -255,7 +264,7 @@ CLEAN += win32/setup/asap.wixobj
 
 release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/shellex/ASAPShellEx.propdesc) \
-	win32/x64/ASAPShellEx.dll
+	win32/x64/ASAPShellEx.dll win32/x64/libasap_plugin.dll
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b $(srcdir)/win32/setup -b $(srcdir)win32 $<
 
 win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs
