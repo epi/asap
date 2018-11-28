@@ -1,5 +1,5 @@
 GIT = git
-TAR = tar
+TAR = /usr/bin/tar
 UNIX2DOS = $(DO)unix2dos <$< >$@
 GREP = @grep -H
 
