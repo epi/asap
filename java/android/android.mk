@@ -1,7 +1,7 @@
 ASMA_DIR = ../asma
-ANDROID_SDK = C:/bin/android-sdk
-ANDROID_JAR = $(ANDROID_SDK)/platforms/android-26/android.jar
-ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/27.0.2
+ANDROID_SDK = C:/Users/fox/AppData/Local/Android/Sdk
+ANDROID_JAR = $(ANDROID_SDK)/platforms/android-28/android.jar
+ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/28.0.3
 PROGUARD_JAR = $(ANDROID_SDK)/tools/proguard/lib/proguard.jar
 
 JAVA = $(DO)java
@@ -93,7 +93,7 @@ java/android/classes.jar: $(srcdir)java/android/proguard.cfg java/android/classe
 	$(PROGUARD) -injars java/android/classes -outjars $@ -libraryjars $(ANDROID_JAR) @$<
 
 java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,AATRFileInputStream.java ArchiveSelector.java BaseSelector.java FileContainer.java FileInfo.java FileSelector.java JavaAATR.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
-	$(JAVAC) -d java/android/classes -bootclasspath $(ANDROID_JAR) $(addprefix $(srcdir)java/android/,AATRFileInputStream.java ArchiveSelector.java BaseSelector.java FileContainer.java FileInfo.java FileSelector.java JavaAATR.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/gen/net/sf/asap/R.java java/src/net/sf/asap/*.java
+	$(JAVAC) -d java/android/classes -source 1.7 -target 1.7 -bootclasspath $(ANDROID_JAR) $(addprefix $(srcdir)java/android/,AATRFileInputStream.java ArchiveSelector.java BaseSelector.java FileContainer.java FileInfo.java FileSelector.java JavaAATR.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/gen/net/sf/asap/R.java java/src/net/sf/asap/*.java
 CLEANDIR += java/android/classes
 
 # Also generates java/android/gen/net/sf/asap/R.java
