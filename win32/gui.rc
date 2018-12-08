@@ -21,7 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY)
+#if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(XMPLAY)
 #include <windows.h>
 #define IDC_STATIC  -1
 #endif
@@ -94,9 +94,6 @@ IDR_TRAYMENU MENU
 #elif defined(FOOBAR2000)
 #  define APP_NAME "foobar2000"
 #  define INTERNAL_NAME "foo_asap"
-#elif defined(APOLLO)
-#  define APP_NAME "Apollo"
-#  define INTERNAL_NAME "ASAP_Apollo"
 #elif defined(XMPLAY)
 #  define APP_NAME "XMPlay"
 #  define INTERNAL_NAME "xmp-asap"
@@ -122,7 +119,7 @@ IDR_TRAYMENU MENU
 #  define FILE_TYPE 2
 #endif
 
-#if defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY)
+#if defined(WINAMP) || defined(FOOBAR2000) || defined(XMPLAY)
 
 #include "settings_dlg.h"
 
@@ -164,9 +161,9 @@ FONT 8, "MS Shell Dlg 2"
 #  endif
 }
 
-#endif /* defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY) */
+#endif /* defined(WINAMP) || defined(FOOBAR2000) || defined(XMPLAY) */
 
-#if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY)
+#if defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(XMPLAY)
 
 #include "info_dlg.h"
 
@@ -213,7 +210,7 @@ FONT 8, "MS Shell Dlg 2"
 
 #endif /* _UNICODE */
 
-#endif /* defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(APOLLO) || defined(XMPLAY) */
+#endif /* defined(WASAP) || defined(WINAMP) || defined(FOOBAR2000) || defined(XMPLAY) */
 
 #if defined(WASAP) || defined(WINAMP)
 

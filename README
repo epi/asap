@@ -143,7 +143,7 @@ This remarkable portability is possible thanks to the http://cito.sourceforge.ne
 ASAP includes the following programs:
 
 - plugins for Windows/macOS/Linux player http://www.videolan.org/vlc/[VLC]
-- plugins for Windows players: http://www.winamp.com/[Winamp], http://www.foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay], http://koti.welho.com/hylinen/apollo/[Apollo]
+- plugins for Windows players: http://www.winamp.com/[Winamp], http://www.foobar2000.org/[foobar2000], http://www.un4seen.com/xmplay.html[XMPlay]
 - plugins for Linux players: http://www.xmms.org/[XMMS], http://moc.daper.net/[MOC]
 - add-on for Windows library http://www.un4seen.com/bass.html[BASS] (for http://www.aimp.ru/[AIMP] and http://www.un4seen.com/bass_showcase.php[other players])
 - asapconv - portable command-line converter
@@ -158,7 +158,7 @@ ASAP includes the following programs:
 
 {asapports}link:PORTS.xml[This table] summarizes differences between the above versions.
 
-To play the music on an Atari 8-bit, convert the music to an Atari program (XEX) using asapconv, WASAP, Winamp, Apollo or XMPlay.
+To play the music on an Atari 8-bit, convert the music to an Atari program (XEX) using asapconv, WASAP, Winamp or XMPlay.
 
 There are other projects which use ASAP:
 

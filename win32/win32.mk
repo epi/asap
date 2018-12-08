@@ -32,7 +32,7 @@ WIN32_CARGS = -s -O2 -Wall -Wl,--nxcompat -o $@ $(if $(filter %.dll,$@),-shared 
 WIN32_CLDO = $(DO)$(if $(filter-out %.obj,$@),mkdir -p win32/obj/$@ && )
 WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@ -Fowin32/obj/$@/) $(if $(filter %.dll,$@),-LD) $(INCLUDEOPTS) $(filter-out %.h,$^)
 
-mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe ASAP_Apollo.dll bass_asap.dll in_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
+mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe bass_asap.dll in_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
 .PHONY: mingw
 
 # asapconv
@@ -116,16 +116,6 @@ CLEAN += win32/x64/wasap.exe
 win32/x64/wasap-res.o: $(call src,win32/gui.rc asap.h win32/info_dlg.h win32/wasap/wasap.h win32/wasap/wasap.ico win32/wasap/play.ico win32/wasap/stop.ico)
 	$(WIN64_WINDRES) -DWASAP
 CLEAN += win32/x64/wasap-res.o
-
-# Apollo
-
-win32/ASAP_Apollo.dll: $(call src,win32/apollo/ASAP_Apollo.cpp asap.[ch] astil.[ch] win32/info_dlg.[ch] win32/settings_dlg.[ch] win32/apollo/InputPlugin.h) win32/apollo/ASAP_Apollo-res.o
-	$(WIN32_CXX) -DAPOLLO -lcomctl32 -lcomdlg32
-CLEAN += win32/ASAP_Apollo.dll
-
-win32/apollo/ASAP_Apollo-res.o: $(call src,win32/gui.rc asap.h win32/info_dlg.h win32/settings_dlg.h)
-	$(WIN32_WINDRES) -DAPOLLO
-CLEAN += win32/apollo/ASAP_Apollo-res.o
 
 # VLC
 
@@ -255,7 +245,7 @@ win32/setup: release/asap-$(VERSION)-win32.msi
 
 release/asap-$(VERSION)-win32.msi: win32/setup/asap.wixobj \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/diff-sap.js win32/shellex/ASAPShellEx.propdesc) \
-	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll ASAP_Apollo.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll)
+	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll)
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b release -b $(srcdir)win32/setup -b $(srcdir)win32 $<
 
 win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs

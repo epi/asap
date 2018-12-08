@@ -17,9 +17,6 @@ When you hover the mouse pointer over the icon, the name of the loaded file appe
 To open another file, left-click the tray icon. The other options are
 available in the menu which appears when you right-click the icon.
 
-Apollo plugin::
-Extract `ASAP_Apollo.dll` to the `Plug-ins` directory of your Apollo installation.
-
 foobar2000 plugin::
 Extract `foo_asap.dll` to the `components` directory of your foobar2000 installation.
 

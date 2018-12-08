@@ -110,7 +110,7 @@ If you have another XMMS plugin that supports Atari 8-bit music,
 remove it in order to avoid conflicts.
 
 
-Building asapconv, WASAP, Winamp/Apollo/XMPlay/BASS plugins, RMT DLL,
+Building asapconv, WASAP, Winamp/XMPlay/BASS plugins, RMT DLL,
 asapscan, shell extension and libasap on Windows
 ---------------------------------------------------------------------
 

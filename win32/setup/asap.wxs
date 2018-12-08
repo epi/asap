@@ -141,16 +141,13 @@
 			<?if $(sys.BUILDARCH) = x86?>
 			<!-- handle mutually exclusive file associations, conditions generated with wix_mutex.pl -->
 			<?foreach MUTEXCOND in (($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3) OR $foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)));
-(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3) OR $xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
-(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3) OR $libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
-(($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)));
-(($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
+(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
+(($wasap.ext=3 OR ($wasap.ext=-1 AND ?wasap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
+(($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3) OR $xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
+(($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
 (($in_asap.ext=3 OR ($in_asap.ext=-1 AND ?in_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
-(($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)) AND ($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3) OR $xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)));
-(($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
+(($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
 (($foo_asap.ext=3 OR ($foo_asap.ext=-1 AND ?foo_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
-(($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)) AND ($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3) OR $aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
-(($ASAP_Apollo.ext=3 OR ($ASAP_Apollo.ext=-1 AND ?ASAP_Apollo.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
 (($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)) AND ($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)));
 (($xmp_asap.ext=3 OR ($xmp_asap.ext=-1 AND ?xmp_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)));
 (($aimp_asap.ext=3 OR ($aimp_asap.ext=-1 AND ?aimp_asap.ext=3)) AND ($libasap_plugin.ext=3 OR ($libasap_plugin.ext=-1 AND ?libasap_plugin.ext=3)))?>
@@ -195,14 +192,6 @@
 		<Property Id="FOO.EXE">
 			<RegistrySearch Id="foo.exe" Root="HKLM" Key="SOFTWARE\foobar2000" Name="InstallDir" Type="directory">
 				<FileSearch Name="foobar2000.exe" />
-			</RegistrySearch>
-		</Property>
-		<Property Id="APOLLO.DIR">
-			<RegistrySearch Id="apollo.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Apollo_is1" Name="InstallLocation" Type="directory" />
-		</Property>
-		<Property Id="APOLLO.EXE">
-			<RegistrySearch Id="apollo.exe" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Apollo_is1" Name="InstallLocation" Type="directory">
-				<FileSearch Name="Apollo.exe" />
 			</RegistrySearch>
 		</Property>
 		<Property Id="XMPLAY.DIR">
@@ -368,24 +357,6 @@
 						</Component>
 					</Directory>
 				</Directory>
-				<Directory Id="APOLLO.DIR" Name="Apollo">
-					<Directory Id="APOLLOPLUG.DIR" Name="Plug-ins">
-						<Component Id="ASAP_Apollo.dll">
-							<File Name="ASAP_Apollo.dll" Source="ASAP_Apollo.dll" Checksum="yes" KeyPath="yes" />
-						</Component>
-						<Component Id="ASAP_Apollo.ext">
-							<RegistryValue Root="HKCR" Key="Apollo.Track" Name="ASAP_Apollo" Type="integer" Value="1" KeyPath="yes" />
-							<ProgId Id="Apollo.Track">
-								<Extension Id="sap">
-									<Verb Id="Play" TargetProperty="APOLLO.EXE" Argument='"%1"' />
-								</Extension>
-								<?foreach EXT in $(var.NATIVE_EXTS)?>
-									<Extension Id="$(var.EXT)" />
-								<?endforeach?>
-							</ProgId>
-						</Component>
-					</Directory>
-				</Directory>
 				<Directory Id="XMPLAY.DIR" Name="XMPlay">
 					<Component Id="xmp_asap.dll">
 						<File Name="xmp-asap.dll" Source="xmp-asap.dll" Checksum="yes" KeyPath="yes" />
@@ -481,14 +452,6 @@
 			<Feature Id="foo_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) foobar2000." AllowAdvertise="no">
 				<Condition Level="9">FOO.EXE</Condition>
 				<ComponentRef Id="foo_asap.ext" />
-			</Feature>
-		</Feature>
-		<Feature Id="ASAP_Apollo" Title="Apollo plugin" Level="9" ConfigurableDirectory="APOLLOPLUG.DIR" Description="Plugin for Apollo." AllowAdvertise="no">
-			<Condition Level="1">APOLLO.DIR</Condition>
-			<ComponentRef Id="ASAP_Apollo.dll" />
-			<Feature Id="ASAP_Apollo.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) Apollo." AllowAdvertise="no">
-				<Condition Level="9">APOLLO.EXE</Condition>
-				<ComponentRef Id="ASAP_Apollo.ext" />
 			</Feature>
 		</Feature>
 		<Feature Id="xmp_asap" Title="XMPlay plugin" Level="9" ConfigurableDirectory="XMPLAY.DIR" Description="Plugin for XMPlay." AllowAdvertise="no">
