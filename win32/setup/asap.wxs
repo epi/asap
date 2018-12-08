@@ -173,19 +173,6 @@
 		<Property Id="TGIT.VER">
 			<RegistrySearch Id="tgit.ver" Root="HKCU" Key="SOFTWARE\TortoiseGit" Name="CurrentVersion" Type="raw" />
 		</Property>
-		<Property Id="WMP.EXE">
-			<RegistrySearch Id="wmp.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\MediaPlayer" Name="Installation Directory" Type="directory">
-				<FileSearch Id="wmp.exe" Name="wmplayer.exe" />
-			</RegistrySearch>
-		</Property>
-		<Property Id="WINAMP.DIR">
-			<RegistrySearch Id="winamp.installdir" Root="HKCU" Key="SOFTWARE\Winamp" Type="directory" />
-		</Property>
-		<Property Id="WINAMP.EXE">
-			<RegistrySearch Id="winamp.exe" Root="HKCU" Key="SOFTWARE\Winamp" Type="directory">
-				<FileSearch Name="winamp.exe" />
-			</RegistrySearch>
-		</Property>
 		<Property Id="FOO.DIR">
 			<RegistrySearch Id="foo.installdir" Root="HKLM" Key="SOFTWARE\foobar2000" Name="InstallDir" Type="directory" />
 		</Property>
@@ -209,6 +196,14 @@
 			<DirectorySearch Id="aimp.exe" Path="[AIMP.DIR]">
 				<FileSearch Name="AIMP.exe" />
 			</DirectorySearch>
+		</Property>
+		<Property Id="WINAMP.DIR">
+			<RegistrySearch Id="winamp.installdir" Root="HKCU" Key="SOFTWARE\Winamp" Type="directory" />
+		</Property>
+		<Property Id="WINAMP.EXE">
+			<RegistrySearch Id="winamp.exe" Root="HKCU" Key="SOFTWARE\Winamp" Type="directory">
+				<FileSearch Name="winamp.exe" />
+			</RegistrySearch>
 		</Property>
 		<?endif?>
 		<Property Id="VLC.DIR">
@@ -322,24 +317,6 @@
 				</Directory>
 
 				<?if $(sys.BUILDARCH) = x86?>
-				<Directory Id="WINAMP.DIR" Name="Winamp">
-					<Directory Id="WINAMPPLUG.DIR" Name="Plugins">
-						<Component Id="in_asap.dll">
-							<File Name="in_asap.dll" Source="in_asap.dll" Checksum="yes" KeyPath="yes" />
-						</Component>
-						<Component Id="in_asap.ext">
-							<RegistryValue Root="HKCR" Key="Winamp.File" Name="in_asap" Type="integer" Value="1" KeyPath="yes" />
-							<ProgId Id="Winamp.File">
-								<Extension Id="sap">
-									<Verb Id="open" TargetProperty="WINAMP.EXE" Argument='"%1"' />
-								</Extension>
-								<?foreach EXT in $(var.NATIVE_EXTS)?>
-									<Extension Id="$(var.EXT)" />
-								<?endforeach?>
-							</ProgId>
-						</Component>
-					</Directory>
-				</Directory>
 				<Directory Id="FOO.DIR" Name="foobar2000">
 					<Directory Id="FOOCOMP.DIR" Name="components">
 						<Component Id="foo_asap.dll">
@@ -393,6 +370,24 @@
 						</Directory>
 					</Directory>
 				</Directory>
+				<Directory Id="WINAMP.DIR" Name="Winamp">
+					<Directory Id="WINAMPPLUG.DIR" Name="Plugins">
+						<Component Id="in_asap.dll">
+							<File Name="in_asap.dll" Source="in_asap.dll" Checksum="yes" KeyPath="yes" />
+						</Component>
+						<Component Id="in_asap.ext">
+							<RegistryValue Root="HKCR" Key="Winamp.File" Name="in_asap" Type="integer" Value="1" KeyPath="yes" />
+							<ProgId Id="Winamp.File">
+								<Extension Id="sap">
+									<Verb Id="open" TargetProperty="WINAMP.EXE" Argument='"%1"' />
+								</Extension>
+								<?foreach EXT in $(var.NATIVE_EXTS)?>
+									<Extension Id="$(var.EXT)" />
+								<?endforeach?>
+							</ProgId>
+						</Component>
+					</Directory>
+				</Directory>
 				<Directory Id="RMT.DIR" Name="RMT">
 					<Component Id="apokeysnd.dll">
 						<File Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
@@ -438,14 +433,6 @@
 		</Feature>
 		<?endif?>
 		<?if $(sys.BUILDARCH) = x86?>
-		<Feature Id="in_asap" Title="Winamp plugin" Level="9" ConfigurableDirectory="WINAMPPLUG.DIR" Description="Plugin for Winamp." AllowAdvertise="no">
-			<Condition Level="1">WINAMP.DIR</Condition>
-			<ComponentRef Id="in_asap.dll" />
-			<Feature Id="in_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) Winamp." AllowAdvertise="no">
-				<Condition Level="9">WINAMP.EXE</Condition>
-				<ComponentRef Id="in_asap.ext" />
-			</Feature>
-		</Feature>
 		<Feature Id="foo_asap" Title="foobar2000 plugin" Level="9" ConfigurableDirectory="FOOCOMP.DIR" Description="Plugin for foobar2000." AllowAdvertise="no">
 			<Condition Level="1">FOO.DIR</Condition>
 			<ComponentRef Id="foo_asap.dll" />
@@ -468,6 +455,14 @@
 			<Feature Id="aimp_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) AIMP." AllowAdvertise="no">
 				<Condition Level="9">AIMP.EXE</Condition>
 				<ComponentRef Id="aimp_asap.ext" />
+			</Feature>
+		</Feature>
+		<Feature Id="in_asap" Title="Winamp plugin" Level="9" ConfigurableDirectory="WINAMPPLUG.DIR" Description="Plugin for Winamp." AllowAdvertise="no">
+			<Condition Level="1">WINAMP.DIR</Condition>
+			<ComponentRef Id="in_asap.dll" />
+			<Feature Id="in_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) Winamp." AllowAdvertise="no">
+				<Condition Level="9">WINAMP.EXE</Condition>
+				<ComponentRef Id="in_asap.ext" />
 			</Feature>
 		</Feature>
 		<Feature Id="apokeysnd" Title="RMT sound emulator" Level="9" ConfigurableDirectory="RMT.DIR" Description="POKEY sound emulation engine for Raster Music Tracker." AllowAdvertise="no">

@@ -20,15 +20,15 @@ available in the menu which appears when you right-click the icon.
 foobar2000 plugin::
 Extract `foo_asap.dll` to the `components` directory of your foobar2000 installation.
 
-Winamp plugin::
-Extract `in_asap.dll` to the `Plugins` directory of your Winamp installation.
-It is recommended that you remove other plugins that support Atari 8-bit music.
-
 XMPlay plugin::
 Extract `xmp-asap.dll` to your XMPlay directory.
 +
 If you want to use the "File information" window (to edit tags or convert between SAP and other formats),
 assign a shortcut to it from XMPlay options.
+
+Winamp plugin::
+Extract `in_asap.dll` to the `Plugins` directory of your Winamp installation.
+It is recommended that you remove other plugins that support Atari 8-bit music.
 
 DLL for Raster Music Tracker::
 Extract `apokeysnd.dll` to the directory which contains `Rmt.exe`.
