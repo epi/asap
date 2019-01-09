@@ -44,8 +44,8 @@ release/asap-$(VERSION)-win32.zip: release/COPYING.txt \
 release/foo_asap-$(VERSION).fb2k-component: win32/foo_asap.dll
 	$(MAKEZIP)
 
-release/asap-vlc-$(VERSION)-osx.dmg: release/osx/libasap_plugin.dylib release/osx/plugins
-	$(DO)hdiutil create -volname asap-vlc-$(VERSION)-osx -srcfolder release/osx -format UDBZ -imagekey bzip2-level=3 -ov $@
+release/asap-$(VERSION)-macos.dmg: release/osx/libasap_plugin.dylib release/osx/plugins release/osx/asapconv release/osx/bin
+	$(DO)hdiutil create -volname asap-$(VERSION)-macos -srcfolder release/osx -format UDBZ -fs HFS+ -imagekey bzip2-level=3 -ov $@
 
 release/osx/libasap_plugin.dylib: libasap_plugin.dylib
 	$(DO)strip -o $@ -x $< && chmod 644 $@
@@ -53,6 +53,12 @@ CLEANDIR += release/osx
 
 release/osx/plugins:
 	$(DO)ln -s /Applications/VLC.app/Contents/MacOS/plugins $@
+
+release/osx/asapconv: $(call src,asapconv.c asap.[ch])
+	$(OSX_CC)
+
+release/osx/bin: 
+	$(DO)ln -s /usr/local/bin $@
 
 deb:
 	debuild -b -us -uc
