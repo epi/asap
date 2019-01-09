@@ -34,7 +34,7 @@ $(srcdir)MANIFEST:
 .PHONY: $(srcdir)MANIFEST
 
 release/asap-$(VERSION)-web.zip: release/COPYING.txt \
-	javascript/asap.js $(srcdir)javascript/asapweb.js $(srcdir)javascript/binaryHttpRequest.js
+	javascript/asap.js $(srcdir)javascript/asapweb.js
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-win32.zip: release/COPYING.txt \

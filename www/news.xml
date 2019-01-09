@@ -1,4 +1,19 @@
 ﻿<page title="News">
+	<release version="4.0.0" date="2019-01-??">
+		<ul>
+			<li>Removed ports: Windows 8, Windows Mobile, Windows Media Player, Java ME, Java applet, Silverlight, Flash Player, Adobe AIR, gstreamer, Audacious, XBMC, GSPlayer, Apollo.</li>
+			<li>Updated to AIMP 4, VLC 3, MOC 2.5.</li>
+			<li>Bundled ASMA in the Android app.</li>
+			<li>Fix file selector on new Androids.</li>
+			<li>Support MyDOS directories in ATRs.</li>
+			<li>Emulate interrupts of the extra POKEY.</li>
+			<li>Support high resolutions on Windows.</li>
+			<li>foobar2000 plays non-ASAP files (e.g. MOD) from ATRs.</li>
+			<li>Extract from SAP and relocate a native module in one go.</li>
+			<li>Fixed a buffer overflow while extracting FC from SAP.</li>
+		</ul>
+	</release>
+
 	<release version="3.2.0" date="2014-06-23">
 		<ul>
 			<li>Reduced amplitude by a half to avoid clipping loud tunes.</li>
