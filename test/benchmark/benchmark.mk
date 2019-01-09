@@ -1,13 +1,10 @@
 GME_PATH = ../game-music-emu
-SAP_PATH = ../sap.src
+SAP_PATH = ../sapLib
 
-benchmark: test/benchmark/BENCHMARK.html
+benchmark: test/benchmark/BENCHMARK.csv
 .PHONY: benchmark
 
-test/benchmark/BENCHMARK.html: test/benchmark/BENCHMARK.txt
-	$(call ASCIIDOC,)
-
-test/benchmark/BENCHMARK.txt: $(srcdir)test/benchmark/benchmark.pl win32/msvc/asapconv.exe win32/asapconv.exe win32/x64/asapconv.exe java/asap2wav.jar csharp/asap2wav.exe d/asap2wav.exe test/benchmark/gme_benchmark.exe test/benchmark/sap_benchmark.exe
+test/benchmark/BENCHMARK.csv: $(srcdir)test/benchmark/benchmark.pl win32/msvc/asapconv.exe win32/asapconv.exe win32/x64/asapconv.exe java/asap2wav.jar csharp/asap2wav.exe test/benchmark/gme_benchmark.exe test/benchmark/sap_benchmark.exe
 	perl $< > $@
 
 test/benchmark/gme_benchmark.exe: $(call src,test/benchmark/gme_benchmark.c asap.[ch]) $(GME_PATH)/gme/*.cpp $(GME_PATH)/gme/*.h

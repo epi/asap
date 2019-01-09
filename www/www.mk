@@ -2,19 +2,17 @@ ifndef DO
 $(error Use "Makefile" instead of "www.mk")
 endif
 
-www: www/index.html www/NEWS.html www/javascript.html www/apokeysnd.dll \
-	www/asap.swf www/asap.js www/asapweb.js www/binaryHttpRequest.js \
+WWW_TARGETS = www/index.html www/android.html www/windows.html www/linux.html \
+	www/web.html www/news.html www/sap-format.html www/contact.html \
+	www/apokeysnd.dll www/asap.js www/asapweb.js \
 	www/favicon.ico www/PORTS.xml www/PORTS.xsl
+CLEAN += $(WWW_TARGETS)
+
+www: $(WWW_TARGETS)
 .PHONY: www
 
-www/index.html: $(call src,README CREDITS)
-	$(call ASCIIDOC,-a asapwww -a asapports)
-
-www/NEWS.html: $(srcdir)NEWS
-	$(call ASCIIDOC,)
-
-www/javascript.html: $(srcdir)www/javascript.txt
-	$(DO)asciidoc -o - $< | sed -e "s/527bbd;/c02020;/" | xmllint --dropdtd --nonet -o $@ -
+www/%.html: $(call src,www/www.xsl www/%.xml)
+	$(DO)xsltproc -o $@ $^ && java -jar C:/bin/vnu.jar $@
 
 www/apokeysnd.dll: win32/apokeysnd.dll
 	$(COPY)
@@ -23,9 +21,6 @@ www/asap.js: javascript/asap.js
 	$(COPY)
 
 www/asapweb.js: $(srcdir)javascript/asapweb.js
-	$(COPY)
-
-www/binaryHttpRequest.js: $(srcdir)javascript/binaryHttpRequest.js
 	$(COPY)
 
 www/favicon.ico: $(srcdir)win32/wasap/wasap.ico

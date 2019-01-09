@@ -1,7 +1,7 @@
 /*
  * asapweb.js - pure JavaScript ASAP for web browsers
  *
- * Copyright (C) 2009-2012  Piotr Fusik
+ * Copyright (C) 2009-2018  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -22,53 +22,63 @@
  */
 
 var asap = {
-	timerId : null,
-	onLoad : new Function(),
-	onPlaybackEnd : new Function(),
-	stop : function()
-	{
-		if (window.asap.timerId) {
-			clearInterval(window.asap.timerId);
-			window.asap.timerId = null;
+	stop : function() {
+		var processor = window.asap.processor;
+		if (processor) {
+			processor.disconnect();
+			delete window.asap.processor;
 		}
 	},
-	play : function(filename, module, song)
+
+	playContent : function(filename, content, song)
 	{
 		var asap = new ASAP();
-		asap.load(filename, module, module.length);
+		asap.load(filename, content, content.length);
 		var info = asap.getInfo();
-		if (song == null)
-			song = info.getDefaultSong();
-		asap.playSong(song, info.getDuration(song));
-
-		var buffer = new Array(8192);
-
-		function audioCallback(samplesRequested)
-		{
-			buffer.length = asap.generate(buffer, samplesRequested, ASAPSampleFormat.U8);
-			for (var i = 0; i < buffer.length; i++)
-				buffer[i] = (buffer[i] - 128) / 128;
-			if (buffer.length == 0) {
-				window.asap.stop();
-				window.asap.onPlaybackEnd();
-			}
-			return buffer;
-		}
-		function failureCallback()
-		{
-			alert("Your browser doesn't support JavaScript audio");
-		}
-		var audio = new XAudioServer(info.getChannels(), ASAP.SAMPLE_RATE, 8192, 16384, audioCallback, 1, failureCallback);
-		function heartbeat()
-		{
-			audio.executeCallback();
-		}
-
-		window.asap.stop();
 		window.asap.author = info.getAuthor();
 		window.asap.title = info.getTitle();
 		window.asap.date = info.getDate();
-		window.asap.onLoad();
-		window.asap.timerId = setInterval(heartbeat, 50);
+		if (song === undefined)
+			song = info.getDefaultSong();
+		asap.playSong(song, -1);
+
+		window.asap.stop();
+		var length = 4096;
+		var channels = asap.getInfo().getChannels();
+		var buffer = new Uint8Array(new ArrayBuffer(length * channels));
+
+		var context = new AudioContext({ sampleRate : ASAP.SAMPLE_RATE });
+		var processor = context.createScriptProcessor(length, 0, channels);
+		processor.onaudioprocess = function (e) {
+			asap.generate(buffer, length * channels, ASAPSampleFormat.U8);
+			for (var c = 0; c < channels; c++) {
+				var output = e.outputBuffer.getChannelData(c);
+				for (var i = 0; i < length; i++)
+					output[i] = (buffer[i * channels + c] - 128) / 128;
+			}
+		};
+		processor.connect(context.destination);
+		window.asap.processor = processor;
+	},
+
+	playUrl : function(url)
+	{
+		var request = new XMLHttpRequest();
+		request.open("GET", url, true);
+		request.responseType = "arraybuffer";
+		request.onload = function (e) {
+			if (this.status == 200 || this.status == 0)
+				asap.playContent(url, new Uint8Array(this.response));
+		};
+		request.send();
+	},
+
+	playFile : function(file)
+	{
+		var reader = new FileReader();
+		reader.onload = function (e) {
+			asap.playContent(file.name, new Uint8Array(e.target.result));
+		};
+		reader.readAsArrayBuffer(file);
 	}
 };

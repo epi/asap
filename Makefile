@@ -14,7 +14,6 @@ CITO = $(DO)cito -o $@ $(patsubst %,-I %,$(sort $(dir $(filter-out %.ci,$^)))) $
 INSTALL = install
 INSTALL_PROGRAM = mkdir -p $(DESTDIR)$(2) && $(INSTALL) $(1) $(DESTDIR)$(2)/$(or $(3),$(1))
 INSTALL_DATA = mkdir -p $(DESTDIR)$(2) && $(INSTALL) -m 644 $(1) $(DESTDIR)$(2)/$(1)
-ASCIIDOC = $(DO)asciidoc -o - $(1) $< | sed -e "s/527bbd;/c02020;/" | xmllint --valid --nonet -o $@ -
 SDL_CFLAGS = `sdl-config --cflags`
 SDL_LIBS = `sdl-config --libs`
 SEVENZIP = 7z a -mx=9 -bd -bso0
@@ -122,11 +121,6 @@ $(srcdir)aatr.h: $(srcdir)aatr.ci | $(srcdir)aatr.c
 
 $(srcdir)aatr.c: $(srcdir)aatr.ci
 	$(CITO)
-
-# other
-
-sap-format.html: $(srcdir)sap-format.txt
-	$(call ASCIIDOC,-a toc)
 
 clean:
 	$(RM) $(CLEAN)
