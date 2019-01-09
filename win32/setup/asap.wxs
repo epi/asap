@@ -413,26 +413,6 @@
 		</Directory>
 
 		<?if $(sys.BUILDARCH) = x86?>
-		<Feature Id="wasap" Title="WASAP" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Tiny player controlled by a tray icon." AllowAdvertise="no">
-			<ComponentRef Id="wasap.exe" />
-			<Feature Id="wasap.lnk" Title="Start menu shortcut" Level="1" Description="Adds WASAP to the Programs menu." AllowAdvertise="no">
-				<ComponentRef Id="WASAP.lnk" />
-			</Feature>
-			<Feature Id="wasap.desktop" Title="Desktop shortcut" Level="9" Description="Adds WASAP to the desktop." AllowAdvertise="no">
-				<ComponentRef Id="WASAP.desktop" />
-			</Feature>
-			<Feature Id="wasap.ext" Title="Associate file types" Level="9" Description="$(var.DOUBLECLICK) WASAP." AllowAdvertise="no">
-				<ComponentRef Id="wasap.ext" />
-			</Feature>
-		</Feature>
-		<Feature Id="asapconv" Title="asapconv" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Command-line converter." AllowAdvertise="no">
-			<ComponentRef Id="asapconv.exe" />
-			<Feature Id="path" Title="Add to Path" Level="1" Description="Add the directory to the Path environment variable so that you don't have to type the location of asapconv at the command prompt." AllowAdvertise="no">
-				<ComponentRef Id="path" />
-			</Feature>
-		</Feature>
-		<?endif?>
-		<?if $(sys.BUILDARCH) = x86?>
 		<Feature Id="foo_asap" Title="foobar2000 plugin" Level="9" ConfigurableDirectory="FOOCOMP.DIR" Description="Plugin for foobar2000." AllowAdvertise="no">
 			<Condition Level="1">FOO.DIR</Condition>
 			<ComponentRef Id="foo_asap.dll" />
@@ -486,6 +466,24 @@
 		</Feature>
 
 		<?if $(sys.BUILDARCH) = x86?>
+		<Feature Id="wasap" Title="WASAP" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Tiny player controlled by a tray icon." AllowAdvertise="no">
+			<ComponentRef Id="wasap.exe" />
+			<Feature Id="wasap.lnk" Title="Start menu shortcut" Level="1" Description="Adds WASAP to the Programs menu." AllowAdvertise="no">
+				<ComponentRef Id="WASAP.lnk" />
+			</Feature>
+			<Feature Id="wasap.desktop" Title="Desktop shortcut" Level="9" Description="Adds WASAP to the desktop." AllowAdvertise="no">
+				<ComponentRef Id="WASAP.desktop" />
+			</Feature>
+			<Feature Id="wasap.ext" Title="Associate file types" Level="9" Description="$(var.DOUBLECLICK) WASAP." AllowAdvertise="no">
+				<ComponentRef Id="wasap.ext" />
+			</Feature>
+		</Feature>
+		<Feature Id="asapconv" Title="asapconv" Level="1" ConfigurableDirectory="ASAP.DIR" Description="Command-line converter." AllowAdvertise="no">
+			<ComponentRef Id="asapconv.exe" />
+			<Feature Id="path" Title="Add to Path" Level="1" Description="Add the directory to the Path environment variable so that you don't have to type the location of asapconv at the command prompt." AllowAdvertise="no">
+				<ComponentRef Id="path" />
+			</Feature>
+		</Feature>
 		<Feature Id="diff_sap_tsvn" Title="TortoiseSVN diff viewer" Level="0" Description="Compare changes in SAP files." AllowAdvertise="no">
 			<Condition Level="1">TSVN.VER</Condition>
 			<ComponentRef Id="sap2txt.exe" />
@@ -498,7 +496,6 @@
 			<ComponentRef Id="diff_sap.js" />
 			<ComponentRef Id="diff_sap_tgit.reg" />
 		</Feature>
-
 		<?endif?>
 
 		<CustomAction Id="InstallPropertySchema" DllEntry="InstallPropertySchema" FileKey="ASAPShellEx.dll" Execute="deferred" Impersonate="no" />
