@@ -16,6 +16,7 @@
 		<author name="Adrian Matoga" email="epi@atari8.info">COVOX information and test files. Testing. Porting to D.</author>
 		<author name="Perry McFarlane" email="perry_m@fastmail.fm">POKEY reverse-engineering.</author>
 		<author name="Kostas Nakos" email="knakos@gmail.com">Windows CE testing.</author>
+		<author name="Petri Pyy" email="laskipeto@gmail.com">macOS releases.</author>
 		<author name="Mariusz Rozwadowski" rip="true">Suggested CMS, CM3, DLT and STIL format support.</author>
 		<author name="Sławomir Śledz" email="slaves@scene.pl">Windows Mobile setup. Thorough testing.</author>
 		<author name="David Spilka">6502 routine for playing CMS.</author>
@@ -23,6 +24,7 @@
 		<author name="Łukasz Sychowicz" email="xray@scene.pl">Windows icons. Testing.</author>
 		<author name="Paweł Szewczyk" email="ripek@op.pl">Windows setup graphics.</author>
 		<author name="Michał Szpilowski" email="miker@atari.pl">Testing.</author>
+		<author name="Piotr Wiszowaty" email="piotr.wiszowaty@onet.pl">VLC 3 compatibility.</author>
 		<author name="Grzegorz Żyła" email="gsunr@poczta.onet.pl">XBMC plugin testing.</author>
 	</authors>
 
@@ -40,7 +42,7 @@
 	or <a href="https://sourceforge.net/p/asap/code/ci/master/tree/">browse Git repository</a>.</p>
 	<p>ASAP is based on a development library, which you can easily embed in your program.
 	It's not only a fully portable C library - it's better than that.
-	Since RECOIL is written in <a href="http://cito.sourceforge.net/">Ć</a>,
+	Since ASAP is written in <a href="http://cito.sourceforge.net/">Ć</a>,
 	it is also available as pure Java, C#, JavaScript, ActionScript, Perl and <a href="http://dlang.org/">D</a>.</p>
 
 	<h2>Third-party projects using ASAP</h2>

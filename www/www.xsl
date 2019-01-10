@@ -18,10 +18,10 @@
 					html { background-color: #eee; color: #000; font-family: Georgia,"Times New Roman",Times,serif; padding: 0em 3em; }
 					h1, h2, h3, dt { color: #c22; }
 					a { color: #00c; }
-					nav ul { border-bottom: solid #aaa 1px; margin: 0px; padding: 1em 0em; }
+					nav ul { border-bottom: solid #aaa 1px; margin: 0px; padding: 0.5em 0em; }
 					nav li { display: inline; }
-					nav li.tab_selected { background-color: #fff; border: solid #aaa 1px; border-bottom-color: #fff; padding: 1em; }
-					nav li a { padding: 1em; text-decoration: none; }
+					nav li.tab_selected { background-color: #fff; border: solid #aaa 1px; border-bottom-color: #fff; padding: 0.5em; }
+					nav li a { padding: 0.5em; text-decoration: none; }
 					main { background-color: #fff; border: solid #888 1px; border-top-style: none; padding: 1em 3em 3em 3em; }
 					dt { margin-top: 1em; }
 					.author { color: #c22; padding-right: 1em; text-align: right; }
@@ -39,6 +39,7 @@
 						<xsl:call-template name="menu"><xsl:with-param name="page">Home</xsl:with-param></xsl:call-template>
 						<xsl:call-template name="menu"><xsl:with-param name="page">Android</xsl:with-param></xsl:call-template>
 						<xsl:call-template name="menu"><xsl:with-param name="page">Windows</xsl:with-param></xsl:call-template>
+						<xsl:call-template name="menu"><xsl:with-param name="page">macOS</xsl:with-param></xsl:call-template>
 						<xsl:call-template name="menu"><xsl:with-param name="page">Linux</xsl:with-param></xsl:call-template>
 						<xsl:call-template name="menu"><xsl:with-param name="page">Web</xsl:with-param></xsl:call-template>
 						<xsl:call-template name="menu"><xsl:with-param name="page">News</xsl:with-param></xsl:call-template>
@@ -81,6 +82,10 @@
 				</xsl:otherwise>
 			</xsl:choose>
 		</li>
+	</xsl:template>
+
+	<xsl:template match="version">
+		<xsl:value-of select="$version" />
 	</xsl:template>
 
 	<xsl:template match="release">
@@ -132,7 +137,7 @@
 		</ul>
 	</xsl:template>
 
-	<xsl:template match="a[@href]|code|div|dd|dl|dt|h2|h3|img|input|li|p|pre|script|select|ul">
+	<xsl:template match="a[@href]|code|div|dd|dl|dt|h2|h3|img|input|li|ol|p|pre|script|select|ul">
 		<xsl:element name="{name()}">
 			<xsl:copy-of select="@*" />
 			<xsl:apply-templates />

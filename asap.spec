@@ -1,5 +1,5 @@
 Name: asap
-Version: 3.2.0
+Version: 4.0.0
 Release: 1
 Summary: Player of Atari 8-bit music
 License: GPLv2+
@@ -75,6 +75,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/vlc/plugins/demux/libasap_plugin.so
 
 %changelog
+* Thu Jan 10 2019 Piotr Fusik <fox@scene.pl>
+- 4.0.0-1
+
 * Sat Aug 12 2017 Piotr Fusik <fox@scene.pl>
 - Discontinued GStreamer
 

@@ -8,8 +8,8 @@
 	but the current version has an original emulation core.</p>
 
 	<p>ASAP is available on <a href="android.html">Android</a>,
-	<a href="windows.html">Windows</a>, <a href="linux.html">Linux</a>
-	and <a href="web.html">modern web browsers</a>.</p>
+	<a href="windows.html">Windows</a>, <a href="macos.html">macOS</a>,
+	<a href="linux.html">Linux</a> and <a href="web.html">modern web browsers</a>.</p>
 
 	<h2>Input formats</h2>
 	<p>ASAP supports the following file formats:</p>
@@ -69,4 +69,8 @@
 	<p>You can find some test files in <a href="http://asap.sourceforge.net/examples.zip">examples.zip</a>.</p>
 
 	<p>For viewing Atari pictures, check out my other project <a href="http://recoil.sourceforge.net/">RECOIL</a>.</p>
+
+	<h2>License</h2>
+	<p>ASAP is free software, you can redistribute it and/or modify it under the terms
+	of the <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt">GNU General Public License</a>.</p>
 </page>

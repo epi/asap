@@ -1,7 +1,7 @@
 ﻿<page title="Linux">
 	<h2>Linux</h2>
 	<p>Download the source code <download prefix="asap-" suffix=".tar.gz" />.
-	Inside you will find instructions how to build a <a href="http://www.videolan.org/vlc/">VLC</a> plugin,
+	Inside you will find instructions on how to build a <a href="http://www.videolan.org/vlc/">VLC</a> plugin,
 	a <a href="http://moc.daper.net/">MOC</a> plugin, an <a href="http://www.xmms.org/">XMMS</a> plugin
 	and a command-line converter asapconv.</p>
 </page>

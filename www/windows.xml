@@ -59,7 +59,7 @@
 	<h2>asapconv</h2>
 	<p>For command-line conversions (e.g. to WAV or between SAP and the tracker formats)
 	and editing the metadata, use asapconv. Run the program from the command prompt to see the syntax.
-	The -o/--output option selects the output format and is mandatory.</p>
+	The <code>-o/--output</code> option selects the output format and is mandatory.</p>
 
 	<h2>Manual installation</h2>
 	<p>If you are allergic to installers, you may download <download prefix="asap-" suffix="-win32.zip" />

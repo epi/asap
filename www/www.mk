@@ -2,7 +2,7 @@ ifndef DO
 $(error Use "Makefile" instead of "www.mk")
 endif
 
-WWW_TARGETS = www/index.html www/android.html www/windows.html www/linux.html \
+WWW_TARGETS = www/index.html www/android.html www/windows.html www/macos.html www/linux.html \
 	www/web.html www/news.html www/sap-format.html www/contact.html \
 	www/apokeysnd.dll www/asap.js www/asapweb.js \
 	www/favicon.ico www/PORTS.xml www/PORTS.xsl

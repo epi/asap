@@ -1,4 +1,9 @@
+asap (4.0.0-1) UNRELEASED; urgency=low
+
+  * New release.
   * Discontinued GStreamer.
+
+ -- Piotr Fusik <fox@scene.pl>  Thu, 10 Jan 2019 17:27:07 +0100
 
 asap (3.2.0-1) UNRELEASED; urgency=low
 
