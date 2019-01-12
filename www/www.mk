@@ -12,7 +12,7 @@ www: $(WWW_TARGETS)
 .PHONY: www
 
 www/%.html: $(call src,www/www.xsl www/%.xml)
-	$(DO)xsltproc -o $@ $^ && java -jar C:/bin/vnu.jar $@
+	$(DO)xsltproc -o $@ --stringparam version $(VERSION) $^ && java -jar C:/bin/vnu.jar $@
 
 www/apokeysnd.dll: win32/apokeysnd.dll
 	$(COPY)
