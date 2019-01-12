@@ -70,7 +70,7 @@ CLEAN += release/COPYING.txt
 
 version:
 	@echo ./release/release.mk: VERSION=$(VERSION)
-	$(GREP) -m 1 ^ASAP $(srcdir)NEWS
+	$(GREP) -m 1 version= $(srcdir)www/news.xml
 	$(GREP) "<since>" $(srcdir)PORTS.xml | /usr/bin/sort -ru | head -1
 	$(GREP) Version: $(srcdir)asap.spec
 	$(GREP) -m 1 ^asap $(srcdir)debian/changelog
