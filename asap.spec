@@ -43,6 +43,8 @@ BuildRequires: vlc-devel
 Provides playback of Atari 8-bit music in VLC.
 Supports the following file formats: SAP, RMT, FC.
 
+%global debug_package %{nil}
+
 %prep
 %setup -q
 
@@ -58,7 +60,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc README.html
 %{_bindir}/asapconv
 
 %files devel
