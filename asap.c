@@ -4402,7 +4402,6 @@ static cibool ASAPNativeModuleWriter_Write(ASAPNativeModuleWriter *self, ASAPInf
 					return FALSE;
 				if (!ASAPNativeModuleWriter_RelocateWords(self, 1))
 					return FALSE;
-				songOffset += 4;
 			}
 			if (nextSongOffset > songEnd)
 				nextSongOffset = songEnd;

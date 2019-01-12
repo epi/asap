@@ -1,6 +1,6 @@
 // asapwriter.ci - format conversions
 //
-// Copyright (C) 2011-2018  Piotr Fusik
+// Copyright (C) 2011-2019  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -147,7 +147,6 @@ class ASAPNativeModuleWriter
 					// song jump
 					Copy(songOffset + 2); // copy 0xfe, line_number
 					RelocateWords(1); // relocate jump address
-					songOffset += 4;
 				}
 				if (nextSongOffset > songEnd)
 					nextSongOffset = songEnd;
