@@ -1,7 +1,7 @@
 /*
  * ASAPMusicRoutine.java - music embeddable in an Atari program
  *
- * Copyright (C) 2011-2018  Piotr Fusik
+ * Copyright (C) 2011-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -27,7 +27,7 @@ package net.sf.asap;
  * Music embeddable in an Atari program.
  * Use this class to transform music into a routine
  * that can be called from your 6502 assembly language program.
- * Link your program with the binary returned by {@link #getBinary()}.
+ * Link your program with the binary returned by {@link #getBinaryContent()}.
  * Call the music routine as specified by {@link #getInitAddress()},
  * {@link #isFulltime()}, {@link #getPlayerAddress()} and {@link #getPlayerRate()}.
  */
