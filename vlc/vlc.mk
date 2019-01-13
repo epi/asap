@@ -1,7 +1,7 @@
 # Linux
 
 VLC_CFLAGS = -std=gnu99 -I/usr/include/vlc/plugins
-VLC_DEMUX_PLUGIN_DIR = $(libdir)/vlc/plugins/demux
+VLC_DEMUX_PLUGIN_DIR = `pkg-config --variable pluginsdir vlc-plugin`/demux
 
 # macOS
 
