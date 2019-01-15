@@ -3,6 +3,7 @@
 	<?if $(sys.BUILDARCH) = x86?>
 		<?define WIN64=no?>
 		<?define PLATFORM_SUFFIX=""?>
+		<?define PLATFORM_BITS=32-bit?>
 		<?define UPGRADE_GUID=4250B3CB-D4A1-4486-828C-AC26A84D00D9?>
 		<?define PROGRAM_FILES_FOLDER=ProgramFilesFolder?>
 		<?define SRC_DIR=""?>
@@ -10,6 +11,7 @@
 	<?elseif $(sys.BUILDARCH) = x64?>
 		<?define WIN64=yes?>
 		<?define PLATFORM_SUFFIX=" (64-bit)"?>
+		<?define PLATFORM_BITS=64-bit?>
 		<?define UPGRADE_GUID=205ADAB1-56A1-42B9-9789-FD20FCD1DF9B?>
 		<?define PROGRAM_FILES_FOLDER=ProgramFiles64Folder?>
 		<?define SRC_DIR=x64\?>
@@ -450,7 +452,7 @@
 		</Feature>
 		<?endif?>
 
-		<Feature Id="libasap_plugin" Title="VLC plugin" Level="9" ConfigurableDirectory="VLC.DIR" Description="Plugin for VLC 3 (SAP format only)." AllowAdvertise="no">
+		<Feature Id="libasap_plugin" Title="VLC $(var.PLATFORM_BITS) plugin" Level="9" ConfigurableDirectory="VLC.DIR" Description="Plugin for $(var.PLATFORM_BITS) VLC 3 (SAP and FC formats only)." AllowAdvertise="no">
 			<Condition Level="1">VLC.DIR</Condition>
 			<ComponentRef Id="libasap_plugin.dll" />
 			<Feature Id="libasap_plugin.ext" Title="Associate file types" Level="0" Description="Double-click SAP file in Windows Explorer to play it in VLC." AllowAdvertise="no">
@@ -458,7 +460,7 @@
 				<ComponentRef Id="libasap_plugin.ext" />
 			</Feature>
 		</Feature>
-		<Feature Id="ASAPShellEx" Title="Windows Explorer extension" Level="$(var.SHELL_EX_LEVEL)" ConfigurableDirectory="ASAP.DIR" Description="Shows metadata (title, author, year, duration, subsongs) in Windows Explorer." AllowAdvertise="no">
+		<Feature Id="ASAPShellEx" Title="Windows Explorer $(var.PLATFORM_BITS) extension" Level="$(var.SHELL_EX_LEVEL)" ConfigurableDirectory="ASAP.DIR" Description="Shows metadata (title, author, year, duration, subsongs) in $(var.PLATFORM_BITS) Windows Explorer." AllowAdvertise="no">
 			<ComponentRef Id="ASAPShellEx.dll" />
 			<ComponentRef Id="ASAPShellEx.propdesc" />
 			<ComponentRef Id="ASAPShellExXP.reg" />
