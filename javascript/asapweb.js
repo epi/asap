@@ -1,7 +1,7 @@
 /*
  * asapweb.js - pure JavaScript ASAP for web browsers
  *
- * Copyright (C) 2009-2018  Piotr Fusik
+ * Copyright (C) 2009-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -47,6 +47,7 @@ var asap = {
 		var channels = asap.getInfo().getChannels();
 		var buffer = new Uint8Array(new ArrayBuffer(length * channels));
 
+		var AudioContext = window.AudioContext || window.webkitAudioContext;
 		var context = new AudioContext({ sampleRate : ASAP.SAMPLE_RATE });
 		var processor = context.createScriptProcessor(length, 0, channels);
 		processor.onaudioprocess = function (e) {
