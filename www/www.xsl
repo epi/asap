@@ -18,11 +18,11 @@
 					html { background-color: #eee; color: #000; font-family: Georgia,"Times New Roman",Times,serif; padding: 0em 3em; }
 					h1, h2, h3, dt { color: #c22; }
 					a { color: #00c; }
-					nav ul { border-bottom: solid #aaa 1px; margin: 0px; padding: 0.5em 0em; }
+					nav ul { border-bottom: solid #ccc 1px; margin: 0px; padding: 0.5em 0em; }
 					nav li { display: inline; }
-					nav li.tab_selected { background-color: #fff; border: solid #aaa 1px; border-bottom-color: #fff; padding: 0.5em; }
+					nav li.tab_selected { background-color: #fff; border: solid #ccc 1px; border-bottom-color: #fff; padding: 0.5em; }
 					nav li a { padding: 0.5em; text-decoration: none; }
-					main { background-color: #fff; border: solid #888 1px; border-top-style: none; padding: 1em 3em 3em 3em; }
+					main { background-color: #fff; border: solid #ccc 1px; border-top-style: none; padding: 1em 3em 3em 3em; }
 					dt { margin-top: 1em; }
 					.author { color: #c22; padding-right: 1em; text-align: right; }
 					.rip { border: solid #000 1px; padding-left: 2px; padding-right: 2px; color: #000; }
