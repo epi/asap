@@ -1,6 +1,6 @@
 // asap.ci - emulation engine
 //
-// Copyright (C) 2010-2018  Piotr Fusik
+// Copyright (C) 2010-2019  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -586,11 +586,10 @@ public class ASAP
 
 	static int FourCC(string s)
 #if CI1
-		=>
+		=> (s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24) & 0x7fffffff;
 #else
-		return
+		return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
 #endif
-			s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
 
 	static void PutLittleEndians(byte[] buffer, int offset, int value1, int value2)
 	{

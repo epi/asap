@@ -1772,12 +1772,13 @@ public class ASAPInfo
 
 #if CI1
 	internal static int PackExt(string ext)
-		=>
+		=> ext.Length == 2 && ext[0] <= 'z' && ext[1] <= 'z' ? ext[0] | ext[1] << 8 | 0x202020
+		 : ext.Length == 3 && ext[0] <= 'z' && ext[1] <= 'z' && ext[2] <= 'z' ? ext[0] | ext[1] << 8 | (ext[2] & 0x7f) << 16 | 0x202020 // FIXME: & 0x7f
+		 : 0;
 #else
 	static int PackExt(string ext)
-		return
+		return ext.Length >> 1 == 1 ? ext[0] + (ext[1] << 8) + (ext.Length == 3 ? ext[2] << 16 : 0) | 0x202020 : 0;
 #endif
-			ext.Length >> 1 == 1 ? ext[0] + (ext[1] << 8) + (ext.Length == 3 ? ext[2] << 16 : 0) | 0x202020 : 0;
 
 #if CI1
 	internal
