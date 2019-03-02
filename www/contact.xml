@@ -4,13 +4,13 @@
 		<author name="Atari800 Emulator Developers" href="https://atari800.github.io/">6502 and POKEY emulation used in 0.x.y versions of ASAP.</author>
 		<author name="Zdenek Eisenhammer" email="pg@pinknet.cz">Testing.</author>
 		<author name="Maciej Grzybek" email="grzybson@pigwa.net">Fixed an overflow in the Silverlight port.</author>
-		<author name="Jakub Husak" email="jakub.husak@gmail.com">SAP fingerprint calculation. asapscan fixes.</author>
+		<author name="Jakub Husak" email="jakub.husak@gmail.com" href="http://husak.pl/">SAP fingerprint calculation. asapscan fixes.</author>
 		<author name="Henryk Karpowicz" email="henkar@poczta.tygrys.net">CMC routine modified for the CM3 format.</author>
 		<author name="Maciek Konecki" email="maciusk1@wp.pl">Porting to C#.</author>
 		<author name="Marek Konopka" email="konop11@poczta.onet.pl">6502 routine for playing DLT.</author>
 		<author name="Daniel Koźminski" email="daniel.kozminski@gmail.com">Ideas.</author>
-		<author name="Jerzy Kut" email="mono@atari.pl">FC format.</author>
-		<author name="Marcin Lewandowski" email="jaskier@atari8.info">6502 routines for playing CMC, MPT, TMC and TM2.</author>
+		<author name="Jerzy Kut" email="mono@atari.pl" href="http://mono.atari.pl/">FC format.</author>
+		<author name="Marcin Lewandowski" email="jaskier@atari8.info" href="http://jaskier.atari8.info/">6502 routines for playing CMC, MPT, TMC and TM2.</author>
 		<author name="Ian Luck" email="il@un4seen.com">Guided development of XMPlay and BASS plugins.</author>
 		<author name="MarOk" email="marok7@os.pl">CMS routine fix.</author>
 		<author name="Adrian Matoga" email="epi@atari8.info">COVOX information and test files. Testing. Porting to D.</author>
