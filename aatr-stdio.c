@@ -1,7 +1,7 @@
 /*
  * aatr-stdio.c - another ATR file extractor
  *
- * Copyright (C) 2012-2018  Piotr Fusik
+ * Copyright (C) 2012-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -30,7 +30,7 @@ typedef struct {
 	FILE *fp;
 } AATRStdio;
 
-static cibool AATRStdio_Read(AATR *self, int offset, const unsigned char *buffer, int length)
+static bool AATRStdio_Read(AATR *self, int offset, const unsigned char *buffer, int length)
 {
 	FILE *fp = ((AATRStdio *) self)->fp;
 	return fseek(fp, offset, SEEK_SET) == 0

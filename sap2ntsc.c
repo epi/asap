@@ -1,7 +1,7 @@
 /*
  * sap2ntsc.c - convert PAL SAP files to NTSC
  *
- * Copyright (C) 2012-2014  Piotr Fusik
+ * Copyright (C) 2012-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -22,6 +22,7 @@
  */
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,31 +43,21 @@ static void fatal_error(const char *format, ...)
 
 static void process_file(const char *filename)
 {
-	const char *ext;
-	FILE *fp;
-	static unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
-	int module_len;
-	ASAPInfo *info;
-	int i;
-	ASAPWriter *writer;
-	static unsigned char output[ASAPInfo_MAX_MODULE_LENGTH];
-	int output_len;
-	int warnings;
-
 	/* check filename */
-	ext = strrchr(filename, '.');
+	const char *ext = strrchr(filename, '.');
 	if (ext == NULL || strcasecmp(ext, ".sap") != 0)
 		fatal_error("%s: filename must be *.sap", filename);
 
 	/* read file */
-	fp = fopen(filename, "rb");
+	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL)
 		fatal_error("cannot open %s", filename);
-	module_len = fread(module, 1, sizeof(module), fp);
+	static unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
+	int module_len = fread(module, 1, sizeof(module), fp);
 	fclose(fp);
 
 	/* parse file */
-	info = ASAPInfo_New();
+	ASAPInfo *info = ASAPInfo_New();
 	if (info == NULL)
 		fatal_error("out of memory");
 	if (!ASAPInfo_Load(info, filename, module, module_len))
@@ -79,18 +70,19 @@ static void process_file(const char *filename)
 		fatal_error("%s: uses FASTPLAY", filename);
 
 	/* do the conversion */
-	writer = ASAPWriter_New();
+	ASAPWriter *writer = ASAPWriter_New();
 	if (writer == NULL)
 		fatal_error("out of memory");
-	info->ntsc = TRUE;
+	info->ntsc = true;
 	info->fastplay = 262;
-	for (i = 0; i < ASAPInfo_GetSongs(info); i++) {
+	for (int i = 0; i < ASAPInfo_GetSongs(info); i++) {
 		int duration = ASAPInfo_GetDuration(info, i);
 		if (duration > 0)
 			ASAPInfo_SetDuration(info, i, (int) (duration * (1773447 / 1789772.5 * 262 / 312)));
 	}
+	static unsigned char output[ASAPInfo_MAX_MODULE_LENGTH];
 	ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
-	output_len = ASAPWriter_Write(writer, filename, info, module, module_len, TRUE);
+	int output_len = ASAPWriter_Write(writer, filename, info, module, module_len, true);
 	ASAPWriter_Delete(writer);
 	if (output_len < 0)
 		fatal_error("%s: conversion error", filename);
@@ -108,7 +100,7 @@ static void process_file(const char *filename)
 
 	/* print summary */
 	printf("%s: ", filename);
-	warnings = 0;
+	int warnings = 0;
 
 	/* issue a warning for samples - they may break on NTSC */
 	/* TYPE S has FASTPLAY!=312, so it has been rejected earlier */
@@ -120,7 +112,7 @@ static void process_file(const char *filename)
 	/* issue a warning if the 6502 code possibly reads the PAL/NTSC flag of GTIA
 	   (LDA/LDX/LDY $D014, e.g. Ghostbusters.sap).
 	   This is just a guess - false positives are possible and other code may be used for NTSC detection. */
-	for (i = 0; i < module_len - 2; i++) {
+	for (int i = 0; i < module_len - 2; i++) {
 		if (module[i] >= 0xac && module[i] <= 0xae && module[i + 1] == 0x14 && module[i + 2] == 0xd0) {
 			if (warnings++ > 0)
 				printf(", ");
@@ -137,12 +129,11 @@ static void process_file(const char *filename)
 
 int main(int argc, char **argv)
 {
-	cibool usage = TRUE;
-	int i;
-	for (i = 1; i < argc; i++) {
+	bool usage = true;
+	for (int i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (strcmp(arg, "--help") == 0) {
-			usage = TRUE;
+			usage = true;
 			break;
 		}
 		if (strcmp(arg, "--version") == 0) {
@@ -150,7 +141,7 @@ int main(int argc, char **argv)
 			return 0;
 		}
 		process_file(arg);
-		usage = FALSE;
+		usage = false;
 	}
 	if (usage) {
 		printf(

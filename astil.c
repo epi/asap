@@ -1,7 +1,7 @@
 /*
  * astil.c - another SID/SAP Tune Information List parser
  *
- * Copyright (C) 2011-2018  Piotr Fusik
+ * Copyright (C) 2011-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -42,7 +42,7 @@ struct ASTILCover
 struct ASTIL
 {
 	int nCovers;
-	cibool isUTF8;
+	bool isUTF8;
 	char stilFilename[FILENAME_MAX];
 	char title[ASTIL_MAX_TEXT_LENGTH + 1];
 	char author[ASTIL_MAX_TEXT_LENGTH + 1];
@@ -73,12 +73,12 @@ static int ASTIL_FindPreviousSlash(const char *filename, int pos)
 	return -1;
 }
 
-static cibool ASTIL_ReadUTF8BOM(FILE *fp)
+static bool ASTIL_ReadUTF8BOM(FILE *fp)
 {
 	if (getc(fp) == 0xef && getc(fp) == 0xbb && getc(fp) == 0xbf)
-		return TRUE;
+		return true;
 	fseek(fp, 0, SEEK_SET);
-	return FALSE;
+	return false;
 }
 
 static int ASTIL_ReadLine(FILE *fp, char *result)
@@ -107,8 +107,7 @@ static int ASTIL_ReadLine(FILE *fp, char *result)
 
 static int ASTIL_MatchFilename(const char *line, const char *filename)
 {
-	int len = 0;
-	for (;; len++) {
+	for (int len = 0; ; len++) {
 		int c = line[len];
 		if (c == filename[len]) {
 			if (c == '\0')
@@ -158,13 +157,13 @@ static int ASTIL_ParseInt(const char *s, int *pos)
 	return result;
 }
 
-static cibool ASTIL_ReadUntilSongNo(FILE *fp, char *line)
+static bool ASTIL_ReadUntilSongNo(FILE *fp, char *line)
 {
 	while (ASTIL_ReadLine(fp, line) > 0) {
 		if (line[0] == '(' && line[1] == '#')
-			return TRUE;
+			return true;
 	}
-	return FALSE;
+	return false;
 }
 
 static int ASTILCover_ParseTimestamp(const char *s, int *pos)
@@ -188,10 +187,9 @@ static void ASTILCover_SetText(char *result, const char *src)
 
 static void ASTILCover_Load(ASTILCover *self, FILE *fp, char *line)
 {
-	const char *ts;
 	self->startSeconds = -1;
 	self->endSeconds = -1;
-	ts = strrchr(line, '(');
+	const char *ts = strrchr(line, '(');
 	if (ts != NULL) {
 		int i = (int) (ts - line) + 1;
 		int startSeconds = ASTILCover_ParseTimestamp(line, &i);
@@ -236,12 +234,9 @@ static void ASTIL_ReadStilBlock(ASTIL *self, FILE *fp, char *line)
 	}
 }
 
-cibool ASTIL_Load(ASTIL *self, const char *filename, int song)
+bool ASTIL_Load(ASTIL *self, const char *filename, int song)
 {
 	int lastSlash = ASTIL_FindPreviousSlash(filename, (int) strlen(filename));
-	int rootSlash;
-	FILE *fp;
-	char line[ASTIL_MAX_TEXT_LENGTH + 1];
 	self->nCovers = 0;
 	self->stilFilename[0] = '\0';
 	self->title[0] = '\0';
@@ -250,12 +245,14 @@ cibool ASTIL_Load(ASTIL *self, const char *filename, int song)
 	self->fileComment[0] = '\0';
 	self->songComment[0] = '\0';
 	if (lastSlash < 0 || lastSlash >= FILENAME_MAX - 14) /* strlen("/Docs/STIL.txt") */
-		return FALSE;
+		return false;
 	memcpy(self->stilFilename, filename, lastSlash + 1);
+	int rootSlash;
+	FILE *fp;
 	for (rootSlash = lastSlash; ; rootSlash = ASTIL_FindPreviousSlash(filename, rootSlash)) {
 		if (rootSlash < 0) {
 			self->stilFilename[0] = '\0';
-			return FALSE;
+			return false;
 		}
 		strcpy(self->stilFilename + rootSlash + 1, "Docs/STIL.txt");
 		self->stilFilename[rootSlash + 5] = self->stilFilename[rootSlash]; /* copy dir separator - slash or backslash */
@@ -268,6 +265,7 @@ cibool ASTIL_Load(ASTIL *self, const char *filename, int song)
 			break;
 	}
 	self->isUTF8 = ASTIL_ReadUTF8BOM(fp);
+	char line[ASTIL_MAX_TEXT_LENGTH + 1];
 	while (ASTIL_ReadLine(fp, line) >= 0) {
 		int len = ASTIL_MatchFilename(line, filename + rootSlash);
 		if (len == -1) {
@@ -290,7 +288,7 @@ cibool ASTIL_Load(ASTIL *self, const char *filename, int song)
 			ASTIL_ReadComment(fp, line, self->directoryComment);
 	}
 	fclose(fp);
-	return TRUE;
+	return true;
 }
 
 const char *ASTIL_GetStilFilename(const ASTIL *self)
@@ -298,7 +296,7 @@ const char *ASTIL_GetStilFilename(const ASTIL *self)
 	return self->stilFilename;
 }
 
-cibool ASTIL_IsUTF8(const ASTIL *self)
+bool ASTIL_IsUTF8(const ASTIL *self)
 {
 	return self->isUTF8;
 }

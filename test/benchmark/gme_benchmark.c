@@ -1,7 +1,7 @@
 /*
  * gme_benchmark.c - Game_Music_Emu benchmark
  *
- * Copyright (C) 2013  Piotr Fusik
+ * Copyright (C) 2013-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -32,40 +32,33 @@
 static int get_stereo_samples_count(const char *filename)
 {
 	/* GME doesn't understand TIME so ask ASAP */
-	FILE *fp;
-	unsigned char content[ASAPInfo_MAX_MODULE_LENGTH];
-	int content_len;
-	ASAPInfo *info;
-	int duration;
-
-	fp = fopen(filename, "rb");
+	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL) {
 		fprintf(stderr, "Cannot open %s\n", filename);
 		exit(1);
 	}
-	content_len = fread(content, 1, sizeof(content), fp);
+	unsigned char content[ASAPInfo_MAX_MODULE_LENGTH];
+	int content_len = fread(content, 1, sizeof(content), fp);
 	fclose(fp);
 	
-	info = ASAPInfo_New();
+	ASAPInfo *info = ASAPInfo_New();
 	if (!ASAPInfo_Load(info, filename, content, content_len)) {
 		fprintf(stderr, "ASAP doesn't understand %s\n", filename);
 		exit(1);
 	}
-	duration = ASAPInfo_GetDuration(info, 0);
+	int duration = ASAPInfo_GetDuration(info, 0);
 	return duration * (44100 / 100) / 10 /* milliseconds to samples */
 		* 2; /* always stereo for gme */
 }
 
 int main(int argc, char **argv)
 {
-	Music_Emu *gme;
-	gme_err_t err;
-	int samples;
 	if (argc != 2) {
 		fprintf(stderr, "Usage: gme_benchmark SAPFILE\n");
 		return 1;
 	}
-	err = gme_open_file(argv[1], &gme, 44100);
+	Music_Emu *gme;
+	gme_err_t err = gme_open_file(argv[1], &gme, 44100);
 	if (err != NULL) {
 		fprintf(stderr, "%s\n", err);
 		return 1;
@@ -75,7 +68,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "%s\n", err);
 		return 1;
 	}
-	samples = get_stereo_samples_count(argv[1]);
+	int samples = get_stereo_samples_count(argv[1]);
 	while (samples > 0) {
 		short buf[BUF_SIZE];
 		int len = samples >= BUF_SIZE ? BUF_SIZE : samples;

@@ -1,7 +1,7 @@
 /*
  * in_asap.c - ASAP plugin for Winamp
  *
- * Copyright (C) 2005-2015  Piotr Fusik
+ * Copyright (C) 2005-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,6 +23,7 @@
 
 #include <windows.h>
 #include <commctrl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -60,8 +61,8 @@ static int duration;
 static int playlistLength;
 
 static HANDLE thread_handle = NULL;
-static volatile int thread_run = FALSE;
-static int paused = 0;
+static volatile bool thread_run = false;
+static bool paused = false;
 static int seek_needed;
 
 static ASAPInfo *title_info;
@@ -123,11 +124,10 @@ static BOOL isATR(const char *filename)
 static void addFileSongs(HWND playlistWnd, fileinfo *fi, const ASAPInfo *info, int *index)
 {
 	char *p = fi->file + strlen(fi->file);
-	int song;
-	for (song = 0; song < ASAPInfo_GetSongs(info); song++) {
-		COPYDATASTRUCT cds;
+	for (int song = 0; song < ASAPInfo_GetSongs(info); song++) {
 		sprintf(p, "#%d", song + 1);
 		fi->index = (*index)++;
+		COPYDATASTRUCT cds;
 		cds.dwData = IPC_PE_INSERTFILENAME;
 		cds.lpData = fi;
 		cds.cbData = sizeof(fileinfo);
@@ -152,7 +152,7 @@ static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
 	else if (isATR(fi.file)) {
 		AATR *disk = AATRStdio_New(fi.file);
 		if (disk != NULL) {
-			BOOL found = FALSE;
+			bool found = false;
 			AATRRecursiveLister *lister = AATRRecursiveLister_New();
 			if (lister != NULL) {
 				AATRFileStream *stream = AATRFileStream_New();
@@ -172,7 +172,7 @@ static void expandFileSongs(HWND playlistWnd, int index, ASAPInfo *info)
 								if (atr_fn_len + inside_fn_len + 4 <= sizeof(fi.file)) {
 									memcpy(fi.file + atr_fn_len, inside_fn, inside_fn_len + 1);
 									if (!found) {
-										found = TRUE;
+										found = true;
 										SendMessage(playlistWnd, WM_WA_IPC, IPC_PE_DELETEINDEX, index);
 									}
 									addFileSongs(playlistWnd, &fi, info, &index);
@@ -205,21 +205,17 @@ static INT_PTR CALLBACK progressDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, 
 
 static void expandPlaylistSongs(void)
 {
-	static BOOL processing = FALSE;
-	HWND playlistWnd;
-	ASAPInfo *info;
-	HWND progressWnd;
-	int index;
+	static bool processing = false;
 	if (processing)
 		return;
-	playlistWnd = (HWND) SendMessage(mod.hMainWindow, WM_WA_IPC, IPC_GETWND_PE, IPC_GETWND);
+	HWND playlistWnd = (HWND) SendMessage(mod.hMainWindow, WM_WA_IPC, IPC_GETWND_PE, IPC_GETWND);
 	if (playlistWnd == NULL)
 		return;
-	processing = TRUE;
-	info = ASAPInfo_New();
+	processing = true;
+	ASAPInfo *info = ASAPInfo_New();
 	playlistLength = SendMessage(mod.hMainWindow, WM_WA_IPC, 0, IPC_GETLISTLENGTH);
-	progressWnd = CreateDialog(mod.hDllInstance, MAKEINTRESOURCE(IDD_PROGRESS), mod.hMainWindow, progressDialogProc);
-	index = playlistLength;
+	HWND progressWnd = CreateDialog(mod.hDllInstance, MAKEINTRESOURCE(IDD_PROGRESS), mod.hMainWindow, progressDialogProc);
+	int index = playlistLength;
 	while (--index >= 0) {
 		if ((index & 15) == 0)
 			SendDlgItemMessage(progressWnd, IDC_PROGRESS, PBM_SETPOS, playlistLength - index, 0);
@@ -227,7 +223,7 @@ static void expandPlaylistSongs(void)
 	}
 	DestroyWindow(progressWnd);
 	ASAPInfo_Delete(info);
-	processing = FALSE;
+	processing = false;
 }
 
 static void init(void)
@@ -277,16 +273,15 @@ static void tagFreeFunc(char *tag, void *p)
 
 static void getFileInfo(char *file, char *title, int *length_in_ms)
 {
-	char filename[MAX_PATH];
-	const char *hash;
 	if (file == NULL || file[0] == '\0')
 		file = playing_filename_with_song;
+	char filename[MAX_PATH];
 	title_song = extractSongNumber(file, filename);
 	if (title_song < 0)
 		expandPlaylistSongs();
 	if (!loadModule(filename, module, &module_len))
 		return;
-	hash = atrFilenameHash(filename);
+	const char *hash = atrFilenameHash(filename);
 	if (!ASAPInfo_Load(title_info, hash != NULL ? hash + 1 : filename, module, module_len))
 		return;
 	if (title_song < 0)
@@ -305,8 +300,7 @@ static void getFileInfo(char *file, char *title, int *length_in_ms)
 static int infoBox(char *file, HWND hwndParent)
 {
 	char filename[MAX_PATH];
-	int song;
-	song = extractSongNumber(file, filename);
+	int song = extractSongNumber(file, filename);
 	showInfoDialog(mod.hDllInstance, hwndParent, filename, song);
 	return 0;
 }
@@ -338,7 +332,6 @@ static DWORD WINAPI playThread(LPVOID dummy)
 			<< mod.dsp_isactive()
 #endif
 		) {
-			int t;
 			buffered_bytes = ASAP_Generate(asap, buffer, buffered_bytes, BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 			if (buffered_bytes <= 0) {
 				mod.outMod->CanWrite();
@@ -349,7 +342,7 @@ static DWORD WINAPI playThread(LPVOID dummy)
 				Sleep(10);
 				continue;
 			}
-			t = mod.outMod->GetWrittenTime();
+			int t = mod.outMod->GetWrittenTime();
 			mod.SAAddPCMData(buffer, channels, BITS_PER_SAMPLE, t);
 			mod.VSAAddPCMData(buffer, channels, BITS_PER_SAMPLE, t);
 #if SUPPORT_EQUALIZER
@@ -369,24 +362,19 @@ static DWORD WINAPI playThread(LPVOID dummy)
 
 static int play(char *fn)
 {
-	char filename[MAX_PATH];
-	int song;
-	const ASAPInfo *info;
-	int channels;
-	int maxlatency;
-	DWORD threadId;
 	strcpy(playing_filename_with_song, fn);
-	song = extractSongNumber(fn, filename);
+	char filename[MAX_PATH];
+	int song = extractSongNumber(fn, filename);
 	if (!loadModule(filename, module, &module_len))
 		return -1;
 	if (!ASAP_Load(asap, filename, module, module_len))
 		return 1;
-	info = ASAP_GetInfo(asap);
+	const ASAPInfo *info = ASAP_GetInfo(asap);
 	if (song < 0)
 		song = ASAPInfo_GetDefaultSong(info);
 	duration = playSong(song);
-	channels = ASAPInfo_GetChannels(info);
-	maxlatency = mod.outMod->Open(ASAP_SAMPLE_RATE, channels, BITS_PER_SAMPLE, -1, -1);
+	int channels = ASAPInfo_GetChannels(info);
+	int maxlatency = mod.outMod->Open(ASAP_SAMPLE_RATE, channels, BITS_PER_SAMPLE, -1, -1);
 	if (maxlatency < 0)
 		return 1;
 	mod.SetInfo(BITS_PER_SAMPLE, ASAP_SAMPLE_RATE / 1000, channels, 1);
@@ -396,7 +384,8 @@ static int play(char *fn)
 	mod.VSASetInfo(ASAP_SAMPLE_RATE, channels);
 	mod.outMod->SetVolume(-666);
 	seek_needed = -1;
-	thread_run = TRUE;
+	thread_run = true;
+	DWORD threadId;
 	thread_handle = CreateThread(NULL, 0, playThread, NULL, 0, &threadId);
 	setPlayingSong(filename, song);
 	return thread_handle != NULL ? 0 : 1;
@@ -404,13 +393,13 @@ static int play(char *fn)
 
 static void pause(void)
 {
-	paused = 1;
+	paused = true;
 	mod.outMod->Pause(1);
 }
 
 static void unPause(void)
 {
-	paused = 0;
+	paused = false;
 	mod.outMod->Pause(0);
 }
 
@@ -422,7 +411,7 @@ static int isPaused(void)
 static void stop(void)
 {
 	if (thread_handle != NULL) {
-		thread_run = FALSE;
+		thread_run = false;
 		// wait max 10 seconds
 		if (WaitForSingleObject(thread_handle, 10 * 1000) == WAIT_TIMEOUT)
 			TerminateThread(thread_handle, 0);

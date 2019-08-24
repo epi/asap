@@ -1,5 +1,5 @@
 # MinGW for most ports
-WIN32_CC = $(DO)i686-w64-mingw32-gcc $(WIN32_CARGS)
+WIN32_CC = $(DO)i686-w64-mingw32-gcc $(WIN32_CARGS) $(filter-out %.h,$^)
 WIN32_CXX = $(DO)i686-w64-mingw32-g++ -static $(WIN32_CARGS)
 WIN32_WINDRES = $(DO)i686-w64-mingw32-windres -o $@ $<
 VLC_INCLUDE = ../vlc/include
@@ -8,12 +8,12 @@ VLC_LIB64 = "C:/Program Files/VideoLAN/VLC"
 
 # Microsoft compiler for foobar2000
 FOOBAR2000_SDK_DIR = ../foobar2000_SDK
-WIN32_CL = $(WIN32_CLDO)cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS)
+WIN32_CL = $(WIN32_CLDO)cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS) $(filter-out %.h,$^)
 WIN32_LINKOPT = -link -release
 WIN32_MKLIB = $(DO)lib -nologo -ltcg -out:$@ $^
 
 # MinGW x64
-WIN64_CC = $(DO)x86_64-w64-mingw32-gcc $(WIN32_CARGS)
+WIN64_CC = $(DO)x86_64-w64-mingw32-gcc $(WIN32_CARGS) $(filter-out %.h,$^)
 WIN64_CXX = $(DO)x86_64-w64-mingw32-g++ -static $(WIN32_CARGS)
 WIN64_WINDRES = $(DO)x86_64-w64-mingw32-windres -o $@ $<
 
@@ -28,9 +28,9 @@ $(error Use "Makefile" instead of "win32.mk")
 endif
 
 comma = ,
-WIN32_CARGS = -s -O2 -Wall -Wl,--nxcompat -o $@ $(if $(filter %.dll,$@),-shared -Wl$(comma)-subsystem$(comma)windows) $(INCLUDEOPTS) $(filter-out %.h,$^)
+WIN32_CARGS = -s -O2 -Wall -Wl,--nxcompat -o $@ $(if $(filter %.dll,$@),-shared -Wl$(comma)-subsystem$(comma)windows) $(INCLUDEOPTS)
 WIN32_CLDO = $(DO)$(if $(filter-out %.obj,$@),mkdir -p win32/obj/$@ && )
-WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@ -Fowin32/obj/$@/) $(if $(filter %.dll,$@),-LD) $(INCLUDEOPTS) $(filter-out %.h,$^)
+WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@ -Fowin32/obj/$@/) $(if $(filter %.dll,$@),-LD) $(INCLUDEOPTS)
 
 mingw: $(addprefix win32/,asapconv.exe libasap.a asapscan.exe wasap.exe bass_asap.dll in_asap.dll xmp-asap.dll apokeysnd.dll ASAPShellEx.dll)
 .PHONY: mingw
@@ -217,7 +217,7 @@ CLEAN += win32/rmt/apokeysnd-res.o
 # ASAPShellEx
 
 win32/ASAPShellEx.dll: $(srcdir)win32/shellex/ASAPShellEx.cpp win32/shellex/asap-infowriter.c win32/shellex/asap-infowriter.h win32/shellex/ASAPShellEx-res.o
-	$(WIN32_CXX) -Wl,--kill-at -lole32 -loleaut32 -lshlwapi -luuid
+	$(WIN32_CXX) $(srcdir)win32/shellex/ASAPShellEx.cpp -xc win32/shellex/asap-infowriter.c -xnone win32/shellex/ASAPShellEx-res.o -Wl,--kill-at -lole32 -loleaut32 -lshlwapi -luuid
 CLEAN += win32/ASAPShellEx.dll
 
 win32/shellex/ASAPShellEx-res.o: $(call src,win32/gui.rc asap.h)
@@ -225,7 +225,7 @@ win32/shellex/ASAPShellEx-res.o: $(call src,win32/gui.rc asap.h)
 CLEAN += win32/shellex/ASAPShellEx-res.o
 
 win32/x64/ASAPShellEx.dll: $(srcdir)win32/shellex/ASAPShellEx.cpp win32/shellex/asap-infowriter.c win32/shellex/asap-infowriter.h win32/x64/ASAPShellEx-res.o
-	$(WIN64_CXX) -Wl,--kill-at -lole32 -loleaut32 -lshlwapi -luuid
+	$(WIN64_CXX) $(srcdir)win32/shellex/ASAPShellEx.cpp -xc win32/shellex/asap-infowriter.c -xnone win32/x64/ASAPShellEx-res.o -Wl,--kill-at -lole32 -loleaut32 -lshlwapi -luuid
 CLEAN += win32/x64/ASAPShellEx.dll
 
 win32/x64/ASAPShellEx-res.o: $(call src,win32/gui.rc asap.h)
@@ -235,7 +235,7 @@ CLEAN += win32/x64/ASAPShellEx-res.o
 win32/shellex/asap-infowriter.h: $(call src,asapinfo.ci asap6502.ci asapwriter.ci flashpack.ci) $(ASM6502_OBX) | win32/shellex/asap-infowriter.c
 
 win32/shellex/asap-infowriter.c: $(call src,asapinfo.ci asap6502.ci asapwriter.ci flashpack.ci) $(ASM6502_OBX)
-	$(CITO)
+	$(CITO) -l c99
 CLEAN += win32/shellex/asap-infowriter.c win32/shellex/asap-infowriter.h
 
 # setups

@@ -1,7 +1,7 @@
 /*
  * libasap-xmms.c - ASAP plugin for XMMS
  *
- * Copyright (C) 2006-2011  Piotr Fusik
+ * Copyright (C) 2006-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -22,6 +22,7 @@
  */
 
 #include <pthread.h>
+#include <stdbool.h>
 #include <string.h>
 #ifdef USE_STDIO
 #include <stdio.h>
@@ -49,8 +50,8 @@ static ASAP *asap;
 
 static volatile int seek_to;
 static pthread_t thread_handle;
-static volatile cibool thread_run = FALSE;
-static volatile cibool generated_eof = FALSE;
+static volatile bool thread_run = false;
+static volatile bool generated_eof = false;
 
 static char *asap_stpcpy(char *dest, const char *src)
 {
@@ -80,34 +81,31 @@ static int asap_is_our_file(char *filename)
 	return ASAPInfo_IsOurFile(filename);
 }
 
-static cibool asap_load_file(const char *filename)
+static bool asap_load_file(const char *filename)
 {
 #ifdef USE_STDIO
-	FILE *fp;
-	fp = fopen(filename, "rb");
+	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL)
-		return FALSE;
+		return false;
 	module_len = (int) fread(module, 1, sizeof(module), fp);
 	fclose(fp);
 #else
-	int fd;
-	fd = open(filename, O_RDONLY);
+	int fd = open(filename, O_RDONLY);
 	if (fd == -1)
-		return FALSE;
+		return false;
 	module_len = read(fd, module, sizeof(module));
 	close(fd);
 	if (module_len < 0)
-		return FALSE;
+		return false;
 #endif
-	return TRUE;
+	return true;
 }
 
 static ASAPInfo *asap_get_info(const char *filename)
 {
-	ASAPInfo *info;
 	if (!asap_load_file(filename))
 		return NULL;
-	info = ASAPInfo_New();
+	ASAPInfo *info = ASAPInfo_New();
 	if (info == NULL)
 		return NULL;
 	if (!ASAPInfo_Load(info, filename, module, module_len)) {
@@ -119,32 +117,25 @@ static ASAPInfo *asap_get_info(const char *filename)
 
 static char *asap_get_title(const char *filename, const ASAPInfo *info)
 {
-	char *path;
-	char *filepart;
-	char *ext;
-	TitleInput *title_input;
-	const char *p;
-	int year;
-	char *title;
-
-	path = g_strdup(filename);
-	filepart = strrchr(path, '/');
+	char *path = g_strdup(filename);
+	char *filepart = strrchr(path, '/');
 	if (filepart != NULL) {
 		filepart[1] = '\0';
 		filepart += 2;
 	}
 	else
 		filepart = path;
-	ext = strrchr(filepart, '.');
+	char *ext = strrchr(filepart, '.');
 	if (ext != NULL)
 		ext++;
 
+	TitleInput *title_input;
 	XMMS_NEW_TITLEINPUT(title_input);
-	p = ASAPInfo_GetAuthor(info);
+	const char *p = ASAPInfo_GetAuthor(info);
 	if (p[0] != '\0')
 		title_input->performer = (gchar *) p;
 	title_input->track_name = (gchar *) ASAPInfo_GetTitleOrFilename(info);
-	year = ASAPInfo_GetYear(info);
+	int year = ASAPInfo_GetYear(info);
 	if (year > 0)
 		title_input->year = year;
 	p = ASAPInfo_GetDate(info);
@@ -153,7 +144,7 @@ static char *asap_get_title(const char *filename, const ASAPInfo *info)
 	title_input->file_name = g_basename(filename);
 	title_input->file_ext = ext;
 	title_input->file_path = path;
-	title = xmms_get_titlestring(xmms_get_gentitle_format(), title_input);
+	char *title = xmms_get_titlestring(xmms_get_gentitle_format(), title_input);
 	if (title == NULL)
 		title = g_strdup(ASAPInfo_GetTitleOrFilename(info));
 
@@ -164,8 +155,6 @@ static char *asap_get_title(const char *filename, const ASAPInfo *info)
 static void *asap_play_thread(void *arg)
 {
 	while (thread_run) {
-		static unsigned char buffer[BUFFERED_BLOCKS * (BITS_PER_SAMPLE / 8) * 2];
-		int buffered_bytes;
 		if (generated_eof) {
 			xmms_usleep(10000);
 			continue;
@@ -175,11 +164,12 @@ static void *asap_play_thread(void *arg)
 			ASAP_Seek(asap, seek_to);
 			seek_to = -1;
 		}
-		buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
+		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
+		static unsigned char buffer[BUFFERED_BLOCKS * (BITS_PER_SAMPLE / 8) * 2];
 		buffered_bytes = ASAP_Generate(asap, buffer, buffered_bytes,
 			BITS_PER_SAMPLE == 8 ? ASAPSampleFormat_U8 : ASAPSampleFormat_S16_L_E);
 		if (buffered_bytes == 0) {
-			generated_eof = TRUE;
+			generated_eof = true;
 			mod.output->buffer_free();
 			mod.output->buffer_free();
 			continue;
@@ -197,37 +187,33 @@ static void *asap_play_thread(void *arg)
 
 static void asap_play_file(char *filename)
 {
-	const ASAPInfo *info;
-	int song;
-	int duration;
-	char *title;
 	if (asap == NULL)
 		return;
 	if (!asap_load_file(filename))
 		return;
 	if (!ASAP_Load(asap, filename, module, module_len))
 		return;
-	info = ASAP_GetInfo(asap);
-	song = ASAPInfo_GetDefaultSong(info);
-	duration = ASAPInfo_GetDuration(info, song);
+	const ASAPInfo *info = ASAP_GetInfo(asap);
+	int song = ASAPInfo_GetDefaultSong(info);
+	int duration = ASAPInfo_GetDuration(info, song);
 	if (!ASAP_PlaySong(asap, song, duration))
 		return;
 	channels = ASAPInfo_GetChannels(info);
 	if (!mod.output->open_audio(BITS_PER_SAMPLE == 8 ? FMT_U8 : FMT_S16_LE, ASAP_SAMPLE_RATE, channels))
 		return;
-	title = asap_get_title(filename, info);
+	char *title = asap_get_title(filename, info);
 	mod.set_info(title, duration, BITS_PER_SAMPLE * 1000, ASAP_SAMPLE_RATE, channels);
 	g_free(title);
 	seek_to = -1;
-	thread_run = TRUE;
-	generated_eof = FALSE;
+	thread_run = true;
+	generated_eof = false;
 	pthread_create(&thread_handle, NULL, asap_play_thread, NULL);
 }
 
 static void asap_seek(int time)
 {
 	seek_to = time * 1000;
-	generated_eof = FALSE;
+	generated_eof = false;
 	while (thread_run && seek_to >= 0)
 		xmms_usleep(10000);
 }
@@ -240,7 +226,7 @@ static void asap_pause(short paused)
 static void asap_stop(void)
 {
 	if (thread_run) {
-		thread_run = FALSE;
+		thread_run = false;
 		pthread_join(thread_handle, NULL);
 		mod.output->close_audio();
 	}
@@ -266,11 +252,10 @@ static void asap_get_song_info(char *filename, char **title, int *length)
 static void asap_file_info_box(char *filename)
 {
 	ASAPInfo *info = asap_get_info(filename);
-	char s[3 * ASAPInfo_MAX_TEXT_LENGTH + 100];
-	char *p;
 	if (info == NULL)
 		return;
-	p = asap_stpcpy(s, "Author: ");
+	char s[3 * ASAPInfo_MAX_TEXT_LENGTH + 100];
+	char *p = asap_stpcpy(s, "Author: ");
 	p = asap_stpcpy(p, ASAPInfo_GetAuthor(info));
 	p = asap_stpcpy(p, "\nName: ");
 	p = asap_stpcpy(p, ASAPInfo_GetTitle(info));

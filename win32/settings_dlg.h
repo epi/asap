@@ -1,7 +1,7 @@
 /*
  * settings_dlg.h - settings dialog box
  *
- * Copyright (C) 2007-2011  Piotr Fusik
+ * Copyright (C) 2007-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -22,6 +22,7 @@
  */
 
 #include <windows.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,16 +43,16 @@ extern "C" {
 #define IDC_MUTE1      411
 
 #ifdef FOOBAR2000
-void enableTimeInput(HWND hDlg, BOOL enable);
+void enableTimeInput(HWND hDlg, bool enable);
 void setFocusAndSelect(HWND hDlg, int nID);
-void settingsDialogSet(HWND hDlg, int song_length, int silence_seconds, BOOL play_loops, int mute_mask);
+void settingsDialogSet(HWND hDlg, int song_length, int silence_seconds, bool play_loops, int mute_mask);
 #else
 extern ASAP *asap;
 extern int song_length;
 extern int silence_seconds;
-extern BOOL play_loops;
+extern bool play_loops;
 extern int mute_mask;
-BOOL settingsDialog(HINSTANCE hInstance, HWND hwndParent);
+bool settingsDialog(HINSTANCE hInstance, HWND hwndParent);
 int getSongDurationInternal(const ASAPInfo *module_info, int song, ASAP *asap);
 #define getSongDuration(module_info, song)  getSongDurationInternal(module_info, song, NULL)
 int playSong(int song);

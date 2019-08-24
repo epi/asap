@@ -1,7 +1,7 @@
 /*
  * asapscan.c - Atari 8-bit music analyzer
  *
- * Copyright (C) 2007-2017  Piotr Fusik
+ * Copyright (C) 2007-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -22,6 +22,7 @@
  */
 
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +32,7 @@
 
 #include "asap-asapscan.h"
 
-static cibool detect_time = FALSE;
+static bool detect_time = false;
 static int scan_frames;
 static int silence_frames;
 static int loop_check_frames;
@@ -44,9 +45,9 @@ static int *hash_next;
 static int hash_last[1 << HASH_BITS];
 
 static ASAP *asap;
-static cibool dump = FALSE;
-static cibool fingerprint = FALSE;
-static cibool long_fingerprint = FALSE;
+static bool dump = false;
+static bool fingerprint = false;
+static bool long_fingerprint = false;
 
 #define FEATURE_CHECK          1
 #define FEATURE_15_KHZ         2
@@ -64,7 +65,7 @@ static void trace_cpu(void);
 
 static int print_time_at_pc = -1;
 
-static cibool acid = FALSE;
+static bool acid = false;
 static int exit_code = 0;
 
 #include "asap-asapscan.c"
@@ -82,7 +83,7 @@ static int frames_to_milliseconds(int frames)
 	return (int) ceil(frames * 1000.0 * CYCLES_PER_FRAME / MAIN_CLOCK);
 }
 
-static void print_time(int frames, cibool loop)
+static void print_time(int frames, bool loop)
 {
 	int duration = frames_to_milliseconds(frames);
 	printf("TIME %02d:%02d.%02d%s\n", duration / 60000, duration / 1000 % 60, duration / 10 % 100, loop ? " LOOP" : "");
@@ -151,13 +152,9 @@ static char cpu_opcodes[256] = {
 static void show_instruction(int pc)
 {
 	int addr = pc;
-	int opcode;
-	const char *mnemonic;
-	const char *p;
-
-	opcode = asap->cpu.memory[pc++];
-	mnemonic = cpu_mnemonics[opcode];
-	for (p = mnemonic + 3; *p != '\0'; p++) {
+	int opcode = asap->cpu.memory[pc++];
+	const char *mnemonic = cpu_mnemonics[opcode];
+	for (const char *p = mnemonic + 3; *p != '\0'; p++) {
 		if (*p == '1') {
 			int value = asap->cpu.memory[pc];
 			printf("%04X: %02X %02X     %.*s$%02X%s\n",
@@ -195,7 +192,7 @@ static void trace_cpu(void)
 		show_instruction(pc);
 	}
 	if (pc == print_time_at_pc)
-		print_time(frame, TRUE);
+		print_time(frame, true);
 	if (pc != 0xd200 && pc != 0xd203) /* don't count 0xd2 used by Do6502Init() and Call6502() */
 		cpu_opcodes[asap->cpu.memory[pc]] |= CPU_OPCODE_USED;
 }
@@ -203,8 +200,7 @@ static void trace_cpu(void)
 static void print_unofficial_mnemonic(int opcode)
 {
 	const char *mnemonic = cpu_mnemonics[opcode];
-	const char *p;
-	for (p = mnemonic + 3; *p != '\0'; p++) {
+	for (const char *p = mnemonic + 3; *p != '\0'; p++) {
 		if (*p == '1') {
 			printf("%02X: %.*s$xx%s\n", opcode, (int) (p - mnemonic), mnemonic, p + 1);
 			return;
@@ -238,13 +234,12 @@ static void print_help(void)
 	);
 }
 
-static cibool store_pokey(unsigned char *p, Pokey *pokey)
+static bool store_pokey(unsigned char *p, Pokey *pokey)
 {
-	cibool is_silence = TRUE;
-	int i;
-	for (i = 0; i < 4; i++) {
+	bool is_silence = true;
+	for (int i = 0; i < 4; i++) {
 		if ((pokey->channels[i].audc & 0xf) != 0) {
-			is_silence = FALSE;
+			is_silence = false;
 			p[i * 2] = pokey->channels[i].audf;
 			p[i * 2 + 1] = pokey->channels[i].audc;
 		}
@@ -257,30 +252,29 @@ static cibool store_pokey(unsigned char *p, Pokey *pokey)
 	return is_silence;
 }
 
-static cibool store_pokeys(int frame)
+static bool store_pokeys(int frame)
 {
 	unsigned char *p = registers_dump + 18 * frame;
-	cibool is_silence = store_pokey(p, &asap->pokeys.basePokey);
+	bool is_silence = store_pokey(p, &asap->pokeys.basePokey);
 	is_silence &= store_pokey(p + 9, &asap->pokeys.extraPokey);
 	return is_silence;
 }
 
-static cibool has_loop_at(int first_frame, int second_frame)
+static bool has_loop_at(int first_frame, int second_frame)
 {
 	return memcmp(registers_dump + 18 * first_frame, registers_dump + 18 * second_frame, 18 * loop_check_frames) == 0;
 }
 
 static int get_hash(int player_call)
 {
-	int hash = 0;
-	int i;
-	for (i = 1; i < 9; i += 2) {
+	for (int i = 1; i < 9; i += 2) {
 		if ((registers_dump[18 * player_call + i] & 0xe0) == 0xe0)
 			registers_dump[18 * player_call + i] &= 0xbf;
 		if ((registers_dump[18 * player_call + i + 9] & 0xe0) == 0xe0)
 			registers_dump[18 * player_call + i + 9] &= 0xbf;
 	}
-	for (i = 0; i < 18; i++)
+	int hash = 0;
+	for (int i = 0; i < 18; i++)
 		hash += registers_dump[18 * player_call + i];
 	return hash;
 }
@@ -295,31 +289,24 @@ static int get_byte_hash(int frame)
 
 static void compute_entrophy(int frames)
 {
-	int entrophy_counters[256];
-#define ENTROPHY_LEN 32
-	int emaxvalue = 0;
-	int emaxframe = 0;
-	int evalue = 0;
-	int i;
-	int v;
-
-	for (i = 0; i < 256; i++)
-		entrophy_counters[i] = 0;
-
 	if (long_fingerprint) {
-		for (i = 0; i < frame; i++) {
-			v = get_byte_hash(i);
-			printf("%02x", v);
-		}
+		for (int i = 0; i < frame; i++)
+			printf("%02x", get_byte_hash(i));
 		printf("\n");
 	}
 	else {
-		for (i = 0; i < frames; i++) {
-			v = get_byte_hash(i);
+		int entrophy_counters[256] = { 0 };
+		int emaxvalue = 0;
+		int emaxframe = 0;
+		int evalue = 0;
+
+		for (int i = 0; i < frames; i++) {
+			int v = get_byte_hash(i);
 			if (entrophy_counters[v] == 0)
 				evalue++;
 			entrophy_counters[v]++;
 
+#define ENTROPHY_LEN 32
 			if (i >= ENTROPHY_LEN) {
 				v = get_byte_hash(i - ENTROPHY_LEN);
 				entrophy_counters[v]--;
@@ -333,43 +320,39 @@ static void compute_entrophy(int frames)
 			}
 		}
 
-		for (i = 0; i < ENTROPHY_LEN; i++) {
-			v = get_byte_hash(i + emaxframe);
-			printf("%02x", v);
-		}
+		for (int i = 0; i < ENTROPHY_LEN; i++)
+			printf("%02x", get_byte_hash(i + emaxframe));
 		printf("\n");
 	}
 }
 
 static void print_pokey(const Pokey *pokey)
 {
-	int i;
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 		printf("%02X %02X  ", pokey->channels[i].audf, pokey->channels[i].audc);
 	printf("%02X", pokey->audctl);
 }
 
-static cibool is_ultrasound(const PokeyChannel *ch)
+static bool is_ultrasound(const PokeyChannel *ch)
 {
 	if (ch->periodCycles > 112)
-		return FALSE;
+		return false;
 	if ((ch->audc & 0xf) == 0)
-		return FALSE;
+		return false;
 	return (ch->audc & 0xb0) == 0xa0;
 }
 
 static void scan_song(int song)
 {
-	int silence_run = 0;
-	int running_hash = 0;
-	int i;
 	if (!ASAP_PlaySong(asap, song, -1)) {
 		fprintf(stderr, "asapscan: PlaySong failed\n");
 		return;
 	}
+	int silence_run = 0;
+	int running_hash = 0;
 	if (acid)
 		scan_frames = seconds_to_frames(ASAPInfo_GetDuration(&asap->moduleInfo, song) / 1000);
-	for (i = 0; i < 1 << HASH_BITS; i++)
+	for (int i = 0; i < 1 << HASH_BITS; i++)
 		hash_first[i] = -1;
 	for (frame = 0; frame < scan_frames; frame++) {
 		ASAP_Do6502Frame(asap);
@@ -394,7 +377,7 @@ static void scan_song(int song)
 				features |= FEATURE_LOW_OF_16_BIT;
 			if (((c1 | c2) & 0x80) != 0)
 				features |= FEATURE_9_BIT_POLY;
-			for (i = 0; i < 4; i++) {
+			for (int i = 0; i < 4; i++) {
 				if (is_ultrasound(&asap->pokeys.basePokey.channels[i])) {
 					features |= FEATURE_ULTRASOUND;
 					break;
@@ -408,25 +391,24 @@ static void scan_song(int song)
 					if (fingerprint)
 						compute_entrophy(frame + 1 - silence_run);
 					else
-						print_time(frame + 1 - silence_run, FALSE);
+						print_time(frame + 1 - silence_run, false);
 					return;
 				}
 			}
 			else
 				silence_run = 0;
 			if (frame >= loop_check_frames) {
-				int first_frame;
 				int second_frame = frame - loop_check_frames;
 				running_hash &= (1 << HASH_BITS) - 1;
 				/* Now running_hash is for the last loop_check_player_calls player calls before player_call. */
-				for (first_frame = hash_first[running_hash]; first_frame >= 0; first_frame = hash_next[first_frame]) {
+				for (int first_frame = hash_first[running_hash]; first_frame >= 0; first_frame = hash_next[first_frame]) {
 					if (has_loop_at(first_frame, second_frame)) {
 						int loop_len = second_frame - first_frame;
 						if (loop_len >= loop_min_frames) {
 							if (fingerprint)
 								compute_entrophy(second_frame);
 							else
-								print_time(second_frame, TRUE);
+								print_time(second_frame, true);
 							return;
 						}
 						if (loop_len == 1) {
@@ -434,7 +416,7 @@ static void scan_song(int song)
 							if (fingerprint)
 								compute_entrophy(first_frame);
 							else
-								print_time(first_frame, FALSE);
+								print_time(first_frame, false);
 							return;
 						}
 					}
@@ -467,6 +449,7 @@ static void scan_song(int song)
 #else
 #define set_color(x)
 #endif
+		int i;
 		for (i = 0x1000; i <= 0x17ff; i++) {
 			unsigned char c = asap->cpu.memory[i];
 			if (c == 0)
@@ -496,28 +479,24 @@ static void scan_song(int song)
 
 int main(int argc, char **argv)
 {
-	int i;
 	const char *input_file = NULL;
 	int song = -1;
 	int scan_seconds = 15 * 60;
 	int silence_seconds = 5;
 	int loop_check_seconds = 3 * 60;
 	int loop_min_seconds = 5;
-	FILE *fp;
-	static unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
-	int module_len;
 
-	for (i = 1; i < argc; i++) {
+	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-d") == 0)
-			dump = TRUE;
+			dump = true;
 		else if (strcmp(argv[i], "-p") == 0)
-			detect_time = fingerprint = TRUE;
+			detect_time = fingerprint = true;
 		else if (strcmp(argv[i], "-l") == 0)
-			detect_time = fingerprint = long_fingerprint = TRUE;
+			detect_time = fingerprint = long_fingerprint = true;
 		else if (strcmp(argv[i], "-f") == 0)
 			features = FEATURE_CHECK;
 		else if (strcmp(argv[i], "-t") == 0)
-			detect_time = TRUE;
+			detect_time = true;
 		else if (strcmp(argv[i], "-c") == 0)
 			cpu_trace |= CPU_TRACE_PRINT;
 		else if (strcmp(argv[i], "-u") == 0)
@@ -529,7 +508,7 @@ int main(int argc, char **argv)
 		else if (strcmp(argv[i], "-s") == 0)
 			song = atoi(argv[++i]);
 		else if (strcmp(argv[i], "-a") == 0)
-			acid = TRUE;
+			acid = true;
 		else if (strcmp(argv[i], "-v") == 0) {
 			printf("asapscan " ASAPInfo_VERSION "\n");
 			return 0;
@@ -546,12 +525,13 @@ int main(int argc, char **argv)
 		print_help();
 		return 1;
 	}
-	fp = fopen(input_file, "rb");
+	FILE *fp = fopen(input_file, "rb");
 	if (fp == NULL) {
 		fprintf(stderr, "asapscan: cannot open %s\n", input_file);
 		return 1;
 	}
-	module_len = fread(module, 1, sizeof(module), fp);
+	static unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
+	int module_len = fread(module, 1, sizeof(module), fp);
 	fclose(fp);
 	asap = ASAP_New();
 	if (!ASAP_Load(asap, input_file, module, module_len)) {
@@ -587,7 +567,7 @@ int main(int argc, char **argv)
 			printf("Ultrasound\n");
 	}
 	if ((cpu_trace & CPU_TRACE_UNOFFICIAL) != 0) {
-		for (i = 0; i < 256; i++) {
+		for (int i = 0; i < 256; i++) {
 			if (cpu_opcodes[i] == (CPU_OPCODE_UNOFFICIAL | CPU_OPCODE_USED))
 				print_unofficial_mnemonic(i);
 		}

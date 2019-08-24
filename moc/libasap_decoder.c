@@ -1,7 +1,7 @@
 /*
  * libasap_decoder.c - ASAP plugin for MOC (Music On Console)
  *
- * Copyright (C) 2007-2015  Piotr Fusik
+ * Copyright (C) 2007-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,6 +21,8 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdbool.h>
+
 #include "config.h"
 #include "common.h"
 #include "decoder.h"
@@ -37,47 +39,39 @@ typedef struct {
 	struct decoder_error error;
 } ASAP_Decoder;
 
-static cibool asap_load(ASAP_Decoder *d, const char *filename)
+static bool asap_load(ASAP_Decoder *d, const char *filename)
 {
-	struct io_stream *s;
-	ssize_t module_len;
-	unsigned char *module;
-	cibool ok;
-	const ASAPInfo *info;
-	int song;
-	int duration;
-
 	d->asap = NULL;
 	decoder_error_init(&d->error);
-	s = io_open(filename, 0);
+	struct io_stream *s = io_open(filename, 0);
 	if (s == NULL) {
 		decoder_error(&d->error, ERROR_FATAL, 0, "Can't open %s", filename);
-		return FALSE;
+		return false;
 	}
-	module_len = io_file_size(s);
-	module = (unsigned char *) xmalloc(module_len);
+	ssize_t module_len = io_file_size(s);
+	unsigned char *module = (unsigned char *) xmalloc(module_len);
 	module_len = io_read(s, module, module_len);
 	io_close(s);
 
 	d->asap = ASAP_New();
 	if (d->asap == NULL) {
 		decoder_error(&d->error, ERROR_FATAL, 0, "Out of memory");
-		return FALSE;
+		return false;
 	}
 
-	ok = ASAP_Load(d->asap, filename, module, module_len);
+	bool ok = ASAP_Load(d->asap, filename, module, module_len);
 	free(module);
 	if (!ok) {
 		decoder_error(&d->error, ERROR_FATAL, 0, "Unsupported file format");
-		return FALSE;
+		return false;
 	}
-	info = ASAP_GetInfo(d->asap);
-	song = ASAPInfo_GetDefaultSong(info);
-	duration = ASAPInfo_GetDuration(info, song);
+	const ASAPInfo *info = ASAP_GetInfo(d->asap);
+	int song = ASAPInfo_GetDefaultSong(info);
+	int duration = ASAPInfo_GetDuration(info, song);
 	if (duration < 0)
 		duration = DEFAULT_SONG_LENGTH * 1000;
 	d->duration = duration;
-	return TRUE;
+	return true;
 }
 
 static void asap_close(void *data)

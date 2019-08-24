@@ -1,7 +1,7 @@
 /*
  * ASAPShellEx.cpp - ASAP Column Handler and Property Handler shell extensions
  *
- * Copyright (C) 2010-2018  Piotr Fusik
+ * Copyright (C) 2010-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -302,7 +302,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		return S_OK;
 	}
 
-	HRESULT SetString(cibool (*psetfunc)(ASAPInfo *, const char *), REFPROPVARIANT propvar)
+	HRESULT SetString(bool (*psetfunc)(ASAPInfo *, const char *), REFPROPVARIANT propvar)
 	{
 		char s[ASAPInfo_MAX_TEXT_LENGTH + 1];
 		int offset = 0;
@@ -321,9 +321,8 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 				return hr;
 			break;
 		case VT_VECTOR | VT_LPWSTR:
-			ULONG i;
 			s[0] = '\0';
-			for (i = 0; i < propvar.calpwstr.cElems; i++) {
+			for (ULONG i = 0; i < propvar.calpwstr.cElems; i++) {
 				if (i > 0) {
 					hr = AppendString(s, &offset, L" & ");
 					if (FAILED(hr))
@@ -517,7 +516,7 @@ public:
 				else {
 					byte output[ASAPInfo_MAX_MODULE_LENGTH];
 					ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
-					module_len = ASAPWriter_Write(writer, "dummy.sap", m_pinfo, module, module_len, FALSE);
+					module_len = ASAPWriter_Write(writer, "dummy.sap", m_pinfo, module, module_len, false);
 					ASAPWriter_Delete(writer);
 					if (module_len < 0)
 						hr = E_FAIL;

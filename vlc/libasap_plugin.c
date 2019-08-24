@@ -1,7 +1,7 @@
 /*
  * libasap_plugin.c - ASAP plugin for VLC
  *
- * Copyright (C) 2012-2016  Piotr Fusik
+ * Copyright (C) 2012-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,6 +26,7 @@
 #define MODULE_STRING  "asap"
 
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include <vlc_common.h>
 #include <vlc_input.h>
@@ -68,16 +69,16 @@ static int Demux(demux_t *demux)
 	return 1;
 }
 
-static cibool PlaySong(demux_t *demux, demux_sys_t *sys, int song)
+static bool PlaySong(demux_t *demux, demux_sys_t *sys, int song)
 {
 	const ASAPInfo *info = ASAP_GetInfo(sys->asap);
 	int duration = ASAPInfo_GetDuration(info, song);
 	if (!ASAP_PlaySong(sys->asap, song, duration))
-		return FALSE;
+		return false;
 	sys->duration = duration;
 	demux->info.i_title = song;
 	demux->info.i_update |= INPUT_UPDATE_TITLE;
-	return TRUE;
+	return true;
 }
 
 static int Control(demux_t *demux, int query, va_list args)

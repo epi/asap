@@ -1,7 +1,7 @@
 /*
  * sap2txt.c - write plain text summary of a SAP file
  *
- * Copyright (C) 2012  Piotr Fusik
+ * Copyright (C) 2012-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,6 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef _WIN32
@@ -42,10 +43,9 @@ static void usage(void)
 static int get_word(FILE *fp)
 {
 	int lo = getc(fp);
-	int hi;
 	if (lo == EOF)
 		return -1;
-	hi = getc(fp);
+	int hi = getc(fp);
 	if (hi == EOF)
 		return -2;
 	return lo | (hi << 8);
@@ -75,12 +75,8 @@ static int sap2txt(const char *sap_file)
 		return 0;
 
 	for (;;) {
-		int ffff = 0;
+		bool ffff = false;
 		int start_address = get_word(fp);
-		int end_address;
-		Byte buffer[65536];
-		int len;
-		uLong crc;
 
 		switch (start_address) {
 		case -1:
@@ -90,13 +86,13 @@ static int sap2txt(const char *sap_file)
 			printf("Unexpected end of file in a binary header\n");
 			return 0;
 		case 0xffff:
-			ffff = 1;
+			ffff = true;
 			start_address = get_word(fp);
 			break;
 		default:
 			break;
 		}
-		end_address = get_word(fp);
+		int end_address = get_word(fp);
 		if (end_address < 0) {
 			printf("Unexpected end of file in a binary header\n");
 			return 0;
@@ -105,12 +101,13 @@ static int sap2txt(const char *sap_file)
 			printf("Invalid binary header\n");
 			return 0;
 		}
-		len = end_address - start_address + 1;
+		int len = end_address - start_address + 1;
+		Byte buffer[65536];
 		if (fread(buffer, 1, len, fp) != len) {
 			printf("Unexpected end of file in a binary block\n");
 			return 0;
 		}
-		crc = crc32(0, Z_NULL, 0);
+		uLong crc = crc32(0, Z_NULL, 0);
 		crc = crc32(crc, buffer, len);
 		if (ffff)
 			printf("FFFF ");
@@ -121,12 +118,11 @@ static int sap2txt(const char *sap_file)
 static size_t slurp(const char *input_file, Byte *buffer, size_t len)
 {
 	FILE *fp = fopen(input_file, "rb");
-	size_t result;
 	if (fp == NULL) {
 		fprintf(stderr, "sap2txt: cannot open %s\n", input_file);
 		return 0;
 	}
-	result = fread(buffer, 1, len, fp);
+	size_t result = fread(buffer, 1, len, fp);
 	fclose(fp);
 	if (result == len) {
 		fprintf(stderr, "sap2txt: %s: file too long\n", input_file);
@@ -138,26 +134,21 @@ static size_t slurp(const char *input_file, Byte *buffer, size_t len)
 static int txt2sap(const char *txt_file, const char *sap_file)
 {
 	Byte txt_buf[65536];
-	size_t txt_len;
-	Byte sap_buf[65536];
-	size_t sap_len;
-	const void *bin_ptr;
-	size_t i;
-	FILE *fp;
-
-	txt_len = slurp(txt_file, txt_buf, sizeof(txt_buf));
+	size_t txt_len = slurp(txt_file, txt_buf, sizeof(txt_buf));
 	if (txt_len == 0)
 		return 1;
-	sap_len = slurp(sap_file, sap_buf, sizeof(sap_buf));
+	Byte sap_buf[65536];
+	size_t sap_len = slurp(sap_file, sap_buf, sizeof(sap_buf));
 	if (sap_len == 0)
 		return 1;
 
-	bin_ptr = memchr(sap_buf, 0xff, sap_len);
+	const void *bin_ptr = memchr(sap_buf, 0xff, sap_len);
 	if (bin_ptr == NULL) {
 		fprintf(stderr, "sap2txt: missing binary part in %s\n", sap_file);
 		return 1;
 	}
 
+	size_t i;
 	for (i = 0; i < txt_len; ) {
 		if (memcmp(txt_buf + i, "LOAD ", 5) == 0)
 			break;
@@ -169,7 +160,7 @@ static int txt2sap(const char *txt_file, const char *sap_file)
 	if (i == (const Byte *) bin_ptr - sap_buf && memcmp(txt_buf, sap_buf, i) == 0)
 		return 0; /* same */
 
-	fp = fopen(sap_file, "wb");
+	FILE *fp = fopen(sap_file, "wb");
 	if (fp == NULL) {
 		fprintf(stderr, "sap2txt: cannot write %s\n", sap_file);
 		return 1;

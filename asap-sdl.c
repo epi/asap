@@ -1,7 +1,7 @@
 /*
  * asap-sdl.c - simple SDL ASAP player
  *
- * Copyright (C) 2010-2011  Piotr Fusik
+ * Copyright (C) 2010-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -82,23 +82,17 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
 
 static void process_file(const char *input_file)
 {
-	FILE *fp;
-	static unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
-	int module_len;
-	ASAP *asap;
-	const ASAPInfo *info;
-	SDL_AudioSpec desired;
-
-	fp = fopen(input_file, "rb");
+	FILE *fp = fopen(input_file, "rb");
 	if (fp == NULL)
 		fatal_error("cannot open %s", input_file);
-	module_len = fread(module, 1, sizeof(module), fp);
+	static unsigned char module[ASAPInfo_MAX_MODULE_LENGTH];
+	int module_len = fread(module, 1, sizeof(module), fp);
 	fclose(fp);
 
-	asap = ASAP_New();
+	ASAP *asap = ASAP_New();
 	if (!ASAP_Load(asap, input_file, module, module_len))
 		fatal_error("%s: unsupported file", input_file);
-	info = ASAP_GetInfo(asap);
+	const ASAPInfo *info = ASAP_GetInfo(asap);
 	if (song < 0)
 		song = ASAPInfo_GetDefaultSong(info);
 	if (!ASAP_PlaySong(asap, song, -1))
@@ -109,6 +103,7 @@ static void process_file(const char *input_file)
 
 	if (SDL_Init(SDL_INIT_AUDIO) != 0)
 		sdl_error("SDL_Init");
+	SDL_AudioSpec desired;
 	desired.freq = ASAP_SAMPLE_RATE;
 	desired.format = AUDIO_S16LSB;
 	desired.channels = ASAPInfo_GetChannels(info);
@@ -126,8 +121,7 @@ static void process_file(const char *input_file)
 int main(int argc, char *argv[])
 {
 	const char *options_error = "no input file";
-	int i;
-	for (i = 1; i < argc; i++) {
+	for (int i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (arg[0] != '-') {
 			process_file(arg);

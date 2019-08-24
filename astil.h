@@ -1,7 +1,7 @@
 /*
  * astil.h - another SID/SAP Tune Information List parser
  *
- * Copyright (C) 2011-2012  Piotr Fusik
+ * Copyright (C) 2011-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,15 +23,9 @@
 
 #ifndef _ASTIL_H_
 #define _ASTIL_H_
-#ifndef _ASAP_H_ /* FIXME */
-typedef int cibool;
-#endif
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
+
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,11 +35,11 @@ typedef struct ASTILCover ASTILCover;
 
 ASTIL *ASTIL_New(void);
 void ASTIL_Delete(ASTIL *self);
-cibool ASTIL_Load(ASTIL *self, const char *filename, int song);
+bool ASTIL_Load(ASTIL *self, const char *filename, int song);
 const char *ASTIL_GetStilFilename(const ASTIL *self);
-/* If TRUE, the following strings are expected to be UTF-8 encoded,
+/* If true, the following strings are expected to be UTF-8 encoded,
    otherwise it's an old STIL.txt, ASCII or Windows-1250 maybe? */
-cibool ASTIL_IsUTF8(const ASTIL *self);
+bool ASTIL_IsUTF8(const ASTIL *self);
 const char *ASTIL_GetTitle(const ASTIL *self);
 const char *ASTIL_GetAuthor(const ASTIL *self);
 const char *ASTIL_GetDirectoryComment(const ASTIL *self);

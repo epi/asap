@@ -1,7 +1,7 @@
 /*
  * bass_asap.c - ASAP add-on for BASS
  *
- * Copyright (C) 2010-2012  Piotr Fusik
+ * Copyright (C) 2010-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -58,10 +58,9 @@ static void WINAPI ASAP_Free(void *inst)
 static QWORD WINAPI ASAP_GetLength(void *inst, DWORD mode)
 {
 	ASAPSTREAM *stream = (ASAPSTREAM *) inst;
-	int channels;
 	if (mode != BASS_POS_BYTE)
 		errorn(BASS_ERROR_NOTAVAIL);
-	channels = ASAPInfo_GetChannels(ASAP_GetInfo(stream->asap));
+	int channels = ASAPInfo_GetChannels(ASAP_GetInfo(stream->asap));
 	noerrorn((stream->duration * (ASAP_SAMPLE_RATE / 100) / 10) << channels); // assumes 16-bit
 }
 
@@ -70,21 +69,18 @@ static QWORD WINAPI ASAP_GetLength(void *inst, DWORD mode)
 static const char * WINAPI ASAP_GetTags(void *inst, DWORD tags)
 {
 	ASAPSTREAM *stream = (ASAPSTREAM *) inst;
-	TAG_ID3 *tag;
-	const ASAPInfo *info;
-	int year;
 	if (tags != BASS_TAG_ID3)
 		return NULL;
-	tag = &stream->tag;
+	TAG_ID3 *tag = &stream->tag;
 	memset(tag, 0, sizeof(TAG_ID3));
 	tag->id[0] = 'T';
 	tag->id[1] = 'A';
 	tag->id[2] = 'G';
-	info = ASAP_GetInfo(stream->asap);
+	const ASAPInfo *info = ASAP_GetInfo(stream->asap);
 	strncpy(tag->title, ASAPInfo_GetTitleOrFilename(info), sizeof(tag->title));
 	strncpy(tag->artist, ASAPInfo_GetAuthor(info), sizeof(tag->artist));
-	year = ASAPInfo_GetYear(info);
-	if (year > 0)
+	int year = ASAPInfo_GetYear(info);
+	if (year > 0 && year < 10000)
 		sprintf(tag->year, "%d", year);
 	tag->genre = 52; /* Electronic */
 	return (const char *) tag;
@@ -155,23 +151,16 @@ static DWORD CALLBACK StreamProc(HSTREAM handle, void *buffer, DWORD length, voi
 static HSTREAM WINAPI StreamCreateProc(BASSFILE file, DWORD flags)
 {
 	BOOL unicode = FALSE;
-	const char *filename;
+	const char *filename = (const char *) bassfunc->file.GetFileName(file, &unicode);
 	char aFilename[MAX_PATH];
-	byte module[ASAPInfo_MAX_MODULE_LENGTH];
-	int module_len;
-	ASAPSTREAM *stream;
-	const ASAPInfo *info;
-	int song;
-	int duration;
-	HSTREAM handle;
-	filename = (const char *) bassfunc->file.GetFileName(file, &unicode);
 	if (filename != NULL && unicode) {
 		if (WideCharToMultiByte(CP_ACP, 0, (LPCWSTR) filename, -1, aFilename, MAX_PATH, NULL, NULL) <= 0)
 			error(BASS_ERROR_NOTFILE);
 		filename = aFilename;
 	}
-	module_len = bassfunc->file.Read(file, module, sizeof(module));
-	stream = malloc(sizeof(ASAPSTREAM));
+	byte module[ASAPInfo_MAX_MODULE_LENGTH];
+	int module_len = bassfunc->file.Read(file, module, sizeof(module));
+	ASAPSTREAM *stream = malloc(sizeof(ASAPSTREAM));
 	if (stream == NULL)
 		error(BASS_ERROR_MEM);
 	stream->asap = ASAP_New();
@@ -185,8 +174,9 @@ static HSTREAM WINAPI StreamCreateProc(BASSFILE file, DWORD flags)
 	}
 	flags &= BASS_SAMPLE_SOFTWARE | BASS_SAMPLE_LOOP | BASS_SAMPLE_3D | BASS_SAMPLE_FX
 		| BASS_STREAM_DECODE | BASS_STREAM_AUTOFREE | 0x3f000000; // 0x3f000000 = all speaker flags
-	info = ASAP_GetInfo(stream->asap);
-	song = ASAPInfo_GetDefaultSong(info);
+	const ASAPInfo *info = ASAP_GetInfo(stream->asap);
+	int song = ASAPInfo_GetDefaultSong(info);
+	int duration;
 	if ((flags & BASS_MUSIC_LOOP) != 0 && ASAPInfo_GetLoop(info, song))
 		duration = -1;
 	else
@@ -196,7 +186,7 @@ static HSTREAM WINAPI StreamCreateProc(BASSFILE file, DWORD flags)
 		free(stream);
 		error(BASS_ERROR_FILEFORM);
 	}
-	handle = bassfunc->CreateStream(ASAP_SAMPLE_RATE, ASAPInfo_GetChannels(info), flags, &StreamProc, stream, &ASAPfuncs);
+	HSTREAM handle = bassfunc->CreateStream(ASAP_SAMPLE_RATE, ASAPInfo_GetChannels(info), flags, &StreamProc, stream, &ASAPfuncs);
 	if (handle == 0) {
 		free(stream);
 		return 0; // CreateStream set the error code

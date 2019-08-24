@@ -105,7 +105,7 @@ CLEAN += asapscan asapscan.exe
 asap-asapscan.h: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX) | asap-asapscan.c
 
 asap-asapscan.c: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
-	$(CITO) -D ASAPSCAN
+	$(CITO) -l c99 -D ASAPSCAN
 CLEAN += asap-asapscan.c asap-asapscan.h
 
 # asap.[ch]
@@ -113,14 +113,14 @@ CLEAN += asap-asapscan.c asap-asapscan.h
 $(srcdir)asap.h: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(ASM6502_OBX) | $(srcdir)asap.c
 
 $(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(ASM6502_OBX)
-	$(CITO) -D C
+	$(CITO) -l c99 -D C
 
 # aatr.[ch]
 
 $(srcdir)aatr.h: $(srcdir)aatr.ci | $(srcdir)aatr.c
 
 $(srcdir)aatr.c: $(srcdir)aatr.ci
-	$(CITO)
+	$(CITO) -l c99
 
 clean:
 	$(RM) $(CLEAN)

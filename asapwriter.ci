@@ -606,6 +606,9 @@ public class ASAPWriter
 			WriteBytes(playerRoutine, 2, playerLastByte - player + 7);
 			break;
 		case ASAPModuleType.Tmc:
+#if !CI1
+			native { ; }
+#endif
 			const int[4] tmcPlayerOffset = { 3, -9, -10, -10 };
 			int player2 = player + tmcPlayerOffset[module[0x25] - 1];
 			const int[4] tmcInitOffset = { -14, -16, -17, -17 };

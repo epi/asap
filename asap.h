@@ -1,13 +1,7 @@
-/* Generated automatically with "cito". Do not edit. */
+// Generated automatically with "cito". Do not edit.
 #ifndef _ASAP_H_
 #define _ASAP_H_
-typedef int cibool;
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
+#include <stdbool.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -55,7 +49,7 @@ void ASAP_DetectSilence(ASAP *self, int seconds);
  * @param module Contents of the file.
  * @param moduleLen Length of the file.
  */
-cibool ASAP_Load(ASAP *self, const char *filename, unsigned char const *module, int moduleLen);
+bool ASAP_Load(ASAP *self, const char *filename, unsigned char const *module, int moduleLen);
 
 /**
  * Returns information about the loaded module.
@@ -73,7 +67,7 @@ void ASAP_MutePokeyChannels(ASAP *self, int mask);
  * @param song Zero-based song index.
  * @param duration Playback time in milliseconds, -1 means infinity.
  */
-cibool ASAP_PlaySong(ASAP *self, int song, int duration);
+bool ASAP_PlaySong(ASAP *self, int song, int duration);
 
 /**
  * Returns current playback position in blocks.
@@ -90,13 +84,13 @@ int ASAP_GetPosition(ASAP const *self);
  * Changes the playback position.
  * @param block The requested absolute position in samples (always 44100 per second, even in stereo).
  */
-cibool ASAP_SeekSample(ASAP *self, int block);
+bool ASAP_SeekSample(ASAP *self, int block);
 
 /**
  * Changes the playback position.
  * @param position The requested absolute position in milliseconds.
  */
-cibool ASAP_Seek(ASAP *self, int position);
+bool ASAP_Seek(ASAP *self, int position);
 
 /**
  * Fills leading bytes of the specified buffer with WAV file header.
@@ -105,7 +99,7 @@ cibool ASAP_Seek(ASAP *self, int position);
  * @param format Format of samples.
  * @param metadata Include metadata (title, author, date).
  */
-int ASAP_GetWavHeader(ASAP const *self, unsigned char *buffer, ASAPSampleFormat format, cibool metadata);
+int ASAP_GetWavHeader(ASAP const *self, unsigned char *buffer, ASAPSampleFormat format, bool metadata);
 
 /**
  * Fills the specified buffer with generated samples.
@@ -190,7 +184,7 @@ const char *ASAPInfo_GetAuthor(ASAPInfo const *self);
  * Multiple authors are separated with <code>" &amp; "</code>.
  * An empty string means the author is unknown.
  */
-cibool ASAPInfo_SetAuthor(ASAPInfo *self, const char *value);
+bool ASAPInfo_SetAuthor(ASAPInfo *self, const char *value);
 
 /**
  * Returns music title.
@@ -202,7 +196,7 @@ const char *ASAPInfo_GetTitle(ASAPInfo const *self);
  * Sets music title.
  * An empty string means the title is unknown.
  */
-cibool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
+bool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
 
 /**
  * Returns music title or filename.
@@ -234,7 +228,7 @@ const char *ASAPInfo_GetDate(ASAPInfo const *self);
  * </ul>
  * An empty string means the date is unknown.
  */
-cibool ASAPInfo_SetDate(ASAPInfo *self, const char *value);
+bool ASAPInfo_SetDate(ASAPInfo *self, const char *value);
 
 /**
  * Returns music creation year.
@@ -273,7 +267,7 @@ int ASAPInfo_GetDefaultSong(ASAPInfo const *self);
 /**
  * Sets the 0-based index of the "main" song.
  */
-cibool ASAPInfo_SetDefaultSong(ASAPInfo *self, int song);
+bool ASAPInfo_SetDefaultSong(ASAPInfo *self, int song);
 
 /**
  * Returns length of the specified song.
@@ -285,7 +279,7 @@ int ASAPInfo_GetDuration(ASAPInfo const *self, int song);
  * Sets length of the specified song.
  * The length is specified in milliseconds. -1 means the length is indeterminate.
  */
-cibool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration);
+bool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration);
 
 /**
  * Returns information whether the specified song loops.
@@ -296,7 +290,7 @@ cibool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration);
  * </ul>
  * 
  */
-cibool ASAPInfo_GetLoop(ASAPInfo const *self, int song);
+bool ASAPInfo_GetLoop(ASAPInfo const *self, int song);
 
 /**
  * Sets information whether the specified song loops.
@@ -307,12 +301,12 @@ cibool ASAPInfo_GetLoop(ASAPInfo const *self, int song);
  * </ul>
  * 
  */
-cibool ASAPInfo_SetLoop(ASAPInfo *self, int song, cibool loop);
+bool ASAPInfo_SetLoop(ASAPInfo *self, int song, bool loop);
 
 /**
  * Returns <code>true</code> for NTSC song and <code>false</code> for PAL song.
  */
-cibool ASAPInfo_IsNtsc(ASAPInfo const *self);
+bool ASAPInfo_IsNtsc(ASAPInfo const *self);
 
 int ASAPInfo_GetTypeLetter(ASAPInfo const *self);
 
@@ -326,7 +320,7 @@ int ASAPInfo_GetMusicAddress(ASAPInfo const *self);
  * Causes music to be relocated.
  * Use only with <code>ASAPWriter.Write</code>.
  */
-cibool ASAPInfo_SetMusicAddress(ASAPInfo *self, int address);
+bool ASAPInfo_SetMusicAddress(ASAPInfo *self, int address);
 
 int ASAPInfo_GetInitAddress(ASAPInfo const *self);
 
@@ -349,14 +343,14 @@ int ASAPInfo_ParseDuration(const char *s);
  * Returns <code>true</code> if the filename is supported by ASAP.
  * @param filename Filename to check the extension of.
  */
-cibool ASAPInfo_IsOurFile(const char *filename);
+bool ASAPInfo_IsOurFile(const char *filename);
 
 /**
  * Checks whether the filename extension represents a module type supported by ASAP.
  * Returns <code>true</code> if the filename extension is supported by ASAP.
  * @param ext Filename extension without the leading dot.
  */
-cibool ASAPInfo_IsOurExt(const char *ext);
+bool ASAPInfo_IsOurExt(const char *ext);
 
 /**
  * Loads file information.
@@ -364,7 +358,7 @@ cibool ASAPInfo_IsOurExt(const char *ext);
  * @param module Contents of the file.
  * @param moduleLen Length of the file.
  */
-cibool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *module, int moduleLen);
+bool ASAPInfo_Load(ASAPInfo *self, const char *filename, unsigned char const *module, int moduleLen);
 
 /**
  * Returns human-readable description of the filename extension.
@@ -420,7 +414,7 @@ void ASAPWriter_SetOutput(ASAPWriter *self, unsigned char *output, int startInde
  * @param moduleLen Length of the source file.
  * @param tag Display information (xex output only).
  */
-int ASAPWriter_Write(ASAPWriter *self, const char *targetFilename, ASAPInfo const *info, unsigned char const *module, int moduleLen, cibool tag);
+int ASAPWriter_Write(ASAPWriter *self, const char *targetFilename, ASAPInfo const *info, unsigned char const *module, int moduleLen, bool tag);
 
 #ifdef __cplusplus
 }

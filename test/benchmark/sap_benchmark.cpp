@@ -1,7 +1,7 @@
 /*
  * sap_benchmark.cpp - SAP Library benchmark
  *
- * Copyright (C) 2013  Piotr Fusik
+ * Copyright (C) 2013-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -32,20 +32,16 @@
 static int get_samples_count(const char *filename)
 {
 	/* SAP Library doesn't understand TIME so ask ASAP */
-	FILE *fp;
-	unsigned char content[ASAPInfo_MAX_MODULE_LENGTH];
-	int content_len;
-	ASAPInfo *info;
-
-	fp = fopen(filename, "rb");
+	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL) {
 		fprintf(stderr, "Cannot open %s\n", filename);
 		exit(1);
 	}
-	content_len = fread(content, 1, sizeof(content), fp);
+	unsigned char content[ASAPInfo_MAX_MODULE_LENGTH];
+	int content_len = fread(content, 1, sizeof(content), fp);
 	fclose(fp);
 	
-	info = ASAPInfo_New();
+	ASAPInfo *info = ASAPInfo_New();
 	if (!ASAPInfo_Load(info, filename, content, content_len)) {
 		fprintf(stderr, "ASAP doesn't understand %s\n", filename);
 		exit(1);
@@ -56,19 +52,17 @@ static int get_samples_count(const char *filename)
 
 int main(int argc, char **argv)
 {
-	sapMUSICstrc *sap;
-	int samples;
 	if (argc != 2) {
 		fprintf(stderr, "Usage: sap_benchmark SAPFILE\n");
 		return 1;
 	}
-	sap = sapLoadMusicFile(argv[1]);
+	sapMUSICstrc *sap = sapLoadMusicFile(argv[1]);
 	if (sap == NULL) {
 		fprintf(stderr, "SAP doesn't understand %s\n", argv[1]);
 		return 1;
 	}
 	sapPlaySong(0);
-	samples = get_samples_count(argv[1]);
+	int samples = get_samples_count(argv[1]);
 	while (samples > 0) {
 		short buf[BUF_SIZE * 2];
 		int len = samples >= BUF_SIZE ? BUF_SIZE : samples;
