@@ -2489,17 +2489,21 @@ static int DurationParser_Parse(DurationParser *self, const char *s)
 	int result;
 	if ((result = DurationParser_ParseDigit(self, 9)) == -1)
 		return -1;
+	int digit;
 	if (self->position < self->length) {
-		int digit = s[self->position] - 48;
+		digit = s[self->position] - 48;
 		if (digit >= 0 && digit <= 9) {
 			self->position++;
 			result = result * 10 + digit;
 		}
 		if (self->position < self->length && s[self->position] == 58) {
 			self->position++;
-			result = (result * 6 + DurationParser_ParseDigit(self, 5)) * 10;
-			if ((result += DurationParser_ParseDigit(self, 9)) == -1)
+			if ((digit = DurationParser_ParseDigit(self, 5)) == -1)
 				return -1;
+			result = result * 60 + digit * 10;
+			if ((digit = DurationParser_ParseDigit(self, 9)) == -1)
+				return -1;
+			result += digit;
 		}
 	}
 	result *= 1000;
@@ -2507,14 +2511,19 @@ static int DurationParser_Parse(DurationParser *self, const char *s)
 		return result;
 	if (s[self->position++] != 46)
 		return -1;
-	result += DurationParser_ParseDigit(self, 9) * 100;
-	if (self->position >= self->length)
-		return result;
-	result += DurationParser_ParseDigit(self, 9) * 10;
-	if (self->position >= self->length)
-		return result;
-	if ((result += DurationParser_ParseDigit(self, 9)) == -1)
+	if ((digit = DurationParser_ParseDigit(self, 9)) == -1)
 		return -1;
+	result += digit * 100;
+	if (self->position >= self->length)
+		return result;
+	if ((digit = DurationParser_ParseDigit(self, 9)) == -1)
+		return -1;
+	result += digit * 10;
+	if (self->position >= self->length)
+		return result;
+	if ((digit = DurationParser_ParseDigit(self, 9)) == -1)
+		return -1;
+	result += digit;
 	return result;
 }
 

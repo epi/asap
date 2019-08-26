@@ -72,16 +72,19 @@ class DurationParser
 		Position = 0;
 		Length = s.Length;
 		int result = ParseDigit(9);
+		int digit;
 		if (Position < Length) {
-			int digit = s[Position] - '0';
+			digit = s[Position] - '0';
 			if (digit >= 0 && digit <= 9) {
 				Position++;
 				result = result * 10 + digit;
 			}
 			if (Position < Length && s[Position] == ':') {
 				Position++;
-				result = (result * 6 + ParseDigit(5)) * 10;
-				result += ParseDigit(9);
+				digit = ParseDigit(5);
+				result = result * 60 + digit * 10;
+				digit = ParseDigit(9);
+				result += digit;
 			}
 		}
 		result *= 1000;
@@ -89,13 +92,16 @@ class DurationParser
 			return result;
 		if (s[Position++] != '.')
 			throw "Invalid duration";
-		result += ParseDigit(9) * 100;
+		digit = ParseDigit(9);
+		result += digit * 100;
 		if (Position >= Length)
 			return result;
-		result += ParseDigit(9) * 10;
+		digit = ParseDigit(9);
+		result += digit * 10;
 		if (Position >= Length)
 			return result;
-		result += ParseDigit(9);
+		digit = ParseDigit(9);
+		result += digit;
 		return result;
 	}
 }
