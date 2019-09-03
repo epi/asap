@@ -30,7 +30,7 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 
-#include "asap-infowriter.h"
+#include "asap-infowriter.hpp"
 
 static const char extensions[][5] =
 	{ ".sap", ".cmc", ".cm3", ".cmr", ".cms", ".dmc", ".dlt", ".mpt", ".mpd", ".rmt", ".tmc", ".tm8", ".tm2", ".fc" };
@@ -108,11 +108,10 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 	WCHAR m_filename[MAX_PATH];
 	bool m_hasInfo = false;
 	IStream *m_pstream = nullptr;
-	ASAPInfo *m_pinfo;
+	ASAPInfo m_info;
 
 	~CASAPMetadataHandler()
 	{
-		ASAPInfo_Delete(m_pinfo);
 		if (m_pstream != nullptr)
 			m_pstream->Release();
 		DeleteCriticalSection(&m_lock);
@@ -132,10 +131,10 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		if (WideCharToMultiByte(CP_ACP, 0, wszFile, -1, filename, cbFilename, nullptr, nullptr) <= 0)
 			return HRESULT_FROM_WIN32(GetLastError());
 
-		byte module[ASAPInfo_MAX_MODULE_LENGTH];
+		byte module[ASAPInfo::maxModuleLength];
 		int module_len;
 		if (pstream != nullptr) {
-			HRESULT hr = pstream->Read(module, ASAPInfo_MAX_MODULE_LENGTH, reinterpret_cast<ULONG *>(&module_len));
+			HRESULT hr = pstream->Read(module, ASAPInfo::maxModuleLength, reinterpret_cast<ULONG *>(&module_len));
 			if (FAILED(hr))
 				return hr;
 		}
@@ -143,7 +142,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 			HANDLE fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 			if (fh == INVALID_HANDLE_VALUE)
 				return HRESULT_FROM_WIN32(GetLastError());
-			if (!ReadFile(fh, module, ASAPInfo_MAX_MODULE_LENGTH, reinterpret_cast<LPDWORD>(&module_len), nullptr)) {
+			if (!ReadFile(fh, module, ASAPInfo::maxModuleLength, reinterpret_cast<LPDWORD>(&module_len), nullptr)) {
 				HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
 				CloseHandle(fh);
 				return hr;
@@ -151,14 +150,21 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 			CloseHandle(fh);
 		}
 
-		m_hasInfo = ASAPInfo_Load(m_pinfo, filename, module, module_len);
-		if (m_hasInfo && (grfMode & STGM_READWRITE) != 0) {
+		try {
+			m_info.load(filename, module, module_len);
+		}
+		catch (...) {
+			return S_OK;
+		}
+
+		if ((grfMode & STGM_READWRITE) != 0) {
 			const char *ext = strrchr(filename, '.');
 			if (ext != nullptr && _stricmp(ext, ".sap") == 0) {
 				m_pstream = pstream;
 				pstream->AddRef();
 			}
 		}
+		m_hasInfo = true;
 		return S_OK;
 	}
 
@@ -184,7 +190,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 
 	HRESULT GetAuthors(PROPVARIANT *pvarData, bool vista)
 	{
-		const char *author = ASAPInfo_GetAuthor(m_pinfo);
+		const char *author = m_info.getAuthor().data();
 		if (!vista)
 			return GetString(pvarData, author);
 		if (author[0] == '\0') {
@@ -229,7 +235,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 
 		if (pscid->fmtid == FMTID_SummaryInformation) {
 			if (pscid->pid == PIDSI_TITLE)
-				return GetString(pvarData, ASAPInfo_GetTitle(m_pinfo));
+				return GetString(pvarData, m_info.getTitle().data());
 			if (pscid->pid == PIDSI_AUTHOR)
 				return GetAuthors(pvarData, vista);
 		}
@@ -237,7 +243,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 			if (pscid->pid == PIDSI_ARTIST)
 				return GetAuthors(pvarData, vista);
 			if (pscid->pid == PIDSI_YEAR) {
-				int year = ASAPInfo_GetYear(m_pinfo);
+				int year = m_info.getYear();
 				if (year < 0) {
 					pvarData->vt = VT_EMPTY;
 					return S_OK;
@@ -247,7 +253,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		}
 		else if (pscid->fmtid == FMTID_AudioSummaryInformation) {
 			if (pscid->pid == PIDASI_TIMELENGTH) {
-				int duration = ASAPInfo_GetDuration(m_pinfo, ASAPInfo_GetDefaultSong(m_pinfo));
+				int duration = m_info.getDuration(m_info.getDefaultSong());
 				if (duration < 0) {
 					pvarData->vt = VT_EMPTY;
 					return S_OK;
@@ -265,13 +271,13 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 				}
 			}
 			if (pscid->pid == PIDASI_CHANNEL_COUNT)
-				return GetInt(pvarData, ASAPInfo_GetChannels(m_pinfo));
+				return GetInt(pvarData, m_info.getChannels());
 		}
 		else if (pscid->fmtid == CLSID_ASAPMetadataHandler) {
 			if (pscid->pid == 1)
-				return GetInt(pvarData, ASAPInfo_GetSongs(m_pinfo));
+				return GetInt(pvarData, m_info.getSongs());
 			if (pscid->pid == 2)
-				return GetString(pvarData, ASAPInfo_IsNtsc(m_pinfo) ? "NTSC" : "PAL");
+				return GetString(pvarData, m_info.isNtsc() ? "NTSC" : "PAL");
 		}
 		return S_FALSE;
 	}
@@ -280,7 +286,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 	{
 		int i = *offset;
 		while (*wszVal != 0) {
-			if (i >= ASAPInfo_MAX_TEXT_LENGTH) {
+			if (i >= ASAPInfo::maxTextLength) {
 				dest[i] = '\0';
 				return INPLACE_S_TRUNCATED;
 			}
@@ -294,9 +300,9 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		return S_OK;
 	}
 
-	HRESULT SetString(bool (*psetfunc)(ASAPInfo *, const char *), REFPROPVARIANT propvar)
+	HRESULT SetString(void (ASAPInfo::*psetfunc)(std::string_view), REFPROPVARIANT propvar)
 	{
-		char s[ASAPInfo_MAX_TEXT_LENGTH + 1];
+		char s[ASAPInfo::maxTextLength + 1];
 		int offset = 0;
 		HRESULT hr = S_OK;
 		switch (propvar.vt) {
@@ -328,9 +334,13 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		default:
 			return E_NOTIMPL;
 		}
-		if (!psetfunc(m_pinfo, s))
+		try {
+			(m_info.*psetfunc)(s);
+			return hr;
+		}
+		catch (...) {
 			return E_FAIL;
-		return hr;
+		}
 	}
 
 public:
@@ -340,7 +350,6 @@ public:
 		DllAddRef();
 		InitializeCriticalSection(&m_lock);
 		m_filename[0] = '\0';
-		m_pinfo = ASAPInfo_New();
 	}
 
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
@@ -412,7 +421,7 @@ public:
 		if (pscd->pwszExt[5] != '\0')
 			return S_FALSE;
 		ext[3] = '\0';
-		if (!ASAPInfo_IsOurExt(ext))
+		if (!ASAPInfo::isOurExt(ext))
 			return S_FALSE;
 
 		CMyLock lck(&m_lock);
@@ -475,15 +484,15 @@ public:
 			return STG_E_ACCESSDENIED;
 		if (key.fmtid == FMTID_SummaryInformation) {
 			if (key.pid == PIDSI_TITLE)
-				return SetString(ASAPInfo_SetTitle, propvar);
+				return SetString(ASAPInfo::setTitle, propvar);
 			if (key.pid == PIDSI_AUTHOR)
-				return SetString(ASAPInfo_SetAuthor, propvar);
+				return SetString(ASAPInfo::setAuthor, propvar);
 		}
 		else if (key.fmtid == FMTID_MUSIC) {
 			if (key.pid == PIDSI_ARTIST)
-				return SetString(ASAPInfo_SetAuthor, propvar);
+				return SetString(ASAPInfo::setAuthor, propvar);
 			if (key.pid == PIDSI_YEAR)
-				return SetString(ASAPInfo_SetDate, propvar);
+				return SetString(ASAPInfo::setDate, propvar);
 		}
 		return E_FAIL;
 	}
@@ -498,32 +507,29 @@ public:
 		liZero.HighPart = 0;
 		HRESULT hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, nullptr);
 		if (SUCCEEDED(hr)) {
-			byte module[ASAPInfo_MAX_MODULE_LENGTH];
+			byte module[ASAPInfo::maxModuleLength];
 			int module_len;
-			hr = m_pstream->Read(module, ASAPInfo_MAX_MODULE_LENGTH, reinterpret_cast<ULONG *>(&module_len));
+			hr = m_pstream->Read(module, ASAPInfo::maxModuleLength, reinterpret_cast<ULONG *>(&module_len));
 			if (SUCCEEDED(hr)) {
-				ASAPWriter *writer = ASAPWriter_New();
-				if (writer == nullptr)
-					hr = E_OUTOFMEMORY;
+				byte output[ASAPInfo::maxModuleLength];
+				{
+					ASAPWriter writer;
+					writer.setOutput(output, 0, sizeof(output));
+					module_len = writer.write("dummy.sap", &m_info, module, module_len, false);
+				}
+				if (module_len < 0)
+					hr = E_FAIL;
 				else {
-					byte output[ASAPInfo_MAX_MODULE_LENGTH];
-					ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
-					module_len = ASAPWriter_Write(writer, "dummy.sap", m_pinfo, module, module_len, false);
-					ASAPWriter_Delete(writer);
-					if (module_len < 0)
-						hr = E_FAIL;
-					else {
-						hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, nullptr);
+					hr = m_pstream->Seek(liZero, STREAM_SEEK_SET, nullptr);
+					if (SUCCEEDED(hr)) {
+						ULARGE_INTEGER liSize;
+						liSize.LowPart = module_len;
+						liSize.HighPart = 0;
+						hr = m_pstream->SetSize(liSize);
 						if (SUCCEEDED(hr)) {
-							ULARGE_INTEGER liSize;
-							liSize.LowPart = module_len;
-							liSize.HighPart = 0;
-							hr = m_pstream->SetSize(liSize);
-							if (SUCCEEDED(hr)) {
-								hr = m_pstream->Write(output, module_len, nullptr);
-								if (SUCCEEDED(hr))
-									hr = m_pstream->Commit(STGC_DEFAULT);
-							}
+							hr = m_pstream->Write(output, module_len, nullptr);
+							if (SUCCEEDED(hr))
+								hr = m_pstream->Commit(STGC_DEFAULT);
 						}
 					}
 				}

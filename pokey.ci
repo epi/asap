@@ -1,6 +1,6 @@
 // pokey.ci - POKEY chip emulator
 //
-// Copyright (C) 2010-2018  Piotr Fusik
+// Copyright (C) 2010-2019  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -32,47 +32,23 @@ public enum ASAPSampleFormat
 
 class PokeyChannel
 {
-#if CI1
-	internal
-#endif
-		int Audf;
-#if CI1
-	internal
-#endif
-		int Audc;
-#if CI1
-	internal
-#endif
-		int PeriodCycles;
-#if CI1
-	internal
-#endif
-		int TickCycle;
-#if CI1
-	internal
-#endif
-		int TimerCycle;
+	internal int Audf;
+	internal int Audc;
+	internal int PeriodCycles;
+	internal int TickCycle;
+	internal int TimerCycle;
 
 	// Is channel muted?
 	const int MuteFrequency = 1;
 	const int MuteInit = 2;
 	const int MuteUser = 4;
 	const int MuteSerialInput = 8;
-#if CI1
-	internal
-#endif
-		int Mute;
+	internal int Mute;
 
 	int Out;
-#if CI1
-	internal
-#endif
-		int Delta;
+	internal int Delta;
 
-#if CI1
-	internal
-#endif
-	void Initialize()
+	internal void Initialize!()
 	{
 		Audf = 0;
 		Audc = 0;
@@ -84,19 +60,13 @@ class PokeyChannel
 		Delta = 0;
 	}
 
-#if CI1
-	internal
-#endif
-	void Slope(Pokey pokey, PokeyPair pokeys, int cycle)
+	internal void Slope!(Pokey! pokey, PokeyPair pokeys, int cycle)
 	{
 		Delta = -Delta;
 		pokey.AddDelta(pokeys, cycle, Delta);
 	}
 
-#if CI1
-	internal
-#endif
-	void DoTick(Pokey pokey, PokeyPair pokeys, int cycle, int ch)
+	internal void DoTick!(Pokey! pokey, PokeyPair pokeys, int cycle, int ch)
 	{
 		TickCycle += PeriodCycles;
 		int audc = Audc;
@@ -129,19 +99,13 @@ class PokeyChannel
 		Slope(pokey, pokeys, cycle);
 	}
 
-#if CI1
-	internal
-#endif
-	void DoStimer(int cycle)
+	internal void DoStimer!(int cycle)
 	{
 		if (TickCycle != Pokey.NeverCycle)
 			TickCycle = cycle + PeriodCycles;
 	}
 
-#if CI1
-	internal
-#endif
-	void SetMute(bool enable, int mask, int cycle)
+	internal void SetMute!(bool enable, int mask, int cycle)
 	{
 		if (enable) {
 			Mute |= mask;
@@ -154,19 +118,13 @@ class PokeyChannel
 		}
 	}
 
-#if CI1
-	internal
-#endif
-	void MuteUltrasound(int cycle)
+	internal void MuteUltrasound!(int cycle)
 	{
 		const int UltrasoundCycles = 112;
 		SetMute(PeriodCycles <= UltrasoundCycles && (Audc & 0xb0) == 0xa0, MuteFrequency, cycle);
 	}
 
-#if CI1
-	internal
-#endif
-	void SetAudc(Pokey pokey, PokeyPair pokeys, int data, int cycle)
+	internal void SetAudc!(Pokey! pokey, PokeyPair pokeys, int data, int cycle)
 	{
 		if (Audc == data)
 			return;
@@ -192,10 +150,7 @@ class PokeyChannel
 		}
 	}
 
-#if CI1
-	internal
-#endif
-	void EndFrame(int cycle)
+	internal void EndFrame!(int cycle)
 	{
 		if (TimerCycle != Pokey.NeverCycle)
 			TimerCycle -= cycle;
@@ -204,30 +159,15 @@ class PokeyChannel
 
 class Pokey
 {
-#if CI1
-	internal
-#endif
-		PokeyChannel()[4] Channels;
-#if CI1
-	internal
-#endif
-		int Audctl;
+	internal PokeyChannel()[4] Channels;
+	internal int Audctl;
 	int Skctl;
-#if CI1
-	internal
-#endif
-		int Irqst;
-#if CI1
-	internal
-#endif
-		bool Init;
+	internal int Irqst;
+	internal bool Init;
 	int DivCycles;
 	int ReloadCycles1;
 	int ReloadCycles3;
-#if CI1
-	internal
-#endif
-		int PolyIndex;
+	internal int PolyIndex;
 	const int NeverCycle = 0x800000;
 
 	// Sample rates from 32000 to 50000 should be fine,
@@ -242,22 +182,12 @@ class Pokey
 
 	int IirAcc;
 
-#if CI1
-	internal
-#endif
-	void StartFrame()
+	internal void StartFrame!()
 	{
-#if CI1
 		DeltaBuffer.Fill(0);
-#else
-		DeltaBuffer.Clear();
-#endif
 	}
 
-#if CI1
-	internal
-#endif
-	void Initialize()
+	internal void Initialize!()
 	{
 		for (int i = 0; i < 4; i++)
 			Channels[i].Initialize();
@@ -273,10 +203,7 @@ class Pokey
 		StartFrame();
 	}
 
-#if CI1
-	internal
-#endif
-	void AddDelta(PokeyPair pokeys, int cycle, int delta)
+	internal void AddDelta!(PokeyPair pokeys, int cycle, int delta)
 	{
 		int i = cycle * pokeys.SampleFactor + pokeys.SampleOffset;
 		// too large value reduces the resolution of delta (if bigger than DeltaShiftCOVOX, DeltaShiftPOKEY)
@@ -289,10 +216,7 @@ class Pokey
 	}
 
 	/// Fills `DeltaBuffer` up to `cycleLimit` basing on current Audf/Audc/Audctl values.
-#if CI1
-	internal
-#endif
-	void GenerateUntilCycle(PokeyPair pokeys, int cycleLimit)
+	internal void GenerateUntilCycle!(PokeyPair pokeys, int cycleLimit)
 	{
 		for (;;) {
 			int cycle = cycleLimit;
@@ -331,10 +255,7 @@ class Pokey
 		}
 	}
 
-#if CI1
-	internal
-#endif
-	void EndFrame(PokeyPair pokeys, int cycle)
+	internal void EndFrame!(PokeyPair pokeys, int cycle)
 	{
 		GenerateUntilCycle(pokeys, cycle);
 		PolyIndex += cycle;
@@ -348,10 +269,7 @@ class Pokey
 		}
 	}
 
-#if CI1
-	internal
-#endif
-	bool IsSilent()
+	internal bool IsSilent()
 	{
 		for (int i = 0; i < 4; i++)
 			if ((Channels[i].Audc & 0xf) != 0)
@@ -359,16 +277,13 @@ class Pokey
 		return true;
 	}
 
-#if CI1
-	internal
-#endif
-	void Mute(int mask)
+	internal void Mute!(int mask)
 	{
 		for (int i = 0; i < 4; i++)
 			Channels[i].SetMute((mask & (1 << i)) != 0, PokeyChannel.MuteUser, 0);
 	}
 
-	void InitMute(int cycle)
+	void InitMute!(int cycle)
 	{
 		bool init = Init;
 		int audctl = Audctl;
@@ -378,10 +293,7 @@ class Pokey
 		Channels[3].SetMute(init && (audctl & 0x28) != 0x28, PokeyChannel.MuteInit, cycle);
 	}
 
-#if CI1
-	internal
-#endif
-	int Poke(PokeyPair pokeys, int addr, int data, int cycle)
+	internal int Poke!(PokeyPair pokeys, int addr, int data, int cycle)
 	{
 		int nextEventCycle = NeverCycle;
 		switch (addr & 0xf) {
@@ -581,10 +493,7 @@ class Pokey
 		return nextEventCycle;
 	}
 
-#if CI1
-	internal
-#endif
-	int CheckIrq(int cycle, int nextEventCycle)
+	internal int CheckIrq!(int cycle, int nextEventCycle)
 	{
 		for (int i = 3; ; i >>= 1) {
 			int timerCycle = Channels[i].TimerCycle;
@@ -600,10 +509,7 @@ class Pokey
 		return nextEventCycle;
 	}
 
-#if CI1
-	internal
-#endif
-	int StoreSample(byte[] buffer, int bufferOffset, int i, ASAPSampleFormat format)
+	internal int StoreSample!(byte[]! buffer, int bufferOffset, int i, ASAPSampleFormat format)
 	{
 		IirAcc += DeltaBuffer[i] - (IirAcc * 3 >> 10);
 		int sample = IirAcc >> 11;
@@ -616,31 +522,18 @@ class Pokey
 			buffer[bufferOffset++] = (sample >> 8) + 128;
 			break;
 		case ASAPSampleFormat.S16LE:
-#if CI1
 			buffer[bufferOffset++] = sample & 0xff;
 			buffer[bufferOffset++] = sample >> 8 & 0xff;
-#else
-			buffer[bufferOffset++] = sample.LowByte;
-			buffer[bufferOffset++] = (sample >> 8).LowByte;
-#endif
 			break;
 		case ASAPSampleFormat.S16BE:
-#if CI1
 			buffer[bufferOffset++] = sample >> 8 & 0xff;
 			buffer[bufferOffset++] = sample & 0xff;
-#else
-			buffer[bufferOffset++] = (sample >> 8).LowByte;
-			buffer[bufferOffset++] = sample.LowByte;
-#endif
 			break;
 		}
 		return bufferOffset;
 	}
 
-#if CI1
-	internal
-#endif
-	void AccumulateTrailing(int i)
+	internal void AccumulateTrailing!(int i)
 	{
 		IirAcc += DeltaBuffer[i] + DeltaBuffer[i + 1];
 	}
@@ -651,45 +544,21 @@ public
 #endif
 class PokeyPair
 {
-#if CI1
-	internal
-#endif
-		byte[511] Poly9Lookup;
-#if CI1
-	internal
-#endif
-		byte[16385] Poly17Lookup;
+	internal byte[511] Poly9Lookup;
+	internal byte[16385] Poly17Lookup;
 	int ExtraPokeyMask;
-#if CI1
-	internal
-#endif
-		Pokey() BasePokey;
-#if CI1
-	internal
-#endif
-		Pokey() ExtraPokey;
+	internal Pokey() BasePokey;
+	internal Pokey() ExtraPokey;
 
 	// DeltaBuffer.Length << SampleFactorShift shouldn't overflow int.
 	// SampleFactorShift could be 21, but that wouldn't improve
 	// accuracy because SampleFactor would be even.
 	const int SampleFactorShift = 20;
-#if CI1
-	internal
-#endif
-		int SampleFactor;
-#if CI1
-	internal
-#endif
-		int SampleOffset;
+	internal int SampleFactor;
+	internal int SampleOffset;
 
-#if CI1
-	internal
-#endif
-		int ReadySamplesStart;
-#if CI1
-	internal
-#endif
-		int ReadySamplesEnd;
+	internal int ReadySamplesStart;
+	internal int ReadySamplesEnd;
 
 #if APOKEYSND
 	public
@@ -699,20 +568,12 @@ class PokeyPair
 		int reg = 0x1ff;
 		for (int i = 0; i < 511; i++) {
 			reg = (((reg >> 5 ^ reg) & 1) << 8) + (reg >> 1);
-#if CI1
 			Poly9Lookup[i] = reg & 0xff;
-#else
-			Poly9Lookup[i] = reg.LowByte;
-#endif
 		}
 		reg = 0x1ffff;
 		for (int i = 0; i < 16385; i++) {
 			reg = (((reg >> 5 ^ reg) & 0xff) << 9) + (reg >> 8);
-#if CI1
 			Poly17Lookup[i] = reg >> 1 & 0xff;
-#else
-			Poly17Lookup[i] = (reg >> 1).LowByte;
-#endif
 		}
 	}
 
@@ -721,19 +582,14 @@ class PokeyPair
 	// unfortunately cito provides only 32-bit arithmetic for the moment,
 	// so I shift by 5 to avoid overflow.
 	static int GetSampleFactor(int clock)
-#if CI1
-		=>
-#else
-		return
-#endif
-			((Pokey.SampleRate << SampleFactorShift - 5) + (clock >> 6)) / (clock >> 5);
+		=> ((Pokey.SampleRate << SampleFactorShift - 5) + (clock >> 6)) / (clock >> 5);
 
 #if APOKEYSND
 	public
-#elif CI1
+#else
 	internal
 #endif
-	void Initialize(bool ntsc, bool stereo)
+	void Initialize!(bool ntsc, bool stereo)
 	{
 		ExtraPokeyMask = stereo ? 0x10 : 0;
 		BasePokey.Initialize();
@@ -746,18 +602,18 @@ class PokeyPair
 
 #if APOKEYSND
 	public
-#elif CI1
+#else
 	internal
 #endif
-	int Poke(int addr, int data, int cycle)
+	int Poke!(int addr, int data, int cycle)
 	{
-		Pokey pokey = (addr & ExtraPokeyMask) != 0 ? ExtraPokey : BasePokey;
+		Pokey! pokey = (addr & ExtraPokeyMask) != 0 ? ExtraPokey : BasePokey;
 		return pokey.Poke(this, addr, data, cycle);
 	}
 
 #if APOKEYSND
 	public
-#elif CI1
+#else
 	internal
 #endif
 	int Peek(int addr, int cycle)
@@ -783,10 +639,10 @@ class PokeyPair
 
 #if APOKEYSND
 	public
-#elif CI1
+#else
 	internal
 #endif
-	void StartFrame()
+	void StartFrame!()
 	{
 		BasePokey.StartFrame();
 		if (ExtraPokeyMask != 0)
@@ -795,10 +651,10 @@ class PokeyPair
 
 #if APOKEYSND
 	public
-#elif CI1
+#else
 	internal
 #endif
-	int EndFrame(int cycle)
+	int EndFrame!(int cycle)
 	{
 		BasePokey.EndFrame(this, cycle);
 		if (ExtraPokeyMask != 0)
@@ -813,10 +669,10 @@ class PokeyPair
 	/// Fills buffer with samples from `DeltaBuffer`.
 #if APOKEYSND
 	public
-#elif CI1
+#else
 	internal
 #endif
-	int Generate(byte[] buffer, int bufferOffset, int blocks, ASAPSampleFormat format)
+	int Generate!(byte[]! buffer, int bufferOffset, int blocks, ASAPSampleFormat format)
 	{
 		int i = ReadySamplesStart;
 		int samplesEnd = ReadySamplesEnd;
@@ -841,12 +697,6 @@ class PokeyPair
 #endif
 	}
 
-#if CI1
 	internal bool IsSilent()
-		=>
-#else
-	bool IsSilent()
-		return
-#endif
-			BasePokey.IsSilent() && ExtraPokey.IsSilent();
+		=> BasePokey.IsSilent() && ExtraPokey.IsSilent();
 }

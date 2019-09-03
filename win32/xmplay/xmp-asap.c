@@ -282,14 +282,15 @@ static DWORD WINAPI ASAP_Process(float *buf, DWORD count)
 static void WINAPI ASAP_GetSamples(char *buf)
 {
 	const ASAPInfo *info = ASAP_GetInfo(asap);
-	const char *s = ASAPInfo_GetInstrumentName(info, module, module_len, 0);
-	if (s != NULL) {
+	int offset = ASAPInfo_GetInstrumentNamesOffset(info, module, module_len);
+	if (offset > 0) {
 		int i = 0;
 		buf += sprintf(buf, "instrument list:\r\n");
 		do {
+			const char *s = (const char *) module + offset;
 			buf += sprintf(buf, "%03d\t%s\r\n", i, s);
-			s = ASAPInfo_GetInstrumentName(info, module, module_len, ++i);
-		} while (s != NULL);
+			offset += strnlen(s, module_len - offset) + 1;
+		} while (offset < module_len);
 		buf[-2] = '\0'; /* chomp trailing \r\n */
 	}
 }

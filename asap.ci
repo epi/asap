@@ -33,10 +33,7 @@ public class ASAP
 	/// Output sample rate.
 	public const int SampleRate = Pokey.SampleRate;
 
-#if CI1
-	internal
-#endif
-		int NextEventCycle;
+	internal int NextEventCycle;
 
 	Cpu6502() Cpu;
 
@@ -71,7 +68,7 @@ public class ASAP
 
 	/// Enables silence detection.
 	/// Causes playback to stop after the specified period of silence.
-	public void DetectSilence(
+	public void DetectSilence!(
 		/// Length of silence which ends playback. Zero disables silence detection.
 		int seconds)
 	{
@@ -79,10 +76,7 @@ public class ASAP
 		SilenceCyclesCounter = SilenceCycles = seconds * 1773447;
 	}
 
-#if CI1
-	internal
-#endif
-	int PeekHardware(int addr)
+	internal int PeekHardware(int addr)
 	{
 		switch (addr & 0xff1f) {
 		case 0xd014:
@@ -120,10 +114,7 @@ public class ASAP
 		}
 	}
 
-#if CI1
-	internal
-#endif
-	void PokeHardware(int addr, int data)
+	internal void PokeHardware!(int addr, int data)
 	{
 		if (addr >> 8 == 0xd2) {
 			int t = Pokeys.Poke(addr, data, Cpu.Cycle);
@@ -138,7 +129,7 @@ public class ASAP
 			Nmist = Cpu.Cycle < 28292 ? NmiStatus.OnVBlank : NmiStatus.Reset;
 		}
 		else if ((addr & 0xff00) == ModuleInfo.GetCovoxAddress()) {
-			Pokey pokey;
+			Pokey! pokey;
 			addr &= 3;
 			if (addr == 0 || addr == 3)
 				pokey = Pokeys.BasePokey;
@@ -168,22 +159,17 @@ public class ASAP
 			Cpu.Memory[addr] = data;
 	}
 
-	void Call6502(int addr)
+	void Call6502!(int addr)
 	{
 		const int codeAddr = 0xd200;
 		Cpu.Memory[codeAddr] = 0x20; // JSR
-		Cpu.Memory[codeAddr + 1] = addr
-#if CI1
-			& 0xff;
-#else
-			.LowByte;
-#endif
+		Cpu.Memory[codeAddr + 1] = addr & 0xff;
 		Cpu.Memory[codeAddr + 2] = addr >> 8;
 		Cpu.Memory[codeAddr + 3] = 0xd2; // escape
 		Cpu.Pc = codeAddr;
 	}
 
-	void Call6502Player()
+	void Call6502Player!()
 	{
 		int player = ModuleInfo.Player;
 		switch (ModuleInfo.Type) {
@@ -210,12 +196,7 @@ public class ASAP
 				Cpu.Memory[codeAddr + 4] = 0x98; // TYA
 				Cpu.Memory[codeAddr + 5] = 0x48; // PHA
 				Cpu.Memory[codeAddr + 6] = 0x20; // JSR
-				Cpu.Memory[codeAddr + 7] = player
-#if CI1
-					& 0xff;
-#else
-					.LowByte;
-#endif
+				Cpu.Memory[codeAddr + 7] = player & 0xff;
 				Cpu.Memory[codeAddr + 8] = player >> 8;
 				Cpu.Memory[codeAddr + 9] = 0x68; // PLA
 				Cpu.Memory[codeAddr + 10] = 0xa8; // TAY
@@ -228,19 +209,9 @@ public class ASAP
 			break;
 		case ASAPModuleType.SapS:
 			int i = Cpu.Memory[0x45] - 1;
-			Cpu.Memory[0x45] = i
-#if CI1
-				& 0xff;
-#else
-				.LowByte;
-#endif
+			Cpu.Memory[0x45] = i & 0xff;
 			if (i == 0)
-				Cpu.Memory[0xb07b] = (Cpu.Memory[0xb07b] + 1)
-#if CI1
-					& 0xff;
-#else
-					.LowByte;
-#endif
+				Cpu.Memory[0xb07b] = (Cpu.Memory[0xb07b] + 1) & 0xff;
 			break;
 #if !ASAP_ONLY_SAP
 		case ASAPModuleType.Dlt:
@@ -268,19 +239,9 @@ public class ASAP
 		}
 	}
 
-#if CI1
-	internal bool IsIrq()
-		=>
-#else
-	bool IsIrq()
-		return
-#endif
-			Pokeys.BasePokey.Irqst != 0xff;
+	internal bool IsIrq() => Pokeys.BasePokey.Irqst != 0xff;
 
-#if CI1
-	internal
-#endif
-	void HandleEvent()
+	internal void HandleEvent!()
 	{
 		int cycle = Cpu.Cycle;
 		if (cycle >= NextScanlineCycle) {
@@ -298,7 +259,7 @@ public class ASAP
 		NextEventCycle = nextEventCycle;
 	}
 
-	int Do6502Frame()
+	int Do6502Frame!()
 	{
 		NextEventCycle = 0;
 		NextScanlineCycle = 0;
@@ -317,7 +278,7 @@ public class ASAP
 		return cycles;
 	}
 
-	int DoFrame()
+	int DoFrame!()
 	{
 		GtiaOrCovoxPlayedThisFrame = false;
 		Pokeys.StartFrame();
@@ -327,16 +288,14 @@ public class ASAP
 	}
 
 	/// Loads music data ("module").
-	public void Load(
+	public void Load!(
 		/// Filename, used to determine the format.
 		string filename,
 		/// Contents of the file.
 		byte[] module,
 		/// Length of the file.
 		int moduleLen)
-#if CI1
 		throws
-#endif
 	{
 		ModuleInfo.Load(filename, module, moduleLen);
 #if !ASAP_ONLY_SAP
@@ -358,11 +317,7 @@ public class ASAP
 			return;
 		}
 #endif
-#if CI1
 		Cpu.Memory.Fill(0);
-#else
-		Cpu.Memory.Clear();
-#endif
 		int moduleIndex = ModuleInfo.HeaderLen + 2;
 		while (moduleIndex + 5 <= moduleLen) {
 			int startAddr = ASAPInfo.GetWord(module, moduleIndex);
@@ -381,18 +336,10 @@ public class ASAP
 	}
 
 	/// Returns information about the loaded module.
-	public ASAPInfo GetInfo()
-#if CI1
-		=>
-#else
-		return
-#endif
-			ModuleInfo;
+	public ASAPInfo GetInfo() => ModuleInfo;
 
-	void Do6502Init(int pc, int a, int x, int y)
-#if CI1
+	void Do6502Init!(int pc, int a, int x, int y)
 		throws
-#endif
 	{
 		Cpu.Pc = pc;
 		Cpu.A = a & 0xff;
@@ -402,12 +349,7 @@ public class ASAP
 		// escape code
 		Cpu.Memory[escapeAddr] = 0xd2;
 		// return address points to the escape code
-		Cpu.Memory[0x1fe] = (escapeAddr - 1)
-#if CI1
-			& 0xff;
-#else
-			.LowByte;
-#endif
+		Cpu.Memory[0x1fe] = (escapeAddr - 1) & 0xff;
 		Cpu.Memory[0x1ff] = (escapeAddr - 1) >> 8;
 		Cpu.S = 0xfd;
 		for (int frame = 0; frame < 50; frame++) {
@@ -419,7 +361,7 @@ public class ASAP
 	}
 
 	/// Mutes the selected POKEY channels.
-	public void MutePokeyChannels(
+	public void MutePokeyChannels!(
 		/// An 8-bit mask which selects POKEY channels to be muted.
 		int mask)
 	{
@@ -428,14 +370,12 @@ public class ASAP
 	}
 
 	/// Prepares playback of the specified song of the loaded module.
-	public void PlaySong(
+	public void PlaySong!(
 		/// Zero-based song index.
 		int song,
 		/// Playback time in milliseconds, -1 means infinity.
 		int duration)
-#if CI1
 		throws
-#endif
 	{
 		if (song < 0 || song >= ModuleInfo.GetSongs())
 			throw "Song number out of range";
@@ -515,38 +455,18 @@ public class ASAP
 
 	/// Returns current playback position in blocks.
 	/// A block is one sample or a pair of samples for stereo.
-	public int GetBlocksPlayed()
-#if CI1
-		=>
-#else
-		return
-#endif
-			BlocksPlayed;
+	public int GetBlocksPlayed() => BlocksPlayed;
 
 	/// Returns current playback position in milliseconds.
-	public int GetPosition()
-#if CI1
-		=>
-#else
-		return
-#endif
-			BlocksPlayed * 10 / (SampleRate / 100);
+	public int GetPosition() => BlocksPlayed * 10 / (SampleRate / 100);
 
-	static int MillisecondsToBlocks(int milliseconds)
-#if CI1
-		=>
-#else
-		return
-#endif
-			milliseconds * (SampleRate / 100) / 10;
+	static int MillisecondsToBlocks(int milliseconds) => milliseconds * (SampleRate / 100) / 10;
 
 	/// Changes the playback position.
-	public void SeekSample(
+	public void SeekSample!(
 		/// The requested absolute position in samples (always 44100 per second, even in stereo).
 		int block)
-#if CI1
 		throws
-#endif
 	{
 		if (block < BlocksPlayed)
 			PlaySong(CurrentSong, CurrentDuration);
@@ -559,45 +479,32 @@ public class ASAP
 	}
 
 	/// Changes the playback position.
-	public void Seek(
+	public void Seek!(
 		/// The requested absolute position in milliseconds.
 		int position)
-#if CI1
 		throws
-#endif
 	{
 		SeekSample(MillisecondsToBlocks(position));
 	}
 
-	static void PutLittleEndian(byte[] buffer, int offset, int value)
+	static void PutLittleEndian(byte[]! buffer, int offset, int value)
 	{
-#if CI1
 		buffer[offset] = value & 0xff;
 		buffer[offset + 1] = value >> 8 & 0xff;
 		buffer[offset + 2] = value >> 16 & 0xff;
 		buffer[offset + 3] = value >> 24 & 0xff;
-#else
-		buffer[offset] = value.LowByte;
-		buffer[offset + 1] = (value >> 8).LowByte;
-		buffer[offset + 2] = (value >> 16).LowByte;
-		buffer[offset + 3] = (value >> 24).LowByte;
-#endif
 	}
 
 	static int FourCC(string s)
-#if CI1
 		=> (s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24) & 0x7fffffff;
-#else
-		return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
-#endif
 
-	static void PutLittleEndians(byte[] buffer, int offset, int value1, int value2)
+	static void PutLittleEndians(byte[]! buffer, int offset, int value1, int value2)
 	{
 		PutLittleEndian(buffer, offset, value1);
 		PutLittleEndian(buffer, offset + 4, value2);
 	}
 
-	static int PutWavMetadata(byte[] buffer, int offset, int fourCC, string value)
+	static int PutWavMetadata(byte[]! buffer, int offset, int fourCC, string value)
 	{
 		int len = value.Length;
 		if (len > 0) {
@@ -617,7 +524,7 @@ public class ASAP
 	/// Returns the number of changed bytes.
 	public int GetWavHeader(
 		/// The destination buffer.
-		byte[] buffer,
+		byte[]! buffer,
 		/// Format of samples.
 		ASAPSampleFormat format,
 		/// Include metadata (title, author, date).
@@ -664,7 +571,7 @@ public class ASAP
 		return i + 8;
 	}
 
-	int GenerateAt(byte[] buffer, int bufferOffset, int bufferLen, ASAPSampleFormat format)
+	int GenerateAt!(byte[]! buffer, int bufferOffset, int bufferLen, ASAPSampleFormat format)
 	{
 		if (SilenceCycles > 0 && SilenceCyclesCounter <= 0)
 			return 0;
@@ -697,19 +604,14 @@ public class ASAP
 	}
 
 	/// Fills the specified buffer with generated samples.
-	public int Generate(
+	public int Generate!(
 		/// The destination buffer.
-		byte[] buffer,
+		byte[]! buffer,
 		/// Number of bytes to fill.
 		int bufferLen,
 		/// Format of samples.
 		ASAPSampleFormat format)
-#if CI1
-		=>
-#else
-		return
-#endif
-			GenerateAt(buffer, 0, bufferLen, format);
+		=> GenerateAt(buffer, 0, bufferLen, format);
 
 	/// Returns POKEY channel volume - an integer between 0 and 15.
 	public int GetPokeyChannelVolume(

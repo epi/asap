@@ -10,7 +10,7 @@ AR = ar
 ARFLAGS = rc
 DO_CC = $(DO)$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(if $(filter %.so,$@),-shared -fPIC) $(INCLUDEOPTS) $(filter %.c,$^) $(LDFLAGS)
 DO_AR = $(DO)$(AR) $(ARFLAGS) $@ $^
-CITO = $(DO)cito -o $@ $(patsubst %,-I %,$(sort $(dir $(filter-out %.ci,$^)))) $(filter %.ci,$^)
+CITO = $(DO)cito1 -o $@ $(patsubst %,-I %,$(sort $(dir $(filter-out %.ci,$^)))) $(filter %.ci,$^)
 INSTALL = install
 INSTALL_PROGRAM = mkdir -p $(DESTDIR)$(2) && $(INSTALL) $(1) $(DESTDIR)$(2)/$(or $(3),$(1))
 INSTALL_DATA = mkdir -p $(DESTDIR)$(2) && $(INSTALL) -m 644 $(1) $(DESTDIR)$(2)/$(1)
@@ -105,7 +105,7 @@ CLEAN += asapscan asapscan.exe
 asap-asapscan.h: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX) | asap-asapscan.c
 
 asap-asapscan.c: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
-	$(CITO) -l c99 -D ASAPSCAN
+	$(CITO) -D ASAPSCAN
 CLEAN += asap-asapscan.c asap-asapscan.h
 
 # asap.[ch]
@@ -113,14 +113,14 @@ CLEAN += asap-asapscan.c asap-asapscan.h
 $(srcdir)asap.h: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(ASM6502_OBX) | $(srcdir)asap.c
 
 $(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(ASM6502_OBX)
-	$(CITO) -l c99 -D C
+	$(CITO) -D C
 
 # aatr.[ch]
 
 $(srcdir)aatr.h: $(srcdir)aatr.ci | $(srcdir)aatr.c
 
 $(srcdir)aatr.c: $(srcdir)aatr.ci
-	$(CITO) -l c99
+	$(CITO)
 
 clean:
 	$(RM) $(CLEAN)
@@ -134,8 +134,6 @@ include $(srcdir)vlc/vlc.mk
 include $(srcdir)xmms/xmms.mk
 
 include $(srcdir)csharp/csharp.mk
-include $(srcdir)d/d.mk
 include $(srcdir)java/java.mk
 include $(srcdir)javascript/javascript.mk
-include $(srcdir)perl/perl.mk
 include $(srcdir)win32/win32.mk

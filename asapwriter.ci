@@ -21,49 +21,25 @@
 
 class ASAPNativeModuleWriter
 {
-#if CI1
-	internal
-#endif
-		ASAPWriter Writer;
-#if CI1
-	internal
-#endif
-		byte[] SourceModule;
-#if CI1
-	internal
-#endif
-		int SourceOffset;
+	internal ASAPWriter! Writer;
+	internal byte[] SourceModule;
+	internal int SourceOffset;
 	int AddressDiff;
 
 	int GetByte(int offset)
-#if CI1
-		=>
-#else
-		return
-#endif
-			SourceModule[SourceOffset + offset];
+		=> SourceModule[SourceOffset + offset];
 
-#if CI1
 	internal int GetWord(int offset)
-		=>
-#else
-	int GetWord(int offset)
-		return
-#endif
-			ASAPInfo.GetWord(SourceModule, SourceOffset + offset);
+		=> ASAPInfo.GetWord(SourceModule, SourceOffset + offset);
 
 	void Copy(int endOffset)
-#if CI1
 		throws
-#endif
 	{
 		Writer.WriteBytes(SourceModule, SourceOffset + Writer.OutputOffset, SourceOffset + endOffset);
 	}
 
 	void RelocateBytes(int lowOffset, int highOffset, int count, int shift)
-#if CI1
 		throws
-#endif
 	{
 		lowOffset += SourceOffset;
 		highOffset += SourceOffset;
@@ -76,9 +52,7 @@ class ASAPNativeModuleWriter
 	}
 
 	void RelocateLowHigh(int count)
-#if CI1
 		throws
-#endif
 	{
 		int lowOffset = Writer.OutputOffset;
 		RelocateBytes(lowOffset, lowOffset + count, count, 0);
@@ -86,9 +60,7 @@ class ASAPNativeModuleWriter
 	}
 
 	void RelocateWords(int count)
-#if CI1
 		throws
-#endif
 	{
 		while (--count >= 0) {
 			int address = GetWord(Writer.OutputOffset);
@@ -98,13 +70,8 @@ class ASAPNativeModuleWriter
 		}
 	}
 
-#if CI1
-	internal
-#endif
-	void Write(ASAPInfo info, ASAPModuleType type, int moduleLen)
-#if CI1
+	internal void Write!(ASAPInfo info, ASAPModuleType type, int moduleLen)
 		throws
-#endif
 	{
 		int startAddr = GetWord(2);
 		AddressDiff = info.GetMusicAddress() < 0 ? 0 : info.GetMusicAddress() - startAddr;
@@ -184,12 +151,16 @@ public class ASAPWriter
 {
 	public const int MaxSaveExts = 3;
 
+	public ASAPWriter()
+	{
+	}
+
 	/// Enumerates possible file types the given module can be written as.
 	/// Returns the number of extensions written to `exts`.
 	public static int GetSaveExts(
 		/// Receives filename extensions without the leading dot.
 		/// Must be `MaxSaveExts` long.
-		string[] exts,
+		string[]! exts,
 		/// File information.
 		ASAPInfo info,
 		/// Contents of the file.
@@ -224,13 +195,13 @@ public class ASAPWriter
 		return i;
 	}
 
-	static void TwoDigitsToString(byte[] result, int offset, int value)
+	static void TwoDigitsToString(byte[]! result, int offset, int value)
 	{
 		result[offset] = '0' + value / 10;
 		result[offset + 1] = '0' + value % 10;
 	}
 
-	static bool SecondsToString(byte[] result, int offset, int value)
+	static bool SecondsToString(byte[]! result, int offset, int value)
 	{
 		if (value < 0 || value >= 100 * 60 * 1000)
 			return false;
@@ -249,7 +220,7 @@ public class ASAPWriter
 	/// Returns the number of bytes written to `result`.
 	public static int DurationToString(
 		/// The output buffer.
-		byte[] result,
+		byte[]! result,
 		/// Number of milliseconds.
 		int value)
 	{
@@ -267,55 +238,34 @@ public class ASAPWriter
 		return 9;
 	}
 
-#if CI1
-	internal
-#endif
-		byte[] Output;
-#if CI1
-	internal
-#endif
-		int OutputOffset;
+	internal byte[]! Output;
+	internal int OutputOffset;
 	int OutputEnd;
 
-	public void SetOutput(byte[] output, int startIndex, int endIndex)
+	public void SetOutput!(byte[]! output, int startIndex, int endIndex)
 	{
 		Output = output;
 		OutputOffset = startIndex;
 		OutputEnd = endIndex;
 	}
 
-#if CI1
-	internal
-#endif
-	void WriteByte(int value)
-#if CI1
+	internal void WriteByte!(int value)
 		throws
-#endif
 	{
 		if (OutputOffset >= OutputEnd)
 			throw "Output full";
 		Output[OutputOffset++] = value;
 	}
 
-#if CI1
-	internal
-#endif
-	void WriteWord(int value)
-#if CI1
+	internal void WriteWord!(int value)
 		throws
-#endif
 	{
 		WriteByte(value & 0xff);
 		WriteByte(value >> 8);
 	}
 
-#if CI1
-	internal
-#endif
-	void WriteBytes(byte[] array, int startIndex, int endIndex)
-#if CI1
+	internal void WriteBytes!(byte[] array, int startIndex, int endIndex)
 		throws
-#endif
 	{
 		int length = endIndex - startIndex;
 		if (OutputOffset + length > OutputEnd)
@@ -324,20 +274,16 @@ public class ASAPWriter
 		OutputOffset += length;
 	}
 
-	void WriteString(string s)
-#if CI1
+	void WriteString!(string s)
 		throws
-#endif
 	{
 		int n = s.Length;
 		for (int i = 0; i < n; i++)
 			WriteByte(s[i]);
 	}
 
-	void WriteDec(int value)
-#if CI1
+	void WriteDec!(int value)
 		throws
-#endif
 	{
 		if (value >= 10) {
 			WriteDec(value / 10);
@@ -346,10 +292,8 @@ public class ASAPWriter
 		WriteByte('0' + value);
 	}
 
-	void WriteTextSapTag(string tag, string value)
-#if CI1
+	void WriteTextSapTag!(string tag, string value)
 		throws
-#endif
 	{
 		WriteString(tag);
 		WriteByte('"');
@@ -361,10 +305,8 @@ public class ASAPWriter
 		WriteByte('\n');
 	}
 
-	void WriteDecSapTag(string tag, int value)
-#if CI1
+	void WriteDecSapTag!(string tag, int value)
 		throws
-#endif
 	{
 		WriteString(tag);
 		WriteDec(value);
@@ -372,10 +314,8 @@ public class ASAPWriter
 		WriteByte('\n');
 	}
 
-	void WriteHexSapTag(string tag, int value)
-#if CI1
+	void WriteHexSapTag!(string tag, int value)
 		throws
-#endif
 	{
 		if (value < 0)
 			return;
@@ -388,10 +328,8 @@ public class ASAPWriter
 		WriteByte('\n');
 	}
 
-	void WriteSapHeader(ASAPInfo info, int type, int init, int player)
-#if CI1
+	void WriteSapHeader!(ASAPInfo info, int type, int init, int player)
 		throws
-#endif
 	{
 		WriteString("SAP\r\n");
 		WriteTextSapTag("AUTHOR ", info.GetAuthor());
@@ -430,10 +368,8 @@ public class ASAPWriter
 		}
 	}
 
-	void WriteExecutableHeader(int[] initAndPlayer, ASAPInfo info, int type, int init, int player)
-#if CI1
+	void WriteExecutableHeader!(int[]! initAndPlayer, ASAPInfo info, int type, int init, int player)
 		throws
-#endif
 	{
 		if (initAndPlayer == null)
 			WriteSapHeader(info, type, init, player);
@@ -443,10 +379,8 @@ public class ASAPWriter
 		}
 	}
 
-	void WritePlaTaxLda0()
-#if CI1
+	void WritePlaTaxLda0!()
 		throws
-#endif
 	{
 		WriteByte(0x68);
 		WriteByte(0xaa);
@@ -454,10 +388,8 @@ public class ASAPWriter
 		WriteByte(0);
 	}
 
-	void WriteCmcInit(int[] initAndPlayer, ASAPInfo info)
-#if CI1
+	void WriteCmcInit!(int[]! initAndPlayer, ASAPInfo info)
 		throws
-#endif
 	{
 		if (initAndPlayer == null)
 			return; // to SAP
@@ -476,19 +408,15 @@ public class ASAPWriter
 		initAndPlayer[1] += 6;
 	}
 
-	void WriteExecutableFromSap(int[] initAndPlayer, ASAPInfo info, int type, byte[] module, int moduleLen)
-#if CI1
+	void WriteExecutableFromSap!(int[]! initAndPlayer, ASAPInfo info, int type, byte[] module, int moduleLen)
 		throws
-#endif
 	{
 		WriteExecutableHeader(initAndPlayer, info, type, info.GetInitAddress(), info.Player);
 		WriteBytes(module, info.HeaderLen, moduleLen);
 	}
 
-	int WriteExecutableHeaderForSongPos(int[] initAndPlayer, ASAPInfo info, int player, int codeForOneSong, int codeForManySongs, int playerOffset)
-#if CI1
+	int WriteExecutableHeaderForSongPos!(int[]! initAndPlayer, ASAPInfo info, int player, int codeForOneSong, int codeForManySongs, int playerOffset)
 		throws
-#endif
 	{
 		if (info.GetSongs() != 1) {
 			WriteExecutableHeader(initAndPlayer, info, 'B', player - codeForManySongs, player + playerOffset);
@@ -498,10 +426,8 @@ public class ASAPWriter
 		return player - codeForOneSong;
 	}
 
-	internal void WriteExecutable(int[] initAndPlayer, ASAPInfo info, byte[] module, int moduleLen)
-#if CI1
+	internal void WriteExecutable!(int[]! initAndPlayer, ASAPInfo info, byte[] module, int moduleLen)
 		throws
-#endif
 	{
 		byte[] playerRoutine = ASAP6502.GetPlayerRoutine(info);
 		int player = -1;
@@ -606,9 +532,6 @@ public class ASAPWriter
 			WriteBytes(playerRoutine, 2, playerLastByte - player + 7);
 			break;
 		case ASAPModuleType.Tmc:
-#if !CI1
-			native { ; }
-#endif
 			const int[4] tmcPlayerOffset = { 3, -9, -10, -10 };
 			int player2 = player + tmcPlayerOffset[module[0x25] - 1];
 			const int[4] tmcInitOffset = { -14, -16, -17, -17 };
@@ -691,14 +614,14 @@ public class ASAPWriter
 
 	const int XexInfoCharactersPerLine = 32;
 
-	static int PadXexInfo(byte[] dest, int offset, int endColumn)
+	static int PadXexInfo(byte[]! dest, int offset, int endColumn)
 	{
 		while (offset % XexInfoCharactersPerLine != endColumn)
 			dest[offset++] = ' ';
 		return offset;
 	}
 
-	static int FormatXexInfoText(byte[] dest, int destLen, int endColumn, string src, bool author)
+	static int FormatXexInfoText(byte[]! dest, int destLen, int endColumn, string src, bool author)
 	{
 		int srcLen = src.Length;
 		for (int srcOffset = 0; srcOffset < srcLen; ) {
@@ -728,10 +651,8 @@ public class ASAPWriter
 		return PadXexInfo(dest, destLen, endColumn);
 	}
 
-	void WriteXexInfoTextDl(int address, int len, int verticalScrollAt)
-#if CI1
+	void WriteXexInfoTextDl!(int address, int len, int verticalScrollAt)
 		throws
-#endif
 	{
 		WriteByte(verticalScrollAt == 0 ? 0x62 : 0x42);
 		WriteWord(address);
@@ -739,10 +660,8 @@ public class ASAPWriter
 			WriteByte(i == verticalScrollAt ? 0x22 : 2);
 	}
 
-	void WriteXexInfo(ASAPInfo info)
-#if CI1
+	void WriteXexInfo!(ASAPInfo info)
 		throws
-#endif
 	{
 		byte[256] title;
 		int titleLen = FormatXexInfoText(title, 0, 0, info.GetTitle().Length == 0 ? "(untitled)" : info.GetTitle(), false);
@@ -777,11 +696,7 @@ public class ASAPWriter
 		int titleAddress = otherAddress - authorLen - 8 - titleLen;
 #endif
 		WriteWord(titleAddress);
-#if CI1
 		WriteBytes(resource<byte[]>("xexinfo.obx"), 4, 6);
-#else
-		WriteBytes(BinaryResource("xexinfo.obx"), 4, 6);
-#endif
 
 		WriteBytes(title, 0, titleLen);
 		for (int i = 0; i < 8; i++)
@@ -830,17 +745,11 @@ public class ASAPWriter
 		for (int i = 0; i < otherLen; i += XexInfoCharactersPerLine)
 			WriteByte(2);
 #endif
-#if CI1
 		WriteBytes(resource<byte[]>("xexinfo.obx"), 6, resource<byte[]>("xexinfo.obx").Length);
-#else
-		WriteBytes(BinaryResource("xexinfo.obx"), 6, BinaryResource("xexinfo.obx").Length);
-#endif
 	}
 
-	void WriteNative(ASAPInfo info, byte[] module, int moduleLen)
-#if CI1
+	void WriteNative!(ASAPInfo info, byte[] module, int moduleLen)
 		throws
-#endif
 	{
 		ASAPNativeModuleWriter() nativeWriter;
 		nativeWriter.Writer = this;
@@ -881,7 +790,7 @@ public class ASAPWriter
 	}
 
 	/// Writes the given module in a possibly different file format.
-	public int Write(
+	public int Write!(
 		/// Output filename, used to determine the format.
 		string targetFilename,
 		/// File information got from the source file with data updated for the output file.
@@ -892,9 +801,7 @@ public class ASAPWriter
 		int moduleLen,
 		/// Display information (xex output only).
 		bool tag)
-#if CI1
 		throws
-#endif
 	{
 		int destExt = ASAPInfo.GetPackedExt(targetFilename);
 		switch (destExt) {
@@ -911,11 +818,7 @@ public class ASAPWriter
 				case ASAPModuleType.SapD:
 					if (info.GetPlayerRateScanlines() != 312)
 						throw "Impossible conversion";
-#if CI1
 					WriteBytes(resource<byte[]>("xexd.obx"), 2, resource<byte[]>("xexd.obx").Length);
-#else
-					WriteBytes(BinaryResource("xexd.obx"), 2, BinaryResource("xexd.obx").Length);
-#endif
 					WriteWord(initAndPlayer[0]);
 					if (initAndPlayer[1] < 0) {
 						WriteByte(0x60); // RTS
@@ -931,11 +834,7 @@ public class ASAPWriter
 				case ASAPModuleType.SapS:
 					throw "Impossible conversion";
 				default:
-#if CI1
 					WriteBytes(resource<byte[]>("xexb.obx"), 2, resource<byte[]>("xexb.obx").Length);
-#else
-					WriteBytes(BinaryResource("xexb.obx"), 2, BinaryResource("xexb.obx").Length);
-#endif
 					WriteWord(initAndPlayer[0]);
 					WriteByte(0x4c); // JMP
 					WriteWord(initAndPlayer[1]);

@@ -1,6 +1,6 @@
 // flashpack.ci - Atari 8-bit executable compression
 //
-// Copyright (C) 2011-2018  Piotr Fusik
+// Copyright (C) 2011-2019  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -31,19 +31,10 @@ enum FlashPackItemType
 
 class FlashPackItem
 {
-#if CI1
-	internal
-#endif
-		FlashPackItemType Type;
-#if CI1
-	internal
-#endif
-		int Value;
+	internal FlashPackItemType Type;
+	internal int Value;
 
-#if CI1
-	internal
-#endif
-	int WriteValueTo(byte[] buffer, int index)
+	internal int WriteValueTo(byte[]! buffer, int index)
 	{
 		switch (Type) {
 		case FlashPackItemType.Literal:
@@ -62,11 +53,7 @@ class FlashPackItem
 		case FlashPackItemType.SetAddress:
 			int value = Value - 0x80;
 			buffer[index] = 0;
-#if CI1
 			buffer[index + 1] = value & 0xff;
-#else
-			buffer[index + 1] = value.LowByte;
-#endif
 			buffer[index + 2] = value >> 8;
 			return 3;
 		default: // case FlashPackItemType.EndOfStream:
@@ -84,9 +71,7 @@ class FlashPack
 	const int MinLoadAddress = 0x2000; // safe for most of Atari DOSes
 
 	int FindHole()
-#if CI1
 		throws
-#endif
 	{
 		const int holeSize = 0x400; // FIXME: just a guess
 		int end = 0xbc1f; // below the Display List for standard text mode
@@ -119,7 +104,7 @@ class FlashPack
 		return flags & 0xff;
 	}
 
-	void PutItems()
+	void PutItems!()
 	{
 		int outerFlags = 0;
 		for (int i = 0; i < ItemsCount; i += 8) {
@@ -137,7 +122,7 @@ class FlashPack
 		}
 	}
 
-	void PutItem(FlashPackItemType type, int value)
+	void PutItem!(FlashPackItemType type, int value)
 	{
 		if (ItemsCount >= 64) {
 			PutItems();
@@ -149,14 +134,9 @@ class FlashPack
 	}
 
 	bool IsLiteralPreferred()
-#if CI1
-		=>
-#else
-		return
-#endif
-			(ItemsCount & 7) == 7 && GetInnerFlags(ItemsCount - 7) == 0;
+		=> (ItemsCount & 7) == 7 && GetInnerFlags(ItemsCount - 7) == 0;
 
-	void CompressMemoryArea(int startAddress, int endAddress)
+	void CompressMemoryArea!(int startAddress, int endAddress)
 	{
 		int lastDistance = -1;
 
@@ -264,19 +244,14 @@ class FlashPack
 		}
 	}
 
-	void PutPoke(int address, int value)
+	void PutPoke!(int address, int value)
 	{
 		PutItem(FlashPackItemType.SetAddress, address);
 		PutItem(FlashPackItemType.Literal, value);
 	}
 
-#if CI1
-	internal
-#endif
-	void Compress(ASAPWriter w)
-#if CI1
+	internal void Compress!(ASAPWriter! w)
 		throws
-#endif
 	{
 		// Load executable from w.Output up to w.OutputOffset into Memory
 		for (int i = 0; i < 65536; i++)

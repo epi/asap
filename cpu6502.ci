@@ -1,6 +1,6 @@
 // cpu6502.ci - 6502 CPU emulator
 //
-// Copyright (C) 2010-2018  Piotr Fusik
+// Copyright (C) 2010-2019  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -44,39 +44,15 @@
 
 class Cpu6502
 {
-#if CI1
-	internal
-#endif
-		ASAP Asap;
-#if CI1
-	internal
-#endif
-		byte[65536] Memory;
-#if CI1
-	internal
-#endif
-		int Cycle;
+	internal ASAP! Asap;
+	internal byte[65536] Memory;
+	internal int Cycle;
 
-#if CI1
-	internal
-#endif
-		int Pc;
-#if CI1
-	internal
-#endif
-		int A;
-#if CI1
-	internal
-#endif
-		int X;
-#if CI1
-	internal
-#endif
-		int Y;
-#if CI1
-	internal
-#endif
-		int S;
+	internal int Pc;
+	internal int A;
+	internal int X;
+	internal int Y;
+	internal int S;
 	int Nz;
 	int C;
 	int Vdi;
@@ -86,10 +62,7 @@ class Cpu6502
 	const int IFlag = 0x04;
 	const int ZFlag = 0x02;
 
-#if CI1
-	internal
-#endif
-	void Reset()
+	internal void Reset!()
 	{
 		Cycle = 0;
 		Nz = 0;
@@ -105,7 +78,7 @@ class Cpu6502
 			return Memory[addr];
 	}
 
-	void Poke(int addr, int data)
+	void Poke!(int addr, int data)
 	{
 		if ((addr & 0xf900) == 0xd000)
 			Asap.PokeHardware(addr, data);
@@ -113,7 +86,7 @@ class Cpu6502
 			Memory[addr] = data;
 	}
 
-	int PeekReadModifyWrite(int addr)
+	int PeekReadModifyWrite!(int addr)
 	{
 		if (addr >> 8 == 0xd2) {
 			Cycle--;
@@ -125,14 +98,14 @@ class Cpu6502
 		return Memory[addr];
 	}
 
-	int Pull()
+	int Pull!()
 	{
 		int s = (S + 1) & 0xff;
 		S = s;
 		return Memory[0x0100 + s];
 	}
 
-	void PullFlags()
+	void PullFlags!()
 	{
 		int data = Pull();
 		Nz = ((data & 0x80) << 1) + (~data & ZFlag);
@@ -140,23 +113,20 @@ class Cpu6502
 		Vdi = data & (VFlag | DFlag | IFlag);
 	}
 
-	void Push(int data)
+	void Push!(int data)
 	{
 		int s = S;
 		Memory[0x0100 + s] = data;
 		S = (s - 1) & 0xff;
 	}
 
-#if CI1
-	internal
-#endif
-	void PushPc()
+	internal void PushPc!()
 	{
 		Push(Pc >> 8);
 		Push(Pc & 0xff);
 	}
 
-	void PushFlags(int b)
+	void PushFlags!(int b)
 	{
 		int nz = Nz;
 		b += ((nz | nz >> 1) & 0x80) + Vdi + C;
@@ -165,7 +135,7 @@ class Cpu6502
 		Push(b);
 	}
 
-	void AddWithCarry(int data)
+	void AddWithCarry!(int data)
 	{
 		int a = A;
 		int vdi = Vdi;
@@ -198,7 +168,7 @@ class Cpu6502
 		}
 	}
 
-	void SubtractWithCarry(int data)
+	void SubtractWithCarry!(int data)
 	{
 		int a = A;
 		int vdi = Vdi;
@@ -217,7 +187,7 @@ class Cpu6502
 		}
 	}
 
-	int ArithmeticShiftLeft(int addr)
+	int ArithmeticShiftLeft!(int addr)
 	{
 		int data = PeekReadModifyWrite(addr);
 		C = data >> 7;
@@ -226,7 +196,7 @@ class Cpu6502
 		return data;
 	}
 
-	int RotateLeft(int addr)
+	int RotateLeft!(int addr)
 	{
 		int data = (PeekReadModifyWrite(addr) << 1) + C;
 		C = data >> 8;
@@ -235,7 +205,7 @@ class Cpu6502
 		return data;
 	}
 
-	int LogicalShiftRight(int addr)
+	int LogicalShiftRight!(int addr)
 	{
 		int data = PeekReadModifyWrite(addr);
 		C = data & 1;
@@ -244,7 +214,7 @@ class Cpu6502
 		return data;
 	}
 
-	int RotateRight(int addr)
+	int RotateRight!(int addr)
 	{
 		int data = (C << 8) + PeekReadModifyWrite(addr);
 		C = data & 1;
@@ -253,21 +223,21 @@ class Cpu6502
 		return data;
 	}
 
-	int Decrement(int addr)
+	int Decrement!(int addr)
 	{
 		int data = PeekReadModifyWrite(addr) - 1 & 0xff;
 		Poke(addr, data);
 		return data;
 	}
 
-	int Increment(int addr)
+	int Increment!(int addr)
 	{
 		int data = PeekReadModifyWrite(addr) + 1 & 0xff;
 		Poke(addr, data);
 		return data;
 	}
 
-	void ExecuteIrq(int b)
+	void ExecuteIrq!(int b)
 	{
 		PushPc();
 		PushFlags(b);
@@ -275,7 +245,7 @@ class Cpu6502
 		Pc = Memory[0xfffe] + (Memory[0xffff] << 8);
 	}
 
-	void CheckIrq()
+	void CheckIrq!()
 	{
 		if ((Vdi & IFlag) == 0 && Asap.IsIrq()) {
 			Cycle += 7;
@@ -283,7 +253,7 @@ class Cpu6502
 		}
 	}
 
-	void Shx(int addr, int data)
+	void Shx!(int addr, int data)
 	{
 		addr += Memory[Pc++];
 		int hi = Memory[Pc++];
@@ -296,10 +266,7 @@ class Cpu6502
 
 	/// Runs 6502 emulation for the specified number of Atari scanlines.
 	/// Each scanline is 114 cycles of which 9 is taken by ANTIC for memory refresh.
-#if CI1
-	internal
-#endif
-	void DoFrame(int cycleLimit)
+	internal void DoFrame!(int cycleLimit)
 	{
 		while (Cycle < cycleLimit) {
 
@@ -853,11 +820,7 @@ class Cpu6502
 			case 0xb0: // BCS
 			case 0xd0: // BNE
 			case 0xf0: // BEQ
-#if CI1
 				addr = (Memory[Pc] ^ 0x80) - 0x80;
-#else
-				addr = Memory[Pc].SByte;
-#endif
 				Pc++;
 				addr += Pc;
 				Cycle += (addr ^ Pc) >> 8 != 0 ? 2 : 1;

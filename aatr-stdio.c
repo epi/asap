@@ -30,11 +30,11 @@ typedef struct {
 	FILE *fp;
 } AATRStdio;
 
-static bool AATRStdio_Read(AATR *self, int offset, const unsigned char *buffer, int length)
+static bool AATRStdio_Read(const AATR *self, int offset, unsigned char *buffer, int length)
 {
 	FILE *fp = ((AATRStdio *) self)->fp;
 	return fseek(fp, offset, SEEK_SET) == 0
-		&& fread((void *) buffer, length, 1, fp) == 1;
+		&& fread(buffer, length, 1, fp) == 1;
 }
 
 AATR *AATRStdio_New(const char *filename)
@@ -49,7 +49,7 @@ AATR *AATRStdio_New(const char *filename)
 		fclose(fp);
 		return NULL;
 	}
-	AATR_Construct(&self->base, &vtbl);
+	self->base.vtbl = &vtbl;
 	self->fp = fp;
 	if (!AATR_Open(&self->base)) {
 		free(self);

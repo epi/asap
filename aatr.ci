@@ -1,6 +1,6 @@
 // aatr.ci - another ATR file extractor
 //
-// Copyright (C) 2012-2018  Piotr Fusik
+// Copyright (C) 2012-2019  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -22,18 +22,14 @@
 /// ATR disk image reader.
 public abstract class AATR
 {
-#if CI1
 	protected abstract bool Read(int offset, byte[]! buffer, int length);
-#else
-	abstract bool Read(int offset, byte[] buffer, int length);
-#endif
 
 	int BytesPerSector;
 	int Sector4Offset;
 
 	/// Opens an ATR disk image.
 	/// Returns `true` on success.
-	public bool Open()
+	public bool Open!()
 	{
 		byte[6] header;
 		if (!Read(0, header, 6) || header[0] != 0x96 || header[1] != 2)
@@ -63,19 +59,9 @@ public abstract class AATR
 		return true;
 	}
 
-	public int GetBytesPerSector()
-#if CI1
-		=>
-#else
-		return
-#endif
-			BytesPerSector;
+	public int GetBytesPerSector() => BytesPerSector;
 
-#if CI1
 	internal bool ReadSector(int sectorNo, byte[]! buffer, int length)
-#else
-	bool ReadSector(int sectorNo, byte[] buffer, int length)
-#endif
 	{
 		int offset;
 		if (sectorNo < 4) {
@@ -92,21 +78,18 @@ public abstract class AATR
 /// Forward-only iterator over a directory on an ATR disk image.
 public class AATRDirectory
 {
-#if CI1
-	internal
-#endif
-		AATR Disk;
+	internal AATR Disk;
 	int FirstSector;
 	int FileNo;
 	byte[128] Sector;
-	string(
-#if !CI1
-		12
-#endif
-		) Filename;
+	string() Filename;
+
+	public AATRDirectory()
+	{
+	}
 
 	/// Opens the root directory of the specified disk image.
-	public void OpenRoot(
+	public void OpenRoot!(
 		/// The disk image.
 		AATR disk)
 	{
@@ -139,7 +122,7 @@ public class AATRDirectory
 
 	/// Advances to the next entry (file or directory).
 	/// Returns the filename or `null` if no more entries found.
-	public string NextEntry()
+	public string NextEntry!()
 	{
 		for (;;) {
 			if (FileNo >= 63)
@@ -169,53 +152,33 @@ public class AATRDirectory
 			int extLength = GetFilenamePart(sectorOffset + 13, 3);
 			if (extLength < 0 || (filenameLength == 0 && extLength == 0))
 				continue;
-#if CI1
 			Filename = Encoding.UTF8.GetString(Sector, sectorOffset + 5, filenameLength);
-#else
-			Filename = Sector.ToString(sectorOffset + 5, filenameLength);
-#endif
 			if (extLength > 0) {
 				Sector[sectorOffset + 12] = '.';
-#if CI1
 				string() ext = Encoding.UTF8.GetString(Sector, sectorOffset + 12, 1 + extLength);
-#else
-				string(4) ext = Sector.ToString(sectorOffset + 12, 1 + extLength);
-#endif
 				Filename += ext;
 			}
 			return Filename;
 		}
 	}
 
-#if CI1
-	internal
-#endif
-	int GetEntryType()
+	internal int GetEntryType()
 	{
 		int sectorOffset = (FileNo & 7) << 4;
 		return Sector[sectorOffset] & 0xd7;
 	}
 
 	/// Returns `true` if the current entry is a directory.
-	public bool IsEntryDirectory()
-#if CI1
-		=>
-#else
-		return
-#endif
-			GetEntryType() == 0x10;
+	public bool IsEntryDirectory() => GetEntryType() == 0x10;
 
-#if CI1
-	internal
-#endif
-	int GetEntryFirstSector()
+	internal int GetEntryFirstSector()
 	{
 		int sectorOffset = (FileNo & 7) << 4;
 		return Sector[sectorOffset + 3] | Sector[sectorOffset + 4] << 8;
 	}
 
 	/// Opens the specified subdirectory.
-	public void Open(
+	public void Open!(
 		/// The iterator pointing at the subdirectory to open.
 		AATRDirectory directory)
 	{
@@ -226,7 +189,7 @@ public class AATRDirectory
 
 	/// Advances to the specified entry.
 	/// Returns whether the entry is found.
-	public bool FindEntry(
+	public bool FindEntry!(
 		/// The name of the file or directory to find.
 		string filename)
 	{
@@ -241,7 +204,7 @@ public class AATRDirectory
 
 	/// Advances to the specified entry, which may be in a subdirectory.
 	/// Returns whether the entry is found.
-	public bool FindEntryRecursively(
+	public bool FindEntryRecursively!(
 		/// The name of the file or directory to find, with subdirectories separated with slashes.
 		string path)
 	{
@@ -251,11 +214,7 @@ public class AATRDirectory
 			if (path[j] == '/') {
 				if (j - i > 12)
 					return false;
-				string(
-#if !CI1
-					12
-#endif
-					) dirname = path.Substring(i, j - i);
+				string() dirname = path.Substring(i, j - i);
 				if (!FindEntry(dirname) || !IsEntryDirectory())
 					return false;
 				Open(this);
@@ -264,11 +223,7 @@ public class AATRDirectory
 		}
 		if (pathLength - i > 12)
 			return false;
-		string(
-#if !CI1
-			12
-#endif
-			) filename = path.Substring(i, pathLength - i);
+		string() filename = path.Substring(i, pathLength - i);
 		return FindEntry(filename);
 	}
 }
@@ -279,19 +234,15 @@ public class AATRRecursiveLister
 	const int MaxDepth = 20;
 	AATRDirectory()[MaxDepth] Directories;
 	int Depth;
-	string(
-#if !CI1
-		MaxDepth * "FILENAME.EXT/".Length
-#endif
-		) DirectoryPath;
-	string(
-#if !CI1
-		MaxDepth * "FILENAME.EXT/".Length + "FILENAME.EXT".Length
-#endif
-		) FilePath;
+	string() DirectoryPath;
+	string() FilePath;
+
+	public AATRRecursiveLister()
+	{
+	}
 
 	/// Opens a disk image.
-	public void Open(
+	public void Open!(
 		/// The disk image to list files on.
 		AATR disk)
 	{
@@ -302,10 +253,10 @@ public class AATRRecursiveLister
 
 	/// Advances to the next file.
 	/// Returns the full path of the file or `null` if no more files found.
-	public string NextFile()
+	public string NextFile!()
 	{
 		for (;;) {
-			AATRDirectory directory = Directories[Depth];
+			AATRDirectory! directory = Directories[Depth];
 			string filename = directory.NextEntry();
 			if (filename == null) {
 				if (Depth == 0)
@@ -333,13 +284,7 @@ public class AATRRecursiveLister
 	}
 
 	/// Returns the directory iterator pointing at the file found by `NextFile`.
-	public AATRDirectory GetDirectory()
-#if CI1
-		=>
-#else
-		return
-#endif
-			Directories[Depth];
+	public AATRDirectory GetDirectory() => Directories[Depth];
 }
 
 /// Contents of a file on an ATR disk image.
@@ -353,7 +298,11 @@ public class AATRFileStream
 	byte[256] Sector;
 	int SectorOffset;
 
-	void Rewind()
+	public AATRFileStream()
+	{
+	}
+
+	void Rewind!()
 	{
 		Position = 0;
 		NextSector = FirstSector;
@@ -361,7 +310,7 @@ public class AATRFileStream
 	}
 
 	/// Opens a file..
-	public void Open(
+	public void Open!(
 		/// Directory iterator pointing at the file to open.
 		AATRDirectory directory)
 	{
@@ -373,13 +322,9 @@ public class AATRFileStream
 
 	/// Reads from the open file.
 	/// Returns the number of bytes read.
-	public int Read(
+	public int Read!(
 		/// Destination buffer.
-		byte[]
-#if CI1
-			!
-#endif
-			buffer,
+		byte[]! buffer,
 		/// Start offset in buffer at which the data is written.
 		int offset,
 		/// Maximum number of bytes to read.
@@ -424,26 +369,14 @@ public class AATRFileStream
 	}
 
 	/// Returns the disk image containing this file.
-	public AATR GetDisk()
-#if CI1
-		=>
-#else
-		return
-#endif
-			Disk;
+	public AATR GetDisk() => Disk;
 
 	/// Returns the current position in the open file.
-	public int GetPosition()
-#if CI1
-		=>
-#else
-		return
-#endif
-			Position;
+	public int GetPosition() => Position;
 
 	/// Sets the current position in the open file.
 	/// Returns `true` on success.
-	public bool SetPosition(
+	public bool SetPosition!(
 		/// Requested position.
 		int position)
 	{
@@ -455,7 +388,7 @@ public class AATRFileStream
 	}
 
 	/// Returns the length of the open file.
-	public int GetLength()
+	public int GetLength!()
 	{
 		int position = GetPosition();
 		int length = position + Read(null, 0, 0x7fffffff - position);

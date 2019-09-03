@@ -118,7 +118,7 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>JavaScript</lang>
-		<a href="http://asap.sourceforge.net/javascript.html">online demo</a>
+		<a href="http://asap.sourceforge.net/web.html">online demo</a>
 	</port>
 	<port name="asapconv">
 		<bin>Windows, Linux</bin>
@@ -404,6 +404,38 @@
 		<stil>no</stil>
 		<lang>JavaScript</lang>
 	</port>
+	<port name="ASAP2WAV (D)">
+		<bin></bin>
+		<platform>desktop operating systems</platform>
+		<interface>command line</interface>
+		<since>3.0.0</since>
+		<status>discontinued</status>
+		<output>8 or 16-bit, WAV or raw file</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
+		<lang>D</lang>
+	</port>
+	<port name="asapplay (D)">
+		<bin></bin>
+		<platform>Windows, Linux</platform>
+		<interface>command line</interface>
+		<since>3.0.0</since>
+		<status>discontinued</status>
+		<output>16-bit sound</output>
+		<subsongs>yes</subsongs>
+		<file-info>AUTHOR, NAME, TIME</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<lang>D</lang>
+	</port>
 	<port name="GStreamer plugin">
 		<bin></bin>
 		<platform>Linux, Windows</platform>
@@ -437,6 +469,22 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>C#</lang>
+	</port>
+	<port name="ASAP2WAV (Perl)">
+		<bin></bin>
+		<platform>desktop operating systems</platform>
+		<interface>command line</interface>
+		<since>3.1.4</since>
+		<status>discontinued</status>
+		<output>8 or 16-bit, WAV or raw file</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
+		<lang>Perl</lang>
 	</port>
 	<port name="ASAP2WAV (Java)">
 		<bin></bin>
@@ -486,38 +534,6 @@
 		<stil>no</stil>
 		<lang>JavaScript</lang>
 	</port>
-	<port name="ASAP2WAV (Perl)">
-		<bin></bin>
-		<platform>desktop operating systems</platform>
-		<interface>command line</interface>
-		<since>3.1.4</since>
-		<status>sample</status>
-		<output>8 or 16-bit, WAV or raw file</output>
-		<subsongs>yes</subsongs>
-		<file-info>no</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>yes</config-time>
-		<mute-pokey>yes</mute-pokey>
-		<stil>no</stil>
-		<lang>Perl</lang>
-	</port>
-	<port name="ASAP2WAV (D)">
-		<bin></bin>
-		<platform>desktop operating systems</platform>
-		<interface>command line</interface>
-		<since>3.0.0</since>
-		<status>sample</status>
-		<output>8 or 16-bit, WAV or raw file</output>
-		<subsongs>yes</subsongs>
-		<file-info>no</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>yes</config-time>
-		<mute-pokey>yes</mute-pokey>
-		<stil>no</stil>
-		<lang>D</lang>
-	</port>
 	<port name="asapplay (C#)">
 		<bin></bin>
 		<platform>desktop operating systems</platform>
@@ -550,22 +566,6 @@
 		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://www.libsdl.org/">SDL</a>
-	</port>
-	<port name="asapplay (D)">
-		<bin></bin>
-		<platform>Windows, Linux</platform>
-		<interface>command line</interface>
-		<since>3.0.0</since>
-		<status>sample</status>
-		<output>16-bit sound</output>
-		<subsongs>yes</subsongs>
-		<file-info>AUTHOR, NAME, TIME</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>yes</config-time>
-		<mute-pokey>no</mute-pokey>
-		<stil>no</stil>
-		<lang>D</lang>
 	</port>
 	<port name="asapconv (Android)">
 		<bin></bin>
