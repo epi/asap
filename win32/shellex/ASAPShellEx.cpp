@@ -30,14 +30,6 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 
-#ifdef __MINGW32__
-/* missing in MinGW */
-
-extern "C" const FMTID FMTID_AudioSummaryInformation =
-	{ 0x64440490, 0x4c8b, 0x11d1, { 0x8b, 0x70, 0x08, 0x00, 0x36, 0xb1, 0x1a, 0x03 } };
-
-#endif
-
 #include "asap-infowriter.h"
 
 static const char extensions[][5] =
