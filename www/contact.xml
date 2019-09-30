@@ -42,8 +42,8 @@
 	or <a href="https://sourceforge.net/p/asap/code/ci/master/tree/">browse Git repository</a>.</p>
 	<p>ASAP is based on a development library, which you can easily embed in your program.
 	It's not only a fully portable C library - it's better than that.
-	Since ASAP is written in <a href="http://cito.sourceforge.net/">Ć</a>,
-	it is also available as pure Java, C#, JavaScript, ActionScript, Perl and <a href="http://dlang.org/">D</a>.</p>
+	Since ASAP is written in <a href="https://github.com/pfusik/cito">Ć</a>,
+	it is also available as pure C++, Java, C# and JavaScript.</p>
 
 	<h2>Third-party projects using ASAP</h2>
 	<p>The following projects already use ASAP:</p>

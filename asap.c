@@ -2368,9 +2368,9 @@ bool ASAP_Seek(ASAP *self, int position)
 static void ASAP_PutLittleEndian(uint8_t *buffer, int offset, int value)
 {
 	buffer[offset] = (uint8_t) (value & 255);
-	buffer[offset + 1] = (uint8_t) ((value >> 8) & 255);
-	buffer[offset + 2] = (uint8_t) ((value >> 16) & 255);
-	buffer[offset + 3] = (uint8_t) ((value >> 24) & 255);
+	buffer[offset + 1] = (uint8_t) (value >> 8 & 255);
+	buffer[offset + 2] = (uint8_t) (value >> 16 & 255);
+	buffer[offset + 3] = (uint8_t) (value >> 24 & 255);
 }
 
 static void ASAP_PutLittleEndians(uint8_t *buffer, int offset, int value1, int value2)
@@ -2874,7 +2874,7 @@ static bool ASAPInfo_ParseModule(ASAPInfo *self, uint8_t const *module, int modu
 static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls)
 {
 	int64_t scanlines = playerCalls * self->fastplay;
-	self->durations[self->songs++] = (int) (scanlines * 38000 / 591149);
+	self->durations[self->songs++] = scanlines * 38000 / 591149;
 }
 
 static void ASAPInfo_ParseCmcSong(ASAPInfo *self, uint8_t const *module, int pos)
@@ -3270,7 +3270,7 @@ static void ASAPInfo_ParseRmtSong(ASAPInfo *self, uint8_t const *module, bool *g
 							instrumentNo[ch] = i >> 10;
 							instrumentFrame[ch] = frames;
 						}
-						volumeValue[ch] = (i >> 6) & 15;
+						volumeValue[ch] = i >> 6 & 15;
 						volumeFrame[ch] = frames;
 						break;
 					}
@@ -4266,7 +4266,7 @@ static bool ASAPNativeModuleWriter_RelocateBytes(const ASAPNativeModuleWriter *s
 		int address = self->sourceModule[lowOffset + i] + (self->sourceModule[highOffset + i] << 8);
 		if (address != 0 && address != 65535)
 			address += self->addressDiff;
-		if (!ASAPWriter_WriteByte(self->writer, (address >> shift) & 255))
+		if (!ASAPWriter_WriteByte(self->writer, address >> shift & 255))
 			return false;
 	}
 	return true;
@@ -4553,7 +4553,7 @@ static bool ASAPWriter_WriteHexSapTag(ASAPWriter *self, const char *tag, int val
 	if (!ASAPWriter_WriteString(self, tag))
 		return false;
 	for (int i = 12; i >= 0; i -= 4) {
-		int digit = (value >> i) & 15;
+		int digit = value >> i & 15;
 		if (!ASAPWriter_WriteByte(self, digit + (digit < 10 ? 48 : 55)))
 			return false;
 	}
@@ -5403,7 +5403,7 @@ static void Cpu6502_AddWithCarry(Cpu6502 *self, int data)
 	int tmp = a + data + self->c;
 	self->nz = tmp & 255;
 	if ((vdi & 8) == 0) {
-		self->vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+		self->vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
 		self->c = tmp >> 8;
 		self->a = self->nz;
 	}
@@ -5414,7 +5414,7 @@ static void Cpu6502_AddWithCarry(Cpu6502 *self, int data)
 			if (self->nz != 0)
 				self->nz = (tmp & 128) + 1;
 		}
-		self->vdi = (vdi & 12) + (((~(data ^ a) & (a ^ tmp)) >> 1) & 64);
+		self->vdi = (vdi & 12) + ((~(data ^ a) & (a ^ tmp)) >> 1 & 64);
 		if (tmp >= 160) {
 			self->c = 1;
 			self->a = (tmp - 160) & 255;
@@ -5433,7 +5433,7 @@ static void Cpu6502_SubtractWithCarry(Cpu6502 *self, int data)
 	int borrow = self->c - 1;
 	int tmp = a - data + borrow;
 	int al = (a & 15) - (data & 15) + borrow;
-	self->vdi = (vdi & 12) + ((((data ^ a) & (a ^ tmp)) >> 1) & 64);
+	self->vdi = (vdi & 12) + (((data ^ a) & (a ^ tmp)) >> 1 & 64);
 	self->c = tmp >= 0 ? 1 : 0;
 	self->nz = self->a = tmp & 255;
 	if ((vdi & 8) != 0) {
@@ -5448,7 +5448,7 @@ static int Cpu6502_ArithmeticShiftLeft(Cpu6502 *self, int addr)
 {
 	int data = Cpu6502_PeekReadModifyWrite(self, addr);
 	self->c = data >> 7;
-	data = (data << 1) & 255;
+	data = data << 1 & 255;
 	Cpu6502_Poke(self, addr, data);
 	return data;
 }
@@ -5652,7 +5652,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, int cycleLimit)
 			break;
 		case 10:
 			self->c = self->a >> 7;
-			self->nz = self->a = (self->a << 1) & 255;
+			self->nz = self->a = self->a << 1 & 255;
 			continue;
 		case 11:
 		case 43:
@@ -5927,7 +5927,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, int cycleLimit)
 				addr = self->memory[self->pc++];
 				int hi = self->memory[(addr + 1) & 255];
 				addr = self->memory[addr];
-				data = ((hi + 1) & self->a) & self->x;
+				data = (hi + 1) & self->a & self->x;
 				addr += self->y;
 				if (addr >= 256)
 					hi = data - 1;
@@ -6733,7 +6733,7 @@ static void PokeyChannel_DoTick(PokeyChannel *self, Pokey *pokey, const PokeyPai
 		return;
 	else {
 		int poly = cycle + pokey->polyIndex - ch;
-		if (audc < 128 && (1706902752 & (1 << poly % 31)) == 0)
+		if (audc < 128 && (1706902752 & 1 << poly % 31) == 0)
 			return;
 		if ((audc & 32) != 0)
 			self->out ^= 1;
@@ -6835,7 +6835,7 @@ static void Pokey_Initialize(Pokey *self)
 static void Pokey_AddDelta(Pokey *self, const PokeyPair *pokeys, int cycle, int delta)
 {
 	int i = cycle * pokeys->sampleFactor + pokeys->sampleOffset;
-	int delta2 = (delta >> 16) * ((i >> 4) & 65535);
+	int delta2 = (delta >> 16) * (i >> 4 & 65535);
 	i >>= 20;
 	self->deltaBuffer[i] += delta - delta2;
 	self->deltaBuffer[i + 1] += delta2;
@@ -6904,7 +6904,7 @@ static bool Pokey_IsSilent(const Pokey *self)
 static void Pokey_Mute(Pokey *self, int mask)
 {
 	for (int i = 0; i < 4; i++)
-		PokeyChannel_SetMute(&self->channels[i], (mask & (1 << i)) != 0, 4, 0);
+		PokeyChannel_SetMute(&self->channels[i], (mask & 1 << i) != 0, 4, 0);
 }
 
 static void Pokey_InitMute(Pokey *self, int cycle)
@@ -7080,7 +7080,7 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 	case 14:
 		self->irqst |= data ^ 255;
 		for (int i = 3;; i >>= 1) {
-			if (((data & self->irqst) & (i + 1)) != 0) {
+			if ((data & self->irqst & (i + 1)) != 0) {
 				if (self->channels[i].timerCycle == 8388608) {
 					int t = self->channels[i].tickCycle;
 					while (t < cycle)
@@ -7145,10 +7145,10 @@ static int Pokey_StoreSample(Pokey *self, uint8_t *buffer, int bufferOffset, int
 		break;
 	case ASAPSampleFormat_S16_L_E:
 		buffer[bufferOffset++] = (uint8_t) (sample & 255);
-		buffer[bufferOffset++] = (uint8_t) ((sample >> 8) & 255);
+		buffer[bufferOffset++] = (uint8_t) (sample >> 8 & 255);
 		break;
 	case ASAPSampleFormat_S16_B_E:
-		buffer[bufferOffset++] = (uint8_t) ((sample >> 8) & 255);
+		buffer[bufferOffset++] = (uint8_t) (sample >> 8 & 255);
 		buffer[bufferOffset++] = (uint8_t) (sample & 255);
 		break;
 	}
@@ -7170,7 +7170,7 @@ static void PokeyPair_Construct(PokeyPair *self)
 	reg = 131071;
 	for (int i = 0; i < 16385; i++) {
 		reg = (((reg >> 5 ^ reg) & 255) << 9) + (reg >> 8);
-		self->poly17Lookup[i] = (uint8_t) ((reg >> 1) & 255);
+		self->poly17Lookup[i] = (uint8_t) (reg >> 1 & 255);
 	}
 }
 

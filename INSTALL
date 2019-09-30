@@ -5,7 +5,7 @@ Required tools
 --------------
 
 1. The core of ASAP is written in the Ć programming language.
-You'll need 'cito' (http://cito.sourceforge.net).
+You'll need 'cito' (https://github.com/pfusik/cito).
 For your convenience, this is not needed for most of the C and C++ ports.
 
 2. GNU Make.
@@ -163,11 +163,10 @@ Open the command prompt in the root directory of ASAP sources and run:
 Building AndroidASAP
 --------------------
 
-Install Android SDK (http://developer.android.com/sdk/)
-with an Android platform(s).
+Install Android Studio (https://developer.android.com/studio).
 
 Edit the paths at the top of 'java/android/android.mk'
-so that they point to your installed SDK.
+so that they point to your installed Android SDK.
 Open the command prompt in the root directory of ASAP sources and run:
 
     make android-debug
@@ -194,50 +193,6 @@ Open the command prompt in the root directory of ASAP sources and run:
 'asap2wav.js' is the command-line script.
 'asapweb.js' plus 'asap.js' are the browser player
 (you'll probably need 'binaryHttpRequest.js' as well).
-
-
-Building Perl command-line ASAP2WAV
------------------------------------
-
-Open the command prompt in the root directory of ASAP sources and run:
-
-    make perl
-
-'asap2wav.pl' is the Perl script which uses the 'Asap.pm' module
-you have just built.
-
-
-Building D ASAP2WAV and asapplay on Windows and Linux
------------------------------------------------------
-
-You need DMD 2.054 or compatible D compiler.
-To build asapplay on Windows, you need
-D Windows API bindings (http://www.dsource.org/projects/bindings/wiki/WindowsApi).
-On Linux, you need ALSA development libraries (e.g. libasound2-dev package in Ubuntu).
-D bindings for ALSA are currently included in ASAP sources.
-
-Open the command prompt in the root directory of ASAP sources and run:
-
-    make d
-
-
-Building Android command-line asapconv
---------------------------------------
-
-You need Android NDK (http://developer.android.com/tools/sdk/ndk/index.html).
-
-Edit the paths at the top of 'java/android/android.mk'
-so that they point to your installed NDK.
-Open the command prompt in the root directory of ASAP sources and run:
-
-    make java/android/asapconv
-
-Now you need to put the binary ('java/android/asapconv')
-on your device and make it executable.
-It's not possible on a FAT-formatted SD card.
-I was able to do that in '/data/local/tmp/'.
-If you use USB debugging, 'make android-push-asapconv' will copy the file,
-but you have to do the 'chmod' part.
 
 
 Using asapconv
