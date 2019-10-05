@@ -69,6 +69,12 @@ void onUpdatePlayingInfo()
 
 /* Decoding -------------------------------------------------------------- */
 
+inline bool has_ext(const char *path, const char *ext)
+{
+	size_t len = strlen(path);
+	return len >= 4 && _stricmp(path + len - 4, ext) == 0;
+}
+
 class input_asap
 {
 	static input_asap *head;
@@ -171,11 +177,9 @@ public:
 	void open(service_ptr_t<file> p_filehint, const char *p_path, t_input_open_reason p_reason, abort_callback &p_abort)
 	{
 		switch (p_reason) {
-		case input_open_info_write: {
-				size_t len = strlen(p_path);
-				if (len < 4 || _stricmp(p_path + len - 4, ".sap") != 0)
-					throw exception_io_unsupported_format();
-			}
+		case input_open_info_write:
+			if (!has_ext(p_path, ".sap"))
+				throw exception_io_unsupported_format();
 			/* FALLTHROUGH */
 		case input_open_decode:
 			free(url);
@@ -295,6 +299,10 @@ public:
 		m_file.release();
 		filesystem::g_open(m_file, url, filesystem::open_mode_write_new, p_abort);
 		m_file->write(output, output_len, p_abort);
+	}
+
+	void set_logger(event_logger::ptr ptr)
+	{
 	}
 
 	typedef input_decoder interface_decoder_t;
@@ -730,6 +738,11 @@ public:
 		}
 		AATRRecursiveLister_Delete(lister);
 		AATRStdio_Delete(disk);
+	}
+
+	bool is_our_archive(const char *path) override
+	{
+		return has_ext(path, ".atr");
 	}
 };
 
