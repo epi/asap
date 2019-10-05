@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000
  *
- * Copyright (C) 2006-2018  Piotr Fusik
+ * Copyright (C) 2006-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -72,10 +72,10 @@ void onUpdatePlayingInfo()
 class input_asap
 {
 	static input_asap *head;
-	input_asap *prev;
+	input_asap *prev = nullptr;
 	input_asap *next;
 	service_ptr_t<file> m_file;
-	char *url;
+	char *url = nullptr;
 	BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
 	ASAP *asap;
@@ -104,15 +104,14 @@ class input_asap
 
 	static const char *empty_if_null(const char *s)
 	{
-		return s != NULL ? s : "";
+		return s != nullptr ? s : "";
 	}
 
 public:
 
 	static void g_set_mute_mask(int mask)
 	{
-		input_asap *p;
-		for (p = head; p != NULL; p = p->next)
+		for (input_asap *p = head; p != nullptr; p = p->next)
 			ASAP_MutePokeyChannels(p->asap, mask);
 	}
 
@@ -150,12 +149,10 @@ public:
 
 	input_asap()
 	{
-		if (head != NULL)
+		if (head != nullptr)
 			head->prev = this;
-		prev = NULL;
 		next = head;
 		head = this;
-		url = NULL;
 		asap = ASAP_New();
 	}
 
@@ -163,9 +160,9 @@ public:
 	{
 		ASAP_Delete(asap);
 		free(url);
-		if (prev != NULL)
+		if (prev != nullptr)
 			prev->next = next;
-		if (next != NULL)
+		if (next != nullptr)
 			next->prev = prev;
 		if (head == this)
 			head = next;
@@ -286,7 +283,7 @@ public:
 	void retag_commit(abort_callback &p_abort)
 	{
 		ASAPWriter *writer = ASAPWriter_New();
-		if (writer == NULL)
+		if (writer == nullptr)
 			throw exception_io_data();
 		BYTE output[ASAPInfo_MAX_MODULE_LENGTH];
 		ASAPWriter_SetOutput(writer, output, 0, sizeof(output));
@@ -305,7 +302,7 @@ public:
 	typedef input_info_writer interface_info_writer_t;
 };
 
-input_asap *input_asap::head = NULL;
+input_asap *input_asap::head = nullptr;
 static input_factory_t<input_asap> g_input_asap_factory;
 
 
@@ -409,7 +406,7 @@ public:
 		m_hWnd = CreateDialog(core_api::get_my_instance(), MAKEINTRESOURCE(IDD_SETTINGS), parent, ::settings_dialog_proc);
 	}
 
-	virtual t_uint32 get_state()
+	t_uint32 get_state() override
 	{
 		if (song_length != get_time_input()
 		 || silence_seconds != get_silence_input()
@@ -420,12 +417,12 @@ public:
 		return preferences_state::resettable;
 	}
 
-	virtual HWND get_wnd()
+	HWND get_wnd() override
 	{
 		return m_hWnd;
 	}
 
-	virtual void apply()
+	void apply() override
 	{
 		song_length = get_time_input();
 		silence_seconds = get_silence_input();
@@ -435,7 +432,7 @@ public:
 		g_callback->on_state_changed();
 	}
 
-	virtual void reset()
+	void reset() override
 	{
 		settingsDialogSet(m_hWnd, -1, -1, FALSE, 0);
 		g_callback->on_state_changed();
@@ -446,28 +443,28 @@ class preferences_page_asap : public preferences_page_v3
 {
 public:
 
-	virtual preferences_page_instance::ptr instantiate(HWND parent, preferences_page_callback::ptr callback)
+	preferences_page_instance::ptr instantiate(HWND parent, preferences_page_callback::ptr callback) override
 	{
 		g_callback = callback;
 		return new service_impl_t<preferences_page_instance_asap>(parent);
 	}
 
-	virtual const char *get_name()
+	const char *get_name() override
 	{
 		return "ASAP";
 	}
 
-	virtual GUID get_guid()
+	GUID get_guid() override
 	{
 		return preferences_guid;
 	}
 
-	virtual GUID get_parent_guid()
+	GUID get_parent_guid() override
 	{
 		return guid_input;
 	}
 
-	virtual bool get_help_url(pfc::string_base &p_out)
+	bool get_help_url(pfc::string_base &p_out) override
 	{
 		p_out = "http://asap.sourceforge.net/";
 		return true;
@@ -496,12 +493,12 @@ class input_file_type_asap : public service_impl_single_t<input_file_type>
 {
 public:
 
-	virtual unsigned get_count()
+	unsigned get_count() override
 	{
 		return N_FILE_TYPES;
 	}
 
-	virtual bool get_name(unsigned idx, pfc::string_base &out)
+	bool get_name(unsigned idx, pfc::string_base &out) override
 	{
 		if (idx < N_FILE_TYPES) {
 			out = ::names_and_masks[idx][0];
@@ -510,7 +507,7 @@ public:
 		return false;
 	}
 
-	virtual bool get_mask(unsigned idx, pfc::string_base &out)
+	bool get_mask(unsigned idx, pfc::string_base &out) override
 	{
 		if (idx < N_FILE_TYPES) {
 			out = ::names_and_masks[idx][1];
@@ -519,7 +516,7 @@ public:
 		return false;
 	}
 
-	virtual bool is_associatable(unsigned idx)
+	bool is_associatable(unsigned idx) override
 	{
 		return true;
 	}
@@ -532,45 +529,45 @@ static service_factory_single_t<input_file_type_asap> g_input_file_type_asap_fac
 
 class info_menu : public mainmenu_commands
 {
-	virtual t_uint32 get_command_count()
+	t_uint32 get_command_count() override
 	{
 		return 1;
 	}
 
-	virtual GUID get_command(t_uint32 p_index)
+	GUID get_command(t_uint32 p_index) override
 	{
 		static const GUID guid = { 0x15a24bcd, 0x176b, 0x4e15, { 0xbc, 0xb1, 0x24, 0xfd, 0x92, 0x67, 0xaf, 0x8f } };
 		return guid;
 	}
 
-	virtual void get_name(t_uint32 p_index, pfc::string_base &p_out)
+	void get_name(t_uint32 p_index, pfc::string_base &p_out) override
 	{
 		p_out = "ASAP info";
 	}
 
-	virtual bool get_description(t_uint32 p_index, pfc::string_base &p_out)
+	bool get_description(t_uint32 p_index, pfc::string_base &p_out) override
 	{
 		p_out = "Activates the ASAP File Information window.";
 		return true;
 	}
 
-	virtual GUID get_parent()
+	GUID get_parent() override
 	{
 		return mainmenu_groups::view;
 	}
 
-	virtual bool get_display(t_uint32 p_index, pfc::string_base &p_text, t_uint32 &p_flags)
+	bool get_display(t_uint32 p_index, pfc::string_base &p_text, t_uint32 &p_flags) override
 	{
 		p_flags = 0;
 		get_name(p_index, p_text);
 		return true;
 	}
 
-	virtual void execute(t_uint32 p_index, service_ptr_t<service_base> p_callback)
+	void execute(t_uint32 p_index, service_ptr_t<service_base> p_callback) override
 	{
 		if (p_index == 0) {
 			playing_info = playing_info_cfg;
-			const char *filename = NULL;
+			const char *filename = nullptr;
 			int song = -1;
 			metadb_handle_ptr item;
 			if (static_api_ptr_t<playlist_manager>()->activeplaylist_get_focus_item_handle(item) && item.is_valid()) {
@@ -592,17 +589,17 @@ static mainmenu_commands_factory_t<info_menu> g_info_menu_factory;
 
 class file_atr : public file_readonly
 {
-	AATRFileStream *stream;
+	AATRFileStream *stream = nullptr;
 
 public:
 
-	file_atr(const char *atr_filename, const char *inside_filename) : stream(NULL)
+	file_atr(const char *atr_filename, const char *inside_filename)
 	{
 		AATR *disk = AATRStdio_New(atr_filename);
-		if (disk == NULL)
+		if (disk == nullptr)
 			throw exception_io_data();
 		AATRDirectory *directory = AATRDirectory_New();
-		if (directory == NULL) {
+		if (directory == nullptr) {
 			AATRStdio_Delete(disk);
 			throw exception_out_of_resources();
 		}
@@ -613,7 +610,7 @@ public:
 			throw exception_io_not_found();
 		}
 		stream = AATRFileStream_New();
-		if (stream == NULL) {
+		if (stream == nullptr) {
 			AATRDirectory_Delete(directory);
 			AATRStdio_Delete(disk);
 			throw exception_out_of_resources();
@@ -624,14 +621,14 @@ public:
 
 	~file_atr()
 	{
-		if (stream != NULL) {
+		if (stream != nullptr) {
 			AATR *disk = const_cast<AATR *>(AATRFileStream_GetDisk(stream));
 			AATRFileStream_Delete(stream);
 			AATRStdio_Delete(disk);
 		}
 	}
 
-	virtual t_size read(void *p_buffer, t_size p_bytes, abort_callback &p_abort)
+	t_size read(void *p_buffer, t_size p_bytes, abort_callback &p_abort) override
 	{
 		int length = p_bytes < INT_MAX ? (int) p_bytes : INT_MAX;
 		int result = AATRFileStream_Read(stream, reinterpret_cast<byte *>(p_buffer), 0, length);
@@ -640,39 +637,39 @@ public:
 		return result;
 	}
 
-	virtual t_filesize get_size(abort_callback &p_abort)
+	t_filesize get_size(abort_callback &p_abort) override
 	{
 		return AATRFileStream_GetLength(stream);
 	}
 
-	virtual t_filesize get_position(abort_callback &p_abort)
+	t_filesize get_position(abort_callback &p_abort) override
 	{
 		return AATRFileStream_GetPosition(stream);
 	}
 
-	virtual void seek(t_filesize p_position, abort_callback &p_abort)
+	void seek(t_filesize p_position, abort_callback &p_abort) override
 	{
 		int position = (int) p_position;
 		if (position != p_position || !AATRFileStream_SetPosition(stream, position))
 			throw exception_io_seek_out_of_range();
 	}
 
-	virtual bool can_seek()
+	bool can_seek() override
 	{
 		return true;
 	}
 
-	virtual bool get_content_type(pfc::string_base &p_out)
+	bool get_content_type(pfc::string_base &p_out) override
 	{
 		return false;
 	}
 
-	virtual void reopen(abort_callback &p_abort)
+	void reopen(abort_callback &p_abort) override
 	{
 		AATRFileStream_SetPosition(stream, 0);
 	}
 
-	virtual bool is_remote()
+	bool is_remote() override
 	{
 		return false;
 	}
@@ -682,37 +679,37 @@ class archive_atr : public archive_impl
 {
 public:
 
-	virtual bool supports_content_types()
+	bool supports_content_types() override
 	{
 		return false;
 	}
 
-	virtual const char *get_archive_type()
+	const char *get_archive_type() override
 	{
 		return "atr";
 	}
 
-	virtual t_filestats get_stats_in_archive(const char *p_archive, const char *p_file, abort_callback &p_abort)
+	t_filestats get_stats_in_archive(const char *p_archive, const char *p_file, abort_callback &p_abort) override
 	{
 		service_impl_single_t<file_atr> f(p_archive, p_file);
 		t_filestats stats = { f.get_size(abort_callback_dummy()), filetimestamp_invalid };
 		return stats;
 	}
 
-	virtual void open_archive(service_ptr_t<file> &p_out, const char *archive, const char *file, abort_callback &p_abort)
+	void open_archive(service_ptr_t<file> &p_out, const char *archive, const char *file, abort_callback &p_abort) override
 	{
 		p_out = new service_impl_t<file_atr>(archive, file);
 	}
 
-	virtual void archive_list(const char *path, const service_ptr_t<file> &p_reader, archive_callback &p_out, bool p_want_readers)
+	void archive_list(const char *path, const service_ptr_t<file> &p_reader, archive_callback &p_out, bool p_want_readers) override
 	{
 		if (!_extract_native_path_ptr(path))
 			throw exception_io_data();
 		AATR *disk = AATRStdio_New(path);
-		if (disk == NULL)
+		if (disk == nullptr)
 			throw exception_io_data();
 		AATRRecursiveLister *lister = AATRRecursiveLister_New();
-		if (lister == NULL) {
+		if (lister == nullptr) {
 			AATRStdio_Delete(disk);
 			throw exception_out_of_resources();
 		}
@@ -720,7 +717,7 @@ public:
 		pfc::string8_fastalloc url;
 		for (;;) {
 			const char *fn = AATRRecursiveLister_NextFile(lister);
-			if (fn == NULL)
+			if (fn == nullptr)
 				break;
 			t_filestats stats = { filesize_invalid, filetimestamp_invalid };
 			service_ptr_t<file> p_file;
