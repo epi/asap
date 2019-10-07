@@ -62,14 +62,14 @@ var asap = {
 		window.asap.processor = processor;
 	},
 
-	playUrl : function(url)
+	playUrl : function(url, song)
 	{
 		var request = new XMLHttpRequest();
 		request.open("GET", url, true);
 		request.responseType = "arraybuffer";
 		request.onload = function (e) {
 			if (this.status == 200 || this.status == 0)
-				asap.playContent(url, new Uint8Array(this.response));
+				asap.playContent(url, new Uint8Array(this.response), song);
 		};
 		request.send();
 	},
