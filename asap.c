@@ -2874,7 +2874,7 @@ static bool ASAPInfo_ParseModule(ASAPInfo *self, uint8_t const *module, int modu
 static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls)
 {
 	int64_t scanlines = playerCalls * self->fastplay;
-	self->durations[self->songs++] = scanlines * 38000 / 591149;
+	self->durations[self->songs++] = (int) (scanlines * 38000 / 591149);
 }
 
 static void ASAPInfo_ParseCmcSong(ASAPInfo *self, uint8_t const *module, int pos)
@@ -3992,7 +3992,7 @@ static bool ASAPInfo_ParseSap(ASAPInfo *self, uint8_t const *module, int moduleL
 
 static int ASAPInfo_PackExt(const char *ext)
 {
-	return (int) strlen(ext) == 2 && ext[0] <= 122 && ext[1] <= 122 ? ext[0] | ext[1] << 8 | 2105376 : (int) strlen(ext) == 3 && ext[0] <= 122 && ext[1] <= 122 && ext[2] <= 122 ? ext[0] | ext[1] << 8 | (ext[2] & 127) << 16 | 2105376 : 0;
+	return (int) strlen(ext) == 2 && ext[0] <= 122 && ext[1] <= 122 ? ext[0] | ext[1] << 8 | 2105376 : (int) strlen(ext) == 3 && ext[0] <= 122 && ext[1] <= 122 && ext[2] <= 122 ? ext[0] | ext[1] << 8 | ext[2] << 16 | 2105376 : 0;
 }
 
 static int ASAPInfo_GetPackedExt(const char *filename)

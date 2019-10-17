@@ -1541,7 +1541,7 @@ public class ASAPInfo
 
 	internal static int PackExt(string ext)
 		=> ext.Length == 2 && ext[0] <= 'z' && ext[1] <= 'z' ? ext[0] | ext[1] << 8 | 0x202020
-		 : ext.Length == 3 && ext[0] <= 'z' && ext[1] <= 'z' && ext[2] <= 'z' ? ext[0] | ext[1] << 8 | (ext[2] & 0x7f) << 16 | 0x202020 // FIXME: & 0x7f
+		 : ext.Length == 3 && ext[0] <= 'z' && ext[1] <= 'z' && ext[2] <= 'z' ? ext[0] | ext[1] << 8 | ext[2] << 16 | 0x202020
 		 : 0;
 
 	internal static int GetPackedExt(string filename)
