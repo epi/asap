@@ -22,7 +22,7 @@
 				select.style.display = "";
 				break;
 			}
-			document.getElementById("stopButton").style.display = "";
+			document.getElementById("pauseButton").style.display = "";
 			asap.playFile(files[0]);
 		}
 	</script>
@@ -30,6 +30,6 @@
 	<p>Select file(s):
 		<input id="fileInput" type="file" multiple="multiple" onchange="openFiles(this.files)" accept=".sap,.cmc,.cm3,.cmr,.cms,.dmc,.dlt,.mpt,.mpd,.rmt,.tmc,.tm8,.tm2,.fc" />
 		<select id="fileSelect" onchange="asap.playFile(fileInput.files[this.selectedIndex])" style="display: none"> </select>
-		<input id="stopButton" type="button" value="Stop" style="display: none" onclick="asap.stop()" />
+		<input id="pauseButton" type="button" value="Pause" style="display: none" onclick="asap.togglePause()" />
 	</p>
 </page>

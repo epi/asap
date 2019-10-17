@@ -22,64 +22,93 @@
  */
 
 var asap = {
-	stop : function() {
-		var processor = window.asap.processor;
-		if (processor) {
-			processor.disconnect();
-			delete window.asap.processor;
+	stop : function()
+	{
+		if (this.processor) {
+			this.processor.disconnect();
+			delete this.processor;
 		}
 	},
 
 	playContent : function(filename, content, song)
 	{
-		var asap = new ASAP();
+		const asap = new ASAP();
 		asap.load(filename, content, content.length);
-		var info = asap.getInfo();
-		window.asap.author = info.getAuthor();
-		window.asap.title = info.getTitle();
-		window.asap.date = info.getDate();
+		const info = asap.getInfo();
 		if (song === undefined)
 			song = info.getDefaultSong();
 		asap.playSong(song, -1);
 
-		window.asap.stop();
-		var length = 4096;
-		var channels = asap.getInfo().getChannels();
-		var buffer = new Uint8Array(new ArrayBuffer(length * channels));
+		this.stop();
+		const length = 4096;
+		const channels = asap.getInfo().getChannels();
+		const buffer = new Uint8Array(new ArrayBuffer(length * channels));
 
-		var AudioContext = window.AudioContext || window.webkitAudioContext;
-		var context = new AudioContext({ sampleRate : ASAP.SAMPLE_RATE });
-		var processor = context.createScriptProcessor(length, 0, channels);
-		processor.onaudioprocess = function (e) {
+		const AudioContext = window.AudioContext || window.webkitAudioContext;
+		this.context = new AudioContext({ sampleRate : ASAP.SAMPLE_RATE });
+		this.processor = this.context.createScriptProcessor(length, 0, channels);
+		this.processor.onaudioprocess = e => {
 			asap.generate(buffer, length * channels, ASAPSampleFormat.U8);
-			for (var c = 0; c < channels; c++) {
-				var output = e.outputBuffer.getChannelData(c);
-				for (var i = 0; i < length; i++)
+			for (let c = 0; c < channels; c++) {
+				const output = e.outputBuffer.getChannelData(c);
+				for (let i = 0; i < length; i++)
 					output[i] = (buffer[i * channels + c] - 128) / 128;
 			}
 		};
-		processor.connect(context.destination);
-		window.asap.processor = processor;
+		this.processor.connect(this.context.destination);
+		this.asap = asap;
+		if (typeof(this.onLoad) == "function")
+			this.onLoad();
+	},
+
+	togglePause : function()
+	{
+		if (this.context) {
+			switch (this.context.state) {
+			case "running":
+				this.context.suspend();
+				return true;
+			case "suspended":
+				this.context.resume();
+				return false;
+			default:
+				break;
+			}
+		}
+		return null;
+	},
+
+	isPaused : function()
+	{
+		if (this.context) {
+			switch (this.context.state) {
+			case "running":
+				return false;
+			case "suspended":
+				return true;
+			default:
+				break;
+			}
+		}
+		return null;
 	},
 
 	playUrl : function(url, song)
 	{
-		var request = new XMLHttpRequest();
+		const request = new XMLHttpRequest();
 		request.open("GET", url, true);
 		request.responseType = "arraybuffer";
-		request.onload = function (e) {
-			if (this.status == 200 || this.status == 0)
-				asap.playContent(url, new Uint8Array(this.response), song);
+		request.onload = e => {
+			if (request.status == 200 || request.status == 0)
+				this.playContent(url, new Uint8Array(request.response), song);
 		};
 		request.send();
 	},
 
 	playFile : function(file)
 	{
-		var reader = new FileReader();
-		reader.onload = function (e) {
-			asap.playContent(file.name, new Uint8Array(e.target.result));
-		};
+		const reader = new FileReader();
+		reader.onload = e => this.playContent(file.name, new Uint8Array(e.target.result));
 		reader.readAsArrayBuffer(file);
 	}
 };
