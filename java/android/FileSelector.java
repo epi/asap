@@ -1,7 +1,7 @@
 /*
  * FileSelector.java - ASAP for Android
  *
- * Copyright (C) 2010-2018  Piotr Fusik
+ * Copyright (C) 2010-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,8 +23,11 @@
 
 package net.sf.asap;
 
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.Menu;
@@ -115,8 +118,12 @@ public class FileSelector extends BaseSelector
 			infos = new FileInfoList().list();
 		}
 		catch (IOException ex) {
-			Toast.makeText(this, R.string.access_denied, Toast.LENGTH_SHORT).show();
 			infos = new FileInfo[0];
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+			 && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED)
+				requestPermissions(new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, 1);
+			else
+				Toast.makeText(this, R.string.access_denied, Toast.LENGTH_SHORT).show();
 		}
 
 		ListAdapter adapter = isDetails
@@ -133,6 +140,14 @@ public class FileSelector extends BaseSelector
 		getListView().setTextFilterEnabled(true);
 		isDetails = getPreferences(MODE_PRIVATE).getBoolean("fileDetails", false);
 		reload();
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
+	{
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+			reload();
 	}
 
 	@Override
