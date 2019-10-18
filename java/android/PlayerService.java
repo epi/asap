@@ -1,7 +1,7 @@
 /*
  * PlayerService.java - ASAP for Android
  *
- * Copyright (C) 2010-2018  Piotr Fusik
+ * Copyright (C) 2010-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -38,8 +38,6 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.widget.MediaController;
 import android.widget.Toast;
 import java.io.FileInputStream;
@@ -436,14 +434,6 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
 		audioManager.registerMediaButtonEventReceiver(eventReceiver);
-
-		TelephonyManager telephony = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-		telephony.listen(new PhoneStateListener() {
-				public void onCallStateChanged(int state, String incomingNumber) {
-					if (state == TelephonyManager.CALL_STATE_RINGING)
-						pause();
-				}
-			}, PhoneStateListener.LISTEN_CALL_STATE);
 
 		song = SONG_DEFAULT;
 		uri = intent.getData();
