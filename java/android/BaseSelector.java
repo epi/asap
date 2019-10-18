@@ -1,7 +1,7 @@
 /*
  * BaseSelector.java - ASAP for Android
  *
- * Copyright (C) 2010-2017  Piotr Fusik
+ * Copyright (C) 2010-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,7 +26,9 @@ package net.sf.asap;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -38,6 +40,13 @@ import android.view.inputmethod.InputMethodManager;
 
 abstract class BaseSelector extends ListActivity
 {
+	@Override
+	public void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+		setVolumeControlStream(AudioManager.STREAM_MUSIC);
+	}
+
 	protected Uri uri;
 	private boolean isSearch;
 
