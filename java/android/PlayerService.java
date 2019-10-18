@@ -24,6 +24,8 @@
 package net.sf.asap;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -79,8 +81,15 @@ public class PlayerService extends Service implements Runnable, MediaController.
 			.setContentText(info.getAuthor())
 			.setContentIntent(intent)
 			.setOngoing(true);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			builder.setVisibility(Notification.VISIBILITY_PUBLIC);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				final String CHANNEL_ID = "NOW_PLAYING";
+				NotificationChannel channel = new NotificationChannel(CHANNEL_ID, getString(R.string.notification_channel), NotificationManager.IMPORTANCE_LOW);
+				((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+				builder.setChannelId(CHANNEL_ID);
+			}
+		}
 		startForeground(NOTIFICATION_ID, builder.getNotification());
 	}
 
