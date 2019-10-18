@@ -36,6 +36,7 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.widget.MediaController;
@@ -72,14 +73,15 @@ public class PlayerService extends Service implements Runnable, MediaController.
 	private void showNotification()
 	{
 		PendingIntent intent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
-		Notification notification = new Notification.Builder(this)
+		Notification.Builder builder = new Notification.Builder(this)
 			.setSmallIcon(R.drawable.icon)
 			.setContentTitle(info.getTitleOrFilename())
 			.setContentText(info.getAuthor())
 			.setContentIntent(intent)
-			.setOngoing(true)
-			.getNotification();
-		startForeground(NOTIFICATION_ID, notification);
+			.setOngoing(true);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			builder.setVisibility(Notification.VISIBILITY_PUBLIC);
+		startForeground(NOTIFICATION_ID, builder.getNotification());
 	}
 
 
