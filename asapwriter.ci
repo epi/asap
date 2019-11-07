@@ -149,6 +149,7 @@ class ASAPNativeModuleWriter
 /// Static methods for writing modules in different formats.
 public class ASAPWriter
 {
+	/// Maximum number of extensions returned by `GetSaveExts`.
 	public const int MaxSaveExts = 3;
 
 	public ASAPWriter()
@@ -242,7 +243,14 @@ public class ASAPWriter
 	internal int OutputOffset;
 	int OutputEnd;
 
-	public void SetOutput!(byte[]! output, int startIndex, int endIndex)
+	/// Sets the destination array for `Write`.
+	public void SetOutput!(
+		/// The destination array.
+		byte[]! output,
+		/// The array offset to start writing at.
+		int startIndex,
+		/// The array offset to finish writing before.
+		int endIndex)
 	{
 		Output = output;
 		OutputOffset = startIndex;

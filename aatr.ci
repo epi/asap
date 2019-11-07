@@ -22,7 +22,14 @@
 /// ATR disk image reader.
 public abstract class AATR
 {
-	protected abstract bool Read(int offset, byte[]! buffer, int length);
+	/// Reads part of the ATR file to the specified buffer.
+	protected abstract bool Read(
+		/// Offset in the file.
+		int offset,
+		/// Destination buffer.
+		byte[]! buffer,
+		/// Number of bytes to read.
+		int length);
 
 	int BytesPerSector;
 	int Sector4Offset;
@@ -59,6 +66,7 @@ public abstract class AATR
 		return true;
 	}
 
+	/// Returns sector size in bytes.
 	public int GetBytesPerSector() => BytesPerSector;
 
 	internal bool ReadSector(int sectorNo, byte[]! buffer, int length)
@@ -309,7 +317,7 @@ public class AATRFileStream
 		SectorOffset = 255;
 	}
 
-	/// Opens a file..
+	/// Opens a file.
 	public void Open!(
 		/// Directory iterator pointing at the file to open.
 		AATRDirectory directory)

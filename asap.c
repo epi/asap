@@ -70,26 +70,52 @@ struct Cpu6502 {
 	int c;
 	int vdi;
 };
+
 static void Cpu6502_Reset(Cpu6502 *self);
+
 static int Cpu6502_Peek(const Cpu6502 *self, int addr);
+
 static void Cpu6502_Poke(Cpu6502 *self, int addr, int data);
+
 static int Cpu6502_PeekReadModifyWrite(Cpu6502 *self, int addr);
+
 static int Cpu6502_Pull(Cpu6502 *self);
+
 static void Cpu6502_PullFlags(Cpu6502 *self);
+
 static void Cpu6502_Push(Cpu6502 *self, int data);
+
 static void Cpu6502_PushPc(Cpu6502 *self);
+
 static void Cpu6502_PushFlags(Cpu6502 *self, int b);
+
 static void Cpu6502_AddWithCarry(Cpu6502 *self, int data);
+
 static void Cpu6502_SubtractWithCarry(Cpu6502 *self, int data);
+
 static int Cpu6502_ArithmeticShiftLeft(Cpu6502 *self, int addr);
+
 static int Cpu6502_RotateLeft(Cpu6502 *self, int addr);
+
 static int Cpu6502_LogicalShiftRight(Cpu6502 *self, int addr);
+
 static int Cpu6502_RotateRight(Cpu6502 *self, int addr);
+
 static int Cpu6502_Decrement(Cpu6502 *self, int addr);
+
 static int Cpu6502_Increment(Cpu6502 *self, int addr);
+
 static void Cpu6502_ExecuteIrq(Cpu6502 *self, int b);
+
 static void Cpu6502_CheckIrq(Cpu6502 *self);
+
 static void Cpu6502_Shx(Cpu6502 *self, int addr, int data);
+
+/**
+ * Runs 6502 emulation for the specified number of Atari scanlines.
+ * Each scanline is 114 cycles of which 9 is taken by ANTIC for memory refresh.
+ * @param self This <code>Cpu6502</code>.
+ */
 static void Cpu6502_DoFrame(Cpu6502 *self, int cycleLimit);
 
 struct PokeyChannel {
@@ -102,13 +128,21 @@ struct PokeyChannel {
 	int out;
 	int delta;
 };
+
 static void PokeyChannel_Initialize(PokeyChannel *self);
+
 static void PokeyChannel_Slope(PokeyChannel *self, Pokey *pokey, const PokeyPair *pokeys, int cycle);
+
 static void PokeyChannel_DoTick(PokeyChannel *self, Pokey *pokey, const PokeyPair *pokeys, int cycle, int ch);
+
 static void PokeyChannel_DoStimer(PokeyChannel *self, int cycle);
+
 static void PokeyChannel_SetMute(PokeyChannel *self, bool enable, int mask, int cycle);
+
 static void PokeyChannel_MuteUltrasound(PokeyChannel *self, int cycle);
+
 static void PokeyChannel_SetAudc(PokeyChannel *self, Pokey *pokey, const PokeyPair *pokeys, int data, int cycle);
+
 static void PokeyChannel_EndFrame(PokeyChannel *self, int cycle);
 
 struct Pokey {
@@ -124,17 +158,33 @@ struct Pokey {
 	int deltaBuffer[888];
 	int iirAcc;
 };
+
 static void Pokey_StartFrame(Pokey *self);
+
 static void Pokey_Initialize(Pokey *self);
+
 static void Pokey_AddDelta(Pokey *self, const PokeyPair *pokeys, int cycle, int delta);
+
+/**
+ * Fills <code>DeltaBuffer</code> up to <code>cycleLimit</code> basing on current Audf/Audc/Audctl values.
+ * @param self This <code>Pokey</code>.
+ */
 static void Pokey_GenerateUntilCycle(Pokey *self, const PokeyPair *pokeys, int cycleLimit);
+
 static void Pokey_EndFrame(Pokey *self, const PokeyPair *pokeys, int cycle);
+
 static bool Pokey_IsSilent(const Pokey *self);
+
 static void Pokey_Mute(Pokey *self, int mask);
+
 static void Pokey_InitMute(Pokey *self, int cycle);
+
 static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, int cycle);
+
 static int Pokey_CheckIrq(Pokey *self, int cycle, int nextEventCycle);
+
 static int Pokey_StoreSample(Pokey *self, uint8_t *buffer, int bufferOffset, int i, ASAPSampleFormat format);
+
 static void Pokey_AccumulateTrailing(Pokey *self, int i);
 
 struct PokeyPair {
@@ -149,14 +199,28 @@ struct PokeyPair {
 	int readySamplesEnd;
 };
 static void PokeyPair_Construct(PokeyPair *self);
+
 static void PokeyPair_Initialize(PokeyPair *self, bool ntsc, bool stereo);
+
 static int PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
+
 static int PokeyPair_Peek(const PokeyPair *self, int addr, int cycle);
+
 static void PokeyPair_StartFrame(PokeyPair *self);
+
 static int PokeyPair_EndFrame(PokeyPair *self, int cycle);
+
+/**
+ * Fills buffer with samples from <code>DeltaBuffer</code>.
+ * @param self This <code>PokeyPair</code>.
+ */
 static int PokeyPair_Generate(PokeyPair *self, uint8_t *buffer, int bufferOffset, int blocks, ASAPSampleFormat format);
+
 static bool PokeyPair_IsSilent(const PokeyPair *self);
 
+/**
+ * Information about a music file.
+ */
 struct ASAPInfo {
 	char *filename;
 	char *author;
@@ -179,49 +243,95 @@ struct ASAPInfo {
 };
 static void ASAPInfo_Construct(ASAPInfo *self);
 static void ASAPInfo_Destruct(ASAPInfo *self);
+
 static bool ASAPInfo_IsValidChar(int c);
+
 static bool ASAPInfo_CheckValidChar(int c);
+
 static bool ASAPInfo_CheckValidText(const char *s);
+
 static bool ASAPInfo_CheckTwoDateDigits(const ASAPInfo *self, int i);
+
 static int ASAPInfo_CheckDate(const ASAPInfo *self);
+
 static int ASAPInfo_GetTwoDateDigits(const ASAPInfo *self, int i);
+
 static int ASAPInfo_GetWord(uint8_t const *array, int i);
+
 static bool ASAPInfo_ParseModule(ASAPInfo *self, uint8_t const *module, int moduleLen);
+
 static void ASAPInfo_AddSong(ASAPInfo *self, int playerCalls);
+
 static void ASAPInfo_ParseCmcSong(ASAPInfo *self, uint8_t const *module, int pos);
+
 static bool ASAPInfo_ParseCmc(ASAPInfo *self, uint8_t const *module, int moduleLen, ASAPModuleType type);
+
 static bool ASAPInfo_IsDltTrackEmpty(uint8_t const *module, int pos);
+
 static bool ASAPInfo_IsDltPatternEnd(uint8_t const *module, int pos, int i);
+
 static void ASAPInfo_ParseDltSong(ASAPInfo *self, uint8_t const *module, bool *seen, int pos);
+
 static bool ASAPInfo_ParseDlt(ASAPInfo *self, uint8_t const *module, int moduleLen);
+
 static void ASAPInfo_ParseMptSong(ASAPInfo *self, uint8_t const *module, bool *globalSeen, int songLen, int pos);
+
 static bool ASAPInfo_ParseMpt(ASAPInfo *self, uint8_t const *module, int moduleLen);
+
 static int ASAPInfo_GetRmtInstrumentFrames(uint8_t const *module, int instrument, int volume, int volumeFrame, bool onExtraPokey);
+
 static void ASAPInfo_ParseRmtSong(ASAPInfo *self, uint8_t const *module, bool *globalSeen, int songLen, int posShift, int pos);
+
 static bool ASAPInfo_ValidateRmt(uint8_t const *module, int moduleLen);
+
 static bool ASAPInfo_ParseRmt(ASAPInfo *self, uint8_t const *module, int moduleLen);
+
 static void ASAPInfo_ParseTmcSong(ASAPInfo *self, uint8_t const *module, int pos);
+
 static int ASAPInfo_ParseTmcTitle(uint8_t *title, int titleLen, uint8_t const *module, int moduleOffset);
+
 static bool ASAPInfo_ParseTmc(ASAPInfo *self, uint8_t const *module, int moduleLen);
+
 static void ASAPInfo_ParseTm2Song(ASAPInfo *self, uint8_t const *module, int pos);
+
 static bool ASAPInfo_ParseTm2(ASAPInfo *self, uint8_t const *module, int moduleLen);
+
 static int ASAPInfo_AfterFF(uint8_t const *module, int moduleLen, int currentOffset);
+
 static int ASAPInfo_GetFcTrackCommand(uint8_t const *module, int const *trackPos, int n);
+
 static bool ASAPInfo_IsFcSongEnd(uint8_t const *module, int const *trackPos);
+
 static bool ASAPInfo_ValidateFc(uint8_t const *module, int moduleLen);
+
 static bool ASAPInfo_ParseFc(ASAPInfo *self, uint8_t const *module, int moduleLen);
+
 static bool ASAPInfo_HasStringAt(uint8_t const *module, int moduleIndex, const char *s);
+
 static int ASAPInfo_ParseDec(const char *s, int minVal, int maxVal);
+
 static int ASAPInfo_ParseHex(const char *s);
+
 static bool ASAPInfo_ValidateSap(uint8_t const *module, int moduleLen);
+
 static bool ASAPInfo_ParseSap(ASAPInfo *self, uint8_t const *module, int moduleLen);
+
 static int ASAPInfo_PackExt(const char *ext);
+
 static int ASAPInfo_GetPackedExt(const char *filename);
+
 static bool ASAPInfo_IsOurPackedExt(int ext);
+
 static int ASAPInfo_GuessPackedExt(uint8_t const *module, int moduleLen);
+
 static int ASAPInfo_GetRmtSapOffset(const ASAPInfo *self, uint8_t const *module, int moduleLen);
+
 static ASAPModuleType ASAPInfo_GetOriginalModuleType(const ASAPInfo *self, uint8_t const *module, int moduleLen);
 
+/**
+ * Atari 8-bit chip music emulator.
+ * This class performs no I/O operations - all music data must be passed in byte arrays.
+ */
 struct ASAP {
 	int nextEventCycle;
 	Cpu6502 cpu;
@@ -242,20 +352,35 @@ struct ASAP {
 };
 static void ASAP_Construct(ASAP *self);
 static void ASAP_Destruct(ASAP *self);
+
 static int ASAP_PeekHardware(const ASAP *self, int addr);
+
 static void ASAP_PokeHardware(ASAP *self, int addr, int data);
+
 static void ASAP_Call6502(ASAP *self, int addr);
+
 static void ASAP_Call6502Player(ASAP *self);
+
 static bool ASAP_IsIrq(const ASAP *self);
+
 static void ASAP_HandleEvent(ASAP *self);
+
 static int ASAP_Do6502Frame(ASAP *self);
+
 static int ASAP_DoFrame(ASAP *self);
+
 static bool ASAP_Do6502Init(ASAP *self, int pc, int a, int x, int y);
+
 static int ASAP_MillisecondsToBlocks(int milliseconds);
+
 static void ASAP_PutLittleEndian(uint8_t *buffer, int offset, int value);
+
 static void ASAP_PutLittleEndians(uint8_t *buffer, int offset, int value1, int value2);
+
 static int ASAP_PutWavMetadata(uint8_t *buffer, int offset, int fourCC, const char *value);
+
 static int ASAP_GenerateAt(ASAP *self, uint8_t *buffer, int bufferOffset, int bufferLen, ASAPSampleFormat format);
+
 static uint8_t const *ASAP6502_GetPlayerRoutine(const ASAPInfo *info);
 
 struct DurationParser {
@@ -263,7 +388,9 @@ struct DurationParser {
 	int position;
 	int length;
 };
+
 static int DurationParser_ParseDigit(DurationParser *self, int max);
+
 static int DurationParser_Parse(DurationParser *self, const char *s);
 
 struct ASAPNativeModuleWriter {
@@ -272,47 +399,80 @@ struct ASAPNativeModuleWriter {
 	int sourceOffset;
 	int addressDiff;
 };
+
 static int ASAPNativeModuleWriter_GetByte(const ASAPNativeModuleWriter *self, int offset);
+
 static int ASAPNativeModuleWriter_GetWord(const ASAPNativeModuleWriter *self, int offset);
+
 static bool ASAPNativeModuleWriter_Copy(const ASAPNativeModuleWriter *self, int endOffset);
+
 static bool ASAPNativeModuleWriter_RelocateBytes(const ASAPNativeModuleWriter *self, int lowOffset, int highOffset, int count, int shift);
+
 static bool ASAPNativeModuleWriter_RelocateLowHigh(const ASAPNativeModuleWriter *self, int count);
+
 static bool ASAPNativeModuleWriter_RelocateWords(const ASAPNativeModuleWriter *self, int count);
+
 static bool ASAPNativeModuleWriter_Write(ASAPNativeModuleWriter *self, const ASAPInfo *info, ASAPModuleType type, int moduleLen);
 
+/**
+ * Static methods for writing modules in different formats.
+ */
 struct ASAPWriter {
 	uint8_t *output;
 	int outputOffset;
 	int outputEnd;
 };
 static void ASAPWriter_Construct(ASAPWriter *self);
+
 static void ASAPWriter_TwoDigitsToString(uint8_t *result, int offset, int value);
+
 static bool ASAPWriter_SecondsToString(uint8_t *result, int offset, int value);
+
 static bool ASAPWriter_WriteByte(ASAPWriter *self, int value);
+
 static bool ASAPWriter_WriteWord(ASAPWriter *self, int value);
+
 static bool ASAPWriter_WriteBytes(ASAPWriter *self, uint8_t const *array, int startIndex, int endIndex);
+
 static bool ASAPWriter_WriteString(ASAPWriter *self, const char *s);
+
 static bool ASAPWriter_WriteDec(ASAPWriter *self, int value);
+
 static bool ASAPWriter_WriteTextSapTag(ASAPWriter *self, const char *tag, const char *value);
+
 static bool ASAPWriter_WriteDecSapTag(ASAPWriter *self, const char *tag, int value);
+
 static bool ASAPWriter_WriteHexSapTag(ASAPWriter *self, const char *tag, int value);
+
 static bool ASAPWriter_WriteSapHeader(ASAPWriter *self, const ASAPInfo *info, int type, int init, int player);
+
 static bool ASAPWriter_WriteExecutableHeader(ASAPWriter *self, int *initAndPlayer, const ASAPInfo *info, int type, int init, int player);
+
 static bool ASAPWriter_WritePlaTaxLda0(ASAPWriter *self);
+
 static bool ASAPWriter_WriteCmcInit(ASAPWriter *self, int *initAndPlayer, const ASAPInfo *info);
+
 static bool ASAPWriter_WriteExecutableFromSap(ASAPWriter *self, int *initAndPlayer, const ASAPInfo *info, int type, uint8_t const *module, int moduleLen);
+
 static int ASAPWriter_WriteExecutableHeaderForSongPos(ASAPWriter *self, int *initAndPlayer, const ASAPInfo *info, int player, int codeForOneSong, int codeForManySongs, int playerOffset);
+
 static bool ASAPWriter_WriteExecutable(ASAPWriter *self, int *initAndPlayer, const ASAPInfo *info, uint8_t const *module, int moduleLen);
+
 static int ASAPWriter_PadXexInfo(uint8_t *dest, int offset, int endColumn);
+
 static int ASAPWriter_FormatXexInfoText(uint8_t *dest, int destLen, int endColumn, const char *src, bool author);
+
 static bool ASAPWriter_WriteXexInfoTextDl(ASAPWriter *self, int address, int len, int verticalScrollAt);
+
 static bool ASAPWriter_WriteXexInfo(ASAPWriter *self, const ASAPInfo *info);
+
 static bool ASAPWriter_WriteNative(ASAPWriter *self, const ASAPInfo *info, uint8_t const *module, int moduleLen);
 
 struct FlashPackItem {
 	FlashPackItemType type;
 	int value;
 };
+
 static int FlashPackItem_WriteValueTo(const FlashPackItem *self, uint8_t *buffer, int index);
 
 struct FlashPack {
@@ -322,13 +482,21 @@ struct FlashPack {
 	FlashPackItem items[64];
 	int itemsCount;
 };
+
 static int FlashPack_FindHole(const FlashPack *self);
+
 static int FlashPack_GetInnerFlags(const FlashPack *self, int index);
+
 static void FlashPack_PutItems(FlashPack *self);
+
 static void FlashPack_PutItem(FlashPack *self, FlashPackItemType type, int value);
+
 static bool FlashPack_IsLiteralPreferred(const FlashPack *self);
+
 static void FlashPack_CompressMemoryArea(FlashPack *self, int startAddress, int endAddress);
+
 static void FlashPack_PutPoke(FlashPack *self, int address, int value);
+
 static bool FlashPack_Compress(FlashPack *self, ASAPWriter *w);
 
 static const uint8_t CiResource_cm3_obx[2022] = {

@@ -193,7 +193,9 @@ public class ASAPInfo
 	/// A nickname may be included in parentheses after the real name.
 	/// Multiple authors are separated with `" & "`.
 	/// An empty string means the author is unknown.
-	public void SetAuthor!(string value)
+	public void SetAuthor!(
+		/// New author's name for the current music.
+		string value)
 		throws
 	{
 		CheckValidText(value);
@@ -206,7 +208,9 @@ public class ASAPInfo
 
 	/// Sets music title.
 	/// An empty string means the title is unknown.
-	public void SetTitle!(string value)
+	public void SetTitle!(
+		/// New title for the current music.
+		string value)
 		throws
 	{
 		CheckValidText(value);
@@ -235,7 +239,9 @@ public class ASAPInfo
 	/// * YYYY-YYYY
 	///
 	/// An empty string means the date is unknown.
-	public void SetDate!(string value)
+	public void SetDate!(
+		/// New music creation date.
+		string value)
 		throws
 	{
 		CheckValidText(value);
@@ -313,7 +319,9 @@ public class ASAPInfo
 	public int GetDefaultSong() => DefaultSong;
 
 	/// Sets the 0-based index of the "main" song.
-	public void SetDefaultSong!(int song)
+	public void SetDefaultSong!(
+		/// New default song.
+		int song)
 		throws
 	{
 		if (song < 0 || song >= Songs)
@@ -323,11 +331,18 @@ public class ASAPInfo
 
 	/// Returns length of the specified song.
 	/// The length is specified in milliseconds. -1 means the length is indeterminate.
-	public int GetDuration(int song) => Durations[song];
+	public int GetDuration(
+		/// Song to get length of, 0-based.
+		int song)
+		=> Durations[song];
 
 	/// Sets length of the specified song.
 	/// The length is specified in milliseconds. -1 means the length is indeterminate.
-	public void SetDuration!(int song, int duration)
+	public void SetDuration!(
+		/// Song to set length of, 0-based.
+		int song,
+		/// New length in milliseconds.
+		int duration)
 		throws
 	{
 		if (song < 0 || song >= Songs)
@@ -339,13 +354,20 @@ public class ASAPInfo
 	/// Returns:
 	/// * `true` if the song loops
 	/// * `false` if the song stops
-	public bool GetLoop(int song) => Loops[song];
+	public bool GetLoop(
+		/// Song to check for looping, 0-based.
+		int song)
+		=> Loops[song];
 
 	/// Sets information whether the specified song loops.
 	/// Use:
 	/// * `true` if the song loops
 	/// * `false` if the song stops
-	public void SetLoop!(int song, bool loop)
+	public void SetLoop!(
+		/// Song to set as looping, 0-based.
+		int song,
+		/// `true` if the song loops.
+		bool loop)
 		throws
 	{
 		if (song < 0 || song >= Songs)
@@ -356,6 +378,8 @@ public class ASAPInfo
 	/// Returns `true` for NTSC song and `false` for PAL song.
 	public bool IsNtsc() => Ntsc;
 
+	/// Returns the letter argument for the TYPE SAP tag.
+	/// Returns zero for non-SAP files.
 	public int GetTypeLetter()
 	{
 		switch (Type) {
@@ -367,19 +391,25 @@ public class ASAPInfo
 		}
 	}
 
+	/// Returns player routine rate in Atari scanlines.
 	public int GetPlayerRateScanlines() => Fastplay;
 
+	/// Returns approximate player routine rate in Hz.
 	public int GetPlayerRateHz()
 	{
 		int scanlineClock = Ntsc ? 1789772 / 114 : 1773447 / 114;
 		return (scanlineClock + (Fastplay >> 1)) / Fastplay;
 	}
 
+	/// Returns the address of the module.
+	/// Returns -1 if unknown.
 	public int GetMusicAddress() => Music;
 
 	/// Causes music to be relocated.
 	/// Use only with `ASAPWriter.Write`.
-	public void SetMusicAddress!(int address)
+	public void SetMusicAddress!(
+		/// New music address.
+		int address)
 		throws
 	{
 		if (address < 0 || address >= 0xffff)
@@ -387,15 +417,27 @@ public class ASAPInfo
 		Music = address;
 	}
 
+	/// Returns the address of the player initialization routine.
+	/// Returns -1 if no initialization routine.
 	public int GetInitAddress() => Init;
 
+	/// Returns the address of the player routine.
 	public int GetPlayerAddress() => Player;
 
+	/// Returns the address of the COVOX chip.
+	/// Returns -1 if no COVOX enabled.
 	public int GetCovoxAddress() => CovoxAddr;
 
+	/// Retturns the length of the SAP header in bytes.
 	public int GetSapHeaderLength() => HeaderLen;
 
-	public int GetInstrumentNamesOffset(byte[] module, int moduleLen)
+	/// Returns the offset of instrument names for RMT module.
+	/// Returns -1 if not an RMT module or RMT module without instrument names.
+	public int GetInstrumentNamesOffset(
+		/// Content of the RMT file.
+		byte[] module,
+		/// Length of the RMT file.
+		int moduleLen)
 	{
 		if (Type != ASAPModuleType.Rmt)
 			return -1;
