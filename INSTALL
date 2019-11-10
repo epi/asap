@@ -9,7 +9,7 @@ You'll need 'cito' (https://github.com/pfusik/cito).
 For your convenience, this is not needed for most of the C and C++ ports.
 
 2. GNU Make.
-On Windows, install from Cygwin (http://cygwin.com).
+On Windows, install from MSYS2 (https://www.msys2.org/).
 
 3. If compiling from Git:
 xasm (https://github.com/pfusik/xasm)
@@ -32,7 +32,7 @@ Building asapconv and libasap on Unix-like systems
 From a directory which contains 'asap.c' run:
 
     make
-	sudo make install
+    sudo make install
 
 The latter command installs the command-line converter and the C library
 in '/usr/local'.  Add '--prefix=DIR' to install somewhere else.
@@ -114,8 +114,9 @@ Building asapconv, WASAP, Winamp/XMPlay/BASS plugins, RMT DLL,
 asapscan, shell extension and libasap on Windows
 ---------------------------------------------------------------------
 
-In Cygwin setup (https://www.cygwin.com/) select: bash, coreutils, dos2unix,
-git, make, tar, mingw64-{i686,x86_64}-{gcc-core,gcc-g++,headers,runtime}.
+Install MSYS2 (https://www.msys2.org/), then additional packages:
+
+    pacman -S make mingw-w64-i686-gcc mingw-w64-x86_64-gcc
 
 Open the command prompt in the root directory of ASAP sources and run:
 
@@ -127,7 +128,7 @@ Building the foobar2000 plugin on Windows
 
 In addition to the common prerequisites you need:
 1. A Microsoft C++ compiler and a Windows SDK.
-   I use Visual Studio Community 2017
+   I use Visual Studio Community 2019.
 2. foobar2000 SDK (http://www.foobar2000.org/SDK).
    Extract it to a new directory called 'foobar2000_SDK'
    next to (not inside!) the ASAP directory.
