@@ -211,7 +211,7 @@ const char *ASAPInfo_GetTitle(const ASAPInfo *self);
  * Sets music title.
  * An empty string means the title is unknown.
  * @param self This <code>ASAPInfo</code>.
- * @param value New ttile for the current music.
+ * @param value New title for the current music.
  */
 bool ASAPInfo_SetTitle(ASAPInfo *self, const char *value);
 

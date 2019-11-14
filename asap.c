@@ -2701,7 +2701,7 @@ static int DurationParser_Parse(DurationParser *self, const char *s)
 			self->position++;
 			result = result * 10 + digit;
 		}
-		if (self->position < self->length && s[self->position] == 58) {
+		if (self->position < self->length && s[self->position] == ':') {
 			self->position++;
 			if ((digit = DurationParser_ParseDigit(self, 5)) == -1)
 				return -1;
@@ -2714,7 +2714,7 @@ static int DurationParser_Parse(DurationParser *self, const char *s)
 	result *= 1000;
 	if (self->position >= self->length)
 		return result;
-	if (s[self->position++] != 46)
+	if (s[self->position++] != '.')
 		return -1;
 	if ((digit = DurationParser_ParseDigit(self, 9)) == -1)
 		return -1;
@@ -2844,10 +2844,10 @@ static int ASAPInfo_CheckDate(const ASAPInfo *self)
 	int n = (int) strlen(self->date);
 	switch (n) {
 	case 10:
-		if (!ASAPInfo_CheckTwoDateDigits(self, 0) || self->date[2] != 47)
+		if (!ASAPInfo_CheckTwoDateDigits(self, 0) || self->date[2] != '/')
 			return -1;
 	case 7:
-		if (!ASAPInfo_CheckTwoDateDigits(self, n - 7) || self->date[n - 5] != 47)
+		if (!ASAPInfo_CheckTwoDateDigits(self, n - 7) || self->date[n - 5] != '/')
 			return -1;
 	case 4:
 		if (!ASAPInfo_CheckTwoDateDigits(self, n - 4) || !ASAPInfo_CheckTwoDateDigits(self, n - 2))
@@ -4028,7 +4028,7 @@ static bool ASAPInfo_ParseSap(ASAPInfo *self, uint8_t const *module, int moduleL
 			char *tag = CiString_Substring((const char *) module + lineStart, tagLen);
 			if (argStart >= 0 && argLen <= 129) {
 				char *arg = CiString_Substring((const char *) module + argStart, argLen);
-				if (argLen >= 3 && arg[0] == 34 && arg[argLen - 1] == 34 && strcmp(arg, "\"<?>\"") != 0) {
+				if (argLen >= 3 && arg[0] == '\"' && arg[argLen - 1] == '\"' && strcmp(arg, "\"<?>\"") != 0) {
 					if (strcmp(tag, "AUTHOR") == 0)
 						CiString_Assign(&self->author, CiString_Substring(arg + 1, argLen - 2));
 					else if (strcmp(tag, "NAME") == 0)
@@ -4160,7 +4160,7 @@ static bool ASAPInfo_ParseSap(ASAPInfo *self, uint8_t const *module, int moduleL
 
 static int ASAPInfo_PackExt(const char *ext)
 {
-	return (int) strlen(ext) == 2 && ext[0] <= 122 && ext[1] <= 122 ? ext[0] | ext[1] << 8 | 2105376 : (int) strlen(ext) == 3 && ext[0] <= 122 && ext[1] <= 122 && ext[2] <= 122 ? ext[0] | ext[1] << 8 | ext[2] << 16 | 2105376 : 0;
+	return (int) strlen(ext) == 2 && ext[0] <= 'z' && ext[1] <= 'z' ? ext[0] | ext[1] << 8 | 2105376 : (int) strlen(ext) == 3 && ext[0] <= 'z' && ext[1] <= 'z' && ext[2] <= 'z' ? ext[0] | ext[1] << 8 | ext[2] << 16 | 2105376 : 0;
 }
 
 static int ASAPInfo_GetPackedExt(const char *filename)
@@ -5261,10 +5261,10 @@ static int ASAPWriter_FormatXexInfoText(uint8_t *dest, int destLen, int endColum
 	for (int srcOffset = 0; srcOffset < srcLen;) {
 		int c = src[srcOffset++];
 		if (c == 32) {
-			if (author && srcOffset < srcLen && src[srcOffset] == 38) {
+			if (author && srcOffset < srcLen && src[srcOffset] == '&') {
 				int authorLen;
 				for (authorLen = 1; srcOffset + authorLen < srcLen; authorLen++) {
-					if (src[srcOffset + authorLen] == 32 && srcOffset + authorLen + 1 < srcLen && src[srcOffset + authorLen + 1] == 38)
+					if (src[srcOffset + authorLen] == ' ' && srcOffset + authorLen + 1 < srcLen && src[srcOffset + authorLen + 1] == '&')
 						break;
 				}
 				if (authorLen <= 32 && destLen % 32 + 1 + authorLen > 32) {
@@ -5273,7 +5273,7 @@ static int ASAPWriter_FormatXexInfoText(uint8_t *dest, int destLen, int endColum
 				}
 			}
 			int wordLen;
-			for (wordLen = 0; srcOffset + wordLen < srcLen && src[srcOffset + wordLen] != 32; wordLen++) {
+			for (wordLen = 0; srcOffset + wordLen < srcLen && src[srcOffset + wordLen] != ' '; wordLen++) {
 			}
 			if (wordLen <= 32 && destLen % 32 + 1 + wordLen > 32) {
 				destLen = ASAPWriter_PadXexInfo(dest, destLen, 0);
