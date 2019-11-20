@@ -330,6 +330,7 @@ public class PlayerService extends Service implements Runnable, MediaController.
 			if (bufferLen < shortBuffer.length)
 				action = ACTION_NEXT;
 		}
+		audioTrack.release();
 	}
 
 	public void run()
