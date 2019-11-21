@@ -50,7 +50,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class PlayerService extends Service implements Runnable, MediaController.MediaPlayerControl
+public class PlayerService extends Service implements Runnable, AudioManager.OnAudioFocusChangeListener, MediaController.MediaPlayerControl
 {
 	// User interface -----------------------------------------------------------------------------------------
 
@@ -335,12 +335,15 @@ public class PlayerService extends Service implements Runnable, MediaController.
 
 	public void run()
 	{
+		if (!gainFocus())
+			return;
 		while (handleLoadAction()) {
 			showInfo();
 			showNotification();
 			playLoop();
 		}
 		stopForeground(true);
+		releaseFocus();
 	}
 
 	private boolean isPaused()
@@ -421,8 +424,39 @@ public class PlayerService extends Service implements Runnable, MediaController.
 
 	public int getAudioSessionId()
 	{
-		// API 9: return audioTrack != null ? audioTrack.getAudioSessionId() : 0;
+		// return audioTrack != null ? audioTrack.getAudioSessionId() : 0;
 		return 0;
+	}
+
+	private AudioManager getAudioManager()
+	{
+		return (AudioManager) getSystemService(AUDIO_SERVICE);
+	}
+
+	@Override
+	public void onAudioFocusChange(int focusChange)
+	{
+		switch (focusChange) {
+		case AudioManager.AUDIOFOCUS_LOSS:
+		case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+			pause();
+			break;
+		case AudioManager.AUDIOFOCUS_GAIN:
+			start();
+			break;
+		default:
+			break;
+		}
+	}
+
+	private boolean gainFocus()
+	{
+		return getAudioManager().requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+	}
+
+	private void releaseFocus()
+	{
+		getAudioManager().abandonAudioFocus(this);
 	}
 
 	private final BroadcastReceiver headsetReceiver = new BroadcastReceiver() {
@@ -443,9 +477,8 @@ public class PlayerService extends Service implements Runnable, MediaController.
 
 		registerReceiver(headsetReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
 
-		AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
-		audioManager.registerMediaButtonEventReceiver(eventReceiver);
+		getAudioManager().registerMediaButtonEventReceiver(eventReceiver);
 
 		song = SONG_DEFAULT;
 		uri = intent.getData();
@@ -468,9 +501,8 @@ public class PlayerService extends Service implements Runnable, MediaController.
 		super.onDestroy();
 		stop();
 
-		AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
-		audioManager.unregisterMediaButtonEventReceiver(eventReceiver);
+		getAudioManager().unregisterMediaButtonEventReceiver(eventReceiver);
 
 		unregisterReceiver(headsetReceiver);
 	}
