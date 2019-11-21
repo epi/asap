@@ -1,4 +1,18 @@
 ﻿<page title="News">
+	<release version="5.0.0" date="2019-11-21">
+		<ul>
+			<li>Upgraded the <a href="https://github.com/pfusik/cito">Ć programming language</a>.</li>
+			<li>Upgraded C code to C99.</li>
+		</ul>
+		<ul title="Android">
+			<li>Fixed app crashes.</li>
+			<li>Pause playback when another app plays.</li>
+			<li>No longer require phone state permission.</li>
+			<li>Request file permissions only when browsing files.</li>
+			<li>Ability to adjust volume before playback.</li>
+		</ul>
+	</release>
+
 	<release version="4.0.0" date="2019-01-10">
 		<ul>
 			<li>Removed ports: Windows 8, Windows Mobile, Windows Media Player, Java ME, Java applet, Silverlight, Flash Player, Adobe AIR, gstreamer, Audacious, XBMC, GSPlayer, Apollo.</li>

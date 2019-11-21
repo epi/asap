@@ -8,7 +8,7 @@
 	The ASAP installer detects it and installs a plugin.
 	This plugin can play directly from ATR disk images.
 	You may also use foobar2000's conversion, e.g. to MP3.
-	If you want to install just the foobar2000 plugin and nothing else, there's an alternative download
+	If you want to install just the foobar2000 plugin and nothing else, there's an alternative download:
 	<download prefix="foo_asap-" suffix=".fb2k-component" />.</p>
 	<img src="foobar2000.png" alt="foobar2000" />
 
@@ -26,7 +26,7 @@
 	<h2>BASS / AIMP</h2>
 	<p><a href="http://www.un4seen.com/bass.html">BASS</a> is a component that provides audio playback
 	in <a href="http://www.aimp.ru/">AIMP</a> and <a href="http://www.un4seen.com/bass_showcase.php">other players</a>.
-	The ASAP installer detects AIMP. For other players, modify the install directory</p>
+	The ASAP installer detects AIMP. For other players, modify the install directory.</p>
 	<img src="aimp.png" alt="AIMP" />
 
 	<h2>VLC</h2>
@@ -47,7 +47,7 @@
 	When you hover the mouse pointer over the icon, the name of the loaded file appears.
 	To open another file, left-click the tray icon. The other options are
 	available in the menu which appears when you right-click the icon.</p>
-	<p>Because of limited functionality of WASAP (e.g. no playlist),
+	<p>Because of limited functionality of WASAP (for instance, no playlist),
 	it's recommended to use the previously described players instead.</p>
 	<img src="wasap.png" alt="WASAP" />
 

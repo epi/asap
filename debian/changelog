@@ -1,3 +1,9 @@
+asap (5.0.0-1) UNRELEASED; urgency=low
+
+  * New release.
+
+ -- Piotr Fusik <fox@scene.pl>  Thu, 21 Nov 2019 10:12:29 +0100
+
 asap (4.0.0-2) UNRELEASED; urgency=low
 
   * Fix VLC plugin location.

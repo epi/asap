@@ -4,11 +4,10 @@
 	<p>Download <download prefix="asap-" suffix="-android.apk" /> and install it manually.</p>
 	<p>The application has the <a href="http://asma.atari.org">ASMA</a> archive bundled.
 	On start it shows the whole archive contents, so you probably want to use the search button.
-	Please note that this is the initial release with the ASMA archive,
-	the navigation is to be improved in future releases!</p>
+	The navigation is to be improved in future releases!</p>
 	<p>Use the open button to play files from your device (memory card not supported yet, sorry).
 	ZIP archives and ATR disk images are supported.
-	There is also a read-only support for M3U playlists (the playlists must be prepared
-	on a computer and transferred to the Android device).</p>
+	M3U playlists are supported, but must be prepared on a computer
+	and transferred to the Android device.</p>
 	<div style="clear: right;" />
 </page>

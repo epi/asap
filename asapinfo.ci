@@ -103,7 +103,7 @@ class DurationParser
 public class ASAPInfo
 {
 	/// ASAP version - major part.
-	public const int VersionMajor = 4;
+	public const int VersionMajor = 5;
 	/// ASAP version - minor part.
 	public const int VersionMinor = 0;
 	/// ASAP version - micro part.
