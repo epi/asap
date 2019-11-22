@@ -11,6 +11,7 @@
 		<li>Open <code>asap-<version />-macos.dmg</code>.</li>
 		<li>Drag <code>libasap_plugin.dylib</code> to <code>plugins</code>.</li>
 	</ol>
+	<p>Due to limitations of the VLC plugin interface, the VLC plugin only supports SAP and FC formats.</p>
 
 	<h2>asapconv</h2>
 	<p>For command-line conversions (e.g. to WAV or between SAP and the tracker formats)
