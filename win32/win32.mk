@@ -248,7 +248,7 @@ release/asap-$(VERSION)-win32.msi: win32/setup/asap.wixobj \
 	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll)
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b release -b $(srcdir)win32/setup -b $(srcdir)win32 $<
 
-win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs
+win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs release/release.mk
 	$(CANDLE) -dVERSION=$(VERSION) $<
 CLEAN += win32/setup/asap.wixobj
 
@@ -257,6 +257,6 @@ release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
 	win32/x64/ASAPShellEx.dll win32/x64/libasap_plugin.dll
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b $(srcdir)/win32/setup -b $(srcdir)win32 $<
 
-win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs
+win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs release/release.mk
 	$(CANDLE) -arch x64 -dVERSION=$(VERSION) $<
 CLEAN += win32/x64/asap.wixobj
