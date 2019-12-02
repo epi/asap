@@ -30,13 +30,11 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.view.inputmethod.InputMethodManager;
 
 abstract class BaseSelector extends ListActivity
 {
@@ -48,7 +46,6 @@ abstract class BaseSelector extends ListActivity
 	}
 
 	protected Uri uri;
-	private boolean isSearch;
 
 	protected static class FileInfoAdapter extends ArrayAdapter<FileInfo>
 	{
@@ -110,26 +107,5 @@ abstract class BaseSelector extends ListActivity
 				intent.putExtra(PlayerService.EXTRA_PLAYLIST, uri.toString());
 		}
 		startActivity(intent);
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item)
-	{
-		switch (item.getItemId()) {
-		case R.id.menu_search:
-			InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-			if (isSearch) {
-				imm.hideSoftInputFromWindow(getListView().getWindowToken(), 0);
-				getListView().clearTextFilter();
-				isSearch = false;
-			}
-			else {
-				imm.showSoftInput(getListView(), 0);
-				isSearch = true;
-			}
-			return true;
-		default:
-			return false;
-		}
 	}
 }

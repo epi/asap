@@ -1,7 +1,7 @@
 /*
  * FileContainer.java - ASAP for Android
  *
- * Copyright (C) 2013-2018  Piotr Fusik
+ * Copyright (C) 2013-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -51,7 +51,7 @@ abstract class FileContainer
 
 	private void listAsma(Context context)
 	{
-		FileInfo[] infos = FileInfo.listIndex(context);
+		FileInfo[] infos = FileInfo.listIndex(context, null);
 		for (int i = 1 /* skip "shuffle all" */; i < infos.length; i++)
 			onSongFile(infos[i].filename, null);
 	}

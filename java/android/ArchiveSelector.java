@@ -1,7 +1,7 @@
 /*
  * ArchiveSelector.java - ASAP for Android
  *
- * Copyright (C) 2015  Piotr Fusik
+ * Copyright (C) 2015-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,10 +23,12 @@
 
 package net.sf.asap;
 
+import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.SearchView;
 
 public class ArchiveSelector extends BaseSelector
 {
@@ -34,15 +36,20 @@ public class ArchiveSelector extends BaseSelector
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		getListView().setTextFilterEnabled(true);
 		uri = Util.asmaRoot;
-		setListAdapter(new FileInfoAdapter(this, R.layout.fileinfo_list_item, FileInfo.listIndex(this)));
+		Intent intent = getIntent();
+		String query = Intent.ACTION_SEARCH.equals(intent.getAction()) ? intent.getStringExtra(SearchManager.QUERY) : null;
+		setListAdapter(new FileInfoAdapter(this, R.layout.fileinfo_list_item, FileInfo.listIndex(this, query)));
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
 		getMenuInflater().inflate(R.menu.archive_selector, menu);
+
+		SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
+		SearchView searchView = (SearchView) menu.findItem(R.id.menu_search).getActionView();
+		searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
 		return true;
 	}
 
@@ -54,7 +61,7 @@ public class ArchiveSelector extends BaseSelector
 			startActivity(new Intent(Intent.ACTION_VIEW, null, this, FileSelector.class));
 			return true;
 		default:
-			return super.onOptionsItemSelected(item);
+			return false;
 		}
 	}
 }

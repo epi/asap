@@ -32,6 +32,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.Toast;
@@ -44,6 +45,7 @@ import java.util.TreeSet;
 
 public class FileSelector extends BaseSelector
 {
+	private boolean isSearch;
 	private boolean isDetails;
 
 	private class FileInfoList extends FileContainer
@@ -164,13 +166,25 @@ public class FileSelector extends BaseSelector
 		case android.R.id.home:
 			finish();
 			return true;
+		case R.id.menu_search:
+			InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+			if (isSearch) {
+				imm.hideSoftInputFromWindow(getListView().getWindowToken(), 0);
+				getListView().clearTextFilter();
+				isSearch = false;
+			}
+			else {
+				imm.showSoftInput(getListView(), 0);
+				isSearch = true;
+			}
+			return true;
 		case R.id.menu_toggle_details:
 			isDetails = !isDetails;
 			getPreferences(MODE_PRIVATE).edit().putBoolean("fileDetails", isDetails).commit();
 			reload();
 			return true;
 		default:
-			return super.onOptionsItemSelected(item);
+			return false;
 		}
 	}
 }

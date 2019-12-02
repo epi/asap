@@ -1,7 +1,7 @@
 /*
  * FileInfo.java - ASAP for Android
  *
- * Copyright (C) 2010-2015  Piotr Fusik
+ * Copyright (C) 2010-2019  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -104,10 +104,24 @@ class FileInfo implements Comparable<FileInfo>
 		return info;
 	}
 
-	private static FileInfo[] readIndex(Context context)
+	private static boolean matches(String value, String query)
+	{
+		if (value.startsWith(query))
+			return true;
+		for (int pos = 0; ;) {
+			pos = value.indexOf(' ', pos);
+			if (pos < 0)
+				return false;
+			if (value.regionMatches(true, ++pos, query, 0, query.length()))
+				return true;
+		}
+	}
+
+	static FileInfo[] listIndex(Context context, String query)
 	{
 		ArrayList<FileInfo> coll = new ArrayList<FileInfo>();
-		coll.add(getShuffleAll(context));
+		if (query == null)
+			coll.add(getShuffleAll(context));
 		try {
 			LineNumberReader r = new LineNumberReader(new InputStreamReader(context.getAssets().open("index.txt")));
 			try {
@@ -115,12 +129,18 @@ class FileInfo implements Comparable<FileInfo>
 					String name = r.readLine();
 					if (name == null)
 						break;
-					FileInfo info = new FileInfo(name);
-					info.title = r.readLine();
-					info.author = r.readLine();
-					info.date = r.readLine();
-					info.songs = Integer.parseInt(r.readLine());
-					coll.add(info);
+					String title = r.readLine();
+					String author = r.readLine();
+					String date = r.readLine();
+					String songs = r.readLine();
+					if (query == null || matches(title, query) || matches(author, query)) {
+						FileInfo info = new FileInfo(name);
+						info.title = title;
+						info.author = author;
+						info.date = date;
+						info.songs = Integer.parseInt(songs);
+						coll.add(info);
+					}
 				}
 			}
 			finally {
@@ -131,18 +151,5 @@ class FileInfo implements Comparable<FileInfo>
 			// shouldn't happen
 		}
 		return coll.toArray(new FileInfo[coll.size()]);
-	}
-
-	private static FileInfo[] indexCache = null;
-
-	static FileInfo[] listIndex(Context context)
-	{
-		if (indexCache == null) {
-			synchronized (FileInfo.class) {
-				if (indexCache == null)
-					indexCache = readIndex(context);
-			}
-		}
-		return indexCache;
 	}
 }
