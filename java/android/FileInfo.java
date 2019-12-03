@@ -106,15 +106,13 @@ class FileInfo implements Comparable<FileInfo>
 
 	private static boolean matches(String value, String query)
 	{
-		if (value.startsWith(query))
-			return true;
-		for (int pos = 0; ;) {
-			pos = value.indexOf(' ', pos);
-			if (pos < 0)
-				return false;
+		int pos = -1;
+		do {
 			if (value.regionMatches(true, ++pos, query, 0, query.length()))
 				return true;
-		}
+			pos = value.indexOf(' ', pos);
+		} while (pos >= 0);
+		return false;
 	}
 
 	static FileInfo[] listIndex(Context context, String query)
