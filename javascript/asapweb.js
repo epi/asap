@@ -45,7 +45,11 @@ var asap = {
 		const buffer = new Uint8Array(new ArrayBuffer(length * channels));
 
 		const AudioContext = window.AudioContext || window.webkitAudioContext;
+		if (typeof(this.context) == "object")
+			this.context.close();
 		this.context = new AudioContext({ sampleRate : ASAP.SAMPLE_RATE });
+		if (typeof(this.onUpdate) == "function")
+			this.context.onstatechange = this.onUpdate;
 		this.processor = this.context.createScriptProcessor(length, 0, channels);
 		this.processor.onaudioprocess = e => {
 			asap.generate(buffer, length * channels, ASAPSampleFormat.U8);
@@ -54,11 +58,13 @@ var asap = {
 				for (let i = 0; i < length; i++)
 					output[i] = (buffer[i * channels + c] - 128) / 128;
 			}
+			if (typeof(this.onUpdate) == "function")
+				this.onUpdate();
 		};
 		this.processor.connect(this.context.destination);
 		this.asap = asap;
-		if (typeof(this.onLoad) == "function")
-			this.onLoad();
+		if (typeof(this.onUpdate) == "function")
+			this.onUpdate();
 	},
 
 	togglePause : function()
