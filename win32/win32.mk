@@ -1,6 +1,6 @@
 # MinGW for most ports
 WIN32_CC = $(DO)i686-w64-mingw32-gcc $(WIN32_CARGS) $(filter-out %.h,$^)
-WIN32_CXX = $(DO)i686-w64-mingw32-g++ -std=c++17 -static $(WIN32_CARGS) $(filter-out %.h %.hpp,$^)
+WIN32_CXX = $(DO)i686-w64-mingw32-g++ $(WIN32_CARGS) -std=c++17 $(filter-out %.h %.hpp,$^)
 WIN32_WINDRES = $(DO)i686-w64-mingw32-windres -o $@ $<
 VLC_INCLUDE = ../vlc/include
 VLC_LIB32 = "C:/Program Files (x86)/VideoLAN/VLC"
@@ -14,7 +14,7 @@ WIN32_MKLIB = $(DO)lib -nologo -ltcg -out:$@ $^
 
 # MinGW x64
 WIN64_CC = $(DO)x86_64-w64-mingw32-gcc $(WIN32_CARGS) $(filter-out %.h,$^)
-WIN64_CXX = $(DO)x86_64-w64-mingw32-g++ -static $(WIN32_CARGS)
+WIN64_CXX = $(DO)x86_64-w64-mingw32-g++ $(WIN32_CARGS)
 WIN64_WINDRES = $(DO)x86_64-w64-mingw32-windres -o $@ $<
 
 # Windows Installer XML
@@ -28,7 +28,7 @@ $(error Use "Makefile" instead of "win32.mk")
 endif
 
 comma = ,
-WIN32_CARGS = -s -O2 -Wall -Wl,--nxcompat -o $@ $(if $(filter %.dll,$@),-shared -Wl$(comma)-subsystem$(comma)windows) $(INCLUDEOPTS)
+WIN32_CARGS = -O2 -Wall -Wl,--nxcompat -o $@ $(if $(filter %.dll,$@),-shared -Wl$(comma)-subsystem$(comma)windows) $(INCLUDEOPTS) -static -s
 WIN32_CLDO = $(DO)$(if $(filter-out %.obj,$@),mkdir -p win32/obj/$@ && )
 WIN32_CLARGS = -nologo -O2 -GL -W3 $(if $(filter %.obj,$@),-c -Fo$@,-Fe$@ -Fowin32/obj/$@/) $(if $(filter %.dll,$@),-LD) $(INCLUDEOPTS)
 
