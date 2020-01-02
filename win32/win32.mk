@@ -14,7 +14,7 @@ WIN32_MKLIB = $(DO)lib -nologo -ltcg -out:$@ $^
 
 # MinGW x64
 WIN64_CC = $(DO)x86_64-w64-mingw32-gcc $(WIN32_CARGS) $(filter-out %.h,$^)
-WIN64_CXX = $(DO)x86_64-w64-mingw32-g++ $(WIN32_CARGS)
+WIN64_CXX = $(DO)x86_64-w64-mingw32-g++ $(WIN32_CARGS) -std=c++17 $(filter-out %.h %.hpp,$^)
 WIN64_WINDRES = $(DO)x86_64-w64-mingw32-windres -o $@ $<
 
 # Windows Installer XML
