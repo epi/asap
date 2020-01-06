@@ -1,7 +1,7 @@
 /*
  * info_dlg.c - file information dialog box
  *
- * Copyright (C) 2007-2019  Piotr Fusik
+ * Copyright (C) 2007-2020  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -167,11 +167,10 @@ static void updateTech(void)
 	char *p = buf;
 	const char *ext;
 	int type;
-	int i;
 	ext = ASAPInfo_GetOriginalModuleExt(edited_info, saved_module, saved_module_len);
 	if (ext != NULL)
 		p += sprintf(p, "Composed in %s\r\n", ASAPInfo_GetExtDescription(ext));
-	i = ASAPInfo_GetSongs(edited_info);
+	int i = ASAPInfo_GetSongs(edited_info);
 	if (i > 1) {
 		p += sprintf(p, "SONGS %d\r\n", i);
 		i = ASAPInfo_GetDefaultSong(edited_info);
@@ -213,13 +212,12 @@ static void updateStil(void)
 {
 	char buf[16000];
 	char *p = buf;
-	int i;
 	p = appendStil(p, "", ASTIL_GetTitle(astil));
 	p = appendStil(p, "by ", ASTIL_GetAuthor(astil));
 	p = appendStil(p, "Directory comment: ", ASTIL_GetDirectoryComment(astil));
 	p = appendStil(p, "File comment: ", ASTIL_GetFileComment(astil));
 	p = appendStil(p, "Song comment: ", ASTIL_GetSongComment(astil));
-	for (i = 0; ; i++) {
+	for (int i = 0; ; i++) {
 		const ASTILCover *cover = ASTIL_GetCover(astil, i);
 		int startSeconds;
 		const char *s;
@@ -308,11 +306,10 @@ static bool isExt(LPCTSTR filename, LPCTSTR ext)
 
 static void setSaved(void)
 {
-	int i;
 	_tcscpy(saved_author, ASAPInfo_GetAuthor(edited_info));
 	_tcscpy(saved_title, ASAPInfo_GetTitle(edited_info));
 	_tcscpy(saved_date, ASAPInfo_GetDate(edited_info));
-	for (i = 0; i < ASAPInfo_GetSongs(edited_info); i++) {
+	for (int i = 0; i < ASAPInfo_GetSongs(edited_info); i++) {
 		saved_durations[i] = ASAPInfo_GetDuration(edited_info, i);
 		saved_loops[i] = ASAPInfo_GetLoop(edited_info, i);
 	}
@@ -390,19 +387,17 @@ static void toggleCalendar(HWND hDlg)
 		ShowWindow(monthcal, SW_HIDE);
 	else {
 		RECT rc;
-		int x;
-		int y;
-		SYSTEMTIME st;
 		GetWindowRect(GetDlgItem(hDlg, IDC_PICKDATE), &rc);
-		x = rc.left;
-		y = rc.bottom;
+		int x = rc.left;
+		int y = rc.bottom;
 		MonthCal_GetMinReqRect(monthcal, &rc);
 		SetWindowPos(monthcal, NULL, x, y, rc.right, rc.bottom, SWP_SHOWWINDOW | SWP_NOZORDER);
 		y = ASAPInfo_GetYear(edited_info);
 		if (y > 0) {
-			DWORD view;
-			int month = ASAPInfo_GetMonth(edited_info);
+			SYSTEMTIME st;
 			st.wYear = y;
+			int month = ASAPInfo_GetMonth(edited_info);
+			DWORD view;
 			if (month > 0) {
 				int day = ASAPInfo_GetDayOfMonth(edited_info);
 				st.wMonth = month;
