@@ -467,8 +467,10 @@ static bool saveFile(LPCTSTR filename, bool tag)
 		// FIXME: delete file
 		return false;
 	}
-	if (isSap)
+	if (isSap) {
 		setSaved();
+		EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), false);
+	}
 	return true;
 }
 
