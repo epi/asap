@@ -5,5 +5,9 @@
 		<item name="android:colorBackgroundCacheHint">@null</item>
 		<item name="android:windowShowWallpaper">true</item>
 		<item name="android:textColor">@android:color/white</item>
+		<item name="android:autoCompleteTextViewStyle">@style/MyAutoCompleteTextView</item>
+	</style>
+	<style name="MyAutoCompleteTextView" parent="android:Widget.AutoCompleteTextView">
+		<item name="android:popupBackground">#202020</item>
 	</style>
 </resources>

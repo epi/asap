@@ -7,6 +7,7 @@
 	<string name="access_denied">Access denied</string>
 	<string name="shuffle_all">(shuffle all)</string>
 	<string name="songs_format">%1$d songs</string>
+	<string name="author_suggestion_songs">%1$d songs</string>
 	<string name="playing_title">ASAP - Playing</string>
 	<string name="error_reading_file">Error reading file</string>
 	<string name="invalid_file">Invalid file</string>

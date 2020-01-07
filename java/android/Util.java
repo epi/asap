@@ -1,7 +1,7 @@
 /*
  * Util.java - ASAP for Android
  *
- * Copyright (C) 2010-2017  Piotr Fusik
+ * Copyright (C) 2010-2020  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,10 +23,13 @@
 
 package net.sf.asap;
 
+import android.content.Context;
 import android.net.Uri;
 import java.io.File;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.LineNumberReader;
 
 class Util
 {
@@ -104,5 +107,21 @@ class Util
 			is.close();
 		}
 		return got;
+	}
+
+	static LineNumberReader openIndex(Context context) throws IOException
+	{
+		return new LineNumberReader(new InputStreamReader(context.getAssets().open("index.txt")));
+	}
+
+	static boolean matches(String value, String query)
+	{
+		int pos = -1;
+		do {
+			if (value.regionMatches(true, ++pos, query, 0, query.length()))
+				return true;
+			pos = value.indexOf(' ', pos);
+		} while (pos >= 0);
+		return false;
 	}
 }

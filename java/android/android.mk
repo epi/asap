@@ -27,6 +27,8 @@ $(error Use "Makefile" instead of "android.mk")
 endif
 
 ANDROID_RELEASE = release/asap-$(VERSION)-android.apk
+ANDROID_JAVA_SRC = $(addprefix $(srcdir)java/android/, AATRFileInputStream.java ArchiveSelector.java ArchiveSuggestionsProvider.java BaseSelector.java \
+	FileContainer.java FileInfo.java FileSelector.java JavaAATR.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java)
 
 android-release: $(ANDROID_RELEASE)
 .PHONY: android-release
@@ -92,8 +94,8 @@ CLEAN += java/android/classes.dex
 java/android/classes.jar: $(srcdir)java/android/proguard.cfg java/android/classes/net/sf/asap/Player.class
 	$(PROGUARD) -injars java/android/classes -outjars $@ -libraryjars $(ANDROID_JAR) @$<
 
-java/android/classes/net/sf/asap/Player.class: $(addprefix $(srcdir)java/android/,AATRFileInputStream.java ArchiveSelector.java BaseSelector.java FileContainer.java FileInfo.java FileSelector.java JavaAATR.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
-	$(JAVAC) -d java/android/classes -source 1.7 -target 1.7 -bootclasspath $(ANDROID_JAR) $(addprefix $(srcdir)java/android/,AATRFileInputStream.java ArchiveSelector.java BaseSelector.java FileContainer.java FileInfo.java FileSelector.java JavaAATR.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java) java/android/gen/net/sf/asap/R.java java/src/net/sf/asap/*.java
+java/android/classes/net/sf/asap/Player.class: $(ANDROID_JAVA_SRC) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
+	$(JAVAC) -d java/android/classes -source 1.7 -target 1.7 -bootclasspath $(ANDROID_JAR) $(ANDROID_JAVA_SRC) java/android/gen/net/sf/asap/R.java java/src/net/sf/asap/*.java
 CLEANDIR += java/android/classes
 
 # Also generates java/android/gen/net/sf/asap/R.java

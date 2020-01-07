@@ -1,7 +1,7 @@
 /*
  * ArchiveSelector.java - ASAP for Android
  *
- * Copyright (C) 2015-2019  Piotr Fusik
+ * Copyright (C) 2015-2020  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -36,10 +36,16 @@ public class ArchiveSelector extends BaseSelector
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		uri = Util.asmaRoot;
 		Intent intent = getIntent();
-		String query = Intent.ACTION_SEARCH.equals(intent.getAction()) ? intent.getStringExtra(SearchManager.QUERY) : null;
-		setListAdapter(new FileInfoAdapter(this, R.layout.fileinfo_list_item, FileInfo.listIndex(this, query)));
+		if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+			finish();
+			startActivity(new Intent(Intent.ACTION_VIEW, intent.getData(), this, Player.class));
+		}
+		else {
+			uri = Util.asmaRoot;
+			String query = Intent.ACTION_SEARCH.equals(intent.getAction()) ? intent.getStringExtra(SearchManager.QUERY) : null;
+			setListAdapter(new FileInfoAdapter(this, R.layout.fileinfo_list_item, FileInfo.listIndex(this, query)));
+		}
 	}
 
 	@Override

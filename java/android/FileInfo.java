@@ -24,7 +24,6 @@
 package net.sf.asap;
 
 import android.content.Context;
-import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.text.Collator;
@@ -104,45 +103,28 @@ class FileInfo implements Comparable<FileInfo>
 		return info;
 	}
 
-	private static boolean matches(String value, String query)
-	{
-		int pos = -1;
-		do {
-			if (value.regionMatches(true, ++pos, query, 0, query.length()))
-				return true;
-			pos = value.indexOf(' ', pos);
-		} while (pos >= 0);
-		return false;
-	}
-
 	static FileInfo[] listIndex(Context context, String query)
 	{
 		ArrayList<FileInfo> coll = new ArrayList<FileInfo>();
 		if (query == null)
 			coll.add(getShuffleAll(context));
-		try {
-			LineNumberReader r = new LineNumberReader(new InputStreamReader(context.getAssets().open("index.txt")));
-			try {
-				for (;;) {
-					String name = r.readLine();
-					if (name == null)
-						break;
-					String title = r.readLine();
-					String author = r.readLine();
-					String date = r.readLine();
-					String songs = r.readLine();
-					if (query == null || matches(title, query) || matches(author, query)) {
-						FileInfo info = new FileInfo(name);
-						info.title = title;
-						info.author = author;
-						info.date = date;
-						info.songs = Integer.parseInt(songs);
-						coll.add(info);
-					}
+		try (LineNumberReader r = Util.openIndex(context)) {
+			for (;;) {
+				String name = r.readLine();
+				if (name == null)
+					break;
+				String title = r.readLine();
+				String author = r.readLine();
+				String date = r.readLine();
+				String songs = r.readLine();
+				if (query == null || Util.matches(title, query) || Util.matches(author, query)) {
+					FileInfo info = new FileInfo(name);
+					info.title = title;
+					info.author = author;
+					info.date = date;
+					info.songs = Integer.parseInt(songs);
+					coll.add(info);
 				}
-			}
-			finally {
-				r.close();
 			}
 		}
 		catch (IOException ex) {
