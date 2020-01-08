@@ -118,7 +118,8 @@ class Util
 	{
 		int pos = -1;
 		do {
-			if (value.regionMatches(true, ++pos, query, 0, query.length()))
+			if (value.regionMatches(true, ++pos, query, 0, query.length())
+			 || (pos + 1 < value.length() && value.charAt(pos) == '(' && value.regionMatches(true, ++pos, query, 0, query.length())))
 				return true;
 			pos = value.indexOf(' ', pos);
 		} while (pos >= 0);
