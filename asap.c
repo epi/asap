@@ -5951,9 +5951,9 @@ static void Cpu6502_DoFrame(Cpu6502 *self, int cycleLimit)
 		case 124:
 		case 220:
 		case 252:
-			if (self->memory[self->pc++] + self->x >= 256)
+			if (self->memory[self->pc] + self->x >= 256)
 				self->cycle++;
-			self->pc++;
+			self->pc += 2;
 			continue;
 		case 29:
 		case 61:
