@@ -120,7 +120,7 @@ CLEAN += win32/x64/wasap-res.o
 # VLC
 
 win32/libasap_plugin.dll: $(call src,vlc/libasap_plugin.c asap.[ch]) win32/libasap_plugin-res.o
-	$(WIN32_CC) -I$(VLC_INCLUDE) -static-libgcc -L$(VLC_LIB32) -lvlccore
+	$(WIN32_CC:-static=-static-libgcc) -I$(VLC_INCLUDE) -L$(VLC_LIB32) -lvlccore
 CLEAN += win32/libasap_plugin.dll
 
 win32/libasap_plugin-res.o: $(call src,win32/gui.rc asap.h)
@@ -128,7 +128,7 @@ win32/libasap_plugin-res.o: $(call src,win32/gui.rc asap.h)
 CLEAN += win32/libasap_plugin-res.o
 
 win32/x64/libasap_plugin.dll: $(call src,vlc/libasap_plugin.c asap.[ch]) win32/x64/libasap_plugin-res.o
-	$(WIN64_CC) -I$(VLC_INCLUDE) -static-libgcc -L$(VLC_LIB64) -lvlccore
+	$(WIN64_CC:-static=-static-libgcc) -I$(VLC_INCLUDE) -L$(VLC_LIB64) -lvlccore
 CLEAN += win32/x64/libasap_plugin.dll
 
 win32/x64/libasap_plugin-res.o: $(call src,win32/gui.rc asap.h)
