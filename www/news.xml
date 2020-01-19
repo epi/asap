@@ -1,4 +1,11 @@
 ﻿<page title="News">
+	<release version="5.0.1" date="2020-01-19">
+		<ul>
+			<li>Android: search by author.</li>
+			<li>Windows: some 5.0.0 plugins required <code>libgcc_s_dw2-1.dll</code> - fixed.</li>
+		</ul>
+	</release>
+
 	<release version="5.0.0" date="2019-11-21">
 		<ul>
 			<li>Upgraded the <a href="https://github.com/pfusik/cito">Ć programming language</a>.</li>

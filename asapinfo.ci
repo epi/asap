@@ -107,7 +107,7 @@ public class ASAPInfo
 	/// ASAP version - minor part.
 	public const int VersionMinor = 0;
 	/// ASAP version - micro part.
-	public const int VersionMicro = 0;
+	public const int VersionMicro = 1;
 	/// ASAP version as a string.
 	public const string Version = VersionMajor + "." + VersionMinor + "." + VersionMicro;
 

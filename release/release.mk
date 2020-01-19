@@ -5,7 +5,7 @@ GREP = @grep -H
 
 # no user-configurable paths below this line
 
-VERSION = 5.0.0
+VERSION = 5.0.1
 
 ifndef DO
 $(error Use "Makefile" instead of "release.mk")
@@ -63,6 +63,24 @@ release/osx/bin:
 deb:
 	debuild -b -us -uc
 .PHONY: deb
+
+deb64:
+	scp release/asap-$(VERSION).tar.gz vm:.
+	ssh vm 'rm -rf asap-$(VERSION) && tar xf asap-$(VERSION).tar.gz && make -C asap-$(VERSION) deb'
+	scp vm:asap{,-dev,-vlc}_$(VERSION)-1_amd64.deb release/
+.PHONY: deb64
+
+rpm64:
+	scp release/asap-$(VERSION).tar.gz vm:.
+	ssh vm 'rpmbuild -tb asap-$(VERSION).tar.gz'
+	scp vm:rpmbuild/RPMS/x86_64/asap{,-devel,-vlc,-xmms}-$(VERSION)-1.x86_64.rpm release/
+.PHONY: rpm64
+
+rpm32:
+	scp release/asap-$(VERSION).tar.gz vm:.
+	ssh vm 'rpmbuild -tb asap-$(VERSION).tar.gz'
+	scp vm:rpmbuild/RPMS/i686/asap{,-devel,-vlc,-xmms}-$(VERSION)-1.i686.rpm release/
+.PHONY: rpm32
 
 release/COPYING.txt: $(srcdir)COPYING
 	$(UNIX2DOS)
