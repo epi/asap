@@ -251,26 +251,17 @@ public class ASAPInfo
 	int CheckDate()
 	{
 		int n = Date.Length;
-		int firstSlash;
-		int secondSlash;
 		switch (n) {
 		case 4: // YYYY
-			firstSlash = secondSlash = -1;
-			break;
 		case 7: // MM/YYYY
-			firstSlash = 2;
-			secondSlash = -1;
-			break;
 		case 10: // DD/MM/YYYY
-			firstSlash = 2;
-			secondSlash = 5;
 			break;
 		default:
 			return -1;
 		}
 		for (int i = 0; i < n; i++) {
 			int c = Date[i];
-			if (i == firstSlash || i == secondSlash) {
+			if (i == n - 5 || i == n - 8) {
 				if (c != '/')
 					return -1;
 			}

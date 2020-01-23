@@ -2833,26 +2833,17 @@ bool ASAPInfo_SetDate(ASAPInfo *self, const char *value)
 static int ASAPInfo_CheckDate(const ASAPInfo *self)
 {
 	int n = (int) strlen(self->date);
-	int firstSlash;
-	int secondSlash;
 	switch (n) {
 	case 4:
-		firstSlash = secondSlash = -1;
-		break;
 	case 7:
-		firstSlash = 2;
-		secondSlash = -1;
-		break;
 	case 10:
-		firstSlash = 2;
-		secondSlash = 5;
 		break;
 	default:
 		return -1;
 	}
 	for (int i = 0; i < n; i++) {
 		int c = self->date[i];
-		if (i == firstSlash || i == secondSlash) {
+		if (i == n - 5 || i == n - 8) {
 			if (c != 47)
 				return -1;
 		}
