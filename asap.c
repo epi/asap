@@ -250,8 +250,6 @@ static bool ASAPInfo_CheckValidChar(int c);
 
 static bool ASAPInfo_CheckValidText(const char *s);
 
-static bool ASAPInfo_CheckTwoDateDigits(const ASAPInfo *self, int i);
-
 static int ASAPInfo_CheckDate(const ASAPInfo *self);
 
 static int ASAPInfo_GetTwoDateDigits(const ASAPInfo *self, int i);
@@ -2832,30 +2830,36 @@ bool ASAPInfo_SetDate(ASAPInfo *self, const char *value)
 	return true;
 }
 
-static bool ASAPInfo_CheckTwoDateDigits(const ASAPInfo *self, int i)
-{
-	int d1 = self->date[i];
-	int d2 = self->date[i + 1];
-	return d1 >= 48 && d1 <= 57 && d2 >= 48 && d2 <= 57;
-}
-
 static int ASAPInfo_CheckDate(const ASAPInfo *self)
 {
 	int n = (int) strlen(self->date);
+	int firstSlash;
+	int secondSlash;
 	switch (n) {
-	case 10:
-		if (!ASAPInfo_CheckTwoDateDigits(self, 0) || self->date[2] != '/')
-			return -1;
-	case 7:
-		if (!ASAPInfo_CheckTwoDateDigits(self, n - 7) || self->date[n - 5] != '/')
-			return -1;
 	case 4:
-		if (!ASAPInfo_CheckTwoDateDigits(self, n - 4) || !ASAPInfo_CheckTwoDateDigits(self, n - 2))
-			return -1;
-		return n;
+		firstSlash = secondSlash = -1;
+		break;
+	case 7:
+		firstSlash = 2;
+		secondSlash = -1;
+		break;
+	case 10:
+		firstSlash = 2;
+		secondSlash = 5;
+		break;
 	default:
 		return -1;
 	}
+	for (int i = 0; i < n; i++) {
+		int c = self->date[i];
+		if (i == firstSlash || i == secondSlash) {
+			if (c != 47)
+				return -1;
+		}
+		else if (c < 48 || c > 57)
+			return -1;
+	}
+	return n;
 }
 
 static int ASAPInfo_GetTwoDateDigits(const ASAPInfo *self, int i)
