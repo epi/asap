@@ -1,6 +1,6 @@
 // flashpack.ci - Atari 8-bit executable compression
 //
-// Copyright (C) 2011-2019  Piotr Fusik
+// Copyright (C) 2011-2020  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -98,8 +98,10 @@ class FlashPack
 		int flags = 1;
 		do {
 			flags <<= 1;
-			if (index < ItemsCount && Items[index++].Type != FlashPackItemType.Literal)
-				flags++;
+			if (index < ItemsCount) {
+				if (Items[index++].Type != FlashPackItemType.Literal)
+					flags++;
+			}
 		} while (flags < 0x100);
 		return flags & 0xff;
 	}

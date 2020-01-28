@@ -708,7 +708,9 @@ public class ASAPInfo
 					seen[i] = SeenBefore;
 			for (int patternRows = module[0x1ce]; --patternRows >= 0; ) {
 				for (ch = 3; ch >= 0; ch--) {
-					if (patternOffset[ch] == 0 || --blankRowsCounter[ch] >= 0)
+					if (patternOffset[ch] == 0)
+						continue;
+					if (--blankRowsCounter[ch] >= 0)
 						continue;
 					for (;;) {
 						i = module[patternOffset[ch]++];
@@ -1331,36 +1333,37 @@ public class ASAPInfo
 			
 			while (!IsFcSongEnd(module, trackPos)) {
 				for (int n = 0; n < 3; n++) {
-					int trackCmd = GetFcTrackCommand(module, trackPos, n);
-					if (trackCmd != 0xff && patternDelay[n]-- <= 0) { //"<" for junks in track
-						while (trackPos[n] < 0x100) {
-							trackCmd = GetFcTrackCommand(module, trackPos, n);
-							if (trackCmd < 0x40) {
-								int patternCmd = module[patternOffsets[trackCmd] + patternPos[n]++];
-								if (patternCmd < 0x40) {
-									patternDelay[n] = noteDuration[n];
-									break;
-								}
-								else if (patternCmd < 0x60)
-									noteDuration[n] = patternCmd - 0x40;
-								else if (patternCmd == 0xff) {
-									patternDelay[n] = 0;
-									noteDuration[n] = 0;
-									patternPos[n] = 0;
-									trackPos[n]++;
-								}
-							}
-							else if (trackCmd == 0x40)
-								trackPos[n] += 2;
-							else if (trackCmd == 0xfe) {
-								Loops[Songs] = false;
+					if (GetFcTrackCommand(module, trackPos, n) == 0xff)
+						continue;
+					if (patternDelay[n]-- > 0)
+						continue;
+					while (trackPos[n] < 0x100) {
+						int trackCmd = GetFcTrackCommand(module, trackPos, n);
+						if (trackCmd < 0x40) {
+							int patternCmd = module[patternOffsets[trackCmd] + patternPos[n]++];
+							if (patternCmd < 0x40) {
+								patternDelay[n] = noteDuration[n];
 								break;
 							}
-							else if (trackCmd == 0xff)
-								break;
-							else
+							else if (patternCmd < 0x60)
+								noteDuration[n] = patternCmd - 0x40;
+							else if (patternCmd == 0xff) {
+								patternDelay[n] = 0;
+								noteDuration[n] = 0;
+								patternPos[n] = 0;
 								trackPos[n]++;
+							}
 						}
+						else if (trackCmd == 0x40)
+							trackPos[n] += 2;
+						else if (trackCmd == 0xfe) {
+							Loops[Songs] = false;
+							break;
+						}
+						else if (trackCmd == 0xff)
+							break;
+						else
+							trackPos[n]++;
 					}
 				}
 				if (IsFcSongEnd(module, trackPos))

@@ -3261,7 +3261,9 @@ static void ASAPInfo_ParseMptSong(ASAPInfo *self, uint8_t const *module, bool *g
 				seen[i] = 2;
 		for (int patternRows = module[462]; --patternRows >= 0;) {
 			for (ch = 3; ch >= 0; ch--) {
-				if (patternOffset[ch] == 0 || --blankRowsCounter[ch] >= 0)
+				if (patternOffset[ch] == 0)
+					continue;
+				if (--blankRowsCounter[ch] >= 0)
 					continue;
 				for (;;) {
 					i = module[patternOffset[ch]++];
@@ -3873,36 +3875,37 @@ static bool ASAPInfo_ParseFc(ASAPInfo *self, uint8_t const *module, int moduleLe
 		self->loops[self->songs] = true;
 		while (!ASAPInfo_IsFcSongEnd(module, trackPos)) {
 			for (int n = 0; n < 3; n++) {
-				int trackCmd = ASAPInfo_GetFcTrackCommand(module, trackPos, n);
-				if (trackCmd != 255 && patternDelay[n]-- <= 0) {
-					while (trackPos[n] < 256) {
-						trackCmd = ASAPInfo_GetFcTrackCommand(module, trackPos, n);
-						if (trackCmd < 64) {
-							int patternCmd = module[patternOffsets[trackCmd] + patternPos[n]++];
-							if (patternCmd < 64) {
-								patternDelay[n] = noteDuration[n];
-								break;
-							}
-							else if (patternCmd < 96)
-								noteDuration[n] = patternCmd - 64;
-							else if (patternCmd == 255) {
-								patternDelay[n] = 0;
-								noteDuration[n] = 0;
-								patternPos[n] = 0;
-								trackPos[n]++;
-							}
-						}
-						else if (trackCmd == 64)
-							trackPos[n] += 2;
-						else if (trackCmd == 254) {
-							self->loops[self->songs] = false;
+				if (ASAPInfo_GetFcTrackCommand(module, trackPos, n) == 255)
+					continue;
+				if (patternDelay[n]-- > 0)
+					continue;
+				while (trackPos[n] < 256) {
+					int trackCmd = ASAPInfo_GetFcTrackCommand(module, trackPos, n);
+					if (trackCmd < 64) {
+						int patternCmd = module[patternOffsets[trackCmd] + patternPos[n]++];
+						if (patternCmd < 64) {
+							patternDelay[n] = noteDuration[n];
 							break;
 						}
-						else if (trackCmd == 255)
-							break;
-						else
+						else if (patternCmd < 96)
+							noteDuration[n] = patternCmd - 64;
+						else if (patternCmd == 255) {
+							patternDelay[n] = 0;
+							noteDuration[n] = 0;
+							patternPos[n] = 0;
 							trackPos[n]++;
+						}
 					}
+					else if (trackCmd == 64)
+						trackPos[n] += 2;
+					else if (trackCmd == 254) {
+						self->loops[self->songs] = false;
+						break;
+					}
+					else if (trackCmd == 255)
+						break;
+					else
+						trackPos[n]++;
 				}
 			}
 			if (ASAPInfo_IsFcSongEnd(module, trackPos))
@@ -6495,8 +6498,10 @@ static int FlashPack_GetInnerFlags(const FlashPack *self, int index)
 	int flags = 1;
 	do {
 		flags <<= 1;
-		if (index < self->itemsCount && self->items[index++].type != FlashPackItemType_LITERAL)
-			flags++;
+		if (index < self->itemsCount) {
+			if (self->items[index++].type != FlashPackItemType_LITERAL)
+				flags++;
+		}
 	}
 	while (flags < 256);
 	return flags & 255;
