@@ -3,10 +3,8 @@ How to use command-line JavaScript ASAP2WAV
 
 Enter the following command line to see the syntax:
 
-Windows Script Host: cscript asap2wav.js
         Rhino Shell: java -jar js.jar -opt 1 asap2wav.js
            V8 Shell: d8 asap2wav.js
-       JScript .NET: asap2wav
        JaegerMonkey: js asap2wav.js
           DMDScript: ds asap2wav.js
 

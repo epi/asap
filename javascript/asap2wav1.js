@@ -1,7 +1,7 @@
 /*
  * asap2wav1.js - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2009-2011 Piotr Fusik
+ * Copyright (C) 2009-2020 Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,127 +23,7 @@
 
 var usage;
 
-/*@cc_on
-@if (@_jscript_version >= 7)
-	// JScript .NET
-
-	import System;
-	import System.IO;
-
-	var arguments = new Array(Environment.GetCommandLineArgs());
-	usage = arguments.shift() + " [OPTIONS] INPUTFILE...";
-
-	function quit(code)
-	{
-		Environment.Exit(code);
-	}
-
-	function readBinaryFile(filename)
-	{
-		return File.ReadAllBytes(filename);
-	}
-
-	class BinaryFileOutput
-	{
-		var stream;
-
-		function BinaryFileOutput(filename)
-		{
-			this.stream = File.Create(filename);
-		}
-
-		function write(bytes, len)
-		{
-			this.stream.Write(bytes, 0, len);
-		}
-
-		function close()
-		{
-			this.stream.Close();
-		}
-	}
-@else @*/
-if (typeof(WScript) == "object") {
-	// WScript
-
-	var arguments = new Array();
-	for (var i = 0; i < WScript.Arguments.length; i++)
-		arguments[i] = WScript.Arguments(i);
-	usage = "cscript asap2wav.js [OPTIONS] INPUTFILE...";
-
-	var print = function(s)
-	{
-		WScript.Echo(s);
-	}
-
-	var quit = function(code)
-	{
-		WScript.Quit(code);
-	}
-
-	var BinaryFile_cp437ToUnicode = [
-		199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236, 196, 197,
-		201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 162, 163, 165, 8359, 402,
-		225, 237, 243, 250, 241, 209, 170, 186, 191, 8976, 172, 189, 188, 161, 171, 187,
-		9617, 9618, 9619, 9474, 9508, 9569, 9570, 9558, 9557, 9571, 9553, 9559, 9565, 9564, 9563, 9488,
-		9492, 9524, 9516, 9500, 9472, 9532, 9566, 9567, 9562, 9556, 9577, 9574, 9568, 9552, 9580, 9575,
-		9576, 9572, 9573, 9561, 9560, 9554, 9555, 9579, 9578, 9496, 9484, 9608, 9604, 9612, 9616, 9600,
-		945, 223, 915, 960, 931, 963, 181, 964, 934, 920, 937, 948, 8734, 966, 949, 8745,
-		8801, 177, 8805, 8804, 8992, 8993, 247, 8776, 176, 8729, 183, 8730, 8319, 178, 9632, 160
-	];
-
-	var BinaryFile_unicodeToCp437 = new Array(9633);
-	for (var c = 0; c < 128; c++) {
-		BinaryFile_unicodeToCp437[c] = c;
-		BinaryFile_unicodeToCp437[BinaryFile_cp437ToUnicode[c]] = 128 + c;
-	}
-
-	var createStream = function()
-	{
-		var stream = WScript.CreateObject("ADODB.Stream");
-		stream.Type = 2;
-		stream.CharSet = '437';
-		stream.Open();
-		return stream;
-	}
-
-	var readBinaryFile = function(filename)
-	{
-		var stream = createStream();
-		stream.LoadFromFile(filename);
-		var unicode = stream.ReadText();
-		stream.Close();
-		var bytes = new Array(unicode.length);
-		for (var i = 0; i < unicode.length; i++) {
-			var c = unicode.charCodeAt(i);
-			bytes[i] = BinaryFile_unicodeToCp437[c];
-		}
-		return bytes;
-	}
-
-	var BinaryFileOutput = function(filename)
-	{
-		this.filename = filename;
-		this.stream = createStream();
-
-		this.write = function(bytes, len)
-		{
-			for (var i = 0; i < len; i++) {
-				var c = bytes[i];
-				if (c >= 128)
-					c = BinaryFile_cp437ToUnicode[c - 128];
-				this.stream.WriteText(String.fromCharCode(c));
-			}
-		}
-
-		this.close = function()
-		{
-			this.stream.SaveToFile(filename, 2);
-			this.stream.Close();
-		}
-	}
-}
-else if (typeof(java) == "object") {
+if (typeof(java) == "object") {
 	// Rhino
 
 	usage = "java -jar js.jar -opt -1 asap2wav.js [OPTIONS] INPUTFILE...";
@@ -250,7 +130,6 @@ else {
 		}
 	}
 }
-/*@end @*/
 
 var outputFilename = null;
 var outputHeader = true;
