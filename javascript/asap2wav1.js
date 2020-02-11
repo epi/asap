@@ -58,16 +58,9 @@ if (typeof(java) == "object") {
 	}
 }
 else {
-	// DMDScript, JaegerMonkey or d8
+	// JaegerMonkey or d8
 
-	if (typeof(readline) == "undefined") {
-		var readline = readln;
-		var write = print;
-		var args = getenv("ARGS");
-		arguments = args == null ? [] : args.split(" ");
-		usage = "\nset ARGS=[OPTIONS] INPUTFILE\nbase64 INPUTFILE | ds asap2wav.js | base64 -d > OUTFILE";
-	}
-	else if (typeof(write) == "undefined") {
+	if (typeof(write) == "undefined") {
 		var write = putstr;
 		usage = "base64 INPUTFILE | js asap2wav.js [OPTIONS] INPUTFILE | base64 -d > OUTFILE";
 	}

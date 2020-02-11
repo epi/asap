@@ -6,7 +6,6 @@ Enter the following command line to see the syntax:
         Rhino Shell: java -jar js.jar -opt 1 asap2wav.js
            V8 Shell: d8 asap2wav.js
        JaegerMonkey: js asap2wav.js
-          DMDScript: ds asap2wav.js
 
 Unless you specify the '-o/--output' option, the output filename will be
 constructed from the input filename with the extension changed to 'wav'.
