@@ -21,14 +21,18 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-var usage;
+var args;
+var driver;
+var readBinaryFile;
+var BinaryFileOutput;
 
 if (typeof(java) == "object") {
 	// Rhino
 
-	usage = "java -jar js.jar -opt -1 asap2wav.js [OPTIONS] INPUTFILE...";
+	args = arguments;
+	driver = "java -jar rhino-*.jar";
 
-	var readBinaryFile = function(filename)
+	readBinaryFile = function(filename)
 	{
 		var stream = new java.io.FileInputStream(filename);
 		var bytes = new Array();
@@ -41,7 +45,7 @@ if (typeof(java) == "object") {
 		return bytes;
 	}
 
-	var BinaryFileOutput = function(filename)
+	BinaryFileOutput = function(filename)
 	{
 		this.stream = new java.io.BufferedOutputStream(new java.io.FileOutputStream(filename));
 
@@ -56,70 +60,36 @@ if (typeof(java) == "object") {
 			this.stream.close();
 		}
 	}
+
+	Int32Array.prototype.fill = function(value)
+	{
+		for (var i = 0; i < this.length; i++)
+			this[i] = value;
+	}
 }
 else {
-	// JaegerMonkey or d8
+	// Node
 
-	if (typeof(write) == "undefined") {
-		var write = putstr;
-		usage = "base64 INPUTFILE | js asap2wav.js [OPTIONS] INPUTFILE | base64 -d > OUTFILE";
-	}
-	else
-		usage = "base64 INPUTFILE | d8 asap2wav.js -- [OPTIONS] INPUTFILE | base64 -d > OUTFILE";
+	args = process.argv.slice(2);
+	driver = "node";
+	var print = console.log;
 
-	var base64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	const fs = require("fs");
 
-	var readBinaryFile = function(filename)
+	readBinaryFile = fs.readFileSync;
+
+	BinaryFileOutput = function(filename)
 	{
-		var bytes = new Array();
-		var prev;
-		var gotBits = 0;
-		for (;;) {
-			var line = readline();
-			if (line == null || line.length == 0)
-				break;
-			for (var i = 0; i < line.length; i++) {
-				var v = base64chars.indexOf(line.charAt(i));
-				if (v >= 0) {
-					gotBits = (gotBits + 6) & 6;
-					if (gotBits != 6)
-						bytes.push((prev << 6 | v) >> gotBits & 0xff);
-					prev = v;
-				}
-			}
-		}
-		return bytes;
-	}
-
-	var BinaryFileOutput = function(filename)
-	{
-		this.prev = 0;
-		this.gotBits = 0;
+		this.fd = fs.openSync(filename, "w");
 
 		this.write = function(bytes, len)
 		{
-			for (var i = 0; i < len; i++) {
-				this.gotBits += 2;
-				var v = this.prev << 8 | bytes[i];
-				write(base64chars.charAt(v >> this.gotBits & 63));
-				if (this.gotBits == 6) {
-					write(base64chars.charAt(v & 63));
-					this.gotBits = 0;
-				}
-				this.prev = bytes[i];
-			}
+			fs.writeSync(this.fd, Buffer.from(bytes), 0, len);
 		}
 
 		this.close = function()
 		{
-			if (this.gotBits == 2) {
-				write(base64chars.charAt((this.prev & 3) << 4));
-				write("==");
-			}
-			else if (this.gotBits == 4) {
-				write(base64chars.charAt((this.prev & 15) << 2));
-				write("=");
-			}
+			fs.closeSync(this.fd);
 		}
 	}
 }
@@ -134,7 +104,7 @@ var muteMask = 0;
 function printHelp()
 {
 	print(
-		"Usage: " + usage + "\n" +
+		"Usage: " + driver + " asap2wav.js [OPTIONS] INPUTFILE...\n" +
 		"Each INPUTFILE must be in a supported format:\n" +
 		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2 or FC.\n" +
 		"Options:\n" +
@@ -207,22 +177,22 @@ function processFile(inputFilename)
 }
 
 var noInputFiles = true;
-for (var i = 0; i < arguments.length; i++) {
-	var arg = arguments[i];
+for (var i = 0; i < args.length; i++) {
+	var arg = args[i];
 	if (arg.charAt(0) != "-") {
 		processFile(arg);
 		noInputFiles = false;
 	}
 	else if (arg == "-o")
-		outputFilename = arguments[++i];
+		outputFilename = args[++i];
 	else if (arg.substring(0, 9) == "--output=")
 		outputFilename = arg.substring(9, arg.length);
 	else if (arg == "-s")
-		setSong(arguments[++i]);
+		setSong(args[++i]);
 	else if (arg.substring(0, 7) == "--song=")
 		setSong(arg.substring(7, arg.length));
 	else if (arg == "-t")
-		setTime(arguments[++i]);
+		setTime(args[++i]);
 	else if (arg.substring(0, 7) ==  "--time=")
 		setTime(arg.substring(7, arg.length));
 	else if (arg == "-b" || arg == "--byte-samples")
@@ -232,7 +202,7 @@ for (var i = 0; i < arguments.length; i++) {
 	else if (arg == "--raw")
 		outputHeader = false;
 	else if (arg == "-m")
-		setMuteMask(arguments[++i]);
+		setMuteMask(args[++i]);
 	else if (arg.substring(0, 7) == "--mute=")
 		setMuteMask(arg.substring(7, arg.length));
 	else if (arg == "-h" || arg == "--help") {
@@ -246,7 +216,5 @@ for (var i = 0; i < arguments.length; i++) {
 	else
 		throw "unknown option: " + arg;
 }
-if (noInputFiles) {
+if (noInputFiles)
 	printHelp();
-	quit(1);
-}
