@@ -583,4 +583,20 @@
 		<stil>no</stil>
 		<lang>C</lang>
 	</port>
+	<port name="ASAP2WAV (Python)">
+		<bin></bin>
+		<platform>desktop operating systems</platform>
+		<interface>command line</interface>
+		<since>5.0.2</since>
+		<status>sample</status>
+		<output>8 or 16-bit, WAV or raw file</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
+		<lang>Python</lang>
+	</port>
 </ports>

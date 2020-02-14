@@ -136,4 +136,5 @@ include $(srcdir)xmms/xmms.mk
 include $(srcdir)csharp/csharp.mk
 include $(srcdir)java/java.mk
 include $(srcdir)javascript/javascript.mk
+include $(srcdir)python/python.mk
 include $(srcdir)win32/win32.mk

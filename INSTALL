@@ -173,7 +173,6 @@ Open the command prompt in the root directory of ASAP sources and run:
     make android-debug
 
 AndroidASAP integrates with file managers.
-It reads phone state only to pause playback on incoming phone calls.
 
 
 Building C# ASAP2WAV and asapplay on Windows
@@ -192,8 +191,17 @@ Open the command prompt in the root directory of ASAP sources and run:
     make javascript
 
 'asap2wav.js' is the command-line script.
-'asapweb.js' plus 'asap.js' are the browser player
-(you'll probably need 'binaryHttpRequest.js' as well).
+'asapweb.js' plus 'asap.js' are the browser player.
+
+
+Building Python command-line ASAP2WAV
+-------------------------------------
+
+Open the command prompt in the root directory of ASAP sources and run:
+
+    make python
+
+'asap2wav.py' together with 'asap.py' are the command-line script.
 
 
 Using asapconv
