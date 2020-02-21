@@ -2234,7 +2234,7 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 static void ASAP_Call6502(ASAP *self, int addr)
 {
 	self->cpu.memory[53760] = 32;
-	self->cpu.memory[53761] = (uint8_t) (addr & 255);
+	self->cpu.memory[53761] = (uint8_t) addr;
 	self->cpu.memory[53762] = (uint8_t) (addr >> 8);
 	self->cpu.memory[53763] = 210;
 	self->cpu.pc = 53760;
@@ -2264,7 +2264,7 @@ static void ASAP_Call6502Player(ASAP *self)
 			self->cpu.memory[53764] = 152;
 			self->cpu.memory[53765] = 72;
 			self->cpu.memory[53766] = 32;
-			self->cpu.memory[53767] = (uint8_t) (player & 255);
+			self->cpu.memory[53767] = (uint8_t) player;
 			self->cpu.memory[53768] = (uint8_t) (player >> 8);
 			self->cpu.memory[53769] = 104;
 			self->cpu.memory[53770] = 168;
@@ -2278,9 +2278,9 @@ static void ASAP_Call6502Player(ASAP *self)
 	case ASAPModuleType_SAP_S:
 		;
 		int i = self->cpu.memory[69] - 1;
-		self->cpu.memory[69] = (uint8_t) (i & 255);
+		self->cpu.memory[69] = (uint8_t) i;
 		if (i == 0)
-			self->cpu.memory[45179] = (uint8_t) ((self->cpu.memory[45179] + 1) & 255);
+			self->cpu.memory[45179] = (uint8_t) (self->cpu.memory[45179] + 1);
 		break;
 	case ASAPModuleType_DLT:
 		ASAP_Call6502(self, player + 259);
@@ -2533,10 +2533,10 @@ bool ASAP_Seek(ASAP *self, int position)
 
 static void ASAP_PutLittleEndian(uint8_t *buffer, int offset, int value)
 {
-	buffer[offset] = (uint8_t) (value & 255);
-	buffer[offset + 1] = (uint8_t) (value >> 8 & 255);
-	buffer[offset + 2] = (uint8_t) (value >> 16 & 255);
-	buffer[offset + 3] = (uint8_t) (value >> 24 & 255);
+	buffer[offset] = (uint8_t) value;
+	buffer[offset + 1] = (uint8_t) (value >> 8);
+	buffer[offset + 2] = (uint8_t) (value >> 16);
+	buffer[offset + 3] = (uint8_t) (value >> 24);
 }
 
 static void ASAP_PutLittleEndians(uint8_t *buffer, int offset, int value1, int value2)
@@ -6468,7 +6468,7 @@ static int FlashPackItem_WriteValueTo(const FlashPackItem *self, uint8_t *buffer
 		;
 		int value = self->value - 128;
 		buffer[index] = 0;
-		buffer[index + 1] = (uint8_t) (value & 255);
+		buffer[index + 1] = (uint8_t) value;
 		buffer[index + 2] = (uint8_t) (value >> 8);
 		return 3;
 	default:
@@ -7312,12 +7312,12 @@ static int Pokey_StoreSample(Pokey *self, uint8_t *buffer, int bufferOffset, int
 		buffer[bufferOffset++] = (uint8_t) ((sample >> 8) + 128);
 		break;
 	case ASAPSampleFormat_S16_L_E:
-		buffer[bufferOffset++] = (uint8_t) (sample & 255);
-		buffer[bufferOffset++] = (uint8_t) (sample >> 8 & 255);
+		buffer[bufferOffset++] = (uint8_t) sample;
+		buffer[bufferOffset++] = (uint8_t) (sample >> 8);
 		break;
 	case ASAPSampleFormat_S16_B_E:
-		buffer[bufferOffset++] = (uint8_t) (sample >> 8 & 255);
-		buffer[bufferOffset++] = (uint8_t) (sample & 255);
+		buffer[bufferOffset++] = (uint8_t) (sample >> 8);
+		buffer[bufferOffset++] = (uint8_t) sample;
 		break;
 	}
 	return bufferOffset;
@@ -7333,12 +7333,12 @@ static void PokeyPair_Construct(PokeyPair *self)
 	int reg = 511;
 	for (int i = 0; i < 511; i++) {
 		reg = (((reg >> 5 ^ reg) & 1) << 8) + (reg >> 1);
-		self->poly9Lookup[i] = (uint8_t) (reg & 255);
+		self->poly9Lookup[i] = (uint8_t) reg;
 	}
 	reg = 131071;
 	for (int i = 0; i < 16385; i++) {
 		reg = (((reg >> 5 ^ reg) & 255) << 9) + (reg >> 8);
-		self->poly17Lookup[i] = (uint8_t) (reg >> 1 & 255);
+		self->poly17Lookup[i] = (uint8_t) (reg >> 1);
 	}
 }
 
