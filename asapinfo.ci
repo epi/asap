@@ -109,14 +109,14 @@ public class ASAPInfo
 	/// ASAP version - micro part.
 	public const int VersionMicro = 1;
 	/// ASAP version as a string.
-	public const string Version = VersionMajor + "." + VersionMinor + "." + VersionMicro;
+	public const string Version = $"{VersionMajor}.{VersionMinor}.{VersionMicro}";
 
 	/// Years ASAP was created in.
 	public const string Years = "2005-2020";
 
 	/// Short credits for ASAP.
 	public const string Credits =
-		"Another Slight Atari Player (C) " + Years + " Piotr Fusik\n" +
+		$"Another Slight Atari Player (C) {Years} Piotr Fusik\n" +
 		"CMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\n" +
 		"RMT player (C) 2002-2005 Radek Sterba\n" +
 		"DLT player (C) 2009 Marek Konopka\n" +
@@ -1330,7 +1330,7 @@ public class ASAPInfo
 			int[3] patternPos = 0;
 			int playerCalls = 0;
 			Loops[Songs] = true;
-			
+
 			while (!IsFcSongEnd(module, trackPos)) {
 				for (int n = 0; n < 3; n++) {
 					if (GetFcTrackCommand(module, trackPos, n) == 0xff)
