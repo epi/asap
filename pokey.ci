@@ -1,6 +1,6 @@
 // pokey.ci - POKEY chip emulator
 //
-// Copyright (C) 2010-2019  Piotr Fusik
+// Copyright (C) 2010-2020  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -319,6 +319,8 @@ class Pokey
 				ReloadCycles1 = data + 4;
 				Channels[1].MuteUltrasound(cycle);
 				break;
+			default:
+				assert false;
 			}
 			Channels[0].MuteUltrasound(cycle);
 			break;
@@ -341,6 +343,8 @@ class Pokey
 			case 0x50:
 				Channels[1].PeriodCycles = Channels[0].Audf + (data << 8) + 7;
 				break;
+			default:
+				assert false;
 			}
 			Channels[1].MuteUltrasound(cycle);
 			break;
@@ -369,6 +373,8 @@ class Pokey
 				ReloadCycles3 = data + 4;
 				Channels[3].MuteUltrasound(cycle);
 				break;
+			default:
+				assert false;
 			}
 			Channels[2].MuteUltrasound(cycle);
 			break;
@@ -391,6 +397,8 @@ class Pokey
 			case 0x28:
 				Channels[3].PeriodCycles = Channels[2].Audf + (data << 8) + 7;
 				break;
+			default:
+				assert false;
 			}
 			Channels[3].MuteUltrasound(cycle);
 			break;
@@ -423,6 +431,8 @@ class Pokey
 				Channels[1].PeriodCycles = Channels[0].Audf + (Channels[1].Audf << 8) + 7;
 				ReloadCycles1 = Channels[0].Audf + 4;
 				break;
+			default:
+				assert false;
 			}
 			Channels[0].MuteUltrasound(cycle);
 			Channels[1].MuteUltrasound(cycle);
@@ -445,6 +455,8 @@ class Pokey
 				Channels[3].PeriodCycles = Channels[2].Audf + (Channels[3].Audf << 8) + 7;
 				ReloadCycles3 = Channels[2].Audf + 4;
 				break;
+			default:
+				assert false;
 			}
 			Channels[2].MuteUltrasound(cycle);
 			Channels[3].MuteUltrasound(cycle);

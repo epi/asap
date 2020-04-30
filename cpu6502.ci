@@ -779,8 +779,8 @@ class Cpu6502
 			case 0xf8: // SED
 				Vdi |= DFlag;
 				continue;
-			default: // we handled all the 256 cases, yet gcc 4.8.3 still complains about the uninitialized `addr`
-				continue;
+			default:
+				assert false;
 			}
 
 			// Second dispatch on opcode.
@@ -1043,6 +1043,8 @@ class Cpu6502
 			case 0xfe: // INC abcd,x
 				Nz = Increment(addr);
 				break;
+			default:
+				assert false;
 			}
 		}
 	}

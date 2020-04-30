@@ -1,4 +1,5 @@
 // Generated automatically with "cito". Do not edit.
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include "asap.h"
@@ -5064,10 +5065,11 @@ static bool ASAPWriter_WriteExecutable(ASAPWriter *self, int *initAndPlayer, con
 		break;
 	case ASAPModuleType_TMC:
 		;
+		int perFrame = module[37];
 		static const int TMC_PLAYER_OFFSET[4] = { 3, -9, -10, -10 };
-		int player2 = player + TMC_PLAYER_OFFSET[module[37] - 1];
+		int player2 = player + TMC_PLAYER_OFFSET[perFrame - 1];
 		static const int TMC_INIT_OFFSET[4] = { -14, -16, -17, -17 };
-		startAddr = player2 + TMC_INIT_OFFSET[module[37] - 1];
+		startAddr = player2 + TMC_INIT_OFFSET[perFrame - 1];
 		if (ASAPInfo_GetSongs(info) != 1)
 			startAddr -= 3;
 		if (!ASAPWriter_WriteExecutableHeader(self, initAndPlayer, info, 66, startAddr, player2))
@@ -5108,7 +5110,7 @@ static bool ASAPWriter_WriteExecutable(ASAPWriter *self, int *initAndPlayer, con
 			if (!ASAPWriter_WriteByte(self, 96))
 				return false;
 		}
-		switch (module[37]) {
+		switch (perFrame) {
 		case 2:
 			if (!ASAPWriter_WriteByte(self, 6))
 				return false;
@@ -5161,7 +5163,7 @@ static bool ASAPWriter_WriteExecutable(ASAPWriter *self, int *initAndPlayer, con
 				return false;
 			if (!ASAPWriter_WriteByte(self, 160))
 				return false;
-			if (!ASAPWriter_WriteByte(self, module[37]))
+			if (!ASAPWriter_WriteByte(self, perFrame))
 				return false;
 			if (!ASAPWriter_WriteByte(self, 132))
 				return false;
@@ -5171,6 +5173,8 @@ static bool ASAPWriter_WriteExecutable(ASAPWriter *self, int *initAndPlayer, con
 				return false;
 			if (!ASAPWriter_WriteByte(self, 3))
 				return false;
+			break;
+		default:
 			break;
 		}
 		if (!ASAPWriter_WriteBytes(self, playerRoutine, 6, playerLastByte - player + 7))
@@ -6186,7 +6190,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, int cycleLimit)
 			self->vdi |= 8;
 			continue;
 		default:
-			continue;
+			assert(false);
 		}
 		switch (data) {
 		case 1:
@@ -6444,6 +6448,8 @@ static void Cpu6502_DoFrame(Cpu6502 *self, int cycleLimit)
 		case 254:
 			self->nz = Cpu6502_Increment(self, addr);
 			break;
+		default:
+			assert(false);
 		}
 	}
 }
@@ -7111,6 +7117,8 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			self->reloadCycles1 = data + 4;
 			PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
 			break;
+		default:
+			assert(false);
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[0], cycle);
 		break;
@@ -7133,6 +7141,8 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		case 80:
 			self->channels[1].periodCycles = self->channels[0].audf + (data << 8) + 7;
 			break;
+		default:
+			assert(false);
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
 		break;
@@ -7161,6 +7171,8 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			self->reloadCycles3 = data + 4;
 			PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
 			break;
+		default:
+			assert(false);
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[2], cycle);
 		break;
@@ -7183,6 +7195,8 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		case 40:
 			self->channels[3].periodCycles = self->channels[2].audf + (data << 8) + 7;
 			break;
+		default:
+			assert(false);
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
 		break;
@@ -7214,6 +7228,8 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			self->channels[1].periodCycles = self->channels[0].audf + (self->channels[1].audf << 8) + 7;
 			self->reloadCycles1 = self->channels[0].audf + 4;
 			break;
+		default:
+			assert(false);
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[0], cycle);
 		PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
@@ -7236,6 +7252,8 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			self->channels[3].periodCycles = self->channels[2].audf + (self->channels[3].audf << 8) + 7;
 			self->reloadCycles3 = self->channels[2].audf + 4;
 			break;
+		default:
+			assert(false);
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[2], cycle);
 		PokeyChannel_MuteUltrasound(&self->channels[3], cycle);

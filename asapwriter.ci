@@ -1,6 +1,6 @@
 // asapwriter.ci - format conversions
 //
-// Copyright (C) 2011-2019  Piotr Fusik
+// Copyright (C) 2011-2020  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -540,10 +540,11 @@ public class ASAPWriter
 			WriteBytes(playerRoutine, 2, playerLastByte - player + 7);
 			break;
 		case ASAPModuleType.Tmc:
+			int perFrame = module[0x25];
 			const int[4] tmcPlayerOffset = { 3, -9, -10, -10 };
-			int player2 = player + tmcPlayerOffset[module[0x25] - 1];
+			int player2 = player + tmcPlayerOffset[perFrame - 1];
 			const int[4] tmcInitOffset = { -14, -16, -17, -17 };
-			startAddr = player2 + tmcInitOffset[module[0x25] - 1];
+			startAddr = player2 + tmcInitOffset[perFrame - 1];
 			if (info.GetSongs() != 1)
 				startAddr -= 3;
 			WriteExecutableHeader(initAndPlayer, info, 'B', startAddr, player2);
@@ -561,7 +562,7 @@ public class ASAPWriter
 			else {
 				WriteByte(0xa9); WriteByte(0x60); // LDA #$60
 			}
-			switch (module[0x25]) {
+			switch (perFrame) {
 			case 2:
 				WriteByte(0x06); WriteByte(0); // ASL 0
 				WriteByte(0x4c); WriteWord(player); // JMP PLAYER
@@ -578,9 +579,11 @@ public class ASAPWriter
 				WriteByte(0xd0); WriteByte(10); // BNE PLAYER
 				WriteByte(0xc6); WriteByte(0); // DEC 0
 				WriteByte(0xd0); WriteByte(12); // BNE PLAYER+6
-				WriteByte(0xa0); WriteByte(module[0x25]); // LDY #3
+				WriteByte(0xa0); WriteByte(perFrame); // LDY #3
 				WriteByte(0x84); WriteByte(0); // STY 0
 				WriteByte(0xd0); WriteByte(3); // BNE PLAYER+3
+				break;
+			default:
 				break;
 			}
 			WriteBytes(playerRoutine, 6, playerLastByte - player + 7);
