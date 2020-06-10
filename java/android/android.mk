@@ -1,6 +1,6 @@
 ASMA_DIR = ../asma
 ANDROID_SDK = C:/Users/fox/AppData/Local/Android/Sdk
-ANDROID_JAR = $(ANDROID_SDK)/platforms/android-28/android.jar
+ANDROID_JAR = $(ANDROID_SDK)/platforms/android-29/android.jar
 ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/29.0.2
 PROGUARD_JAR = $(ANDROID_SDK)/tools/proguard/lib/proguard.jar
 
