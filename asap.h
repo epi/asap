@@ -224,28 +224,30 @@ const char *ASAPInfo_GetTitleOrFilename(const ASAPInfo *self);
 
 /**
  * Returns music creation date.
- * Some of the possible formats are:
+ * 
+ * <p>Some of the possible formats are:
  * <ul>
  * <li>YYYY</li>
  * <li>MM/YYYY</li>
  * <li>DD/MM/YYYY</li>
  * <li>YYYY-YYYY</li>
  * </ul>
- * An empty string means the date is unknown.
+ * <p>An empty string means the date is unknown.
  * @param self This <code>ASAPInfo</code>.
  */
 const char *ASAPInfo_GetDate(const ASAPInfo *self);
 
 /**
  * Sets music creation date.
- * Some of the possible formats are:
+ * 
+ * <p>Some of the possible formats are:
  * <ul>
  * <li>YYYY</li>
  * <li>MM/YYYY</li>
  * <li>DD/MM/YYYY</li>
  * <li>YYYY-YYYY</li>
  * </ul>
- * An empty string means the date is unknown.
+ * <p>An empty string means the date is unknown.
  * @param self This <code>ASAPInfo</code>.
  * @param value New music creation date.
  */
@@ -317,12 +319,12 @@ bool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration);
 
 /**
  * Returns information whether the specified song loops.
- * Returns:
+ * 
+ * <p>Returns:
  * <ul>
  * <li><code>true</code> if the song loops</li>
  * <li><code>false</code> if the song stops</li>
  * </ul>
- * 
  * @param self This <code>ASAPInfo</code>.
  * @param song Song to check for looping, 0-based.
  */
@@ -330,12 +332,12 @@ bool ASAPInfo_GetLoop(const ASAPInfo *self, int song);
 
 /**
  * Sets information whether the specified song loops.
- * Use:
+ * 
+ * <p>Use:
  * <ul>
  * <li><code>true</code> if the song loops</li>
  * <li><code>false</code> if the song stops</li>
  * </ul>
- * 
  * @param self This <code>ASAPInfo</code>.
  * @param song Song to set as looping, 0-based.
  * @param loop <code>true</code> if the song loops.
