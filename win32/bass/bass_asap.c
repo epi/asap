@@ -1,7 +1,7 @@
 /*
  * bass_asap.c - ASAP add-on for BASS
  *
- * Copyright (C) 2010-2019  Piotr Fusik
+ * Copyright (C) 2010-2020  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -39,7 +39,7 @@ static const BASS_PLUGINFORM pluginform = {
 	BASS_CTYPE_MUSIC_ASAP, "ASAP", "*.sap;*.cmc;*.cm3;*.cmr;*.cms;*.dmc;*.dlt;*.mpt;*.mpd;*.rmt;*.tmc;*.tm8;*.tm2;*.fc"
 };
 
-static const BASS_PLUGININFO plugininfo = { 0x02040000, 1, &pluginform };
+static const BASS_PLUGININFO plugininfo = { MAKELONG(MAKEWORD(ASAPInfo_VERSION_MINOR, ASAPInfo_VERSION_MAJOR), BASSVERSION), 1, &pluginform };
 
 typedef struct
 {
@@ -52,7 +52,9 @@ typedef struct
 
 static void WINAPI ASAP_Free(void *inst)
 {
-	free(inst);
+	ASAPSTREAM *stream = (ASAPSTREAM *) inst;
+	ASAP_Delete(stream->asap);
+	free(stream);
 }
 
 static QWORD WINAPI ASAP_GetLength(void *inst, DWORD mode)
@@ -68,9 +70,9 @@ static QWORD WINAPI ASAP_GetLength(void *inst, DWORD mode)
 
 static const char * WINAPI ASAP_GetTags(void *inst, DWORD tags)
 {
-	ASAPSTREAM *stream = (ASAPSTREAM *) inst;
 	if (tags != BASS_TAG_ID3)
 		return NULL;
+	ASAPSTREAM *stream = (ASAPSTREAM *) inst;
 	TAG_ID3 *tag = &stream->tag;
 	memset(tag, 0, sizeof(TAG_ID3));
 	tag->id[0] = 'T';
@@ -169,6 +171,7 @@ static HSTREAM WINAPI StreamCreateProc(BASSFILE file, DWORD flags)
 		error(BASS_ERROR_MEM);
 	}
 	if (!ASAP_Load(stream->asap, filename, module, module_len)) {
+		ASAP_Delete(stream->asap);
 		free(stream);
 		error(BASS_ERROR_FILEFORM);
 	}
@@ -183,11 +186,13 @@ static HSTREAM WINAPI StreamCreateProc(BASSFILE file, DWORD flags)
 		duration = ASAPInfo_GetDuration(info, song);
 	stream->duration = duration;
 	if (!ASAP_PlaySong(stream->asap, song, duration)) {
+		ASAP_Delete(stream->asap);
 		free(stream);
 		error(BASS_ERROR_FILEFORM);
 	}
 	HSTREAM handle = bassfunc->CreateStream(ASAP_SAMPLE_RATE, ASAPInfo_GetChannels(info), flags, &StreamProc, stream, &ASAPfuncs);
 	if (handle == 0) {
+		ASAP_Delete(stream->asap);
 		free(stream);
 		return 0; // CreateStream set the error code
 	}
