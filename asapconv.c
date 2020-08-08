@@ -1,7 +1,7 @@
 /*
  * asapconv.c - converter of ASAP-supported formats
  *
- * Copyright (C) 2005-2019  Piotr Fusik
+ * Copyright (C) 2005-2020  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -250,9 +250,9 @@ static FILE *open_output_file(const char *input_file, const unsigned char *modul
 						fatal_error("-s and %%s are mutually exclusive");
 					if (++current_song >= ASAPInfo_GetSongs(info))
 						return NULL;
-					sprintf(song_tag, "%d", current_song + 1);
 					file_per_song = true;
 				}
+				sprintf(song_tag, "%d", current_song + 1);
 				tag = song_tag;
 				break;
 			case '%':
