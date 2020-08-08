@@ -4,23 +4,20 @@
 	via <code>apt</code>, not <code>snap</code>.
 	Then install the ASAP plugin: <download prefix="asap-vlc_" suffix="-1_amd64.deb" />.</p>
 	<p>On Fedora, <a href="https://www.videolan.org/vlc/download-fedora.html">install VLC from RPM Fusion</a>,
-	then install the 64-bit ASAP plugin: <download prefix="asap-vlc-" suffix="-1.x86_64.rpm" />
-	or the 32-bit plugin: <download prefix="asap-vlc-" suffix="-1.i686.rpm" />.</p>
+	then install the ASAP plugin: <download prefix="asap-vlc-" suffix="-1.x86_64.rpm" />.</p>
 	<img src="vlc-ubuntu.png" alt="VLC on Ubuntu 18.04" />
 
 	<h2>XMMS</h2>
 	<p><a href="http://www.xmms.org/">XMMS</a> is included in Fedora.
-	Install the 64-bit ASAP plugin: <download prefix="asap-xmms-" suffix="-1.x86_64.rpm" />
-	or the 32-bit one: <download prefix="asap-xmms-" suffix="-1.i686.rpm" />.</p>
+	Install the ASAP plugin: <download prefix="asap-xmms-" suffix="-1.x86_64.rpm" />.</p>
 	<img src="xmms-fedora.png" alt="XMMS on Fedora 29" />
 
 	<h2>Command-line converter</h2>
 	<p>For command-line conversions (e.g. to WAV or between SAP and the tracker formats)
 	and editing the metadata, install asapconv:</p>
 	<ul>
-		<li>on Ubuntu 64-bit: <download prefix="asap_" suffix="-1_amd64.deb" /></li>
-		<li>on Fedora 64-bit: <download prefix="asap-" suffix="-1.x86_64.rpm" /></li>
-		<li>on Fedora 32-bit: <download prefix="asap-" suffix="-1.i686.rpm" /></li>
+		<li>on Ubuntu: <download prefix="asap_" suffix="-1_amd64.deb" /></li>
+		<li>on Fedora: <download prefix="asap-" suffix="-1.x86_64.rpm" /></li>
 	</ul>
 	<p>Run <code>asapconv</code> from the shell to see the syntax.
 	The <code>-o/--output</code> option selects the output format and is mandatory.</p>

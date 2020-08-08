@@ -76,12 +76,6 @@ rpm64:
 	scp vm:rpmbuild/RPMS/x86_64/asap{,-devel,-vlc,-xmms}-$(VERSION)-1.x86_64.rpm release/
 .PHONY: rpm64
 
-rpm32:
-	scp release/asap-$(VERSION).tar.gz vm:.
-	ssh vm 'rpmbuild -tb asap-$(VERSION).tar.gz'
-	scp vm:rpmbuild/RPMS/i686/asap{,-devel,-vlc,-xmms}-$(VERSION)-1.i686.rpm release/
-.PHONY: rpm32
-
 release/COPYING.txt: $(srcdir)COPYING
 	$(UNIX2DOS)
 CLEAN += release/COPYING.txt
