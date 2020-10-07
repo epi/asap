@@ -1778,7 +1778,7 @@ public class ASAPInfo
 		case PackExt("CM3"): return "CMC \"3/4\"";
 		case PackExt("CMR"): return "CMC \"Rzog\"";
 		case PackExt("CMS"): return "Stereo Double CMC";
-		case PackExt("DMC"): return "DoublePlay CMC";
+		case PackExt("DMC"): return "CMC DoublePlay";
 		case PackExt("DLT"): return "Delta Music Composer";
 		case PackExt("MPT"): return "Music ProTracker";
 		case PackExt("MPD"): return "MPT DoublePlay";

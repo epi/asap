@@ -4316,7 +4316,7 @@ const char *ASAPInfo_GetExtDescription(const char *ext)
 	case 7564643:
 		return "Stereo Double CMC";
 	case 6516068:
-		return "DoublePlay CMC";
+		return "CMC DoublePlay";
 	case 7629924:
 		return "Delta Music Composer";
 	case 7630957:

@@ -33,7 +33,7 @@
 		<dt>CMS (Stereo Double CMC)</dt>
 		<dd>Stereo CMC.</dd>
 
-		<dt>DMC (DoublePlay CMC)</dt>
+		<dt>DMC (CMC DoublePlay)</dt>
 		<dd>CMC with 6502 routine executed at double rate of the original CMC.</dd>
 
 		<dt>DLT (Delta Music Composer)</dt>
