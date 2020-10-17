@@ -390,7 +390,7 @@
 						</Component>
 					</Directory>
 				</Directory>
-				<Directory Id="RMT.DIR" Name="RMT">
+				<Directory Id="RMT.DIR" Name="rmt128">
 					<Component Id="apokeysnd.dll">
 						<File Name="apokeysnd.dll" Source="apokeysnd.dll" Checksum="yes" KeyPath="yes" />
 					</Component>
