@@ -1,7 +1,7 @@
 prefix := /usr/local
 srcdir := $(dir $(lastword $(MAKEFILE_LIST)))
 bindir = $(prefix)/bin
-libdir = $(prefix)/lib$(shell test -d $(prefix)/lib64 -a `uname -i` = x86_64 && echo 64)
+libdir = $(prefix)/lib
 CC = gcc
 CFLAGS = -O2 -Wall
 CPPFLAGS =

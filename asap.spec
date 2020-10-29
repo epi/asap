@@ -53,7 +53,7 @@ make asapconv libasap.a asap-xmms asap-vlc
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make DESTDIR=$RPM_BUILD_ROOT prefix=%{_prefix} install install-xmms install-vlc
+make DESTDIR=$RPM_BUILD_ROOT prefix=%{_prefix} libdir=%{_libdir} install install-xmms install-vlc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
