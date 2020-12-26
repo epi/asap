@@ -240,8 +240,6 @@ static void updateStil(void)
 	}
 	*p = '\0';
 	chomp(buf);
-#if 1
-	/* not compatible with Windows 9x */
 	if (ASTIL_IsUTF8(astil)) {
 		WCHAR wBuf[16000];
 		if (MultiByteToWideChar(CP_UTF8, 0, buf, -1, wBuf, 16000) > 0) {
@@ -249,7 +247,6 @@ static void updateStil(void)
 			return;
 		}
 	}
-#endif
 	SendDlgItemMessage(infoDialog, IDC_STILINFO, WM_SETTEXT, 0, (LPARAM) buf);
 }
 
@@ -270,33 +267,10 @@ static void setEditedSong(int song)
 	updateStil();
 }
 
-static void showEditTip(int nID, LPCTSTR title, LPCTSTR message)
+static void showEditTip(int nID, LPCWSTR title, LPCWSTR message)
 {
-#ifndef _UNICODE
-
-#ifndef EM_SHOWBALLOONTIP
-/* missing in MinGW */
-typedef struct
-{
-	DWORD cbStruct;
-	LPCWSTR pszTitle;
-	LPCWSTR pszText;
-	INT ttiIcon;
-} EDITBALLOONTIP;
-#define TTI_ERROR  3
-#define EM_SHOWBALLOONTIP  0x1503
-#endif
-	WCHAR wTitle[64];
-	WCHAR wMessage[64];
-	EDITBALLOONTIP ebt = { sizeof(EDITBALLOONTIP), wTitle, wMessage, TTI_ERROR };
-	if (MultiByteToWideChar(CP_ACP, 0, title, -1, wTitle, 64) <= 0
-	 || MultiByteToWideChar(CP_ACP, 0, message, -1, wMessage, 64) <= 0
-	 || !SendDlgItemMessage(infoDialog, nID, EM_SHOWBALLOONTIP, 0, (LPARAM) &ebt))
-
-#endif /* _UNICODE */
-
-		/* Windows before XP don't support balloon tips */
-		MessageBox(infoDialog, message, title, MB_OK | MB_ICONERROR);
+	EDITBALLOONTIP ebt = { sizeof(EDITBALLOONTIP), title, message, TTI_ERROR };
+	SendDlgItemMessage(infoDialog, nID, EM_SHOWBALLOONTIP, 0, (LPARAM) &ebt);
 }
 
 static bool isExt(LPCTSTR filename, LPCTSTR ext)
@@ -350,7 +324,7 @@ static void updateInfoString(HWND hDlg, int nID, int mask, bool (*func)(ASAPInfo
 	bool ok = func(edited_info, str);
 	updateSaveButtons(mask, ok);
 	if (!ok)
-		showEditTip(nID, _T("Invalid characters"), _T("Avoid national characters and quotation marks"));
+		showEditTip(nID, L"Invalid characters", L"Avoid national characters and quotation marks");
 }
 
 static LRESULT CALLBACK MonthCalWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -600,7 +574,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 		case MAKEWPARAM(IDC_TIME, EN_KILLFOCUS):
 			if ((invalid_fields & INVALID_FIELD_TIME_SHOW) != 0) {
 				invalid_fields &= ~INVALID_FIELD_TIME_SHOW;
-				showEditTip(IDC_TIME, _T("Invalid format"), _T("Please type MM:SS.mmm"));
+				showEditTip(IDC_TIME, L"Invalid format", L"Please type MM:SS.mmm");
 			}
 			return TRUE;
 		case MAKEWPARAM(IDC_LOOP, BN_CLICKED):
