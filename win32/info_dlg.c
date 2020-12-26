@@ -165,9 +165,7 @@ static void updateTech(void)
 {
 	char buf[16000];
 	char *p = buf;
-	const char *ext;
-	int type;
-	ext = ASAPInfo_GetOriginalModuleExt(edited_info, saved_module, saved_module_len);
+	const char *ext = ASAPInfo_GetOriginalModuleExt(edited_info, saved_module, saved_module_len);
 	if (ext != NULL)
 		p += sprintf(p, "Composed in %s\r\n", ASAPInfo_GetExtDescription(ext));
 	int i = ASAPInfo_GetSongs(edited_info);
@@ -179,7 +177,7 @@ static void updateTech(void)
 	}
 	p += sprintf(p, ASAPInfo_GetChannels(edited_info) > 1 ? "STEREO\r\n" : "MONO\r\n");
 	p += sprintf(p, ASAPInfo_IsNtsc(edited_info) ? "NTSC\r\n" : "PAL\r\n");
-	type = ASAPInfo_GetTypeLetter(edited_info);
+	int type = ASAPInfo_GetTypeLetter(edited_info);
 	if (type != 0)
 		p += sprintf(p, "TYPE %c\r\n", type);
 	p += sprintf(p, "FASTPLAY %d (%d Hz)\r\n", ASAPInfo_GetPlayerRateScanlines(edited_info), ASAPInfo_GetPlayerRateHz(edited_info));
@@ -194,12 +192,11 @@ static void updateTech(void)
 	if (i >= 0) {
 		while (p < buf + sizeof(buf) - 17 && i + 4 < saved_module_len) {
 			int start = saved_module[i] + (saved_module[i + 1] << 8);
-			int end;
 			if (start == 0xffff) {
 				i += 2;
 				start = saved_module[i] + (saved_module[i + 1] << 8);
 			}
-			end = saved_module[i + 2] + (saved_module[i + 3] << 8);
+			int end = saved_module[i + 2] + (saved_module[i + 3] << 8);
 			p += sprintf(p, "LOAD %04X-%04X\r\n", start, end);
 			i += 5 + end - start;
 		}
@@ -219,11 +216,9 @@ static void updateStil(void)
 	p = appendStil(p, "Song comment: ", ASTIL_GetSongComment(astil));
 	for (int i = 0; ; i++) {
 		const ASTILCover *cover = ASTIL_GetCover(astil, i);
-		int startSeconds;
-		const char *s;
 		if (cover == NULL)
 			break;
-		startSeconds = ASTILCover_GetStartSeconds(cover);
+		int startSeconds = ASTILCover_GetStartSeconds(cover);
 		if (startSeconds >= 0) {
 			int endSeconds = ASTILCover_GetEndSeconds(cover);
 			if (endSeconds >= 0)
@@ -233,7 +228,7 @@ static void updateStil(void)
 		}
 		else
 			*p++ = 'C';
-		s = ASTILCover_GetTitleAndSource(cover);
+		const char *s = ASTILCover_GetTitleAndSource(cover);
 		p = appendStil(p, "overs: ", s[0] != '\0' ? s : "<?>");
 		p = appendStil(p, "by ", ASTILCover_GetArtist(cover));
 		p = appendStil(p, "Comment: ", ASTILCover_GetComment(cover));
