@@ -1,7 +1,7 @@
 /*
  * ASAPShellEx.cpp - ASAP Column Handler and Property Handler shell extensions
  *
- * Copyright (C) 2010-2019  Piotr Fusik
+ * Copyright (C) 2010-2020  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -126,9 +126,11 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 			m_pstream = nullptr;
 		}
 
-		int cbFilename = WideCharToMultiByte(CP_ACP, 0, wszFile, -1, nullptr, 0, nullptr, nullptr);
+		int cbFilename = WideCharToMultiByte(CP_UTF8, 0, wszFile, -1, nullptr, 0, nullptr, nullptr);
+		if (cbFilename <= 0)
+			return HRESULT_FROM_WIN32(GetLastError());
 		char filename[cbFilename];
-		if (WideCharToMultiByte(CP_ACP, 0, wszFile, -1, filename, cbFilename, nullptr, nullptr) <= 0)
+		if (WideCharToMultiByte(CP_UTF8, 0, wszFile, -1, filename, cbFilename, nullptr, nullptr) <= 0)
 			return HRESULT_FROM_WIN32(GetLastError());
 
 		byte module[ASAPInfo::maxModuleLength];
@@ -139,7 +141,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 				return hr;
 		}
 		else {
-			HANDLE fh = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+			HANDLE fh = CreateFileW(wszFile, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 			if (fh == INVALID_HANDLE_VALUE)
 				return HRESULT_FROM_WIN32(GetLastError());
 			if (!ReadFile(fh, module, ASAPInfo::maxModuleLength, reinterpret_cast<LPDWORD>(&module_len), nullptr)) {
