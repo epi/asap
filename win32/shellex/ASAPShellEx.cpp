@@ -182,6 +182,8 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		pvarData->vt = VT_BSTR;
 		// pvarData->bstrVal = A2BSTR(s); - just don't want dependency on ATL
 		int cch = MultiByteToWideChar(CP_ACP, 0, s, -1, nullptr, 0);
+		if (cch <= 0)
+			return HRESULT_FROM_WIN32(GetLastError());
 		pvarData->bstrVal = SysAllocStringLen(nullptr, cch - 1);
 		if (pvarData->bstrVal == nullptr)
 			return E_OUTOFMEMORY;
