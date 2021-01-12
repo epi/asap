@@ -2,21 +2,15 @@
 
 // Get command-line arguments
 
-var sap1;
-var sap2;
-var names = "";
-switch (WScript.Arguments.length) {
-case 4:
-	names =  " /basename:\"" + WScript.Arguments(2) + "\" /minename:\"" + WScript.Arguments(3) + "\"";
-	// FALLTHROUGH
-case 2:
-	sap1 = WScript.Arguments(0);
-	sap2 = WScript.Arguments(1);
-	break;
-default:
-	WScript.Echo("Specify two filenames plus optional two headers");
+var argc = WScript.Arguments.length;
+if (argc != 2 && argc != 4) {
+	WScript.Echo("Specify two filenames and optionally two titles");
 	WScript.Quit(1);
 }
+var sap1 = WScript.Arguments(0);
+var sap2 = WScript.Arguments(1);
+var title1 = WScript.Arguments(argc - 2);
+var title2 = WScript.Arguments(argc - 1);
 
 // Find TortoiseMerge
 
@@ -53,7 +47,7 @@ var txt2 = sap2txt(sap2);
 
 // Display results
 
-wsh.Run("\"" + tmerge + "\" /base:\"" + txt1 + "\" /mine:\"" + txt2 + "\"" + names, 4, true);
+wsh.Run("\"" + tmerge + "\" /base:\"" + txt1 + "\" /mine:\"" + txt2 + "\" /basename:\"" + title1 + "\" /minename:\"" + title2 + "\"", 4, true);
 
 // Write back changes
 
