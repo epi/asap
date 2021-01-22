@@ -1,7 +1,7 @@
 /*
  * ASAPShellEx.cpp - ASAP Column Handler and Property Handler shell extensions
  *
- * Copyright (C) 2010-2020  Piotr Fusik
+ * Copyright (C) 2010-2021  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,10 +21,6 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* There are two separate implementations for different Windows versions:
-   Column Handler (IColumnProvider) works in Windows XP and 2003 (probably 2000 too and maybe 98).
-   Property Handler (IInitializeWithStream+IPropertyStore+IPropertyStoreCapabilities) works in Windows Vista and 7. */
-
 #include <stdio.h>
 #define _WIN32_IE 0x500
 #include <shlobj.h>
@@ -37,7 +33,6 @@ static const char extensions[][5] =
 
 static HINSTANCE g_hDll;
 static LONG g_cRef = 0;
-static enum { WINDOWS_OLD, WINDOWS_XP, WINDOWS_VISTA } g_windowsVer;
 
 static void DllAddRef(void)
 {
@@ -53,55 +48,35 @@ static void DllRelease(void)
 static const GUID CLSID_ASAPMetadataHandler =
 	{ 0x5ae26367, 0xb5cf, 0x444d, { 0xb1, 0x63, 0x2c, 0xbc, 0x99, 0xb4, 0x12, 0x87 } };
 
-struct CMyPropertyDef
-{
-	const SHCOLUMNID scid;
-	const UINT cChars;
-	const DWORD csFlags;
-	const LPCWSTR wszTitle;
-
-	void CopyTo(SHCOLUMNINFO *psci) const
-	{
-		psci->scid = this->scid;
-		psci->vt = VT_LPWSTR;
-		psci->fmt = LVCFMT_LEFT;
-		psci->cChars = this->cChars;
-		psci->csFlags = this->csFlags;
-		lstrcpyW(psci->wszTitle, this->wszTitle);
-		lstrcpyW(psci->wszDescription, this->wszTitle);
-	}
+static const SHCOLUMNID g_scids[] = {
+	{ FMTID_SummaryInformation, PIDSI_TITLE },
+	{ FMTID_SummaryInformation, PIDSI_AUTHOR },
+	{ FMTID_MUSIC, PIDSI_ARTIST },
+	{ FMTID_MUSIC, PIDSI_YEAR },
+	{ FMTID_AudioSummaryInformation, PIDASI_TIMELENGTH },
+	{ FMTID_AudioSummaryInformation, PIDASI_CHANNEL_COUNT },
+	{ CLSID_ASAPMetadataHandler, 1 },
+	{ CLSID_ASAPMetadataHandler, 2 }
 };
-
-static const CMyPropertyDef g_propertyDefs[] = {
-	{ { FMTID_SummaryInformation, PIDSI_TITLE }, 25, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, L"Title" },
-	{ { FMTID_SummaryInformation, PIDSI_AUTHOR }, 25, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, L"Author" },
-	{ { FMTID_MUSIC, PIDSI_ARTIST }, 25, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, L"Artist" },
-	{ { FMTID_MUSIC, PIDSI_YEAR }, 4, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, L"Year" },
-	{ { FMTID_AudioSummaryInformation, PIDASI_TIMELENGTH }, 8, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, L"Duration" },
-	{ { FMTID_AudioSummaryInformation, PIDASI_CHANNEL_COUNT }, 9, SHCOLSTATE_TYPE_INT | SHCOLSTATE_SLOW, L"Channels" },
-	{ { CLSID_ASAPMetadataHandler, 1 }, 8, SHCOLSTATE_TYPE_INT | SHCOLSTATE_SLOW, L"Subsongs" },
-	{ { CLSID_ASAPMetadataHandler, 2 }, 8, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, L"PAL/NTSC" }
-};
-#define N_PROPERTYDEFS ARRAYSIZE(g_propertyDefs)
 
 class CMyLock
 {
-	const PCRITICAL_SECTION m_pLock;
+	CRITICAL_SECTION &m_lock;
 
 public:
 
-	CMyLock(PCRITICAL_SECTION pLock) : m_pLock(pLock)
+	CMyLock(CRITICAL_SECTION &lck) : m_lock(lck)
 	{
-		EnterCriticalSection(pLock);
+		EnterCriticalSection(&lck);
 	}
 
 	~CMyLock()
 	{
-		LeaveCriticalSection(m_pLock);
+		LeaveCriticalSection(&m_lock);
 	}
 };
 
-class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IPropertyStore, IPropertyStoreCapabilities
+class CASAPMetadataHandler final : IInitializeWithStream, IPropertyStore, IPropertyStoreCapabilities
 {
 	LONG m_cRef = 1;
 	CRITICAL_SECTION m_lock;
@@ -192,11 +167,9 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		return S_OK;
 	}
 
-	HRESULT GetAuthors(PROPVARIANT *pvarData, bool vista)
+	HRESULT GetAuthors(PROPVARIANT *pvarData)
 	{
 		const char *author = m_info.getAuthor().data();
-		if (!vista)
-			return GetString(pvarData, author);
 		if (author[0] == '\0') {
 			pvarData->vt = VT_EMPTY;
 			return S_OK;
@@ -232,7 +205,7 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 		return S_OK;
 	}
 
-	HRESULT GetData(LPCSHCOLUMNID pscid, PROPVARIANT *pvarData, bool vista)
+	HRESULT GetData(LPCSHCOLUMNID pscid, PROPVARIANT *pvarData)
 	{
 		if (!m_hasInfo)
 			return S_FALSE;
@@ -241,11 +214,11 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 			if (pscid->pid == PIDSI_TITLE)
 				return GetString(pvarData, m_info.getTitle().data());
 			if (pscid->pid == PIDSI_AUTHOR)
-				return GetAuthors(pvarData, vista);
+				return GetAuthors(pvarData);
 		}
 		else if (pscid->fmtid == FMTID_MUSIC) {
 			if (pscid->pid == PIDSI_ARTIST)
-				return GetAuthors(pvarData, vista);
+				return GetAuthors(pvarData);
 			if (pscid->pid == PIDSI_YEAR) {
 				int year = m_info.getYear();
 				if (year < 0) {
@@ -262,17 +235,9 @@ class CASAPMetadataHandler final : IColumnProvider, IInitializeWithStream, IProp
 					pvarData->vt = VT_EMPTY;
 					return S_OK;
 				}
-				if (g_windowsVer == WINDOWS_OLD) {
-					duration /= 1000;
-					char timeStr[16];
-					sprintf(timeStr, "%02d:%02d:%02d", duration / 3600, duration / 60 % 60, duration % 60);
-					return GetString(pvarData, timeStr);
-				}
-				else {
-					pvarData->vt = VT_UI8;
-					pvarData->uhVal.QuadPart = 10000ULL * duration;
-					return S_OK;
-				}
+				pvarData->vt = VT_UI8;
+				pvarData->uhVal.QuadPart = 10000ULL * duration;
+				return S_OK;
 			}
 			if (pscid->pid == PIDASI_CHANNEL_COUNT)
 				return GetInt(pvarData, m_info.getChannels());
@@ -358,22 +323,17 @@ public:
 
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
 	{
-		if (riid == IID_IUnknown || riid == IID_IColumnProvider) {
-			*ppv = static_cast<IColumnProvider *>(this);
-			AddRef();
-			return S_OK;
-		}
-		if (riid == IID_IInitializeWithStream) {
+		if (riid == __uuidof(IUnknown) || riid == __uuidof(IInitializeWithStream)) {
 			*ppv = static_cast<IInitializeWithStream *>(this);
 			AddRef();
 			return S_OK;
 		}
-		if (riid == IID_IPropertyStore) {
+		if (riid == __uuidof(IPropertyStore)) {
 			*ppv = static_cast<IPropertyStore *>(this);
 			AddRef();
 			return S_OK;
 		}
-		if (riid == IID_IPropertyStoreCapabilities) {
+		if (riid == __uuidof(IPropertyStoreCapabilities)) {
 			*ppv = static_cast<IPropertyStoreCapabilities *>(this);
 			AddRef();
 			return S_OK;
@@ -395,49 +355,6 @@ public:
 		return r;
 	}
 
-	// IColumnProvider
-
-	STDMETHODIMP Initialize(LPCSHCOLUMNINIT psci)
-	{
-		return S_OK;
-	}
-
-	STDMETHODIMP GetColumnInfo(DWORD dwIndex, SHCOLUMNINFO *psci)
-	{
-		if (dwIndex >= 0 && dwIndex < N_PROPERTYDEFS) {
-			g_propertyDefs[dwIndex].CopyTo(psci);
-			return S_OK;
-		}
-		return S_FALSE;
-	}
-
-	STDMETHODIMP GetItemData(LPCSHCOLUMNID pscid, LPCSHCOLUMNDATA pscd, VARIANT *pvarData)
-	{
-		if ((pscd->dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_OFFLINE)) != 0)
-			return S_FALSE;
-		char ext[4];
-		for (int i = 0; i < 3; i++) {
-			WCHAR c = pscd->pwszExt[1 + i];
-			if (c <= ' ' || c > 'z')
-				return S_FALSE;
-			ext[i] = static_cast<char>(c);
-		}
-		if (pscd->pwszExt[5] != '\0')
-			return S_FALSE;
-		ext[3] = '\0';
-		if (!ASAPInfo::isOurExt(ext))
-			return S_FALSE;
-
-		CMyLock lck(&m_lock);
-		if ((pscd->dwFlags & SHCDF_UPDATEITEM) != 0 || lstrcmpW(m_filename, pscd->wszFile) != 0) {
-			lstrcpyW(m_filename, pscd->wszFile);
-			HRESULT hr = LoadFile(pscd->wszFile, nullptr, STGM_READ);
-			if (FAILED(hr))
-				return hr;
-		}
-		return GetData(pscid, reinterpret_cast<PROPVARIANT *>(pvarData), false);
-	}
-
 	// IInitializeWithStream
 
 	STDMETHODIMP Initialize(IStream *pstream, DWORD grfMode)
@@ -446,7 +363,7 @@ public:
 		HRESULT hr = pstream->Stat(&statstg, STATFLAG_DEFAULT);
 		if (FAILED(hr))
 			return hr;
-		CMyLock lck(&m_lock);
+		CMyLock lck(m_lock);
 		hr = LoadFile(statstg.pwcsName, pstream, grfMode);
 		CoTaskMemFree(statstg.pwcsName);
 		return hr;
@@ -456,15 +373,15 @@ public:
 
 	STDMETHODIMP GetCount(DWORD *cProps)
 	{
-		CMyLock lck(&m_lock);
-		return m_hasInfo ? N_PROPERTYDEFS : 0;
+		CMyLock lck(m_lock);
+		return m_hasInfo ? ARRAYSIZE(g_scids) : 0;
 	}
 
 	STDMETHODIMP GetAt(DWORD iProp, PROPERTYKEY *pkey)
 	{
-		CMyLock lck(&m_lock);
-		if (m_hasInfo && iProp >= 0 && iProp < N_PROPERTYDEFS) {
-			*pkey = g_propertyDefs[iProp].scid;
+		CMyLock lck(m_lock);
+		if (m_hasInfo && iProp >= 0 && iProp < ARRAYSIZE(g_scids)) {
+			*pkey = g_scids[iProp];
 			return S_OK;
 		}
 		return E_INVALIDARG;
@@ -472,8 +389,8 @@ public:
 
 	STDMETHODIMP GetValue(REFPROPERTYKEY key, PROPVARIANT *pv)
 	{
-		CMyLock lck(&m_lock);
-		HRESULT hr = GetData(&key, pv, true);
+		CMyLock lck(m_lock);
+		HRESULT hr = GetData(&key, pv);
 		if (hr == S_FALSE) {
 			pv->vt = VT_EMPTY;
 			return S_OK;
@@ -483,7 +400,7 @@ public:
 
 	STDMETHODIMP SetValue(REFPROPERTYKEY key, REFPROPVARIANT propvar)
 	{
-		CMyLock lck(&m_lock);
+		CMyLock lck(m_lock);
 		if (m_pstream == nullptr)
 			return STG_E_ACCESSDENIED;
 		if (key.fmtid == FMTID_SummaryInformation) {
@@ -503,7 +420,7 @@ public:
 
 	STDMETHODIMP Commit(void)
 	{
-		CMyLock lck(&m_lock);
+		CMyLock lck(m_lock);
 		if (m_pstream == nullptr)
 			return STG_E_ACCESSDENIED;
 		LARGE_INTEGER liZero;
@@ -566,7 +483,7 @@ public:
 
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
 	{
-		if (riid == IID_IUnknown || riid == IID_IClassFactory) {
+		if (riid == __uuidof(IUnknown) || riid == __uuidof(IClassFactory)) {
 			*ppv = static_cast<IClassFactory *>(this);
 			DllAddRef();
 			return S_OK;
@@ -612,19 +529,8 @@ public:
 
 STDAPI_(BOOL) __declspec(dllexport) DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
-	if (dwReason == DLL_PROCESS_ATTACH) {
+	if (dwReason == DLL_PROCESS_ATTACH)
 		g_hDll = hInstance;
-		OSVERSIONINFO osvi;
-		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-		GetVersionEx(&osvi);
-		g_windowsVer = WINDOWS_OLD;
-		if (osvi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
-			if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion >= 1)
-				g_windowsVer = WINDOWS_XP;
-			else if (osvi.dwMajorVersion >= 6)
-				g_windowsVer = WINDOWS_VISTA;
-		}
-	}
 	return TRUE;
 }
 
@@ -654,28 +560,21 @@ STDAPI __declspec(dllexport) DllRegisterServer(void)
 	RegCloseKey(hk2);
 	RegCloseKey(hk1);
 
-	if (g_windowsVer == WINDOWS_VISTA) {
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", 0, KEY_WRITE, &hk1) != ERROR_SUCCESS)
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", 0, KEY_WRITE, &hk1) != ERROR_SUCCESS)
+		return E_FAIL;
+	for (LPCSTR ext : extensions) {
+		if (RegCreateKeyEx(hk1, ext, 0, nullptr, 0, KEY_WRITE, nullptr, &hk2, nullptr) != ERROR_SUCCESS) {
+			RegCloseKey(hk1);
 			return E_FAIL;
-		for (LPCSTR ext : extensions) {
-			if (RegCreateKeyEx(hk1, ext, 0, nullptr, 0, KEY_WRITE, nullptr, &hk2, nullptr) != ERROR_SUCCESS) {
-				RegCloseKey(hk1);
-				return E_FAIL;
-			}
-			if (RegSetString(hk2, nullptr, CLSID_ASAPMetadataHandler_str) != ERROR_SUCCESS) {
-				RegCloseKey(hk2);
-				RegCloseKey(hk1);
-				return E_FAIL;
-			}
-			RegCloseKey(hk2);
 		}
-		RegCloseKey(hk1);
-	}
-	else {
-		if (RegCreateKeyEx(HKEY_CLASSES_ROOT, "Folder\\shellex\\ColumnHandlers\\" CLSID_ASAPMetadataHandler_str, 0, nullptr, 0, KEY_WRITE, nullptr, &hk1, nullptr) != ERROR_SUCCESS)
+		if (RegSetString(hk2, nullptr, CLSID_ASAPMetadataHandler_str) != ERROR_SUCCESS) {
+			RegCloseKey(hk2);
+			RegCloseKey(hk1);
 			return E_FAIL;
-		RegCloseKey(hk1);
+		}
+		RegCloseKey(hk2);
 	}
+	RegCloseKey(hk1);
 
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved", 0, KEY_SET_VALUE, &hk1) != ERROR_SUCCESS)
 		return E_FAIL;
@@ -694,15 +593,11 @@ STDAPI __declspec(dllexport) DllUnregisterServer(void)
 		RegDeleteValue(hk1, CLSID_ASAPMetadataHandler_str);
 		RegCloseKey(hk1);
 	}
-	if (g_windowsVer == WINDOWS_VISTA) {
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", 0, DELETE, &hk1) == ERROR_SUCCESS) {
-			for (LPCSTR ext : extensions)
-				RegDeleteKey(hk1, ext);
-			RegCloseKey(hk1);
-		}
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PropertySystem\\PropertyHandlers", 0, DELETE, &hk1) == ERROR_SUCCESS) {
+		for (LPCSTR ext : extensions)
+			RegDeleteKey(hk1, ext);
+		RegCloseKey(hk1);
 	}
-	else
-		RegDeleteKey(HKEY_CLASSES_ROOT, "Folder\\shellex\\ColumnHandlers\\" CLSID_ASAPMetadataHandler_str);
 	RegDeleteKey(HKEY_CLASSES_ROOT, "CLSID\\" CLSID_ASAPMetadataHandler_str "\\InProcServer32");
 	RegDeleteKey(HKEY_CLASSES_ROOT, "CLSID\\" CLSID_ASAPMetadataHandler_str);
 	return S_OK;
