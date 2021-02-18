@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 	<?if $(sys.BUILDARCH) = x86?>
-		<?define WIN64=no?>
 		<?define PLATFORM_SUFFIX=""?>
 		<?define PLATFORM_BITS=32-bit?>
 		<?define UPGRADE_GUID=4250B3CB-D4A1-4486-828C-AC26A84D00D9?>
@@ -9,7 +8,6 @@
 		<?define SRC_DIR=""?>
 		<?define SHELL_EX_LEVEL=9?>
 	<?elseif $(sys.BUILDARCH) = x64?>
-		<?define WIN64=yes?>
 		<?define PLATFORM_SUFFIX=" (64-bit)"?>
 		<?define PLATFORM_BITS=64-bit?>
 		<?define UPGRADE_GUID=205ADAB1-56A1-42B9-9789-FD20FCD1DF9B?>
@@ -246,16 +244,16 @@
 					</Component>
 					<?endif?>
 
-					<Component Id="ASAPShellEx.dll" Win64="$(var.WIN64)">
+					<Component Id="ASAPShellEx.dll">
 						<File Name="ASAPShellEx.dll" Source="$(var.SRC_DIR)ASAPShellEx.dll" Checksum="yes" KeyPath="yes">
 							<Class Id="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Context="InprocServer32" Description="ASAP Metadata Handler" ThreadingModel="both" />
 						</File>
 						<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" Name="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Value="ASAP Metadata Handler" Type="string" />
 					</Component>
-					<Component Id="ASAPShellEx.propdesc" Win64="$(var.WIN64)">
+					<Component Id="ASAPShellEx.propdesc">
 						<File Name="ASAPShellEx.propdesc" Source="shellex\ASAPShellEx.propdesc" KeyPath="yes" />
 					</Component>
-					<Component Id="ASAPShellExVista.reg" Win64="$(var.WIN64)">
+					<Component Id="ASAPShellExVista.reg">
 						<?foreach EXT in $(var.ASAP_EXTS)?>
 							<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\PropertySystem\PropertyHandlers\.$(var.EXT)" Value="{5AE26367-B5CF-444D-B163-2CBC99B41287}" Type="string" />
 							<RegistryValue Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Explorer\KindMap" Name=".$(var.EXT)" Value="music" Type="string" />
@@ -294,10 +292,10 @@
 					<Directory Id="VLC.DIR" Name="VLC">
 						<Directory Id="VLCPLUGINS.DIR" Name="plugins">
 							<Directory Id="VLCDEMUX.DIR" Name="demux">
-								<Component Id="libasap_plugin.dll" Win64="$(var.WIN64)">
+								<Component Id="libasap_plugin.dll">
 									<File Name="libasap_plugin.dll" Source="$(var.SRC_DIR)libasap_plugin.dll" Checksum="yes" KeyPath="yes" />
 								</Component>
-								<Component Id="libasap_plugin.ext" Win64="$(var.WIN64)">
+								<Component Id="libasap_plugin.ext">
 									<RegistryValue Root="HKCR" Key="asap.file" Name="vlc" Type="integer" Value="1" KeyPath="yes" />
 									<ProgId Id="VLC.sap">
 										<Extension Id="sap">
