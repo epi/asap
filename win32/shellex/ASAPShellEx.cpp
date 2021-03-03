@@ -152,19 +152,21 @@ class CASAPMetadataHandler final : IInitializeWithStream, IPropertyStore, IPrope
 		return S_OK;
 	}
 
+	static LPSTR AllocString(const char *s, size_t len)
+	{
+		LPSTR result = static_cast<LPSTR>(CoTaskMemAlloc(len + 1));
+		if (result == nullptr)
+			return nullptr;
+		memcpy(result, s, len);
+		result[len] = '\0';
+		return result;
+	}
+
 	static HRESULT GetString(PROPVARIANT *pvarData, const char *s)
 	{
-		pvarData->vt = VT_BSTR;
-		// pvarData->bstrVal = A2BSTR(s); - just don't want dependency on ATL
-		int cch = MultiByteToWideChar(CP_ACP, 0, s, -1, nullptr, 0);
-		if (cch <= 0)
-			return HRESULT_FROM_WIN32(GetLastError());
-		pvarData->bstrVal = SysAllocStringLen(nullptr, cch - 1);
-		if (pvarData->bstrVal == nullptr)
-			return E_OUTOFMEMORY;
-		if (MultiByteToWideChar(CP_ACP, 0, s, -1, pvarData->bstrVal, cch) <= 0)
-			return HRESULT_FROM_WIN32(GetLastError());
-		return S_OK;
+		pvarData->vt = VT_LPSTR;
+		pvarData->pszVal = AllocString(s, strlen(s));
+		return pvarData->pszVal == NULL ? E_OUTOFMEMORY : S_OK;
 	}
 
 	HRESULT GetAuthors(PROPVARIANT *pvarData)
@@ -193,11 +195,9 @@ class CASAPMetadataHandler final : IInitializeWithStream, IPropertyStore, IPrope
 		for (i = 0; ; i++) {
 			const char *e = strstr(s, " & ");
 			size_t len = e != nullptr ? e - s : strlen(s);
-			pElems[i] = static_cast<LPSTR>(CoTaskMemAlloc(len + 1));
+			pElems[i] = AllocString(s, len);
 			if (pElems[i] == nullptr)
 				return E_OUTOFMEMORY;
-			memcpy(pElems[i], s, len);
-			pElems[i][len] = '\0';
 			if (e == nullptr)
 				break;
 			s = e + 3;
