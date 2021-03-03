@@ -17,7 +17,7 @@ INSTALL_DATA = mkdir -p $(DESTDIR)$(2) && $(INSTALL) -m 644 $(1) $(DESTDIR)$(2)/
 SDL_CFLAGS = `sdl-config --cflags`
 SDL_LIBS = `sdl-config --libs`
 SEVENZIP = 7z a -mx=9 -bd -bso0
-MAKEZIP = $(DO)$(RM) $@ && $(SEVENZIP) -tzip $@ $(^:%=./%) # "./" makes 7z don't store paths in the archive
+MAKEZIP = $(DO)$(RM) $@ && $(SEVENZIP) -tzip $@ $(patsubst %,./%,$(filter-out win32/signed,$^)) # "./" makes 7z don't store paths in the archive
 COPY = $(DO)cp $< $@
 XASM = $(DO)xasm -q -o $@ $<
 OSX_CC = $(DO)gcc -O2 -Wall -o $@ -undefined dynamic_lookup -mmacosx-version-min=10.6 -arch x86_64 -arch arm64 $(INCLUDEOPTS) $(filter %.c,$^)

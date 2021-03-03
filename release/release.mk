@@ -14,9 +14,8 @@ endif
 dist: \
 	release/asap-$(VERSION)-android.apk \
 	release/asap-$(VERSION)-web.zip \
-	release/asap-$(VERSION)-win32.msi \
 	release/asap-$(VERSION)-win32.zip \
-	release/asap-$(VERSION)-win64.msi \
+	release/signed-msi \
 	release/foo_asap-$(VERSION).fb2k-component \
 	srcdist
 .PHONY: dist
@@ -38,7 +37,7 @@ release/asap-$(VERSION)-web.zip: release/COPYING.txt \
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-win32.zip: release/COPYING.txt \
-	$(addprefix win32/,asapconv.exe asapscan.exe wasap.exe in_asap.dll foo_asap.dll apokeysnd.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll libasap_plugin.dll)
+	$(addprefix win32/,asapconv.exe asapscan.exe wasap.exe in_asap.dll foo_asap.dll apokeysnd.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll libasap_plugin.dll signed)
 	$(MAKEZIP)
 
 release/foo_asap-$(VERSION).fb2k-component: win32/foo_asap.dll

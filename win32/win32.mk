@@ -21,6 +21,9 @@ WIN64_WINDRES = $(DO)x86_64-w64-mingw32-windres -o $@ $<
 CANDLE = $(DO)candle -nologo -o $@
 LIGHT = $(DO)light -nologo -o $@ -spdb
 
+# Code signing
+DO_SIGN = $(DO)signtool sign -d "ASAP - Another Slight Atari Player $(VERSION)" -n "Open Source Developer, Piotr Fusik" -tr http://time.certum.pl -fd sha256 -td sha256 $^ && touch $@
+
 # no user-configurable paths below this line
 
 ifndef DO
@@ -245,7 +248,7 @@ win32/setup: release/asap-$(VERSION)-win32.msi
 
 release/asap-$(VERSION)-win32.msi: win32/setup/asap.wixobj \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/diff-sap.js win32/shellex/ASAPShellEx.propdesc) \
-	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll)
+	$(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll signed)
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b release -b $(srcdir)win32/setup -b $(srcdir)win32 $<
 
 win32/setup/asap.wixobj: $(srcdir)win32/setup/asap.wxs release/release.mk
@@ -254,9 +257,17 @@ CLEAN += win32/setup/asap.wixobj
 
 release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/shellex/ASAPShellEx.propdesc) \
-	win32/x64/ASAPShellEx.dll win32/x64/libasap_plugin.dll
+	win32/x64/ASAPShellEx.dll win32/x64/libasap_plugin.dll win32/signed
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b $(srcdir)/win32/setup -b $(srcdir)win32 $<
 
 win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs release/release.mk
 	$(CANDLE) -arch x64 -dVERSION=$(VERSION) $<
 CLEAN += win32/x64/asap.wixobj
+
+win32/signed: $(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll x64/ASAPShellEx.dll x64/libasap_plugin.dll)
+	$(DO_SIGN)
+CLEAN += win32/signed
+
+release/signed-msi: release/asap-$(VERSION)-win32.msi release/asap-$(VERSION)-win64.msi
+	$(DO_SIGN)
+CLEAN += release/signed-msi
