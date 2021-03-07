@@ -1,6 +1,6 @@
 // flashpack.ci - Atari 8-bit executable compression
 //
-// Copyright (C) 2011-2020  Piotr Fusik
+// Copyright (C) 2011-2021  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -66,7 +66,7 @@ class FlashPackItem
 
 class FlashPack
 {
-	int[65536] Memory; // TODO: short
+	short[65536] Memory;
 
 	const int MinLoadAddress = 0x2000; // safe for most of Atari DOSes
 

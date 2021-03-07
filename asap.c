@@ -475,7 +475,7 @@ struct FlashPackItem {
 static int FlashPackItem_WriteValueTo(const FlashPackItem *self, uint8_t *buffer, int index);
 
 struct FlashPack {
-	int memory[65536];
+	int16_t memory[65536];
 	uint8_t compressed[65536];
 	int compressedLength;
 	FlashPackItem items[64];
