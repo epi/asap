@@ -1,7 +1,7 @@
 /*
  * Player.java - ASAP for Android
  *
- * Copyright (C) 2010-2018  Piotr Fusik
+ * Copyright (C) 2010-2021  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -36,7 +36,6 @@ import android.net.Uri;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.MediaController;
 import android.widget.TextView;
 
@@ -91,17 +90,14 @@ public class Player extends Activity
 			setTag(R.id.song, "");
 
 		mediaController.setMediaPlayer(service);
-		mediaController.setPrevNextListeners(new OnClickListener() {
-				public void onClick(View v) { service.playNextSong(); }
-			},
-			new OnClickListener() {
-				public void onClick(View v) { service.playPreviousSong(); }
-			});
+		mediaController.setPrevNextListeners(
+			v -> service.playNextSong(),
+			v -> service.playPreviousSong());
 	}
 
 	static final String ACTION_SHOW_INFO = "net.sf.asap.action.SHOW_INFO";
 
-	private BroadcastReceiver receiver = new BroadcastReceiver() {
+	private final BroadcastReceiver receiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				showInfo();
@@ -124,12 +120,10 @@ public class Player extends Activity
 			startService(intent);
 		bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
-		findViewById(R.id.stop_button).setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					if (service != null)
-						service.stopSelf();
-					finish();
-				}
+		findViewById(R.id.stop_button).setOnClickListener(v -> {
+				if (service != null)
+					service.stopSelf();
+				finish();
 			});
 
 		registerReceiver(receiver, new IntentFilter(ACTION_SHOW_INFO));

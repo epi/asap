@@ -1,7 +1,7 @@
 /*
  * PlayerService.java - ASAP for Android
  *
- * Copyright (C) 2010-2019  Piotr Fusik
+ * Copyright (C) 2010-2021  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -60,11 +60,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	private void showError(final int messageId)
 	{
-		toastHandler.post(new Runnable() {
-			public void run() {
-				Toast.makeText(PlayerService.this, messageId, Toast.LENGTH_SHORT).show();
-			}
-		});
+		toastHandler.post(() -> Toast.makeText(PlayerService.this, messageId, Toast.LENGTH_SHORT).show());
 	}
 
 	private void showInfo()
