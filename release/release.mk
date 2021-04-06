@@ -40,7 +40,7 @@ release/asap-$(VERSION)-win32.zip: release/COPYING.txt \
 	$(addprefix win32/,asapconv.exe asapscan.exe wasap.exe in_asap.dll foo_asap.dll apokeysnd.dll xmp-asap.dll bass_asap.dll ASAPShellEx.dll libasap_plugin.dll signed)
 	$(MAKEZIP)
 
-release/foo_asap-$(VERSION).fb2k-component: win32/foo_asap.dll
+release/foo_asap-$(VERSION).fb2k-component: win32/foo_asap.dll win32/signed
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-macos.dmg: release/osx/libasap_plugin.dylib release/osx/plugins release/osx/asapconv release/osx/bin
