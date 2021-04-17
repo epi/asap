@@ -18,7 +18,7 @@
 		<author name="Kostas Nakos" email="knakos@gmail.com">Windows CE testing.</author>
 		<author name="Petri Pyy" email="laskipeto@gmail.com">macOS releases.</author>
 		<author name="Mariusz Rozwadowski" rip="true">Suggested CMS, CM3, DLT and STIL format support.</author>
-		<author name="Sławomir Śledz" email="slaves@scene.pl">Windows Mobile setup. Thorough testing.</author>
+		<author name="Sławomir Śledź" email="slaves@scene.pl">Windows Mobile setup. Thorough testing.</author>
 		<author name="David Spilka">6502 routine for playing CMS.</author>
 		<author name="Radek Štěrba" rip="true">6502 routine for playing RMT. Testing.</author>
 		<author name="Łukasz Sychowicz" email="xray@scene.pl">Windows icons. Testing.</author>
