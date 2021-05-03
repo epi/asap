@@ -1,6 +1,6 @@
 // aatr.ci - another ATR file extractor
 //
-// Copyright (C) 2012-2019  Piotr Fusik
+// Copyright (C) 2012-2021  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -341,21 +341,18 @@ public class AATRFileStream
 		int totalRead = 0;
 		int bytesPerSector = Disk.GetBytesPerSector();
 		while (length > 0) {
-			int got;
-			for (;;) {
-				got = Sector[bytesPerSector - 1];
-				if (FileType == 0) {
-					// DOS 1
-					if (got < 128)
-						got = 125;
-					else
-						got -= 128;
-				}
-				else if (got > bytesPerSector)
-					return -1;
-				got -= SectorOffset;
-				if (got > 0)
-					break;
+			int got = Sector[bytesPerSector - 1];
+			if (FileType == 0) {
+				// DOS 1
+				if (got < 128)
+					got = 125;
+				else
+					got -= 128;
+			}
+			else if (got > bytesPerSector)
+				return -1;
+			got -= SectorOffset;
+			if (got <= 0) {
 				if (!Disk.ReadSector(NextSector, Sector, bytesPerSector))
 					return totalRead;
 				SectorOffset = 0;
@@ -364,14 +361,16 @@ public class AATRFileStream
 					sectorHi &= 3;
 				NextSector = sectorHi << 8 | Sector[bytesPerSector - 2];
 			}
-			if (got > length)
-				got = length;
-			if (buffer != null)
-				Sector.CopyTo(SectorOffset, buffer, offset + totalRead, got);
-			Position += got;
-			SectorOffset += got;
-			totalRead += got;
-			length -= got;
+			else {
+				if (got > length)
+					got = length;
+				if (buffer != null)
+					Sector.CopyTo(SectorOffset, buffer, offset + totalRead, got);
+				Position += got;
+				SectorOffset += got;
+				totalRead += got;
+				length -= got;
+			}
 		}
 		return totalRead;
 	}
