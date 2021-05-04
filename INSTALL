@@ -204,6 +204,16 @@ Open the command prompt in the root directory of ASAP sources and run:
 'asap2wav.py' together with 'asap.py' are the command-line script.
 
 
+Building Swift command-line ASAP2WAV
+------------------------------------
+
+Install Swift (https://swift.org/download/).
+
+Open the command prompt in the root directory of ASAP sources and run:
+
+    make swift
+
+
 Using asapconv
 --------------
 
