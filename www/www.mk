@@ -31,3 +31,7 @@ www/PORTS.xml: $(srcdir)PORTS.xml
 
 www/PORTS.xsl: $(srcdir)PORTS.xsl
 	$(COPY)
+
+sftp:
+	sftp pfusik,asap@web.sourceforge.net:htdocs
+.PHONY: sftp
