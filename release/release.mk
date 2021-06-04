@@ -44,11 +44,15 @@ release/foo_asap-$(VERSION).fb2k-component: win32/foo_asap.dll win32/signed
 	$(MAKEZIP)
 
 release/asap-$(VERSION)-macos.dmg: release/osx/libasap_plugin.dylib release/osx/plugins release/osx/asapconv release/osx/bin
-ifdef ASAP_CODESIGNING_IDENTITY
-	codesign --options runtime -f -s "$(ASAP_CODESIGNING_IDENTITY)" release/osx/libasap_plugin.dylib
-	codesign --options runtime -f -s "$(ASAP_CODESIGNING_IDENTITY)" release/osx/asapconv
+ifdef PORK_CODESIGNING_IDENTITY
+	codesign --options runtime -f -s $(PORK_CODESIGNING_IDENTITY) release/osx/libasap_plugin.dylib
+	codesign --options runtime -f -s $(PORK_CODESIGNING_IDENTITY) release/osx/asapconv
 endif
 	$(DO)hdiutil create -volname asap-$(VERSION)-macos -srcfolder release/osx -format UDBZ -fs HFS+ -imagekey bzip2-level=3 -ov $@
+ifdef PORK_NOTARIZING_CREDENTIALS
+	xcrun altool --notarize-app --primary-bundle-id net.sf.asap $(PORK_NOTARIZING_CREDENTIALS) --file $@ \
+		| perl -pe 's/^RequestUUID =/xcrun altool $$ENV{PORK_NOTARIZING_CREDENTIALS} --notarization-info/ or next; $$c = $$_; until (/Status: success/) { sleep 20; $$_ = `$$c`; print; } last;'
+endif
 
 release/osx/libasap_plugin.dylib: libasap_plugin.dylib
 	$(DO)strip -o $@ -x $< && chmod 644 $@
@@ -78,6 +82,12 @@ rpm64:
 	ssh vm 'rpmbuild -tb asap-$(VERSION).tar.gz'
 	scp vm:rpmbuild/RPMS/x86_64/asap{,-devel,-vlc,-xmms}-$(VERSION)-1.x86_64.rpm release/
 .PHONY: rpm64
+
+mac:
+	scp release/asap-$(VERSION).tar.gz mac:.
+	ssh mac 'rm -rf asap-$(VERSION) && tar xf asap-$(VERSION).tar.gz && make -C asap-$(VERSION) release/asap-$(VERSION)-macos.dmg'
+	scp mac:asap-$(VERSION)/release/asap-$(VERSION)-macos.dmg release/
+.PHONY: mac
 
 release/COPYING.txt: $(srcdir)COPYING
 	$(UNIX2DOS)
