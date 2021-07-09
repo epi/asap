@@ -1,4 +1,17 @@
 ﻿<page title="News">
+	<release version="5.1.0" date="2021-07-09">
+		<ul>
+			<li>Android app includes the current state of the <a href="http://asma.scene.pl">ASMA repo</a>.</li>
+			<li>Fixed memory leaks in the BASS/AIMP plugin.</li>
+			<li>Unicode filenames in Windows Explorer.</li>
+			<li>Fixed "-ft" in chksap.</li>
+			<li>SAP filenames shown in TortoiseMerge.</li>
+			<li>Windows and macOS binaries are now signed.</li>
+			<li>Pure Python and Swift ASAP2WAVs.</li>
+			<li>JavaScript ASAP2WAV supports Node.js, drops support for DMDScript and JScript.</li>
+		</ul>
+	</release>
+
 	<release version="5.0.1" date="2020-01-19">
 		<ul>
 			<li>Android: search by author.</li>

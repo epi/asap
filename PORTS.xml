@@ -587,7 +587,7 @@
 		<bin></bin>
 		<platform>desktop operating systems</platform>
 		<interface>command line</interface>
-		<since>5.0.2</since>
+		<since>5.1.0</since>
 		<status>sample</status>
 		<output>8 or 16-bit, WAV or raw file</output>
 		<subsongs>yes</subsongs>
@@ -603,7 +603,7 @@
 		<bin></bin>
 		<platform>desktop operating systems</platform>
 		<interface>command line</interface>
-		<since>5.0.2</since>
+		<since>5.1.0</since>
 		<status>sample</status>
 		<output>8 or 16-bit, WAV or raw file</output>
 		<subsongs>yes</subsongs>
