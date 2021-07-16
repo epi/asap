@@ -85,7 +85,7 @@ rpm64:
 
 mac:
 	scp release/asap-$(VERSION).tar.gz mac:.
-	ssh mac 'rm -rf asap-$(VERSION) && tar xf asap-$(VERSION).tar.gz && make -C asap-$(VERSION) release/asap-$(VERSION)-macos.dmg'
+	ssh mac 'security unlock-keychain ~/Library/Keychains/login.keychain && rm -rf asap-$(VERSION) && tar xf asap-$(VERSION).tar.gz && make -C asap-$(VERSION) release/asap-$(VERSION)-macos.dmg'
 	scp mac:asap-$(VERSION)/release/asap-$(VERSION)-macos.dmg release/
 .PHONY: mac
 
