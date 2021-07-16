@@ -74,13 +74,18 @@ deb:
 deb64:
 	scp release/asap-$(VERSION).tar.gz vm:.
 	ssh vm 'rm -rf asap-$(VERSION) && tar xf asap-$(VERSION).tar.gz && make -C asap-$(VERSION) deb'
-	scp vm:asap{,-dev,-vlc}_$(VERSION)-1_amd64.deb release/
+	scp vm:asap_$(VERSION)-1_amd64.deb release/
+	scp vm:asap-dev_$(VERSION)-1_amd64.deb release/
+	scp vm:asap-vlc_$(VERSION)-1_amd64.deb release/
 .PHONY: deb64
 
 rpm64:
 	scp release/asap-$(VERSION).tar.gz vm:.
 	ssh vm 'rpmbuild -tb asap-$(VERSION).tar.gz'
-	scp vm:rpmbuild/RPMS/x86_64/asap{,-devel,-vlc,-xmms}-$(VERSION)-1.x86_64.rpm release/
+	scp vm:rpmbuild/RPMS/x86_64/asap-$(VERSION)-1.x86_64.rpm release/
+	scp vm:rpmbuild/RPMS/x86_64/asap-devel-$(VERSION)-1.x86_64.rpm release/
+	scp vm:rpmbuild/RPMS/x86_64/asap-vlc-$(VERSION)-1.x86_64.rpm release/
+	scp vm:rpmbuild/RPMS/x86_64/asap-xmms-$(VERSION)-1.x86_64.rpm release/
 .PHONY: rpm64
 
 mac:
