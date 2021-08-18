@@ -64,7 +64,7 @@ release/osx/plugins:
 release/osx/asapconv: $(call src,asapconv.c asap.[ch])
 	$(OSX_CC)
 
-release/osx/bin: 
+release/osx/bin:
 	$(DO)ln -s /usr/local/bin $@
 
 deb:
