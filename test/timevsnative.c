@@ -23,7 +23,7 @@ static int print_times(ASAPInfo *info, const char *filename, const unsigned char
 			printf("???");
 		else {
 			s[len] = '\0';
-			printf("%s", (const char *) s);
+			fputs((const char *) s, stdout);
 			if (ASAPInfo_GetLoop(info, song))
 				printf(" LOOP");
 		}
@@ -33,38 +33,32 @@ static int print_times(ASAPInfo *info, const char *filename, const unsigned char
 
 int main(int argc, char *argv[])
 {
-	const char *sap_filename;
-	FILE *fp;
-	unsigned char sap[ASAPInfo_MAX_MODULE_LENGTH];
-	int sap_len;
 	ASAPInfo *sap_info = ASAPInfo_New();
-	int sap_sum;
-	const char *native_ext;
 	ASAPInfo *native_info = ASAPInfo_New();
 	if (argc != 2) {
 		printf("Usage: timevsnative FILE.sap\n");
 		return 1;
 	}
-	sap_filename = argv[1];
-	fp = fopen(sap_filename, "rb");
+	const char *sap_filename = argv[1];
+	FILE *fp = fopen(sap_filename, "rb");
 	if (fp == NULL) {
 		fprintf(stderr, "%s: cannot open\n", sap_filename);
 		return 1;
 	}
-	sap_len = fread(sap, 1, sizeof(sap), fp);
+	unsigned char sap[ASAPInfo_MAX_MODULE_LENGTH];
+	int sap_len = fread(sap, 1, sizeof(sap), fp);
 	fclose(fp);
-	printf("%s", sap_filename);
-	sap_sum = print_times(sap_info, sap_filename, sap, sap_len);
-	native_ext = ASAPInfo_GetOriginalModuleExt(sap_info, sap, sap_len);
+	fputs(sap_filename, stdout);
+	int sap_sum = print_times(sap_info, sap_filename, sap, sap_len);
+	const char *native_ext = ASAPInfo_GetOriginalModuleExt(sap_info, sap, sap_len);
 	if (native_ext != NULL) {
 		ASAPWriter *writer = ASAPWriter_New();
-		char native_filename[FILENAME_MAX];
-		unsigned char native[ASAPInfo_MAX_MODULE_LENGTH];
-		int native_len;
 		printf("\t%s", native_ext);
+		char native_filename[FILENAME_MAX];
 		sprintf(native_filename, "%.*s.%s", (int) (strrchr(sap_filename, '.') - sap_filename), sap_filename, native_ext);
+		unsigned char native[ASAPInfo_MAX_MODULE_LENGTH];
 		ASAPWriter_SetOutput(writer, native, 0, sizeof(native));
-		native_len = ASAPWriter_Write(writer, native_filename, sap_info, sap, sap_len, FALSE);
+		int native_len = ASAPWriter_Write(writer, native_filename, sap_info, sap, sap_len, false);
 		ASAPWriter_Delete(writer);
 		if (native_len >= 0) {
 			int native_sum = print_times(native_info, native_filename, native, native_len);
