@@ -423,7 +423,7 @@ public class ASAPInfo
 	/// Returns -1 if no COVOX enabled.
 	public int GetCovoxAddress() => CovoxAddr;
 
-	/// Retturns the length of the SAP header in bytes.
+	/// Returns the length of the SAP header in bytes.
 	public int GetSapHeaderLength() => HeaderLen;
 
 	/// Returns the offset of instrument names for RMT module.

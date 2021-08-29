@@ -405,7 +405,7 @@ int ASAPInfo_GetPlayerAddress(const ASAPInfo *self);
 int ASAPInfo_GetCovoxAddress(const ASAPInfo *self);
 
 /**
- * Retturns the length of the SAP header in bytes.
+ * Returns the length of the SAP header in bytes.
  * @param self This <code>ASAPInfo</code>.
  */
 int ASAPInfo_GetSapHeaderLength(const ASAPInfo *self);
