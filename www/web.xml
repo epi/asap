@@ -4,7 +4,7 @@
 	<script>
 		function openFiles(files)
 		{
-			var select = document.getElementById("fileSelect");
+			const select = document.getElementById("fileSelect");
 			switch (files.length) {
 			case 0:
 				alert("No supported file selected");
@@ -14,11 +14,8 @@
 				break;
 			default:
 				select.innerHTML = "";
-				Array.prototype.forEach.call(files, function(file) {
-						var option = document.createElement("option");
-						option.text = file.name;
-						select.add(option);
-					});
+				for (const file of files)
+					select.add(new Option(file.name));
 				select.style.display = "";
 				break;
 			}

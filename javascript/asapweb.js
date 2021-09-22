@@ -21,7 +21,7 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-var asap = {
+const asap = {
 	stop : function()
 	{
 		if (this.processor) {
