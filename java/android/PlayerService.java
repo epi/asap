@@ -36,6 +36,9 @@ import android.content.IntentFilter;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.media.MediaMetadata;
+import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
@@ -68,13 +71,17 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		sendBroadcast(new Intent(Player.ACTION_SHOW_INFO));
 	}
 
+	private MediaSession mediaSession;
+
 	private void showNotification()
 	{
+		String title = info.getTitleOrFilename();
+		String author = info.getAuthor();
 		PendingIntent intent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
 		Notification.Builder builder = new Notification.Builder(this)
 			.setSmallIcon(R.drawable.icon)
-			.setContentTitle(info.getTitleOrFilename())
-			.setContentText(info.getAuthor())
+			.setContentTitle(title)
+			.setContentText(author)
 			.setContentIntent(intent)
 			.setOngoing(true);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -85,8 +92,31 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 				((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(channel);
 				builder.setChannelId(CHANNEL_ID);
 			}
+
+			MediaMetadata.Builder metadata = new MediaMetadata.Builder()
+				.putString(MediaMetadata.METADATA_KEY_TITLE, title)
+				.putString(MediaMetadata.METADATA_KEY_ARTIST, author);
+			int duration = info.getDuration(song);
+			if (duration > 0)
+				metadata.putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
+			int songs = info.getSongs();
+			if (songs > 1) {
+				metadata.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, song + 1);
+				metadata.putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, songs);
+			}
+			int year = info.getYear();
+			if (year > 0)
+				metadata.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
+			mediaSession.setMetadata(metadata.build());
+			mediaSession.setActive(true);
 		}
 		startForeground(NOTIFICATION_ID, builder.getNotification());
+	}
+
+	private void setPlaybackState(int state, float speed)
+	{
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			mediaSession.setPlaybackState(new PlaybackState.Builder().setState(state, asap.getPosition(), speed).build());
 	}
 
 
@@ -275,6 +305,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		int pos;
 		synchronized (this) {
 			if (action == ACTION_PAUSE) {
+				setPlaybackState(PlaybackState.STATE_PAUSED, 0);
 				audioTrack.pause();
 				while (action == ACTION_PAUSE) {
 					try {
@@ -283,8 +314,10 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 					catch (InterruptedException ex) {
 					}
 				}
-				if (action == ACTION_PLAY)
+				if (action == ACTION_PLAY) {
+					setPlaybackState(PlaybackState.STATE_PLAYING, 1);
 					audioTrack.play();
+				}
 			}
 			if (action != ACTION_PLAY) {
 				audioTrack.stop();
@@ -295,11 +328,16 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			seekPosition = -1;
 		}
 		if (pos >= 0) {
+			if (pos < asap.getPosition())
+				setPlaybackState(PlaybackState.STATE_REWINDING, -10);
+			else
+				setPlaybackState(PlaybackState.STATE_FAST_FORWARDING, 10);
 			try {
 				asap.seek(pos);
 			}
 			catch (Exception ex) {
 			}
+			setPlaybackState(PlaybackState.STATE_PLAYING, 1);
 		}
 		return true;
 	}
@@ -308,6 +346,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	{
 		action = ACTION_PLAY;
 		seekPosition = -1;
+		setPlaybackState(PlaybackState.STATE_PLAYING, 1);
 
 		int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
 		int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT) >> 1;
@@ -333,12 +372,14 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	{
 		if (!gainFocus())
 			return;
+		mediaSession = new MediaSession(this, "ASAP");
 		while (handleLoadAction()) {
 			showInfo();
 			showNotification();
 			playLoop();
 		}
 		stopForeground(true);
+		mediaSession.release();
 		releaseFocus();
 	}
 
