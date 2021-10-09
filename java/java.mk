@@ -1,6 +1,8 @@
+JAVA_SDK = "C:/Program Files/Java/jdk-11.0.12"
+
 JAVAC = $(DO)javac
-JAR = $(DO)jar
-JAVADOC = $(DO)javadoc
+JAR = $(DO)$(JAVA_SDK)/bin/jar
+JAVADOC = $(DO)$(JAVA_SDK)/bin/javadoc
 
 # no user-configurable paths below this line
 
