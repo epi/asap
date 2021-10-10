@@ -77,46 +77,44 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	{
 		String title = info.getTitleOrFilename();
 		String author = info.getAuthor();
+
+		MediaMetadata.Builder metadata = new MediaMetadata.Builder()
+			.putString(MediaMetadata.METADATA_KEY_TITLE, title)
+			.putString(MediaMetadata.METADATA_KEY_ARTIST, author);
+		int duration = info.getDuration(song);
+		if (duration > 0)
+			metadata.putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
+		int songs = info.getSongs();
+		if (songs > 1) {
+			metadata.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, song + 1);
+			metadata.putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, songs);
+		}
+		int year = info.getYear();
+		if (year > 0)
+			metadata.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
+		mediaSession.setMetadata(metadata.build());
+		mediaSession.setActive(true);
+
 		PendingIntent intent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
 		Notification.Builder builder = new Notification.Builder(this)
 			.setSmallIcon(R.drawable.icon)
 			.setContentTitle(title)
 			.setContentText(author)
 			.setContentIntent(intent)
-			.setOngoing(true);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			builder.setVisibility(Notification.VISIBILITY_PUBLIC);
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-				final String CHANNEL_ID = "NOW_PLAYING";
-				NotificationChannel channel = new NotificationChannel(CHANNEL_ID, getString(R.string.notification_channel), NotificationManager.IMPORTANCE_LOW);
-				((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(channel);
-				builder.setChannelId(CHANNEL_ID);
-			}
-
-			MediaMetadata.Builder metadata = new MediaMetadata.Builder()
-				.putString(MediaMetadata.METADATA_KEY_TITLE, title)
-				.putString(MediaMetadata.METADATA_KEY_ARTIST, author);
-			int duration = info.getDuration(song);
-			if (duration > 0)
-				metadata.putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
-			int songs = info.getSongs();
-			if (songs > 1) {
-				metadata.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, song + 1);
-				metadata.putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, songs);
-			}
-			int year = info.getYear();
-			if (year > 0)
-				metadata.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
-			mediaSession.setMetadata(metadata.build());
-			mediaSession.setActive(true);
+			.setOngoing(true)
+			.setVisibility(Notification.VISIBILITY_PUBLIC);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			final String CHANNEL_ID = "NOW_PLAYING";
+			NotificationChannel channel = new NotificationChannel(CHANNEL_ID, getString(R.string.notification_channel), NotificationManager.IMPORTANCE_LOW);
+			((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+			builder.setChannelId(CHANNEL_ID);
 		}
 		startForeground(NOTIFICATION_ID, builder.getNotification());
 	}
 
 	private void setPlaybackState(int state, float speed)
 	{
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-			mediaSession.setPlaybackState(new PlaybackState.Builder().setState(state, asap.getPosition(), speed).build());
+		mediaSession.setPlaybackState(new PlaybackState.Builder().setState(state, asap.getPosition(), speed).build());
 	}
 
 
@@ -512,7 +510,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	{
 		super.onStart(intent, startId);
 
-		registerReceiver(headsetReceiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
+		registerReceiver(headsetReceiver, new IntentFilter(AudioManager.ACTION_HEADSET_PLUG));
 
 		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
 		getAudioManager().registerMediaButtonEventReceiver(eventReceiver);
