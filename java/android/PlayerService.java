@@ -494,14 +494,12 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		getAudioManager().abandonAudioFocus(this);
 	}
 
-	private final BroadcastReceiver headsetReceiver = new BroadcastReceiver() {
+	private final BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
-			if (!isInitialStickyBroadcast() && intent.getIntExtra("state", -1) == 0) {
-				pause();
-				showInfo(); // just to update the MediaController
-			}
+			pause();
+			showInfo(); // just to update the MediaController
 		}
 	};
 
@@ -510,7 +508,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	{
 		super.onStart(intent, startId);
 
-		registerReceiver(headsetReceiver, new IntentFilter(AudioManager.ACTION_HEADSET_PLUG));
+		registerReceiver(becomingNoisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
 
 		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
 		getAudioManager().registerMediaButtonEventReceiver(eventReceiver);
@@ -539,7 +537,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
 		getAudioManager().unregisterMediaButtonEventReceiver(eventReceiver);
 
-		unregisterReceiver(headsetReceiver);
+		unregisterReceiver(becomingNoisyReceiver);
 	}
 
 
