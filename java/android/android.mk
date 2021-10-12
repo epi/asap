@@ -87,7 +87,7 @@ java/android/classes.dex: java/android/classes/net/sf/asap/Player.class
 CLEAN += java/android/classes.dex
 
 java/android/classes/net/sf/asap/Player.class: $(ANDROID_JAVA_SRC) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
-	$(JAVAC) -d java/android/classes --release 11 -cp $(ANDROID_JAR) $(ANDROID_JAVA_SRC) java/android/gen/net/sf/asap/R.java java/src/net/sf/asap/*.java
+	$(JAVAC) -d java/android/classes --release 11 -cp $(ANDROID_JAR) -Xlint:deprecation $(ANDROID_JAVA_SRC) java/android/gen/net/sf/asap/R.java java/src/net/sf/asap/*.java
 CLEANDIR += java/android/classes
 
 # Also generates java/android/gen/net/sf/asap/R.java

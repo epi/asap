@@ -33,6 +33,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -109,7 +110,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(channel);
 			builder.setChannelId(CHANNEL_ID);
 		}
-		startForeground(NOTIFICATION_ID, builder.getNotification());
+		startForeground(NOTIFICATION_ID, builder.build());
 	}
 
 	private void setPlaybackState(int state, float speed)
@@ -346,13 +347,22 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		seekPosition = -1;
 		setPlaybackState(PlaybackState.STATE_PLAYING, 1);
 
-		int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_CONFIGURATION_MONO : AudioFormat.CHANNEL_CONFIGURATION_STEREO;
+		int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO;
 		int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT) >> 1;
 		if (bufferLen < 16384)
 			bufferLen = 16384;
 		byte[] byteBuffer = new byte[bufferLen << 1];
 		short[] shortBuffer = new short[bufferLen];
-		AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT, bufferLen << 1, AudioTrack.MODE_STREAM);
+		AudioAttributes attributes = new AudioAttributes.Builder()
+			.setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+			.setUsage(AudioAttributes.USAGE_MEDIA)
+			.build();
+		AudioFormat format = new AudioFormat.Builder()
+			.setChannelMask(channelConfig)
+			.setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+			.setSampleRate(ASAP.SAMPLE_RATE)
+			.build();
+		AudioTrack audioTrack = new AudioTrack(attributes, format, bufferLen << 1, AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
 		audioTrack.play();
 
 		while (handlePlayAction(audioTrack)) {
