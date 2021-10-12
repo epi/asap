@@ -40,10 +40,5 @@
 		</activity>
 		<provider android:name=".ArchiveSuggestionsProvider" android:authorities="net.sf.asap.ArchiveSuggestionsProvider" />
 		<service android:name=".PlayerService" android:label="@string/player_service" />
-		<receiver android:name=".MediaButtonEventReceiver">
-			<intent-filter>
-				<action android:name="android.intent.action.MEDIA_BUTTON" />
-			</intent-filter>
-		</receiver>
 	</application>
 </manifest>

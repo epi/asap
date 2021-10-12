@@ -29,7 +29,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -102,7 +101,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			.setContentTitle(title)
 			.setContentText(author)
 			.setContentIntent(intent)
-			.setOngoing(true)
+			.setStyle(new Notification.MediaStyle().setMediaSession(mediaSession.getSessionToken()))
 			.setVisibility(Notification.VISIBILITY_PUBLIC);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			final String CHANNEL_ID = "NOW_PLAYING";
@@ -113,9 +112,12 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		startForeground(NOTIFICATION_ID, builder.build());
 	}
 
-	private void setPlaybackState(int state, float speed)
+	private void setPlaybackState(int state, float speed, long actions)
 	{
-		mediaSession.setPlaybackState(new PlaybackState.Builder().setState(state, asap.getPosition(), speed).build());
+		mediaSession.setPlaybackState(new PlaybackState.Builder()
+			.setState(state, asap.getPosition(), speed)
+			.setActions(actions)
+			.build());
 	}
 
 
@@ -304,7 +306,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		int pos;
 		synchronized (this) {
 			if (action == ACTION_PAUSE) {
-				setPlaybackState(PlaybackState.STATE_PAUSED, 0);
+				setPlaybackState(PlaybackState.STATE_PAUSED, 0, PlaybackState.ACTION_PLAY | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT);
 				audioTrack.pause();
 				while (action == ACTION_PAUSE) {
 					try {
@@ -314,7 +316,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 					}
 				}
 				if (action == ACTION_PLAY) {
-					setPlaybackState(PlaybackState.STATE_PLAYING, 1);
+					setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT);
 					audioTrack.play();
 				}
 			}
@@ -328,15 +330,15 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		}
 		if (pos >= 0) {
 			if (pos < asap.getPosition())
-				setPlaybackState(PlaybackState.STATE_REWINDING, -10);
+				setPlaybackState(PlaybackState.STATE_REWINDING, -10, 0);
 			else
-				setPlaybackState(PlaybackState.STATE_FAST_FORWARDING, 10);
+				setPlaybackState(PlaybackState.STATE_FAST_FORWARDING, 10, 0);
 			try {
 				asap.seek(pos);
 			}
 			catch (Exception ex) {
 			}
-			setPlaybackState(PlaybackState.STATE_PLAYING, 1);
+			setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT);
 		}
 		return true;
 	}
@@ -345,7 +347,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	{
 		action = ACTION_PLAY;
 		seekPosition = -1;
-		setPlaybackState(PlaybackState.STATE_PLAYING, 1);
+		setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT);
 
 		int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO;
 		int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT) >> 1;
@@ -380,14 +382,12 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	{
 		if (!gainFocus())
 			return;
-		mediaSession = new MediaSession(this, "ASAP");
 		while (handleLoadAction()) {
 			showInfo();
 			showNotification();
 			playLoop();
 		}
 		stopForeground(true);
-		mediaSession.release();
 		releaseFocus();
 	}
 
@@ -429,14 +429,6 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	public void start()
 	{
 		setAction(ACTION_PLAY);
-	}
-
-	synchronized void togglePause()
-	{
-		if (isPaused())
-			start();
-		else
-			pause();
 	}
 
 	void playNextSong()
@@ -504,6 +496,38 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		getAudioManager().abandonAudioFocus(this);
 	}
 
+	private final MediaSession.Callback callback = new MediaSession.Callback() {
+		@Override
+		public void onPause()
+		{
+			pause();
+		}
+
+		@Override
+		public void onPlay()
+		{
+			start();
+		}
+
+		@Override
+		public void onSeekTo(long pos)
+		{
+			seekTo((int) pos);
+		}
+
+		@Override
+		public void onSkipToNext()
+		{
+			playPreviousSong();
+		}
+
+		@Override
+		public void onSkipToPrevious()
+		{
+			playNextSong();
+		}
+	};
+
 	private final BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent)
@@ -514,14 +538,17 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	};
 
 	@Override
-	public void onStart(Intent intent, int startId)
+	public void onCreate()
 	{
-		super.onStart(intent, startId);
+		mediaSession = new MediaSession(this, "ASAP");
+		mediaSession.setCallback(callback);
+		mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+	}
 
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId)
+	{
 		registerReceiver(becomingNoisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
-
-		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
-		getAudioManager().registerMediaButtonEventReceiver(eventReceiver);
 
 		song = SONG_DEFAULT;
 		uri = intent.getData();
@@ -536,18 +563,17 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			uri = playlist.get(0);
 		}
 		setAction(ACTION_LOAD);
+		return START_NOT_STICKY;
 	}
 
 	@Override
 	public void onDestroy()
 	{
-		super.onDestroy();
 		stop();
 
-		ComponentName eventReceiver = new ComponentName(getPackageName(), MediaButtonEventReceiver.class.getName());
-		getAudioManager().unregisterMediaButtonEventReceiver(eventReceiver);
-
 		unregisterReceiver(becomingNoisyReceiver);
+
+		mediaSession.release();
 	}
 
 

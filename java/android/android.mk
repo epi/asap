@@ -26,7 +26,7 @@ endif
 
 ANDROID_RELEASE = release/asap-$(VERSION)-android.apk
 ANDROID_JAVA_SRC = $(addprefix $(srcdir)java/android/, AATRFileInputStream.java ArchiveSelector.java ArchiveSuggestionsProvider.java BaseSelector.java \
-	FileContainer.java FileInfo.java FileSelector.java JavaAATR.java MediaButtonEventReceiver.java Player.java PlayerService.java Util.java ZipInputStream.java)
+	FileContainer.java FileInfo.java FileSelector.java JavaAATR.java Player.java PlayerService.java Util.java ZipInputStream.java)
 
 android-release: $(ANDROID_RELEASE)
 .PHONY: android-release
