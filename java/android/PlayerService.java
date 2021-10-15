@@ -77,10 +77,14 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	{
 		String title = info.getTitleOrFilename();
 		String author = info.getAuthor();
+		String date = info.getDate();
 
 		MediaMetadata.Builder metadata = new MediaMetadata.Builder()
-			.putString(MediaMetadata.METADATA_KEY_TITLE, title)
-			.putString(MediaMetadata.METADATA_KEY_ARTIST, author);
+			.putString(MediaMetadata.METADATA_KEY_TITLE, title);
+		if (author.length() > 0)
+			metadata.putString(MediaMetadata.METADATA_KEY_ARTIST, author);
+		if (date.length() > 0)
+			metadata.putString(MediaMetadata.METADATA_KEY_DATE, date);
 		int duration = info.getDuration(song);
 		if (duration > 0)
 			metadata.putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
