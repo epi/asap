@@ -60,6 +60,11 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	private static final int NOTIFICATION_ID = 1;
 
+	private static final String ACTION_PLAY = "asap.intent.action.PLAY";
+	private static final String ACTION_PAUSE = "asap.intent.action.PAUSE";
+	private static final String ACTION_NEXT = "asap.intent.action.NEXT";
+	private static final String ACTION_PREVIOUS = "asap.intent.action.PREVIOUS";
+
 	private final Handler toastHandler = new Handler();
 
 	private void showError(final int messageId)
@@ -73,6 +78,12 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	}
 
 	private MediaSession mediaSession;
+
+	private Notification.Action getNotificationAction(int icon, int titleResource, String action)
+	{
+		PendingIntent intent = PendingIntent.getService(this, 0, new Intent(action, null, this, PlayerService.class), 0);
+		return new Notification.Action(icon, getString(titleResource), intent);
+	}
 
 	private void showNotification()
 	{
@@ -107,8 +118,15 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			.setContentTitle(title)
 			.setContentText(author)
 			.setContentIntent(intent)
-			.setStyle(new Notification.MediaStyle().setMediaSession(mediaSession.getSessionToken()))
-			.setVisibility(Notification.VISIBILITY_PUBLIC);
+			.setStyle(new Notification.MediaStyle()
+				.setMediaSession(mediaSession.getSessionToken())
+				.setShowActionsInCompactView(0, 1, 2))
+			.setVisibility(Notification.VISIBILITY_PUBLIC)
+			.addAction(getNotificationAction(android.R.drawable.ic_media_previous, R.string.notification_previous, ACTION_PREVIOUS))
+			.addAction(isPaused()
+				? getNotificationAction(android.R.drawable.ic_media_play, R.string.notification_play, ACTION_PLAY)
+				: getNotificationAction(android.R.drawable.ic_media_pause, R.string.notification_pause, ACTION_PAUSE))
+			.addAction(getNotificationAction(android.R.drawable.ic_media_next, R.string.notification_next, ACTION_NEXT));
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			final String CHANNEL_ID = "NOW_PLAYING";
 			NotificationChannel channel = new NotificationChannel(CHANNEL_ID, getString(R.string.notification_channel), NotificationManager.IMPORTANCE_LOW);
@@ -576,21 +594,38 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId)
 	{
-		registerReceiver(becomingNoisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
-
-		song = SONG_DEFAULT;
-		uri = intent.getData();
-		String playlistUri = intent.getStringExtra(EXTRA_PLAYLIST);
-		if (playlistUri != null)
-			setPlaylist(Uri.parse(playlistUri), false);
-		else if (ASAPInfo.isOurFile(uri.toString()))
-			setPlaylist(Util.getParent(uri), false);
-		else {
-			// shuffle
-			setPlaylist(uri, true);
-			uri = playlist.get(0);
+		switch (intent.getAction()) {
+		case Intent.ACTION_VIEW:
+			registerReceiver(becomingNoisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
+			song = SONG_DEFAULT;
+			uri = intent.getData();
+			String playlistUri = intent.getStringExtra(EXTRA_PLAYLIST);
+			if (playlistUri != null)
+				setPlaylist(Uri.parse(playlistUri), false);
+			else if (ASAPInfo.isOurFile(uri.toString()))
+				setPlaylist(Util.getParent(uri), false);
+			else {
+				// shuffle
+				setPlaylist(uri, true);
+				uri = playlist.get(0);
+			}
+			setCommand(COMMAND_LOAD);
+			break;
+		case ACTION_PLAY:
+			start();
+			break;
+		case ACTION_PAUSE:
+			pause();
+			break;
+		case ACTION_NEXT:
+			playNextSong();
+			break;
+		case ACTION_PREVIOUS:
+			playPreviousSong();
+			break;
+		default:
+			break;
 		}
-		setCommand(COMMAND_LOAD);
 		return START_NOT_STICKY;
 	}
 

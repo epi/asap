@@ -16,5 +16,9 @@
 	<string name="menu_search">Search</string>
 	<string name="menu_toggle_details">Toggle details</string>
 	<string name="menu_browse">Browse</string>
-    <string name="notification_channel">Now Playing</string>
+	<string name="notification_channel">Now Playing</string>
+	<string name="notification_play">Play</string>
+	<string name="notification_pause">Pause</string>
+	<string name="notification_next">Next</string>
+	<string name="notification_previous">Previous</string>
 </resources>
