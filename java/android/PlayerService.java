@@ -305,12 +305,14 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		}
 	}
 
+	private final long COMMON_PLAYBACK_STATE = PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT;
+
 	private boolean handlePlayAction(AudioTrack audioTrack)
 	{
 		int pos;
 		synchronized (this) {
 			if (action == ACTION_PAUSE) {
-				setPlaybackState(PlaybackState.STATE_PAUSED, 0, PlaybackState.ACTION_PLAY | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT);
+				setPlaybackState(PlaybackState.STATE_PAUSED, 0, PlaybackState.ACTION_PLAY | COMMON_PLAYBACK_STATE);
 				audioTrack.pause();
 				while (action == ACTION_PAUSE) {
 					try {
@@ -320,7 +322,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 					}
 				}
 				if (action == ACTION_PLAY) {
-					setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT);
+					setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_PLAYBACK_STATE);
 					audioTrack.play();
 				}
 			}
@@ -342,7 +344,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			}
 			catch (Exception ex) {
 			}
-			setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT);
+			setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_PLAYBACK_STATE);
 		}
 		return true;
 	}
@@ -351,7 +353,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	{
 		action = ACTION_PLAY;
 		seekPosition = -1;
-		setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT);
+		setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_PLAYBACK_STATE);
 
 		int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO;
 		int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT) >> 1;
