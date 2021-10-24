@@ -78,6 +78,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		String title = info.getTitleOrFilename();
 		String author = info.getAuthor();
 		String date = info.getDate();
+		PendingIntent intent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
 
 		MediaMetadata.Builder metadata = new MediaMetadata.Builder()
 			.putString(MediaMetadata.METADATA_KEY_TITLE, title);
@@ -97,9 +98,9 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		if (year > 0)
 			metadata.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
 		mediaSession.setMetadata(metadata.build());
+		mediaSession.setSessionActivity(intent);
 		mediaSession.setActive(true);
 
-		PendingIntent intent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
 		Notification.Builder builder = new Notification.Builder(this)
 			.setSmallIcon(R.drawable.icon)
 			.setContentTitle(title)
