@@ -173,18 +173,18 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	// Playback -----------------------------------------------------------------------------------------------
 
-	private static final int ACTION_STOP = 0;
-	private static final int ACTION_LOAD = 1;
-	private static final int ACTION_PLAY = 2;
-	private static final int ACTION_PAUSE = 3;
-	private static final int ACTION_NEXT = 4;
-	private static final int ACTION_PREV = 5;
-	private int action = ACTION_STOP;
+	private static final int COMMAND_STOP = 0;
+	private static final int COMMAND_LOAD = 1;
+	private static final int COMMAND_PLAY = 2;
+	private static final int COMMAND_PAUSE = 3;
+	private static final int COMMAND_NEXT = 4;
+	private static final int COMMAND_PREV = 5;
+	private int command = COMMAND_STOP;
 	private Thread thread = null;
 
-	private synchronized void setAction(int action)
+	private synchronized void setCommand(int command)
 	{
-		this.action = action;
+		this.command = command;
 		if (thread != null && thread.isAlive())
 			notify();
 		else {
@@ -196,7 +196,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	private void stop()
 	{
 		if (thread != null) {
-			setAction(ACTION_STOP);
+			setCommand(COMMAND_STOP);
 			try {
 				thread.join();
 			}
@@ -279,13 +279,13 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		return true;
 	}
 
-	private synchronized boolean handleLoadAction()
+	private synchronized boolean handleLoadCommand()
 	{
-		switch (action) {
-		case ACTION_LOAD:
+		switch (command) {
+		case COMMAND_LOAD:
 			return load();
 
-		case ACTION_NEXT:
+		case COMMAND_NEXT:
 			if (info != null && song >= 0 && song + 1 < info.getSongs())
 				song++;
 			else {
@@ -299,7 +299,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			}
 			return load();
 
-		case ACTION_PREV:
+		case COMMAND_PREV:
 			if (song > 0)
 				song--;
 			else {
@@ -318,28 +318,28 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		}
 	}
 
-	private final long COMMON_PLAYBACK_STATE = PlaybackState.ACTION_PLAY_FROM_SEARCH | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT;
+	private final long COMMON_ACTIONS = PlaybackState.ACTION_PLAY_FROM_SEARCH | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT;
 
-	private boolean handlePlayAction(AudioTrack audioTrack)
+	private boolean handlePlayCommand(AudioTrack audioTrack)
 	{
 		int pos;
 		synchronized (this) {
-			if (action == ACTION_PAUSE) {
-				setPlaybackState(PlaybackState.STATE_PAUSED, 0, PlaybackState.ACTION_PLAY | COMMON_PLAYBACK_STATE);
+			if (command == COMMAND_PAUSE) {
+				setPlaybackState(PlaybackState.STATE_PAUSED, 0, PlaybackState.ACTION_PLAY | COMMON_ACTIONS);
 				audioTrack.pause();
-				while (action == ACTION_PAUSE) {
+				while (command == COMMAND_PAUSE) {
 					try {
 						wait();
 					}
 					catch (InterruptedException ex) {
 					}
 				}
-				if (action == ACTION_PLAY) {
-					setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_PLAYBACK_STATE);
+				if (command == COMMAND_PLAY) {
+					setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
 					audioTrack.play();
 				}
 			}
-			if (action != ACTION_PLAY) {
+			if (command != COMMAND_PLAY) {
 				audioTrack.stop();
 				return false;
 			}
@@ -357,16 +357,16 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			}
 			catch (Exception ex) {
 			}
-			setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_PLAYBACK_STATE);
+			setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
 		}
 		return true;
 	}
 
 	private void playLoop()
 	{
-		action = ACTION_PLAY;
+		command = COMMAND_PLAY;
 		seekPosition = -1;
-		setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_PLAYBACK_STATE);
+		setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
 
 		int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO;
 		int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT) >> 1;
@@ -386,13 +386,13 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		AudioTrack audioTrack = new AudioTrack(attributes, format, bufferLen << 1, AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
 		audioTrack.play();
 
-		while (handlePlayAction(audioTrack)) {
+		while (handlePlayCommand(audioTrack)) {
 			bufferLen = asap.generate(byteBuffer, byteBuffer.length, ASAPSampleFormat.S16_L_E) >> 1;
 			for (int i = 0; i < bufferLen; i++)
 				shortBuffer[i] = (short) ((byteBuffer[i << 1] & 0xff) | byteBuffer[i << 1 | 1] << 8);
 			audioTrack.write(shortBuffer, 0, bufferLen);
 			if (bufferLen < shortBuffer.length)
-				action = ACTION_NEXT;
+				command = COMMAND_NEXT;
 		}
 		audioTrack.release();
 	}
@@ -401,7 +401,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	{
 		if (!gainFocus())
 			return;
-		while (handleLoadAction()) {
+		while (handleLoadCommand()) {
 			showInfo();
 			showNotification();
 			playLoop();
@@ -412,12 +412,12 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	private boolean isPaused()
 	{
-		return action == ACTION_PAUSE;
+		return command == COMMAND_PAUSE;
 	}
 
 	public boolean isPlaying()
 	{
-		return action != ACTION_PAUSE;
+		return command != COMMAND_PAUSE;
 	}
 
 	public boolean canPause()
@@ -442,22 +442,22 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	public void pause()
 	{
-		setAction(ACTION_PAUSE);
+		setCommand(COMMAND_PAUSE);
 	}
 
 	public void start()
 	{
-		setAction(ACTION_PLAY);
+		setCommand(COMMAND_PLAY);
 	}
 
 	void playNextSong()
 	{
-		setAction(ACTION_NEXT);
+		setCommand(COMMAND_NEXT);
 	}
 
 	void playPreviousSong()
 	{
-		setAction(ACTION_PREV);
+		setCommand(COMMAND_PREV);
 	}
 
 	public int getDuration()
@@ -551,7 +551,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		{
 			if (setSearchPlaylist(query)) {
 				uri = playlist.get(0);
-				setAction(ACTION_LOAD);
+				setCommand(COMMAND_LOAD);
 			}
 		}
 	};
@@ -590,7 +590,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			setPlaylist(uri, true);
 			uri = playlist.get(0);
 		}
-		setAction(ACTION_LOAD);
+		setCommand(COMMAND_LOAD);
 		return START_NOT_STICKY;
 	}
 
