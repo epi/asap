@@ -42,6 +42,7 @@ import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.widget.MediaController;
@@ -151,6 +152,17 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		catch (IOException ex) {
 			// playlist is not essential
 		}
+	}
+
+	private boolean setSearchPlaylist(String query)
+	{
+		FileInfo[] infos = FileInfo.listIndex(this, query);
+		if (infos.length == 0)
+			return false;
+		playlist.clear();
+		for (FileInfo info : infos)
+			playlist.add(Util.getAsmaUri(info.filename));
+		return true;
 	}
 
 	private int getPlaylistIndex()
@@ -306,7 +318,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		}
 	}
 
-	private final long COMMON_PLAYBACK_STATE = PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT;
+	private final long COMMON_PLAYBACK_STATE = PlaybackState.ACTION_PLAY_FROM_SEARCH | PlaybackState.ACTION_SEEK_TO | PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_SKIP_TO_NEXT;
 
 	private boolean handlePlayAction(AudioTrack audioTrack)
 	{
@@ -532,6 +544,15 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		public void onSkipToPrevious()
 		{
 			playNextSong();
+		}
+
+		@Override
+		public void onPlayFromSearch(String query, Bundle extras)
+		{
+			if (setSearchPlaylist(query)) {
+				uri = playlist.get(0);
+				setAction(ACTION_LOAD);
+			}
 		}
 	};
 

@@ -1,7 +1,7 @@
 /*
  * Util.java - ASAP for Android
  *
- * Copyright (C) 2010-2020  Piotr Fusik
+ * Copyright (C) 2010-2021  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -47,6 +47,11 @@ class Util
 		return "asma".equals(uri.getScheme());
 	}
 
+	static Uri getAsmaUri(String path)
+	{
+		return Uri.fromParts("asma", path, null);
+	}
+
 	static String getParent(String path)
 	{
 		// nice hack - if there is no slash we return an empty string
@@ -71,7 +76,7 @@ class Util
 	static Uri buildUri(Uri baseUri, String relativePath)
 	{
 		if (isAsma(baseUri))
-			return Uri.fromParts("asma", relativePath, null);
+			return getAsmaUri(relativePath);
 		String path = baseUri.getPath();
 		if (endsWithIgnoreCase(path, ".zip") || endsWithIgnoreCase(path, ".atr")) {
 			String innerPath = baseUri.getFragment();
