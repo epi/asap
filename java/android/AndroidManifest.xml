@@ -39,6 +39,6 @@
 			</intent-filter>
 		</activity>
 		<provider android:name=".ArchiveSuggestionsProvider" android:authorities="net.sf.asap.ArchiveSuggestionsProvider" />
-		<service android:name=".PlayerService" android:label="@string/player_service" />
+		<service android:name=".PlayerService" />
 	</application>
 </manifest>
