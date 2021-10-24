@@ -537,13 +537,13 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		@Override
 		public void onSkipToNext()
 		{
-			playPreviousSong();
+			playNextSong();
 		}
 
 		@Override
 		public void onSkipToPrevious()
 		{
-			playNextSong();
+			playPreviousSong();
 		}
 
 		@Override
