@@ -58,8 +58,6 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 {
 	// User interface -----------------------------------------------------------------------------------------
 
-	private static final int NOTIFICATION_ID = 1;
-
 	private static final String ACTION_PLAY = "asap.intent.action.PLAY";
 	private static final String ACTION_PAUSE = "asap.intent.action.PAUSE";
 	private static final String ACTION_NEXT = "asap.intent.action.NEXT";
@@ -77,7 +75,13 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		sendBroadcast(new Intent(Player.ACTION_SHOW_INFO));
 	}
 
+	private PendingIntent activityIntent;
 	private MediaSession mediaSession;
+
+	private NotificationManager getNotificationManager()
+	{
+		return (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+	}
 
 	private Notification.Action getNotificationAction(int icon, int titleResource, String action)
 	{
@@ -85,39 +89,24 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		return new Notification.Action(icon, getString(titleResource), intent);
 	}
 
-	private void showNotification()
+	private void showNotification(boolean start)
 	{
-		String title = info.getTitleOrFilename();
-		String author = info.getAuthor();
-		String date = info.getDate();
-		PendingIntent intent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
-
-		MediaMetadata.Builder metadata = new MediaMetadata.Builder()
-			.putString(MediaMetadata.METADATA_KEY_TITLE, title);
-		if (author.length() > 0)
-			metadata.putString(MediaMetadata.METADATA_KEY_ARTIST, author);
-		if (date.length() > 0)
-			metadata.putString(MediaMetadata.METADATA_KEY_DATE, date);
-		int duration = info.getDuration(song);
-		if (duration > 0)
-			metadata.putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
-		int songs = info.getSongs();
-		if (songs > 1) {
-			metadata.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, song + 1);
-			metadata.putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, songs);
+		Notification.Builder builder;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			final String CHANNEL_ID = "NOW_PLAYING";
+			if (start) {
+				NotificationChannel channel = new NotificationChannel(CHANNEL_ID, getString(R.string.notification_channel), NotificationManager.IMPORTANCE_LOW);
+				getNotificationManager().createNotificationChannel(channel);
+			}
+			builder = new Notification.Builder(this, CHANNEL_ID);
 		}
-		int year = info.getYear();
-		if (year > 0)
-			metadata.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
-		mediaSession.setMetadata(metadata.build());
-		mediaSession.setSessionActivity(intent);
-		mediaSession.setActive(true);
-
-		Notification.Builder builder = new Notification.Builder(this)
+		else
+			builder = new Notification.Builder(this);
+		Notification notification = builder
 			.setSmallIcon(R.drawable.icon)
-			.setContentTitle(title)
-			.setContentText(author)
-			.setContentIntent(intent)
+			.setContentTitle(info.getTitleOrFilename())
+			.setContentText(info.getAuthor())
+			.setContentIntent(activityIntent)
 			.setStyle(new Notification.MediaStyle()
 				.setMediaSession(mediaSession.getSessionToken())
 				.setShowActionsInCompactView(0, 1, 2))
@@ -126,14 +115,13 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			.addAction(isPaused()
 				? getNotificationAction(android.R.drawable.ic_media_play, R.string.notification_play, ACTION_PLAY)
 				: getNotificationAction(android.R.drawable.ic_media_pause, R.string.notification_pause, ACTION_PAUSE))
-			.addAction(getNotificationAction(android.R.drawable.ic_media_next, R.string.notification_next, ACTION_NEXT));
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			final String CHANNEL_ID = "NOW_PLAYING";
-			NotificationChannel channel = new NotificationChannel(CHANNEL_ID, getString(R.string.notification_channel), NotificationManager.IMPORTANCE_LOW);
-			((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(channel);
-			builder.setChannelId(CHANNEL_ID);
-		}
-		startForeground(NOTIFICATION_ID, builder.build());
+			.addAction(getNotificationAction(android.R.drawable.ic_media_next, R.string.notification_next, ACTION_NEXT))
+			.build();
+		final int NOTIFICATION_ID = 1;
+		if (start)
+			startForeground(NOTIFICATION_ID, notification);
+		else
+			getNotificationManager().notify(NOTIFICATION_ID, notification);
 	}
 
 	private void setPlaybackState(int state, float speed, long actions)
@@ -274,15 +262,17 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		}
 
 		// load into ASAP
+		int songs;
 		try {
 			asap.load(filename, module, moduleLen);
 			info = asap.getInfo();
+			songs = info.getSongs();
 			switch (song) {
 			case SONG_DEFAULT:
 				song = info.getDefaultSong();
 				break;
 			case SONG_LAST:
-				song = info.getSongs() - 1;
+				song = songs - 1;
 				break;
 			default:
 				break;
@@ -293,6 +283,28 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			showError(R.string.invalid_file);
 			return false;
 		}
+
+		// put metadata into mediaSession
+		MediaMetadata.Builder metadata = new MediaMetadata.Builder()
+			.putString(MediaMetadata.METADATA_KEY_TITLE, info.getTitleOrFilename());
+		String author = info.getAuthor();
+		if (author.length() > 0)
+			metadata.putString(MediaMetadata.METADATA_KEY_ARTIST, author);
+		String date = info.getDate();
+		if (date.length() > 0)
+			metadata.putString(MediaMetadata.METADATA_KEY_DATE, date);
+		int duration = info.getDuration(song);
+		if (duration > 0)
+			metadata.putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
+		if (songs > 1) {
+			metadata.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, song + 1);
+			metadata.putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, songs);
+		}
+		int year = info.getYear();
+		if (year > 0)
+			metadata.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
+		mediaSession.setMetadata(metadata.build());
+		mediaSession.setActive(true);
 
 		return true;
 	}
@@ -344,6 +356,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		synchronized (this) {
 			if (command == COMMAND_PAUSE) {
 				setPlaybackState(PlaybackState.STATE_PAUSED, 0, PlaybackState.ACTION_PLAY | COMMON_ACTIONS);
+				showNotification(false);
 				audioTrack.pause();
 				while (command == COMMAND_PAUSE) {
 					try {
@@ -354,6 +367,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 				}
 				if (command == COMMAND_PLAY) {
 					setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
+					showNotification(false);
 					audioTrack.play();
 				}
 			}
@@ -421,7 +435,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			return;
 		while (handleLoadCommand()) {
 			showInfo();
-			showNotification();
+			showNotification(true);
 			playLoop();
 		}
 		stopForeground(true);
@@ -586,8 +600,10 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	@Override
 	public void onCreate()
 	{
+		activityIntent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
 		mediaSession = new MediaSession(this, "ASAP");
 		mediaSession.setCallback(callback);
+		mediaSession.setSessionActivity(activityIntent);
 		mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
 	}
 
