@@ -358,17 +358,24 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 				setPlaybackState(PlaybackState.STATE_PAUSED, 0, PlaybackState.ACTION_PLAY | COMMON_ACTIONS);
 				showNotification(false);
 				audioTrack.pause();
-				while (command == COMMAND_PAUSE) {
+				releaseFocus();
+				for (;;) {
+					if (command == COMMAND_PLAY) {
+						if (gainFocus()) {
+							setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
+							showNotification(false);
+							audioTrack.play();
+							break;
+						}
+						command = COMMAND_PAUSE;
+					}
+					else if (command != COMMAND_PAUSE)
+						break;
 					try {
 						wait();
 					}
 					catch (InterruptedException ex) {
 					}
-				}
-				if (command == COMMAND_PLAY) {
-					setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
-					showNotification(false);
-					audioTrack.play();
 				}
 			}
 			if (command != COMMAND_PLAY) {
