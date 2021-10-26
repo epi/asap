@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000
  *
- * Copyright (C) 2006-2019  Piotr Fusik
+ * Copyright (C) 2006-2021  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -84,9 +84,9 @@ class input_asap
 	char *url = nullptr;
 	BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
 	int module_len;
-	ASAP *asap;
+	ASAP * const asap;
 
-	int get_song_duration(int song, bool play)
+	int get_song_duration(int song, bool play) const
 	{
 		const ASAPInfo *info = ASAP_GetInfo(asap);
 		int duration = ASAPInfo_GetDuration(info, song);
@@ -153,25 +153,24 @@ public:
 		return false;
 	}
 
-	input_asap()
+	input_asap() : asap(ASAP_New())
 	{
 		if (head != nullptr)
 			head->prev = this;
 		next = head;
 		head = this;
-		asap = ASAP_New();
 	}
 
 	~input_asap()
 	{
-		ASAP_Delete(asap);
-		free(url);
 		if (prev != nullptr)
 			prev->next = next;
 		if (next != nullptr)
 			next->prev = prev;
 		if (head == this)
 			head = next;
+		free(url);
+		ASAP_Delete(asap);
 	}
 
 	void open(service_ptr_t<file> p_filehint, const char *p_path, t_input_open_reason p_reason, abort_callback &p_abort)
@@ -196,17 +195,17 @@ public:
 			throw exception_io_unsupported_format();
 	}
 
-	t_uint32 get_subsong_count()
+	t_uint32 get_subsong_count() const
 	{
 		return ASAPInfo_GetSongs(ASAP_GetInfo(asap));
 	}
 
-	t_uint32 get_subsong(t_uint32 p_index)
+	t_uint32 get_subsong(t_uint32 p_index) const
 	{
 		return p_index;
 	}
 
-	void get_info(t_uint32 p_subsong, file_info &p_info, abort_callback &p_abort)
+	void get_info(t_uint32 p_subsong, file_info &p_info, abort_callback &p_abort) const
 	{
 		int duration = get_song_duration(p_subsong, false);
 		if (duration >= 0)
@@ -219,12 +218,12 @@ public:
 		meta_set(p_info, "date", ASAPInfo_GetDate(info));
 	}
 
-	t_filestats get_file_stats(abort_callback &p_abort)
+	t_filestats get_file_stats(abort_callback &p_abort) const
 	{
 		return m_file->get_stats(p_abort);
 	}
 
-	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort)
+	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort) const
 	{
 		int duration = get_song_duration(p_subsong, true);
 		if (!ASAP_PlaySong(asap, p_subsong, duration))
@@ -235,7 +234,7 @@ public:
 			setPlayingSong(filename, p_subsong);
 	}
 
-	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort)
+	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort) const
 	{
 		int channels = ASAPInfo_GetChannels(ASAP_GetInfo(asap));
 		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
@@ -251,32 +250,32 @@ public:
 		return true;
 	}
 
-	void decode_seek(double p_seconds, abort_callback &p_abort)
+	void decode_seek(double p_seconds, abort_callback &p_abort) const
 	{
 		ASAP_Seek(asap, static_cast<int>(p_seconds * 1000));
 	}
 
-	bool decode_can_seek()
+	bool decode_can_seek() const
 	{
 		return true;
 	}
 
-	bool decode_get_dynamic_info(file_info &p_out, double &p_timestamp_delta)
+	bool decode_get_dynamic_info(file_info &p_out, double &p_timestamp_delta) const
 	{
 		return false;
 	}
 
-	bool decode_get_dynamic_info_track(file_info &p_out, double &p_timestamp_delta)
+	bool decode_get_dynamic_info_track(file_info &p_out, double &p_timestamp_delta) const
 	{
 		return false;
 	}
 
-	void decode_on_idle(abort_callback &p_abort)
+	void decode_on_idle(abort_callback &p_abort) const
 	{
 		m_file->on_idle(p_abort);
 	}
 
-	void retag_set_info(t_uint32 p_subsong, const file_info &p_info, abort_callback &p_abort)
+	void retag_set_info(t_uint32 p_subsong, const file_info &p_info, abort_callback &p_abort) const
 	{
 		ASAPInfo *info = const_cast<ASAPInfo *>(ASAP_GetInfo(asap));
 		ASAPInfo_SetAuthor(info, empty_if_null(p_info.meta_get("composer", 0)));
@@ -301,7 +300,7 @@ public:
 		m_file->write(output, output_len, p_abort);
 	}
 
-	void set_logger(event_logger::ptr ptr)
+	void set_logger(event_logger::ptr ptr) const
 	{
 	}
 
@@ -371,10 +370,10 @@ static INT_PTR CALLBACK settings_dialog_proc(HWND hDlg, UINT uMsg, WPARAM wParam
 
 class preferences_page_instance_asap : public preferences_page_instance
 {
-	HWND m_parent;
-	HWND m_hWnd;
+	const HWND m_parent;
+	const HWND m_hWnd;
 
-	int get_time_input()
+	int get_time_input() const
 	{
 		HWND hDlg = m_hWnd;
 		if (IsDlgButtonChecked(hDlg, IDC_UNLIMITED) == BST_CHECKED)
@@ -384,7 +383,7 @@ class preferences_page_instance_asap : public preferences_page_instance
 		return static_cast<int>(60 * minutes + seconds);
 	}
 
-	int get_silence_input()
+	int get_silence_input() const
 	{
 		HWND hDlg = m_hWnd;
 		if (IsDlgButtonChecked(hDlg, IDC_SILENCE) != BST_CHECKED)
@@ -392,12 +391,12 @@ class preferences_page_instance_asap : public preferences_page_instance
 		return GetDlgItemInt(hDlg, IDC_SILSECONDS, NULL, FALSE);
 	}
 
-	bool get_loops_input()
+	bool get_loops_input() const
 	{
 		return IsDlgButtonChecked(m_hWnd, IDC_LOOPS) == BST_CHECKED;
 	}
 
-	int get_mute_input()
+	int get_mute_input() const
 	{
 		HWND hDlg = m_hWnd;
 		int mask = 0;
@@ -409,9 +408,9 @@ class preferences_page_instance_asap : public preferences_page_instance
 
 public:
 
-	preferences_page_instance_asap(HWND parent) : m_parent(parent)
+	preferences_page_instance_asap(HWND parent) : m_parent(parent),
+		m_hWnd(CreateDialog(core_api::get_my_instance(), MAKEINTRESOURCE(IDD_SETTINGS), parent, ::settings_dialog_proc))
 	{
-		m_hWnd = CreateDialog(core_api::get_my_instance(), MAKEINTRESOURCE(IDD_SETTINGS), parent, ::settings_dialog_proc);
 	}
 
 	t_uint32 get_state() override
@@ -638,8 +637,8 @@ public:
 
 	t_size read(void *p_buffer, t_size p_bytes, abort_callback &p_abort) override
 	{
-		int length = p_bytes < INT_MAX ? (int) p_bytes : INT_MAX;
-		int result = AATRFileStream_Read(stream, reinterpret_cast<byte *>(p_buffer), 0, length);
+		int length = p_bytes < INT_MAX ? static_cast<int>(p_bytes) : INT_MAX;
+		int result = AATRFileStream_Read(stream, static_cast<byte *>(p_buffer), 0, length);
 		if (result < 0)
 			throw exception_io_data();
 		return result;
@@ -657,7 +656,7 @@ public:
 
 	void seek(t_filesize p_position, abort_callback &p_abort) override
 	{
-		int position = (int) p_position;
+		int position = static_cast<int>(p_position);
 		if (position != p_position || !AATRFileStream_SetPosition(stream, position))
 			throw exception_io_seek_out_of_range();
 	}
