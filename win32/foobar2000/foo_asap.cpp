@@ -483,32 +483,30 @@ static service_factory_single_t<preferences_page_asap> g_preferences_page_asap_f
 
 /* File types ------------------------------------------------------------ */
 
-static const char * const names_and_masks[][2] = {
-	{ "Slight Atari Player", "*.SAP" },
-	{ "Chaos Music Composer", "*.CMC;*.CM3;*.CMR;*.CMS;*.DMC" },
-	{ "Delta Music Composer", "*.DLT" },
-	{ "Music ProTracker", "*.MPT;*.MPD" },
-	{ "Raster Music Tracker", "*.RMT" },
-	{ "Theta Music Composer 1.x", "*.TMC;*.TM8" },
-	{ "Theta Music Composer 2.x", "*.TM2" },
-	{ "Future Composer", "*.FC" }
-};
-
-#define N_FILE_TYPES (sizeof(names_and_masks) / sizeof(names_and_masks[0]))
-
 class input_file_type_asap : public service_impl_single_t<input_file_type>
 {
+	static constexpr const char *names_and_masks[][2] = {
+		{ "Slight Atari Player", "*.SAP" },
+		{ "Chaos Music Composer", "*.CMC;*.CM3;*.CMR;*.CMS;*.DMC" },
+		{ "Delta Music Composer", "*.DLT" },
+		{ "Music ProTracker", "*.MPT;*.MPD" },
+		{ "Raster Music Tracker", "*.RMT" },
+		{ "Theta Music Composer 1.x", "*.TMC;*.TM8" },
+		{ "Theta Music Composer 2.x", "*.TM2" },
+		{ "Future Composer", "*.FC" }
+	};
+
 public:
 
 	unsigned get_count() override
 	{
-		return N_FILE_TYPES;
+		return ARRAYSIZE(names_and_masks);
 	}
 
 	bool get_name(unsigned idx, pfc::string_base &out) override
 	{
-		if (idx < N_FILE_TYPES) {
-			out = ::names_and_masks[idx][0];
+		if (idx < ARRAYSIZE(names_and_masks)) {
+			out = names_and_masks[idx][0];
 			return true;
 		}
 		return false;
@@ -516,8 +514,8 @@ public:
 
 	bool get_mask(unsigned idx, pfc::string_base &out) override
 	{
-		if (idx < N_FILE_TYPES) {
-			out = ::names_and_masks[idx][1];
+		if (idx < ARRAYSIZE(names_and_masks)) {
+			out = names_and_masks[idx][1];
 			return true;
 		}
 		return false;
