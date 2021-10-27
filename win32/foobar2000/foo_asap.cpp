@@ -77,9 +77,6 @@ inline bool has_ext(const char *path, const char *ext)
 
 class input_asap
 {
-	static input_asap *head;
-	input_asap *prev = nullptr;
-	input_asap *next;
 	service_ptr_t<file> m_file;
 	char *url = nullptr;
 	BYTE module[ASAPInfo_MAX_MODULE_LENGTH];
@@ -115,12 +112,6 @@ class input_asap
 
 public:
 
-	static void g_set_mute_mask(int mask)
-	{
-		for (input_asap *p = head; p != nullptr; p = p->next)
-			ASAP_MutePokeyChannels(p->asap, mask);
-	}
-
 	static bool g_is_our_content_type(const char *p_content_type)
 	{
 		return false;
@@ -155,20 +146,10 @@ public:
 
 	input_asap() : asap(ASAP_New())
 	{
-		if (head != nullptr)
-			head->prev = this;
-		next = head;
-		head = this;
 	}
 
 	~input_asap()
 	{
-		if (prev != nullptr)
-			prev->next = next;
-		if (next != nullptr)
-			next->prev = prev;
-		if (head == this)
-			head = next;
 		free(url);
 		ASAP_Delete(asap);
 	}
@@ -228,7 +209,6 @@ public:
 		int duration = get_song_duration(p_subsong, true);
 		if (!ASAP_PlaySong(asap, p_subsong, duration))
 			throw exception_io_unsupported_format();
-		ASAP_MutePokeyChannels(asap, mute_mask);
 		const char *filename = url;
 		if (foobar2000_io::_extract_native_path_ptr(filename))
 			setPlayingSong(filename, p_subsong);
@@ -236,6 +216,8 @@ public:
 
 	bool decode_run(audio_chunk &p_chunk, abort_callback &p_abort) const
 	{
+		ASAP_MutePokeyChannels(asap, mute_mask);
+
 		int channels = ASAPInfo_GetChannels(ASAP_GetInfo(asap));
 		int buffered_bytes = BUFFERED_BLOCKS * channels * (BITS_PER_SAMPLE / 8);
 		BYTE buffer[BUFFERED_BLOCKS * 2 * (BITS_PER_SAMPLE / 8)];
@@ -309,7 +291,6 @@ public:
 	typedef input_info_writer interface_info_writer_t;
 };
 
-input_asap *input_asap::head = nullptr;
 static input_factory_t<input_asap> g_input_asap_factory;
 
 
@@ -435,7 +416,6 @@ public:
 		silence_seconds = get_silence_input();
 		play_loops = get_loops_input();
 		mute_mask = get_mute_input();
-		input_asap::g_set_mute_mask(mute_mask);
 		g_callback->on_state_changed();
 	}
 
