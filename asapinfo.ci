@@ -141,10 +141,12 @@ public class ASAPInfo
 	/// Maximum number of songs in a file.
 	public const int MaxSongs = 32;
 
+#if !OPENCL
 	string() Filename;
 	string() Author;
 	string() Title;
 	string() Date;
+#endif
 	int Channels;
 	int Songs;
 	int DefaultSong;
@@ -172,6 +174,8 @@ public class ASAPInfo
 		if (!IsValidChar(c))
 			throw "Invalid character";
 	}
+
+#if !OPENCL
 
 	static void CheckValidText(string s)
 		throws
@@ -302,6 +306,8 @@ public class ASAPInfo
 			return -1;
 		return GetTwoDateDigits(0);
 	}
+
+#endif
 
 	/// Returns 1 for mono or 2 for stereo.
 	public int GetChannels() => Channels;
@@ -984,6 +990,7 @@ public class ASAPInfo
 		Player = 0x600;
 		if (Songs == 0)
 			throw "No songs found";
+#if !OPENCL
 		byte[MaxTextLength] title;
 		int titleLen;
 		for (titleLen = 0; titleLen < MaxTextLength && 10 + blockLen + titleLen < moduleLen; titleLen++) {
@@ -994,6 +1001,7 @@ public class ASAPInfo
 			title[titleLen] = IsValidChar(c) ? c : ' ';
 		}
 		Title = Encoding.UTF8.GetString(title, 0, titleLen);
+#endif
 	}
 
 	void ParseTmcSong!(byte[] module, int pos)
@@ -1053,6 +1061,7 @@ public class ASAPInfo
 		AddSong(frames);
 	}
 
+#if !OPENCL
 	static int ParseTmcTitle(byte[]! title, int titleLen, byte[] module, int moduleOffset)
 	{
 		int lastOffset = moduleOffset + 29;
@@ -1095,6 +1104,7 @@ public class ASAPInfo
 		}
 		return titleLen;
 	}
+#endif
 
 	void ParseTmc!(byte[] module, int moduleLen)
 		throws
@@ -1129,9 +1139,11 @@ public class ASAPInfo
 		if (i < 1 || i > 4)
 			throw "Unsupported player call rate";
 		Fastplay = 312 / i;
+#if !OPENCL
 		byte[MaxTextLength] title;
 		int titleLen = ParseTmcTitle(title, 0, module, 6);
 		Title = Encoding.UTF8.GetString(title, 0, titleLen);
+#endif
 	}
 
 	void ParseTm2Song!(byte[] module, int pos)
@@ -1249,11 +1261,13 @@ public class ASAPInfo
 			if (c == 0 || c >= 0x80)
 				ParseTm2Song(module, i + 17);
 		}
+#if !OPENCL
 		byte[MaxTextLength] title;
 		int titleLen = ParseTmcTitle(title, 0, module, 0x27);
 		titleLen = ParseTmcTitle(title, titleLen, module, 0x47);
 		titleLen = ParseTmcTitle(title, titleLen, module, 0x67);
 		Title = Encoding.UTF8.GetString(title, 0, titleLen);
+#endif
 	}
 
 	static int AfterFF(byte[] module, int moduleLen, int currentOffset)
@@ -1385,6 +1399,17 @@ public class ASAPInfo
 		}
 	}
 
+#if !OPENCL
+	static string() ParseText(byte[] module, int i, int argEnd)
+	{
+		if (i < 0 || argEnd - i < 2 || module[i] != '"' || module[argEnd - 1] != '"')
+			return ""; // silently ignore malformed AUTHOR/NAME/DATE
+		if (module[i + 1] == '<' && module[i + 2] == '?' && module[i + 3] == '>')
+			return "";
+		return Encoding.UTF8.GetString(module, i + 1, argEnd - i - 2);
+	}
+#endif
+
 	static bool HasStringAt(byte[] module, int moduleIndex, string s)
 	{
 		int n = s.Length;
@@ -1394,13 +1419,14 @@ public class ASAPInfo
 		return true;
 	}
 
-	static int ParseDec(string s, int minVal, int maxVal)
+	static int ParseDec(byte[] module, int i, int argEnd, int minVal, int maxVal)
 		throws
 	{
+		if (i < 0)
+			throw "Missing number";
 		int r = 0;
-		int len = s.Length;
-		for (int i = 0; i < len; i++) {
-			int c = s[i];
+		while (i < argEnd) {
+			int c = module[i++];
 			if (c < '0' || c > '9')
 				throw "Invalid number";
 			r = r * 10 + c - '0';
@@ -1412,15 +1438,16 @@ public class ASAPInfo
 		return r;
 	}
 
-	static int ParseHex(string s)
+	static int ParseHex(byte[] module, int i, int argEnd)
 		throws
 	{
+		if (i < 0)
+			throw "Missing number";
 		int r = 0;
-		int len = s.Length;
-		for (int i = 0; i < len; i++) {
+		while (i < argEnd) {
+			int c = module[i++];
 			if (r > 0xfff)
 				throw "Number too big";
-			int c = s[i];
 			r <<= 4;
 			if (c >= '0' && c <= '9')
 				r += c - '0';
@@ -1467,18 +1494,18 @@ public class ASAPInfo
 
 			// find where is the argument, if any
 			int argStart = -1;
-			int argLen = -1;
+			int argEnd = -1;
 			for (;;) {
 				int c = module[moduleIndex];
 				if (c > ' ') {
 					CheckValidChar(c);
 					if (argStart < 0)
 						argStart = moduleIndex;
-					argLen = -1;
+					argEnd = -1;
 				}
 				else {
-					if (argLen < 0)
-						argLen = moduleIndex - argStart;
+					if (argEnd < 0)
+						argEnd = moduleIndex;
 					if (c == '\n')
 						break;
 				}
@@ -1489,54 +1516,69 @@ public class ASAPInfo
 				throw "Invalid SAP file";
 
 			// handle tags, ignore unknown
-			const int maxTagLen = "FASTPLAY".Length;
-			if (tagLen <= maxTagLen) {
-				string() tag = Encoding.UTF8.GetString(module, lineStart, tagLen);
-				if (argStart >= 0 && argLen <= MaxTextLength + 2) {
-					string() arg = Encoding.UTF8.GetString(module, argStart, argLen);
-					if (argLen >= 3 && arg[0] == '"' && arg[argLen - 1] == '"'
-					 && arg != "\"<?>\"") {
-						if (tag == "AUTHOR")
-							Author = arg.Substring(1, argLen - 2);
-						else if (tag == "NAME")
-							Title = arg.Substring(1, argLen - 2);
-						else if (tag == "DATE")
-							Date = arg.Substring(1, argLen - 2);
-					}
-					else if (tag == "SONGS")
-						Songs = ParseDec(arg, 1, MaxSongs);
-					else if (tag == "DEFSONG")
-						DefaultSong = ParseDec(arg, 0, MaxSongs - 1);
-					else if (tag == "TIME") {
-						if (durationIndex >= MaxSongs)
-							throw "Too many TIME tags";
-						if (argLen > 5 && HasStringAt(module, argStart + argLen - 5, " LOOP")) {
-							Loops[durationIndex] = true;
-							arg = arg.Substring(0, argLen - 5);
-						}
-						Durations[durationIndex++] = ParseDuration(arg);
-					}
-					else if (tag == "TYPE")
-						type = arg[0];
-					else if (tag == "FASTPLAY")
-						Fastplay = ParseDec(arg, 1, 32767);
-					else if (tag == "MUSIC")
-						Music = ParseHex(arg);
-					else if (tag == "INIT")
-						Init = ParseHex(arg);
-					else if (tag == "PLAYER")
-						Player = ParseHex(arg);
-					else if (tag == "COVOX") {
-						CovoxAddr = ParseHex(arg);
-						if (CovoxAddr != 0xd600)
-							throw "COVOX should be D600";
-						Channels = 2;
-					}
+			switch (Encoding.UTF8.GetString(module, lineStart, tagLen)) {
+#if !OPENCL
+			case "AUTHOR":
+				Author = ParseText(module, argStart, argEnd);
+				break;
+			case "NAME":
+				Title = ParseText(module, argStart, argEnd);
+				break;
+			case "DATE":
+				Date = ParseText(module, argStart, argEnd);
+				break;
+			case "TIME":
+				if (durationIndex >= MaxSongs)
+					throw "Too many TIME tags";
+				if (argStart < 0)
+					throw "Missing TIME argument";
+				if (argEnd - argStart > 5 && HasStringAt(module, argEnd - 5, " LOOP")) {
+					Loops[durationIndex] = true;
+					argEnd -= 5;
 				}
-				else if (tag == "STEREO")
-					Channels = 2;
-				else if (tag == "NTSC")
-					Ntsc = true;
+				{
+					string() arg = Encoding.UTF8.GetString(module, argStart, argEnd - argStart);
+					Durations[durationIndex++] = ParseDuration(arg);
+				}
+				break;
+#endif
+			case "SONGS":
+				Songs = ParseDec(module, argStart, argEnd, 1, MaxSongs);
+				break;
+			case "DEFSONG":
+				DefaultSong = ParseDec(module, argStart, argEnd, 0, MaxSongs - 1);
+				break;
+			case "TYPE":
+				if (argStart < 0)
+					throw "Missing TYPE argument";
+				type = module[argStart];
+				break;
+			case "FASTPLAY":
+				Fastplay = ParseDec(module, argStart, argEnd, 1, 32767);
+				break;
+			case "MUSIC":
+				Music = ParseHex(module, argStart, argEnd);
+				break;
+			case "INIT":
+				Init = ParseHex(module, argStart, argEnd);
+				break;
+			case "PLAYER":
+				Player = ParseHex(module, argStart, argEnd);
+				break;
+			case "COVOX":
+				CovoxAddr = ParseHex(module, argStart, argEnd);
+				if (CovoxAddr != 0xd600)
+					throw "COVOX should be D600";
+				Channels = 2;
+				break;
+			case "STEREO":
+				Channels = 2;
+				break;
+			case "NTSC":
+				Ntsc = true;
+				break;
+			default:
+				break;
 			}
 		}
 
@@ -1681,17 +1723,23 @@ public class ASAPInfo
 			ext -= basename;
 			if (ext > MaxTextLength)
 				ext = MaxTextLength;
+#if !OPENCL
 			Filename = filename.Substring(basename, ext);
+#endif
 			ext = GetPackedExt(filename);
 		}
 		else {
+#if !OPENCL
 			Filename = "";
+#endif
 			ext = GuessPackedExt(module, moduleLen);
 		}
 
+#if !OPENCL
 		Author = "";
 		Title = "";
 		Date = "";
+#endif
 		Channels = 1;
 		Songs = 1;
 		DefaultSong = 0;

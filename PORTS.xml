@@ -615,4 +615,20 @@
 		<stil>no</stil>
 		<lang>Swift</lang>
 	</port>
+	<port name="ASAPCL">
+		<bin></bin>
+		<platform>desktop operating systems</platform>
+		<interface>command line</interface>
+		<since>5.2.0</since>
+		<status>experimental</status>
+		<output>16-bit WAV file</output>
+		<subsongs>no</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<lang>OpenCL</lang>
+	</port>
 </ports>

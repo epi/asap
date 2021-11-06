@@ -305,11 +305,13 @@ static bool ASAPInfo_ValidateFc(uint8_t const *module, int moduleLen);
 
 static bool ASAPInfo_ParseFc(ASAPInfo *self, uint8_t const *module, int moduleLen);
 
+static char *ASAPInfo_ParseText(uint8_t const *module, int i, int argEnd);
+
 static bool ASAPInfo_HasStringAt(uint8_t const *module, int moduleIndex, const char *s);
 
-static int ASAPInfo_ParseDec(const char *s, int minVal, int maxVal);
+static int ASAPInfo_ParseDec(uint8_t const *module, int i, int argEnd, int minVal, int maxVal);
 
-static int ASAPInfo_ParseHex(const char *s);
+static int ASAPInfo_ParseHex(uint8_t const *module, int i, int argEnd);
 
 static bool ASAPInfo_ValidateSap(uint8_t const *module, int moduleLen);
 
@@ -3928,6 +3930,15 @@ static bool ASAPInfo_ParseFc(ASAPInfo *self, uint8_t const *module, int moduleLe
 	return true;
 }
 
+static char *ASAPInfo_ParseText(uint8_t const *module, int i, int argEnd)
+{
+	if (i < 0 || argEnd - i < 2 || module[i] != 34 || module[argEnd - 1] != 34)
+		return strdup("");
+	if (module[i + 1] == 60 && module[i + 2] == 63 && module[i + 3] == 62)
+		return strdup("");
+	return CiString_Substring((const char *) module + i + 1, argEnd - i - 2);
+}
+
 static bool ASAPInfo_HasStringAt(uint8_t const *module, int moduleIndex, const char *s)
 {
 	int n = (int) strlen(s);
@@ -3937,12 +3948,13 @@ static bool ASAPInfo_HasStringAt(uint8_t const *module, int moduleIndex, const c
 	return true;
 }
 
-static int ASAPInfo_ParseDec(const char *s, int minVal, int maxVal)
+static int ASAPInfo_ParseDec(uint8_t const *module, int i, int argEnd, int minVal, int maxVal)
 {
+	if (i < 0)
+		return -1;
 	int r = 0;
-	int len = (int) strlen(s);
-	for (int i = 0; i < len; i++) {
-		int c = s[i];
+	while (i < argEnd) {
+		int c = module[i++];
 		if (c < 48 || c > 57)
 			return -1;
 		r = r * 10 + c - 48;
@@ -3954,14 +3966,15 @@ static int ASAPInfo_ParseDec(const char *s, int minVal, int maxVal)
 	return r;
 }
 
-static int ASAPInfo_ParseHex(const char *s)
+static int ASAPInfo_ParseHex(uint8_t const *module, int i, int argEnd)
 {
+	if (i < 0)
+		return -1;
 	int r = 0;
-	int len = (int) strlen(s);
-	for (int i = 0; i < len; i++) {
+	while (i < argEnd) {
+		int c = module[i++];
 		if (r > 4095)
 			return -1;
-		int c = s[i];
 		r <<= 4;
 		if (c >= 48 && c <= 57)
 			r += c - 48;
@@ -4002,7 +4015,7 @@ static bool ASAPInfo_ParseSap(ASAPInfo *self, uint8_t const *module, int moduleL
 		}
 		int tagLen = moduleIndex - lineStart;
 		int argStart = -1;
-		int argLen = -1;
+		int argEnd = -1;
 		for (;;) {
 			int c = module[moduleIndex];
 			if (c > 32) {
@@ -4010,11 +4023,11 @@ static bool ASAPInfo_ParseSap(ASAPInfo *self, uint8_t const *module, int moduleL
 					return false;
 				if (argStart < 0)
 					argStart = moduleIndex;
-				argLen = -1;
+				argEnd = -1;
 			}
 			else {
-				if (argLen < 0)
-					argLen = moduleIndex - argStart;
+				if (argEnd < 0)
+					argEnd = moduleIndex;
 				if (c == 10)
 					break;
 			}
@@ -4023,99 +4036,70 @@ static bool ASAPInfo_ParseSap(ASAPInfo *self, uint8_t const *module, int moduleL
 		}
 		if (++moduleIndex + 6 >= moduleLen)
 			return false;
-		if (tagLen <= 8) {
-			char *tag = CiString_Substring((const char *) module + lineStart, tagLen);
-			if (argStart >= 0 && argLen <= 129) {
-				char *arg = CiString_Substring((const char *) module + argStart, argLen);
-				if (argLen >= 3 && arg[0] == '\"' && arg[argLen - 1] == '\"' && strcmp(arg, "\"<?>\"") != 0) {
-					if (strcmp(tag, "AUTHOR") == 0)
-						CiString_Assign(&self->author, CiString_Substring(arg + 1, argLen - 2));
-					else if (strcmp(tag, "NAME") == 0)
-						CiString_Assign(&self->title, CiString_Substring(arg + 1, argLen - 2));
-					else if (strcmp(tag, "DATE") == 0)
-						CiString_Assign(&self->date, CiString_Substring(arg + 1, argLen - 2));
-				}
-				else if (strcmp(tag, "SONGS") == 0) {
-					if ((self->songs = ASAPInfo_ParseDec(arg, 1, 32)) == -1) {
-						free(arg);
-						free(tag);
-						return false;
-					}
-				}
-				else if (strcmp(tag, "DEFSONG") == 0) {
-					if ((self->defaultSong = ASAPInfo_ParseDec(arg, 0, 31)) == -1) {
-						free(arg);
-						free(tag);
-						return false;
-					}
-				}
-				else if (strcmp(tag, "TIME") == 0) {
-					if (durationIndex >= 32) {
-						free(arg);
-						free(tag);
-						return false;
-					}
-					if (argLen > 5 && ASAPInfo_HasStringAt(module, argStart + argLen - 5, " LOOP")) {
-						self->loops[durationIndex] = true;
-						arg[argLen - 5] = '\0';
-					}
-					if ((self->durations[durationIndex++] = ASAPInfo_ParseDuration(arg)) == -1) {
-						free(arg);
-						free(tag);
-						return false;
-					}
-				}
-				else if (strcmp(tag, "TYPE") == 0)
-					type = arg[0];
-				else if (strcmp(tag, "FASTPLAY") == 0) {
-					if ((self->fastplay = ASAPInfo_ParseDec(arg, 1, 32767)) == -1) {
-						free(arg);
-						free(tag);
-						return false;
-					}
-				}
-				else if (strcmp(tag, "MUSIC") == 0) {
-					if ((self->music = ASAPInfo_ParseHex(arg)) == -1) {
-						free(arg);
-						free(tag);
-						return false;
-					}
-				}
-				else if (strcmp(tag, "INIT") == 0) {
-					if ((self->init = ASAPInfo_ParseHex(arg)) == -1) {
-						free(arg);
-						free(tag);
-						return false;
-					}
-				}
-				else if (strcmp(tag, "PLAYER") == 0) {
-					if ((self->player = ASAPInfo_ParseHex(arg)) == -1) {
-						free(arg);
-						free(tag);
-						return false;
-					}
-				}
-				else if (strcmp(tag, "COVOX") == 0) {
-					if ((self->covoxAddr = ASAPInfo_ParseHex(arg)) == -1) {
-						free(arg);
-						free(tag);
-						return false;
-					}
-					if (self->covoxAddr != 54784) {
-						free(arg);
-						free(tag);
-						return false;
-					}
-					self->channels = 2;
+		if (tagLen == 6 && memcmp(module + lineStart, "AUTHOR", 6) == 0)
+			CiString_Assign(&self->author, ASAPInfo_ParseText(module, argStart, argEnd));
+		else if (tagLen == 4 && memcmp(module + lineStart, "NAME", 4) == 0)
+			CiString_Assign(&self->title, ASAPInfo_ParseText(module, argStart, argEnd));
+		else if (tagLen == 4 && memcmp(module + lineStart, "DATE", 4) == 0)
+			CiString_Assign(&self->date, ASAPInfo_ParseText(module, argStart, argEnd));
+		else if (tagLen == 4 && memcmp(module + lineStart, "TIME", 4) == 0) {
+			if (durationIndex >= 32)
+				return false;
+			if (argStart < 0)
+				return false;
+			if (argEnd - argStart > 5 && ASAPInfo_HasStringAt(module, argEnd - 5, " LOOP")) {
+				self->loops[durationIndex] = true;
+				argEnd -= 5;
+			}
+			{
+				char *arg = CiString_Substring((const char *) module + argStart, argEnd - argStart);
+				if ((self->durations[durationIndex++] = ASAPInfo_ParseDuration(arg)) == -1) {
+					free(arg);
+					return false;
 				}
 				free(arg);
 			}
-			else if (strcmp(tag, "STEREO") == 0)
-				self->channels = 2;
-			else if (strcmp(tag, "NTSC") == 0)
-				self->ntsc = true;
-			free(tag);
 		}
+		else if (tagLen == 5 && memcmp(module + lineStart, "SONGS", 5) == 0) {
+			if ((self->songs = ASAPInfo_ParseDec(module, argStart, argEnd, 1, 32)) == -1)
+				return false;
+		}
+		else if (tagLen == 7 && memcmp(module + lineStart, "DEFSONG", 7) == 0) {
+			if ((self->defaultSong = ASAPInfo_ParseDec(module, argStart, argEnd, 0, 31)) == -1)
+				return false;
+		}
+		else if (tagLen == 4 && memcmp(module + lineStart, "TYPE", 4) == 0) {
+			if (argStart < 0)
+				return false;
+			type = module[argStart];
+		}
+		else if (tagLen == 8 && memcmp(module + lineStart, "FASTPLAY", 8) == 0) {
+			if ((self->fastplay = ASAPInfo_ParseDec(module, argStart, argEnd, 1, 32767)) == -1)
+				return false;
+		}
+		else if (tagLen == 5 && memcmp(module + lineStart, "MUSIC", 5) == 0) {
+			if ((self->music = ASAPInfo_ParseHex(module, argStart, argEnd)) == -1)
+				return false;
+		}
+		else if (tagLen == 4 && memcmp(module + lineStart, "INIT", 4) == 0) {
+			if ((self->init = ASAPInfo_ParseHex(module, argStart, argEnd)) == -1)
+				return false;
+		}
+		else if (tagLen == 6 && memcmp(module + lineStart, "PLAYER", 6) == 0) {
+			if ((self->player = ASAPInfo_ParseHex(module, argStart, argEnd)) == -1)
+				return false;
+		}
+		else if (tagLen == 5 && memcmp(module + lineStart, "COVOX", 5) == 0) {
+			if ((self->covoxAddr = ASAPInfo_ParseHex(module, argStart, argEnd)) == -1)
+				return false;
+			if (self->covoxAddr != 54784)
+				return false;
+			self->channels = 2;
+		}
+		else if (tagLen == 6 && memcmp(module + lineStart, "STEREO", 6) == 0)
+			self->channels = 2;
+		else if (tagLen == 4 && memcmp(module + lineStart, "NTSC", 4) == 0)
+			self->ntsc = true;
 	}
 	if (self->defaultSong >= self->songs)
 		return false;
