@@ -249,12 +249,6 @@ static bool ASAPInfo_IsValidChar(int c);
 
 static bool ASAPInfo_CheckValidChar(int c);
 
-static bool ASAPInfo_CheckValidText(const char *s);
-
-static int ASAPInfo_CheckDate(const ASAPInfo *self);
-
-static int ASAPInfo_GetTwoDateDigits(const ASAPInfo *self, int i);
-
 static int ASAPInfo_GetWord(uint8_t const *array, int i);
 
 static bool ASAPInfo_ParseModule(ASAPInfo *self, uint8_t const *module, int moduleLen);
@@ -324,6 +318,12 @@ static int ASAPInfo_GetPackedExt(const char *filename);
 static bool ASAPInfo_IsOurPackedExt(int ext);
 
 static int ASAPInfo_GuessPackedExt(uint8_t const *module, int moduleLen);
+
+static bool ASAPInfo_CheckValidText(const char *s);
+
+static int ASAPInfo_CheckDate(const ASAPInfo *self);
+
+static int ASAPInfo_GetTwoDateDigits(const ASAPInfo *self, int i);
 
 static int ASAPInfo_GetRmtSapOffset(const ASAPInfo *self, uint8_t const *module, int moduleLen);
 
@@ -2777,239 +2777,6 @@ static bool ASAPInfo_CheckValidChar(int c)
 	return true;
 }
 
-static bool ASAPInfo_CheckValidText(const char *s)
-{
-	int n = (int) strlen(s);
-	if (n > 127)
-		return false;
-	for (int i = 0; i < n; i++) {
-		if (!ASAPInfo_CheckValidChar(s[i]))
-			return false;
-	}
-	return true;
-}
-
-const char *ASAPInfo_GetAuthor(const ASAPInfo *self)
-{
-	return self->author;
-}
-
-bool ASAPInfo_SetAuthor(ASAPInfo *self, const char *value)
-{
-	if (!ASAPInfo_CheckValidText(value))
-		return false;
-	CiString_Assign(&self->author, strdup(value));
-	return true;
-}
-
-const char *ASAPInfo_GetTitle(const ASAPInfo *self)
-{
-	return self->title;
-}
-
-bool ASAPInfo_SetTitle(ASAPInfo *self, const char *value)
-{
-	if (!ASAPInfo_CheckValidText(value))
-		return false;
-	CiString_Assign(&self->title, strdup(value));
-	return true;
-}
-
-const char *ASAPInfo_GetTitleOrFilename(const ASAPInfo *self)
-{
-	return self->title[0] != '\0' ? self->title : self->filename;
-}
-
-const char *ASAPInfo_GetDate(const ASAPInfo *self)
-{
-	return self->date;
-}
-
-bool ASAPInfo_SetDate(ASAPInfo *self, const char *value)
-{
-	if (!ASAPInfo_CheckValidText(value))
-		return false;
-	CiString_Assign(&self->date, strdup(value));
-	return true;
-}
-
-static int ASAPInfo_CheckDate(const ASAPInfo *self)
-{
-	int n = (int) strlen(self->date);
-	switch (n) {
-	case 4:
-	case 7:
-	case 10:
-		break;
-	default:
-		return -1;
-	}
-	for (int i = 0; i < n; i++) {
-		int c = self->date[i];
-		if (i == n - 5 || i == n - 8) {
-			if (c != 47)
-				return -1;
-		}
-		else if (c < 48 || c > 57)
-			return -1;
-	}
-	return n;
-}
-
-static int ASAPInfo_GetTwoDateDigits(const ASAPInfo *self, int i)
-{
-	return (self->date[i] - 48) * 10 + self->date[i + 1] - 48;
-}
-
-int ASAPInfo_GetYear(const ASAPInfo *self)
-{
-	int n = ASAPInfo_CheckDate(self);
-	if (n < 0)
-		return -1;
-	return ASAPInfo_GetTwoDateDigits(self, n - 4) * 100 + ASAPInfo_GetTwoDateDigits(self, n - 2);
-}
-
-int ASAPInfo_GetMonth(const ASAPInfo *self)
-{
-	int n = ASAPInfo_CheckDate(self);
-	if (n < 7)
-		return -1;
-	return ASAPInfo_GetTwoDateDigits(self, n - 7);
-}
-
-int ASAPInfo_GetDayOfMonth(const ASAPInfo *self)
-{
-	int n = ASAPInfo_CheckDate(self);
-	if (n != 10)
-		return -1;
-	return ASAPInfo_GetTwoDateDigits(self, 0);
-}
-
-int ASAPInfo_GetChannels(const ASAPInfo *self)
-{
-	return self->channels;
-}
-
-int ASAPInfo_GetSongs(const ASAPInfo *self)
-{
-	return self->songs;
-}
-
-int ASAPInfo_GetDefaultSong(const ASAPInfo *self)
-{
-	return self->defaultSong;
-}
-
-bool ASAPInfo_SetDefaultSong(ASAPInfo *self, int song)
-{
-	if (song < 0 || song >= self->songs)
-		return false;
-	self->defaultSong = song;
-	return true;
-}
-
-int ASAPInfo_GetDuration(const ASAPInfo *self, int song)
-{
-	return self->durations[song];
-}
-
-bool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration)
-{
-	if (song < 0 || song >= self->songs)
-		return false;
-	self->durations[song] = duration;
-	return true;
-}
-
-bool ASAPInfo_GetLoop(const ASAPInfo *self, int song)
-{
-	return self->loops[song];
-}
-
-bool ASAPInfo_SetLoop(ASAPInfo *self, int song, bool loop)
-{
-	if (song < 0 || song >= self->songs)
-		return false;
-	self->loops[song] = loop;
-	return true;
-}
-
-bool ASAPInfo_IsNtsc(const ASAPInfo *self)
-{
-	return self->ntsc;
-}
-
-int ASAPInfo_GetTypeLetter(const ASAPInfo *self)
-{
-	switch (self->type) {
-	case ASAPModuleType_SAP_B:
-		return 66;
-	case ASAPModuleType_SAP_C:
-		return 67;
-	case ASAPModuleType_SAP_D:
-		return 68;
-	case ASAPModuleType_SAP_S:
-		return 83;
-	default:
-		return 0;
-	}
-}
-
-int ASAPInfo_GetPlayerRateScanlines(const ASAPInfo *self)
-{
-	return self->fastplay;
-}
-
-int ASAPInfo_GetPlayerRateHz(const ASAPInfo *self)
-{
-	int scanlineClock = self->ntsc ? 15699 : 15556;
-	return (scanlineClock + (self->fastplay >> 1)) / self->fastplay;
-}
-
-int ASAPInfo_GetMusicAddress(const ASAPInfo *self)
-{
-	return self->music;
-}
-
-bool ASAPInfo_SetMusicAddress(ASAPInfo *self, int address)
-{
-	if (address < 0 || address >= 65535)
-		return false;
-	self->music = address;
-	return true;
-}
-
-int ASAPInfo_GetInitAddress(const ASAPInfo *self)
-{
-	return self->init;
-}
-
-int ASAPInfo_GetPlayerAddress(const ASAPInfo *self)
-{
-	return self->player;
-}
-
-int ASAPInfo_GetCovoxAddress(const ASAPInfo *self)
-{
-	return self->covoxAddr;
-}
-
-int ASAPInfo_GetSapHeaderLength(const ASAPInfo *self)
-{
-	return self->headerLen;
-}
-
-int ASAPInfo_GetInstrumentNamesOffset(const ASAPInfo *self, uint8_t const *module, int moduleLen)
-{
-	if (self->type != ASAPModuleType_RMT)
-		return -1;
-	for (int offset = ASAPInfo_GetWord(module, 4) - ASAPInfo_GetWord(module, 2) + 12; offset < moduleLen; offset++) {
-		if (module[offset - 1] == 0)
-			return offset;
-	}
-	return -1;
-}
-
 static int ASAPInfo_GetWord(uint8_t const *array, int i)
 {
 	return array[i] + (array[i + 1] << 8);
@@ -4284,6 +4051,239 @@ bool ASAPInfo_Load(ASAPInfo *self, const char *filename, uint8_t const *module, 
 	default:
 		return false;
 	}
+}
+
+static bool ASAPInfo_CheckValidText(const char *s)
+{
+	int n = (int) strlen(s);
+	if (n > 127)
+		return false;
+	for (int i = 0; i < n; i++) {
+		if (!ASAPInfo_CheckValidChar(s[i]))
+			return false;
+	}
+	return true;
+}
+
+const char *ASAPInfo_GetAuthor(const ASAPInfo *self)
+{
+	return self->author;
+}
+
+bool ASAPInfo_SetAuthor(ASAPInfo *self, const char *value)
+{
+	if (!ASAPInfo_CheckValidText(value))
+		return false;
+	CiString_Assign(&self->author, strdup(value));
+	return true;
+}
+
+const char *ASAPInfo_GetTitle(const ASAPInfo *self)
+{
+	return self->title;
+}
+
+bool ASAPInfo_SetTitle(ASAPInfo *self, const char *value)
+{
+	if (!ASAPInfo_CheckValidText(value))
+		return false;
+	CiString_Assign(&self->title, strdup(value));
+	return true;
+}
+
+const char *ASAPInfo_GetTitleOrFilename(const ASAPInfo *self)
+{
+	return self->title[0] != '\0' ? self->title : self->filename;
+}
+
+const char *ASAPInfo_GetDate(const ASAPInfo *self)
+{
+	return self->date;
+}
+
+bool ASAPInfo_SetDate(ASAPInfo *self, const char *value)
+{
+	if (!ASAPInfo_CheckValidText(value))
+		return false;
+	CiString_Assign(&self->date, strdup(value));
+	return true;
+}
+
+static int ASAPInfo_CheckDate(const ASAPInfo *self)
+{
+	int n = (int) strlen(self->date);
+	switch (n) {
+	case 4:
+	case 7:
+	case 10:
+		break;
+	default:
+		return -1;
+	}
+	for (int i = 0; i < n; i++) {
+		int c = self->date[i];
+		if (i == n - 5 || i == n - 8) {
+			if (c != 47)
+				return -1;
+		}
+		else if (c < 48 || c > 57)
+			return -1;
+	}
+	return n;
+}
+
+static int ASAPInfo_GetTwoDateDigits(const ASAPInfo *self, int i)
+{
+	return (self->date[i] - 48) * 10 + self->date[i + 1] - 48;
+}
+
+int ASAPInfo_GetYear(const ASAPInfo *self)
+{
+	int n = ASAPInfo_CheckDate(self);
+	if (n < 0)
+		return -1;
+	return ASAPInfo_GetTwoDateDigits(self, n - 4) * 100 + ASAPInfo_GetTwoDateDigits(self, n - 2);
+}
+
+int ASAPInfo_GetMonth(const ASAPInfo *self)
+{
+	int n = ASAPInfo_CheckDate(self);
+	if (n < 7)
+		return -1;
+	return ASAPInfo_GetTwoDateDigits(self, n - 7);
+}
+
+int ASAPInfo_GetDayOfMonth(const ASAPInfo *self)
+{
+	int n = ASAPInfo_CheckDate(self);
+	if (n != 10)
+		return -1;
+	return ASAPInfo_GetTwoDateDigits(self, 0);
+}
+
+int ASAPInfo_GetChannels(const ASAPInfo *self)
+{
+	return self->channels;
+}
+
+int ASAPInfo_GetSongs(const ASAPInfo *self)
+{
+	return self->songs;
+}
+
+int ASAPInfo_GetDefaultSong(const ASAPInfo *self)
+{
+	return self->defaultSong;
+}
+
+bool ASAPInfo_SetDefaultSong(ASAPInfo *self, int song)
+{
+	if (song < 0 || song >= self->songs)
+		return false;
+	self->defaultSong = song;
+	return true;
+}
+
+int ASAPInfo_GetDuration(const ASAPInfo *self, int song)
+{
+	return self->durations[song];
+}
+
+bool ASAPInfo_SetDuration(ASAPInfo *self, int song, int duration)
+{
+	if (song < 0 || song >= self->songs)
+		return false;
+	self->durations[song] = duration;
+	return true;
+}
+
+bool ASAPInfo_GetLoop(const ASAPInfo *self, int song)
+{
+	return self->loops[song];
+}
+
+bool ASAPInfo_SetLoop(ASAPInfo *self, int song, bool loop)
+{
+	if (song < 0 || song >= self->songs)
+		return false;
+	self->loops[song] = loop;
+	return true;
+}
+
+bool ASAPInfo_IsNtsc(const ASAPInfo *self)
+{
+	return self->ntsc;
+}
+
+int ASAPInfo_GetTypeLetter(const ASAPInfo *self)
+{
+	switch (self->type) {
+	case ASAPModuleType_SAP_B:
+		return 66;
+	case ASAPModuleType_SAP_C:
+		return 67;
+	case ASAPModuleType_SAP_D:
+		return 68;
+	case ASAPModuleType_SAP_S:
+		return 83;
+	default:
+		return 0;
+	}
+}
+
+int ASAPInfo_GetPlayerRateScanlines(const ASAPInfo *self)
+{
+	return self->fastplay;
+}
+
+int ASAPInfo_GetPlayerRateHz(const ASAPInfo *self)
+{
+	int scanlineClock = self->ntsc ? 15699 : 15556;
+	return (scanlineClock + (self->fastplay >> 1)) / self->fastplay;
+}
+
+int ASAPInfo_GetMusicAddress(const ASAPInfo *self)
+{
+	return self->music;
+}
+
+bool ASAPInfo_SetMusicAddress(ASAPInfo *self, int address)
+{
+	if (address < 0 || address >= 65535)
+		return false;
+	self->music = address;
+	return true;
+}
+
+int ASAPInfo_GetInitAddress(const ASAPInfo *self)
+{
+	return self->init;
+}
+
+int ASAPInfo_GetPlayerAddress(const ASAPInfo *self)
+{
+	return self->player;
+}
+
+int ASAPInfo_GetCovoxAddress(const ASAPInfo *self)
+{
+	return self->covoxAddr;
+}
+
+int ASAPInfo_GetSapHeaderLength(const ASAPInfo *self)
+{
+	return self->headerLen;
+}
+
+int ASAPInfo_GetInstrumentNamesOffset(const ASAPInfo *self, uint8_t const *module, int moduleLen)
+{
+	if (self->type != ASAPModuleType_RMT)
+		return -1;
+	for (int offset = ASAPInfo_GetWord(module, 4) - ASAPInfo_GetWord(module, 2) + 12; offset < moduleLen; offset++) {
+		if (module[offset - 1] == 0)
+			return offset;
+	}
+	return -1;
 }
 
 const char *ASAPInfo_GetExtDescription(const char *ext)

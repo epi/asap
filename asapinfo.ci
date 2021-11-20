@@ -175,280 +175,6 @@ public class ASAPInfo
 			throw "Invalid character";
 	}
 
-#if !OPENCL
-
-	static void CheckValidText(string s)
-		throws
-	{
-		int n = s.Length;
-		if (n > MaxTextLength)
-			throw "Text too long";
-		for (int i = 0; i < n; i++)
-			CheckValidChar(s[i]);
-	}
-
-	/// Returns author's name.
-	/// A nickname may be included in parentheses after the real name.
-	/// Multiple authors are separated with `" & "`.
-	/// An empty string means the author is unknown.
-	public string GetAuthor() => Author;
-
-	/// Sets author's name.
-	/// A nickname may be included in parentheses after the real name.
-	/// Multiple authors are separated with `" & "`.
-	/// An empty string means the author is unknown.
-	public void SetAuthor!(
-		/// New author's name for the current music.
-		string value)
-		throws
-	{
-		CheckValidText(value);
-		Author = value;
-	}
-
-	/// Returns music title.
-	/// An empty string means the title is unknown.
-	public string GetTitle() => Title;
-
-	/// Sets music title.
-	/// An empty string means the title is unknown.
-	public void SetTitle!(
-		/// New title for the current music.
-		string value)
-		throws
-	{
-		CheckValidText(value);
-		Title = value;
-	}
-
-	/// Returns music title or filename.
-	/// If title is unknown returns filename without the path or extension.
-	public string GetTitleOrFilename() => Title.Length > 0 ? Title : Filename;
-
-	/// Returns music creation date.
-	/// Some of the possible formats are:
-	/// * YYYY
-	/// * MM/YYYY
-	/// * DD/MM/YYYY
-	/// * YYYY-YYYY
-	///
-	/// An empty string means the date is unknown.
-	public string GetDate() => Date;
-
-	/// Sets music creation date.
-	/// Some of the possible formats are:
-	/// * YYYY
-	/// * MM/YYYY
-	/// * DD/MM/YYYY
-	/// * YYYY-YYYY
-	///
-	/// An empty string means the date is unknown.
-	public void SetDate!(
-		/// New music creation date.
-		string value)
-		throws
-	{
-		CheckValidText(value);
-		Date = value;
-	}
-
-	int CheckDate()
-	{
-		int n = Date.Length;
-		switch (n) {
-		case 4: // YYYY
-		case 7: // MM/YYYY
-		case 10: // DD/MM/YYYY
-			break;
-		default:
-			return -1;
-		}
-		for (int i = 0; i < n; i++) {
-			int c = Date[i];
-			if (i == n - 5 || i == n - 8) {
-				if (c != '/')
-					return -1;
-			}
-			else if (c < '0' || c > '9')
-				return -1;
-		}
-		return n;
-	}
-
-	int GetTwoDateDigits(int i) => (Date[i] - '0') * 10 + Date[i + 1] - '0';
-
-	/// Returns music creation year.
-	/// -1 means the year is unknown.
-	public int GetYear()
-	{
-		int n = CheckDate();
-		if (n < 0)
-			return -1;
-		return GetTwoDateDigits(n - 4) * 100 + GetTwoDateDigits(n - 2);
-	}
-
-	/// Returns music creation month (1-12).
-	/// -1 means the month is unknown.
-	public int GetMonth()
-	{
-		int n = CheckDate();
-		if (n < 7)
-			return -1;
-		return GetTwoDateDigits(n - 7);
-	}
-
-	/// Returns day of month of the music creation date.
-	/// -1 means the day is unknown.
-	public int GetDayOfMonth()
-	{
-		int n = CheckDate();
-		if (n != 10)
-			return -1;
-		return GetTwoDateDigits(0);
-	}
-
-#endif
-
-	/// Returns 1 for mono or 2 for stereo.
-	public int GetChannels() => Channels;
-
-	/// Returns number of songs in the file.
-	public int GetSongs() => Songs;
-
-	/// Returns 0-based index of the "main" song.
-	/// The specified song should be played by default.
-	public int GetDefaultSong() => DefaultSong;
-
-	/// Sets the 0-based index of the "main" song.
-	public void SetDefaultSong!(
-		/// New default song.
-		int song)
-		throws
-	{
-		if (song < 0 || song >= Songs)
-			throw "Song out of range";
-		DefaultSong = song;
-	}
-
-	/// Returns length of the specified song.
-	/// The length is specified in milliseconds. -1 means the length is indeterminate.
-	public int GetDuration(
-		/// Song to get length of, 0-based.
-		int song)
-		=> Durations[song];
-
-	/// Sets length of the specified song.
-	/// The length is specified in milliseconds. -1 means the length is indeterminate.
-	public void SetDuration!(
-		/// Song to set length of, 0-based.
-		int song,
-		/// New length in milliseconds.
-		int duration)
-		throws
-	{
-		if (song < 0 || song >= Songs)
-			throw "Song out of range";
-		Durations[song] = duration;
-	}
-
-	/// Returns information whether the specified song loops.
-	/// Returns:
-	/// * `true` if the song loops
-	/// * `false` if the song stops
-	public bool GetLoop(
-		/// Song to check for looping, 0-based.
-		int song)
-		=> Loops[song];
-
-	/// Sets information whether the specified song loops.
-	/// Use:
-	/// * `true` if the song loops
-	/// * `false` if the song stops
-	public void SetLoop!(
-		/// Song to set as looping, 0-based.
-		int song,
-		/// `true` if the song loops.
-		bool loop)
-		throws
-	{
-		if (song < 0 || song >= Songs)
-			throw "Song out of range";
-		Loops[song] = loop;
-	}
-
-	/// Returns `true` for NTSC song and `false` for PAL song.
-	public bool IsNtsc() => Ntsc;
-
-	/// Returns the letter argument for the TYPE SAP tag.
-	/// Returns zero for non-SAP files.
-	public int GetTypeLetter()
-	{
-		switch (Type) {
-		case ASAPModuleType.SapB: return 'B';
-		case ASAPModuleType.SapC: return 'C';
-		case ASAPModuleType.SapD: return 'D';
-		case ASAPModuleType.SapS: return 'S';
-		default: return 0;
-		}
-	}
-
-	/// Returns player routine rate in Atari scanlines.
-	public int GetPlayerRateScanlines() => Fastplay;
-
-	/// Returns approximate player routine rate in Hz.
-	public int GetPlayerRateHz()
-	{
-		int scanlineClock = Ntsc ? 1789772 / 114 : 1773447 / 114;
-		return (scanlineClock + (Fastplay >> 1)) / Fastplay;
-	}
-
-	/// Returns the address of the module.
-	/// Returns -1 if unknown.
-	public int GetMusicAddress() => Music;
-
-	/// Causes music to be relocated.
-	/// Use only with `ASAPWriter.Write`.
-	public void SetMusicAddress!(
-		/// New music address.
-		int address)
-		throws
-	{
-		if (address < 0 || address >= 0xffff)
-			throw "Invalid music address";
-		Music = address;
-	}
-
-	/// Returns the address of the player initialization routine.
-	/// Returns -1 if no initialization routine.
-	public int GetInitAddress() => Init;
-
-	/// Returns the address of the player routine.
-	public int GetPlayerAddress() => Player;
-
-	/// Returns the address of the COVOX chip.
-	/// Returns -1 if no COVOX enabled.
-	public int GetCovoxAddress() => CovoxAddr;
-
-	/// Returns the length of the SAP header in bytes.
-	public int GetSapHeaderLength() => HeaderLen;
-
-	/// Returns the offset of instrument names for RMT module.
-	/// Returns -1 if not an RMT module or RMT module without instrument names.
-	public int GetInstrumentNamesOffset(
-		/// Content of the RMT file.
-		byte[] module,
-		/// Length of the RMT file.
-		int moduleLen)
-	{
-		if (Type != ASAPModuleType.Rmt)
-			return -1;
-		for (int offset = GetWord(module, 4) - GetWord(module, 2) + 12; offset < moduleLen; offset++) {
-			if (module[offset - 1] == 0)
-				return offset;
-		}
-		return -1;
-	}
-
 	internal static int GetWord(byte[] array, int i) => array[i] + (array[i + 1] << 8);
 
 	void ParseModule!(byte[] module, int moduleLen)
@@ -1810,6 +1536,280 @@ public class ASAPInfo
 		default:
 			throw "Unknown filename extension";
 		}
+	}
+
+#if !OPENCL
+
+	static void CheckValidText(string s)
+		throws
+	{
+		int n = s.Length;
+		if (n > MaxTextLength)
+			throw "Text too long";
+		for (int i = 0; i < n; i++)
+			CheckValidChar(s[i]);
+	}
+
+	/// Returns author's name.
+	/// A nickname may be included in parentheses after the real name.
+	/// Multiple authors are separated with `" & "`.
+	/// An empty string means the author is unknown.
+	public string GetAuthor() => Author;
+
+	/// Sets author's name.
+	/// A nickname may be included in parentheses after the real name.
+	/// Multiple authors are separated with `" & "`.
+	/// An empty string means the author is unknown.
+	public void SetAuthor!(
+		/// New author's name for the current music.
+		string value)
+		throws
+	{
+		CheckValidText(value);
+		Author = value;
+	}
+
+	/// Returns music title.
+	/// An empty string means the title is unknown.
+	public string GetTitle() => Title;
+
+	/// Sets music title.
+	/// An empty string means the title is unknown.
+	public void SetTitle!(
+		/// New title for the current music.
+		string value)
+		throws
+	{
+		CheckValidText(value);
+		Title = value;
+	}
+
+	/// Returns music title or filename.
+	/// If title is unknown returns filename without the path or extension.
+	public string GetTitleOrFilename() => Title.Length > 0 ? Title : Filename;
+
+	/// Returns music creation date.
+	/// Some of the possible formats are:
+	/// * YYYY
+	/// * MM/YYYY
+	/// * DD/MM/YYYY
+	/// * YYYY-YYYY
+	///
+	/// An empty string means the date is unknown.
+	public string GetDate() => Date;
+
+	/// Sets music creation date.
+	/// Some of the possible formats are:
+	/// * YYYY
+	/// * MM/YYYY
+	/// * DD/MM/YYYY
+	/// * YYYY-YYYY
+	///
+	/// An empty string means the date is unknown.
+	public void SetDate!(
+		/// New music creation date.
+		string value)
+		throws
+	{
+		CheckValidText(value);
+		Date = value;
+	}
+
+	int CheckDate()
+	{
+		int n = Date.Length;
+		switch (n) {
+		case 4: // YYYY
+		case 7: // MM/YYYY
+		case 10: // DD/MM/YYYY
+			break;
+		default:
+			return -1;
+		}
+		for (int i = 0; i < n; i++) {
+			int c = Date[i];
+			if (i == n - 5 || i == n - 8) {
+				if (c != '/')
+					return -1;
+			}
+			else if (c < '0' || c > '9')
+				return -1;
+		}
+		return n;
+	}
+
+	int GetTwoDateDigits(int i) => (Date[i] - '0') * 10 + Date[i + 1] - '0';
+
+	/// Returns music creation year.
+	/// -1 means the year is unknown.
+	public int GetYear()
+	{
+		int n = CheckDate();
+		if (n < 0)
+			return -1;
+		return GetTwoDateDigits(n - 4) * 100 + GetTwoDateDigits(n - 2);
+	}
+
+	/// Returns music creation month (1-12).
+	/// -1 means the month is unknown.
+	public int GetMonth()
+	{
+		int n = CheckDate();
+		if (n < 7)
+			return -1;
+		return GetTwoDateDigits(n - 7);
+	}
+
+	/// Returns day of month of the music creation date.
+	/// -1 means the day is unknown.
+	public int GetDayOfMonth()
+	{
+		int n = CheckDate();
+		if (n != 10)
+			return -1;
+		return GetTwoDateDigits(0);
+	}
+
+#endif
+
+	/// Returns 1 for mono or 2 for stereo.
+	public int GetChannels() => Channels;
+
+	/// Returns number of songs in the file.
+	public int GetSongs() => Songs;
+
+	/// Returns 0-based index of the "main" song.
+	/// The specified song should be played by default.
+	public int GetDefaultSong() => DefaultSong;
+
+	/// Sets the 0-based index of the "main" song.
+	public void SetDefaultSong!(
+		/// New default song.
+		int song)
+		throws
+	{
+		if (song < 0 || song >= Songs)
+			throw "Song out of range";
+		DefaultSong = song;
+	}
+
+	/// Returns length of the specified song.
+	/// The length is specified in milliseconds. -1 means the length is indeterminate.
+	public int GetDuration(
+		/// Song to get length of, 0-based.
+		int song)
+		=> Durations[song];
+
+	/// Sets length of the specified song.
+	/// The length is specified in milliseconds. -1 means the length is indeterminate.
+	public void SetDuration!(
+		/// Song to set length of, 0-based.
+		int song,
+		/// New length in milliseconds.
+		int duration)
+		throws
+	{
+		if (song < 0 || song >= Songs)
+			throw "Song out of range";
+		Durations[song] = duration;
+	}
+
+	/// Returns information whether the specified song loops.
+	/// Returns:
+	/// * `true` if the song loops
+	/// * `false` if the song stops
+	public bool GetLoop(
+		/// Song to check for looping, 0-based.
+		int song)
+		=> Loops[song];
+
+	/// Sets information whether the specified song loops.
+	/// Use:
+	/// * `true` if the song loops
+	/// * `false` if the song stops
+	public void SetLoop!(
+		/// Song to set as looping, 0-based.
+		int song,
+		/// `true` if the song loops.
+		bool loop)
+		throws
+	{
+		if (song < 0 || song >= Songs)
+			throw "Song out of range";
+		Loops[song] = loop;
+	}
+
+	/// Returns `true` for NTSC song and `false` for PAL song.
+	public bool IsNtsc() => Ntsc;
+
+	/// Returns the letter argument for the TYPE SAP tag.
+	/// Returns zero for non-SAP files.
+	public int GetTypeLetter()
+	{
+		switch (Type) {
+		case ASAPModuleType.SapB: return 'B';
+		case ASAPModuleType.SapC: return 'C';
+		case ASAPModuleType.SapD: return 'D';
+		case ASAPModuleType.SapS: return 'S';
+		default: return 0;
+		}
+	}
+
+	/// Returns player routine rate in Atari scanlines.
+	public int GetPlayerRateScanlines() => Fastplay;
+
+	/// Returns approximate player routine rate in Hz.
+	public int GetPlayerRateHz()
+	{
+		int scanlineClock = Ntsc ? 1789772 / 114 : 1773447 / 114;
+		return (scanlineClock + (Fastplay >> 1)) / Fastplay;
+	}
+
+	/// Returns the address of the module.
+	/// Returns -1 if unknown.
+	public int GetMusicAddress() => Music;
+
+	/// Causes music to be relocated.
+	/// Use only with `ASAPWriter.Write`.
+	public void SetMusicAddress!(
+		/// New music address.
+		int address)
+		throws
+	{
+		if (address < 0 || address >= 0xffff)
+			throw "Invalid music address";
+		Music = address;
+	}
+
+	/// Returns the address of the player initialization routine.
+	/// Returns -1 if no initialization routine.
+	public int GetInitAddress() => Init;
+
+	/// Returns the address of the player routine.
+	public int GetPlayerAddress() => Player;
+
+	/// Returns the address of the COVOX chip.
+	/// Returns -1 if no COVOX enabled.
+	public int GetCovoxAddress() => CovoxAddr;
+
+	/// Returns the length of the SAP header in bytes.
+	public int GetSapHeaderLength() => HeaderLen;
+
+	/// Returns the offset of instrument names for RMT module.
+	/// Returns -1 if not an RMT module or RMT module without instrument names.
+	public int GetInstrumentNamesOffset(
+		/// Content of the RMT file.
+		byte[] module,
+		/// Length of the RMT file.
+		int moduleLen)
+	{
+		if (Type != ASAPModuleType.Rmt)
+			return -1;
+		for (int offset = GetWord(module, 4) - GetWord(module, 2) + 12; offset < moduleLen; offset++) {
+			if (module[offset - 1] == 0)
+				return offset;
+		}
+		return -1;
 	}
 
 #if !ASAP_ONLY_SAP
