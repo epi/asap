@@ -6,26 +6,26 @@
 	<h2>History</h2>
 	<p>The SAP format was created in the 1990s by Adam Bienias and was intended
 	to be a single format for playback of any Atari 8-bit music on a PC.
-	Adam Bienias has also created the first player for Windows and later published
-	its source code. Later, other players appeared.</p>
+	Adam Bienias has also created the first SAP player for Windows and later published
+	its source code. Other players appeared later.</p>
 	<p>At the time of writing, there are five independent players of the SAP format:</p>
 	<ul>
 		<li>Slight Atari Player (SAP) by Adam Bienias</li>
 		<li><a href="http://asap.sourceforge.net/">Another Slight Atari Player (ASAP)</a> by Piotr Fusik (me)</li>
 		<li><a href="https://bitbucket.org/mpyne/game-music-emu/wiki/Home">Game_Music_Emu (GME)</a> by Shay Green</li>
 		<li><a href="https://github.com/epi/sapemu">sapemu</a> by Adrian Matoga</li>
-		<li><a href="http://www.virtualdub.org/altirra.html">Altirra</a> by Avery Lee</li>
+		<li><a href="https://www.virtualdub.org/altirra.html">Altirra</a> by Avery Lee</li>
 	</ul>
 	<p>There are many players for different platforms based on either SAP,
 	ASAP or GME. sapemu runs on an Atari XL/XE computer with 128 KB RAM.
 	Windows-only Altirra is a full emulator of Atari computers.</p>
 
 	<h2>Concept</h2>
-	<p>A SAP file contains the original data and code used to playback
+	<p>A SAP file contains the original data and code needed to playback
 	the Atari music. SAP players actually run the program contained in the SAP file
 	on an emulated or real (sapemu) 6502 processor.
 	The program controls the POKEY chip, which generates the sound.</p>
-	<p>Identical method is used with platforms other than Atari,
+	<p>Same method is used with platforms other than Atari,
 	for example the SID format for the C64 music.</p>
 	<p>Important advantages of SAP over, let's say, MP3, are that
 	SAP files are very small (about 5 KB on average) and play more accurately
@@ -47,14 +47,13 @@
 	<pre>copy /b music.txt+music.bin music.sap</pre>
 	<p>On macOS or Linux:</p>
 	<pre>cat music.txt music.bin >music.sap</pre>
+
 	<h3>Part One - Text Header</h3>
 	<p>This part consists of tags, one tag per line.
-	Lines must be terminated by a CR/LF (0x0d, 0x0a) pair
-	(required by ASAP, other SAP players may be more forgiving).
+	Lines should be terminated by a CR/LF (0x0d, 0x0a) pair.
 	A line consists of an uppercase tag name and an optional argument, which might be
 	a string, a decimal integer, a hexadecimal integer or a single letter.
-	The argument should be separated from the tag name with a single space.
-	Extra whitespace is not allowed.</p>
+	The argument should be separated from the tag name with a single space.</p>
 	<p>Example header:</p>
 	<pre>SAP
 AUTHOR "Jakub Husak"
@@ -74,7 +73,7 @@ TIME 00:15.40 LOOP
 	described below. Note that format identification in GStreamer
 	requires the AUTHOR tag to be placed right after the "SAP" line.</p>
 	<p>The arguments to AUTHOR, NAME and DATE must be wrapped in doublequotes.
-	Allowed are characters identical in ASCII and ATASCII (ATari ASCII),
+	Allowed are characters which are identical in ASCII and ATASCII (ATari ASCII),
 	that is: characters with ASCII codes from space to underscore
 	plus all lowercase letters, plus the pipe character (`|`).
 	There are no backquote, tilde nor curly brackets in ATASCII.
@@ -120,7 +119,7 @@ DATE "12/2001"
 DATE "23-26/07/2010"
 DATE "199?"
 </pre>
-			<p>The last example means some unknown year in the 1990s.</p>
+			<p>The last example represents some unknown year in the 1990s.</p>
 		</dd>
 
 		<dt>SONG</dt>
@@ -128,7 +127,7 @@ DATE "199?"
 			<p>Number of subsongs in the file.
 			If there is just one song in the file, it is recommended to omit this tag.
 			ASAP currently limits the number of songs to 32.
-			The biggest known number of songs in a SAP file is 20.</p>
+			The largest known number of songs in a SAP file is 20.</p>
 		</dd>
 
 		<dt>DEFSONG</dt>
@@ -162,10 +161,10 @@ DATE "199?"
 			A scanline is defined to be 114 Atari clock cycles.
 			FASTPLAY defaults to one frame: 312 scanlines for PAL (about 50 Hz),
 			262 for NTSC (about 60 Hz).
-			Most songs don't include this tag. Common values are 156 (twice per frame),
+			Most songs don't include this tag. Common values are 156 (twice per PAL frame),
 			104 (three times per frame) and 78 (four times per frame).
 			ASAP 3.0.0 and above supports FASTPLAY up to 32767.
-			Other SAP players may limit the value to 312.</p>
+			Other SAP players may limit FASTPLAY to 312.</p>
 		</dd>
 
 		<dt>INIT</dt>
@@ -184,7 +183,8 @@ DATE "199?"
 
 		<dt>PLAYER</dt>
 		<dd>
-			<p>Hexadecimal address of the player routine.</p>
+			<p>Hexadecimal address of the player routine,
+			called with constant frequency (see FASTPLAY).</p>
 		</dd>
 
 		<dt>COVOX</dt>
@@ -198,11 +198,10 @@ DATE "199?"
 		<dt>TIME</dt>
 		<dd>
 			<p>Song duration in minutes, seconds and milliseconds.
-			In files with subsongs the TIME tag may occur many times
-			(for example 3 times if there are 3 subsongs).
+			In files with subsongs, there is a separate TIME tag for every subsong.
 			The optional LOOP modifier specifies that the song starts looping endlessly
-			at the specified moment.
-			The exact format of the argument is:</p>
+			at the specified moment. Players can decide to play such songs longer.
+			The exact format of the TIME argument is:</p>
 			<ul>
 				<li>one or two digits specifying minutes</li>
 				<li>colon</li>
@@ -215,36 +214,41 @@ DATE "199?"
 
 	<h3>Part Two - Binary Data</h3>
 	<p>This part contains the player routine and music data in the format
-	of Atari executables. This format has a two-byte header 0xFF, 0xFF.
-	The two following bytes are the starting memory address (little endian),
-	the next two bytes are the ending address. Then data bytes follow.
-	Usually there are multiple blocks
-	(the 0xFF/0xFF header is only required for the first block).</p>
-	<p>The difference from real Atari executables is that
-	INIT (0x2e2) and RUN (0x2e0) blocks are not supported.</p>
+	of Atari executables. An Atari executable is a sequence of one or more blocks.
+	Every block consists of:</p>
+	<ul>
+		<li>a header of two 0xFF bytes (required for the first block,
+		optional for subsequent blocks)</li>
+		<li>memory address where to load the data (16-bit little endian)</li>
+		<li>memory address of the last byte (16-bit little endian)</li>
+		<li>the data of the block (<code>end_address-start_address+1</code> bytes)</li>
+	</ul>
+	<p>In real Atari executables memory locations 0x2E0-0x2E1 specify the run address
+	and 0x2E2-0x2E3 specify the initialization address.
+	In the SAP format these are ordinary RAM locations with no special treatment.</p>
 	<p>Example:</p>
 -------------------------------------------------------------
 FF FF    - executable header (always 0xFF, 0xFF)
 00 06    - start address of the first block (0x0600)
-01 06    - end address of the first block (0x0601)
-AB CD    - first block data - loaded to 0x0600-0x0601
+02 06    - end address of the first block (0x0602)
+AB CD EF - first block data - loaded to 0x0600-0x0602
 25 20    - start address of the second block (0x2025)
 27 20    - end address of the second block (0x2027)
 01 42 A3 - second block data - loaded to 0x2025-0x2027
 -------------------------------------------------------------
 
-	<p>Some players allow files that end in the middle of start/end address
-	or block data, but this practice is strongly discouraged.</p>
+	<p>Files that end in the middle of block data or the addresses are considered
+	malformed, but some SAP players accept them.</p>
 
 	<h2>Execution Model</h2>
 	<p>The program from the SAP file is run inside an emulated machine that resembles
 	a limited Atari computer with the 6502 processor, POKEY chip
-	(at least the audio part) and 64 KB RAM.
+	(at least its audio part) and 64 KB RAM.
 	Some players include emulation of parts of the ANTIC and GTIA chips,
 	as well as the COVOX expansion.
 	Since SAP files may be played on a real Atari, they should be prepared
 	for the possibility that all the original hardware is present
-	(for example PIA doing the bankswitching).</p>
+	(for example PIA controlling memory bank switching).</p>
 	<p>Memory map:</p>
 	<dl>
 		<dt>0000-CFFF</dt>
@@ -253,7 +257,7 @@ AB CD    - first block data - loaded to 0x0600-0x0601
 		<dt>D000-D0FF</dt>
 		<dd>GTIA chip mirrored 8 times.
 		ASAP maps just the PAL register at D014 for NTSC/PAL detection
-		and the CONSOL register at D01F for 1-bit sounds, the rest is RAM.</dd>
+		and the CONSOL register at D01F for 1-bit sounds. The rest is RAM.</dd>
 
 		<dt>D100-D1FF</dt>
 		<dd>reserved for parallel devices connected to the Atari, do not use.</dd>
@@ -285,7 +289,7 @@ AB CD    - first block data - loaded to 0x0600-0x0601
 		0 and 3 for the left channel, 1 and 2 for the right channel.</dd>
 
 		<dt>D700-D7FF</dt>
-		<dd>reserved for expansions, do not use.</dd>
+		<dd>reserved for hardware expansions, do not use.</dd>
 
 		<dt>D800-FFFF</dt>
 		<dd>RAM.
@@ -294,7 +298,7 @@ AB CD    - first block data - loaded to 0x0600-0x0601
 
 	<p>Timing: The main clock is 1773447 Hz (PAL) or 1789772.5 Hz (NTSC).
 	There are 114 cycles per scanline, including 9 cycles memory refresh
-	not available for the 6502 - same as in the Atari with ANTIC DMA
+	when the 6502 is stalled - same as in the Atari with ANTIC DMA
 	disabled completely. WSYNC and VCOUNT registers may be used for delays.
 	Note that some SAP players reset VCOUNT at the FASTPLAY rate
 	instead of every frame.</p>
@@ -312,7 +316,8 @@ AB CD    - first block data - loaded to 0x0600-0x0601
 
 		<dt>TYPE C</dt>
 		<dd>
-			<p>This type is for easy handling CMC (Chaos Music Composer) music.
+			<p>This type is for convenient handling of music
+			composed in CMC (Chaos Music Composer) .
 			The player is initialized using the values
 			of MUSIC, PLAYER and DEFSONG as follows:</p>
 			<pre>    lda #$70
@@ -338,15 +343,15 @@ AB CD    - first block data - loaded to 0x0600-0x0601
 		(which is initially clear, allowing interrupts).
 		All 6502 registers (including flags) are saved when calling the PLAYER routine
 		and restored when it returns to the running INIT routine.
-		In ASAP 2.1.0 and above the PLAYER tag is optional for TYPE D.
-		First call to PLAYER usually occurs before the first instruction of INIT
-		gets executed.</dd>
+		In ASAP 2.1.0 and above, the PLAYER tag is optional for TYPE D.
+		Beware that in many players the first call to PLAYER usually occurs
+		before the first instruction of INIT gets executed.</dd>
 
 		<dt>TYPE S</dt>
-		<dd>This is a convenience type for SoftSynth music.
+		<dd>This is a convenience type for music composed in SoftSynth.
 		The PLAYER tag is not used here, yet some SAP players require it.
 		Instead of the PLAYER routine, at FASTPLAY intervals the memory location 0x45
-		is decreased and if reaches zero, the memory location 0xb07b is increased.
+		is decreased and if reaches zero, the memory location 0xB07B is increased.
 		The default FASTPLAY for this type is 78.</dd>
 
 		<dt>TYPE R</dt>
