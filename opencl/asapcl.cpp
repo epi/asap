@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		char output_file[FILENAME_MAX];
-		if (snprintf(output_file, sizeof(output_file), "%*s.wav", (int) (input_dot - input_file), input_file) >= static_cast<int>(sizeof(output_file))) {
+		if (snprintf(output_file, sizeof(output_file), "%.*s.wav", (int) (input_dot - input_file), input_file) >= static_cast<int>(sizeof(output_file))) {
 			fprintf(stderr, "%s: filename too long\n", input_file);
 			exit_code = 1;
 			continue;
