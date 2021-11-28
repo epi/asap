@@ -620,7 +620,7 @@
 		<platform>desktop operating systems</platform>
 		<interface>command line</interface>
 		<since>5.2.0</since>
-		<status>experimental</status>
+		<status>sample</status>
 		<output>16-bit WAV file</output>
 		<subsongs>no</subsongs>
 		<file-info>no</file-info>

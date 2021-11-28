@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 	cl_program program = clCreateProgramWithSource(context, 1, &source, nullptr, &err);
 	check_error(err);
 
-	check_error(clBuildProgram(program, 1, &device, "-cl-std=CL2.0", nullptr, nullptr));
+	check_error(clBuildProgram(program, 1, &device, "-cl-std=CL2.0 -cl-opt-disable", nullptr, nullptr));
 
 	cl_kernel kernel;
 	check_error(clCreateKernelsInProgram(program, 1, &kernel, nullptr));
