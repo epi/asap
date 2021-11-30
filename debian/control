@@ -3,7 +3,7 @@ Maintainer: Piotr Fusik <fox@scene.pl>
 Section: contrib/sound
 Priority: optional
 Standards-Version: 3.9.3
-Build-Depends: debhelper (>= 7), libvlccore-dev
+Build-Depends: debhelper (>= 7), libvlccore-dev, xmms2-dev
 
 Package: asap
 Architecture: any
@@ -21,3 +21,8 @@ Architecture: any
 Depends: vlc, ${shlibs:Depends}
 Description: Provides playback of Atari 8-bit music in VLC.
  Supports the following file formats: SAP, RMT, FC.
+
+Package: asap-xmms2
+Architecture: any
+Depends: xmms2, ${shlibs:Depends}
+Description: Provides playback of Atari 8-bit music (SAP format) in XMMS2.

@@ -50,7 +50,6 @@
 							<li><span class="partial">in development</span> - working, but incomplete or buggy</li>
 							<li><span class="bad">discontinued</span> - present in previous releases, no longer supported</li>
 							<li><span class="bad">sample</span> - sample code for developers, not recommended for end-users</li>
-							<li><span class="bad">experimental</span> - work in progress</li>
 						</ul>
 					</li>
 				</ol>

@@ -7,11 +7,6 @@
 	then install the ASAP plugin: <download prefix="asap-vlc-" suffix="-1.x86_64.rpm" />.</p>
 	<img src="vlc-ubuntu.png" alt="VLC on Ubuntu 18.04" />
 
-	<h2>XMMS</h2>
-	<p><a href="http://www.xmms.org/">XMMS</a> is included in Fedora.
-	Install the ASAP plugin: <download prefix="asap-xmms-" suffix="-1.x86_64.rpm" />.</p>
-	<img src="xmms-fedora.png" alt="XMMS on Fedora 29" />
-
 	<h2>Command-line converter</h2>
 	<p>For command-line conversions (e.g. to WAV or between SAP and the tracker formats)
 	and editing the metadata, install asapconv:</p>

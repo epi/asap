@@ -132,6 +132,7 @@ clean:
 include $(srcdir)moc/moc.mk
 include $(srcdir)vlc/vlc.mk
 include $(srcdir)xmms/xmms.mk
+include $(srcdir)xmms2/xmms2.mk
 
 include $(srcdir)csharp/csharp.mk
 include $(srcdir)java/java.mk

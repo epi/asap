@@ -35,7 +35,7 @@
 		<a href="http://www.winamp.com/">Winamp</a>
 	</port>
 	<port name="XMMS plugin">
-		<bin>Linux</bin>
+		<bin></bin>
 		<platform>Linux</platform>
 		<interface>player plugin</interface>
 		<since>0.2.0</since>
@@ -630,5 +630,23 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>OpenCL</lang>
+	</port>
+	<port name="XMMS2 plugin">
+		<bin>Linux</bin>
+		<platform>Linux</platform>
+		<interface>player plugin</interface>
+		<since>5.2.0</since>
+		<status>stable</status>
+		<output>16-bit sound</output>
+		<subsongs>no</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<comment class="bad">SAP format only</comment>
+		<lang>C</lang>
+		<a href="http://www.xmms2.org/">XMMS2</a>
 	</port>
 </ports>

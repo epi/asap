@@ -77,6 +77,7 @@ deb64:
 	scp vm:asap_$(VERSION)-1_amd64.deb release/
 	scp vm:asap-dev_$(VERSION)-1_amd64.deb release/
 	scp vm:asap-vlc_$(VERSION)-1_amd64.deb release/
+	scp vm:asap-xmms2_$(VERSION)-1_amd64.deb release/
 .PHONY: deb64
 
 rpm64:
@@ -85,7 +86,7 @@ rpm64:
 	scp vm:rpmbuild/RPMS/x86_64/asap-$(VERSION)-1.x86_64.rpm release/
 	scp vm:rpmbuild/RPMS/x86_64/asap-devel-$(VERSION)-1.x86_64.rpm release/
 	scp vm:rpmbuild/RPMS/x86_64/asap-vlc-$(VERSION)-1.x86_64.rpm release/
-	scp vm:rpmbuild/RPMS/x86_64/asap-xmms-$(VERSION)-1.x86_64.rpm release/
+	scp vm:rpmbuild/RPMS/x86_64/asap-xmms2-$(VERSION)-1.x86_64.rpm release/
 .PHONY: rpm64
 
 mac:
