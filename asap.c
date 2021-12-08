@@ -7409,16 +7409,18 @@ static int PokeyPair_Generate(PokeyPair *self, uint8_t *buffer, int bufferOffset
 		samplesEnd = i + blocks;
 	else
 		blocks = samplesEnd - i;
-	for (; i < samplesEnd; i++) {
-		bufferOffset = Pokey_StoreSample(&self->basePokey, buffer, bufferOffset, i, format);
-		if (self->extraPokeyMask != 0)
-			bufferOffset = Pokey_StoreSample(&self->extraPokey, buffer, bufferOffset, i, format);
+	if (blocks > 0) {
+		for (; i < samplesEnd; i++) {
+			bufferOffset = Pokey_StoreSample(&self->basePokey, buffer, bufferOffset, i, format);
+			if (self->extraPokeyMask != 0)
+				bufferOffset = Pokey_StoreSample(&self->extraPokey, buffer, bufferOffset, i, format);
+		}
+		if (i == self->readySamplesEnd) {
+			Pokey_AccumulateTrailing(&self->basePokey, i);
+			Pokey_AccumulateTrailing(&self->extraPokey, i);
+		}
+		self->readySamplesStart = i;
 	}
-	if (i == self->readySamplesEnd) {
-		Pokey_AccumulateTrailing(&self->basePokey, i);
-		Pokey_AccumulateTrailing(&self->extraPokey, i);
-	}
-	self->readySamplesStart = i;
 	return blocks;
 }
 

@@ -692,16 +692,18 @@ class PokeyPair
 			samplesEnd = i + blocks;
 		else
 			blocks = samplesEnd - i;
-		for (; i < samplesEnd; i++) {
-			bufferOffset = BasePokey.StoreSample(buffer, bufferOffset, i, format);
-			if (ExtraPokeyMask != 0)
-				bufferOffset = ExtraPokey.StoreSample(buffer, bufferOffset, i, format);
+		if (blocks > 0) {
+			for (; i < samplesEnd; i++) {
+				bufferOffset = BasePokey.StoreSample(buffer, bufferOffset, i, format);
+				if (ExtraPokeyMask != 0)
+					bufferOffset = ExtraPokey.StoreSample(buffer, bufferOffset, i, format);
+			}
+			if (i == ReadySamplesEnd) {
+				BasePokey.AccumulateTrailing(i);
+				ExtraPokey.AccumulateTrailing(i);
+			}
+			ReadySamplesStart = i;
 		}
-		if (i == ReadySamplesEnd) {
-			BasePokey.AccumulateTrailing(i);
-			ExtraPokey.AccumulateTrailing(i);
-		}
-		ReadySamplesStart = i;
 #if APOKEYSND
 		return bufferOffset;
 #else
