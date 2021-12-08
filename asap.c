@@ -2610,7 +2610,7 @@ static int ASAP_GenerateAt(ASAP *self, uint8_t *buffer, int bufferOffset, int bu
 {
 	if (self->silenceCycles > 0 && self->silenceCyclesCounter <= 0)
 		return 0;
-	int blockShift = ASAPInfo_GetChannels(&self->moduleInfo) - 1 + (format != ASAPSampleFormat_U8 ? 1 : 0);
+	int blockShift = ASAPInfo_GetChannels(&self->moduleInfo) - (format == ASAPSampleFormat_U8 ? 1 : 0);
 	int bufferBlocks = bufferLen >> blockShift;
 	if (self->currentDuration > 0) {
 		int totalBlocks = ASAP_MillisecondsToBlocks(self->currentDuration);
