@@ -1,5 +1,5 @@
 Name: asap
-Version: 5.1.0
+Version: 5.2.0
 Release: 1
 Summary: Player of Atari 8-bit music
 License: GPLv2+
@@ -74,6 +74,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/xmms2/libxmms_asap.so
 
 %changelog
+* Wed Dec 8 2021 Piotr Fusik <fox@scene.pl>
+- 5.2.0-1
+
 * Tue Nov 30 2021 Piotr Fusik <fox@scene.pl>
 - Added the XMMS2 subpackage
 - Removed the XMMS subpackage

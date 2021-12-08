@@ -7,6 +7,12 @@
 	then install the ASAP plugin: <download prefix="asap-vlc-" suffix="-1.x86_64.rpm" />.</p>
 	<img src="vlc-ubuntu.png" alt="VLC on Ubuntu 18.04" />
 
+	<h2>XMMS2</h2>
+	<p>On Ubuntu install XMMS2 with <code>sudo apt install xmms2</code>.
+	Then install the ASAP plugin: <download prefix="asap-xmms2_" suffix="-1_amd64.deb" />.</p>
+	<p>On Fedora: <code>sudo dnf install xmms2</code>,
+	then <download prefix="asap-xmms2-" suffix="-1.x86_64.rpm" />.</p>
+
 	<h2>Command-line converter</h2>
 	<p>For command-line conversions (e.g. to WAV or between SAP and the tracker formats)
 	and editing the metadata, install asapconv:</p>

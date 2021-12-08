@@ -1,3 +1,10 @@
+asap (5.2.0-1) UNRELEASED; urgency=low
+
+  * New release.
+  * Added XMMS2.
+
+ -- Piotr Fusik <fox@scene.pl>  Wed, 8 Dec 2021 10:08:56 +0100
+
 asap (5.1.0-1) UNRELEASED; urgency=low
 
   * New release.
