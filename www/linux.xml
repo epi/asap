@@ -1,6 +1,6 @@
 ﻿<page title="Linux">
 	<h2>VLC</h2>
-	<p>On Ubuntu, install <a href="http://www.videolan.org/vlc/">VLC</a>
+	<p>On Ubuntu, install <a href="https://www.videolan.org/vlc/">VLC</a>
 	via <code>apt</code>, not <code>snap</code>.
 	Then install the ASAP plugin: <download prefix="asap-vlc_" suffix="-1_amd64.deb" />.</p>
 	<p>On Fedora, <a href="https://www.videolan.org/vlc/download-fedora.html">install VLC from RPM Fusion</a>,
@@ -26,6 +26,6 @@
 	<h2>Other distros</h2>
 	<p>Download the source code <download prefix="asap-" suffix=".tar.gz" />.
 	Inside you will find instructions on how to build a VLC plugin,
-	a <a href="http://moc.daper.net/">MOC</a> plugin, an XMMS plugin
+	a <a href="https://moc.daper.net/">MOC</a> plugin, an XMMS plugin
 	and a command-line converter asapconv.</p>
 </page>

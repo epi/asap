@@ -4,7 +4,7 @@
 	also the 64-bit ones.</p>
 
 	<h2>foobar2000</h2>
-	<p><a href="http://www.foobar2000.org/">foobar2000</a> is the recommended player.
+	<p><a href="https://www.foobar2000.org/">foobar2000</a> is the recommended player.
 	The ASAP installer detects it and installs a plugin.
 	This plugin can play directly from ATR disk images.
 	You may also use foobar2000's conversion, e.g. to MP3.
@@ -13,24 +13,24 @@
 	<img src="foobar2000.png" alt="foobar2000" />
 
 	<h2>XMPlay</h2>
-	<p><a href="http://www.un4seen.com/xmplay.html">XMPlay</a> is a player supporting MOD and similar formats out of the box.
+	<p><a href="https://www.un4seen.com/xmplay.html">XMPlay</a> is a player supporting MOD and similar formats out of the box.
 	The ASAP plugin can display RMT instrument names. If you want to use the "File information" window
 	(to edit tags or convert between SAP and other formats), assign a shortcut to it from XMPlay options.</p>
 	<img src="xmplay.png" alt="XMPlay" />
 
 	<h2>Winamp</h2>
-	<p><a href="http://www.winamp.com/">Winamp</a> is a pure old-school classic! Believe it or not, it works on Windows 10.
+	<p><a href="https://www.winamp.com/">Winamp</a> is a pure old-school classic! Believe it or not, it works on Windows 10.
 	The ASAP plugin supports ATR disk images.</p>
 	<img src="winamp.png" alt="Winamp" />
 
 	<h2>BASS / AIMP</h2>
-	<p><a href="http://www.un4seen.com/bass.html">BASS</a> is a component that provides audio playback
-	in <a href="http://www.aimp.ru/">AIMP</a> and <a href="http://www.un4seen.com/bass_showcase.php">other players</a>.
+	<p><a href="https://www.un4seen.com/bass.html">BASS</a> is a component that provides audio playback
+	in <a href="https://www.aimp.ru/">AIMP</a> and <a href="https://www.un4seen.com/bass_showcase.php">other players</a>.
 	The ASAP installer detects AIMP. For other players, modify the install directory.</p>
 	<img src="aimp.png" alt="AIMP" />
 
 	<h2>VLC</h2>
-	<p><a href="http://www.videolan.org/vlc/">VLC</a> is a popular video player that plays audio as well.
+	<p><a href="https://www.videolan.org/vlc/">VLC</a> is a popular video player that plays audio as well.
 	It provides limited support for the SAP file format out of the box (no digitized sounds, buggy emulation).
 	For best experience, install the ASAP plugin.</p>
 	<p>For 64-bit VLC, you need to install <download prefix="asap-" suffix="-win64.msi" />.

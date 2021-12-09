@@ -34,7 +34,7 @@
 	This list is for users and developers.
 	Once you subscribe, you can post comments, ideas and questions about ASAP.
 	They will be answered ASAP. ;-)</p>
-	<p>Use <a href="http://sourceforge.net/p/asap/_list/tickets">tracker</a>
+	<p>Use <a href="https://sourceforge.net/p/asap/_list/tickets">tracker</a>
 	to submit bug reports, feature request and small code patches.</p>
 
 	<h2>For software developers</h2>
@@ -49,16 +49,16 @@
 	<p>The following projects already use ASAP:</p>
 	<ul>
 		<li><a href="http://mmsap.sourceforge.net/">mmSAP</a> - standalone player for GNU/Linux and Windows with GTK+ user interface</li>
-		<li><a href="http://www.rockbox.org/">Rockbox</a> - open source firmware for MP3 players</li>
+		<li><a href="https://www.rockbox.org/">Rockbox</a> - open source firmware for MP3 players</li>
 		<li><a href="http://bzrplayer.blazer.nu/">BZR Player</a> - player for Windows</li>
 		<li>Game Music Gear MX - player for PlayStation Portable</li>
-		<li><a href="http://yoyofr.blogspot.com/p/modizer.html">Modizer</a> - player for iPhone, iPod and iPad</li>
+		<li><a href="https://yoyofr.blogspot.com/p/modizer.html">Modizer</a> - player for iPhone, iPod and iPad</li>
 		<li><a href="http://www.chipamp.org/">Chipamp</a> - bundle of plugins for Winamp</li>
 		<li><a href="http://atari-sounds.fatmagnus.ppa.pl/">Atari Sounds For The Masses</a> - GUI frontend to asapconv for macOS</li>
 		<li><a href="http://dangerousprototypes.com/forum/viewtopic.php?t=3944">Atari POKEY 8-bit Computer Sound on PIC32</a> - ASAP on a microcontroller</li>
 		<li><a href="http://mxplay.atari.org/">mxPlay</a> - audio player for Atari Falcon</li>
 		<li><a href="https://github.com/epi/enotracker">enotracker</a> - POKEY music editor for PC</li>
-		<li><a href="http://www.wothke.ch/webasap/">WebAsap</a> - HTML5/WebAudio port</li>
+		<li><a href="https://www.wothke.ch/webasap/">WebAsap</a> - HTML5/WebAudio port</li>
 		<li><a href="https://zxtune.bitbucket.io/">ZXTune</a> - AY/SID/POKEY player for Windows/macOS/Linux/Android</li>
 		<li><a href="https://github.com/1ucasvb/pokey2midi">POKEY2MIDI</a> - converter to MIDI music files</li>
 	</ul>

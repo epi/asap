@@ -1,8 +1,8 @@
 ﻿<page title="Home">
-	<p>ASAP is a player of <a href="http://en.wikipedia.org/wiki/Atari_8-bit_family">Atari 8-bit</a>
+	<p>ASAP is a player of <a href="https://en.wikipedia.org/wiki/Atari_8-bit_family">Atari 8-bit</a>
 	<a href="https://en.wikipedia.org/wiki/Chiptune">chiptunes</a> for modern computers and mobile devices.
-	It emulates the <a href="http://en.wikipedia.org/wiki/POKEY">POKEY sound chip</a>
-	and the <a href="http://en.wikipedia.org/wiki/6502">6502 processor</a>.
+	It emulates the <a href="https://en.wikipedia.org/wiki/POKEY">POKEY sound chip</a>
+	and the <a href="https://en.wikipedia.org/wiki/6502">6502 processor</a>.
 	The project was initially based on the routines from the
 	<a href="https://atari800.github.io/">Atari800 emulator</a>,
 	but the current version has an original emulation core.</p>
@@ -62,7 +62,7 @@
 		<dt>STIL (SAP Tune Information List)</dt>
 		<dd>This isn't a music format.
 		It's a text file that contains cover information and comments for many music files.
-		This format is identical to <a href="http://www.hvsc.de/download/C64Music/DOCUMENTS/STIL.faq">C64 STIL</a>.
+		This format is identical to <a href="https://www.hvsc.de/download/C64Music/DOCUMENTS/STIL.faq">C64 STIL</a>.
 		<code>STIL.txt</code> is distributed with ASMA (see above).</dd>
 	</dl>
 

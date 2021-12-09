@@ -1,7 +1,7 @@
 ﻿<page title="Spec">
 	<h2>SAP (Slight Atari Player) file format specification</h2>
 	<p>A SAP file contains chip music of the
-	<a href="http://en.wikipedia.org/wiki/Atari_8-bit_family">Atari 8-bit computers</a>.</p>
+	<a href="https://en.wikipedia.org/wiki/Atari_8-bit_family">Atari 8-bit computers</a>.</p>
 
 	<h2>History</h2>
 	<p>The SAP format was created in the 1990s by Adam Bienias and was intended

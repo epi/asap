@@ -158,7 +158,7 @@
 			<li>The Audacious plugin updated to Audacious 3.2 and compiled for Windows.</li>
 			<li>The BASS add-on made compatible with AIMP 3 (SAP format only).</li>
 			<li>Enabled title/author/year in the BASS add-on (only selected BASS-based players use it,
-			for example <a href="http://sourceforge.net/projects/encorebassing/">EncoreBassing</a>).</li>
+			for example <a href="https://sourceforge.net/projects/encorebassing/">EncoreBassing</a>).</li>
 			<li>The Windows Media Player codec supports subsongs, AUTHOR and NAME
 			(this works at least with Media Player Classic Home Cinema).</li>
 			<li>Extended and unified the JavaScript interface of the web players.</li>

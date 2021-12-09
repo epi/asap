@@ -3,7 +3,7 @@
 	<p>Download <download prefix="asap-" suffix="-macos.dmg" />.</p>
 
 	<h2>VLC</h2>
-	<p><a href="http://www.videolan.org/vlc/">VLC</a> is a popular video player that plays audio as well.
+	<p><a href="https://www.videolan.org/vlc/">VLC</a> is a popular video player that plays audio as well.
 	It provides limited support for the SAP file format out of the box (no digitized sounds, buggy emulation).
 	For best experience, install the ASAP plugin as follows:</p>
 	<ol>
