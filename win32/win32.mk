@@ -169,8 +169,8 @@ win32/foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
 	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc -D_WIN32_IE=0x550 -I$(FOOBAR2000_SDK_DIR)
 CLEAN += win32/foobar2000/*.obj
 
-win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,audio_math audio_sample bit_array bsearch \
-	guid other pathUtils sort stringNew string_base string_conv threads timers utf8 win-objects)
+win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,audio_math audio_sample bit_array bsearch guid other \
+	pathUtils sort splitString2 string-compare string-lite string_base string_conv threads timers utf8 win-objects)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/pfc.lib
 
