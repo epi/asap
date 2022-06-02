@@ -1,6 +1,5 @@
-*.exp
-*.lib
 *.obj
-*.res
+/foobar2000/foo_asap.res
+/foobar2000/*.lib
 /signed
 /x64
