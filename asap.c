@@ -3699,7 +3699,7 @@ static bool ASAPInfo_ParseFc(ASAPInfo *self, uint8_t const *module, int moduleLe
 
 static char *ASAPInfo_ParseText(uint8_t const *module, int i, int argEnd)
 {
-	if (i < 0 || argEnd - i < 2 || module[i] != '\"' || module[argEnd - 1] != '\"')
+	if (i < 0 || argEnd - i < 2 || module[i] != '"' || module[argEnd - 1] != '"')
 		return strdup("");
 	if (module[i + 1] == '<' && module[i + 2] == '?' && module[i + 3] == '>')
 		return strdup("");
@@ -4673,13 +4673,13 @@ static bool ASAPWriter_WriteTextSapTag(ASAPWriter *self, const char *tag, const 
 {
 	if (!ASAPWriter_WriteString(self, tag))
 		return false;
-	if (!ASAPWriter_WriteByte(self, '\"'))
+	if (!ASAPWriter_WriteByte(self, '"'))
 		return false;
 	if (value[0] == '\0')
 		value = "<?>";
 	if (!ASAPWriter_WriteString(self, value))
 		return false;
-	if (!ASAPWriter_WriteByte(self, '\"'))
+	if (!ASAPWriter_WriteByte(self, '"'))
 		return false;
 	if (!ASAPWriter_WriteByte(self, '\r'))
 		return false;
