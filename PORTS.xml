@@ -201,7 +201,7 @@
 		<config-time>no</config-time>
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
-		<comment class="good">Plays from ZIP archives and M3U playlists</comment>
+		<comment class="good">Plays from ZIP archives</comment>
 		<lang>Java</lang>
 	</port>
 	<port name="VLC plugin">

@@ -1,7 +1,7 @@
 /*
  * FileSelector.java - ASAP for Android
  *
- * Copyright (C) 2010-2019  Piotr Fusik
+ * Copyright (C) 2010-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -85,19 +85,13 @@ public class FileSelector extends BaseSelector
 
 		FileInfo[] list() throws IOException
 		{
-			boolean isM3u = Util.endsWithIgnoreCase(uri.toString(), ".m3u");
-			coll = isM3u ? new ArrayList<FileInfo>() : new TreeSet<FileInfo>();
+			coll = new TreeSet<FileInfo>();
 			songFiles = 0;
 			list(FileSelector.this, uri, isDetails, false);
 
 			// "(shuffle all)" if any song files or non-empty ZIP directory
-			if (songFiles > 1 || (!coll.isEmpty() && Util.endsWithIgnoreCase(uri.getPath(), ".zip"))) {
-				FileInfo shuffleAll = FileInfo.getShuffleAll(FileSelector.this);
-				if (isM3u)
-					((ArrayList<FileInfo>) coll).add(0, shuffleAll); // insert at the beginning
-				else
-					coll.add(shuffleAll);
-			}
+			if (songFiles > 1 || (!coll.isEmpty() && Util.endsWithIgnoreCase(uri.getPath(), ".zip")))
+				coll.add(FileInfo.getShuffleAll(FileSelector.this));
 
 			return coll.toArray(new FileInfo[coll.size()]);
 		}

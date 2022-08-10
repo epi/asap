@@ -135,8 +135,6 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	// Playlist -----------------------------------------------------------------------------------------------
 
-	static final String EXTRA_PLAYLIST = "asap.intent.extra.PLAYLIST";
-
 	private final ArrayList<Uri> playlist = new ArrayList<Uri>();
 
 	private void setPlaylist(final Uri uri, boolean shuffle)
@@ -152,7 +150,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			container.list(this, uri, false, true);
 			if (shuffle)
 				Collections.shuffle(playlist);
-			else if (!Util.isAsma(uri) && !Util.endsWithIgnoreCase(uri.toString(), ".m3u"))
+			else if (!Util.isAsma(uri))
 				Collections.sort(playlist);
 		}
 		catch (IOException ex) {
@@ -617,10 +615,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			registerReceiver(becomingNoisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
 			song = SONG_DEFAULT;
 			uri = intent.getData();
-			String playlistUri = intent.getStringExtra(EXTRA_PLAYLIST);
-			if (playlistUri != null)
-				setPlaylist(Uri.parse(playlistUri), false);
-			else if (ASAPInfo.isOurFile(uri.toString()))
+			if (ASAPInfo.isOurFile(uri.toString()))
 				setPlaylist(Util.getParent(uri), false);
 			else {
 				// shuffle

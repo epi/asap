@@ -68,11 +68,6 @@ class Util
 		return Uri.fromFile(new File(getParent(uri.getPath())));
 	}
 
-	static String stripM3u(String path)
-	{
-		return endsWithIgnoreCase(path, ".m3u") ? getParent(path) : path;
-	}
-
 	static Uri buildUri(Uri baseUri, String relativePath)
 	{
 		if (isAsma(baseUri))
@@ -83,10 +78,10 @@ class Util
 			if (innerPath == null)
 				innerPath = relativePath;
 			else
-				innerPath = stripM3u(innerPath) + relativePath;
+				innerPath += relativePath;
 			return baseUri.buildUpon().fragment(innerPath).build();
 		}
-		return Uri.fromFile(new File(stripM3u(path), relativePath));
+		return Uri.fromFile(new File(path, relativePath));
 	}
 
 	/**

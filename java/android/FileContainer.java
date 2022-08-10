@@ -25,26 +25,24 @@ package net.sf.asap;
 
 import android.content.Context;
 import android.net.Uri;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipEntry;
 
 /*
- * Container of files: either a directory, a ZIP directory or an M3U playlist.
+ * Container of files: either a directory or a ZIP directory.
  */
 abstract class FileContainer
 {
 	protected abstract void onSongFile(String name, InputStream is);
 
-	// directory, m3u, zip
+	// directory, zip
 	protected void onContainer(String name)
 	{
 	}
@@ -73,61 +71,8 @@ abstract class FileContainer
 					// ignore files we cannot read
 				}
 			}
-			else if (Util.endsWithIgnoreCase(name, ".zip")
-				  || Util.endsWithIgnoreCase(name, ".m3u")) {
+			else if (Util.endsWithIgnoreCase(name, ".zip"))
 				onContainer(name);
-			}
-		}
-	}
-
-	private void listM3u(Uri uri, boolean inputStreams) throws IOException
-	{
-		String path = uri.getPath();
-		InputStream m3uIs;
-		ZipInputStream zis;
-		if (Util.endsWithIgnoreCase(path, ".zip")) {
-			String zipFilename = path;
-			path = uri.getFragment();
-			m3uIs = zis = new ZipInputStream(zipFilename, path);
-		}
-		else {
-			m3uIs = new FileInputStream(uri.getPath());
-			zis = null;
-		}
-		path = Util.getParent(path);
-		BufferedReader lineReader = new BufferedReader(new InputStreamReader(m3uIs));
-
-		try {
-			for (;;) {
-				String line = lineReader.readLine();
-				if (line == null)
-					break;
-				if (line.length() == 0 || line.charAt(0) == '#')
-					continue;
-				line = line.replace('\\', '/');
-
-				if (ASAPInfo.isOurFile(line)) {
-					InputStream is;
-					if (inputStreams) {
-						try {
-							if (zis != null)
-								is = zis.openInputStream(path + line);
-							else
-								is = new FileInputStream(path + line);
-						}
-						catch (IOException ex) {
-							// ignore files we cannot read
-							continue;
-						}
-					}
-					else
-						is = null;
-					onSongFile(line, is);
-				}
-			}
-		}
-		finally {
-			lineReader.close();
 		}
 	}
 
@@ -143,7 +88,7 @@ abstract class FileContainer
 				final ZipEntry zipEntry = zipEntries.nextElement();
 				if (!zipEntry.isDirectory()) {
 					String name = zipEntry.getName();
-					if (name.startsWith(zipPath) && (ASAPInfo.isOurFile(name) || Util.endsWithIgnoreCase(name, ".m3u"))) {
+					if (name.startsWith(zipPath) && ASAPInfo.isOurFile(name)) {
 						if (!recurseZip) {
 							int i = name.indexOf('/', zipPathLen);
 							if (i >= 0) {
@@ -154,15 +99,11 @@ abstract class FileContainer
 						}
 						// file
 						name = name.substring(zipPathLen);
-						if (Util.endsWithIgnoreCase(name, ".m3u"))
-							onContainer(name);
-						else {
-							try {
-								onSongFile(name, inputStreams ? zip.getInputStream(zipEntry) : null);
-							}
-							catch (IOException ex) {
-								// ignore files we cannot read
-							}
+						try {
+							onSongFile(name, inputStreams ? zip.getInputStream(zipEntry) : null);
+						}
+						catch (IOException ex) {
+							// ignore files we cannot read
 						}
 					}
 				}
@@ -182,8 +123,6 @@ abstract class FileContainer
 			File file = new File(path);
 			if (file.isDirectory())
 				listDirectory(file, inputStreams);
-			else if (Util.endsWithIgnoreCase(uri.toString(), ".m3u"))
-				listM3u(uri, inputStreams);
 			else if (Util.endsWithIgnoreCase(path, ".zip"))
 				listZipDirectory(file, uri.getFragment(), inputStreams, recurseZip);
 		}

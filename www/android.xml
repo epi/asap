@@ -6,8 +6,6 @@
 	On start it shows the whole archive contents, so you probably want to use the search button.
 	The navigation is to be improved in future releases!</p>
 	<p>Use the open button to play files from your device (memory card not supported yet, sorry).
-	ZIP archives and ATR disk images are supported.
-	M3U playlists are supported, but must be prepared on a computer
-	and transferred to the Android device.</p>
+	ZIP archives are supported.</p>
 	<div style="clear: right;" />
 </page>

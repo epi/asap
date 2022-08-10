@@ -1,7 +1,7 @@
 /*
  * BaseSelector.java - ASAP for Android
  *
- * Copyright (C) 2010-2019  Piotr Fusik
+ * Copyright (C) 2010-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -103,8 +103,6 @@ abstract class BaseSelector extends ListActivity
 		else {
 			Class klass = ASAPInfo.isOurFile(name) ? Player.class : FileSelector.class;
 			intent = new Intent(Intent.ACTION_VIEW, Util.buildUri(uri, name), this, klass);
-			if (Util.endsWithIgnoreCase(uri.toString(), ".m3u"))
-				intent.putExtra(PlayerService.EXTRA_PLAYLIST, uri.toString());
 		}
 		startActivity(intent);
 	}
