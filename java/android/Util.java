@@ -1,7 +1,7 @@
 /*
  * Util.java - ASAP for Android
  *
- * Copyright (C) 2010-2021  Piotr Fusik
+ * Copyright (C) 2010-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -78,7 +78,7 @@ class Util
 		if (isAsma(baseUri))
 			return getAsmaUri(relativePath);
 		String path = baseUri.getPath();
-		if (endsWithIgnoreCase(path, ".zip") || endsWithIgnoreCase(path, ".atr")) {
+		if (endsWithIgnoreCase(path, ".zip")) {
 			String innerPath = baseUri.getFragment();
 			if (innerPath == null)
 				innerPath = relativePath;

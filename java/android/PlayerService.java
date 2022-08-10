@@ -1,7 +1,7 @@
 /*
  * PlayerService.java - ASAP for Android
  *
- * Copyright (C) 2010-2021  Piotr Fusik
+ * Copyright (C) 2010-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -240,11 +240,6 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 					String zipFilename = filename;
 					filename = uri.getFragment();
 					stream = new ZipInputStream(zipFilename, filename);
-				}
-				else if (Util.endsWithIgnoreCase(filename, ".atr")) {
-					JavaAATR atr = new JavaAATR(filename);
-					filename = uri.getFragment();
-					stream = new AATRFileInputStream(atr, filename);
 				}
 				else {
 					stream = new FileInputStream(filename);

@@ -1,7 +1,7 @@
 /*
  * FileContainer.java - ASAP for Android
  *
- * Copyright (C) 2013-2019  Piotr Fusik
+ * Copyright (C) 2013-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -44,7 +44,7 @@ abstract class FileContainer
 {
 	protected abstract void onSongFile(String name, InputStream is);
 
-	// directory, m3u, zip, atr
+	// directory, m3u, zip
 	protected void onContainer(String name)
 	{
 	}
@@ -74,8 +74,7 @@ abstract class FileContainer
 				}
 			}
 			else if (Util.endsWithIgnoreCase(name, ".zip")
-				  || Util.endsWithIgnoreCase(name, ".m3u")
-				  || Util.endsWithIgnoreCase(name, ".atr")) {
+				  || Util.endsWithIgnoreCase(name, ".m3u")) {
 				onContainer(name);
 			}
 		}
@@ -174,34 +173,6 @@ abstract class FileContainer
 		}
 	}
 
-	private void listAtr(String atrFilename, String atrPath, boolean inputStreams) throws IOException
-	{
-		JavaAATR atr = new JavaAATR(atrFilename);
-		try {
-			AATRDirectory directory = new AATRDirectory();
-			directory.openRoot(atr);
-			if (atrPath != null) {
-				if (atrPath.endsWith("/"))
-					atrPath = atrPath.substring(0, atrPath.length() - 1);
-				if (!directory.findEntryRecursively(atrPath) || !directory.isEntryDirectory())
-					throw new FileNotFoundException();
-				directory.open(directory);
-			}
-			for (;;) {
-				String name = directory.nextEntry();
-				if (name == null)
-					break;
-				if (directory.isEntryDirectory())
-					onContainer(name + '/');
-				else if (ASAPInfo.isOurFile(name))
-					onSongFile(name, inputStreams ? new AATRFileInputStream(directory) : null);
-			}
-		}
-		finally {
-			atr.close();
-		}
-	}
-
 	void list(Context context, Uri uri, boolean inputStreams, boolean recurseZip) throws IOException
 	{
 		if (Util.isAsma(uri))
@@ -215,8 +186,6 @@ abstract class FileContainer
 				listM3u(uri, inputStreams);
 			else if (Util.endsWithIgnoreCase(path, ".zip"))
 				listZipDirectory(file, uri.getFragment(), inputStreams, recurseZip);
-			else if (Util.endsWithIgnoreCase(path, ".atr"))
-				listAtr(path, uri.getFragment(), inputStreams);
 		}
 	}
 }

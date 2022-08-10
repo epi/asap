@@ -35,7 +35,6 @@
 				<data android:pathPattern=".*\\.tm8" />
 				<data android:pathPattern=".*\\.tm2" />
 				<data android:pathPattern=".*\\.fc" />
-				<data android:pathPattern=".*\\.atr" />
 			</intent-filter>
 		</activity>
 		<provider android:name=".ArchiveSuggestionsProvider" android:authorities="net.sf.asap.ArchiveSuggestionsProvider" />
