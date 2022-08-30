@@ -1,4 +1,4 @@
-JAVA_SDK = "C:/Program Files/Java/jdk-11.0.12"
+JAVA_SDK = "C:/Program Files/Java/jdk-17.0.4.1"
 
 JAVAC = $(DO)javac
 JAR = $(DO)$(JAVA_SDK)/bin/jar
