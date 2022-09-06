@@ -473,12 +473,6 @@ void ASAPWriter_Delete(ASAPWriter *self);
 #define ASAPWriter_MAX_SAVE_EXTS 3
 
 /**
- * Maximum length of text representation of a duration.
- * Corresponds to the longest format which is <code>"mm:ss.xxx"</code>.
- */
-#define ASAPWriter_MAX_DURATION_LENGTH 9
-
-/**
  * Enumerates possible file types the given module can be written as.
  * Returns the number of extensions written to <code>exts</code>.
  * @param exts Receives filename extensions without the leading dot.
@@ -487,6 +481,12 @@ void ASAPWriter_Delete(ASAPWriter *self);
  * @param moduleLen Length of the file.
  */
 int ASAPWriter_GetSaveExts(const char **exts, const ASAPInfo *info, uint8_t const *module, int moduleLen);
+
+/**
+ * Maximum length of text representation of a duration.
+ * Corresponds to the longest format which is <code>"mm:ss.xxx"</code>.
+ */
+#define ASAPWriter_MAX_DURATION_LENGTH 9
 
 /**
  * Writes text representation of the given duration.
