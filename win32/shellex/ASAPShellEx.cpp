@@ -1,7 +1,7 @@
 /*
  * ASAPShellEx.cpp - ASAP Column Handler and Property Handler shell extensions
  *
- * Copyright (C) 2010-2021  Piotr Fusik
+ * Copyright (C) 2010-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #define _WIN32_IE 0x500
+#include <propvarutil.h>
 #include <shlobj.h>
 #include <shlwapi.h>
 
@@ -34,12 +35,12 @@ static const char extensions[][5] =
 static HINSTANCE g_hDll;
 static LONG g_cRef = 0;
 
-static void DllAddRef(void)
+static void DllAddRef()
 {
 	InterlockedIncrement(&g_cRef);
 }
 
-static void DllRelease(void)
+static void DllRelease()
 {
 	InterlockedDecrement(&g_cRef);
 }
@@ -145,13 +146,6 @@ class CASAPMetadataHandler final : IInitializeWithStream, IPropertyStore, IPrope
 		return S_OK;
 	}
 
-	static HRESULT GetInt(PROPVARIANT *pvarData, int i)
-	{
-		pvarData->vt = VT_UI4;
-		pvarData->ulVal = static_cast<ULONG>(i);
-		return S_OK;
-	}
-
 	static LPSTR AllocString(const char *s, size_t len)
 	{
 		LPSTR result = static_cast<LPSTR>(CoTaskMemAlloc(len + 1));
@@ -225,7 +219,7 @@ class CASAPMetadataHandler final : IInitializeWithStream, IPropertyStore, IPrope
 					pvarData->vt = VT_EMPTY;
 					return S_OK;
 				}
-				return GetInt(pvarData, year);
+				return InitPropVariantFromUInt32(year, pvarData);
 			}
 		}
 		else if (pscid->fmtid == FMTID_AudioSummaryInformation) {
@@ -240,11 +234,11 @@ class CASAPMetadataHandler final : IInitializeWithStream, IPropertyStore, IPrope
 				return S_OK;
 			}
 			if (pscid->pid == PIDASI_CHANNEL_COUNT)
-				return GetInt(pvarData, m_info.getChannels());
+				return InitPropVariantFromUInt32(m_info.getChannels(), pvarData);
 		}
 		else if (pscid->fmtid == CLSID_ASAPMetadataHandler) {
 			if (pscid->pid == 1)
-				return GetInt(pvarData, m_info.getSongs());
+				return InitPropVariantFromUInt32(m_info.getSongs(), pvarData);
 			if (pscid->pid == 2)
 				return GetString(pvarData, m_info.isNtsc() ? "NTSC" : "PAL");
 		}
@@ -323,6 +317,8 @@ public:
 
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
 	{
+		if (ppv == nullptr)
+			return E_POINTER;
 		if (riid == __uuidof(IUnknown) || riid == __uuidof(IInitializeWithStream)) {
 			*ppv = static_cast<IInitializeWithStream *>(this);
 			AddRef();
@@ -418,7 +414,7 @@ public:
 		return E_FAIL;
 	}
 
-	STDMETHODIMP Commit(void)
+	STDMETHODIMP Commit()
 	{
 		CMyLock lck(m_lock);
 		if (m_pstream == nullptr)
@@ -483,6 +479,8 @@ public:
 
 	STDMETHODIMP QueryInterface(REFIID riid, void **ppv)
 	{
+		if (ppv == nullptr)
+			return E_POINTER;
 		if (riid == __uuidof(IUnknown) || riid == __uuidof(IClassFactory)) {
 			*ppv = static_cast<IClassFactory *>(this);
 			DllAddRef();
@@ -539,7 +537,7 @@ static LSTATUS RegSetString(HKEY hKey, LPCSTR lpValueName, LPCSTR lpStr)
 	return RegSetValueEx(hKey, lpValueName, 0, REG_SZ, reinterpret_cast<const BYTE *>(lpStr), strlen(lpStr) + 1);
 }
 
-STDAPI __declspec(dllexport) DllRegisterServer(void)
+STDAPI __declspec(dllexport) DllRegisterServer()
 {
 	HKEY hk1;
 	if (RegCreateKeyEx(HKEY_CLASSES_ROOT, "CLSID\\" CLSID_ASAPMetadataHandler_str, 0, nullptr, 0, KEY_WRITE, nullptr, &hk1, nullptr) != ERROR_SUCCESS)
@@ -586,7 +584,7 @@ STDAPI __declspec(dllexport) DllRegisterServer(void)
 	return S_OK;
 }
 
-STDAPI __declspec(dllexport) DllUnregisterServer(void)
+STDAPI __declspec(dllexport) DllUnregisterServer()
 {
 	HKEY hk1;
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved", 0, KEY_SET_VALUE, &hk1) == ERROR_SUCCESS) {
@@ -603,7 +601,7 @@ STDAPI __declspec(dllexport) DllUnregisterServer(void)
 	return S_OK;
 }
 
-STDAPI __declspec(dllexport) DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
+STDAPI __declspec(dllexport) DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
 	if (ppv == nullptr)
 		return E_INVALIDARG;
@@ -615,7 +613,7 @@ STDAPI __declspec(dllexport) DllGetClassObject(REFCLSID rclsid, REFIID riid, LPV
 	return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-STDAPI __declspec(dllexport) DllCanUnloadNow(void)
+STDAPI __declspec(dllexport) DllCanUnloadNow()
 {
 	return g_cRef == 0 ? S_OK : S_FALSE;
 }
@@ -646,7 +644,7 @@ static HRESULT DoPropertySchema(LPCSTR funcName)
 	return hr;
 }
 
-STDAPI __declspec(dllexport) InstallPropertySchema(void)
+STDAPI __declspec(dllexport) InstallPropertySchema()
 {
 	HRESULT hr = DoPropertySchema("PSRegisterPropertySchema");
 	if (SUCCEEDED(hr))
@@ -654,7 +652,7 @@ STDAPI __declspec(dllexport) InstallPropertySchema(void)
 	return hr;
 }
 
-STDAPI __declspec(dllexport) UninstallPropertySchema(void)
+STDAPI __declspec(dllexport) UninstallPropertySchema()
 {
 	return DoPropertySchema("PSUnregisterPropertySchema");
 }
