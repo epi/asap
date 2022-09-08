@@ -1,4 +1,4 @@
-CSC = $(DO)"C:/Windows/Microsoft.NET/Framework/v4.0.30319/csc.exe" -nologo -o+ -out:$@ $(if $(filter %.dll,$@),-t:library) $(subst /,\\,$^)
+CSC = $(DO)"C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/Roslyn/csc.exe" -nologo -o+ -out:$@ $(if $(filter %.dll,$@),-t:library) $^
 NDOC = $(DO)"C:/Program Files (x86)/NDoc3/bin/NDoc3Console.exe"
 
 # no user-configurable paths below this line
