@@ -25,7 +25,7 @@ $(error Use "Makefile" instead of "android.mk")
 endif
 
 ANDROID_RELEASE = release/asap-$(VERSION)-android.apk
-ANDROID_JAVA_SRC = $(addprefix $(srcdir)java/android/, ArchiveSelector.java ArchiveSuggestionsProvider.java BaseSelector.java FileInfo.java Player.java PlayerService.java Util.java)
+ANDROID_JAVA_SRC = $(addprefix $(srcdir)java/android/, ArchiveSelector.java ArchiveSuggestionsProvider.java FileInfo.java Player.java PlayerService.java Util.java)
 
 android-release: $(ANDROID_RELEASE)
 .PHONY: android-release
