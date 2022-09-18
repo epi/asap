@@ -5,7 +5,6 @@
 	<p>The application has the <a href="http://asma.atari.org">ASMA</a> archive bundled.
 	On start it shows the whole archive contents, so you probably want to use the search button.
 	The navigation is to be improved in future releases!</p>
-	<p>Use the open button to play files from your device (memory card not supported yet, sorry).
-	ZIP archives are supported.</p>
+	<p>Use the open button to play files from your device.</p>
 	<div style="clear: right;" />
 </page>

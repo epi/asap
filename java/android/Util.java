@@ -25,7 +25,6 @@ package net.sf.asap;
 
 import android.content.Context;
 import android.net.Uri;
-import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -33,55 +32,11 @@ import java.io.LineNumberReader;
 
 class Util
 {
-	static boolean endsWithIgnoreCase(String s, String suffix)
-	{
-		int length = s.length();
-		int suffixLength = suffix.length();
-		return length >= suffixLength && s.regionMatches(true, length - suffixLength, suffix, 0, suffixLength);
-	}
-
 	static final Uri asmaRoot = Uri.fromParts("asma", "", null);
-
-	static boolean isAsma(Uri uri)
-	{
-		return "asma".equals(uri.getScheme());
-	}
 
 	static Uri getAsmaUri(String path)
 	{
 		return Uri.fromParts("asma", path, null);
-	}
-
-	static String getParent(String path)
-	{
-		// nice hack - if there is no slash we return an empty string
-		return path.substring(0, path.lastIndexOf('/') + 1);
-	}
-
-	static Uri getParent(Uri uri)
-	{
-		if (isAsma(uri))
-			return asmaRoot;
-		String path = uri.getFragment();
-		if (path != null)
-			return uri.buildUpon().fragment(getParent(path)).build();
-		return Uri.fromFile(new File(getParent(uri.getPath())));
-	}
-
-	static Uri buildUri(Uri baseUri, String relativePath)
-	{
-		if (isAsma(baseUri))
-			return getAsmaUri(relativePath);
-		String path = baseUri.getPath();
-		if (endsWithIgnoreCase(path, ".zip")) {
-			String innerPath = baseUri.getFragment();
-			if (innerPath == null)
-				innerPath = relativePath;
-			else
-				innerPath += relativePath;
-			return baseUri.buildUpon().fragment(innerPath).build();
-		}
-		return Uri.fromFile(new File(path, relativePath));
 	}
 
 	/**

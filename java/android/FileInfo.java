@@ -1,7 +1,7 @@
 /*
  * FileInfo.java - ASAP for Android
  *
- * Copyright (C) 2010-2019  Piotr Fusik
+ * Copyright (C) 2010-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -26,11 +26,9 @@ package net.sf.asap;
 import android.content.Context;
 import java.io.IOException;
 import java.io.LineNumberReader;
-import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Comparator;
 
-class FileInfo implements Comparable<FileInfo>
+class FileInfo
 {
 	String filename;
 	String title;
@@ -47,53 +45,6 @@ class FileInfo implements Comparable<FileInfo>
 	public String toString()
 	{
 		return title;
-	}
-
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (!(obj instanceof FileInfo))
-			return false;
-		FileInfo that = (FileInfo) obj;
-		if (this.filename == null)
-			return that.filename == null;
-		return this.filename.equals(that.filename);
-	}
-
-	@Override
-	public int hashCode()
-	{
-		return filename == null ? 0 : filename.hashCode();
-	}
-
-	private static Comparator<? super String> comparator;
-
-	private static Comparator<? super String> getComparator()
-	{
-		if (comparator == null) {
-			synchronized (FileInfo.class) {
-				if (comparator == null)
-					comparator = Collator.getInstance();
-			}
-		}
-		return comparator;
-	}
-
-	public int compareTo(FileInfo that)
-	{
-		if (this.filename == null)
-			return -1;
-		if (that.filename == null)
-			return 1;
-		boolean dir1 = this.filename.endsWith("/");
-		boolean dir2 = that.filename.endsWith("/");
-		if (dir1 != dir2)
-			return dir1 ? -1 : 1;
-		Comparator<? super String> comparator = getComparator();
-		int titleCmp = comparator.compare(this.title, that.title);
-		if (titleCmp != 0)
-			return titleCmp;
-		return comparator.compare(this.filename, that.filename);
 	}
 
 	static FileInfo getShuffleAll(Context context)

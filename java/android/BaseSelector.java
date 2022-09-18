@@ -100,10 +100,8 @@ abstract class BaseSelector extends ListActivity
 			// shuffle all
 			intent = new Intent(Intent.ACTION_VIEW, uri, this, Player.class);
 		}
-		else {
-			Class klass = ASAPInfo.isOurFile(name) ? Player.class : FileSelector.class;
-			intent = new Intent(Intent.ACTION_VIEW, Util.buildUri(uri, name), this, klass);
-		}
+		else
+			intent = new Intent(Intent.ACTION_VIEW, Util.getAsmaUri(name), this, Player.class);
 		startActivity(intent);
 	}
 }

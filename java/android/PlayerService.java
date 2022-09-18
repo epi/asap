@@ -49,8 +49,6 @@ import android.os.IBinder;
 import android.provider.OpenableColumns;
 import android.widget.MediaController;
 import android.widget.Toast;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -142,22 +140,11 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	private void setPlaylist(final Uri uri, boolean shuffle)
 	{
 		playlist.clear();
-		FileContainer container = new FileContainer() {
-				@Override
-				protected void onSongFile(String name, InputStream is) {
-					playlist.add(Util.buildUri(uri, name));
-				}
-			};
-		try {
-			container.list(this, uri, false, true);
-			if (shuffle)
-				Collections.shuffle(playlist);
-			else if (!Util.isAsma(uri))
-				Collections.sort(playlist);
-		}
-		catch (IOException ex) {
-			// playlist is not essential
-		}
+		FileInfo[] infos = FileInfo.listIndex(this, null);
+		for (int i = 1 /* skip "shuffle all" */; i < infos.length; i++)
+			playlist.add(Util.getAsmaUri(infos[i].filename));
+		if (shuffle)
+			Collections.shuffle(playlist);
 	}
 
 	private boolean setSearchPlaylist(String query)
@@ -228,22 +215,10 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
 		int moduleLen;
 		try {
-			String scheme = uri.getScheme();
 			InputStream stream;
-			if ("asma".equals(scheme)) {
+			if ("asma".equals(uri.getScheme())) {
 				filename = uri.getSchemeSpecificPart();
 				stream = getAssets().open(filename);
-			}
-			else if ("file".equals(scheme)) {
-				filename = uri.getPath();
-				if (Util.endsWithIgnoreCase(filename, ".zip")) {
-					String zipFilename = filename;
-					filename = uri.getFragment();
-					stream = new ZipInputStream(zipFilename, filename);
-				}
-				else {
-					stream = new FileInputStream(filename);
-				}
 			}
 			else {
 				Cursor cursor = getContentResolver().query(uri, new String[] { OpenableColumns.DISPLAY_NAME }, null, null, null);
@@ -631,14 +606,15 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			registerReceiver(becomingNoisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
 			song = SONG_DEFAULT;
 			uri = intent.getData();
-			if (ASAPInfo.isOurFile(uri.toString()))
-				setPlaylist(Util.getParent(uri), false);
-			else {
-				// shuffle
-				setPlaylist(uri, true);
-				if (!playlist.isEmpty())
-					uri = playlist.get(0);
-			}
+			// TODO
+//			if (ASAPInfo.isOurFile(uri.toString()))
+//				setPlaylist(Util.asmaRoot, false);
+//			else {
+//				// shuffle
+//				setPlaylist(uri, true);
+//				if (!playlist.isEmpty())
+//					uri = playlist.get(0);
+//			}
 			setCommand(COMMAND_LOAD);
 			break;
 		case ACTION_PLAY:

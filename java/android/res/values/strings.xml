@@ -14,7 +14,6 @@
 	<string name="stop_button">Stop</string>
 	<string name="song_format">Song %1$d of %2$d</string>
 	<string name="menu_search">Search</string>
-	<string name="menu_toggle_details">Toggle details</string>
 	<string name="menu_browse">Browse</string>
 	<string name="notification_channel">Now Playing</string>
 	<string name="notification_play">Play</string>
