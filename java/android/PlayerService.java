@@ -32,6 +32,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -45,6 +46,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.OpenableColumns;
 import android.widget.MediaController;
 import android.widget.Toast;
 import java.io.FileInputStream;
@@ -244,8 +246,22 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 				}
 			}
 			else {
-				showError(R.string.error_reading_file);
-				return false;
+				Cursor cursor = getContentResolver().query(uri, new String[] { OpenableColumns.DISPLAY_NAME }, null, null, null);
+				if (cursor == null) {
+					showError(R.string.error_reading_file);
+					return false;
+				}
+				try {
+					if (!cursor.moveToNext()) {
+						showError(R.string.error_reading_file);
+						return false;
+					}
+					filename = cursor.getString(0);
+				}
+				finally {
+					cursor.close();
+				}
+				stream = getContentResolver().openInputStream(uri);
 			}
 			moduleLen = Util.readAndClose(stream, module);
 		}
@@ -620,7 +636,8 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			else {
 				// shuffle
 				setPlaylist(uri, true);
-				uri = playlist.get(0);
+				if (!playlist.isEmpty())
+					uri = playlist.get(0);
 			}
 			setCommand(COMMAND_LOAD);
 			break;

@@ -59,15 +59,27 @@ public class ArchiveSelector extends BaseSelector
 		return true;
 	}
 
+	private static final int OPEN_REQUEST_CODE = 1;
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
 		switch (item.getItemId()) {
 		case R.id.menu_browse:
-			startActivity(new Intent(Intent.ACTION_VIEW, null, this, FileSelector.class));
+			Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+			intent.addCategory(Intent.CATEGORY_OPENABLE);
+			intent.setType("*/*");
+			startActivityForResult(intent, OPEN_REQUEST_CODE);
 			return true;
 		default:
 			return false;
 		}
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data)
+	{
+		if (requestCode == OPEN_REQUEST_CODE && resultCode == RESULT_OK && data != null)
+			startActivity(new Intent(Intent.ACTION_VIEW, data.getData(), this, Player.class));
 	}
 }

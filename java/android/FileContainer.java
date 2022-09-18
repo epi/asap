@@ -118,7 +118,7 @@ abstract class FileContainer
 	{
 		if (Util.isAsma(uri))
 			listAsma(context);
-		else {
+		else if ("file".equals(uri.getScheme())) {
 			String path = uri.getPath();
 			File file = new File(path);
 			if (file.isDirectory())
