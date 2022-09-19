@@ -137,14 +137,18 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	private final ArrayList<Uri> playlist = new ArrayList<Uri>();
 
-	private void setPlaylist(final Uri uri, boolean shuffle)
+	private void setPlaylist()
 	{
 		playlist.clear();
-		FileInfo[] infos = FileInfo.listIndex(this, null);
-		for (int i = 1 /* skip "shuffle all" */; i < infos.length; i++)
-			playlist.add(Util.getAsmaUri(infos[i].filename));
-		if (shuffle)
-			Collections.shuffle(playlist);
+		if ("asma".equals(uri.getScheme())) {
+			FileInfo[] infos = FileInfo.listIndex(this, null);
+			for (int i = 1 /* skip "shuffle all" */; i < infos.length; i++)
+				playlist.add(Util.getAsmaUri(infos[i].filename));
+			if (uri.getSchemeSpecificPart().isEmpty()) { // shuffle all
+				Collections.shuffle(playlist);
+				uri = playlist.get(0);
+			}
+		}
 	}
 
 	private boolean setSearchPlaylist(String query)
@@ -606,15 +610,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 			registerReceiver(becomingNoisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
 			song = SONG_DEFAULT;
 			uri = intent.getData();
-			// TODO
-//			if (ASAPInfo.isOurFile(uri.toString()))
-//				setPlaylist(Util.asmaRoot, false);
-//			else {
-//				// shuffle
-//				setPlaylist(uri, true);
-//				if (!playlist.isEmpty())
-//					uri = playlist.get(0);
-//			}
+			setPlaylist();
 			setCommand(COMMAND_LOAD);
 			break;
 		case ACTION_PLAY:
