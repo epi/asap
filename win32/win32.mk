@@ -150,7 +150,7 @@ CLEAN += win32/bass/bass_asap-res.o
 
 # foobar2000
 
-FOOBAR2000_RUNTIME = win32/foobar2000/foobar2000_SDK.lib win32/foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared.lib
+FOOBAR2000_RUNTIME = win32/foobar2000/foobar2000_SDK.lib win32/foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared-Win32.lib
 
 win32/foo_asap.dll: $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] astil.[ch] aatr-stdio.[ch] aatr.h win32/info_dlg.[ch] win32/settings_dlg.[ch]) win32/foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME)
 	$(WIN32_CL) -DFOOBAR2000 -DWIN32 -EHsc -I$(FOOBAR2000_SDK_DIR) comctl32.lib comdlg32.lib ole32.lib shell32.lib shlwapi.lib user32.lib $(WIN32_LINKOPT)
@@ -170,7 +170,7 @@ win32/foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
 CLEAN += win32/foobar2000/*.obj
 
 win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,audio_math audio_sample bit_array bsearch guid other \
-	pathUtils sort splitString2 string-compare string-lite string_base string_conv threads timers utf8 win-objects)
+	pathUtils sort splitString2 string-compare string-lite string_base string_conv string-conv-lite threads timers utf8 win-objects)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/pfc.lib
 
