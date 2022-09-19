@@ -11,6 +11,9 @@ FOOBAR2000_SDK_DIR = ../foobar2000_SDK
 WIN32_CL = $(WIN32_CLDO)cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS) $(filter-out %.h,$^)
 WIN32_LINKOPT = -link -release -noexp -noimplib
 WIN32_MKLIB = $(DO)lib -nologo -ltcg -out:$@ $^
+WIN64_CL = $(WIN32_CL)
+WIN64_LINKOPT = $(WIN32_LINKOPT)
+WIN64_MKLIB = $(WIN32_MKLIB)
 
 # MinGW x64
 WIN64_CC = $(DO)x86_64-w64-mingw32-gcc $(WIN32_CARGS) $(filter-out %.h,$^)
@@ -150,11 +153,15 @@ CLEAN += win32/bass/bass_asap-res.o
 
 # foobar2000
 
-FOOBAR2000_RUNTIME = win32/foobar2000/foobar2000_SDK.lib win32/foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared-Win32.lib
+FOOBAR2000_SRC = $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] astil.[ch] aatr-stdio.[ch] aatr.h win32/info_dlg.[ch] win32/settings_dlg.[ch]) win32/foobar2000/foo_asap.res
 
-win32/foo_asap.dll: $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] astil.[ch] aatr-stdio.[ch] aatr.h win32/info_dlg.[ch] win32/settings_dlg.[ch]) win32/foobar2000/foo_asap.res $(FOOBAR2000_RUNTIME)
+win32/foo_asap.dll: $(FOOBAR2000_SRC) win32/foobar2000/foobar2000_SDK.lib win32/foobar2000/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared-Win32.lib
 	$(WIN32_CL) -DFOOBAR2000 -DWIN32 -EHsc -I$(FOOBAR2000_SDK_DIR) comctl32.lib comdlg32.lib ole32.lib shell32.lib shlwapi.lib user32.lib $(WIN32_LINKOPT)
 CLEAN += win32/foo_asap.dll
+
+win32/x64/foo_asap.dll: $(FOOBAR2000_SRC) win32/foobar2000/x64/foobar2000_SDK.lib win32/foobar2000/x64/pfc.lib $(FOOBAR2000_SDK_DIR)/foobar2000/shared/shared-x64.lib
+	$(WIN64_CL) -DFOOBAR2000 -DWIN32 -EHsc -I$(FOOBAR2000_SDK_DIR) comctl32.lib comdlg32.lib ole32.lib shell32.lib shlwapi.lib user32.lib $(WIN32_LINKOPT)
+CLEAN += win32/x64/foo_asap.dll
 
 win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,component_client abort_callback audio_chunk audio_chunk_channel_config \
 	cfg_var console file_info file_info_impl file_info_merge filesystem filesystem_helper foosort guids input \
@@ -162,19 +169,30 @@ win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,compone
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/foobar2000_SDK.lib
 
-win32/foobar2000/component_client.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp
+win32/foobar2000/x64/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/x64/%.obj,component_client abort_callback audio_chunk audio_chunk_channel_config \
+	cfg_var console file_info file_info_impl file_info_merge filesystem filesystem_helper foosort guids input \
+	main_thread_callback metadb_handle metadb_handle_list playable_location playlist preferences_page replaygain_info service titleformat utility)
+	$(WIN64_MKLIB)
+CLEAN += win32/foobar2000/x64/foobar2000_SDK.lib
+
+win32/foobar2000/component_client.obj win32/foobar2000/x64/component_client.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp
 	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc
 
-win32/foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
+win32/foobar2000/%.obj win32/foobar2000/x64/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
 	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc -D_WIN32_IE=0x550 -I$(FOOBAR2000_SDK_DIR)
-CLEAN += win32/foobar2000/*.obj
+CLEAN += win32/foobar2000/*.obj win32/foobar2000/x64/*.obj
 
 win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,audio_math audio_sample bit_array bsearch guid other \
 	pathUtils sort splitString2 string-compare string-lite string_base string_conv string-conv-lite threads timers utf8 win-objects)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/pfc.lib
 
-win32/foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/pfc/%.cpp
+win32/foobar2000/x64/pfc.lib: $(patsubst %,win32/foobar2000/x64/%.obj,audio_math audio_sample bit_array bsearch guid other \
+	pathUtils sort splitString2 string-compare string-lite string_base string_conv string-conv-lite threads timers utf8 win-objects)
+	$(WIN64_MKLIB)
+CLEAN += win32/foobar2000/x64/pfc.lib
+
+win32/foobar2000/%.obj win32/foobar2000/x64/%.obj: $(FOOBAR2000_SDK_DIR)/pfc/%.cpp
 	$(WIN32_CL) -DWIN32 -DUNICODE -D_UNICODE -EHsc
 
 win32/foobar2000/foo_asap.res: $(call src,win32/gui.rc asap.h win32/settings_dlg.h)
@@ -264,7 +282,7 @@ win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs release/release.mk
 	$(CANDLE) -arch x64 -dVERSION=$(VERSION) $<
 CLEAN += win32/x64/asap.wixobj
 
-win32/signed: $(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll x64/ASAPShellEx.dll x64/libasap_plugin.dll)
+win32/signed: $(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll x64/ASAPShellEx.dll x64/foo_asap.dll x64/libasap_plugin.dll)
 	$(DO_SIGN)
 CLEAN += win32/signed
 
