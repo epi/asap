@@ -8,12 +8,12 @@ VLC_LIB64 = "C:/Program Files/VideoLAN/VLC"
 
 # Microsoft compiler for foobar2000
 FOOBAR2000_SDK_DIR = ../foobar2000_SDK
-WIN32_CL = $(WIN32_CLDO)cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS) $(filter-out %.h,$^)
+WIN32_CL = $(WIN32_CLDO)win32/foobar2000/msvc32.bat cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS) $(filter-out %.h,$^)
 WIN32_LINKOPT = -link -release -noexp -noimplib
-WIN32_MKLIB = $(DO)lib -nologo -ltcg -out:$@ $^
-WIN64_CL = $(WIN32_CL)
+WIN32_MKLIB = $(DO)win32/foobar2000/msvc32.bat lib -nologo -ltcg -out:$@ $^
+WIN64_CL = $(WIN32_CLDO)win32/foobar2000/msvc64.bat cl -GR- -GS- -wd4996 -DNDEBUG $(WIN32_CLARGS) $(filter-out %.h,$^)
 WIN64_LINKOPT = $(WIN32_LINKOPT)
-WIN64_MKLIB = $(WIN32_MKLIB)
+WIN64_MKLIB = $(DO)win32/foobar2000/msvc64.bat lib -nologo -ltcg -out:$@ $^
 
 # MinGW x64
 WIN64_CC = $(DO)x86_64-w64-mingw32-gcc $(WIN32_CARGS) $(filter-out %.h,$^)
@@ -175,12 +175,19 @@ win32/foobar2000/x64/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/x64/%.obj
 	$(WIN64_MKLIB)
 CLEAN += win32/foobar2000/x64/foobar2000_SDK.lib
 
-win32/foobar2000/component_client.obj win32/foobar2000/x64/component_client.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp
+win32/foobar2000/component_client.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp
 	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc
 
-win32/foobar2000/%.obj win32/foobar2000/x64/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
+win32/foobar2000/x64/component_client.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp
+	$(WIN64_CL) -DWIN32 -DUNICODE -EHsc
+
+win32/foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
 	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc -D_WIN32_IE=0x550 -I$(FOOBAR2000_SDK_DIR)
-CLEAN += win32/foobar2000/*.obj win32/foobar2000/x64/*.obj
+CLEAN += win32/foobar2000/*.obj
+
+win32/foobar2000/x64/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
+	$(WIN64_CL) -DWIN32 -DUNICODE -EHsc -D_WIN32_IE=0x550 -I$(FOOBAR2000_SDK_DIR)
+CLEAN += win32/foobar2000/x64/*.obj
 
 win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,audio_math audio_sample bit_array bsearch guid other \
 	pathUtils sort splitString2 string-compare string-lite string_base string_conv string-conv-lite threads timers utf8 win-objects)
@@ -192,8 +199,11 @@ win32/foobar2000/x64/pfc.lib: $(patsubst %,win32/foobar2000/x64/%.obj,audio_math
 	$(WIN64_MKLIB)
 CLEAN += win32/foobar2000/x64/pfc.lib
 
-win32/foobar2000/%.obj win32/foobar2000/x64/%.obj: $(FOOBAR2000_SDK_DIR)/pfc/%.cpp
+win32/foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/pfc/%.cpp
 	$(WIN32_CL) -DWIN32 -DUNICODE -D_UNICODE -EHsc
+
+win32/foobar2000/x64/%.obj: $(FOOBAR2000_SDK_DIR)/pfc/%.cpp
+	$(WIN64_CL) -DWIN32 -DUNICODE -D_UNICODE -EHsc
 
 win32/foobar2000/foo_asap.res: $(call src,win32/gui.rc asap.h win32/settings_dlg.h)
 	$(WIN32_WINDRES) -DFOOBAR2000
