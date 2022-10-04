@@ -12,7 +12,7 @@
 			</intent-filter>
 			<meta-data android:name="android.app.searchable" android:resource="@xml/searchable" />
 		</activity>
-		<activity android:name=".Player" android:label="@string/play_in_asap" android:launchMode="singleTop" android:configChanges="mcc|mnc|keyboard|keyboardHidden|orientation|screenSize" />
+		<activity android:name=".Player" android:launchMode="singleTop" android:configChanges="mcc|mnc|keyboard|keyboardHidden|orientation|screenSize" />
 		<provider android:name=".ArchiveSuggestionsProvider" android:authorities="net.sf.asap.ArchiveSuggestionsProvider" />
 		<service android:name=".PlayerService" />
 	</application>
