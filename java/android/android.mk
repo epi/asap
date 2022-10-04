@@ -6,7 +6,7 @@ ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/33.0.0
 JAVA = $(DO)java
 AAPT = $(ANDROID_BUILD_TOOLS)/aapt
 D8 = $(DO)java -cp "$(ANDROID_BUILD_TOOLS)/lib/d8.jar" com.android.tools.r8.D8
-JARSIGNER = $(DO)$(JAVA_SDK)/bin/jarsigner -sigalg SHA1withRSA -digestalg SHA1
+APKSIGNER = $(DO)$(ANDROID_BUILD_TOOLS)/apksigner.bat
 ZIPALIGN = $(DO)$(ANDROID_BUILD_TOOLS)/zipalign
 ADB = $(ANDROID_SDK)/platform-tools/adb
 ANDROID = $(ANDROID_SDK)/tools/android.bat
@@ -70,16 +70,16 @@ android-create-avd:
 	$(ANDROID) create avd -n kit -t android-19 -c 16M
 .PHONY: android-create-avd
 
-$(ANDROID_RELEASE): java/android/AndroidASAP-unaligned.apk
+$(ANDROID_RELEASE): java/android/AndroidASAP-unsigned.apk
+	$(APKSIGNER) sign --ks C:/Users/fox/.keystore --ks-key-alias pfusik --ks-pass pass:walsie --out $@ $<
+
+java/android/AndroidASAP-unsigned.apk: java/android/AndroidASAP-unaligned.apk
 	$(ZIPALIGN) -f 4 $< $@
-
-java/android/AndroidASAP-unaligned.apk: java/android/AndroidASAP-unsigned.apk
-	$(JARSIGNER) -storepass walsie -signedjar $@ $< pfusik
-CLEAN += java/android/AndroidASAP-unaligned.apk
-
-java/android/AndroidASAP-unsigned.apk: java/android/AndroidASAP-resources.apk java/android/classes.dex
-	$(DO)cp $< $@ && $(SEVENZIP) -tzip $@ ./java/android/classes.dex
 CLEAN += java/android/AndroidASAP-unsigned.apk
+
+java/android/AndroidASAP-unaligned.apk: java/android/AndroidASAP-resources.apk java/android/classes.dex
+	$(DO)cp $< $@ && $(SEVENZIP) -tzip $@ ./java/android/classes.dex
+CLEAN += java/android/AndroidASAP-unaligned.apk
 
 java/android/classes.dex: java/android/classes/net/sf/asap/Player.class
 	$(D8) --release --output $(@D) --lib $(ANDROID_JAR) `ls java/android/classes/net/sf/asap/*.class`

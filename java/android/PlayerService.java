@@ -85,7 +85,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	private Notification.Action getNotificationAction(int icon, int titleResource, String action)
 	{
-		PendingIntent intent = PendingIntent.getService(this, 0, new Intent(action, null, this, PlayerService.class), 0);
+		PendingIntent intent = PendingIntent.getService(this, 0, new Intent(action, null, this, PlayerService.class), PendingIntent.FLAG_IMMUTABLE);
 		return new Notification.Action(icon, getString(titleResource), intent);
 	}
 
@@ -595,7 +595,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	@Override
 	public void onCreate()
 	{
-		activityIntent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), 0);
+		activityIntent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), PendingIntent.FLAG_IMMUTABLE);
 		mediaSession = new MediaSession(this, "ASAP");
 		mediaSession.setCallback(callback);
 		mediaSession.setSessionActivity(activityIntent);
