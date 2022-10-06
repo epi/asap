@@ -48,7 +48,7 @@
 	<h2>Third-party projects using ASAP</h2>
 	<p>The following projects already use ASAP:</p>
 	<ul>
-		<li><a href="http://mmsap.sourceforge.net/">mmSAP</a> - standalone player for GNU/Linux and Windows with GTK+ user interface</li>
+		<li><a href="https://github.com/baktragh/mmSAP">mmSAP</a> - standalone player for GNU/Linux and Windows with GTK+ user interface</li>
 		<li><a href="https://www.rockbox.org/">Rockbox</a> - open source firmware for MP3 players</li>
 		<li><a href="http://bzrplayer.blazer.nu/">BZR Player</a> - player for Windows</li>
 		<li>Game Music Gear MX - player for PlayStation Portable</li>
