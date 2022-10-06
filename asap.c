@@ -4747,7 +4747,7 @@ static bool ASAPWriter_WriteSapHeader(ASAPWriter *self, const ASAPInfo *info, in
 		return false;
 	if (!ASAPWriter_WriteByte(self, '\n'))
 		return false;
-	if (ASAPInfo_GetPlayerRateScanlines(info) != 312 || ASAPInfo_IsNtsc(info)) {
+	if (ASAPInfo_GetPlayerRateScanlines(info) != (type == 'S' ? 78 : 312) || ASAPInfo_IsNtsc(info)) {
 		if (!ASAPWriter_WriteDecSapTag(self, "FASTPLAY ", ASAPInfo_GetPlayerRateScanlines(info)))
 			return false;
 	}

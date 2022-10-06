@@ -356,7 +356,7 @@ public class ASAPWriter
 		WriteByte(type);
 		WriteByte('\r');
 		WriteByte('\n');
-		if (info.GetPlayerRateScanlines() != 312 || info.IsNtsc())
+		if (info.GetPlayerRateScanlines() != (type == 'S' ? 78 : 312) || info.IsNtsc())
 			WriteDecSapTag("FASTPLAY ", info.GetPlayerRateScanlines());
 		if (type == 'C')
 			WriteHexSapTag("MUSIC ", info.GetMusicAddress());
