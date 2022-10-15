@@ -22,7 +22,7 @@
  */
 
 const asapWeb = {
-	stop : function()
+	stop()
 	{
 		if (this.processor) {
 			this.processor.disconnect();
@@ -30,7 +30,7 @@ const asapWeb = {
 		}
 	},
 
-	playContent : function(filename, content, song)
+	playContent(filename, content, song)
 	{
 		const asap = new ASAP();
 		asap.load(filename, content, content.length);
@@ -67,7 +67,7 @@ const asapWeb = {
 			this.onUpdate();
 	},
 
-	togglePause : function()
+	togglePause()
 	{
 		if (this.context) {
 			switch (this.context.state) {
@@ -84,7 +84,7 @@ const asapWeb = {
 		return null;
 	},
 
-	isPaused : function()
+	isPaused()
 	{
 		if (this.context) {
 			switch (this.context.state) {
@@ -99,7 +99,7 @@ const asapWeb = {
 		return null;
 	},
 
-	playUrl : function(url, song)
+	playUrl(url, song)
 	{
 		const request = new XMLHttpRequest();
 		request.open("GET", url, true);
@@ -111,7 +111,7 @@ const asapWeb = {
 		request.send();
 	},
 
-	playFile : function(file)
+	playFile(file)
 	{
 		const reader = new FileReader();
 		reader.onload = e => this.playContent(file.name, new Uint8Array(e.target.result));
