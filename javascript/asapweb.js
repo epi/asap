@@ -42,7 +42,7 @@ const asapWeb = {
 		this.stop();
 		const length = 4096;
 		const channels = asap.getInfo().getChannels();
-		const buffer = new Uint8Array(new ArrayBuffer(length * channels));
+		const buffer = new Uint8Array(length * channels);
 
 		const AudioContext = window.AudioContext || window.webkitAudioContext;
 		if (this.context)
