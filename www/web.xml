@@ -20,7 +20,16 @@
 				break;
 			}
 			document.getElementById("pauseButton").style.display = "";
+			asapWeb.onUpdate = update;
 			asapWeb.playFile(files[0]);
+		}
+		function update()
+		{
+			const seekBar = document.getElementById("seekBar");
+			seekBar.style.display = "";
+			const info = asapWeb.asap.getInfo();
+			seekBar.max = info.getDuration(info.getDefaultSong());
+			seekBar.value = asapWeb.asap.getPosition();
 		}
 	</script>
 	<p>Play your local Atari 8-bit chiptunes on this page, using a pure-JavaScript player.</p>
@@ -28,5 +37,6 @@
 		<input id="fileInput" type="file" multiple="multiple" onchange="openFiles(this.files)" accept=".sap,.cmc,.cm3,.cmr,.cms,.dmc,.dlt,.mpt,.mpd,.rmt,.tmc,.tm8,.tm2,.fc" />
 		<select id="fileSelect" onchange="asapWeb.playFile(fileInput.files[this.selectedIndex])" style="display: none"> </select>
 		<input id="pauseButton" type="button" value="Pause" style="display: none" onclick="asapWeb.togglePause()" />
+		<input id="seekBar" type="range" style="display: none" oninput="asapWeb.seek(this.value)" />
 	</p>
 </page>

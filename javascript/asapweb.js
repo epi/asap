@@ -116,5 +116,14 @@ const asapWeb = {
 		const reader = new FileReader();
 		reader.onload = e => this.playContent(file.name, new Uint8Array(e.target.result));
 		reader.readAsArrayBuffer(file);
+	},
+
+	seek(position)
+	{
+		if (!this.context)
+			return;
+		this.context.suspend();
+		this.asap.seek(position);
+		this.context.resume();
 	}
 };
