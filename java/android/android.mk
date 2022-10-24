@@ -90,7 +90,7 @@ java/android/classes/net/sf/asap/Player.class: $(ANDROID_JAVA_SRC) java/android/
 CLEANDIR += java/android/classes
 
 # Also generates java/android/gen/net/sf/asap/R.java
-java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/ic_menu_browse.png res/drawable/icon.xml res/layout/fileinfo_list_item.xml res/layout/playing.xml res/menu/archive_selector.xml res/values/strings.xml res/values/themes.xml res/xml/searchable.xml) $(ASMA_DIR)/index.txt $(JAVA_OBX)
+java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/ic_menu_browse.png res/drawable/banner.png res/drawable/icon.xml res/layout/fileinfo_list_item.xml res/layout/playing.xml res/menu/archive_selector.xml res/values/strings.xml res/values/themes.xml res/xml/searchable.xml) $(ASMA_DIR)/index.txt $(JAVA_OBX)
 	$(DO)mkdir -p java/android/gen && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -A $(ASMA_DIR) --ignore-assets Docs:*.ttt -F $@ -J java/android/gen java/obx
 CLEAN += java/android/AndroidASAP-resources.apk java/android/gen/net/sf/asap/R.java
 
