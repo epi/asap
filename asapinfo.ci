@@ -1138,9 +1138,8 @@ public class ASAPInfo
 
 	static bool HasStringAt(byte[] module, int moduleIndex, string s)
 	{
-		int n = s.Length;
-		for (int i = 0; i < n; i++)
-			if (module[moduleIndex + i] != s[i])
+		foreach (int c in s)
+			if (c != module[moduleIndex++])
 				return false;
 		return true;
 	}
@@ -1543,11 +1542,10 @@ public class ASAPInfo
 	static void CheckValidText(string s)
 		throws
 	{
-		int n = s.Length;
-		if (n > MaxTextLength)
+		if (s.Length > MaxTextLength)
 			throw "Text too long";
-		for (int i = 0; i < n; i++)
-			CheckValidChar(s[i]);
+		foreach (int c in s)
+			CheckValidChar(c);
 	}
 
 	/// Returns author's name.

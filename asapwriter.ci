@@ -285,9 +285,8 @@ public class ASAPWriter
 	void WriteString!(string s)
 		throws
 	{
-		int n = s.Length;
-		for (int i = 0; i < n; i++)
-			WriteByte(s[i]);
+		foreach (int c in s)
+			WriteByte(c);
 	}
 
 	void WriteDec!(int value)

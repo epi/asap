@@ -3708,9 +3708,8 @@ static char *ASAPInfo_ParseText(uint8_t const *module, int i, int argEnd)
 
 static bool ASAPInfo_HasStringAt(uint8_t const *module, int moduleIndex, const char *s)
 {
-	int n = (int) strlen(s);
-	for (int i = 0; i < n; i++)
-		if (module[moduleIndex + i] != s[i])
+	for (const char *c = s; *c != '\0'; c++)
+		if (*c != module[moduleIndex++])
 			return false;
 	return true;
 }
@@ -4055,11 +4054,10 @@ bool ASAPInfo_Load(ASAPInfo *self, const char *filename, uint8_t const *module, 
 
 static bool ASAPInfo_CheckValidText(const char *s)
 {
-	int n = (int) strlen(s);
-	if (n > 127)
+	if ((int) strlen(s) > 127)
 		return false;
-	for (int i = 0; i < n; i++) {
-		if (!ASAPInfo_CheckValidChar(s[i]))
+	for (const char *c = s; *c != '\0'; c++) {
+		if (!ASAPInfo_CheckValidChar(*c))
 			return false;
 	}
 	return true;
@@ -4651,9 +4649,8 @@ static bool ASAPWriter_WriteBytes(ASAPWriter *self, uint8_t const *array, int st
 
 static bool ASAPWriter_WriteString(ASAPWriter *self, const char *s)
 {
-	int n = (int) strlen(s);
-	for (int i = 0; i < n; i++) {
-		if (!ASAPWriter_WriteByte(self, s[i]))
+	for (const char *c = s; *c != '\0'; c++) {
+		if (!ASAPWriter_WriteByte(self, *c))
 			return false;
 	}
 	return true;
