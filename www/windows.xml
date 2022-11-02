@@ -1,25 +1,26 @@
 ﻿<page title="Windows">
 	<h2>Windows</h2>
-	<p>Download <download prefix="asap-" suffix="-win32.msi" />, it's an installer for Windows 11/10/8/7/Vista/XP,
-	also the 64-bit ones.</p>
+	<p>Download <download prefix="asap-" suffix="-win32.msi" />.
+	It's an installer for Windows 11/10/8/7/Vista/XP, also the 64-bit ones.</p>
 
 	<h2>foobar2000</h2>
 	<p><a href="https://www.foobar2000.org/">foobar2000</a> is the recommended player.
-	The ASAP installer detects it and installs a plugin.
-	This plugin can play directly from ATR disk images.
-	You may also use foobar2000's conversion, e.g. to MP3.
+	The ASAP installer detects it and installs a suitable plugin.
 	If you want to install just the foobar2000 plugin and nothing else, there's an alternative download:
 	<download prefix="foo_asap-" suffix=".fb2k-component" />.</p>
+	<p>foobar2000 can play directly from ZIP files, so you don't even need to unpack them. The plugin also supports ATR disk images.
+	You can also convert, e.g. to MP3.</p>
+	<p>To view and edit metadata, select "View/ASAP info". This doesn't work inside ZIP archives.</p>
 	<img src="foobar2000.png" alt="foobar2000" />
 
 	<h2>XMPlay</h2>
 	<p><a href="https://www.un4seen.com/xmplay.html">XMPlay</a> is a player supporting MOD and similar formats out of the box.
 	The ASAP plugin can display RMT instrument names. If you want to use the "File information" window
-	(to edit tags or convert between SAP and other formats), assign a shortcut to it from XMPlay options.</p>
+	(to edit tags or convert between SAP and other formats), assign a shortcut to it from within XMPlay options.</p>
 	<img src="xmplay.png" alt="XMPlay" />
 
 	<h2>Winamp</h2>
-	<p><a href="https://www.winamp.com/">Winamp</a> is a pure old-school classic! Believe it or not, it works on Windows 10.
+	<p><a href="https://www.winamp.com/">Winamp</a> is a pure old-school classic! Believe it or not, it does work on Windows 10.
 	The ASAP plugin supports ATR disk images.</p>
 	<img src="winamp.png" alt="Winamp" />
 
@@ -62,6 +63,6 @@
 	The <code>-o/--output</code> option selects the output format and is mandatory.</p>
 
 	<h2>Manual installation</h2>
-	<p>If you are allergic to installers, you may download <download prefix="asap-" suffix="-win32.zip" />
+	<p>If you are allergic to installers, download <download prefix="asap-" suffix="-win32.zip" />
 	and extract the files to proper locations.</p>
 </page>

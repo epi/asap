@@ -1,0 +1,80 @@
+﻿<page title="Convert">
+	<p>In addition to playback, ASAP features conversion and editing metadata.</p>
+
+	<h2>Exporting audio (WAV/MP3)</h2>
+	<p>For playback on devices where ASAP does not run, you need to convert
+	to popular audio formats such as WAV or MP3.</p>
+	<p>This can be done using a general-purpose player with an ASAP plugin.
+	For example, in <a href="https://www.foobar2000.org">foobar2000</a>
+	select songs on the playlist, right-click and use the "Convert" menu.</p>
+	<p>To convert from the command line:</p>
+	<pre>asapconv -o .wav Lasermania.sap</pre>
+	<p>To preserve metadata (title/author/year):</p>
+	<pre>asapconv -o .wav --tag Lasermania.sap</pre>
+	<p>The above will only convert the default subsong. You can select any subsong (counting from zero):</p>
+	<pre>asapconv -o .wav -s 2 Lasermania.sap</pre>
+	<p>Or convert every subsong to a separate file (with numbers in filenames):</p>
+	<pre>asapconv -o Lasermania-%s.wav Lasermania.sap</pre>
+	<p>You can convert many files at once and customize the output filenames
+	using metadata from the source files:</p>
+	<pre>asapconv -o "%a - %n - song %s.wav" --tag *.sap</pre>
+	<p>On Windows, asapconv can output MP3 files using
+	<code>libmp3lame.dll</code> or <code>lame_enc.dll</code> (not included in ASAP):</p>
+	<pre>asapconv -o Lasermania-%s.mp3 --tag Lasermania.sap</pre>
+
+	<h2>Exporting to Atari executables (XEX)</h2>
+	<p>If you want to play music on your real Atari 8-bit computer,
+	you can export SAP and the tracker formats to Atari executables (XEX format).</p>
+	<p>On Windows, you can do this from the File Information window, which is available
+	in the fooobar2000 plugin ("View/ASAP info" from the main menu), XMPlay, Winamp and WASAP.</p>
+	<img src="info_dlg.png" alt="File Information window" />
+	<p>Click "Save as..." and select "Atari 8-bit executable" as the file type.</p>
+	<p>Alternatively, use the command line:</p>
+	<pre>asapconv -o .xex --tag Euglena_Zielona.tmc</pre>
+	<p>The <code>--tag</code> option includes display of metadata and the remaining playback time
+	on screen while running the program. Without it, the screen is blank.</p>
+	<p>Like with WAV files, the above only converts the default subsong.
+	Use the <code>-s</code> option or the <code>%s</code> output filename placeholder
+	for subsongs.</p>
+
+	<h2>Converting tracker formats to SAP</h2>
+	<p>Atari 8-bit tracker files, such as RMT, can be converted to the SAP format.
+	On Windows, use "Save as..." from the File Information window described above.
+	On any operating system, you can use asapconv.</p>
+	<p>Main reason for such a conversion is the ability to specify metadata.
+	You can type it in the File Information window or specify on the command line:</p>
+	<pre>asapconv -o Komar.sap -a "Lukasz Sychowicz (X-Ray)" -n "Komar" -d "2002" Komar.mpt</pre>
+
+	<h2>Extracting tracker formats from SAP</h2>
+	<p>A SAP file consists of metadata, 6502 code and data.
+	If it was created directly from a tracker file as described above,
+	the original tracker file can be extracted.</p>
+	<p>Use "Save as..." on Windows or the following command line:</p>
+	<pre>asapconv -o .rmt Colding.sap</pre>
+
+	<h2>Editing metadata</h2>
+	<p>You can edit metadata (title/author/date/time) in SAP files using:</p>
+	<ul>
+		<li>the File Information window</li>
+		<li>Properties in foobar2000</li>
+		<li>asapconv</li>
+		<li>the Windows Explorer extension</li>
+	</ul>
+	<p>The File Information window is limited to editing one file at a time.
+	The other methods can modify many files (for example, set the same author), for example:</p>
+	<pre>asapconv -o .sap -a "Rob Hubbard" *.sap</pre>
+
+	<h2>Relocating tracker formats</h2>
+	<p>If you are developing a new Atari 8-bit program, you might need to adjust
+	the loading address for your music file. Specify the requested address in hexadecimal:</p>
+	<pre>asapconv --address=a000 -o relocated.rmt original.rmt</pre>
+
+	<h2>Mass conversion</h2>
+	<p>asapconv supports filename wildcards.
+	To recursively process directories on Windows, use for example:</p>
+	<pre>for /r ASMA %f in (*.sap) do @asapconv -o .%e %f</pre>
+	<p>The above command will extract native modules in different formats
+	and write them next to the SAP files in the ASMA directory.
+	On macOS or Linux use:</p>
+	<pre>find ASMA -name \*.sap -exec asapconv -o .%e {} \;</pre>
+</page>

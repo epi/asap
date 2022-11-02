@@ -1,0 +1,67 @@
+﻿<page title="Formats">
+	<h2>Input formats</h2>
+	<p>ASAP supports the following file formats:</p>
+	<dl>
+		<dt>SAP (Slight Atari Player)</dt>
+		<dd>Designed for playing Atari 8-bit music on a PC.
+		All other formats can be converted to SAP.
+		<a href="http://asma.atari.org/">Atari SAP Music Archive (ASMA)</a>
+		is a single collection of over 6000 SAP files with over 200 hours of playback time.
+		For technical details of the format, see the <a href="sap-format.html">SAP specification</a>.</dd>
+
+		<dt>CMC (Chaos Music Composer)</dt>
+		<dd>Atari music editor from early 1990s.</dd>
+
+		<dt>CM3 (CMC "3/4")</dt>
+		<dd>CMC clone with modified pattern length.</dd>
+
+		<dt>CMR (CMC "Rzog")</dt>
+		<dd>CMC clone with modified bass sounds.</dd>
+
+		<dt>CMS (Stereo Double CMC)</dt>
+		<dd>Stereo CMC clone.</dd>
+
+		<dt>DMC (CMC DoublePlay)</dt>
+		<dd>CMC clone with the 6502 routine executed at double rate of the original CMC.</dd>
+
+		<dt>DLT (Delta Music Composer)</dt>
+		<dd>Atari music editor from 1990s.</dd>
+
+		<dt>FC (Future Composer)</dt>
+		<dd>Atari music editor from 1990s.</dd>
+
+		<dt>MPT (Music ProTracker)</dt>
+		<dd>Atari music editor from 1990s.</dd>
+
+		<dt>MPD (MPT DoublePlay)</dt>
+		<dd>MPT clone with the 6502 routine executed at double rate of the original MPT.</dd>
+
+		<dt>RMT (<a href="http://raster.infos.cz/atari/rmt/rmt.htm">Raster Music Tracker</a>)</dt>
+		<dd>Modern Atari music editor running on Windows.</dd>
+
+		<dt>TMC, TM8 (<a href="http://jaskier.atari8.info/">Theta Music Composer</a> 1.x)</dt>
+		<dd>Atari music editor from late 1990s.
+		TM8 means it's stereo (8-channel) music while TMC can be either mono or stereo.
+		ASAP treats both extensions identically and always plays in stereo.</dd>
+
+		<dt>TM2 (<a href="http://jaskier.atari8.info/">Theta Music Composer</a> 2.x)</dt>
+		<dd>Modern Atari music editor.</dd>
+
+		<dt>STIL (SAP Tune Information List)</dt>
+		<dd>This isn't a music format.
+		It's a text file that contains cover information and comments for many music files.
+		This format is identical to <a href="https://www.hvsc.de/download/C64Music/DOCUMENTS/STIL.faq">C64 STIL</a>.
+		<code>STIL.txt</code> is distributed with ASMA (see above).</dd>
+	</dl>
+
+	<p>You can find some test files in <a href="http://asap.sourceforge.net/examples.zip">examples.zip</a>.</p>
+
+	<p>For viewing Atari pictures, check out my other project <a href="http://recoil.sourceforge.net/">RECOIL</a>.</p>
+
+	<h2>Subsongs</h2>
+	<p>One file usually contains one song, but some files contain many songs (<em>"subsongs"</em>).
+	For example, a SAP file ripped from a game might contain a title song, an in-game song and a "game over" song.
+	The songs in a file are numbered and one of them is marked as default.</p>
+	<p>Due to technical restrictions of some general-purpose players,
+	some plugins cannot play subsongs other than the default one.</p>
+</page>

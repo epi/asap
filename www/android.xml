@@ -1,10 +1,16 @@
 ﻿<page title="Android">
 	<img src="android.png" alt="Android application" style="float: right; margin-left: 3em;" />
 	<h2>Android application</h2>
-	<p>Download <download prefix="asap-" suffix="-android.apk" /> and install it manually.</p>
+	<p>To install, download and open <download prefix="asap-" suffix="-android.apk" />.
+	It's compatible with Android 5.0 and newer.</p>
 	<p>The application has the <a href="http://asma.atari.org">ASMA</a> archive bundled.
-	On start it shows the whole archive contents, so you probably want to use the search button.
-	The navigation is to be improved in future releases!</p>
+	On start it shows the whole archive contents. Tap "shuffle all" or the search button.
+	The navigation will be improved in future releases!</p>
 	<p>Use the open button to play files from your device.</p>
+	<p>Playback can be controlled from the notification, the lock screen
+	or via voice assistant commands such as "pause playback", "next song", "seek to one minute".
+	There is no voice search yet.</p>
+	<p>You can also view metadata and control playback via Bluetooth, for example a car audio system.</p>
+	<img src="bluetooth.jpg" alt="Car audio" />
 	<div style="clear: right;" />
 </page>

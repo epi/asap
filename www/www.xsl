@@ -42,8 +42,9 @@
 						<xsl:call-template name="menu"><xsl:with-param name="page">macOS</xsl:with-param></xsl:call-template>
 						<xsl:call-template name="menu"><xsl:with-param name="page">Linux</xsl:with-param></xsl:call-template>
 						<xsl:call-template name="menu"><xsl:with-param name="page">Web</xsl:with-param></xsl:call-template>
+						<xsl:call-template name="menu"><xsl:with-param name="page">Formats</xsl:with-param></xsl:call-template>
+						<xsl:call-template name="menu"><xsl:with-param name="page">Convert</xsl:with-param></xsl:call-template>
 						<xsl:call-template name="menu"><xsl:with-param name="page">News</xsl:with-param></xsl:call-template>
-						<xsl:call-template name="menu"><xsl:with-param name="page">Spec</xsl:with-param></xsl:call-template>
 						<xsl:call-template name="menu"><xsl:with-param name="page">Contact</xsl:with-param></xsl:call-template>
 					</ul>
 				</nav>
@@ -71,9 +72,6 @@
 				</xsl:when>
 				<xsl:when test="$page = 'Home'">
 					<a href="/">Home</a>
-				</xsl:when>
-				<xsl:when test="$page = 'Spec'">
-					<a href="sap-format.html">Spec</a>
 				</xsl:when>
 				<xsl:otherwise>
 					<a href="{translate($page, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')}.html">
@@ -137,7 +135,7 @@
 		</ul>
 	</xsl:template>
 
-	<xsl:template match="a[@href]|code|div|dd|dl|dt|h2|h3|img|input|li|ol|p|pre|script|select|ul">
+	<xsl:template match="a[@href]|code|div|dd|dl|dt|em|h2|h3|img|input|li|ol|p|pre|script|select|ul">
 		<xsl:element name="{name()}">
 			<xsl:copy-of select="@*" />
 			<xsl:apply-templates />

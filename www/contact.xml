@@ -1,4 +1,23 @@
 ﻿<page title="Contact">
+	<h2>Feedback</h2>
+	<p>If you are interested in the ASAP project, please subscribe its
+	<a href="https://lists.sourceforge.net/lists/listinfo/asap-users">mailing list</a>.
+	This list is for users and developers.
+	Once you subscribe, you can post comments, ideas and questions about ASAP.
+	They will be answered ASAP. ;-)</p>
+	<p>Use <a href="https://sourceforge.net/p/asap/_list/tickets">tracker</a>
+	to submit bug reports, feature request and small code patches.</p>
+
+	<h2>For software developers</h2>
+	<p>Download the latest source release: <download prefix="asap-" suffix=".tar.gz" />
+	or <a href="https://sourceforge.net/p/asap/code/ci/master/tree/">browse Git repository</a>.</p>
+	<p>The project is hosted on SourceForge. Check out <a href="https://sourceforge.net/p/asap/">project pages</a>.</p>
+	<p>ASAP is based on a development library, which you can easily embed in your program.
+	It's not only a fully portable C library - it's better than that.
+	Since ASAP is written in <a href="https://github.com/pfusik/cito">Ć</a>,
+	it is also available as pure C++, C#, Java, JavaScript, Python, Swift and OpenCL.</p>
+	<img src="asap-internals.png" alt="Architecture diagram" />
+
 	<authors>
 		<author name="Piotr Fusik" email="fox@scene.pl" href="http://fusik.info/piotr/">Creator and lead developer.</author>
 		<author name="Atari800 Emulator Developers" href="https://atari800.github.io/">6502 and POKEY emulation used in 0.x.y versions of ASAP.</author>
@@ -28,23 +47,6 @@
 		<author name="Grzegorz Żyła" email="gsunr@poczta.onet.pl">XBMC plugin testing.</author>
 	</authors>
 
-	<h2>Feedback</h2>
-	<p>If you are interested in the ASAP project, please subscribe its
-	<a href="https://lists.sourceforge.net/lists/listinfo/asap-users">mailing list</a>.
-	This list is for users and developers.
-	Once you subscribe, you can post comments, ideas and questions about ASAP.
-	They will be answered ASAP. ;-)</p>
-	<p>Use <a href="https://sourceforge.net/p/asap/_list/tickets">tracker</a>
-	to submit bug reports, feature request and small code patches.</p>
-
-	<h2>For software developers</h2>
-	<p>Download the latest source release: <download prefix="asap-" suffix=".tar.gz" />
-	or <a href="https://sourceforge.net/p/asap/code/ci/master/tree/">browse Git repository</a>.</p>
-	<p>ASAP is based on a development library, which you can easily embed in your program.
-	It's not only a fully portable C library - it's better than that.
-	Since ASAP is written in <a href="https://github.com/pfusik/cito">Ć</a>,
-	it is also available as pure C++, C#, Java, JavaScript, Python, Swift and OpenCL.</p>
-
 	<h2>Third-party projects using ASAP</h2>
 	<p>The following projects already use ASAP:</p>
 	<ul>
@@ -61,5 +63,6 @@
 		<li><a href="https://www.wothke.ch/webasap/">WebAsap</a> - HTML5/WebAudio port</li>
 		<li><a href="https://zxtune.bitbucket.io/">ZXTune</a> - AY/SID/POKEY player for Windows/macOS/Linux/Android</li>
 		<li><a href="https://github.com/1ucasvb/pokey2midi">POKEY2MIDI</a> - converter to MIDI music files</li>
+		<li><a href="https://turgen.sourceforge.io">TURGEN</a> - tool for authoring tapes with software for Atari 8-bit computers</li>
 	</ul>
 </page>

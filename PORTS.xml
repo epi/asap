@@ -60,7 +60,7 @@
 		<output>16-bit sound</output>
 		<subsongs>yes</subsongs>
 		<file-info>yes</file-info>
-		<edit-info>yes</edit-info>
+		<edit-info>yes, multi-file</edit-info>
 		<convert-sap>yes</convert-sap>
 		<config-time>yes</config-time>
 		<mute-pokey>yes</mute-pokey>
@@ -121,7 +121,7 @@
 		<a href="http://asap.sourceforge.net/web.html">online demo</a>
 	</port>
 	<port name="asapconv">
-		<bin>Windows, Linux</bin>
+		<bin>Windows, macOS, Linux</bin>
 		<platform>desktop operating systems</platform>
 		<interface>command line</interface>
 		<since>2.1.0</since>
@@ -221,6 +221,24 @@
 		<comment class="bad">SAP, FC, RMT formats only</comment>
 		<lang>C</lang>
 		<a href="http://www.videolan.org/vlc/">VLC</a>
+	</port>
+	<port name="XMMS2 plugin">
+		<bin>Linux</bin>
+		<platform>Linux</platform>
+		<interface>player plugin</interface>
+		<since>5.2.0</since>
+		<status>stable</status>
+		<output>16-bit sound</output>
+		<subsongs>no</subsongs>
+		<file-info>yes</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>no</config-time>
+		<mute-pokey>no</mute-pokey>
+		<stil>no</stil>
+		<comment class="bad">SAP format only</comment>
+		<lang>C</lang>
+		<a href="http://www.xmms2.org/">XMMS2</a>
 	</port>
 	<port name="GSPlayer">
 		<bin></bin>
@@ -567,22 +585,6 @@
 		<lang>C</lang>
 		<a href="http://www.libsdl.org/">SDL</a>
 	</port>
-	<port name="asapconv (Android)">
-		<bin></bin>
-		<platform>Android</platform>
-		<interface>command line</interface>
-		<since>3.1.5</since>
-		<status>sample</status>
-		<output>8 or 16-bit, WAV or raw, file or stdout</output>
-		<subsongs>yes</subsongs>
-		<file-info>no</file-info>
-		<edit-info>yes, multi-file</edit-info>
-		<convert-sap>yes, multi-file</convert-sap>
-		<config-time>yes</config-time>
-		<mute-pokey>yes</mute-pokey>
-		<stil>no</stil>
-		<lang>C</lang>
-	</port>
 	<port name="ASAP2WAV (Python)">
 		<bin></bin>
 		<platform>desktop operating systems</platform>
@@ -630,23 +632,5 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>OpenCL</lang>
-	</port>
-	<port name="XMMS2 plugin">
-		<bin>Linux</bin>
-		<platform>Linux</platform>
-		<interface>player plugin</interface>
-		<since>5.2.0</since>
-		<status>stable</status>
-		<output>16-bit sound</output>
-		<subsongs>no</subsongs>
-		<file-info>yes</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>no</config-time>
-		<mute-pokey>no</mute-pokey>
-		<stil>no</stil>
-		<comment class="bad">SAP format only</comment>
-		<lang>C</lang>
-		<a href="http://www.xmms2.org/">XMMS2</a>
 	</port>
 </ports>
