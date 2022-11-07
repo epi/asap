@@ -1,7 +1,7 @@
 /*
  * asapconv.c - converter of ASAP-supported formats
  *
- * Copyright (C) 2005-2020  Piotr Fusik
+ * Copyright (C) 2005-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -55,6 +55,7 @@ static const char *arg_author = NULL;
 static const char *arg_name = NULL;
 static const char *arg_date = NULL;
 static bool arg_tag = false;
+static int arg_ntsc = -1;
 static int arg_music_address = -1;
 
 static int current_song;
@@ -102,6 +103,8 @@ static void print_help(void)
 		"Options for SAP output:\n"
 		"-s SONG     --song=SONG        Select subsong to set length of\n"
 		"-t TIME     --time=TIME        Set subsong length (MM:SS format)\n"
+		"            --ntsc             Mark file as NTSC\n"
+		"            --pal              Mark file as PAL\n"
 		"Options for native module output:\n"
 		"            --address=HEXNUM   Relocate music to the given address\n"
 	);
@@ -519,6 +522,11 @@ static void convert_to_module(const char *input_file, const unsigned char *modul
 	if (writer == NULL)
 		fatal_error("out of memory");
 	apply_tags(input_file, info);
+	if (arg_ntsc >= 0) {
+		if (!ASAPInfo_CanSetNtsc(info))
+			fatal_error("%s: cannot modify NTSC tag", input_file);
+		ASAPInfo_SetNtsc(info, (bool) arg_ntsc);
+	}
 	if (arg_music_address >= 0)
 		ASAPInfo_SetMusicAddress(info, arg_music_address);
 
@@ -618,6 +626,10 @@ int main(int argc, char *argv[])
 			arg_date = arg + 7;
 		else if (strcmp(arg, "--tag") == 0)
 			arg_tag = true;
+		else if (strcmp(arg, "--ntsc") == 0)
+			arg_ntsc = 1;
+		else if (strcmp(arg, "--pal") == 0)
+			arg_ntsc = 0;
 		else if (strncmp(arg, "--address=", 10) == 0)
 			set_music_address(arg + 10);
 		else if (is_opt('h') || strcmp(arg, "--help") == 0) {

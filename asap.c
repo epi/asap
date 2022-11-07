@@ -4213,6 +4213,23 @@ bool ASAPInfo_IsNtsc(const ASAPInfo *self)
 	return self->ntsc;
 }
 
+bool ASAPInfo_CanSetNtsc(const ASAPInfo *self)
+{
+	return self->type == ASAPModuleType_SAP_B && self->fastplay == (self->ntsc ? 262 : 312);
+}
+
+void ASAPInfo_SetNtsc(ASAPInfo *self, bool ntsc)
+{
+	self->ntsc = ntsc;
+	self->fastplay = ntsc ? 262 : 312;
+	for (int song = 0; song < self->songs; song++) {
+		int64_t duration = self->durations[song];
+		if (duration > 0) {
+			self->durations[song] = (int) (ntsc ? duration * 5956963 / 7159090 : duration * 7159090 / 5956963);
+		}
+	}
+}
+
 int ASAPInfo_GetTypeLetter(const ASAPInfo *self)
 {
 	switch (self->type) {

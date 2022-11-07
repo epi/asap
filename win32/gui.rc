@@ -1,7 +1,7 @@
 /*
  * gui.rc - Windows resources
  *
- * Copyright (C) 2005-2020  Piotr Fusik
+ * Copyright (C) 2005-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -191,6 +191,7 @@ FONT 8, "MS Shell Dlg 2"
 	RTEXT "&Time:", IDC_STATIC, 80, 66 + INFO_Y, 20, 12
 	EDITTEXT IDC_TIME, 108, 64 + INFO_Y, 40, 12
 	AUTOCHECKBOX "&Loop", IDC_LOOP, 156, 64 + INFO_Y, 40, 12
+	AUTOCHECKBOX "NTSC", IDC_NTSC, INFO_W + 6, 64 + INFO_Y, 40, 12
 	RTEXT "Technical:", IDC_STATIC, 8, 82 + INFO_Y, 32, 12
 	EDITTEXT IDC_TECHINFO, 46, 82 + INFO_Y, INFO_W, 48, ES_LEFT | ES_AUTOVSCROLL | ES_MULTILINE | ES_READONLY | WS_BORDER | WS_TABSTOP | WS_VSCROLL
 	RTEXT "STIL file:", IDC_STATIC, 8, 132 + INFO_Y, 32, 12

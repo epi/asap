@@ -1740,6 +1740,27 @@ public class ASAPInfo
 	/// Returns `true` for NTSC song and `false` for PAL song.
 	public bool IsNtsc() => Ntsc;
 
+	/// Returns `true` if NTSC can be set or removed.
+	public bool CanSetNtsc() => Type == ASAPModuleType.SapB && Fastplay == (Ntsc ? 262 : 312);
+
+	/// Marks a SAP file as NTSC or PAL.
+	public void SetNtsc!(
+		/// `true` for NTSC, `false` for PAL.
+		bool ntsc)
+	{
+		Ntsc = ntsc;
+		Fastplay = ntsc ? 262 : 312;
+		for (int song = 0; song < Songs; song++) {
+			long duration = Durations[song];
+			if (duration > 0) {
+				// 78 is the GCD
+				Durations[song] = ntsc
+					? duration * (1773447 * 262 / 78) / (3579545 * 312 / 2 / 78)
+					: duration * (3579545 * 312 / 2 / 78) / (1773447 * 262 / 78);
+			}
+		}
+	}
+
 	/// Returns the letter argument for the TYPE SAP tag.
 	/// Returns zero for non-SAP files.
 	public int GetTypeLetter()

@@ -1,7 +1,7 @@
 /*
  * info_dlg.c - file information dialog box
  *
- * Copyright (C) 2007-2020  Piotr Fusik
+ * Copyright (C) 2007-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -119,6 +119,11 @@ static HWND monthcal = NULL;
 static WNDPROC monthcalOriginalWndProc;
 static ASTIL *astil = NULL;
 
+static void enableDlgItem(int id, bool enable)
+{
+	EnableWindow(GetDlgItem(infoDialog, id), enable);
+}
+
 static char *appendStilString(char *p, const char *s)
 {
 	for (;;) {
@@ -176,7 +181,7 @@ static void updateTech(void)
 			p += sprintf(p, "DEFSONG %d (song %d)\r\n", i, i + 1);
 	}
 	p += sprintf(p, ASAPInfo_GetChannels(edited_info) > 1 ? "STEREO\r\n" : "MONO\r\n");
-	p += sprintf(p, ASAPInfo_IsNtsc(edited_info) ? "NTSC\r\n" : "PAL\r\n");
+	// p += sprintf(p, ASAPInfo_IsNtsc(edited_info) ? "NTSC\r\n" : "PAL\r\n");
 	int type = ASAPInfo_GetTypeLetter(edited_info);
 	if (type != 0)
 		p += sprintf(p, "TYPE %c\r\n", type);
@@ -245,15 +250,20 @@ static void updateStil(void)
 	SendDlgItemMessage(infoDialog, IDC_STILINFO, WM_SETTEXT, 0, (LPARAM) buf);
 }
 
-static void setEditedSong(int song)
+static void updateTime(void)
 {
 	unsigned char str[ASAPWriter_MAX_DURATION_LENGTH + 1];
-	edited_song = song;
-	int len = ASAPWriter_DurationToString(str, ASAPInfo_GetDuration(edited_info, song));
+	int len = ASAPWriter_DurationToString(str, ASAPInfo_GetDuration(edited_info, edited_song));
 	str[len] = '\0';
 	SendDlgItemMessage(infoDialog, IDC_TIME, WM_SETTEXT, 0, (LPARAM) str);
+}
+
+static void setEditedSong(int song)
+{
+	edited_song = song;
+	updateTime();
 	CheckDlgButton(infoDialog, IDC_LOOP, ASAPInfo_GetLoop(edited_info, song) ? BST_CHECKED : BST_UNCHECKED);
-	EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), len > 0);
+	enableDlgItem(IDC_LOOP, ASAPInfo_GetDuration(edited_info, song) > 0);
 
 	_TCHAR filename[MAX_PATH];
 	SendDlgItemMessage(infoDialog, IDC_FILENAME, WM_GETTEXT, MAX_PATH, (LPARAM) filename);
@@ -308,8 +318,8 @@ static void updateSaveButtons(int mask, bool ok)
 	else
 		invalid_fields |= mask;
 	if (can_save)
-		EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), ok && infoChanged());
-	EnableWindow(GetDlgItem(infoDialog, IDC_SAVEAS), ok);
+		enableDlgItem(IDC_SAVE, ok && infoChanged());
+	enableDlgItem(IDC_SAVEAS, ok);
 }
 
 static void updateInfoString(HWND hDlg, int nID, int mask, bool (*func)(ASAPInfo *, LPCTSTR))
@@ -438,7 +448,7 @@ static bool saveFile(LPCTSTR filename, bool tag)
 	}
 	if (isSap) {
 		setSaved();
-		EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), false);
+		enableDlgItem(IDC_SAVE, false);
 	}
 	return true;
 }
@@ -562,7 +572,7 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 				SendDlgItemMessage(hDlg, IDC_TIME, WM_GETTEXT, ASAPWriter_MAX_DURATION_LENGTH + 1, (LPARAM) str);
 				int duration = ASAPInfo_ParseDuration(str);
 				ASAPInfo_SetDuration(edited_info, edited_song, duration);
-				EnableWindow(GetDlgItem(infoDialog, IDC_LOOP), str[0] != '\0');
+				enableDlgItem(IDC_LOOP, str[0] != '\0');
 				updateSaveButtons(INVALID_FIELD_TIME | INVALID_FIELD_TIME_SHOW, duration >=0 || str[0] == '\0');
 			}
 			return TRUE;
@@ -574,6 +584,12 @@ static INT_PTR CALLBACK infoDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			return TRUE;
 		case MAKEWPARAM(IDC_LOOP, BN_CLICKED):
 			ASAPInfo_SetLoop(edited_info, edited_song, IsDlgButtonChecked(hDlg, IDC_LOOP) == BST_CHECKED);
+			updateSaveButtons(0, true);
+			return TRUE;
+		case MAKEWPARAM(IDC_NTSC, BN_CLICKED):
+			ASAPInfo_SetNtsc(edited_info, IsDlgButtonChecked(hDlg, IDC_NTSC) == BST_CHECKED);
+			updateTech();
+			updateTime();
 			updateSaveButtons(0, true);
 			return TRUE;
 		case MAKEWPARAM(IDC_SONGNO, CBN_SELCHANGE):
@@ -666,7 +682,7 @@ void updateInfoDialog(LPCTSTR filename, int song)
 	SendDlgItemMessage(infoDialog, IDC_DATE, WM_SETTEXT, 0, (LPARAM) saved_date);
 	SendDlgItemMessage(infoDialog, IDC_SONGNO, CB_RESETCONTENT, 0, 0);
 	int songs = ASAPInfo_GetSongs(edited_info);
-	EnableWindow(GetDlgItem(infoDialog, IDC_SONGNO), songs > 1);
+	enableDlgItem(IDC_SONGNO, songs > 1);
 	for (int i = 1; i <= songs; i++) {
 		_TCHAR str[16];
 		_stprintf(str, _T("%d"), i);
@@ -676,7 +692,9 @@ void updateInfoDialog(LPCTSTR filename, int song)
 		song = ASAPInfo_GetDefaultSong(edited_info);
 	SendDlgItemMessage(infoDialog, IDC_SONGNO, CB_SETCURSEL, song, 0);
 	setEditedSong(song);
-	EnableWindow(GetDlgItem(infoDialog, IDC_SAVE), FALSE);
+	CheckDlgButton(infoDialog, IDC_NTSC, ASAPInfo_IsNtsc(edited_info) ? BST_CHECKED : BST_UNCHECKED);
+	enableDlgItem(IDC_NTSC, ASAPInfo_CanSetNtsc(edited_info));
+	enableDlgItem(IDC_SAVE, false);
 	updateTech();
 }
 

@@ -380,6 +380,19 @@ bool ASAPInfo_SetLoop(ASAPInfo *self, int song, bool loop);
 bool ASAPInfo_IsNtsc(const ASAPInfo *self);
 
 /**
+ * Returns <code>true</code> if NTSC can be set or removed.
+ * @param self This <code>ASAPInfo</code>.
+ */
+bool ASAPInfo_CanSetNtsc(const ASAPInfo *self);
+
+/**
+ * Marks a SAP file as NTSC or PAL.
+ * @param self This <code>ASAPInfo</code>.
+ * @param ntsc <code>true</code> for NTSC, <code>false</code> for PAL.
+ */
+void ASAPInfo_SetNtsc(ASAPInfo *self, bool ntsc);
+
+/**
  * Returns the letter argument for the TYPE SAP tag.
  * Returns zero for non-SAP files.
  * @param self This <code>ASAPInfo</code>.

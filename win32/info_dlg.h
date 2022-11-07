@@ -1,7 +1,7 @@
 /*
  * info_dlg.h - file information dialog box
  *
- * Copyright (C) 2007-2019  Piotr Fusik
+ * Copyright (C) 2007-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -39,11 +39,12 @@ extern "C" {
 #define IDC_SONGNO     307
 #define IDC_TIME       308
 #define IDC_LOOP       309
-#define IDC_TECHINFO   310
-#define IDC_STILFILE   311
-#define IDC_STILINFO   312
-#define IDC_SAVE       313
-#define IDC_SAVEAS     314
+#define IDC_NTSC       310
+#define IDC_TECHINFO   311
+#define IDC_STILFILE   312
+#define IDC_STILINFO   313
+#define IDC_SAVE       314
+#define IDC_SAVEAS     315
 
 #define IDD_PROGRESS   500
 #define IDC_PROGRESS   501
