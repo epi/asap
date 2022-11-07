@@ -106,6 +106,7 @@ static int edited_song;
 static _TCHAR saved_author[ASAPInfo_MAX_TEXT_LENGTH + 1];
 static _TCHAR saved_title[ASAPInfo_MAX_TEXT_LENGTH + 1];
 static _TCHAR saved_date[ASAPInfo_MAX_TEXT_LENGTH + 1];
+static bool saved_ntsc;
 static int saved_durations[ASAPInfo_MAX_SONGS];
 static bool saved_loops[ASAPInfo_MAX_SONGS];
 static bool can_save;
@@ -288,6 +289,7 @@ static void setSaved(void)
 	_tcscpy(saved_author, ASAPInfo_GetAuthor(edited_info));
 	_tcscpy(saved_title, ASAPInfo_GetTitle(edited_info));
 	_tcscpy(saved_date, ASAPInfo_GetDate(edited_info));
+	saved_ntsc = ASAPInfo_IsNtsc(edited_info);
 	for (int i = 0; i < ASAPInfo_GetSongs(edited_info); i++) {
 		saved_durations[i] = ASAPInfo_GetDuration(edited_info, i);
 		saved_loops[i] = ASAPInfo_GetLoop(edited_info, i);
@@ -298,7 +300,8 @@ static bool infoChanged(void)
 {
 	if (_tcscmp(ASAPInfo_GetAuthor(edited_info), saved_author) != 0
 	 || _tcscmp(ASAPInfo_GetTitle(edited_info), saved_title) != 0
-	 || _tcscmp(ASAPInfo_GetDate(edited_info), saved_date) != 0)
+	 || _tcscmp(ASAPInfo_GetDate(edited_info), saved_date) != 0
+	 || ASAPInfo_IsNtsc(edited_info) != saved_ntsc)
 		return true;
 	for (int i = 0; i < ASAPInfo_GetSongs(edited_info); i++) {
 		if (ASAPInfo_GetDuration(edited_info, i) != saved_durations[i])
