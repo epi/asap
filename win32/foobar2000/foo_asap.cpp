@@ -1,7 +1,7 @@
 /*
  * foo_asap.cpp - ASAP plugin for foobar2000
  *
- * Copyright (C) 2006-2021  Piotr Fusik
+ * Copyright (C) 2006-2022  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -75,7 +75,7 @@ inline bool has_ext(const char *path, const char *ext)
 	return len >= 4 && _stricmp(path + len - 4, ext) == 0;
 }
 
-class input_asap
+class input_asap : public input_stubs
 {
 	service_ptr_t<file> m_file;
 	char *url = nullptr;
@@ -105,9 +105,18 @@ class input_asap
 			p_info.meta_set(p_name, p_value);
 	}
 
-	static const char *empty_if_null(const char *s)
+	static const char *meta_get(const file_info &p_info, const char *p_name)
 	{
+		const char *s = p_info.meta_get(p_name, 0);
 		return s != nullptr ? s : "";
+	}
+
+	void set_tags(const char *author, const char *title, const char *date)
+	{
+		ASAPInfo *info = const_cast<ASAPInfo *>(ASAP_GetInfo(asap));
+		ASAPInfo_SetAuthor(info, author);
+		ASAPInfo_SetTitle(info, title);
+		ASAPInfo_SetDate(info, date);
 	}
 
 public:
@@ -137,11 +146,6 @@ public:
 	static GUID g_get_preferences_guid()
 	{
 		return preferences_guid;
-	}
-
-	static bool g_is_low_merit()
-	{
-		return false;
 	}
 
 	input_asap() : asap(ASAP_New())
@@ -199,9 +203,9 @@ public:
 		meta_set(p_info, "date", ASAPInfo_GetDate(info));
 	}
 
-	t_filestats get_file_stats(abort_callback &p_abort) const
+	t_filestats2 get_stats2(uint32_t f, abort_callback &p_abort) const
 	{
-		return m_file->get_stats(p_abort);
+		return m_file->get_stats2_(f, p_abort);
 	}
 
 	void decode_initialize(t_uint32 p_subsong, unsigned p_flags, abort_callback &p_abort) const
@@ -242,27 +246,9 @@ public:
 		return true;
 	}
 
-	bool decode_get_dynamic_info(file_info &p_out, double &p_timestamp_delta) const
+	void retag_set_info(t_uint32 p_subsong, const file_info &p_info, abort_callback &p_abort)
 	{
-		return false;
-	}
-
-	bool decode_get_dynamic_info_track(file_info &p_out, double &p_timestamp_delta) const
-	{
-		return false;
-	}
-
-	void decode_on_idle(abort_callback &p_abort) const
-	{
-		m_file->on_idle(p_abort);
-	}
-
-	void retag_set_info(t_uint32 p_subsong, const file_info &p_info, abort_callback &p_abort) const
-	{
-		ASAPInfo *info = const_cast<ASAPInfo *>(ASAP_GetInfo(asap));
-		ASAPInfo_SetAuthor(info, empty_if_null(p_info.meta_get("composer", 0)));
-		ASAPInfo_SetTitle(info, empty_if_null(p_info.meta_get("title", 0)));
-		ASAPInfo_SetDate(info, empty_if_null(p_info.meta_get("date", 0)));
+		set_tags(meta_get(p_info, "composer"), meta_get(p_info, "title"), meta_get(p_info, "date"));
 	}
 
 	void retag_commit(abort_callback &p_abort)
@@ -282,13 +268,11 @@ public:
 		m_file->write(output, output_len, p_abort);
 	}
 
-	void set_logger(event_logger::ptr ptr) const
+	void remove_tags(abort_callback &p_abort)
 	{
+		set_tags("", "", "");
+		retag_commit(p_abort);
 	}
-
-	typedef input_decoder interface_decoder_t;
-	typedef input_info_reader interface_info_reader_t;
-	typedef input_info_writer interface_info_writer_t;
 };
 
 static input_factory_t<input_asap> g_input_asap_factory;
@@ -674,10 +658,16 @@ public:
 		return "atr";
 	}
 
-	t_filestats get_stats_in_archive(const char *p_archive, const char *p_file, abort_callback &p_abort) override
+	t_filestats2 get_stats2_in_archive(const char *p_archive, const char *p_file, unsigned s2flags, abort_callback &p_abort) override
 	{
-		service_impl_single_t<file_atr> f(p_archive, p_file);
-		t_filestats stats = { f.get_size(abort_callback_dummy()), filetimestamp_invalid };
+		t_filestats2 stats;
+		if (s2flags & stats2_size) {
+			service_impl_single_t<file_atr> f(p_archive, p_file);
+			stats.m_size = f.get_size(p_abort);
+		}
+		stats.set_file();
+		stats.set_hidden(false);
+		stats.set_system(false);
 		return stats;
 	}
 

@@ -157,23 +157,23 @@ win32/x64/foo_asap.dll: $(FOOBAR2000_SRC) win32/foobar2000/x64/foobar2000_SDK.li
 	$(WIN64_CL) -DFOOBAR2000 -DWIN32 -EHsc -I$(FOOBAR2000_SDK_DIR) comctl32.lib comdlg32.lib ole32.lib shell32.lib shlwapi.lib user32.lib $(WIN32_LINKOPT)
 CLEAN += win32/x64/foo_asap.dll
 
-win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,component_client abort_callback audio_chunk audio_chunk_channel_config \
-	cfg_var console file_info file_info_impl file_info_merge filesystem filesystem_helper foosort guids input \
-	main_thread_callback metadb_handle metadb_handle_list playable_location playlist preferences_page replaygain_info service titleformat utility)
+win32/foobar2000/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/%.obj,component_client abort_callback album_art app_close_blocker audio_chunk audio_chunk_channel_config \
+	cfg_var cfg_var_legacy commonObjects completion_notify configStore console file_info file_info_impl file_info_merge filesystem filesystem_helper foosort foosortstring \
+	fsItem guids input input_file_type main_thread_callback metadb_handle metadb_handle_list playable_location playlist preferences_page replaygain_info service titleformat utility)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/foobar2000_SDK.lib
 
-win32/foobar2000/x64/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/x64/%.obj,component_client abort_callback audio_chunk audio_chunk_channel_config \
-	cfg_var console file_info file_info_impl file_info_merge filesystem filesystem_helper foosort guids input \
-	main_thread_callback metadb_handle metadb_handle_list playable_location playlist preferences_page replaygain_info service titleformat utility)
+win32/foobar2000/x64/foobar2000_SDK.lib: $(patsubst %,win32/foobar2000/x64/%.obj,component_client abort_callback album_art app_close_blocker audio_chunk audio_chunk_channel_config \
+	cfg_var cfg_var_legacy commonObjects completion_notify configStore console file_info file_info_impl file_info_merge filesystem filesystem_helper foosort foosortstring \
+	fsItem guids input input_file_type main_thread_callback metadb_handle metadb_handle_list playable_location playlist preferences_page replaygain_info service titleformat utility)
 	$(WIN64_MKLIB)
 CLEAN += win32/foobar2000/x64/foobar2000_SDK.lib
 
 win32/foobar2000/component_client.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp
-	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc
+	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR)/foobar2000 -I$(FOOBAR2000_SDK_DIR)
 
 win32/foobar2000/x64/component_client.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/foobar2000_component_client/component_client.cpp
-	$(WIN64_CL) -DWIN32 -DUNICODE -EHsc
+	$(WIN64_CL) -DWIN32 -DUNICODE -EHsc -I$(FOOBAR2000_SDK_DIR)/foobar2000 -I$(FOOBAR2000_SDK_DIR)
 
 win32/foobar2000/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
 	$(WIN32_CL) -DWIN32 -DUNICODE -EHsc -D_WIN32_IE=0x550 -I$(FOOBAR2000_SDK_DIR)
@@ -183,13 +183,13 @@ win32/foobar2000/x64/%.obj: $(FOOBAR2000_SDK_DIR)/foobar2000/SDK/%.cpp
 	$(WIN64_CL) -DWIN32 -DUNICODE -EHsc -D_WIN32_IE=0x550 -I$(FOOBAR2000_SDK_DIR)
 CLEAN += win32/foobar2000/x64/*.obj
 
-win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,audio_math audio_sample bit_array bsearch guid other \
-	pathUtils sort splitString2 string-compare string-lite string_base string_conv string-conv-lite threads timers utf8 win-objects)
+win32/foobar2000/pfc.lib: $(patsubst %,win32/foobar2000/%.obj,audio_math audio_sample bit_array bsearch guid other pathUtils \
+	sort splitString2 string-compare string-lite string_base string_conv string-conv-lite threads timers unicode-normalize utf8 win-objects)
 	$(WIN32_MKLIB)
 CLEAN += win32/foobar2000/pfc.lib
 
-win32/foobar2000/x64/pfc.lib: $(patsubst %,win32/foobar2000/x64/%.obj,audio_math audio_sample bit_array bsearch guid other \
-	pathUtils sort splitString2 string-compare string-lite string_base string_conv string-conv-lite threads timers utf8 win-objects)
+win32/foobar2000/x64/pfc.lib: $(patsubst %,win32/foobar2000/x64/%.obj,audio_math audio_sample bit_array bsearch guid other pathUtils \
+	sort splitString2 string-compare string-lite string_base string_conv string-conv-lite threads timers unicode-normalize utf8 win-objects)
 	$(WIN64_MKLIB)
 CLEAN += win32/foobar2000/x64/pfc.lib
 
