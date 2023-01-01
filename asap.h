@@ -152,12 +152,12 @@ void ASAPInfo_Delete(ASAPInfo *self);
 /**
  * Years ASAP was created in.
  */
-#define ASAPInfo_YEARS "2005-2022"
+#define ASAPInfo_YEARS "2005-2023"
 
 /**
  * Short credits for ASAP.
  */
-#define ASAPInfo_CREDITS "Another Slight Atari Player (C) 2005-2022 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\nFC player (C) 2011 Jerzy Kut\n"
+#define ASAPInfo_CREDITS "Another Slight Atari Player (C) 2005-2023 Piotr Fusik\nCMC, MPT, TMC, TM2 players (C) 1994-2005 Marcin Lewandowski\nRMT player (C) 2002-2005 Radek Sterba\nDLT player (C) 2009 Marek Konopka\nCMS player (C) 1999 David Spilka\nFC player (C) 2011 Jerzy Kut\n"
 
 /**
  * Short license notice.
@@ -374,7 +374,7 @@ bool ASAPInfo_GetLoop(const ASAPInfo *self, int song);
 bool ASAPInfo_SetLoop(ASAPInfo *self, int song, bool loop);
 
 /**
- * Returns <code>true</code> for NTSC song and <code>false</code> for PAL song.
+ * Returns <code>true</code> for an NTSC song and <code>false</code> for a PAL song.
  * @param self This <code>ASAPInfo</code>.
  */
 bool ASAPInfo_IsNtsc(const ASAPInfo *self);

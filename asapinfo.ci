@@ -1,6 +1,6 @@
 // asapinfo.ci - module parser
 //
-// Copyright (C) 2010-2022  Piotr Fusik
+// Copyright (C) 2010-2023  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -112,7 +112,7 @@ public class ASAPInfo
 	public const string Version = $"{VersionMajor}.{VersionMinor}.{VersionMicro}";
 
 	/// Years ASAP was created in.
-	public const string Years = "2005-2022";
+	public const string Years = "2005-2023";
 
 	/// Short credits for ASAP.
 	public const string Credits =
@@ -1737,7 +1737,7 @@ public class ASAPInfo
 		Loops[song] = loop;
 	}
 
-	/// Returns `true` for NTSC song and `false` for PAL song.
+	/// Returns `true` for an NTSC song and `false` for a PAL song.
 	public bool IsNtsc() => Ntsc;
 
 	/// Returns `true` if NTSC can be set or removed.
