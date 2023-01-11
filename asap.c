@@ -1,5 +1,4 @@
 // Generated automatically with "cito". Do not edit.
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include "asap.h"
@@ -6188,7 +6187,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, int cycleLimit)
 			self->vdi |= 8;
 			continue;
 		default:
-			assert(false);
+			abort();
 		}
 		switch (data) {
 		case 1:
@@ -6447,7 +6446,7 @@ static void Cpu6502_DoFrame(Cpu6502 *self, int cycleLimit)
 			self->nz = Cpu6502_Increment(self, addr);
 			break;
 		default:
-			assert(false);
+			abort();
 		}
 	}
 }
@@ -7116,7 +7115,7 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
 			break;
 		default:
-			assert(false);
+			abort();
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[0], cycle);
 		break;
@@ -7140,7 +7139,7 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			self->channels[1].periodCycles = self->channels[0].audf + (data << 8) + 7;
 			break;
 		default:
-			assert(false);
+			abort();
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
 		break;
@@ -7170,7 +7169,7 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
 			break;
 		default:
-			assert(false);
+			abort();
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[2], cycle);
 		break;
@@ -7194,7 +7193,7 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			self->channels[3].periodCycles = self->channels[2].audf + (data << 8) + 7;
 			break;
 		default:
-			assert(false);
+			abort();
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
 		break;
@@ -7227,7 +7226,7 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			self->reloadCycles1 = self->channels[0].audf + 4;
 			break;
 		default:
-			assert(false);
+			abort();
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[0], cycle);
 		PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
@@ -7251,7 +7250,7 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			self->reloadCycles3 = self->channels[2].audf + 4;
 			break;
 		default:
-			assert(false);
+			abort();
 		}
 		PokeyChannel_MuteUltrasound(&self->channels[2], cycle);
 		PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
