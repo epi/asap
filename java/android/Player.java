@@ -25,11 +25,14 @@ package net.sf.asap;
 
 import android.app.ListActivity;
 import android.app.SearchManager;
-import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.media.MediaMetadata;
+import android.media.browse.MediaBrowser;
+import android.media.session.MediaController;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -87,33 +90,6 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 
 public class Player extends ListActivity
 {
-	static final String ACTION_SHOW_INFO = "net.sf.asap.action.SHOW_INFO";
-
-	private void setTag(int controlId, String value)
-	{
-		TextView control = (TextView) findViewById(controlId);
-		if (value.length() == 0)
-			control.setVisibility(View.GONE);
-		else {
-			control.setText(value);
-			control.setVisibility(View.VISIBLE);
-		}
-	}
-
-	private final BroadcastReceiver receiver = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				setTag(R.id.playing_name, intent.getStringExtra(PlayerService.EXTRA_NAME));
-				setTag(R.id.playing_author, intent.getStringExtra(PlayerService.EXTRA_AUTHOR));
-				setTag(R.id.playing_date, intent.getStringExtra(PlayerService.EXTRA_DATE));
-				int songs = intent.getIntExtra(PlayerService.EXTRA_SONGS, 1);
-				if (songs > 1)
-					setTag(R.id.playing_song, getString(R.string.song_format, intent.getIntExtra(PlayerService.EXTRA_SONG, 0) + 1, songs));
-				else
-					setTag(R.id.playing_song, "");
-			}
-		};
-
 	private void play(Uri uri)
 	{
 		startService(new Intent(Intent.ACTION_VIEW, uri, this, PlayerService.class));
@@ -123,6 +99,53 @@ public class Player extends ListActivity
 	{
 		findViewById(controlId).setOnClickListener(v -> startService(new Intent(action, null, this, PlayerService.class)));
 	}
+
+	private void setTag(int controlId, String value)
+	{
+		TextView control = (TextView) findViewById(controlId);
+		if (value == null)
+			control.setVisibility(View.GONE);
+		else {
+			control.setText(value);
+			control.setVisibility(View.VISIBLE);
+		}
+	}
+
+	private MediaController mediaController;
+	private final MediaBrowser.ConnectionCallback mediaBrowserConnectionCallback = new MediaBrowser.ConnectionCallback() {
+			@Override
+			public void onConnected()
+			{
+				mediaController = new MediaController(Player.this, mediaBrowser.getSessionToken());
+				mediaController.registerCallback(new MediaController.Callback() {
+						@Override
+						public void onMetadataChanged(MediaMetadata metadata)
+						{
+							setTag(R.id.playing_name, metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
+							setTag(R.id.playing_author, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
+							setTag(R.id.playing_date, metadata.getString(MediaMetadata.METADATA_KEY_DATE));
+							int songs = (int) metadata.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS);
+							if (songs > 1)
+								setTag(R.id.playing_song, getString(R.string.song_format, metadata.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER), songs));
+							else
+								setTag(R.id.playing_song, "");
+						}
+					});
+			}
+
+			@Override
+			public void onConnectionFailed()
+			{
+				mediaController = null;
+			}
+
+			@Override
+			public void onConnectionSuspended()
+			{
+				mediaController = null;
+			}
+		};
+	private MediaBrowser mediaBrowser;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -138,19 +161,12 @@ public class Player extends ListActivity
 			setContentView(R.layout.player);
 			String query = Intent.ACTION_SEARCH.equals(intent.getAction()) ? intent.getStringExtra(SearchManager.QUERY) : null;
 			setListAdapter(new FileInfoAdapter(this, R.layout.fileinfo_list_item, FileInfo.listIndex(this, query)));
-			registerReceiver(receiver, new IntentFilter(ACTION_SHOW_INFO));
 			setButtonAction(R.id.prev, PlayerService.ACTION_PREVIOUS);
 			setButtonAction(R.id.play, PlayerService.ACTION_PLAY);
 			setButtonAction(R.id.pause, PlayerService.ACTION_PAUSE);
 			setButtonAction(R.id.next, PlayerService.ACTION_NEXT);
+			mediaBrowser = new MediaBrowser(this, new ComponentName(this, PlayerService.class), mediaBrowserConnectionCallback, null);
 		}
-	}
-
-	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id)
-	{
-		String name = ((FileInfo) l.getItemAtPosition(position)).filename;
-		play(name == null ? Util.asmaRoot : Util.getAsmaUri(name));
 	}
 
 	@Override
@@ -162,6 +178,27 @@ public class Player extends ListActivity
 		SearchView searchView = (SearchView) menu.findItem(R.id.menu_search).getActionView();
 		searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
 		return true;
+	}
+
+	@Override
+	public void onStart()
+	{
+		super.onStart();
+		mediaBrowser.connect();
+	}
+
+	@Override
+	public void onStop()
+	{
+		super.onStop();
+		mediaBrowser.disconnect();
+	}
+
+	@Override
+	protected void onListItemClick(ListView l, View v, int position, long id)
+	{
+		String name = ((FileInfo) l.getItemAtPosition(position)).filename;
+		play(name == null ? Util.asmaRoot : Util.getAsmaUri(name));
 	}
 
 	private static final int OPEN_REQUEST_CODE = 1;

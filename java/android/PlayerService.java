@@ -27,7 +27,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -38,30 +37,25 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaMetadata;
+import android.media.browse.MediaBrowser;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.provider.OpenableColumns;
+import android.service.media.MediaBrowserService;
 import android.widget.Toast;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
-public class PlayerService extends Service implements Runnable, AudioManager.OnAudioFocusChangeListener
+public class PlayerService extends MediaBrowserService implements Runnable, AudioManager.OnAudioFocusChangeListener
 {
 	// User interface -----------------------------------------------------------------------------------------
-
-	static final String EXTRA_NAME = "asap.intent.extra.NAME";
-	static final String EXTRA_AUTHOR = "asap.intent.extra.AUTHOR";
-	static final String EXTRA_DATE = "asap.intent.extra.DATE";
-	static final String EXTRA_SONG = "asap.intent.extra.SONG";
-	static final String EXTRA_SONGS = "asap.intent.extra.SONGS";
-	static final String EXTRA_PAUSED = "asap.intent.extra.PAUSED";
 
 	static final String ACTION_PLAY = "asap.intent.action.PLAY";
 	static final String ACTION_PAUSE = "asap.intent.action.PAUSE";
@@ -73,18 +67,6 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	private void showError(final int messageId)
 	{
 		toastHandler.post(() -> Toast.makeText(PlayerService.this, messageId, Toast.LENGTH_SHORT).show());
-	}
-
-	private void showInfo()
-	{
-		Intent intent = new Intent(Player.ACTION_SHOW_INFO);
-		intent.putExtra(EXTRA_NAME, info.getTitleOrFilename());
-		intent.putExtra(EXTRA_AUTHOR, info.getAuthor());
-		intent.putExtra(EXTRA_DATE, info.getDate());
-		intent.putExtra(EXTRA_SONG, song);
-		intent.putExtra(EXTRA_SONGS, info.getSongs());
-		intent.putExtra(EXTRA_PAUSED, isPaused());
-		sendBroadcast(intent);
 	}
 
 	private PendingIntent activityIntent;
@@ -455,7 +437,6 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		if (!gainFocus())
 			return;
 		while (handleLoadCommand()) {
-			showInfo();
 			showNotification(true);
 			playLoop();
 		}
@@ -567,19 +548,15 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	};
 
 	@Override
-	public IBinder onBind(Intent intent)
-	{
-		return null;
-	}
-
-	@Override
 	public void onCreate()
 	{
+		super.onCreate();
 		activityIntent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), PendingIntent.FLAG_IMMUTABLE);
 		mediaSession = new MediaSession(this, "ASAP");
 		mediaSession.setCallback(callback);
 		mediaSession.setSessionActivity(activityIntent);
 		mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+		setSessionToken(mediaSession.getSessionToken());
 	}
 
 	private final BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
@@ -627,5 +604,17 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		unregisterReceiver(becomingNoisyReceiver);
 
 		mediaSession.release();
+	}
+
+	@Override
+	public BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints)
+	{
+		return new BrowserRoot("ASAP", null);
+	}
+
+	@Override
+	public void onLoadChildren(String parentId, Result<List<MediaBrowser.MediaItem>> result)
+	{
+		result.sendResult(null);
 	}
 }
