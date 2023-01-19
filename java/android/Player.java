@@ -123,7 +123,8 @@ public class Player extends ListActivity
 				if (songs > 1)
 					setTag(R.id.playing_song, getString(R.string.song_format, metadata.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER), songs));
 				else
-					setTag(R.id.playing_song, "");
+					findViewById(R.id.playing_song).setVisibility(View.GONE);
+				findViewById(R.id.playing_panel).setVisibility(View.VISIBLE);
 			}
 
 			@Override
