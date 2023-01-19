@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -118,6 +119,11 @@ public class ArchiveSelector extends ListActivity
 		findViewById(controlId).setOnClickListener(v -> startService(new Intent(action, null, this, PlayerService.class)));
 	}
 
+	private void play(Uri uri)
+	{
+		startService(new Intent(Intent.ACTION_VIEW, uri, this, PlayerService.class));
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
@@ -126,7 +132,7 @@ public class ArchiveSelector extends ListActivity
 		Intent intent = getIntent();
 		if (Intent.ACTION_VIEW.equals(intent.getAction())) {
 			finish();
-			startActivity(new Intent(Intent.ACTION_VIEW, intent.getData(), this, Player.class));
+			play(intent.getData());
 		}
 		else {
 			setContentView(R.layout.file_list);
@@ -143,16 +149,8 @@ public class ArchiveSelector extends ListActivity
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id)
 	{
-		Intent intent;
-		FileInfo info = (FileInfo) l.getItemAtPosition(position);
-		String name = info.filename;
-		if (name == null) {
-			// shuffle all
-			intent = new Intent(Intent.ACTION_VIEW, Util.asmaRoot, this, Player.class);
-		}
-		else
-			intent = new Intent(Intent.ACTION_VIEW, Util.getAsmaUri(name), this, Player.class);
-		startActivity(intent);
+		String name = ((FileInfo) l.getItemAtPosition(position)).filename;
+		play(name == null ? Util.asmaRoot : Util.getAsmaUri(name));
 	}
 
 	@Override
@@ -187,6 +185,6 @@ public class ArchiveSelector extends ListActivity
 	protected void onActivityResult(int requestCode, int resultCode, Intent data)
 	{
 		if (requestCode == OPEN_REQUEST_CODE && resultCode == RESULT_OK && data != null)
-			startActivity(new Intent(Intent.ACTION_VIEW, data.getData(), this, Player.class));
+			play(data.getData());
 	}
 }

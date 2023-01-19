@@ -41,20 +41,18 @@ import android.media.MediaMetadata;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.net.Uri;
-import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.OpenableColumns;
-import android.widget.MediaController;
 import android.widget.Toast;
 import java.io.InputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class PlayerService extends Service implements Runnable, AudioManager.OnAudioFocusChangeListener, MediaController.MediaPlayerControl
+public class PlayerService extends Service implements Runnable, AudioManager.OnAudioFocusChangeListener
 {
 	// User interface -----------------------------------------------------------------------------------------
 
@@ -79,7 +77,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	private void showInfo()
 	{
-		Intent intent = new Intent(Player.ACTION_SHOW_INFO);
+		Intent intent = new Intent(ArchiveSelector.ACTION_SHOW_INFO);
 		intent.putExtra(EXTRA_NAME, info.getTitleOrFilename());
 		intent.putExtra(EXTRA_AUTHOR, info.getAuthor());
 		intent.putExtra(EXTRA_DATE, info.getDate());
@@ -456,37 +454,12 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		return command == COMMAND_PAUSE;
 	}
 
-	public boolean isPlaying()
-	{
-		return command != COMMAND_PAUSE;
-	}
-
-	public boolean canPause()
-	{
-		return true;
-	}
-
-	public boolean canSeekBackward()
-	{
-		return false;
-	}
-
-	public boolean canSeekForward()
-	{
-		return false;
-	}
-
-	public int getBufferPercentage()
-	{
-		return 100;
-	}
-
-	public void pause()
+	void pause()
 	{
 		setCommand(COMMAND_PAUSE);
 	}
 
-	public void start()
+	void start()
 	{
 		setCommand(COMMAND_PLAY);
 	}
@@ -501,33 +474,10 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		setCommand(COMMAND_PREV);
 	}
 
-	public int getDuration()
-	{
-		if (info == null || song < 0)
-			return -1;
-		return info.getDuration(song);
-	}
-
-	public int getCurrentPosition()
-	{
-		return asap.getPosition();
-	}
-
-	public synchronized void seekTo(int pos)
+	synchronized void seekTo(int pos)
 	{
 		seekPosition = pos;
 		start();
-	}
-
-	public int getAudioSessionId()
-	{
-		// return audioTrack != null ? audioTrack.getAudioSessionId() : 0;
-		return 0;
-	}
-
-	private AudioManager getAudioManager()
-	{
-		return (AudioManager) getSystemService(AUDIO_SERVICE);
 	}
 
 	@Override
@@ -544,6 +494,11 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		default:
 			break;
 		}
+	}
+
+	private AudioManager getAudioManager()
+	{
+		return (AudioManager) getSystemService(AUDIO_SERVICE);
 	}
 
 	private boolean gainFocus()
@@ -602,14 +557,13 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		public void onReceive(Context context, Intent intent)
 		{
 			pause();
-			showInfo(); // just to update the MediaController
 		}
 	};
 
 	@Override
 	public void onCreate()
 	{
-		activityIntent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), PendingIntent.FLAG_IMMUTABLE);
+		activityIntent = PendingIntent.getActivity(this, 0, new Intent(this, ArchiveSelector.class), PendingIntent.FLAG_IMMUTABLE);
 		mediaSession = new MediaSession(this, "ASAP");
 		mediaSession.setCallback(callback);
 		mediaSession.setSessionActivity(activityIntent);
@@ -655,22 +609,9 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		mediaSession.release();
 	}
 
-
-	// Player.java interface ----------------------------------------------------------------------------------
-
-	class LocalBinder extends Binder
-	{
-		PlayerService getService()
-		{
-			return PlayerService.this;
-		}
-	}
-
-	private final IBinder binder = new LocalBinder();
-
 	@Override
 	public IBinder onBind(Intent intent)
 	{
-		return binder;
+		return null;
 	}
 }
