@@ -216,20 +216,20 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	}
 
 	private Uri uri;
-	int song;
+	private int song;
 	private static final int SONG_DEFAULT = -1;
 	private static final int SONG_LAST = -2;
 	private int seekPosition;
 
 	private final ASAP asap = new ASAP();
-	ASAPInfo info;
+	private ASAPInfo info;
 
 	private boolean load()
 	{
 		// read file
 		String filename;
 		byte[] module = new byte[ASAPInfo.MAX_MODULE_LENGTH];
-		int moduleLen;
+		int moduleLen = 0;
 		try {
 			InputStream stream;
 			if ("asma".equals(uri.getScheme())) {
@@ -254,7 +254,21 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 				}
 				stream = getContentResolver().openInputStream(uri);
 			}
-			moduleLen = Util.readAndClose(stream, module);
+
+			try {
+				// Android 13: module = stream.readNBytes(ASAPInfo.MAX_MODULE_LENGTH);
+				for (;;) {
+					int i = stream.read(module, moduleLen, module.length - moduleLen);
+					if (i <= 0)
+						break;
+					moduleLen += i;
+				}
+			}
+			finally {
+				stream.close();
+			}
+			if (moduleLen == module.length)
+				throw new IOException();
 		}
 		catch (IOException ex) {
 			showError(R.string.error_reading_file);
@@ -454,27 +468,27 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		return command == COMMAND_PAUSE;
 	}
 
-	void pause()
+	private void pause()
 	{
 		setCommand(COMMAND_PAUSE);
 	}
 
-	void start()
+	private void start()
 	{
 		setCommand(COMMAND_PLAY);
 	}
 
-	void playNextSong()
+	private void playNextSong()
 	{
 		setCommand(COMMAND_NEXT);
 	}
 
-	void playPreviousSong()
+	private void playPreviousSong()
 	{
 		setCommand(COMMAND_PREV);
 	}
 
-	synchronized void seekTo(int pos)
+	private synchronized void seekTo(int pos)
 	{
 		seekPosition = pos;
 		start();
@@ -552,13 +566,11 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		}
 	};
 
-	private final BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent)
-		{
-			pause();
-		}
-	};
+	@Override
+	public IBinder onBind(Intent intent)
+	{
+		return null;
+	}
 
 	@Override
 	public void onCreate()
@@ -569,6 +581,14 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		mediaSession.setSessionActivity(activityIntent);
 		mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
 	}
+
+	private final BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent)
+		{
+			pause();
+		}
+	};
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId)
@@ -607,11 +627,5 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 		unregisterReceiver(becomingNoisyReceiver);
 
 		mediaSession.release();
-	}
-
-	@Override
-	public IBinder onBind(Intent intent)
-	{
-		return null;
 	}
 }

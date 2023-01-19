@@ -44,7 +44,7 @@ import android.widget.TextView;
 
 class FileInfoAdapter extends ArrayAdapter<FileInfo>
 {
-	private LayoutInflater layoutInflater;
+	private final LayoutInflater layoutInflater;
 
 	protected FileInfoAdapter(Context context, int rowViewResourceId, FileInfo[] infos)
 	{
@@ -114,14 +114,14 @@ public class Player extends ListActivity
 			}
 		};
 
-	private void setButtonAction(int controlId, String action)
-	{
-		findViewById(controlId).setOnClickListener(v -> startService(new Intent(action, null, this, PlayerService.class)));
-	}
-
 	private void play(Uri uri)
 	{
 		startService(new Intent(Intent.ACTION_VIEW, uri, this, PlayerService.class));
+	}
+
+	private void setButtonAction(int controlId, String action)
+	{
+		findViewById(controlId).setOnClickListener(v -> startService(new Intent(action, null, this, PlayerService.class)));
 	}
 
 	@Override

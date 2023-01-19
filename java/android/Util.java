@@ -1,7 +1,7 @@
 /*
  * Util.java - ASAP for Android
  *
- * Copyright (C) 2010-2022  Piotr Fusik
+ * Copyright (C) 2010-2023  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -25,7 +25,6 @@ package net.sf.asap;
 
 import android.content.Context;
 import android.net.Uri;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
@@ -37,31 +36,6 @@ class Util
 	static Uri getAsmaUri(String path)
 	{
 		return Uri.fromParts("asma", path, null);
-	}
-
-	/**
-	 * Reads bytes from the stream into the byte array
-	 * until end of stream or array is full.
-	 * @param is source stream
-	 * @param b output array
-	 * @return number of bytes read
-	 */
-	static int readAndClose(InputStream is, byte[] b) throws IOException
-	{
-		int got = 0;
-		int len = b.length;
-		try {
-			while (got < len) {
-				int i = is.read(b, got, len - got);
-				if (i <= 0)
-					break;
-				got += i;
-			}
-		}
-		finally {
-			is.close();
-		}
-		return got;
 	}
 
 	static LineNumberReader openIndex(Context context) throws IOException
