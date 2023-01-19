@@ -33,6 +33,7 @@ import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.browse.MediaBrowser;
 import android.media.session.MediaController;
+import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -111,26 +112,35 @@ public class Player extends ListActivity
 		}
 	}
 
+	private final MediaController.Callback mediaControllerCallback = new MediaController.Callback() {
+			@Override
+			public void onMetadataChanged(MediaMetadata metadata)
+			{
+				setTag(R.id.playing_name, metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
+				setTag(R.id.playing_author, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
+				setTag(R.id.playing_date, metadata.getString(MediaMetadata.METADATA_KEY_DATE));
+				int songs = (int) metadata.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS);
+				if (songs > 1)
+					setTag(R.id.playing_song, getString(R.string.song_format, metadata.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER), songs));
+				else
+					setTag(R.id.playing_song, "");
+			}
+
+			@Override
+			public void onPlaybackStateChanged(PlaybackState state)
+			{
+				long actions = state.getActions();
+				findViewById(R.id.play).setVisibility((actions & PlaybackState.ACTION_PLAY) != 0 ? View.VISIBLE : View.GONE);
+				findViewById(R.id.pause).setVisibility((actions & PlaybackState.ACTION_PAUSE) != 0 ? View.VISIBLE : View.GONE);
+			}
+		};
 	private MediaController mediaController;
 	private final MediaBrowser.ConnectionCallback mediaBrowserConnectionCallback = new MediaBrowser.ConnectionCallback() {
 			@Override
 			public void onConnected()
 			{
 				mediaController = new MediaController(Player.this, mediaBrowser.getSessionToken());
-				mediaController.registerCallback(new MediaController.Callback() {
-						@Override
-						public void onMetadataChanged(MediaMetadata metadata)
-						{
-							setTag(R.id.playing_name, metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
-							setTag(R.id.playing_author, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
-							setTag(R.id.playing_date, metadata.getString(MediaMetadata.METADATA_KEY_DATE));
-							int songs = (int) metadata.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS);
-							if (songs > 1)
-								setTag(R.id.playing_song, getString(R.string.song_format, metadata.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER), songs));
-							else
-								setTag(R.id.playing_song, "");
-						}
-					});
+				mediaController.registerCallback(mediaControllerCallback);
 			}
 
 			@Override
@@ -190,8 +200,8 @@ public class Player extends ListActivity
 	@Override
 	public void onStop()
 	{
-		super.onStop();
 		mediaBrowser.disconnect();
+		super.onStop();
 	}
 
 	@Override
