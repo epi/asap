@@ -142,6 +142,12 @@ public class Player extends ListActivity
 			{
 				mediaController = new MediaController(Player.this, mediaBrowser.getSessionToken());
 				mediaController.registerCallback(mediaControllerCallback);
+				MediaMetadata metadata = mediaController.getMetadata();
+				if (metadata != null)
+					mediaControllerCallback.onMetadataChanged(metadata);
+				PlaybackState state = mediaController.getPlaybackState();
+				if (state != null)
+					mediaControllerCallback.onPlaybackStateChanged(state);
 			}
 
 			@Override
