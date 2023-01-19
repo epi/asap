@@ -77,7 +77,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	private void showInfo()
 	{
-		Intent intent = new Intent(ArchiveSelector.ACTION_SHOW_INFO);
+		Intent intent = new Intent(Player.ACTION_SHOW_INFO);
 		intent.putExtra(EXTRA_NAME, info.getTitleOrFilename());
 		intent.putExtra(EXTRA_AUTHOR, info.getAuthor());
 		intent.putExtra(EXTRA_DATE, info.getDate());
@@ -563,7 +563,7 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 	@Override
 	public void onCreate()
 	{
-		activityIntent = PendingIntent.getActivity(this, 0, new Intent(this, ArchiveSelector.class), PendingIntent.FLAG_IMMUTABLE);
+		activityIntent = PendingIntent.getActivity(this, 0, new Intent(this, Player.class), PendingIntent.FLAG_IMMUTABLE);
 		mediaSession = new MediaSession(this, "ASAP");
 		mediaSession.setCallback(callback);
 		mediaSession.setSessionActivity(activityIntent);

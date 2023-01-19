@@ -25,7 +25,7 @@ $(error Use "Makefile" instead of "android.mk")
 endif
 
 ANDROID_RELEASE = release/asap-$(VERSION)-android.apk
-ANDROID_JAVA_SRC = $(addprefix $(srcdir)java/android/, ArchiveSelector.java ArchiveSuggestionsProvider.java FileInfo.java PlayerService.java Util.java)
+ANDROID_JAVA_SRC = $(addprefix $(srcdir)java/android/, ArchiveSuggestionsProvider.java FileInfo.java Player.java PlayerService.java Util.java)
 
 android-release: $(ANDROID_RELEASE)
 .PHONY: android-release
@@ -81,16 +81,16 @@ java/android/AndroidASAP-unaligned.apk: java/android/AndroidASAP-resources.apk j
 	$(DO)cp $< $@ && $(SEVENZIP) -tzip $@ ./java/android/classes.dex
 CLEAN += java/android/AndroidASAP-unaligned.apk
 
-java/android/classes.dex: java/android/classes/net/sf/asap/PlayerService.class
+java/android/classes.dex: java/android/classes/net/sf/asap/Player.class
 	$(D8) --release --output $(@D) --lib $(ANDROID_JAR) `ls java/android/classes/net/sf/asap/*.class`
 CLEAN += java/android/classes.dex
 
-java/android/classes/net/sf/asap/PlayerService.class: $(ANDROID_JAVA_SRC) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
+java/android/classes/net/sf/asap/Player.class: $(ANDROID_JAVA_SRC) java/android/AndroidASAP-resources.apk java/src/net/sf/asap/ASAP.java
 	$(JAVAC) -d java/android/classes --release 11 -cp $(ANDROID_JAR) -Xlint:deprecation $(ANDROID_JAVA_SRC) java/android/gen/net/sf/asap/R.java java/src/net/sf/asap/*.java
 CLEANDIR += java/android/classes
 
 # Also generates java/android/gen/net/sf/asap/R.java
-java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/ic_menu_browse.png res/drawable-land/background.jpg res/drawable-port/background.jpg res/drawable/banner.png res/drawable/icon.xml res/layout/fileinfo_list_item.xml res/layout/file_list.xml res/menu/archive_selector.xml res/values/strings.xml res/values/themes.xml res/xml/searchable.xml) $(ASMA_DIR)/index.txt $(JAVA_OBX)
+java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/ic_menu_browse.png res/drawable-land/background.jpg res/drawable-port/background.jpg res/drawable/banner.png res/drawable/icon.xml res/layout/fileinfo_list_item.xml res/layout/player.xml res/menu/player.xml res/values/strings.xml res/values/themes.xml res/xml/searchable.xml) $(ASMA_DIR)/index.txt $(JAVA_OBX)
 	$(DO)mkdir -p java/android/gen && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -A $(ASMA_DIR) --ignore-assets Docs:*.ttt -F $@ -J java/android/gen java/obx
 CLEAN += java/android/AndroidASAP-resources.apk java/android/gen/net/sf/asap/R.java
 

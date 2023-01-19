@@ -1,5 +1,5 @@
 /*
- * ArchiveSelector.java - ASAP for Android
+ * Player.java - ASAP for Android
  *
  * Copyright (C) 2010-2023  Piotr Fusik
  *
@@ -85,7 +85,7 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 	}
 }
 
-public class ArchiveSelector extends ListActivity
+public class Player extends ListActivity
 {
 	static final String ACTION_SHOW_INFO = "net.sf.asap.action.SHOW_INFO";
 
@@ -135,7 +135,7 @@ public class ArchiveSelector extends ListActivity
 			play(intent.getData());
 		}
 		else {
-			setContentView(R.layout.file_list);
+			setContentView(R.layout.player);
 			String query = Intent.ACTION_SEARCH.equals(intent.getAction()) ? intent.getStringExtra(SearchManager.QUERY) : null;
 			setListAdapter(new FileInfoAdapter(this, R.layout.fileinfo_list_item, FileInfo.listIndex(this, query)));
 			registerReceiver(receiver, new IntentFilter(ACTION_SHOW_INFO));
@@ -156,7 +156,7 @@ public class ArchiveSelector extends ListActivity
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
 	{
-		getMenuInflater().inflate(R.menu.archive_selector, menu);
+		getMenuInflater().inflate(R.menu.player, menu);
 
 		SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
 		SearchView searchView = (SearchView) menu.findItem(R.id.menu_search).getActionView();
