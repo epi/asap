@@ -143,6 +143,8 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 				uri = playlist.get(0);
 			}
 		}
+		else
+			playlist.add(uri);
 	}
 
 	private boolean setSearchPlaylist(String query)
