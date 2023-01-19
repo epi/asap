@@ -1,7 +1,7 @@
 /*
  * ArchiveSelector.java - ASAP for Android
  *
- * Copyright (C) 2015-2022  Piotr Fusik
+ * Copyright (C) 2010-2023  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -25,8 +25,10 @@ package net.sf.asap;
 
 import android.app.ListActivity;
 import android.app.SearchManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -84,6 +86,38 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 
 public class ArchiveSelector extends ListActivity
 {
+	static final String ACTION_SHOW_INFO = "net.sf.asap.action.SHOW_INFO";
+
+	private void setTag(int controlId, String value)
+	{
+		TextView control = (TextView) findViewById(controlId);
+		if (value.length() == 0)
+			control.setVisibility(View.GONE);
+		else {
+			control.setText(value);
+			control.setVisibility(View.VISIBLE);
+		}
+	}
+
+	private final BroadcastReceiver receiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				setTag(R.id.playing_name, intent.getStringExtra(PlayerService.EXTRA_NAME));
+				setTag(R.id.playing_author, intent.getStringExtra(PlayerService.EXTRA_AUTHOR));
+				setTag(R.id.playing_date, intent.getStringExtra(PlayerService.EXTRA_DATE));
+				int songs = intent.getIntExtra(PlayerService.EXTRA_SONGS, 1);
+				if (songs > 1)
+					setTag(R.id.playing_song, getString(R.string.song_format, intent.getIntExtra(PlayerService.EXTRA_SONG, 0) + 1, songs));
+				else
+					setTag(R.id.playing_song, "");
+			}
+		};
+
+	private void setButtonAction(int controlId, String action)
+	{
+		findViewById(controlId).setOnClickListener(v -> startService(new Intent(action, null, this, PlayerService.class)));
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
@@ -95,8 +129,14 @@ public class ArchiveSelector extends ListActivity
 			startActivity(new Intent(Intent.ACTION_VIEW, intent.getData(), this, Player.class));
 		}
 		else {
+			setContentView(R.layout.file_list);
 			String query = Intent.ACTION_SEARCH.equals(intent.getAction()) ? intent.getStringExtra(SearchManager.QUERY) : null;
 			setListAdapter(new FileInfoAdapter(this, R.layout.fileinfo_list_item, FileInfo.listIndex(this, query)));
+			registerReceiver(receiver, new IntentFilter(ACTION_SHOW_INFO));
+			setButtonAction(R.id.prev, PlayerService.ACTION_PREVIOUS);
+			setButtonAction(R.id.play, PlayerService.ACTION_PLAY);
+			setButtonAction(R.id.pause, PlayerService.ACTION_PAUSE);
+			setButtonAction(R.id.next, PlayerService.ACTION_NEXT);
 		}
 	}
 

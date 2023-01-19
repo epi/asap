@@ -1,7 +1,7 @@
 /*
  * PlayerService.java - ASAP for Android
  *
- * Copyright (C) 2010-2022  Piotr Fusik
+ * Copyright (C) 2010-2023  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -58,10 +58,17 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 {
 	// User interface -----------------------------------------------------------------------------------------
 
-	private static final String ACTION_PLAY = "asap.intent.action.PLAY";
-	private static final String ACTION_PAUSE = "asap.intent.action.PAUSE";
-	private static final String ACTION_NEXT = "asap.intent.action.NEXT";
-	private static final String ACTION_PREVIOUS = "asap.intent.action.PREVIOUS";
+	static final String EXTRA_NAME = "asap.intent.extra.NAME";
+	static final String EXTRA_AUTHOR = "asap.intent.extra.AUTHOR";
+	static final String EXTRA_DATE = "asap.intent.extra.DATE";
+	static final String EXTRA_SONG = "asap.intent.extra.SONG";
+	static final String EXTRA_SONGS = "asap.intent.extra.SONGS";
+	static final String EXTRA_PAUSED = "asap.intent.extra.PAUSED";
+
+	static final String ACTION_PLAY = "asap.intent.action.PLAY";
+	static final String ACTION_PAUSE = "asap.intent.action.PAUSE";
+	static final String ACTION_NEXT = "asap.intent.action.NEXT";
+	static final String ACTION_PREVIOUS = "asap.intent.action.PREVIOUS";
 
 	private final Handler toastHandler = new Handler();
 
@@ -72,7 +79,14 @@ public class PlayerService extends Service implements Runnable, AudioManager.OnA
 
 	private void showInfo()
 	{
-		sendBroadcast(new Intent(Player.ACTION_SHOW_INFO));
+		Intent intent = new Intent(Player.ACTION_SHOW_INFO);
+		intent.putExtra(EXTRA_NAME, info.getTitleOrFilename());
+		intent.putExtra(EXTRA_AUTHOR, info.getAuthor());
+		intent.putExtra(EXTRA_DATE, info.getDate());
+		intent.putExtra(EXTRA_SONG, song);
+		intent.putExtra(EXTRA_SONGS, info.getSongs());
+		intent.putExtra(EXTRA_PAUSED, isPaused());
+		sendBroadcast(intent);
 	}
 
 	private PendingIntent activityIntent;
