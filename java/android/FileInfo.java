@@ -1,7 +1,7 @@
 /*
  * FileInfo.java - ASAP for Android
  *
- * Copyright (C) 2010-2022  Piotr Fusik
+ * Copyright (C) 2010-2023  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -30,15 +30,19 @@ import java.util.ArrayList;
 
 class FileInfo
 {
-	String filename;
-	String title;
-	String author;
-	String date;
-	int songs;
+	final String filename;
+	final String title;
+	final String author;
+	final String date;
+	final int songs;
 
-	FileInfo(String filename)
+	private FileInfo(String filename, String title, String author, String date, int songs)
 	{
-		this.title = this.filename = filename;
+		this.filename = filename;
+		this.title = title;
+		this.author = author;
+		this.date = date;
+		this.songs = songs;
 	}
 
 	@Override
@@ -49,9 +53,7 @@ class FileInfo
 
 	static FileInfo getShuffleAll(Context context)
 	{
-		FileInfo info = new FileInfo(null);
-		info.title = context.getString(R.string.shuffle_all);
-		return info;
+		return new FileInfo(null, context.getString(R.string.shuffle_all), null, null, 0);
 	}
 
 	static FileInfo[] listIndex(Context context, String query)
@@ -68,14 +70,8 @@ class FileInfo
 				String author = r.readLine();
 				String date = r.readLine();
 				String songs = r.readLine();
-				if (query == null || Util.matches(title, query) || Util.matches(author, query)) {
-					FileInfo info = new FileInfo(name);
-					info.title = title;
-					info.author = author;
-					info.date = date;
-					info.songs = Integer.parseInt(songs);
-					coll.add(info);
-				}
+				if (query == null || Util.matches(title, query) || Util.matches(author, query))
+					coll.add(new FileInfo(name, title, author, date, Integer.parseInt(songs)));
 			}
 		}
 		catch (IOException ex) {
