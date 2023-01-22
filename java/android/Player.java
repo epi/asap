@@ -45,8 +45,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.SearchView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 class FileInfoAdapter extends ArrayAdapter<FileInfo>
@@ -129,7 +129,7 @@ public class Player extends ListActivity
 	{
 		showTime(R.id.playing_position, position);
 		if (duration > 0)
-			((ProgressBar) findViewById(R.id.seekbar)).setProgress((int) (1000L * position / duration));
+			((SeekBar) findViewById(R.id.seekbar)).setProgress((int) (1000L * position / duration));
 	}
 
 	private final Runnable positionUpdater = () -> {
@@ -144,6 +144,32 @@ public class Player extends ListActivity
 	{
 		positionUpdateHandler.postDelayed(positionUpdater, 1000 - position % 1000);
 	}
+
+	private long getPosition(int progress)
+	{
+		return (long) progress * duration / 1000;
+	}
+
+	private final SeekBar.OnSeekBarChangeListener seekBarListener = new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar)
+			{
+				zeroPositionRealtime = 0;
+			}
+
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
+			{
+				if (fromUser)
+					showTime(R.id.playing_position, getPosition(progress));
+			}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar)
+			{
+				mediaController.getTransportControls().seekTo(getPosition(seekBar.getProgress()));
+			}
+		};
 
 	private final MediaController.Callback mediaControllerCallback = new MediaController.Callback() {
 			@Override
@@ -225,6 +251,7 @@ public class Player extends ListActivity
 			setButtonAction(R.id.play, PlayerService.ACTION_PLAY);
 			setButtonAction(R.id.pause, PlayerService.ACTION_PAUSE);
 			setButtonAction(R.id.next, PlayerService.ACTION_NEXT);
+			((SeekBar) findViewById(R.id.seekbar)).setOnSeekBarChangeListener(seekBarListener);
 			mediaBrowser = new MediaBrowser(this, new ComponentName(this, PlayerService.class), mediaBrowserConnectionCallback, null);
 		}
 	}
