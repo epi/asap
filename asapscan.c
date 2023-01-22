@@ -63,6 +63,16 @@ static int features = 0;
 static int cpu_trace = 0;
 static void trace_cpu(void);
 
+#define MEM_TRACE_STORE        1
+#define MEM_TRACE_LOAD         2
+#define MEM_TRACE_LOAD_UNINIT  4
+#define MEM_TRACE_FILE         8
+static int mem_trace = 0;
+static void trace_mem_store(unsigned short addr, unsigned char data);
+static void trace_mem_load(unsigned short addr, unsigned char data);
+static void trace_mem_file(unsigned short addr, unsigned short len);
+static unsigned char mem_access[65537];
+
 static int print_time_at_pc = -1;
 
 static bool acid = false;
@@ -197,6 +207,27 @@ static void trace_cpu(void)
 		cpu_opcodes[asap->cpu.memory[pc]] |= CPU_OPCODE_USED;
 }
 
+static void trace_mem_store(unsigned short addr, unsigned char data)
+{
+	if ((addr & 0xf800) != 0xd000)
+		mem_access[addr] |= MEM_TRACE_STORE;
+}
+
+static void trace_mem_load(unsigned short addr, unsigned char data)
+{
+	if ((addr & 0xf800) != 0xd000) {
+		if (mem_access[addr] == 0)
+			mem_access[addr] |= MEM_TRACE_LOAD_UNINIT;
+		mem_access[addr] |= MEM_TRACE_LOAD;
+	}
+}
+
+static void trace_mem_file(unsigned short addr, unsigned short value)
+{
+	while (value--)
+		mem_access[addr++] |= MEM_TRACE_FILE;
+}
+
 static void print_unofficial_mnemonic(int opcode)
 {
 	const char *mnemonic = cpu_mnemonics[opcode];
@@ -225,6 +256,7 @@ static void print_help(void)
 		"-p          Calculate fingerprint\n"
 		"-l          Calculate hash representation (fingerprint is a substring of this)\n"
 		"-c          Dump 6502 trace\n"
+		"-m          List memory areas written to\n"
 		"-u          List used unofficial 6502 instructions and BRK\n"
 		"-b HEXADDR  Print time the given instruction reached\n"
 		"-a          Run Acid800 test\n"
@@ -477,6 +509,31 @@ static void scan_song(int song)
 	}
 }
 
+void print_mem_ranges(int mask, int not_mask, const char *description)
+{
+	bool printed = false;
+	if (mem_trace & mask) {
+		int start = -1;
+		for (int addr = 0; addr < 65536; addr++) {
+			if ((mem_access[addr] & mask) && !(mem_access[addr] & not_mask)) {
+				if (start < 0)
+					start = addr;
+				if (!((mem_access[addr + 1] & mask) && !(mem_access[addr + 1] & not_mask))) {
+					if (!printed) {
+						printf("%s\n", description);
+						printed = true;
+					}
+					if (addr == start)
+						printf("%04x\n", addr);
+					else
+						printf("%04x-%04x\n", start, addr);
+					start = -1;
+				}
+			}
+		}
+	}
+}
+
 int main(int argc, char **argv)
 {
 	const char *input_file = NULL;
@@ -505,6 +562,8 @@ int main(int argc, char **argv)
 			print_time_at_pc = (int) strtol(argv[++i], NULL, 16);
 			cpu_trace |= CPU_TRACE_PC_TIME;
 		}
+		else if (strcmp(argv[i], "-m") == 0)
+			mem_trace |= MEM_TRACE_STORE | MEM_TRACE_LOAD | MEM_TRACE_LOAD_UNINIT | MEM_TRACE_FILE;
 		else if (strcmp(argv[i], "-s") == 0)
 			song = atoi(argv[++i]);
 		else if (strcmp(argv[i], "-a") == 0)
@@ -521,7 +580,7 @@ int main(int argc, char **argv)
 			input_file = argv[i];
 		}
 	}
-	if (dump + features + detect_time + cpu_trace + acid == 0 || input_file == NULL) {
+	if (dump + features + detect_time + cpu_trace + acid + mem_trace == 0 || input_file == NULL) {
 		print_help();
 		return 1;
 	}
@@ -572,5 +631,11 @@ int main(int argc, char **argv)
 				print_unofficial_mnemonic(i);
 		}
 	}
+	print_mem_ranges(MEM_TRACE_LOAD_UNINIT, 0,
+		"Module reads uninitialized data at the following address ranges:");
+	print_mem_ranges(MEM_TRACE_STORE, MEM_TRACE_FILE,
+		"Module writes to the following address ranges:");
+	print_mem_ranges(MEM_TRACE_FILE, 0,
+		"Module is loaded to the following address ranges:");
 	return exit_code;
 }

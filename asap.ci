@@ -307,11 +307,16 @@ public class ASAP
 			if (music <= playerLastByte)
 				throw "Module address conflicts with the player routine";
 			Cpu.Memory[0x4c00] = 0; // for 11270-byte DLT
-			if (ModuleInfo.Type == ASAPModuleType.Fc)
-				module.CopyTo(0, Cpu.Memory, music, moduleLen);
-			else
-				module.CopyTo(6, Cpu.Memory, music, moduleLen - 6);
+			int offset = ModuleInfo.Type == ASAPModuleType.Fc ? 0 : 6;
+			module.CopyTo(offset, Cpu.Memory, music, moduleLen - offset);
 			playerRoutine.CopyTo(6, Cpu.Memory, player, playerLastByte + 1 - player);
+#if ASAPSCAN
+			native {
+				trace_mem_file(music, moduleLen - offset);
+				trace_mem_file(player, playerLastByte + 1 - player);
+			}
+#endif
+
 			if (ModuleInfo.Player < 0)
 				ModuleInfo.Player = player;
 			return;
@@ -326,6 +331,11 @@ public class ASAP
 				throw "Invalid binary block";
 			moduleIndex += 4;
 			module.CopyTo(moduleIndex, Cpu.Memory, startAddr, blockLen);
+#if ASAPSCAN
+			native {
+				trace_mem_file(startAddr, blockLen);
+			}
+#endif
 			moduleIndex += blockLen;
 			if (moduleIndex == moduleLen)
 				return;
