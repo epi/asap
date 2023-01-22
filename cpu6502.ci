@@ -121,7 +121,7 @@ class Cpu6502
 	{
 		int s = (S + 1) & 0xff;
 		S = s;
-		return PeekMemory(0x0100 + s);
+		return Memory[0x0100 + s];
 	}
 
 	void PullFlags!()
@@ -135,7 +135,7 @@ class Cpu6502
 	void Push!(int data)
 	{
 		int s = S;
-		Poke(0x0100 + s, data);
+		Memory[0x0100 + s] = data;
 		S = (s - 1) & 0xff;
 	}
 
