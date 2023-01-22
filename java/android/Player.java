@@ -36,6 +36,8 @@ import android.media.session.MediaController;
 import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,6 +45,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.TextView;
 
@@ -101,7 +104,7 @@ public class Player extends ListActivity
 		findViewById(controlId).setOnClickListener(v -> startService(new Intent(action, null, this, PlayerService.class)));
 	}
 
-	private void setTag(int controlId, String value)
+	private void showTag(int controlId, String value)
 	{
 		TextView control = (TextView) findViewById(controlId);
 		if (value == null)
@@ -112,18 +115,50 @@ public class Player extends ListActivity
 		}
 	}
 
+	private void showTime(int controlId, long milliseconds)
+	{
+		int seconds = (int) (milliseconds / 1000);
+		((TextView) findViewById(controlId)).setText(milliseconds < 0 ? "" : String.format("%02d:%02d", seconds / 60, seconds % 60));
+	}
+
+	private int duration = 0;
+	private long zeroPositionRealtime;
+	private final Handler positionUpdateHandler = new Handler();
+
+	private void showPosition(long position)
+	{
+		showTime(R.id.playing_position, position);
+		if (duration > 0)
+			((ProgressBar) findViewById(R.id.seekbar)).setProgress((int) (1000L * position / duration));
+	}
+
+	private final Runnable positionUpdater = () -> {
+			if (zeroPositionRealtime != 0) {
+				long position = SystemClock.elapsedRealtime() - zeroPositionRealtime;
+				showPosition(position);
+				schedulePositionUpdate(position);
+			}
+		};
+
+	private void schedulePositionUpdate(long position)
+	{
+		positionUpdateHandler.postDelayed(positionUpdater, 1000 - position % 1000);
+	}
+
 	private final MediaController.Callback mediaControllerCallback = new MediaController.Callback() {
 			@Override
 			public void onMetadataChanged(MediaMetadata metadata)
 			{
-				setTag(R.id.playing_name, metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
-				setTag(R.id.playing_author, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
-				setTag(R.id.playing_date, metadata.getString(MediaMetadata.METADATA_KEY_DATE));
+				showTag(R.id.playing_name, metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
+				showTag(R.id.playing_author, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
+				showTag(R.id.playing_date, metadata.getString(MediaMetadata.METADATA_KEY_DATE));
 				int songs = (int) metadata.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS);
 				if (songs > 1)
-					setTag(R.id.playing_song, getString(R.string.song_format, metadata.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER), songs));
+					showTag(R.id.playing_song, getString(R.string.song_format, metadata.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER), songs));
 				else
 					findViewById(R.id.playing_song).setVisibility(View.GONE);
+				duration = (int) metadata.getLong(MediaMetadata.METADATA_KEY_DURATION);
+				showTime(R.id.playing_time, duration == 0 ? -1 : duration);
 				findViewById(R.id.playing_panel).setVisibility(View.VISIBLE);
 			}
 
@@ -133,6 +168,14 @@ public class Player extends ListActivity
 				long actions = state.getActions();
 				findViewById(R.id.play).setVisibility((actions & PlaybackState.ACTION_PLAY) != 0 ? View.VISIBLE : View.GONE);
 				findViewById(R.id.pause).setVisibility((actions & PlaybackState.ACTION_PAUSE) != 0 ? View.VISIBLE : View.GONE);
+				long position = state.getPosition();
+				showPosition(position);
+				if (state.getState() == PlaybackState.STATE_PLAYING) {
+					zeroPositionRealtime = SystemClock.elapsedRealtime() - position;
+					schedulePositionUpdate(position);
+				}
+				else
+					zeroPositionRealtime = 0; // stop an already scheduled positionUpdater
 			}
 		};
 	private MediaController mediaController;
