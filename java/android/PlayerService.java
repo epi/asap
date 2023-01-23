@@ -118,10 +118,10 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 			getNotificationManager().notify(NOTIFICATION_ID, notification);
 	}
 
-	private void setPlaybackState(int state, float speed, long actions)
+	private void setPlaybackState(int state, int position, float speed, long actions)
 	{
 		mediaSession.setPlaybackState(new PlaybackState.Builder()
-			.setState(state, asap.getPosition(), speed)
+			.setState(state, position, speed)
 			.setActions(actions)
 			.build());
 	}
@@ -353,14 +353,14 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 		int pos;
 		synchronized (this) {
 			if (command == COMMAND_PAUSE) {
-				setPlaybackState(PlaybackState.STATE_PAUSED, 0, PlaybackState.ACTION_PLAY | COMMON_ACTIONS);
+				setPlaybackState(PlaybackState.STATE_PAUSED, asap.getPosition(), 0, PlaybackState.ACTION_PLAY | COMMON_ACTIONS);
 				showNotification(false);
 				audioTrack.pause();
 				releaseFocus();
 				for (;;) {
 					if (command == COMMAND_PLAY) {
 						if (gainFocus()) {
-							setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
+							setPlaybackState(PlaybackState.STATE_PLAYING, asap.getPosition(), 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
 							showNotification(false);
 							audioTrack.play();
 							break;
@@ -386,15 +386,15 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 		}
 		if (pos >= 0) {
 			if (pos < asap.getPosition())
-				setPlaybackState(PlaybackState.STATE_REWINDING, -10, 0);
+				setPlaybackState(PlaybackState.STATE_REWINDING, pos, -10, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
 			else
-				setPlaybackState(PlaybackState.STATE_FAST_FORWARDING, 10, 0);
+				setPlaybackState(PlaybackState.STATE_FAST_FORWARDING, pos, 10, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
 			try {
 				asap.seek(pos);
 			}
 			catch (Exception ex) {
 			}
-			setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
+			setPlaybackState(PlaybackState.STATE_PLAYING, asap.getPosition(), 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
 		}
 		return true;
 	}
@@ -403,7 +403,7 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 	{
 		command = COMMAND_PLAY;
 		seekPosition = -1;
-		setPlaybackState(PlaybackState.STATE_PLAYING, 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
+		setPlaybackState(PlaybackState.STATE_PLAYING, asap.getPosition(), 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
 
 		int channelConfig = info.getChannels() == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO;
 		int bufferLen = AudioTrack.getMinBufferSize(ASAP.SAMPLE_RATE, channelConfig, AudioFormat.ENCODING_PCM_16BIT) >> 1;
