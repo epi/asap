@@ -312,8 +312,8 @@ public class ASAP
 			playerRoutine.CopyTo(6, Cpu.Memory, player, playerLastByte + 1 - player);
 #if ASAPSCAN
 			native {
-				trace_mem_file(music, moduleLen - offset);
-				trace_mem_file(player, playerLastByte + 1 - player);
+				trace_mem_range(MEM_TRACE_FILE, music, moduleLen - offset);
+				trace_mem_range(MEM_TRACE_FILE, player, playerLastByte + 1 - player);
 			}
 #endif
 
@@ -333,7 +333,7 @@ public class ASAP
 			module.CopyTo(moduleIndex, Cpu.Memory, startAddr, blockLen);
 #if ASAPSCAN
 			native {
-				trace_mem_file(startAddr, blockLen);
+				trace_mem_range(MEM_TRACE_FILE, startAddr, blockLen);
 			}
 #endif
 			moduleIndex += blockLen;

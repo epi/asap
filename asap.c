@@ -5538,7 +5538,8 @@ static int Cpu6502_Pull(Cpu6502 *self)
 {
 	int s = (self->s + 1) & 255;
 	self->s = s;
-	return Cpu6502_PeekMemory(self, 256 + s);
+	int data = self->memory[256 + s];
+	return data;
 }
 
 static void Cpu6502_PullFlags(Cpu6502 *self)
@@ -5552,7 +5553,7 @@ static void Cpu6502_PullFlags(Cpu6502 *self)
 static void Cpu6502_Push(Cpu6502 *self, int data)
 {
 	int s = self->s;
-	Cpu6502_Poke(self, 256 + s, data);
+	self->memory[256 + s] = (uint8_t) data;
 	self->s = (s - 1) & 255;
 }
 

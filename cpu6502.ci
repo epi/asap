@@ -76,7 +76,7 @@ class Cpu6502
 #if ASAPSCAN
 		native {
 			if (mem_trace & (MEM_TRACE_LOAD | MEM_TRACE_LOAD_UNINIT))
-				trace_mem_load(addr, data);
+				trace_mem(MEM_TRACE_LOAD, addr, data);
 		}
 #endif
 		return data;
@@ -99,7 +99,7 @@ class Cpu6502
 #if ASAPSCAN
 			native {
 				if (mem_trace & MEM_TRACE_STORE)
-					trace_mem_store(addr, data);
+					trace_mem(MEM_TRACE_STORE, addr, data);
 			}
 #endif
 		}
@@ -121,7 +121,14 @@ class Cpu6502
 	{
 		int s = (S + 1) & 0xff;
 		S = s;
-		return Memory[0x0100 + s];
+		int data = Memory[0x0100 + s];
+#if ASAPSCAN
+		native {
+			if (mem_trace & MEM_TRACE_PULL)
+				trace_mem(MEM_TRACE_PULL, 0x0100 + s, data);
+		}
+#endif
+		return data;
 	}
 
 	void PullFlags!()
@@ -136,6 +143,12 @@ class Cpu6502
 	{
 		int s = S;
 		Memory[0x0100 + s] = data;
+#if ASAPSCAN
+		native {
+			if (mem_trace & MEM_TRACE_PUSH)
+				trace_mem(MEM_TRACE_PUSH, 0x0100 + s, data);
+		}
+#endif
 		S = (s - 1) & 0xff;
 	}
 
