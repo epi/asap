@@ -1,9 +1,9 @@
 ﻿<page title="Web">
-	<script src="asap.js"> </script>
-	<script src="asapweb.js"> </script>
-	<script>
-		function openFiles(files)
+	<script type="module">
+		import { asapWeb } from "./asapweb.js";
+		function openFiles()
 		{
+			const files = this.files;
 			const select = document.getElementById("fileSelect");
 			switch (files.length) {
 			case 0:
@@ -31,14 +31,22 @@
 			seekBar.max = info.getDuration(info.getDefaultSong());
 			seekBar.value = asapWeb.asap.getPosition();
 		}
+		function selectFile()
+		{
+			asapWeb.playFile(document.getElementById("fileInput").files[this.selectedIndex]);
+		}
+		document.getElementById("fileInput").addEventListener("change", openFiles);
+		document.getElementById("fileSelect").addEventListener("change", selectFile);
+		document.getElementById("pauseButton").addEventListener("click", () => asapWeb.togglePause());
+		document.getElementById("seekBar").addEventListener("input", function() { asapWeb.seek(this.value); });
 	</script>
 	<p>Play your local Atari 8-bit chiptunes on this page.
 	Select one or more files from your device. The files will <em>not</em> be uploaded, but played right in your browser using JavaScript.</p>
 	<p>Select file(s):
-		<input id="fileInput" type="file" multiple="multiple" onchange="openFiles(this.files)" accept=".sap,.cmc,.cm3,.cmr,.cms,.dmc,.dlt,.mpt,.mpd,.rmt,.tmc,.tm8,.tm2,.fc" />
-		<select id="fileSelect" onchange="asapWeb.playFile(fileInput.files[this.selectedIndex])" style="display: none"> </select>
-		<input id="pauseButton" type="button" value="Pause" style="display: none" onclick="asapWeb.togglePause()" />
-		<input id="seekBar" type="range" style="display: none" oninput="asapWeb.seek(this.value)" />
+		<input id="fileInput" type="file" multiple="multiple" accept=".sap,.cmc,.cm3,.cmr,.cms,.dmc,.dlt,.mpt,.mpd,.rmt,.tmc,.tm8,.tm2,.fc" />
+		<select id="fileSelect" style="display: none"> </select>
+		<input id="pauseButton" type="button" value="Pause" style="display: none" />
+		<input id="seekBar" type="range" style="display: none" />
 	</p>
 	<p>To play something from the ASMA archive without downloading it, use search on the <a href="http://asma.atari.org">ASMA website</a>.</p>
 </page>

@@ -1,7 +1,7 @@
 /*
- * asap2wav1.js - converter of ASAP-supported formats to WAV files
+ * asap2wav.js - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2009-2020 Piotr Fusik
+ * Copyright (C) 2009-2023 Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -21,90 +21,13 @@
  * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-var args;
-var driver;
-var readBinaryFile;
-var BinaryFileOutput;
-
-if (typeof(java) == "object") {
-	// Rhino
-
-	args = arguments;
-	driver = "java -jar rhino-*.jar";
-
-	readBinaryFile = function(filename)
-	{
-		var stream = new java.io.FileInputStream(filename);
-		var bytes = new Array();
-		for (;;) {
-			var c = stream.read();
-			if (c < 0)
-				break;
-			bytes.push(c);
-		}
-		return bytes;
-	}
-
-	BinaryFileOutput = function(filename)
-	{
-		this.stream = new java.io.BufferedOutputStream(new java.io.FileOutputStream(filename));
-
-		this.write = function(bytes, len)
-		{
-			for (var i = 0; i < len; i++)
-				this.stream.write(bytes[i]);
-		}
-
-		this.close = function()
-		{
-			this.stream.close();
-		}
-	}
-
-	Int32Array.prototype.fill = function(value)
-	{
-		for (var i = 0; i < this.length; i++)
-			this[i] = value;
-	}
-}
-else {
-	// Node
-
-	args = process.argv.slice(2);
-	driver = "node";
-	var print = console.log;
-
-	const fs = require("fs");
-
-	readBinaryFile = fs.readFileSync;
-
-	BinaryFileOutput = function(filename)
-	{
-		this.fd = fs.openSync(filename, "w");
-
-		this.write = function(bytes, len)
-		{
-			fs.writeSync(this.fd, Buffer.from(bytes), 0, len);
-		}
-
-		this.close = function()
-		{
-			fs.closeSync(this.fd);
-		}
-	}
-}
-
-var outputFilename = null;
-var outputHeader = true;
-var song = -1;
-var format = ASAPSampleFormat.S16_L_E;
-var duration = -1;
-var muteMask = 0;
+import fs from "fs";
+import { ASAP, ASAPInfo, ASAPSampleFormat } from "./asap.mjs";
 
 function printHelp()
 {
-	print(
-		"Usage: " + driver + " asap2wav.js [OPTIONS] INPUTFILE...\n" +
+	console.log(
+		"Usage: node asap2wav.mjs [OPTIONS] INPUTFILE...\n" +
 		"Each INPUTFILE must be in a supported format:\n" +
 		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2 or FC.\n" +
 		"Options:\n" +
@@ -120,6 +43,13 @@ function printHelp()
 	);
 }
 
+let outputFilename = null;
+let outputHeader = true;
+let song = -1;
+let format = ASAPSampleFormat.S16_L_E;
+let duration = -1;
+let muteMask = 0;
+
 function setSong(s)
 {
 	song = parseInt(s, 10);
@@ -133,8 +63,8 @@ function setTime(s)
 function setMuteMask(s)
 {
 	muteMask = 0;
-	for (var i = 0; i < s.length; i++) {
-		var ch = s.charCodeAt(i) - 49;
+	for (let i = 0; i < s.length; i++) {
+		const ch = s.charCodeAt(i) - 49;
 		if (ch >= 0 && ch < 8)
 			muteMask |= 1 << ch;
 	}
@@ -142,10 +72,10 @@ function setMuteMask(s)
 
 function processFile(inputFilename)
 {
-	var module = readBinaryFile(inputFilename);
-	var asap = new ASAP();
+	const module = fs.readFileSync(inputFilename);
+	const asap = new ASAP();
 	asap.load(inputFilename, module, module.length);
-	var info = asap.getInfo();
+	const info = asap.getInfo();
 	if (song < 0)
 		song = info.getDefaultSong();
 	if (duration < 0) {
@@ -156,29 +86,30 @@ function processFile(inputFilename)
 	asap.playSong(song, duration);
 	asap.mutePokeyChannels(muteMask);
 	if (outputFilename == null) {
-		var i = inputFilename.lastIndexOf(".");
+		const i = inputFilename.lastIndexOf(".");
 		outputFilename = inputFilename.substring(0, i + 1) + (outputHeader ? "wav" : "raw");
 	}
-	var of = new BinaryFileOutput(outputFilename);
-	var buffer = new Array(8192);
-	var nBytes;
+	const of = fs.openSync(outputFilename, "w");
+	const buffer = new Uint8Array(8192);
+	let nBytes;
 	if (outputHeader) {
 		nBytes = asap.getWavHeader(buffer, format, false);
-		of.write(buffer, nBytes);
+		fs.writeSync(of, buffer, 0, nBytes);
 	}
 	do {
 		nBytes = asap.generate(buffer, 8192, format);
-		of.write(buffer, nBytes);
+		fs.writeSync(of, buffer, 0, nBytes);
 	} while (nBytes == 8192);
-	of.close();
+	fs.closeSync(of);
 	outputFilename = null;
 	song = -1;
 	duration = -1;
 }
 
-var noInputFiles = true;
-for (var i = 0; i < args.length; i++) {
-	var arg = args[i];
+const args = process.argv.slice(2);
+let noInputFiles = true;
+for (let i = 0; i < args.length; i++) {
+	const arg = args[i];
 	if (arg.charAt(0) != "-") {
 		processFile(arg);
 		noInputFiles = false;
@@ -210,7 +141,7 @@ for (var i = 0; i < args.length; i++) {
 		noInputFiles = false;
 	}
 	else if (arg == "-v" || arg == "--version") {
-		print("ASAP2WAV (JavaScript) " + ASAPInfo.VERSION);
+		console.log("ASAP2WAV (JavaScript) " + ASAPInfo.VERSION);
 		noInputFiles = false;
 	}
 	else
