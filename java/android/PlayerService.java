@@ -175,6 +175,8 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 	private int command = COMMAND_STOP;
 	private Thread thread = null;
 
+	static final String METADATA_KEY_CHANNELS = "asap.media.metadata.CHANNELS";
+
 	private synchronized void setCommand(int command)
 	{
 		this.command = command;
@@ -301,6 +303,7 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 		int year = info.getYear();
 		if (year > 0)
 			metadata.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
+		metadata.putLong(METADATA_KEY_CHANNELS, info.getChannels());
 		mediaSession.setMetadata(metadata.build());
 		mediaSession.setActive(true);
 

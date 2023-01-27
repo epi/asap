@@ -175,6 +175,7 @@ public class Player extends ListActivity
 			@Override
 			public void onMetadataChanged(MediaMetadata metadata)
 			{
+				getWindow().setBackgroundDrawableResource(metadata.getLong(PlayerService.METADATA_KEY_CHANNELS) == 2 ? R.drawable.stereo : R.drawable.background);
 				showTag(R.id.playing_name, metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
 				showTag(R.id.playing_author, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
 				showTag(R.id.playing_date, metadata.getString(MediaMetadata.METADATA_KEY_DATE));
