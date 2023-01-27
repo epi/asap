@@ -3698,11 +3698,12 @@ static bool ASAPInfo_ParseFc(ASAPInfo *self, uint8_t const *module, int moduleLe
 
 static char *ASAPInfo_ParseText(uint8_t const *module, int i, int argEnd)
 {
-	if (i < 0 || argEnd - i < 2 || module[i] != '"' || module[argEnd - 1] != '"')
+	int len = argEnd - i - 2;
+	if (i < 0 || len < 0 || module[i] != '"' || module[argEnd - 1] != '"')
 		return strdup("");
-	if (module[i + 1] == '<' && module[i + 2] == '?' && module[i + 3] == '>')
+	if (len == 3 && module[i + 1] == '<' && module[i + 2] == '?' && module[i + 3] == '>')
 		return strdup("");
-	return CiString_Substring((const char *) module + i + 1, argEnd - i - 2);
+	return CiString_Substring((const char *) module + i + 1, len);
 }
 
 static bool ASAPInfo_HasStringAt(uint8_t const *module, int moduleIndex, const char *s)
