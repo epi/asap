@@ -90,7 +90,11 @@ java/android/classes/net/sf/asap/Player.class: $(ANDROID_JAVA_SRC) java/android/
 CLEANDIR += java/android/classes
 
 # Also generates java/android/gen/net/sf/asap/R.java
-java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml res/drawable/ic_menu_browse.png res/drawable-land/background.jpg res/drawable-port/background.jpg res/drawable/banner.png res/drawable/icon.xml res/layout/fileinfo_list_item.xml res/layout/player.xml res/menu/player.xml res/values/strings.xml res/values/themes.xml res/xml/searchable.xml) $(ASMA_DIR)/index.txt $(JAVA_OBX)
+java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml \
+	res/drawable/ic_menu_browse.png res/drawable-land/background.jpg res/drawable-port/background.jpg res/drawable/banner.png res/drawable/icon.xml \
+	res/layout/fileinfo_list_item.xml res/layout/player.xml res/menu/player.xml res/values/strings.xml res/values/themes.xml res/xml/searchable.xml) \
+	java/android/res/drawable-land/background.jpg java/android/res/drawable-port/background.jpg \
+	$(ASMA_DIR)/index.txt $(JAVA_OBX)
 	$(DO)mkdir -p java/android/gen && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -A $(ASMA_DIR) --ignore-assets Docs:*.ttt -F $@ -J java/android/gen java/obx
 CLEAN += java/android/AndroidASAP-resources.apk java/android/gen/net/sf/asap/R.java
 
@@ -101,6 +105,14 @@ CLEAN += $(ASMA_DIR)/index.txt
 java/android/Indexer.class: $(srcdir)java/android/Indexer.java java/classes/net/sf/asap/ASAP.class
 	$(JAVAC) -d $(@D) -classpath java/classes $<
 CLEAN += java/android/Indexer.class
+
+java/android/res/drawable-land/background.jpg: java/android/img/POKEY_chip_on_an_Atari_130XE_motherboard.jpg
+	$(DO)magick $< -crop 2560x1280+0+420 -resize 2160x1080 -brightness-contrast -70x-75 $@
+CLEAN += java/android/res/drawable-land/background.jpg
+
+java/android/res/drawable-port/background.jpg: java/android/img/POKEY_chip_on_an_Atari_130XE_motherboard.jpg
+	$(DO)magick $< -crop 928x1856+112+0 -resize 1080x2160 -brightness-contrast -70x-75 $@
+CLEAN += java/android/res/drawable-port/background.jpg
 
 android-push-asapconv: java/android/asapconv
 	$(ADB) -d push java/android/asapconv /data/local/tmp/
