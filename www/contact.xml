@@ -21,6 +21,7 @@
 	<authors>
 		<author name="Piotr Fusik" email="fox@scene.pl" href="http://fusik.info/piotr/">Creator and lead developer.</author>
 		<author name="Atari800 Emulator Developers" href="https://atari800.github.io/">6502 and POKEY emulation used in 0.x.y versions of ASAP.</author>
+		<author name="Rod Castler" href="https://commons.wikimedia.org/wiki/File:POKEY_chip_on_an_Atari_130XE_motherboard.jpg">Android background photo.</author>
 		<author name="Zdenek Eisenhammer" email="pg@pinknet.cz">Testing.</author>
 		<author name="Maciej Grzybek" email="grzybson@pigwa.net">Fixed an overflow in the Silverlight port.</author>
 		<author name="Jakub Husak" email="jakub.husak@gmail.com" href="http://husak.pl/">SAP fingerprint calculation. asapscan fixes.</author>
