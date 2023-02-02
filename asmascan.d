@@ -49,10 +49,16 @@ struct Region {
 }
 
 struct SapInfo {
+	this(string filename) {
+		this.filename = filename;
+		this.regions.length = 64;
+		this.memory.length = 65536;
+	}
+
 	string filename;
 	string[] tags;
-	Region[][64] regions;
-	ubyte[65536] memory;
+	Region[][] regions;
+	ubyte[] memory;
 
 	ubyte stackUsage() const {
 		return cast(ubyte) regions[32 .. $].join.map!(r => r.size).sum;
