@@ -12,6 +12,7 @@ import std.range;
 import std.conv : to;
 import std.exception;
 import std.getopt;
+import std.ascii;
 import core.atomic;
 
 T parseInt(T)(in char[] t) {
@@ -73,7 +74,7 @@ struct SapInfo {
 		auto labels = [
 			"file data", "store", "load", "load uninitialized", "push", "pull"
 		];
-		foreach (l; p.stdout.byLine) {
+		foreach (l; p.stdout.byLine(No.keepTerminator, newline)) {
 			if (l.startsWith("Unused")) {
 				i = 0;
 			} else if (l.startsWith("Memory regions")) {
