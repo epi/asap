@@ -52,11 +52,18 @@ import android.widget.TextView;
 class FileInfoAdapter extends ArrayAdapter<FileInfo>
 {
 	private final LayoutInflater layoutInflater;
+	private String playingFilename = "";
 
 	protected FileInfoAdapter(Context context, int rowViewResourceId, FileInfo[] infos)
 	{
 		super(context, rowViewResourceId, infos);
 		layoutInflater = LayoutInflater.from(context);
+	}
+
+	void setPlayingFilename(String filename)
+	{
+		playingFilename = filename;
+		notifyDataSetChanged();
 	}
 
 	private static class ViewHolder
@@ -87,6 +94,7 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 		holder.author.setText(info.author);
 		holder.date.setText(info.date);
 		holder.songs.setText(info.songs > 1 ? getContext().getString(R.string.songs_format, info.songs) : null);
+		convertView.setBackgroundColor(playingFilename.equals(info.filename) ? 0xc0661111 : 0);
 
 		return convertView;
 	}
@@ -176,6 +184,8 @@ public class Player extends ListActivity
 			public void onMetadataChanged(MediaMetadata metadata)
 			{
 				getWindow().setBackgroundDrawableResource(metadata.getLong(PlayerService.METADATA_KEY_CHANNELS) == 2 ? R.drawable.stereo : R.drawable.background);
+				String filename = Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_URI)).getSchemeSpecificPart();
+				((FileInfoAdapter) getListAdapter()).setPlayingFilename(filename);
 				showTag(R.id.playing_name, metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
 				showTag(R.id.playing_author, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
 				showTag(R.id.playing_date, metadata.getString(MediaMetadata.METADATA_KEY_DATE));

@@ -286,6 +286,8 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 
 		// put metadata into mediaSession
 		MediaMetadata.Builder metadata = new MediaMetadata.Builder()
+			.putString(MediaMetadata.METADATA_KEY_MEDIA_URI, uri.toString())
+			.putLong(METADATA_KEY_CHANNELS, info.getChannels())
 			.putString(MediaMetadata.METADATA_KEY_TITLE, info.getTitleOrFilename());
 		String author = info.getAuthor();
 		if (author.length() > 0)
@@ -303,7 +305,6 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 		int year = info.getYear();
 		if (year > 0)
 			metadata.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
-		metadata.putLong(METADATA_KEY_CHANNELS, info.getChannels());
 		mediaSession.setMetadata(metadata.build());
 		mediaSession.setActive(true);
 
