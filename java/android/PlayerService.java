@@ -562,6 +562,7 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 		mediaSession.setSessionActivity(activityIntent);
 		mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
 		setSessionToken(mediaSession.getSessionToken());
+		registerReceiver(becomingNoisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
 	}
 
 	private final BroadcastReceiver becomingNoisyReceiver = new BroadcastReceiver() {
@@ -577,7 +578,6 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 	{
 		switch (intent.getAction()) {
 		case Intent.ACTION_VIEW:
-			registerReceiver(becomingNoisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
 			song = SONG_DEFAULT;
 			uri = intent.getData();
 			setPlaylist();
