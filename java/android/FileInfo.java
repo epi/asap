@@ -51,16 +51,13 @@ class FileInfo
 		return title;
 	}
 
-	static FileInfo getShuffleAll(Context context)
-	{
-		return new FileInfo(null, context.getString(R.string.shuffle_all), null, null, 0);
-	}
+	static final FileInfo SHUFFLE_ALL = null;
 
 	static FileInfo[] listIndex(Context context, String query)
 	{
 		ArrayList<FileInfo> coll = new ArrayList<FileInfo>();
 		if (query == null)
-			coll.add(getShuffleAll(context));
+			coll.add(SHUFFLE_ALL);
 		try (LineNumberReader r = Util.openIndex(context)) {
 			for (;;) {
 				String name = r.readLine();

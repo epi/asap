@@ -66,6 +66,21 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 		notifyDataSetChanged();
 	}
 
+	private static final int VIEW_TYPE_SHUFFLE_ALL = 0;
+	private static final int VIEW_TYPE_FILE = 1;
+
+	@Override
+	public int getViewTypeCount()
+	{
+		return 2;
+	}
+
+	@Override
+	public int getItemViewType(int position)
+	{
+		return getItem(position) == FileInfo.SHUFFLE_ALL ? VIEW_TYPE_SHUFFLE_ALL : VIEW_TYPE_FILE;
+	}
+
 	private static class ViewHolder
 	{
 		private TextView title;
@@ -74,8 +89,13 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 		private TextView songs;
 	}
 
+	@Override
 	public View getView(int position, View convertView, ViewGroup parent)
 	{
+		FileInfo info = getItem(position);
+		if (info == FileInfo.SHUFFLE_ALL)
+			return convertView == null ? layoutInflater.inflate(R.layout.shuffle_all_list_item, null) : convertView;
+
 		ViewHolder holder;
 		if (convertView == null) {
 			convertView = layoutInflater.inflate(R.layout.fileinfo_list_item, null);
@@ -88,14 +108,11 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 		}
 		else
 			holder = (ViewHolder) convertView.getTag();
-
-		FileInfo info = getItem(position);
 		holder.title.setText(info.title);
 		holder.author.setText(info.author);
 		holder.date.setText(info.date);
 		holder.songs.setText(info.songs > 1 ? getContext().getString(R.string.songs_format, info.songs) : null);
 		convertView.setBackgroundColor(playingFilename.equals(info.filename) ? 0xc0661111 : 0);
-
 		return convertView;
 	}
 }
@@ -295,8 +312,8 @@ public class Player extends ListActivity
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id)
 	{
-		String name = ((FileInfo) l.getItemAtPosition(position)).filename;
-		play(name == null ? Util.asmaRoot : Util.getAsmaUri(name));
+		FileInfo info = (FileInfo) l.getItemAtPosition(position);
+		play(info == FileInfo.SHUFFLE_ALL ? Util.asmaRoot : Util.getAsmaUri(info.filename));
 	}
 
 	private static final int OPEN_REQUEST_CODE = 1;
