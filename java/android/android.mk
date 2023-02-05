@@ -1,5 +1,5 @@
 ASMA_DIR = ../aasma/asma
-ANDROID_SDK = C:/Users/fox/AppData/Local/Android/Sdk
+ANDROID_SDK = $(subst \,/,$(LOCALAPPDATA))/Android/Sdk
 ANDROID_JAR = $(ANDROID_SDK)/platforms/android-33/android.jar
 ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/33.0.0
 
