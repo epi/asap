@@ -66,9 +66,6 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 		notifyDataSetChanged();
 	}
 
-	private static final int VIEW_TYPE_SHUFFLE_ALL = 0;
-	private static final int VIEW_TYPE_FILE = 1;
-
 	@Override
 	public int getViewTypeCount()
 	{
@@ -78,7 +75,7 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 	@Override
 	public int getItemViewType(int position)
 	{
-		return getItem(position) == FileInfo.SHUFFLE_ALL ? VIEW_TYPE_SHUFFLE_ALL : VIEW_TYPE_FILE;
+		return getItem(position) == FileInfo.SHUFFLE_ALL ? 0 : 1;
 	}
 
 	private static class ViewHolder
