@@ -10,7 +10,6 @@ APKSIGNER = $(DO)$(ANDROID_BUILD_TOOLS)/apksigner.bat
 ZIPALIGN = $(DO)$(ANDROID_BUILD_TOOLS)/zipalign
 ADB = $(ANDROID_SDK)/platform-tools/adb
 ANDROID = $(ANDROID_SDK)/tools/android.bat
-EMULATOR = $(ANDROID_SDK)/tools/emulator
 
 # NDK is only needed for the command-line asapconv
 # It ended up in this Makefile even though it's not Java
@@ -30,45 +29,17 @@ ANDROID_JAVA_SRC = $(addprefix $(srcdir)java/android/, ArchiveSuggestionsProvide
 android-release: $(ANDROID_RELEASE)
 .PHONY: android-release
 
-android-install-emu: $(ANDROID_RELEASE)
-	$(ADB) -e install -r $<
-.PHONY: android-install-emu
+android-install: $(ANDROID_RELEASE)
+	$(ADB) install -r $<
+.PHONY: android-install
 
-android-install-dev: $(ANDROID_RELEASE)
-	$(ADB) -d install -r $<
-.PHONY: android-install-dev
+android-log:
+	$(ADB) logcat -d
+.PHONY: android-log
 
-android-log-emu:
-	$(ADB) -e logcat -d
-.PHONY: android-log-emu
-
-android-log-dev:
-	$(ADB) -d logcat
-.PHONY: android-log-dev
-
-android-shell-emu:
-	$(ADB) -e shell
-.PHONY: android-shell-emu
-
-android-shell-dev:
-	$(ADB) -d shell
-.PHONY: android-shell-dev
-
-android-emu:
-	$(EMULATOR) -avd kit &
-.PHONY: android-emu
-
-android-push-release: $(ANDROID_RELEASE)
-	$(ADB) -d push $(ANDROID_RELEASE) /sdcard/sap/
-.PHONY: android-push-release
-
-android-push-sap:
-	$(ADB) -e push ../Drunk_Chessboard.sap /sdcard/
-.PHONY: android-push-sap
-
-android-create-avd:
-	$(ANDROID) create avd -n kit -t android-19 -c 16M
-.PHONY: android-create-avd
+android-log-clear:
+	$(ADB) logcat -c
+.PHONY: android-log-clear
 
 $(ANDROID_RELEASE): java/android/AndroidASAP-unsigned.apk
 	$(APKSIGNER) sign --ks C:/Users/fox/.keystore --ks-key-alias pfusik --ks-pass pass:walsie --out $@ $<
