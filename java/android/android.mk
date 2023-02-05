@@ -62,7 +62,7 @@ CLEANDIR += java/android/classes
 
 # Also generates java/android/gen/net/sf/asap/R.java
 java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml \
-	res/drawable/ic_menu_browse.png res/drawable-land/background.jpg res/drawable-port/background.jpg res/drawable/banner.png res/drawable/icon.xml \
+	res/drawable/ic_menu_browse.png res/drawable-land/background.jpg res/drawable-port/background.jpg res/drawable/banner.png res/drawable/icon.xml res/drawable/list_selector.xml res/drawable/list_selector_focused.xml \
 	res/layout/fileinfo_list_item.xml res/layout/shuffle_all_list_item.xml res/layout/player.xml res/menu/player.xml res/values/strings.xml res/values/themes.xml res/xml/searchable.xml) \
 	java/android/res/drawable-land/background.jpg java/android/res/drawable-port/background.jpg java/android/res/drawable-land/stereo.jpg java/android/res/drawable-port/stereo.jpg \
 	$(ASMA_DIR)/index.txt $(JAVA_OBX)

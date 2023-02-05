@@ -2,9 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
 	<ListView android:id="@android:id/list" android:layout_width="match_parent" android:layout_height="0dp"
-		android:layout_weight="1" android:drawSelectorOnTop="false" />
+		android:layout_weight="1" android:drawSelectorOnTop="false" android:listSelector="@drawable/list_selector" />
 	<LinearLayout android:id="@+id/playing_panel" android:layout_width="match_parent" android:layout_height="wrap_content"
-		android:orientation="vertical" android:gravity="center" android:background="#611" android:visibility="gone" >
+		android:orientation="vertical" android:background="#611" android:visibility="gone" >
 		<TextView android:id="@+id/playing_name" android:textSize="20sp" android:gravity="center_horizontal"
 			android:layout_width="match_parent" android:layout_height="wrap_content" />
 		<TextView android:id="@+id/playing_author" android:textSize="16sp" android:gravity="center_horizontal"
