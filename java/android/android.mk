@@ -62,11 +62,11 @@ CLEANDIR += java/android/classes
 
 # Also generates java/android/gen/net/sf/asap/R.java
 java/android/AndroidASAP-resources.apk: $(addprefix $(srcdir)java/android/,AndroidManifest.xml \
-	res/drawable/ic_menu_browse.png res/drawable-land/background.jpg res/drawable-port/background.jpg \
-	res/drawable/banner.png res/drawable/icon.xml res/drawable/list_selector.xml res/drawable/list_selector_focused.xml \
+	res/drawable/banner.png res/drawable/icon.xml res/drawable/ic_menu_browse.png res/drawable/list_selector.xml res/drawable/list_selector_focused.xml \
 	res/layout/buttons_seekbar.xml res/layout/fileinfo_list_item.xml res/layout/shuffle_all_list_item.xml res/layout/player.xml res/layout-land/fileinfo_list_item.xml res/layout-land/player.xml \
 	res/menu/player.xml res/values/strings.xml res/values/themes.xml res/xml/searchable.xml) \
-	java/android/res/drawable-land/background.jpg java/android/res/drawable-port/background.jpg java/android/res/drawable-land/stereo.jpg java/android/res/drawable-port/stereo.jpg \
+	java/android/res/drawable-land/background.jpg java/android/res/drawable-land/stereo.jpg java/android/res/drawable-land-xhdpi/background.jpg java/android/res/drawable-land-xhdpi/stereo.jpg \
+	java/android/res/drawable-port/background.jpg java/android/res/drawable-port/stereo.jpg java/android/res/drawable-port-xhdpi/background.jpg java/android/res/drawable-port-xhdpi/stereo.jpg \
 	$(ASMA_DIR)/index.txt $(JAVA_OBX)
 	$(DO)mkdir -p java/android/gen && $(AAPT) p -f -m -M $< -I $(ANDROID_JAR) -S $(srcdir)java/android/res -A $(ASMA_DIR) --ignore-assets Docs:*.ttt -F $@ -J java/android/gen java/obx
 CLEAN += java/android/AndroidASAP-resources.apk java/android/gen/net/sf/asap/R.java
@@ -80,20 +80,36 @@ java/android/Indexer.class: $(srcdir)java/android/Indexer.java java/classes/net/
 CLEAN += java/android/Indexer.class
 
 java/android/res/drawable-land/background.jpg: java/android/img/POKEY_chip_on_an_Atari_130XE_motherboard.jpg
-	$(DO)magick $< -crop 2560x1280+0+420 -resize 2160x1080 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 2560x1280+0+420 -resize 1080x540 -brightness-contrast -70x-75 $@
 CLEAN += java/android/res/drawable-land/background.jpg
 
+java/android/res/drawable-land-xhdpi/background.jpg: java/android/img/POKEY_chip_on_an_Atari_130XE_motherboard.jpg
+	$(DO)magick $< -crop 2560x1280+0+420 -resize 2160x1080 -brightness-contrast -70x-75 $@
+CLEAN += java/android/res/drawable-land-xhdpi/background.jpg
+
 java/android/res/drawable-port/background.jpg: java/android/img/POKEY_chip_on_an_Atari_130XE_motherboard.jpg
-	$(DO)magick $< -crop 928x1856+112+0 -resize 1080x2160 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 928x1856+112+0 -resize 540x1080 -brightness-contrast -70x-75 $@
 CLEAN += java/android/res/drawable-port/background.jpg
 
+java/android/res/drawable-port-xhdpi/background.jpg: java/android/img/POKEY_chip_on_an_Atari_130XE_motherboard.jpg
+	$(DO)magick $< -crop 928x1856+112+0 -resize 1080x2160 -brightness-contrast -70x-75 $@
+CLEAN += java/android/res/drawable-port-xhdpi/background.jpg
+
 java/android/res/drawable-land/stereo.jpg: java/android/img/stereo.jpg
-	$(DO)magick $< -crop 3840x1920+192+380 -resize 2160x1080 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 3840x1920+192+380 -resize 1080x540 -brightness-contrast -70x-75 $@
 CLEAN += java/android/res/drawable-land/stereo.jpg
 
+java/android/res/drawable-land-xhdpi/stereo.jpg: java/android/img/stereo.jpg
+	$(DO)magick $< -crop 3840x1920+192+380 -resize 2160x1080 -brightness-contrast -70x-75 $@
+CLEAN += java/android/res/drawable-land-xhdpi/stereo.jpg
+
 java/android/res/drawable-port/stereo.jpg: java/android/img/stereo.jpg
-	$(DO)magick $< -crop 1512x3024+900+0 -resize 1080x2160 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 1512x3024+900+0 -resize 540x1080 -brightness-contrast -70x-75 $@
 CLEAN += java/android/res/drawable-port/stereo.jpg
+
+java/android/res/drawable-port-xhdpi/stereo.jpg: java/android/img/stereo.jpg
+	$(DO)magick $< -crop 1512x3024+900+0 -resize 1080x2160 -brightness-contrast -70x-75 $@
+CLEAN += java/android/res/drawable-port-xhdpi/stereo.jpg
 
 android-push-asapconv: java/android/asapconv
 	$(ADB) -d push java/android/asapconv /data/local/tmp/
