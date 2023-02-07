@@ -97,7 +97,7 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 		else
 			builder = new Notification.Builder(this);
 		Notification notification = builder
-			.setSmallIcon(R.drawable.icon)
+			.setSmallIcon(R.drawable.ic_notification)
 			.setContentTitle(info.getTitleOrFilename())
 			.setContentText(info.getAuthor())
 			.setContentIntent(activityIntent)
