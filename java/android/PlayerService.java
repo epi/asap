@@ -358,6 +358,7 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 		synchronized (this) {
 			if (command == COMMAND_PAUSE) {
 				setPlaybackState(PlaybackState.STATE_PAUSED, asap.getPosition(), 0, PlaybackState.ACTION_PLAY | COMMON_ACTIONS);
+				stopForeground(false);
 				showNotification(false);
 				audioTrack.pause();
 				releaseFocus();
@@ -365,7 +366,7 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 					if (command == COMMAND_PLAY) {
 						if (gainFocus()) {
 							setPlaybackState(PlaybackState.STATE_PLAYING, asap.getPosition(), 1, PlaybackState.ACTION_PAUSE | COMMON_ACTIONS);
-							showNotification(false);
+							showNotification(true);
 							audioTrack.play();
 							break;
 						}
