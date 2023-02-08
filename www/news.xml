@@ -1,4 +1,21 @@
 ﻿<page title="News">
+	<release version="5.3.0" date="2023-02-08">
+		<ul>
+			<li>Fix SAP author nicknames not shown if their real name is unknown.</li>
+			<li>NTSC/PAL toggle in the File Information window and asapconv.</li>
+			<li>Support for 64-bit foobar2000 2.0. Currently in beta.</li>
+			<li>Reworked the JavaScript player. Added a seek bar.</li>
+		</ul>
+		<ul title="Android">
+			<li>Replaced the playback screen with a bottom panel.</li>
+			<li>POKEY chip photos in the background. Two POKEYs if playing in stereo!</li>
+			<li>New layout for landscape orientation.</li>
+			<li>Switched to system file picker. Supports local and cloud storage. Removed ZIP, ATR and M3U support.</li>
+			<li>Preliminary support for Android TV. Hardly usable because of no search.</li>
+			<li>New icon.</li>
+		</ul>
+	</release>
+
 	<release version="5.2.0" date="2021-12-08">
 		<ul>
 			<li>Fixed "click" glitches. Depending on the music and the ASAP port, they were happening every dozen of seconds or not at all.</li>
