@@ -1,7 +1,7 @@
 ﻿<page title="News">
 	<release version="5.3.0" date="2023-02-08">
 		<ul>
-			<li>Fix SAP author nicknames not shown if their real name is unknown.</li>
+			<li>Fixed SAP author nicknames not shown if their real name is unknown.</li>
 			<li>NTSC/PAL toggle in the File Information window and asapconv.</li>
 			<li>Support for 64-bit foobar2000 2.0. Currently in beta.</li>
 			<li>Reworked the JavaScript player. Added a seek bar.</li>
