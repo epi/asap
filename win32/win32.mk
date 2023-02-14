@@ -145,6 +145,14 @@ win32/bass/bass_asap-res.o: $(call src,win32/gui.rc asap.h)
 	$(WIN32_WINDRES) -DBASS
 CLEAN += win32/bass/bass_asap-res.o
 
+win32/x64/bass_asap.dll: $(call src,win32/bass/bass_asap.c asap.[ch] win32/bass/bass-addon.h win32/bass/bass.h win32/bass/x64/bass.lib) win32/bass/x64/bass_asap-res.o
+	$(WIN64_CC) -DBASS
+CLEAN += win32/x64/bass_asap.dll
+
+win32/bass/x64/bass_asap-res.o: $(call src,win32/gui.rc asap.h)
+	$(WIN64_WINDRES) -DBASS
+CLEAN += win32/bass/x64/bass_asap-res.o
+
 # foobar2000
 
 FOOBAR2000_SRC = $(call src,win32/foobar2000/foo_asap.cpp asap.[ch] astil.[ch] aatr-stdio.[ch] aatr.h win32/info_dlg.[ch] win32/settings_dlg.[ch]) win32/foobar2000/foo_asap.res
@@ -279,14 +287,14 @@ CLEAN += win32/setup/asap.wixobj
 
 release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/shellex/ASAPShellEx.propdesc) \
-	win32/x64/ASAPShellEx.dll win32/x64/libasap_plugin.dll win32/signed
+	win32/x64/bass_asap.dll win32/x64/ASAPShellEx.dll win32/x64/libasap_plugin.dll win32/signed
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b $(srcdir)/win32/setup -b $(srcdir)win32 $<
 
 win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs release/release.mk
 	$(CANDLE) -arch x64 -dVERSION=$(VERSION) $<
 CLEAN += win32/x64/asap.wixobj
 
-win32/signed: $(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll x64/ASAPShellEx.dll x64/foo_asap.dll x64/libasap_plugin.dll)
+win32/signed: $(addprefix win32/,asapconv.exe sap2txt.exe wasap.exe in_asap.dll xmp-asap.dll bass_asap.dll apokeysnd.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll x64/bass_asap.dll x64/ASAPShellEx.dll x64/foo_asap.dll x64/libasap_plugin.dll)
 	$(DO_SIGN)
 CLEAN += win32/signed
 

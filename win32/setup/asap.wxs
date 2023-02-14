@@ -166,6 +166,23 @@
 		</UI>
 		<UIRef Id="WixUI_Common" />
 
+		<Property Id="AIMP.DIR">
+			<RegistrySearch Id="aimp.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AIMP" Name="InstallPath" Type="directory" />
+		</Property>
+		<Property Id="AIMP.EXE">
+			<DirectorySearch Id="aimp.exe" Path="[AIMP.DIR]">
+				<FileSearch Name="AIMP.exe" />
+			</DirectorySearch>
+		</Property>
+		<Property Id="VLC.DIR">
+			<RegistrySearch Id="vlc.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VLC media player" Name="InstallLocation" Type="directory" />
+		</Property>
+		<Property Id="VLC.EXE">
+			<RegistrySearch Id="vlc.exe" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VLC media player" Name="InstallLocation" Type="directory">
+				<FileSearch Name="vlc.exe" />
+			</RegistrySearch>
+		</Property>
+
 		<?if $(sys.BUILDARCH) = x86?>
 		<Property Id="TSVN.VER">
 			<RegistrySearch Id="tsvn.ver" Root="HKCU" Key="SOFTWARE\TortoiseSVN" Name="CurrentVersion" Type="raw" />
@@ -189,14 +206,6 @@
 				<FileSearch Name="xmplay.exe" />
 			</RegistrySearch>
 		</Property>
-		<Property Id="AIMP.DIR">
-			<RegistrySearch Id="aimp.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AIMP" Name="InstallPath" Type="directory" />
-		</Property>
-		<Property Id="AIMP.EXE">
-			<DirectorySearch Id="aimp.exe" Path="[AIMP.DIR]">
-				<FileSearch Name="AIMP.exe" />
-			</DirectorySearch>
-		</Property>
 		<Property Id="WINAMP.DIR">
 			<RegistrySearch Id="winamp.installdir" Root="HKCU" Key="SOFTWARE\Winamp" Type="directory" />
 		</Property>
@@ -206,14 +215,6 @@
 			</RegistrySearch>
 		</Property>
 		<?endif?>
-		<Property Id="VLC.DIR">
-			<RegistrySearch Id="vlc.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VLC media player" Name="InstallLocation" Type="directory" />
-		</Property>
-		<Property Id="VLC.EXE">
-			<RegistrySearch Id="vlc.exe" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VLC media player" Name="InstallLocation" Type="directory">
-				<FileSearch Name="vlc.exe" />
-			</RegistrySearch>
-		</Property>
 
 		<Directory Id="TARGETDIR" Name="SourceDir">
 			<Directory Id="$(var.PROGRAM_FILES_FOLDER)">
@@ -288,6 +289,26 @@
 					<?endif?>
 				</Directory>
 
+				<Directory Id="AIMP.DIR" Name="AIMP">
+					<Directory Id="AIMPPLUG.DIR" Name="Plugins">
+						<Directory Id="AIMPASAP.DIR" Name="bass_asap">
+							<Component Id="bass_asap.dll">
+								<File Name="bass_asap.dll" Source="$(var.SRC_DIR)bass_asap.dll" Checksum="yes" KeyPath="yes" />
+							</Component>
+							<Component Id="aimp_asap.ext">
+								<RegistryValue Root="HKCR" Key="asap.file" Name="aimp" Type="integer" Value="1" KeyPath="yes" />
+								<ProgId Id="AIMP.ASAP">
+									<Extension Id="sap">
+										<Verb Id="open" Command="Open with AIMP" TargetProperty="AIMP.EXE" Argument='"%1"' />
+									</Extension>
+									<?foreach EXT in $(var.NATIVE_EXTS)?>
+										<Extension Id="$(var.EXT)" />
+									<?endforeach?>
+								</ProgId>
+							</Component>
+						</Directory>
+					</Directory>
+				</Directory>
 				<Directory Id="VIDEOLAN.DIR" Name="VideoLAN">
 					<Directory Id="VLC.DIR" Name="VLC">
 						<Directory Id="VLCPLUGINS.DIR" Name="plugins">
@@ -343,26 +364,6 @@
 							<?endforeach?>
 						</ProgId>
 					</Component>
-				</Directory>
-				<Directory Id="AIMP.DIR" Name="AIMP">
-					<Directory Id="AIMPPLUG.DIR" Name="Plugins">
-						<Directory Id="AIMPASAP.DIR" Name="bass_asap">
-							<Component Id="bass_asap.dll">
-								<File Name="bass_asap.dll" Source="bass_asap.dll" Checksum="yes" KeyPath="yes" />
-							</Component>
-							<Component Id="aimp_asap.ext">
-								<RegistryValue Root="HKCR" Key="asap.file" Name="aimp" Type="integer" Value="1" KeyPath="yes" />
-								<ProgId Id="AIMP.ASAP">
-									<Extension Id="sap">
-										<Verb Id="open" Command="Open with AIMP" TargetProperty="AIMP.EXE" Argument='"%1"' />
-									</Extension>
-									<?foreach EXT in $(var.NATIVE_EXTS)?>
-										<Extension Id="$(var.EXT)" />
-									<?endforeach?>
-								</ProgId>
-							</Component>
-						</Directory>
-					</Directory>
 				</Directory>
 				<Directory Id="WINAMP.DIR" Name="Winamp">
 					<Directory Id="WINAMPPLUG.DIR" Name="Plugins">
@@ -423,7 +424,9 @@
 				<ComponentRef Id="xmp_asap.ext" />
 			</Feature>
 		</Feature>
-		<Feature Id="aimp_asap" Title="AIMP plugin" Level="9" ConfigurableDirectory="AIMPASAP.DIR" Description="Plugin for AIMP." AllowAdvertise="no">
+		<?endif?>
+
+		<Feature Id="aimp_asap" Title="AIMP $(var.PLATFORM_BITS) plugin" Level="9" ConfigurableDirectory="AIMPASAP.DIR" Description="Plugin for $(var.PLATFORM_BITS) AIMP." AllowAdvertise="no">
 			<Condition Level="1">AIMP.DIR</Condition>
 			<ComponentRef Id="bass_asap.dll" />
 			<Feature Id="aimp_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) AIMP." AllowAdvertise="no">
@@ -431,6 +434,8 @@
 				<ComponentRef Id="aimp_asap.ext" />
 			</Feature>
 		</Feature>
+
+		<?if $(sys.BUILDARCH) = x86?>
 		<Feature Id="in_asap" Title="Winamp plugin" Level="9" ConfigurableDirectory="WINAMPPLUG.DIR" Description="Plugin for Winamp." AllowAdvertise="no">
 			<Condition Level="1">WINAMP.DIR</Condition>
 			<ComponentRef Id="in_asap.dll" />
