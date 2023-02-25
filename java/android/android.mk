@@ -1,7 +1,7 @@
 ASMA_DIR = ../aasma/asma
 ANDROID_SDK = $(subst \,/,$(LOCALAPPDATA))/Android/Sdk
 ANDROID_JAR = $(ANDROID_SDK)/platforms/android-33/android.jar
-ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/33.0.0
+ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/33.0.2
 
 JAVA = $(DO)java
 AAPT = $(ANDROID_BUILD_TOOLS)/aapt
