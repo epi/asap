@@ -1,7 +1,7 @@
 /*
  * main.swift - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2021  Piotr Fusik
+ * Copyright (C) 2021-2023  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -68,7 +68,7 @@ func processFile(_ inputFilename : String) throws
 	if let data = FileManager.default.contents(atPath: inputFilename) {
 		let asap = ASAP()
 		try asap.load(inputFilename, ArrayRef(Array(data)), data.count)
-		let info = asap.getInfo()!
+		let info = asap.getInfo()
 		let song = songOption ?? info.getDefaultSong()
 		var duration = durationOption ?? info.getDuration(song)
 		if duration < 0 {

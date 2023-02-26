@@ -1,6 +1,6 @@
 // asapwriter.ci - format conversions
 //
-// Copyright (C) 2011-2022  Piotr Fusik
+// Copyright (C) 2011-2023  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -21,8 +21,8 @@
 
 class ASAPNativeModuleWriter
 {
-	internal ASAPWriter! Writer;
-	internal byte[] SourceModule;
+	internal ASAPWriter!? Writer;
+	internal byte[]? SourceModule;
 	internal int SourceOffset;
 	int AddressDiff;
 
@@ -174,7 +174,7 @@ public class ASAPWriter
 		case ASAPModuleType.SapB:
 		case ASAPModuleType.SapC:
 			exts[i++] = "sap";
-			string ext = info.GetOriginalModuleExt(module, moduleLen);
+			string? ext = info.GetOriginalModuleExt(module, moduleLen);
 			if (ext != null)
 				exts[i++] = ext;
 			exts[i++] = "xex";
@@ -375,7 +375,7 @@ public class ASAPWriter
 		}
 	}
 
-	void WriteExecutableHeader!(int[]! initAndPlayer, ASAPInfo info, int type, int init, int player)
+	void WriteExecutableHeader!(int[]!? initAndPlayer, ASAPInfo info, int type, int init, int player)
 		throws
 	{
 		if (initAndPlayer == null)
@@ -395,7 +395,7 @@ public class ASAPWriter
 		WriteByte(0);
 	}
 
-	void WriteCmcInit!(int[]! initAndPlayer, ASAPInfo info)
+	void WriteCmcInit!(int[]!? initAndPlayer, ASAPInfo info)
 		throws
 	{
 		if (initAndPlayer == null)
@@ -433,10 +433,10 @@ public class ASAPWriter
 		return player - codeForOneSong;
 	}
 
-	internal void WriteExecutable!(int[]! initAndPlayer, ASAPInfo info, byte[] module, int moduleLen)
+	internal void WriteExecutable!(int[]!? initAndPlayer, ASAPInfo info, byte[] module, int moduleLen)
 		throws
 	{
-		byte[] playerRoutine = ASAP6502.GetPlayerRoutine(info);
+		byte[]? playerRoutine = ASAP6502.GetPlayerRoutine(info);
 		int player = -1;
 		int playerLastByte = -1;
 		int music = info.GetMusicAddress();
@@ -867,7 +867,7 @@ public class ASAPWriter
 				return OutputOffset;
 			}
 		default:
-			string possibleExt = info.GetOriginalModuleExt(module, moduleLen);
+			string? possibleExt = info.GetOriginalModuleExt(module, moduleLen);
 			if (possibleExt != null) {
 				int packedPossibleExt = ASAPInfo.PackExt(possibleExt);
 				if (destExt == packedPossibleExt

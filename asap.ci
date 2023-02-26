@@ -1,6 +1,6 @@
 // asap.ci - emulation engine
 //
-// Copyright (C) 2010-2021  Piotr Fusik
+// Copyright (C) 2010-2023  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -299,7 +299,7 @@ public class ASAP
 	{
 		ModuleInfo.Load(filename, module, moduleLen);
 #if !ASAP_ONLY_SAP
-		byte[] playerRoutine = ASAP6502.GetPlayerRoutine(ModuleInfo);
+		byte[]? playerRoutine = ASAP6502.GetPlayerRoutine(ModuleInfo);
 		if (playerRoutine != null) {
 			int player = ASAPInfo.GetWord(playerRoutine, 2);
 			int playerLastByte = ASAPInfo.GetWord(playerRoutine, 4);

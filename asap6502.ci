@@ -1,6 +1,6 @@
 // asap6502.ci - player routines for the 6502 CPU
 //
-// Copyright (C) 2011-2019  Piotr Fusik
+// Copyright (C) 2011-2023  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -21,7 +21,7 @@
 
 static class ASAP6502
 {
-	internal static byte[] GetPlayerRoutine(ASAPInfo info)
+	internal static byte[]? GetPlayerRoutine(ASAPInfo info)
 	{
 		switch (info.Type) {
 		case ASAPModuleType.Cmc: return resource<byte[]>("cmc.obx");

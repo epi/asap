@@ -43,7 +43,7 @@ enum ASAPModuleType
 
 class DurationParser
 {
-	string Source;
+	string? Source;
 	int Position;
 	int Length;
 
@@ -1423,7 +1423,7 @@ public class ASAPInfo
 	/// Loads file information.
 	public void Load!(
 		/// Filename, used to determine the format.
-		string filename,
+		string? filename,
 		/// Contents of the file.
 		byte[] module,
 		/// Length of the file.
@@ -1912,7 +1912,7 @@ public class ASAPInfo
 	/// Returns the extension of the original module format.
 	/// For native modules it simply returns their extension.
 	/// For the SAP format it attempts to detect the original module format.
-	public string GetOriginalModuleExt(
+	public string? GetOriginalModuleExt(
 		/// Contents of the file.
 		byte[] module,
 		/// Length of the file.
