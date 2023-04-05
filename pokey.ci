@@ -1,6 +1,6 @@
 // pokey.ci - POKEY chip emulator
 //
-// Copyright (C) 2010-2021  Piotr Fusik
+// Copyright (C) 2010-2023  Piotr Fusik
 //
 // This file is part of ASAP (Another Slight Atari Player),
 // see http://asap.sourceforge.net
@@ -589,10 +589,8 @@ class PokeyPair
 		}
 	}
 
-	// What we really need here is:
 	// return ((Pokey.SampleRate << SampleFactorShift) + (clock >> 1)) / clock;
-	// unfortunately cito provides only 32-bit arithmetic for the moment,
-	// so I shift by 5 to avoid overflow.
+	// Shifted by 5 to fit in 32-bit arithmetic.
 	static int GetSampleFactor(int clock)
 		=> ((Pokey.SampleRate << SampleFactorShift - 5) + (clock >> 6)) / (clock >> 5);
 
