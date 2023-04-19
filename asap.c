@@ -3703,7 +3703,7 @@ static char *ASAPInfo_ParseText(uint8_t const *module, int i, int argEnd)
 		return strdup("");
 	if (len == 3 && module[i + 1] == '<' && module[i + 2] == '?' && module[i + 3] == '>')
 		return strdup("");
-	return CiString_Substring((const char *) module + i + 1, len);
+	return CiString_Substring((const char *) module + (i + 1), len);
 }
 
 static bool ASAPInfo_HasStringAt(uint8_t const *module, int moduleIndex, const char *s)

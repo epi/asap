@@ -130,7 +130,7 @@ public class AATRDirectory
 
 	/// Advances to the next entry (file or directory).
 	/// Returns the filename or `null` if no more entries found.
-	public string NextEntry!()
+	public string? NextEntry!()
 	{
 		for (;;) {
 			if (FileNo >= 63)
@@ -202,7 +202,7 @@ public class AATRDirectory
 		string filename)
 	{
 		for (;;) {
-			string currentFilename = NextEntry();
+			string? currentFilename = NextEntry();
 			if (currentFilename == null)
 				return false;
 			if (currentFilename == filename)
@@ -261,11 +261,11 @@ public class AATRRecursiveLister
 
 	/// Advances to the next file.
 	/// Returns the full path of the file or `null` if no more files found.
-	public string NextFile!()
+	public string? NextFile!()
 	{
 		for (;;) {
 			AATRDirectory! directory = Directories[Depth];
-			string filename = directory.NextEntry();
+			string? filename = directory.NextEntry();
 			if (filename == null) {
 				if (Depth == 0)
 					return null;
@@ -332,7 +332,7 @@ public class AATRFileStream
 	/// Returns the number of bytes read.
 	public int Read!(
 		/// Destination buffer.
-		byte[]! buffer,
+		byte[]!? buffer,
 		/// Start offset in buffer at which the data is written.
 		int offset,
 		/// Maximum number of bytes to read.
