@@ -582,6 +582,16 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 		case Intent.ACTION_VIEW:
 			song = SONG_DEFAULT;
 			uri = intent.getData();
+			switch (uri.getScheme()) {
+			case "http":
+			case "https":
+				String fragment = uri.getFragment();
+				if (fragment != null && fragment.startsWith("/"))
+					uri = Util.getAsmaUri(fragment.substring(1));
+				break;
+			default:
+				break;
+			}
 			setPlaylist();
 			setCommand(COMMAND_LOAD);
 			break;
