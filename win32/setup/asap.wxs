@@ -166,6 +166,14 @@
 		</UI>
 		<UIRef Id="WixUI_Common" />
 
+		<Property Id="FOO.DIR">
+			<RegistrySearch Id="foo.installdir" Root="HKLM" Key="SOFTWARE\foobar2000" Name="InstallDir" Type="directory" />
+		</Property>
+		<Property Id="FOO.EXE">
+			<RegistrySearch Id="foo.exe" Root="HKLM" Key="SOFTWARE\foobar2000" Name="InstallDir" Type="directory">
+				<FileSearch Name="foobar2000.exe" />
+			</RegistrySearch>
+		</Property>
 		<Property Id="AIMP.DIR">
 			<RegistrySearch Id="aimp.installdir" Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AIMP" Name="InstallPath" Type="directory" />
 		</Property>
@@ -189,14 +197,6 @@
 		</Property>
 		<Property Id="TGIT.VER">
 			<RegistrySearch Id="tgit.ver" Root="HKCU" Key="SOFTWARE\TortoiseGit" Name="CurrentVersion" Type="raw" />
-		</Property>
-		<Property Id="FOO.DIR">
-			<RegistrySearch Id="foo.installdir" Root="HKLM" Key="SOFTWARE\foobar2000" Name="InstallDir" Type="directory" />
-		</Property>
-		<Property Id="FOO.EXE">
-			<RegistrySearch Id="foo.exe" Root="HKLM" Key="SOFTWARE\foobar2000" Name="InstallDir" Type="directory">
-				<FileSearch Name="foobar2000.exe" />
-			</RegistrySearch>
 		</Property>
 		<Property Id="XMPLAY.DIR">
 			<RegistrySearch Id="xmplay.installdir" Root="HKCR" Key="XMPlay\shell\Open\command" Type="file" />
@@ -289,6 +289,23 @@
 					<?endif?>
 				</Directory>
 
+				<Directory Id="FOO.DIR" Name="foobar2000">
+					<Directory Id="FOOCOMP.DIR" Name="components">
+						<Component Id="foo_asap.dll">
+							<File Name="foo_asap.dll" Source="$(var.SRC_DIR)foo_asap.dll" Checksum="yes" KeyPath="yes" />
+						</Component>
+						<Component Id="foo_asap.ext">
+							<RegistryValue Root="HKCR" Key="asap.file" Name="foo_asap" Type="integer" Value="1" KeyPath="yes" />
+							<?foreach EXT in $(var.NATIVE_EXTS)?>
+								<ProgId Id="foobar2000.$(var.EXT)">
+									<Extension Id="$(var.EXT)">
+										<Verb Id="open" TargetProperty="FOO.EXE" Argument='"%1"' />
+									</Extension>
+								</ProgId>
+							<?endforeach?>
+						</Component>
+					</Directory>
+				</Directory>
 				<Directory Id="AIMP.DIR" Name="AIMP">
 					<Directory Id="AIMPPLUG.DIR" Name="Plugins">
 						<Directory Id="AIMPASAP.DIR" Name="bass_asap">
@@ -332,23 +349,6 @@
 				</Directory>
 
 				<?if $(sys.BUILDARCH) = x86?>
-				<Directory Id="FOO.DIR" Name="foobar2000">
-					<Directory Id="FOOCOMP.DIR" Name="components">
-						<Component Id="foo_asap.dll">
-							<File Name="foo_asap.dll" Source="foo_asap.dll" Checksum="yes" KeyPath="yes" />
-						</Component>
-						<Component Id="foo_asap.ext">
-							<RegistryValue Root="HKCR" Key="asap.file" Name="foo_asap" Type="integer" Value="1" KeyPath="yes" />
-							<?foreach EXT in $(var.NATIVE_EXTS)?>
-								<ProgId Id="foobar2000.$(var.EXT)">
-									<Extension Id="$(var.EXT)">
-										<Verb Id="open" TargetProperty="FOO.EXE" Argument='"%1"' />
-									</Extension>
-								</ProgId>
-							<?endforeach?>
-						</Component>
-					</Directory>
-				</Directory>
 				<Directory Id="XMPLAY.DIR" Name="XMPlay">
 					<Component Id="xmp_asap.dll">
 						<File Name="xmp-asap.dll" Source="xmp-asap.dll" Checksum="yes" KeyPath="yes" />
@@ -407,8 +407,7 @@
 			<?endif?>
 		</Directory>
 
-		<?if $(sys.BUILDARCH) = x86?>
-		<Feature Id="foo_asap" Title="foobar2000 plugin" Level="9" ConfigurableDirectory="FOOCOMP.DIR" Description="Plugin for foobar2000." AllowAdvertise="no">
+		<Feature Id="foo_asap" Title="foobar2000 plugin" Level="9" ConfigurableDirectory="FOOCOMP.DIR" Description="Plugin for $(var.PLATFORM_BITS) foobar2000." AllowAdvertise="no">
 			<Condition Level="1">FOO.DIR</Condition>
 			<ComponentRef Id="foo_asap.dll" />
 			<Feature Id="foo_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) foobar2000." AllowAdvertise="no">
@@ -416,16 +415,6 @@
 				<ComponentRef Id="foo_asap.ext" />
 			</Feature>
 		</Feature>
-		<Feature Id="xmp_asap" Title="XMPlay plugin" Level="9" ConfigurableDirectory="XMPLAY.DIR" Description="Plugin for XMPlay." AllowAdvertise="no">
-			<Condition Level="1">XMPLAY.DIR</Condition>
-			<ComponentRef Id="xmp_asap.dll" />
-			<Feature Id="xmp_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) XMPlay." AllowAdvertise="no">
-				<Condition Level="9">XMPLAY.EXE</Condition>
-				<ComponentRef Id="xmp_asap.ext" />
-			</Feature>
-		</Feature>
-		<?endif?>
-
 		<Feature Id="aimp_asap" Title="AIMP $(var.PLATFORM_BITS) plugin" Level="9" ConfigurableDirectory="AIMPASAP.DIR" Description="Plugin for $(var.PLATFORM_BITS) AIMP." AllowAdvertise="no">
 			<Condition Level="1">AIMP.DIR</Condition>
 			<ComponentRef Id="bass_asap.dll" />
@@ -436,6 +425,14 @@
 		</Feature>
 
 		<?if $(sys.BUILDARCH) = x86?>
+		<Feature Id="xmp_asap" Title="XMPlay plugin" Level="9" ConfigurableDirectory="XMPLAY.DIR" Description="Plugin for XMPlay." AllowAdvertise="no">
+			<Condition Level="1">XMPLAY.DIR</Condition>
+			<ComponentRef Id="xmp_asap.dll" />
+			<Feature Id="xmp_asap.ext" Title="Associate file types" Level="0" Description="$(var.DOUBLECLICK) XMPlay." AllowAdvertise="no">
+				<Condition Level="9">XMPLAY.EXE</Condition>
+				<ComponentRef Id="xmp_asap.ext" />
+			</Feature>
+		</Feature>
 		<Feature Id="in_asap" Title="Winamp plugin" Level="9" ConfigurableDirectory="WINAMPPLUG.DIR" Description="Plugin for Winamp." AllowAdvertise="no">
 			<Condition Level="1">WINAMP.DIR</Condition>
 			<ComponentRef Id="in_asap.dll" />

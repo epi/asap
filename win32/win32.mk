@@ -287,7 +287,7 @@ CLEAN += win32/setup/asap.wixobj
 
 release/asap-$(VERSION)-win64.msi: win32/x64/asap.wixobj \
 	$(call src,win32/wasap/wasap.ico win32/setup/license.rtf win32/setup/asap-banner.jpg win32/setup/asap-dialog.jpg win32/shellex/ASAPShellEx.propdesc) \
-	win32/x64/bass_asap.dll win32/x64/ASAPShellEx.dll win32/x64/libasap_plugin.dll win32/signed
+	$(addprefix win32/x64/,bass_asap.dll ASAPShellEx.dll foo_asap.dll libasap_plugin.dll) win32/signed
 	$(LIGHT) -ext WixUIExtension -sice:ICE69 -b win32 -b $(srcdir)/win32/setup -b $(srcdir)win32 $<
 
 win32/x64/asap.wixobj: $(srcdir)win32/setup/asap.wxs release/release.mk
