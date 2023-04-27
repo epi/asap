@@ -116,6 +116,7 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 
 public class Player extends ListActivity
 {
+	private String playingFilename;
 	private void play(Uri uri)
 	{
 		startService(new Intent(Intent.ACTION_VIEW, uri, this, PlayerService.class));
@@ -198,8 +199,16 @@ public class Player extends ListActivity
 			public void onMetadataChanged(MediaMetadata metadata)
 			{
 				getWindow().setBackgroundDrawableResource(metadata.getLong(PlayerService.METADATA_KEY_CHANNELS) == 2 ? R.drawable.stereo : R.drawable.background);
-				String filename = Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_URI)).getSchemeSpecificPart();
-				((FileInfoAdapter) getListAdapter()).setPlayingFilename(filename);
+				Uri uri = Uri.parse(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_URI));
+				if ("asma".equals(uri.getScheme())) {
+					playingFilename = uri.getSchemeSpecificPart();
+					findViewById(R.id.share).setVisibility(View.VISIBLE);
+				}
+				else {
+					playingFilename = "";
+					findViewById(R.id.share).setVisibility(View.GONE);
+				}
+				((FileInfoAdapter) getListAdapter()).setPlayingFilename(playingFilename);
 				showTag(R.id.playing_name, metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
 				showTag(R.id.playing_author, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
 				showTag(R.id.playing_date, metadata.getString(MediaMetadata.METADATA_KEY_DATE));
@@ -258,6 +267,14 @@ public class Player extends ListActivity
 		};
 	private MediaBrowser mediaBrowser;
 
+	private void share()
+	{
+		Intent intent = new Intent(Intent.ACTION_SEND);
+		intent.setType("text/plain");
+		intent.putExtra(Intent.EXTRA_TEXT, "https://asma.atari.org/asmadb/asma.html#/" + playingFilename);
+		startActivity(intent);
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
@@ -276,6 +293,7 @@ public class Player extends ListActivity
 			setButtonAction(R.id.play, PlayerService.ACTION_PLAY);
 			setButtonAction(R.id.pause, PlayerService.ACTION_PAUSE);
 			setButtonAction(R.id.next, PlayerService.ACTION_NEXT);
+			findViewById(R.id.share).setOnClickListener(v -> share());
 			((SeekBar) findViewById(R.id.seekbar)).setOnSeekBarChangeListener(seekBarListener);
 			mediaBrowser = new MediaBrowser(this, new ComponentName(this, PlayerService.class), mediaBrowserConnectionCallback, null);
 		}
