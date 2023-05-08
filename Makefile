@@ -135,6 +135,7 @@ include $(srcdir)xmms/xmms.mk
 include $(srcdir)xmms2/xmms2.mk
 
 include $(srcdir)csharp/csharp.mk
+include $(srcdir)d/d.mk
 include $(srcdir)java/java.mk
 include $(srcdir)javascript/javascript.mk
 include $(srcdir)opencl/opencl.mk

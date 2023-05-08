@@ -422,22 +422,6 @@
 		<stil>no</stil>
 		<lang>JavaScript</lang>
 	</port>
-	<port name="ASAP2WAV (D)">
-		<bin></bin>
-		<platform>desktop operating systems</platform>
-		<interface>command line</interface>
-		<since>3.0.0</since>
-		<status>discontinued</status>
-		<output>8 or 16-bit, WAV or raw file</output>
-		<subsongs>yes</subsongs>
-		<file-info>no</file-info>
-		<edit-info>no</edit-info>
-		<convert-sap>no</convert-sap>
-		<config-time>yes</config-time>
-		<mute-pokey>yes</mute-pokey>
-		<stil>no</stil>
-		<lang>D</lang>
-	</port>
 	<port name="asapplay (D)">
 		<bin></bin>
 		<platform>Windows, Linux</platform>
@@ -584,6 +568,22 @@
 		<stil>no</stil>
 		<lang>C</lang>
 		<a href="http://www.libsdl.org/">SDL</a>
+	</port>
+	<port name="ASAP2WAV (D)">
+		<bin></bin>
+		<platform>desktop operating systems</platform>
+		<interface>command line</interface>
+		<since>3.0.0</since>
+		<status>sample</status>
+		<output>8 or 16-bit, WAV or raw file</output>
+		<subsongs>yes</subsongs>
+		<file-info>no</file-info>
+		<edit-info>no</edit-info>
+		<convert-sap>no</convert-sap>
+		<config-time>yes</config-time>
+		<mute-pokey>yes</mute-pokey>
+		<stil>no</stil>
+		<lang>D</lang>
 	</port>
 	<port name="ASAP2WAV (Python)">
 		<bin></bin>
