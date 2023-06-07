@@ -39,7 +39,6 @@ class PokeyChannel
 	internal int TimerCycle;
 
 	// Is channel muted?
-	const int MuteFrequency = 1;
 	const int MuteInit = 2;
 	const int MuteUser = 4;
 	const int MuteSerialInput = 8;
@@ -55,7 +54,7 @@ class PokeyChannel
 		PeriodCycles = 28;
 		TickCycle = Pokey.NeverCycle;
 		TimerCycle = Pokey.NeverCycle;
-		Mute = MuteFrequency;
+		Mute = 0;
 		Out = 0;
 		Delta = 0;
 	}
@@ -118,12 +117,6 @@ class PokeyChannel
 		}
 	}
 
-	internal void MuteUltrasound!(int cycle)
-	{
-		const int UltrasoundCycles = 112;
-		SetMute(PeriodCycles <= UltrasoundCycles && (Audc & 0xb0) == 0xa0, MuteFrequency, cycle);
-	}
-
 	internal void SetAudc!(Pokey! pokey, PokeyPair pokeys, int data, int cycle)
 	{
 		if (Audc == data)
@@ -139,7 +132,6 @@ class PokeyChannel
 		}
 		else {
 			data = (data & 0xf) << DeltaShiftPOKEY;
-			MuteUltrasound(cycle);
 			if (Delta > 0) {
 				if ((Mute & MuteUser) == 0)
 					pokey.AddDelta(pokeys, cycle, data - Delta);
@@ -309,7 +301,6 @@ class Pokey
 			case 0x10:
 				Channels[1].PeriodCycles = DivCycles * (data + (Channels[1].Audf << 8) + 1);
 				ReloadCycles1 = DivCycles * (data + 1);
-				Channels[1].MuteUltrasound(cycle);
 				break;
 			case 0x40:
 				Channels[0].PeriodCycles = data + 4;
@@ -317,12 +308,10 @@ class Pokey
 			case 0x50:
 				Channels[1].PeriodCycles = data + (Channels[1].Audf << 8) + 7;
 				ReloadCycles1 = data + 4;
-				Channels[1].MuteUltrasound(cycle);
 				break;
 			default:
 				assert false;
 			}
-			Channels[0].MuteUltrasound(cycle);
 			break;
 		case 0x01:
 			Channels[0].SetAudc(this, pokeys, data, cycle);
@@ -346,7 +335,6 @@ class Pokey
 			default:
 				assert false;
 			}
-			Channels[1].MuteUltrasound(cycle);
 			break;
 		case 0x03:
 			Channels[1].SetAudc(this, pokeys, data, cycle);
@@ -363,7 +351,6 @@ class Pokey
 			case 0x08:
 				Channels[3].PeriodCycles = DivCycles * (data + (Channels[3].Audf << 8) + 1);
 				ReloadCycles3 = DivCycles * (data + 1);
-				Channels[3].MuteUltrasound(cycle);
 				break;
 			case 0x20:
 				Channels[2].PeriodCycles = data + 4;
@@ -371,12 +358,10 @@ class Pokey
 			case 0x28:
 				Channels[3].PeriodCycles = data + (Channels[3].Audf << 8) + 7;
 				ReloadCycles3 = data + 4;
-				Channels[3].MuteUltrasound(cycle);
 				break;
 			default:
 				assert false;
 			}
-			Channels[2].MuteUltrasound(cycle);
 			break;
 		case 0x05:
 			Channels[2].SetAudc(this, pokeys, data, cycle);
@@ -400,7 +385,6 @@ class Pokey
 			default:
 				assert false;
 			}
-			Channels[3].MuteUltrasound(cycle);
 			break;
 		case 0x07:
 			Channels[3].SetAudc(this, pokeys, data, cycle);
@@ -434,8 +418,6 @@ class Pokey
 			default:
 				assert false;
 			}
-			Channels[0].MuteUltrasound(cycle);
-			Channels[1].MuteUltrasound(cycle);
 			switch (data & 0x28) {
 			case 0x00:
 				Channels[2].PeriodCycles = DivCycles * (Channels[2].Audf + 1);
@@ -458,8 +440,6 @@ class Pokey
 			default:
 				assert false;
 			}
-			Channels[2].MuteUltrasound(cycle);
-			Channels[3].MuteUltrasound(cycle);
 			InitMute(cycle);
 			break;
 		case 0x09:
