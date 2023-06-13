@@ -17,6 +17,48 @@ static char *CiString_Substring(const char *str, int len)
 	return p;
 }
 
+typedef void (*CiMethodPtr)(void *);
+typedef struct {
+	size_t count;
+	size_t unitSize;
+	size_t refCount;
+	CiMethodPtr destructor;
+} CiShared;
+
+static void *CiShared_Make(size_t count, size_t unitSize, CiMethodPtr constructor, CiMethodPtr destructor)
+{
+	CiShared *self = (CiShared *) malloc(sizeof(CiShared) + count * unitSize);
+	self->count = count;
+	self->unitSize = unitSize;
+	self->refCount = 1;
+	self->destructor = destructor;
+	if (constructor != NULL) {
+		for (size_t i = 0; i < count; i++)
+			constructor((char *) (self + 1) + i * unitSize);
+	}
+	return self + 1;
+}
+
+static void CiShared_Release(void *ptr)
+{
+	if (ptr == NULL)
+		return;
+	CiShared *self = (CiShared *) ptr - 1;
+	if (--self->refCount != 0)
+		return;
+	if (self->destructor != NULL) {
+		for (size_t i = self->count; i > 0;)
+			self->destructor((char *) ptr + --i * self->unitSize);
+	}
+	free(self);
+}
+
+static void CiShared_Assign(void **ptr, void *value)
+{
+	CiShared_Release(*ptr);
+	*ptr = value;
+}
+
 typedef enum {
 	NmiStatus_RESET,
 	NmiStatus_ON_V_BLANK,
@@ -139,8 +181,6 @@ static void PokeyChannel_DoStimer(PokeyChannel *self, int cycle);
 
 static void PokeyChannel_SetMute(PokeyChannel *self, bool enable, int mask, int cycle);
 
-static void PokeyChannel_MuteUltrasound(PokeyChannel *self, int cycle);
-
 static void PokeyChannel_SetAudc(PokeyChannel *self, Pokey *pokey, const PokeyPair *pokeys, int data, int cycle);
 
 static void PokeyChannel_EndFrame(PokeyChannel *self, int cycle);
@@ -155,13 +195,17 @@ struct Pokey {
 	int reloadCycles1;
 	int reloadCycles3;
 	int polyIndex;
-	int deltaBuffer[888];
+	int deltaBufferLength;
+	int *deltaBuffer;
+	int iirRate;
 	int iirAcc;
 };
+static void Pokey_Construct(Pokey *self);
+static void Pokey_Destruct(Pokey *self);
 
 static void Pokey_StartFrame(Pokey *self);
 
-static void Pokey_Initialize(Pokey *self);
+static void Pokey_Initialize(Pokey *self, int sampleRate);
 
 static void Pokey_AddDelta(Pokey *self, const PokeyPair *pokeys, int cycle, int delta);
 
@@ -193,14 +237,18 @@ struct PokeyPair {
 	int extraPokeyMask;
 	Pokey basePokey;
 	Pokey extraPokey;
+	int sampleRate;
 	int sampleFactor;
 	int sampleOffset;
 	int readySamplesStart;
 	int readySamplesEnd;
 };
 static void PokeyPair_Construct(PokeyPair *self);
+static void PokeyPair_Destruct(PokeyPair *self);
 
-static void PokeyPair_Initialize(PokeyPair *self, bool ntsc, bool stereo);
+static int PokeyPair_GetSampleFactor(const PokeyPair *self, int clock);
+
+static void PokeyPair_Initialize(PokeyPair *self, bool ntsc, bool stereo, int sampleRate);
 
 static int PokeyPair_Poke(PokeyPair *self, int addr, int data, int cycle);
 
@@ -349,6 +397,7 @@ struct ASAP {
 	int silenceCycles;
 	int silenceCyclesCounter;
 	bool gtiaOrCovoxPlayedThisFrame;
+	int currentSampleRate;
 };
 static void ASAP_Construct(ASAP *self);
 static void ASAP_Destruct(ASAP *self);
@@ -371,7 +420,7 @@ static int ASAP_DoFrame(ASAP *self);
 
 static bool ASAP_Do6502Init(ASAP *self, int pc, int a, int x, int y);
 
-static int ASAP_MillisecondsToBlocks(int milliseconds);
+static int ASAP_MillisecondsToBlocks(const ASAP *self, int milliseconds);
 
 static void ASAP_PutLittleEndian(uint8_t *buffer, int offset, int value);
 
@@ -2122,6 +2171,7 @@ static void ASAP_Construct(ASAP *self)
 {
 	PokeyPair_Construct(&self->pokeys);
 	ASAPInfo_Construct(&self->moduleInfo);
+	self->currentSampleRate = 44100;
 	self->silenceCycles = 0;
 	self->cpu.asap = self;
 }
@@ -2129,6 +2179,7 @@ static void ASAP_Construct(ASAP *self)
 static void ASAP_Destruct(ASAP *self)
 {
 	ASAPInfo_Destruct(&self->moduleInfo);
+	PokeyPair_Destruct(&self->pokeys);
 }
 
 ASAP *ASAP_New(void)
@@ -2145,6 +2196,16 @@ void ASAP_Delete(ASAP *self)
 		return;
 	ASAP_Destruct(self);
 	free(self);
+}
+
+int ASAP_GetSampleRate(const ASAP *self)
+{
+	return self->currentSampleRate;
+}
+
+void ASAP_SetSampleRate(ASAP *self, int sampleRate)
+{
+	self->currentSampleRate = sampleRate;
 }
 
 void ASAP_DetectSilence(ASAP *self, int seconds)
@@ -2439,7 +2500,7 @@ bool ASAP_PlaySong(ASAP *self, int song, int duration)
 	self->covox[1] = 128;
 	self->covox[2] = 128;
 	self->covox[3] = 128;
-	PokeyPair_Initialize(&self->pokeys, ASAPInfo_IsNtsc(&self->moduleInfo), ASAPInfo_GetChannels(&self->moduleInfo) > 1);
+	PokeyPair_Initialize(&self->pokeys, ASAPInfo_IsNtsc(&self->moduleInfo), ASAPInfo_GetChannels(&self->moduleInfo) > 1, self->currentSampleRate);
 	ASAP_MutePokeyChannels(self, 255);
 	int player = self->moduleInfo.player;
 	int music = ASAPInfo_GetMusicAddress(&self->moduleInfo);
@@ -2505,12 +2566,13 @@ int ASAP_GetBlocksPlayed(const ASAP *self)
 
 int ASAP_GetPosition(const ASAP *self)
 {
-	return self->blocksPlayed * 10 / 441;
+	return self->blocksPlayed * 10 / (self->currentSampleRate / 100);
 }
 
-static int ASAP_MillisecondsToBlocks(int milliseconds)
+static int ASAP_MillisecondsToBlocks(const ASAP *self, int milliseconds)
 {
-	return milliseconds * 441 / 10;
+	int64_t ms = milliseconds;
+	return (int) (ms * self->currentSampleRate / 1000);
 }
 
 bool ASAP_SeekSample(ASAP *self, int block)
@@ -2530,7 +2592,7 @@ bool ASAP_SeekSample(ASAP *self, int block)
 
 bool ASAP_Seek(ASAP *self, int position)
 {
-	return ASAP_SeekSample(self, ASAP_MillisecondsToBlocks(position));
+	return ASAP_SeekSample(self, ASAP_MillisecondsToBlocks(self, position));
 }
 
 static void ASAP_PutLittleEndian(uint8_t *buffer, int offset, int value)
@@ -2566,8 +2628,8 @@ int ASAP_GetWavHeader(const ASAP *self, uint8_t *buffer, ASAPSampleFormat format
 {
 	int use16bit = format != ASAPSampleFormat_U8 ? 1 : 0;
 	int blockSize = ASAPInfo_GetChannels(&self->moduleInfo) << use16bit;
-	int bytesPerSecond = 44100 * blockSize;
-	int totalBlocks = ASAP_MillisecondsToBlocks(self->currentDuration);
+	int bytesPerSecond = self->currentSampleRate * blockSize;
+	int totalBlocks = ASAP_MillisecondsToBlocks(self, self->currentDuration);
 	int nBytes = (totalBlocks - self->blocksPlayed) * blockSize;
 	ASAP_PutLittleEndian(buffer, 8, 1163280727);
 	ASAP_PutLittleEndians(buffer, 12, 544501094, 16);
@@ -2575,7 +2637,7 @@ int ASAP_GetWavHeader(const ASAP *self, uint8_t *buffer, ASAPSampleFormat format
 	buffer[21] = 0;
 	buffer[22] = (uint8_t) ASAPInfo_GetChannels(&self->moduleInfo);
 	buffer[23] = 0;
-	ASAP_PutLittleEndians(buffer, 24, 44100, bytesPerSecond);
+	ASAP_PutLittleEndians(buffer, 24, self->currentSampleRate, bytesPerSecond);
 	buffer[32] = (uint8_t) blockSize;
 	buffer[33] = 0;
 	buffer[34] = (uint8_t) (8 << use16bit);
@@ -2612,7 +2674,7 @@ static int ASAP_GenerateAt(ASAP *self, uint8_t *buffer, int bufferOffset, int bu
 	int blockShift = ASAPInfo_GetChannels(&self->moduleInfo) - (format == ASAPSampleFormat_U8 ? 1 : 0);
 	int bufferBlocks = bufferLen >> blockShift;
 	if (self->currentDuration > 0) {
-		int totalBlocks = ASAP_MillisecondsToBlocks(self->currentDuration);
+		int totalBlocks = ASAP_MillisecondsToBlocks(self, self->currentDuration);
 		if (bufferBlocks > totalBlocks - self->blocksPlayed)
 			bufferBlocks = totalBlocks - self->blocksPlayed;
 	}
@@ -6884,7 +6946,7 @@ static void PokeyChannel_Initialize(PokeyChannel *self)
 	self->periodCycles = 28;
 	self->tickCycle = 8388608;
 	self->timerCycle = 8388608;
-	self->mute = 1;
+	self->mute = 0;
 	self->out = 0;
 	self->delta = 0;
 }
@@ -6947,11 +7009,6 @@ static void PokeyChannel_SetMute(PokeyChannel *self, bool enable, int mask, int 
 	}
 }
 
-static void PokeyChannel_MuteUltrasound(PokeyChannel *self, int cycle)
-{
-	PokeyChannel_SetMute(self, self->periodCycles <= 112 && (self->audc & 176) == 160, 1, cycle);
-}
-
 static void PokeyChannel_SetAudc(PokeyChannel *self, Pokey *pokey, const PokeyPair *pokeys, int data, int cycle)
 {
 	if (self->audc == data)
@@ -6966,7 +7023,6 @@ static void PokeyChannel_SetAudc(PokeyChannel *self, Pokey *pokey, const PokeyPa
 	}
 	else {
 		data = (data & 15) << 20;
-		PokeyChannel_MuteUltrasound(self, cycle);
 		if (self->delta > 0) {
 			if ((self->mute & 4) == 0)
 				Pokey_AddDelta(pokey, pokeys, cycle, data - self->delta);
@@ -6983,13 +7039,26 @@ static void PokeyChannel_EndFrame(PokeyChannel *self, int cycle)
 		self->timerCycle -= cycle;
 }
 
-static void Pokey_StartFrame(Pokey *self)
+static void Pokey_Construct(Pokey *self)
 {
-	memset(self->deltaBuffer, 0, sizeof(self->deltaBuffer));
+	self->deltaBuffer = NULL;
 }
 
-static void Pokey_Initialize(Pokey *self)
+static void Pokey_Destruct(Pokey *self)
 {
+	CiShared_Release(self->deltaBuffer);
+}
+
+static void Pokey_StartFrame(Pokey *self)
+{
+	memset(self->deltaBuffer, 0, self->deltaBufferLength * sizeof(int));
+}
+
+static void Pokey_Initialize(Pokey *self, int sampleRate)
+{
+	int64_t sr = sampleRate;
+	self->deltaBufferLength = (int) (sr * 312 * 114 / 1773447 + 4);
+	CiShared_Assign((void **) &self->deltaBuffer, (int *) CiShared_Make(self->deltaBufferLength, sizeof(int), NULL, NULL));
 	for (int i = 0; i < 4; i++)
 		PokeyChannel_Initialize(&self->channels[i]);
 	self->audctl = 0;
@@ -7001,14 +7070,15 @@ static void Pokey_Initialize(Pokey *self)
 	self->reloadCycles3 = 28;
 	self->polyIndex = 60948015;
 	self->iirAcc = 0;
+	self->iirRate = 1058400 / sampleRate;
 	Pokey_StartFrame(self);
 }
 
 static void Pokey_AddDelta(Pokey *self, const PokeyPair *pokeys, int cycle, int delta)
 {
 	int i = cycle * pokeys->sampleFactor + pokeys->sampleOffset;
-	int delta2 = (delta >> 16) * (i >> 4 & 65535);
-	i >>= 20;
+	int delta2 = (delta >> 16) * (i >> 2 & 65535);
+	i >>= 18;
 	self->deltaBuffer[i] += delta - delta2;
 	self->deltaBuffer[i + 1] += delta2;
 }
@@ -7105,7 +7175,6 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		case 16:
 			self->channels[1].periodCycles = self->divCycles * (data + (self->channels[1].audf << 8) + 1);
 			self->reloadCycles1 = self->divCycles * (data + 1);
-			PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
 			break;
 		case 64:
 			self->channels[0].periodCycles = data + 4;
@@ -7113,12 +7182,10 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		case 80:
 			self->channels[1].periodCycles = data + (self->channels[1].audf << 8) + 7;
 			self->reloadCycles1 = data + 4;
-			PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
 			break;
 		default:
 			abort();
 		}
-		PokeyChannel_MuteUltrasound(&self->channels[0], cycle);
 		break;
 	case 1:
 		PokeyChannel_SetAudc(&self->channels[0], self, pokeys, data, cycle);
@@ -7142,7 +7209,6 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		default:
 			abort();
 		}
-		PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
 		break;
 	case 3:
 		PokeyChannel_SetAudc(&self->channels[1], self, pokeys, data, cycle);
@@ -7159,7 +7225,6 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		case 8:
 			self->channels[3].periodCycles = self->divCycles * (data + (self->channels[3].audf << 8) + 1);
 			self->reloadCycles3 = self->divCycles * (data + 1);
-			PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
 			break;
 		case 32:
 			self->channels[2].periodCycles = data + 4;
@@ -7167,12 +7232,10 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		case 40:
 			self->channels[3].periodCycles = data + (self->channels[3].audf << 8) + 7;
 			self->reloadCycles3 = data + 4;
-			PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
 			break;
 		default:
 			abort();
 		}
-		PokeyChannel_MuteUltrasound(&self->channels[2], cycle);
 		break;
 	case 5:
 		PokeyChannel_SetAudc(&self->channels[2], self, pokeys, data, cycle);
@@ -7196,7 +7259,6 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		default:
 			abort();
 		}
-		PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
 		break;
 	case 7:
 		PokeyChannel_SetAudc(&self->channels[3], self, pokeys, data, cycle);
@@ -7229,8 +7291,6 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		default:
 			abort();
 		}
-		PokeyChannel_MuteUltrasound(&self->channels[0], cycle);
-		PokeyChannel_MuteUltrasound(&self->channels[1], cycle);
 		switch (data & 40) {
 		case 0:
 			self->channels[2].periodCycles = self->divCycles * (self->channels[2].audf + 1);
@@ -7253,8 +7313,6 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		default:
 			abort();
 		}
-		PokeyChannel_MuteUltrasound(&self->channels[2], cycle);
-		PokeyChannel_MuteUltrasound(&self->channels[3], cycle);
 		Pokey_InitMute(self, cycle);
 		break;
 	case 9:
@@ -7317,7 +7375,7 @@ static int Pokey_CheckIrq(Pokey *self, int cycle, int nextEventCycle)
 
 static int Pokey_StoreSample(Pokey *self, uint8_t *buffer, int bufferOffset, int i, ASAPSampleFormat format)
 {
-	self->iirAcc += self->deltaBuffer[i] - (self->iirAcc * 3 >> 10);
+	self->iirAcc += self->deltaBuffer[i] - (self->iirRate * self->iirAcc >> 13);
 	int sample = self->iirAcc >> 11;
 	if (sample < -32767)
 		sample = -32767;
@@ -7346,6 +7404,8 @@ static void Pokey_AccumulateTrailing(Pokey *self, int i)
 
 static void PokeyPair_Construct(PokeyPair *self)
 {
+	Pokey_Construct(&self->basePokey);
+	Pokey_Construct(&self->extraPokey);
 	int reg = 511;
 	for (int i = 0; i < 511; i++) {
 		reg = (((reg >> 5 ^ reg) & 1) << 8) + (reg >> 1);
@@ -7358,12 +7418,24 @@ static void PokeyPair_Construct(PokeyPair *self)
 	}
 }
 
-static void PokeyPair_Initialize(PokeyPair *self, bool ntsc, bool stereo)
+static void PokeyPair_Destruct(PokeyPair *self)
+{
+	Pokey_Destruct(&self->extraPokey);
+	Pokey_Destruct(&self->basePokey);
+}
+
+static int PokeyPair_GetSampleFactor(const PokeyPair *self, int clock)
+{
+	return ((self->sampleRate << 13) + (clock >> 6)) / (clock >> 5);
+}
+
+static void PokeyPair_Initialize(PokeyPair *self, bool ntsc, bool stereo, int sampleRate)
 {
 	self->extraPokeyMask = stereo ? 16 : 0;
-	Pokey_Initialize(&self->basePokey);
-	Pokey_Initialize(&self->extraPokey);
-	self->sampleFactor = ntsc ? 25837 : 26075;
+	self->sampleRate = sampleRate;
+	Pokey_Initialize(&self->basePokey, sampleRate);
+	Pokey_Initialize(&self->extraPokey, sampleRate);
+	self->sampleFactor = ntsc ? PokeyPair_GetSampleFactor(self, 1789772) : PokeyPair_GetSampleFactor(self, 1773447);
 	self->sampleOffset = 0;
 	self->readySamplesStart = 0;
 	self->readySamplesEnd = 0;
@@ -7410,8 +7482,8 @@ static int PokeyPair_EndFrame(PokeyPair *self, int cycle)
 		Pokey_EndFrame(&self->extraPokey, self, cycle);
 	self->sampleOffset += cycle * self->sampleFactor;
 	self->readySamplesStart = 0;
-	self->readySamplesEnd = self->sampleOffset >> 20;
-	self->sampleOffset &= 1048575;
+	self->readySamplesEnd = self->sampleOffset >> 18;
+	self->sampleOffset &= 262143;
 	return self->readySamplesEnd;
 }
 

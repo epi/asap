@@ -162,25 +162,24 @@ class Pokey
 	internal int PolyIndex;
 	const int NeverCycle = 0x800000;
 
-	// Sample rates from 32000 to 50000 should be fine,
-	// but weren't tested - please report your experience.
-	// For lower rates, you'll need to add a low-pass filter.
-	// The DC filter in PokeyPair.Generate should also be adjusted
-	// whenever the sample rate considerably differs from 44100.
-	const int SampleRate = 44100;
-	// Enough for one PAL frame == 312 * 114 cycles + some margin,
-	// as we emulate whole 6502 instructions and interpolate samples.
-	int[SampleRate * 312 * 114 / 1773447 + 4] DeltaBuffer;
+	int DeltaBufferLength;
+	int[]# DeltaBuffer;
 
+	int IirRate;
 	int IirAcc;
 
 	internal void StartFrame!()
 	{
-		DeltaBuffer.Fill(0);
+		DeltaBuffer.Fill(0, 0, DeltaBufferLength);
 	}
 
-	internal void Initialize!()
+	internal void Initialize!(int sampleRate = 44100)
 	{
+		long sr = sampleRate;
+		// Enough for one PAL frame == 312 * 114 cycles + some margin,
+		// as we emulate whole 6502 instructions and interpolate samples.
+		DeltaBufferLength = sr * 312 * 114 / 1773447 + 4;
+		DeltaBuffer = new int[DeltaBufferLength];
 		for (int i = 0; i < 4; i++)
 			Channels[i].Initialize();
 		Audctl = 0;
@@ -192,6 +191,7 @@ class Pokey
 		ReloadCycles3 = 28;
 		PolyIndex = 15 * 31 * 131071;
 		IirAcc = 0;
+		IirRate = 44100 * 24 / sampleRate;
 		StartFrame();
 	}
 
@@ -503,7 +503,7 @@ class Pokey
 
 	internal int StoreSample!(byte[]! buffer, int bufferOffset, int i, ASAPSampleFormat format)
 	{
-		IirAcc += DeltaBuffer[i] - (IirAcc * 3 >> 10);
+		IirAcc += DeltaBuffer[i] - (IirRate * IirAcc >> 13);
 		int sample = IirAcc >> 11;
 		if (sample < -32767)
 			sample = -32767;
@@ -542,10 +542,11 @@ class PokeyPair
 	internal Pokey() BasePokey;
 	internal Pokey() ExtraPokey;
 
+	internal int SampleRate;
 	// DeltaBuffer.Length << SampleFactorShift shouldn't overflow int.
 	// SampleFactorShift could be 21, but that wouldn't improve
 	// accuracy because SampleFactor would be even.
-	const int SampleFactorShift = 20;
+	const int SampleFactorShift = 18;
 	internal int SampleFactor;
 	internal int SampleOffset;
 
@@ -571,19 +572,20 @@ class PokeyPair
 
 	// return ((Pokey.SampleRate << SampleFactorShift) + (clock >> 1)) / clock;
 	// Shifted by 5 to fit in 32-bit arithmetic.
-	static int GetSampleFactor(int clock)
-		=> ((Pokey.SampleRate << SampleFactorShift - 5) + (clock >> 6)) / (clock >> 5);
+	int GetSampleFactor(int clock)
+		=> ((SampleRate << SampleFactorShift - 5) + (clock >> 6)) / (clock >> 5);
 
 #if APOKEYSND
 	public
 #else
 	internal
 #endif
-	void Initialize!(bool ntsc, bool stereo)
+	void Initialize!(bool ntsc, bool stereo, int sampleRate = 44100)
 	{
 		ExtraPokeyMask = stereo ? 0x10 : 0;
-		BasePokey.Initialize();
-		ExtraPokey.Initialize();
+		SampleRate = sampleRate;
+		BasePokey.Initialize(sampleRate);
+		ExtraPokey.Initialize(sampleRate);
 		SampleFactor = ntsc ? GetSampleFactor(1789772) : GetSampleFactor(1773447);
 		SampleOffset = 0;
 		ReadySamplesStart = 0;

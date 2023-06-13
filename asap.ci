@@ -30,8 +30,8 @@ enum NmiStatus
 /// This class performs no I/O operations - all music data must be passed in byte arrays.
 public class ASAP
 {
-	/// Output sample rate.
-	public const int SampleRate = Pokey.SampleRate;
+	/// Default output sample rate.
+	public const int SampleRate = 44100;
 
 	internal int NextEventCycle;
 
@@ -64,6 +64,17 @@ public class ASAP
 	{
 		SilenceCycles = 0;
 		Cpu.Asap = this;
+	}
+
+	int CurrentSampleRate = SampleRate;
+
+	/// Get current output sample rate.
+	public int GetSampleRate() => CurrentSampleRate;
+
+	/// Set output sample rate.
+	public void SetSampleRate!(int sampleRate)
+	{
+		CurrentSampleRate = sampleRate;
 	}
 
 	/// Enables silence detection.
@@ -392,7 +403,7 @@ public class ASAP
 		Covox[1] = 0x80;
 		Covox[2] = 0x80;
 		Covox[3] = 0x80;
-		Pokeys.Initialize(ModuleInfo.IsNtsc(), ModuleInfo.GetChannels() > 1);
+		Pokeys.Initialize(ModuleInfo.IsNtsc(), ModuleInfo.GetChannels() > 1, CurrentSampleRate);
 		MutePokeyChannels(0xff);
 		int player = ModuleInfo.Player;
 		int music = ModuleInfo.GetMusicAddress();
@@ -458,9 +469,12 @@ public class ASAP
 	public int GetBlocksPlayed() => BlocksPlayed;
 
 	/// Returns current playback position in milliseconds.
-	public int GetPosition() => BlocksPlayed * 10 / (SampleRate / 100);
+	public int GetPosition() => BlocksPlayed * 10 / (CurrentSampleRate / 100);
 
-	static int MillisecondsToBlocks(int milliseconds) => milliseconds * (SampleRate / 100) / 10;
+	int MillisecondsToBlocks(int milliseconds) {
+		long ms = milliseconds;
+		return ms * CurrentSampleRate / 1000;
+	}
 
 	/// Changes the playback position.
 	public void SeekSample!(
@@ -534,7 +548,7 @@ public class ASAP
 	{
 		int use16bit = format != ASAPSampleFormat.U8 ? 1 : 0;
 		int blockSize = ModuleInfo.GetChannels() << use16bit;
-		int bytesPerSecond = SampleRate * blockSize;
+		int bytesPerSecond = CurrentSampleRate * blockSize;
 		int totalBlocks = MillisecondsToBlocks(CurrentDuration);
 		int nBytes = (totalBlocks - BlocksPlayed) * blockSize;
 		PutLittleEndian(buffer, 8, FourCC("WAVE"));
@@ -543,7 +557,7 @@ public class ASAP
 		buffer[21] = 0;
 		buffer[22] = ModuleInfo.GetChannels();
 		buffer[23] = 0;
-		PutLittleEndians(buffer, 24, SampleRate, bytesPerSecond);
+		PutLittleEndians(buffer, 24, CurrentSampleRate, bytesPerSecond);
 		buffer[32] = blockSize;
 		buffer[33] = 0;
 		buffer[34] = 8 << use16bit;

@@ -25,6 +25,7 @@ import sys
 
 output_filename = None
 song = None
+sample_rate = 44100
 duration = None
 format = ASAPSampleFormat.S16_L_E
 output_header = True
@@ -42,6 +43,7 @@ def print_help():
 		"-b          --byte-samples     Output 8-bit samples\n"
 		"-w          --word-samples     Output 16-bit samples (default)\n"
 		"            --raw              Output raw audio (no WAV header)\n"
+		"-R RATE     --sample-rate=RATE Set output sample rate to RATE Hz\n"
 		"-m CHANNELS --mute=CHANNELS    Mute POKEY channels (1-8)\n"
 		"-h          --help             Display this information\n"
 		"-v          --version          Display version information")
@@ -55,6 +57,7 @@ def set_mute_mask(s):
 def process_file(input_filename):
 	with open(input_filename, "rb") as f: module = f.read()
 	asap = ASAP()
+	asap.set_sample_rate(sample_rate)
 	asap.load(input_filename, module, len(module))
 	info = asap.get_info()
 	global output_filename, song, duration, format, output_header, mute_mask
@@ -69,7 +72,7 @@ def process_file(input_filename):
 	if output_filename is None:
 		output_filename = Path(input_filename).with_suffix(".wav" if output_header else ".raw")
 	buffer = bytearray(8192)
-	with open(output_filename, "wb") as f:
+	with sys.stdout.buffer if output_filename == "-" else open(output_filename, "wb") as f:
 		if output_header:
 			buffer_len = asap.get_wav_header(buffer, format, False)
 			f.write(buffer[:buffer_len])
@@ -106,6 +109,10 @@ while (args):
 		format = ASAPSampleFormat.S16_L_E
 	elif arg == "--raw":
 		output_header = False
+	elif arg == "-R":
+		sample_rate = int(args.pop(0))
+	elif arg.startswith("--sample-rate"):
+		sample_rate = int(arg[13:])
 	elif arg == "-m":
 		set_mute_mask(args.pop(0))
 	elif arg == "--mute=":

@@ -32,11 +32,13 @@ function printHelp()
 		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2 or FC.\n" +
 		"Options:\n" +
 		"-o FILE     --output=FILE      Set output file name\n" +
+		"-o -        --output=-         Write to standard output\n" +
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n" +
 		"-t TIME     --time=TIME        Set output length (MM:SS format)\n" +
 		"-b          --byte-samples     Output 8-bit samples\n" +
 		"-w          --word-samples     Output 16-bit samples (default)\n" +
 		"            --raw              Output raw audio (no WAV header)\n" +
+		"-R RATE     --sample-rate=RATE Set output sample rate to RATE Hz\n" +
 		"-m CHANNELS --mute=CHANNELS    Mute POKEY channels (1-8)\n" +
 		"-h          --help             Display this information\n" +
 		"-v          --version          Display version information"
@@ -46,6 +48,7 @@ function printHelp()
 let outputFilename = null;
 let outputHeader = true;
 let song = -1;
+let sampleRate = 44100;
 let format = ASAPSampleFormat.S16_L_E;
 let duration = -1;
 let muteMask = 0;
@@ -53,6 +56,11 @@ let muteMask = 0;
 function setSong(s)
 {
 	song = parseInt(s, 10);
+}
+
+function setSampleRate(s)
+{
+	sampleRate = parseInt(s, 10);
 }
 
 function setTime(s)
@@ -74,6 +82,7 @@ function processFile(inputFilename)
 {
 	const module = fs.readFileSync(inputFilename);
 	const asap = new ASAP();
+	asap.setSampleRate(sampleRate);
 	asap.load(inputFilename, module, module.length);
 	const info = asap.getInfo();
 	if (song < 0)
@@ -89,7 +98,7 @@ function processFile(inputFilename)
 		const i = inputFilename.lastIndexOf(".");
 		outputFilename = inputFilename.substring(0, i + 1) + (outputHeader ? "wav" : "raw");
 	}
-	const of = fs.openSync(outputFilename, "w");
+	const of = outputFilename == "-" ? 1 : fs.openSync(outputFilename, "w");
 	const buffer = new Uint8Array(8192);
 	let nBytes;
 	if (outputHeader) {
@@ -100,7 +109,8 @@ function processFile(inputFilename)
 		nBytes = asap.generate(buffer, 8192, format);
 		fs.writeSync(of, buffer, 0, nBytes);
 	} while (nBytes == 8192);
-	fs.closeSync(of);
+	if (of > 2)
+		fs.closeSync(of);
 	outputFilename = null;
 	song = -1;
 	duration = -1;
@@ -132,6 +142,10 @@ for (let i = 0; i < args.length; i++) {
 		format = ASAPSampleFormat.S16_L_E;
 	else if (arg == "--raw")
 		outputHeader = false;
+	else if (arg == "-R")
+		setSampleRate(args[++i]);
+	else if (arg.substring(0, 13) == "--sample-rate")
+		setSampleRate(arg.substring(13, arg.length));
 	else if (arg == "-m")
 		setMuteMask(args[++i]);
 	else if (arg.substring(0, 7) == "--mute=")

@@ -31,9 +31,21 @@ ASAP *ASAP_New(void);
 void ASAP_Delete(ASAP *self);
 
 /**
- * Output sample rate.
+ * Default output sample rate.
  */
 #define ASAP_SAMPLE_RATE 44100
+
+/**
+ * Get current output sample rate.
+ * @param self This <code>ASAP</code>.
+ */
+int ASAP_GetSampleRate(const ASAP *self);
+
+/**
+ * Set output sample rate.
+ * @param self This <code>ASAP</code>.
+ */
+void ASAP_SetSampleRate(ASAP *self, int sampleRate);
 
 /**
  * Enables silence detection.

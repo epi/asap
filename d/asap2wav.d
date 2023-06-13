@@ -31,6 +31,7 @@ import asap;
 string outputFilename;
 bool outputHeader = true;
 int song = -1;
+int sampleRate = 44100;
 ASAPSampleFormat format = ASAPSampleFormat.s16LE;
 int duration = -1;
 int muteMask = 0;
@@ -43,11 +44,13 @@ void printHelp()
 		"SAP, CMC, CM3, CMR, CMS, DMC, DLT, MPT, MPD, RMT, TMC, TM8, TM2 or FC.\n" ~
 		"Options:\n" ~
 		"-o FILE     --output=FILE      Set output file name\n" ~
+		"-o -        --output=-         Write to standard output\n" ~
 		"-s SONG     --song=SONG        Select subsong number (zero-based)\n" ~
 		"-t TIME     --time=TIME        Set output length (MM:SS format)\n" ~
 		"-b          --byte-samples     Output 8-bit samples\n" ~
 		"-w          --word-samples     Output 16-bit samples (default)\n" ~
 		"            --raw              Output raw audio (no WAV header)\n" ~
+		"-R RATE     --sample-rate=RATE Set output sample rate to RATE Hz\n" ~
 		"-m CHANNELS --mute=CHANNELS    Mute POKEY chanels (1-8)\n" ~
 		"-h          --help             Display this information\n" ~
 		"-v          --version          Display version information\n"
@@ -77,6 +80,7 @@ void setMuteMask(string s)
 void processFile(string inputFilename)
 {
 	auto asap = new ASAP;
+	asap.setSampleRate(sampleRate);
 	auto mod = cast(ubyte[]) read(inputFilename, ASAPInfo.maxModuleLength);
 	asap.load(inputFilename, mod, cast(int) mod.length);
 	ASAPInfo info = asap.getInfo();
@@ -93,7 +97,7 @@ void processFile(string inputFilename)
 		auto i = inputFilename.lastIndexOf('.');
 		outputFilename = inputFilename[0 .. i + 1] ~ (outputHeader ? "wav" : "raw");
 	}
-	auto s = File(outputFilename, "wb");
+	File s = outputFilename == "-" ? stdout : File(outputFilename, "wb");
 	auto buffer = new ubyte[8192];
 	if (outputHeader) {
 		int len = asap.getWavHeader(buffer, format, false);
@@ -134,6 +138,10 @@ int main(string[] args)
 			format = ASAPSampleFormat.s16LE;
 		else if (arg == "--raw")
 			outputHeader = false;
+		else if (arg == "-R")
+			sampleRate = args[++i].to!int;
+		else if (arg.startsWith("--sample-rate"))
+			sampleRate = arg[13 .. $].to!int;
 		else if (arg == "-m")
 			setMuteMask(args[++i]);
 		else if (arg.startsWith("--mute="))

@@ -48,6 +48,7 @@
 /* parsed command line */
 static const char *arg_output = NULL;
 static int arg_song = -1;
+static int arg_sample_rate = 44100;
 static ASAPSampleFormat arg_sample_format = ASAPSampleFormat_S16_L_E;
 static int arg_duration = -1;
 static int arg_mute_mask = 0;
@@ -94,6 +95,7 @@ static void print_help(void)
 		                       "output:\n"
 		"            --tag              Include metadata in the output file\n"
 		"Options for " SAMPLE_FORMATS " output:\n"
+		"-R RATE     --sample-rate=RATE Set output sample rate to RATE Hz\n"
 		"-m CHANNELS --mute=CHANNELS    Mute POKEY channels (1-8, comma-separated)\n"
 #ifdef HAVE_LIBMP3LAME
 		"Options for WAV or RAW output:\n"
@@ -135,6 +137,11 @@ static int parse_int(const char *s, int base, const char *description, int max_v
 static void set_song(const char *s)
 {
 	arg_song = parse_int(s, 10, "subsong number", ASAPInfo_MAX_SONGS - 1);
+}
+
+static void set_sample_rate(const char *s)
+{
+	arg_sample_rate = parse_int(s, 10, "sample rate", 256000);
 }
 
 static void set_time(const char *s)
@@ -182,6 +189,7 @@ static ASAP *load_module(const char *input_file, const unsigned char *module, in
 	ASAP *asap = ASAP_New();
 	if (asap == NULL)
 		fatal_error("out of memory");
+	ASAP_SetSampleRate(asap, arg_sample_rate);
 	if (!ASAP_Load(asap, input_file, module, module_len))
 		fatal_error("%s: unsupported file", input_file);
 	ASAPInfo *info = (ASAPInfo *) ASAP_GetInfo(asap); /* FIXME: avoid cast */
@@ -608,6 +616,10 @@ int main(int argc, char *argv[])
 			arg_sample_format = ASAPSampleFormat_U8;
 		else if (is_opt('w') || strcmp(arg, "--word-samples") == 0)
 			arg_sample_format = ASAPSampleFormat_S16_L_E;
+		else if (is_opt('R'))
+			set_sample_rate(argv[++i]);
+		else if (strncmp(arg, "--sample-rate", 13) == 0)
+			set_sample_rate(arg + 13);
 		else if (is_opt('m'))
 			set_mute_mask(argv[++i]);
 		else if (strncmp(arg, "--mute=", 7) == 0)
