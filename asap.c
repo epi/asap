@@ -1,4 +1,5 @@
 // Generated automatically with "cito". Do not edit.
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include "asap.h"
@@ -199,6 +200,7 @@ struct Pokey {
 	int *deltaBuffer;
 	int iirRate;
 	int iirAcc;
+	int trailing;
 };
 static void Pokey_Construct(Pokey *self);
 static void Pokey_Destruct(Pokey *self);
@@ -238,6 +240,7 @@ struct PokeyPair {
 	Pokey basePokey;
 	Pokey extraPokey;
 	int sampleRate;
+	int16_t sincLookup[1024][32];
 	int sampleFactor;
 	int sampleOffset;
 	int readySamplesStart;
@@ -7051,14 +7054,16 @@ static void Pokey_Destruct(Pokey *self)
 
 static void Pokey_StartFrame(Pokey *self)
 {
-	memset(self->deltaBuffer, 0, self->deltaBufferLength * sizeof(int));
+	memcpy(self->deltaBuffer, self->deltaBuffer + self->trailing, (self->deltaBufferLength - self->trailing) * sizeof(int));
+	memset(self->deltaBuffer + (self->deltaBufferLength - self->trailing), 0, self->trailing * sizeof(int));
 }
 
 static void Pokey_Initialize(Pokey *self, int sampleRate)
 {
 	int64_t sr = sampleRate;
-	self->deltaBufferLength = (int) (sr * 312 * 114 / 1773447 + 4);
+	self->deltaBufferLength = (int) (sr * 312 * 114 / 1773447 + 32 + 2);
 	CiShared_Assign((void **) &self->deltaBuffer, (int *) CiShared_Make(self->deltaBufferLength, sizeof(int), NULL, NULL));
+	self->trailing = self->deltaBufferLength;
 	for (int i = 0; i < 4; i++)
 		PokeyChannel_Initialize(&self->channels[i]);
 	self->audctl = 0;
@@ -7070,17 +7075,20 @@ static void Pokey_Initialize(Pokey *self, int sampleRate)
 	self->reloadCycles3 = 28;
 	self->polyIndex = 60948015;
 	self->iirAcc = 0;
-	self->iirRate = 1058400 / sampleRate;
+	self->iirRate = 264600 / sampleRate;
 	Pokey_StartFrame(self);
 }
 
 static void Pokey_AddDelta(Pokey *self, const PokeyPair *pokeys, int cycle, int delta)
 {
+	if (delta == 0)
+		return;
 	int i = cycle * pokeys->sampleFactor + pokeys->sampleOffset;
-	int delta2 = (delta >> 16) * (i >> 2 & 65535);
+	int fraction = i >> 8 & 1023;
 	i >>= 18;
-	self->deltaBuffer[i] += delta - delta2;
-	self->deltaBuffer[i + 1] += delta2;
+	delta >>= 14;
+	for (int j = 0; j < 32; j++)
+		self->deltaBuffer[i + j] += delta * pokeys->sincLookup[fraction][j];
 }
 
 static void Pokey_GenerateUntilCycle(Pokey *self, const PokeyPair *pokeys, int cycleLimit)
@@ -7375,7 +7383,7 @@ static int Pokey_CheckIrq(Pokey *self, int cycle, int nextEventCycle)
 
 static int Pokey_StoreSample(Pokey *self, uint8_t *buffer, int bufferOffset, int i, ASAPSampleFormat format)
 {
-	self->iirAcc += self->deltaBuffer[i] - (self->iirRate * self->iirAcc >> 13);
+	self->iirAcc += self->deltaBuffer[i] - (self->iirRate * self->iirAcc >> 11);
 	int sample = self->iirAcc >> 11;
 	if (sample < -32767)
 		sample = -32767;
@@ -7399,7 +7407,7 @@ static int Pokey_StoreSample(Pokey *self, uint8_t *buffer, int bufferOffset, int
 
 static void Pokey_AccumulateTrailing(Pokey *self, int i)
 {
-	self->iirAcc += self->deltaBuffer[i] + self->deltaBuffer[i + 1];
+	self->trailing = i;
 }
 
 static void PokeyPair_Construct(PokeyPair *self)
@@ -7415,6 +7423,33 @@ static void PokeyPair_Construct(PokeyPair *self)
 	for (int i = 0; i < 16385; i++) {
 		reg = (((reg >> 5 ^ reg) & 255) << 9) + (reg >> 8);
 		self->poly17Lookup[i] = (uint8_t) (reg >> 1);
+	}
+	double scaledPI = 3.141592653589793 / 1024;
+	for (int i = 0; i < 1024; i++) {
+		double sinc[64];
+		for (int j = 0; j < 64; j++) {
+			double x = scaledPI * (((j - 32) << 10) - i);
+			sinc[j] = x == 0 ? 1 : sin(x) / x;
+		}
+		double oneDelta[33];
+		for (int j = 0; j < 32; j++) {
+			int t = 16 + j;
+			double acc = 0;
+			for (int n = 0; n < t; n++)
+				acc += sinc[n];
+			for (int n = t; n < 64; n++)
+				acc -= sinc[n];
+			oneDelta[j + 1] = acc;
+		}
+		oneDelta[0] = -1;
+		double norm = 0;
+		for (int j = 0; j < 32; j++) {
+			oneDelta[j] = oneDelta[j + 1] - oneDelta[j];
+			norm += oneDelta[j];
+		}
+		norm = 16384 / norm;
+		for (int j = 0; j < 32; j++)
+			self->sincLookup[i][j] = (int16_t) round(oneDelta[j] * norm);
 	}
 }
 
