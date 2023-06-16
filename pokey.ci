@@ -165,12 +165,35 @@ class Pokey
 	int DeltaBufferLength;
 	int[]# DeltaBuffer;
 
+	// To avoid the cost of computing and accumulating sinc function
+	// each time at exact time points, we use precalculated sinc-interpolated
+	// unit delta function (derivative of step function), sampled at a finite
+	// number of different phase offsets within output sample interval.
+
+	// The following parameters control quality of sinc interpolation.
+	// The default values are fine for sample rates down to 44100.
+	// For lower sample rates you may want to increase them
+	// to reduce aliasing and sinc approximation artifacts.
+	// For best performance, make sure all lookup tables fit in L1$.
+
+	// (1 << InterpolationShift) is the number of pre-calculated deltas:
+	// Useful range is 6..DeltaResolution.
+	internal const int InterpolationShift = 10;
+
+	// Length of one pre-sampled sinc-interpolated unit delta. Must be >=3.
+	internal const int UnitDeltaLength = 32;
+
+	// (1 << DeltaResolution) is the amplitude of unit delta.
+	internal const int DeltaResolution = 14;
+
 	int IirRate;
 	int IirAcc;
+	int Trailing;
 
 	internal void StartFrame!()
 	{
-		DeltaBuffer.Fill(0, 0, DeltaBufferLength);
+		DeltaBuffer.CopyTo(Trailing, DeltaBuffer, 0, DeltaBufferLength - Trailing);
+		DeltaBuffer.Fill(0, DeltaBufferLength - Trailing, Trailing);
 	}
 
 	internal void Initialize!(int sampleRate = 44100)
@@ -178,8 +201,9 @@ class Pokey
 		long sr = sampleRate;
 		// Enough for one PAL frame == 312 * 114 cycles + some margin,
 		// as we emulate whole 6502 instructions and interpolate samples.
-		DeltaBufferLength = sr * 312 * 114 / 1773447 + 4;
+		DeltaBufferLength = sr * 312 * 114 / 1773447 + UnitDeltaLength + 2;
 		DeltaBuffer = new int[DeltaBufferLength];
+		Trailing = DeltaBufferLength;
 		for (int i = 0; i < 4; i++)
 			Channels[i].Initialize();
 		Audctl = 0;
@@ -191,20 +215,20 @@ class Pokey
 		ReloadCycles3 = 28;
 		PolyIndex = 15 * 31 * 131071;
 		IirAcc = 0;
-		IirRate = 44100 * 24 / sampleRate;
+		IirRate = 44100 * 6 / sampleRate;
 		StartFrame();
 	}
 
 	internal void AddDelta!(PokeyPair pokeys, int cycle, int delta)
 	{
+		if (delta == 0)
+			return;
 		int i = cycle * pokeys.SampleFactor + pokeys.SampleOffset;
-		// too large value reduces the resolution of delta (if bigger than DeltaShiftCOVOX, DeltaShiftPOKEY)
-		// too small value reduces the resolution of interpolation
-		const int interpolationShift = 16;
-		int delta2 = (delta >> interpolationShift) * (i >> (PokeyPair.SampleFactorShift - interpolationShift) & ((1 << interpolationShift) - 1));
+		int fraction = i >> (PokeyPair.SampleFactorShift - InterpolationShift) & ((1 << InterpolationShift) - 1);
 		i >>= PokeyPair.SampleFactorShift;
-		DeltaBuffer[i] += delta - delta2;
-		DeltaBuffer[i + 1] += delta2;
+		delta >>= DeltaResolution;
+		for (int j = 0; j < UnitDeltaLength; j++)
+			DeltaBuffer[i + j] += delta * pokeys.SincLookup[fraction][j];
 	}
 
 	/// Fills `DeltaBuffer` up to `cycleLimit` basing on current Audf/Audc/Audctl values.
@@ -503,7 +527,7 @@ class Pokey
 
 	internal int StoreSample!(byte[]! buffer, int bufferOffset, int i, ASAPSampleFormat format)
 	{
-		IirAcc += DeltaBuffer[i] - (IirRate * IirAcc >> 13);
+		IirAcc += DeltaBuffer[i] - (IirRate * IirAcc >> 11);
 		int sample = IirAcc >> 11;
 		if (sample < -32767)
 			sample = -32767;
@@ -527,7 +551,7 @@ class Pokey
 
 	internal void AccumulateTrailing!(int i)
 	{
-		IirAcc += DeltaBuffer[i] + DeltaBuffer[i + 1];
+		Trailing = i;
 	}
 }
 
@@ -543,8 +567,12 @@ class PokeyPair
 	internal Pokey() ExtraPokey;
 
 	internal int SampleRate;
+	// Band-limited unit delta, sampled around (1 << InterpolationShift)
+	// different fractional positions between output samples.
+	internal short[1 << Pokey.InterpolationShift][Pokey.UnitDeltaLength] SincLookup;
+
 	// DeltaBuffer.Length << SampleFactorShift shouldn't overflow int.
-	// SampleFactorShift could be 21, but that wouldn't improve
+	// SampleFactorShift could be 19, but that wouldn't improve
 	// accuracy because SampleFactor would be even.
 	const int SampleFactorShift = 18;
 	internal int SampleFactor;
@@ -567,6 +595,32 @@ class PokeyPair
 		for (int i = 0; i < 16385; i++) {
 			reg = (((reg >> 5 ^ reg) & 0xff) << 9) + (reg >> 8);
 			Poly17Lookup[i] = reg >> 1 & 0xff;
+		}
+		const int sincLength = 2 * Pokey.UnitDeltaLength;
+		/* const */ double scaledPI = Math.PI / (1 << Pokey.InterpolationShift);
+		for (int i = 0; i < (1 << Pokey.InterpolationShift); i++) {
+			double[sincLength] sinc;
+			for (int j = 0; j < sincLength; j++) {
+				double x = scaledPI * (((j - (sincLength >> 1)) << Pokey.InterpolationShift) - i);
+				sinc[j] = x == 0 ? 1 : Math.Sin(x) / x;
+			}
+			double[Pokey.UnitDeltaLength + 1] oneDelta;
+			int lead = sincLength / 2 - Pokey.UnitDeltaLength / 2;
+			oneDelta[0] = -1;
+			oneDelta[1] = 0;
+			for (int j = 0; j < lead - 1; j++)
+				oneDelta[1] += sinc[j];
+			for (int j = lead - 1; j < sincLength; j++)
+				oneDelta[1] -= sinc[j];
+			double norm = 0;
+			for (int j = 0; j < Pokey.UnitDeltaLength; j++) {
+				oneDelta[j + 1] = oneDelta[j] + 2 * sinc[lead + j];
+				oneDelta[j] = oneDelta[j + 1] - oneDelta[j];
+				norm += oneDelta[j];
+			}
+			norm = (1 << Pokey.DeltaResolution) / norm;
+			for (int j = 0; j < Pokey.UnitDeltaLength; j++)
+				SincLookup[i][j] = Math.Round(oneDelta[j] * norm);
 		}
 	}
 
