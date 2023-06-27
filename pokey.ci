@@ -39,9 +39,9 @@ class PokeyChannel
 	internal int TimerCycle;
 
 	// Is channel muted?
-	const int MuteInit = 2;
-	const int MuteUser = 4;
-	const int MuteSerialInput = 8;
+	const int MuteInit = 1;
+	const int MuteUser = 2;
+	const int MuteSerialInput = 4;
 	internal int Mute;
 
 	int Out;

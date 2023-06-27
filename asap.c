@@ -7020,14 +7020,14 @@ static void PokeyChannel_SetAudc(PokeyChannel *self, Pokey *pokey, const PokeyPa
 	self->audc = data;
 	if ((data & 16) != 0) {
 		data = (data & 15) << 20;
-		if ((self->mute & 4) == 0)
+		if ((self->mute & 2) == 0)
 			Pokey_AddDelta(pokey, pokeys, cycle, self->delta > 0 ? data - self->delta : data);
 		self->delta = data;
 	}
 	else {
 		data = (data & 15) << 20;
 		if (self->delta > 0) {
-			if ((self->mute & 4) == 0)
+			if ((self->mute & 2) == 0)
 				Pokey_AddDelta(pokey, pokeys, cycle, data - self->delta);
 			self->delta = data;
 		}
@@ -7154,17 +7154,17 @@ static bool Pokey_IsSilent(const Pokey *self)
 static void Pokey_Mute(Pokey *self, int mask)
 {
 	for (int i = 0; i < 4; i++)
-		PokeyChannel_SetMute(&self->channels[i], (mask & 1 << i) != 0, 4, 0);
+		PokeyChannel_SetMute(&self->channels[i], (mask & 1 << i) != 0, 2, 0);
 }
 
 static void Pokey_InitMute(Pokey *self, int cycle)
 {
 	bool init = self->init;
 	int audctl = self->audctl;
-	PokeyChannel_SetMute(&self->channels[0], init && (audctl & 64) == 0, 2, cycle);
-	PokeyChannel_SetMute(&self->channels[1], init && (audctl & 80) != 80, 2, cycle);
-	PokeyChannel_SetMute(&self->channels[2], init && (audctl & 32) == 0, 2, cycle);
-	PokeyChannel_SetMute(&self->channels[3], init && (audctl & 40) != 40, 2, cycle);
+	PokeyChannel_SetMute(&self->channels[0], init && (audctl & 64) == 0, 1, cycle);
+	PokeyChannel_SetMute(&self->channels[1], init && (audctl & 80) != 80, 1, cycle);
+	PokeyChannel_SetMute(&self->channels[2], init && (audctl & 32) == 0, 1, cycle);
+	PokeyChannel_SetMute(&self->channels[3], init && (audctl & 40) != 40, 1, cycle);
 }
 
 static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, int cycle)
@@ -7356,8 +7356,8 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 			self->polyIndex = ((self->audctl & 128) != 0 ? 237614 : 60948014) - cycle;
 		self->init = init;
 		Pokey_InitMute(self, cycle);
-		PokeyChannel_SetMute(&self->channels[2], (data & 16) != 0, 8, cycle);
-		PokeyChannel_SetMute(&self->channels[3], (data & 16) != 0, 8, cycle);
+		PokeyChannel_SetMute(&self->channels[2], (data & 16) != 0, 4, cycle);
+		PokeyChannel_SetMute(&self->channels[3], (data & 16) != 0, 4, cycle);
 		break;
 	default:
 		break;
