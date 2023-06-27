@@ -272,7 +272,7 @@ public class Player extends ListActivity
 		Intent intent = new Intent(Intent.ACTION_SEND);
 		intent.setType("text/plain");
 		intent.putExtra(Intent.EXTRA_TEXT, "https://asma.atari.org/asmadb/asma.html#/" + playingFilename);
-		startActivity(intent);
+		startActivity(Intent.createChooser(intent, null));
 	}
 
 	@Override
