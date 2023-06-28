@@ -7428,22 +7428,20 @@ static void PokeyPair_Construct(PokeyPair *self)
 	for (int i = 0; i < 1024; i++) {
 		double sinc[64];
 		double sincSum = 0;
+		double leftSum = 0;
 		double norm = 0;
 		for (int j = 0; j < 64; j++) {
 			if (j == 16)
+				leftSum = sincSum;
+			else if (j == 47)
 				norm = sincSum;
 			double x = scaledPI * (((j - 32) << 10) - i);
 			sincSum += sinc[j] = x == 0 ? 1 : sin(x) / x;
 		}
-		double oneDelta[32];
-		oneDelta[0] = norm += (1 - sincSum) * 0.5;
-		for (int j = 1; j < 32; j++) {
-			int t = 16 + j;
-			norm += oneDelta[j] = sinc[t - 1];
-		}
-		norm = 16384 / norm;
-		for (int j = 0; j < 32; j++)
-			self->sincLookup[i][j] = (int16_t) round(oneDelta[j] * norm);
+		norm = 16384 / (norm + (1 - sincSum) * 0.5);
+		self->sincLookup[i][0] = (int16_t) round((leftSum + (1 - sincSum) * 0.5) * norm);
+		for (int j = 1; j < 32; j++)
+			self->sincLookup[i][j] = (int16_t) round(sinc[15 + j] * norm);
 	}
 }
 
