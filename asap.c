@@ -7427,25 +7427,19 @@ static void PokeyPair_Construct(PokeyPair *self)
 	double scaledPI = 3.141592653589793 / 1024;
 	for (int i = 0; i < 1024; i++) {
 		double sinc[64];
-		for (int j = 0; j < 64; j++) {
-			double x = scaledPI * (((j - 32) << 10) - i);
-			sinc[j] = x == 0 ? 1 : sin(x) / x;
-		}
-		double oneDelta[33];
-		for (int j = 0; j < 32; j++) {
-			int t = 16 + j;
-			double acc = 0;
-			for (int n = 0; n < t; n++)
-				acc += sinc[n];
-			for (int n = t; n < 64; n++)
-				acc -= sinc[n];
-			oneDelta[j + 1] = acc;
-		}
-		oneDelta[0] = -1;
+		double sincSum = 0;
 		double norm = 0;
-		for (int j = 0; j < 32; j++) {
-			oneDelta[j] = oneDelta[j + 1] - oneDelta[j];
-			norm += oneDelta[j];
+		for (int j = 0; j < 64; j++) {
+			if (j == 16)
+				norm = sincSum;
+			double x = scaledPI * (((j - 32) << 10) - i);
+			sincSum += sinc[j] = x == 0 ? 1 : sin(x) / x;
+		}
+		double oneDelta[32];
+		oneDelta[0] = norm += (1 - sincSum) * 0.5;
+		for (int j = 1; j < 32; j++) {
+			int t = 16 + j;
+			norm += oneDelta[j] = sinc[t - 1];
 		}
 		norm = 16384 / norm;
 		for (int j = 0; j < 32; j++)
