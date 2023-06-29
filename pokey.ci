@@ -162,8 +162,13 @@ class Pokey
 	internal int PolyIndex;
 	const int NeverCycle = 0x800000;
 
+#if OPENCL
+	const int DeltaBufferLength = ASAP.SampleRate * 312 * 114 / 1773447 + UnitDeltaLength + 2;
+	int[DeltaBufferLength] DeltaBuffer;
+#else
 	int DeltaBufferLength;
 	int[]# DeltaBuffer;
+#endif
 
 	// To avoid the cost of computing and accumulating sinc function
 	// each time at exact time points, we use precalculated sinc-interpolated
@@ -198,11 +203,13 @@ class Pokey
 
 	internal void Initialize!(int sampleRate = 44100)
 	{
+#if !OPENCL
 		long sr = sampleRate;
 		// Enough for one PAL frame == 312 * 114 cycles + some margin,
 		// as we emulate whole 6502 instructions and interpolate samples.
 		DeltaBufferLength = sr * 312 * 114 / 1773447 + UnitDeltaLength + 2;
 		DeltaBuffer = new int[DeltaBufferLength];
+#endif
 		Trailing = DeltaBufferLength;
 		for (int i = 0; i < 4; i++)
 			Channels[i].Initialize();
