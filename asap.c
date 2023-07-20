@@ -249,6 +249,8 @@ struct PokeyPair {
 static void PokeyPair_Construct(PokeyPair *self);
 static void PokeyPair_Destruct(PokeyPair *self);
 
+static double PokeyPair_GetSinc(int i, int j);
+
 static int PokeyPair_GetSampleFactor(const PokeyPair *self, int clock);
 
 static void PokeyPair_Initialize(PokeyPair *self, bool ntsc, bool stereo, int sampleRate);
@@ -7424,24 +7426,21 @@ static void PokeyPair_Construct(PokeyPair *self)
 		reg = (((reg >> 5 ^ reg) & 255) << 9) + (reg >> 8);
 		self->poly17Lookup[i] = (uint8_t) (reg >> 1);
 	}
-	double scaledPI = 3.141592653589793 / 1024;
 	for (int i = 0; i < 1024; i++) {
-		double sinc[64];
 		double sincSum = 0;
-		double leftSum = 0;
-		double norm = 0;
-		for (int j = 0; j < 64; j++) {
-			if (j == 16)
-				leftSum = sincSum;
-			else if (j == 47)
-				norm = sincSum;
-			double x = scaledPI * (((j - 32) << 10) - i);
-			sincSum += sinc[j] = x == 0 ? 1 : sin(x) / x;
-		}
+		for (int j = -32; j < -16; j++)
+			sincSum += PokeyPair_GetSinc(i, j);
+		double leftSum = sincSum;
+		double sinc[31];
+		for (int j = 0; j < 31; j++)
+			sincSum += sinc[j] = PokeyPair_GetSinc(i, j - 16);
+		double norm = sincSum;
+		for (int j = 15; j < 32; j++)
+			sincSum += PokeyPair_GetSinc(i, j);
 		norm = 16384 / (norm + (1 - sincSum) * 0.5);
 		self->sincLookup[i][0] = (int16_t) round((leftSum + (1 - sincSum) * 0.5) * norm);
 		for (int j = 1; j < 32; j++)
-			self->sincLookup[i][j] = (int16_t) round(sinc[15 + j] * norm);
+			self->sincLookup[i][j] = (int16_t) round(sinc[j - 1] * norm);
 	}
 }
 
@@ -7449,6 +7448,12 @@ static void PokeyPair_Destruct(PokeyPair *self)
 {
 	Pokey_Destruct(&self->extraPokey);
 	Pokey_Destruct(&self->basePokey);
+}
+
+static double PokeyPair_GetSinc(int i, int j)
+{
+	double x = 3.141592653589793 / 1024 * ((j << 10) - i);
+	return x == 0 ? 1 : sin(x) / x;
 }
 
 static int PokeyPair_GetSampleFactor(const PokeyPair *self, int clock)
