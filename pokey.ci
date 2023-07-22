@@ -588,12 +588,6 @@ class PokeyPair
 	internal int ReadySamplesStart;
 	internal int ReadySamplesEnd;
 
-	static double GetSinc(int i, int j)
-	{
-		double x = Math.PI / (1 << Pokey.InterpolationShift) * ((j << Pokey.InterpolationShift) - i);
-		return x == 0 ? 1 : Math.Sin(x) / x;
-	}
-
 #if APOKEYSND
 	public
 #else
@@ -611,18 +605,22 @@ class PokeyPair
 			reg = (((reg >> 5 ^ reg) & 0xff) << 9) + (reg >> 8);
 			Poly17Lookup[i] = reg >> 1 & 0xff;
 		}
-		const int sincLength = 2 * Pokey.UnitDeltaLength;
-		for (int i = 0; i < (1 << Pokey.InterpolationShift); i++) {
+		for (int i = 0; i < 1 << Pokey.InterpolationShift; i++) {
 			double sincSum = 0;
-			for (int j = -Pokey.UnitDeltaLength; j < -Pokey.UnitDeltaLength / 2; j++)
-				sincSum += GetSinc(i, j);
-			double leftSum = sincSum;
+			double leftSum = 0;
+			double norm = 0;
 			double[Pokey.UnitDeltaLength - 1] sinc;
-			for (int j = 0; j < sinc.Length; j++)
-				sincSum += sinc[j] = GetSinc(i, j - Pokey.UnitDeltaLength / 2);
-			double norm = sincSum;
-			for (int j = Pokey.UnitDeltaLength / 2 - 1; j < Pokey.UnitDeltaLength; j++)
-				sincSum += GetSinc(i, j);
+			for (int j = -Pokey.UnitDeltaLength; j < Pokey.UnitDeltaLength; j++) {
+				if (j == -Pokey.UnitDeltaLength / 2)
+					leftSum = sincSum;
+				else if (j == Pokey.UnitDeltaLength / 2 - 1)
+					norm = sincSum;
+				double x = Math.PI / (1 << Pokey.InterpolationShift) * ((j << Pokey.InterpolationShift) - i);
+				double s = x == 0 ? 1 : Math.Sin(x) / x;
+				if (j >= -Pokey.UnitDeltaLength / 2 && j < Pokey.UnitDeltaLength / 2 - 1)
+					sinc[Pokey.UnitDeltaLength / 2 + j] = s;
+				sincSum += s;
+			}
 			norm = (1 << Pokey.DeltaResolution) / (norm + (1 - sincSum) * 0.5);
 			SincLookup[i][0] = Math.Round((leftSum + (1 - sincSum) * 0.5) * norm);
 			for (int j = 1; j < Pokey.UnitDeltaLength; j++)
