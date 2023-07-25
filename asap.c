@@ -198,18 +198,26 @@ struct Pokey {
 	int polyIndex;
 	int deltaBufferLength;
 	int *deltaBuffer;
+	int sumDACInputs;
+	int sumDACOutputs;
 	int iirRate;
 	int iirAcc;
 	int trailing;
 };
 static void Pokey_Construct(Pokey *self);
 static void Pokey_Destruct(Pokey *self);
+static const int16_t Pokey_COMPRESSED_SUMS[61] = { 0, 35, 73, 111, 149, 189, 228, 266, 304, 342, 379, 415, 450, 484, 516, 546,
+	575, 602, 628, 652, 674, 695, 715, 733, 750, 766, 782, 796, 809, 822, 834, 846,
+	856, 867, 876, 886, 894, 903, 911, 918, 926, 933, 939, 946, 952, 958, 963, 969,
+	974, 979, 984, 988, 993, 997, 1001, 1005, 1009, 1013, 1016, 1019, 1023 };
 
 static void Pokey_StartFrame(Pokey *self);
 
 static void Pokey_Initialize(Pokey *self, int sampleRate);
 
 static void Pokey_AddDelta(Pokey *self, const PokeyPair *pokeys, int cycle, int delta);
+
+static void Pokey_AddExternalDelta(Pokey *self, const PokeyPair *pokeys, int cycle, int delta);
 
 /**
  * Fills <code>DeltaBuffer</code> up to <code>cycleLimit</code> basing on current Audf/Audc/Audctl values.
@@ -2278,7 +2286,7 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 			pokey = &self->pokeys.extraPokey;
 		int delta = data - self->covox[addr];
 		if (delta != 0) {
-			Pokey_AddDelta(pokey, &self->pokeys, self->cpu.cycle, delta << 17);
+			Pokey_AddExternalDelta(pokey, &self->pokeys, self->cpu.cycle, delta << 17);
 			self->covox[addr] = (uint8_t) data;
 			self->gtiaOrCovoxPlayedThisFrame = true;
 		}
@@ -2287,8 +2295,8 @@ static void ASAP_PokeHardware(ASAP *self, int addr, int data)
 		int delta = ((self->consol & 8) - (data & 8)) << 20;
 		if (delta != 0) {
 			int cycle = self->cpu.cycle;
-			Pokey_AddDelta(&self->pokeys.basePokey, &self->pokeys, cycle, delta);
-			Pokey_AddDelta(&self->pokeys.extraPokey, &self->pokeys, cycle, delta);
+			Pokey_AddExternalDelta(&self->pokeys.basePokey, &self->pokeys, cycle, delta);
+			Pokey_AddExternalDelta(&self->pokeys.extraPokey, &self->pokeys, cycle, delta);
 			self->gtiaOrCovoxPlayedThisFrame = true;
 		}
 		self->consol = data;
@@ -7019,13 +7027,13 @@ static void PokeyChannel_SetAudc(PokeyChannel *self, Pokey *pokey, const PokeyPa
 	Pokey_GenerateUntilCycle(pokey, pokeys, cycle);
 	self->audc = data;
 	if ((data & 16) != 0) {
-		data = (data & 15) << 20;
+		data &= 15;
 		if ((self->mute & 2) == 0)
 			Pokey_AddDelta(pokey, pokeys, cycle, self->delta > 0 ? data - self->delta : data);
 		self->delta = data;
 	}
 	else {
-		data = (data & 15) << 20;
+		data &= 15;
 		if (self->delta > 0) {
 			if ((self->mute & 2) == 0)
 				Pokey_AddDelta(pokey, pokeys, cycle, data - self->delta);
@@ -7076,10 +7084,19 @@ static void Pokey_Initialize(Pokey *self, int sampleRate)
 	self->polyIndex = 60948015;
 	self->iirAcc = 0;
 	self->iirRate = 264600 / sampleRate;
+	self->sumDACInputs = 0;
 	Pokey_StartFrame(self);
 }
 
 static void Pokey_AddDelta(Pokey *self, const PokeyPair *pokeys, int cycle, int delta)
+{
+	self->sumDACInputs += delta;
+	int newOutput = Pokey_COMPRESSED_SUMS[self->sumDACInputs] << 16;
+	Pokey_AddExternalDelta(self, pokeys, cycle, newOutput - self->sumDACOutputs);
+	self->sumDACOutputs = newOutput;
+}
+
+static void Pokey_AddExternalDelta(Pokey *self, const PokeyPair *pokeys, int cycle, int delta)
 {
 	if (delta == 0)
 		return;
@@ -7440,8 +7457,8 @@ static void PokeyPair_Construct(PokeyPair *self)
 				sinc[16 + j] = s;
 			sincSum += s;
 		}
-		norm = 16384 / (norm + (1 - sincSum) * 0.5);
-		self->sincLookup[i][0] = (int16_t) round((leftSum + (1 - sincSum) * 0.5) * norm);
+		norm = 16384 / (norm + (1 - sincSum) * 0.5f);
+		self->sincLookup[i][0] = (int16_t) round((leftSum + (1 - sincSum) * 0.5f) * norm);
 		for (int j = 1; j < 32; j++)
 			self->sincLookup[i][j] = (int16_t) round(sinc[j - 1] * norm);
 	}

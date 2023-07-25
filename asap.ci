@@ -149,7 +149,7 @@ public class ASAP
 			int delta = data - Covox[addr];
 			if (delta != 0) {
 				const int DeltaShiftCOVOX = 17;
-				pokey.AddDelta(Pokeys, Cpu.Cycle, delta << DeltaShiftCOVOX);
+				pokey.AddExternalDelta(Pokeys, Cpu.Cycle, delta << DeltaShiftCOVOX);
 				Covox[addr] = data;
 				GtiaOrCovoxPlayedThisFrame = true;
 			}
@@ -160,8 +160,8 @@ public class ASAP
 			int delta = ((Consol & 8) - (data & 8)) << DeltaShiftGTIA;
 			if (delta != 0) {
 				int cycle = Cpu.Cycle;
-				Pokeys.BasePokey.AddDelta(Pokeys, cycle, delta);
-				Pokeys.ExtraPokey.AddDelta(Pokeys, cycle, delta);
+				Pokeys.BasePokey.AddExternalDelta(Pokeys, cycle, delta);
+				Pokeys.ExtraPokey.AddExternalDelta(Pokeys, cycle, delta);
 				GtiaOrCovoxPlayedThisFrame = true;
 			}
 			Consol = data;

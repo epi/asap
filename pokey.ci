@@ -123,15 +123,14 @@ class PokeyChannel
 			return;
 		pokey.GenerateUntilCycle(pokeys, cycle);
 		Audc = data;
-		const int DeltaShiftPOKEY = 20;
 		if ((data & 0x10) != 0) {
-			data = (data & 0xf) << DeltaShiftPOKEY;
+			data &= 0xf;
 			if ((Mute & MuteUser) == 0)
 				pokey.AddDelta(pokeys, cycle, Delta > 0 ? data - Delta : data);
 			Delta = data;
 		}
 		else {
-			data = (data & 0xf) << DeltaShiftPOKEY;
+			data &= 0xf;
 			if (Delta > 0) {
 				if ((Mute & MuteUser) == 0)
 					pokey.AddDelta(pokeys, cycle, data - Delta);
@@ -169,6 +168,22 @@ class Pokey
 	int DeltaBufferLength;
 	int[]# DeltaBuffer;
 #endif
+	0 .. 60 SumDACInputs;
+	int SumDACOutputs;
+
+	// POKEY DACs are characterized mostly by two types of nonlinearities:
+	// the imperfect scaling between channels of transistors implementing
+	// individual DAC bits, and the output level compression resulting
+	// from the operating point set by the voltage and resistor connected
+	// to the AUDIO pin. This array, based on measurements of AMI-produced
+	// chips, approximates these nonlinearities well enough for my taste.
+	// The actual characteristics vary quite significantly between chips.
+	const short[] CompressedSums = {
+		0, 35, 73, 111, 149, 189, 228, 266, 304, 342, 379, 415, 450, 484, 516, 546,
+		575, 602, 628, 652, 674, 695, 715, 733, 750, 766, 782, 796, 809, 822, 834, 846,
+		856, 867, 876, 886, 894, 903, 911, 918, 926, 933, 939, 946, 952, 958, 963, 969,
+		974, 979, 984, 988, 993, 997, 1001, 1005, 1009, 1013, 1016, 1019, 1023
+	};
 
 	// To avoid the cost of computing and accumulating sinc function
 	// each time at exact time points, we use precalculated sinc-interpolated
@@ -179,7 +194,7 @@ class Pokey
 	// The default values are fine for sample rates down to 44100.
 	// For lower sample rates you may want to increase them
 	// to reduce aliasing and sinc approximation artifacts.
-	// For best performance, make sure all lookup tables fit in L1$.
+	// For best performance, make sure all lookup tables fit in L1$/L2$.
 
 	// (1 << InterpolationShift) is the number of pre-calculated deltas:
 	// Useful range is 6..DeltaResolution.
@@ -223,10 +238,20 @@ class Pokey
 		PolyIndex = 15 * 31 * 131071;
 		IirAcc = 0;
 		IirRate = 44100 * 6 / sampleRate;
+		SumDACInputs = 0;
 		StartFrame();
 	}
 
 	internal void AddDelta!(PokeyPair pokeys, int cycle, int delta)
+	{
+		const int DeltaShiftPOKEY = 16;
+		SumDACInputs += delta;
+		int newOutput = CompressedSums[SumDACInputs] << DeltaShiftPOKEY;
+		AddExternalDelta(pokeys, cycle, newOutput - SumDACOutputs);
+		SumDACOutputs = newOutput;
+	}
+
+	internal void AddExternalDelta!(PokeyPair pokeys, int cycle, int delta)
 	{
 		if (delta == 0)
 			return;
