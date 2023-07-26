@@ -7457,8 +7457,8 @@ static void PokeyPair_Construct(PokeyPair *self)
 				sinc[16 + j] = s;
 			sincSum += s;
 		}
-		norm = 16384 / (norm + (1 - sincSum) * 0.5f);
-		self->sincLookup[i][0] = (int16_t) round((leftSum + (1 - sincSum) * 0.5f) * norm);
+		norm = 16384 / (norm + (1 - sincSum) * 0.5);
+		self->sincLookup[i][0] = (int16_t) round((leftSum + (1 - sincSum) * 0.5) * norm);
 		for (int j = 1; j < 32; j++)
 			self->sincLookup[i][j] = (int16_t) round(sinc[j - 1] * norm);
 	}
