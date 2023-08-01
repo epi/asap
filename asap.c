@@ -7072,8 +7072,8 @@ static void Pokey_Initialize(Pokey *self, int sampleRate)
 	self->deltaBufferLength = (int) (sr * 312 * 114 / 1773447 + 32 + 2);
 	CiShared_Assign((void **) &self->deltaBuffer, (int *) CiShared_Make(self->deltaBufferLength, sizeof(int), NULL, NULL));
 	self->trailing = self->deltaBufferLength;
-	for (int i = 0; i < 4; i++)
-		PokeyChannel_Initialize(&self->channels[i]);
+	for (int c = 0; c < 4; c++)
+		PokeyChannel_Initialize(self->channels + c);
 	self->audctl = 0;
 	self->skctl = 3;
 	self->irqst = 255;
@@ -7112,8 +7112,8 @@ static void Pokey_GenerateUntilCycle(Pokey *self, const PokeyPair *pokeys, int c
 {
 	for (;;) {
 		int cycle = cycleLimit;
-		for (int i = 0; i < 4; i++) {
-			int tickCycle = self->channels[i].tickCycle;
+		for (int c = 0; c < 4; c++) {
+			int tickCycle = self->channels[c].tickCycle;
 			if (cycle > tickCycle)
 				cycle = tickCycle;
 		}
@@ -7153,17 +7153,17 @@ static void Pokey_EndFrame(Pokey *self, const PokeyPair *pokeys, int cycle)
 	int m = (self->audctl & 128) != 0 ? 237615 : 60948015;
 	if (self->polyIndex >= 2 * m)
 		self->polyIndex -= m;
-	for (int i = 0; i < 4; i++) {
-		int tickCycle = self->channels[i].tickCycle;
+	for (int c = 0; c < 4; c++) {
+		int tickCycle = self->channels[c].tickCycle;
 		if (tickCycle != 8388608)
-			self->channels[i].tickCycle = tickCycle - cycle;
+			self->channels[c].tickCycle = tickCycle - cycle;
 	}
 }
 
 static bool Pokey_IsSilent(const Pokey *self)
 {
-	for (int i = 0; i < 4; i++)
-		if ((self->channels[i].audc & 15) != 0)
+	for (int c = 0; c < 4; c++)
+		if ((self->channels[c].audc & 15) != 0)
 			return false;
 	return true;
 }
@@ -7341,8 +7341,8 @@ static int Pokey_Poke(Pokey *self, const PokeyPair *pokeys, int addr, int data, 
 		Pokey_InitMute(self, cycle);
 		break;
 	case 9:
-		for (int i = 0; i < 4; i++)
-			PokeyChannel_DoStimer(&self->channels[i], cycle);
+		for (int c = 0; c < 4; c++)
+			PokeyChannel_DoStimer(self->channels + c, cycle);
 		break;
 	case 14:
 		self->irqst |= data ^ 255;

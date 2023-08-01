@@ -226,8 +226,8 @@ class Pokey
 		DeltaBuffer = new int[DeltaBufferLength];
 #endif
 		Trailing = DeltaBufferLength;
-		for (int i = 0; i < 4; i++)
-			Channels[i].Initialize();
+		foreach (PokeyChannel! c in Channels)
+			c.Initialize();
 		Audctl = 0;
 		Skctl = 3;
 		Irqst = 0xff;
@@ -268,8 +268,8 @@ class Pokey
 	{
 		for (;;) {
 			int cycle = cycleLimit;
-			for (int i = 0; i < 4; i++) {
-				int tickCycle = Channels[i].TickCycle;
+			foreach (PokeyChannel c in Channels) {
+				int tickCycle = c.TickCycle;
 				if (cycle > tickCycle)
 					cycle = tickCycle;
 			}
@@ -310,17 +310,17 @@ class Pokey
 		int m = (Audctl & 0x80) != 0 ? 15 * 31 * 511 : 15 * 31 * 131071;
 		if (PolyIndex >= 2 * m)
 			PolyIndex -= m;
-		for (int i = 0; i < 4; i++) {
-			int tickCycle = Channels[i].TickCycle;
+		foreach (PokeyChannel! c in Channels) {
+			int tickCycle = c.TickCycle;
 			if (tickCycle != NeverCycle)
-				Channels[i].TickCycle = tickCycle - cycle;
+				c.TickCycle = tickCycle - cycle;
 		}
 	}
 
 	internal bool IsSilent()
 	{
-		for (int i = 0; i < 4; i++)
-			if ((Channels[i].Audc & 0xf) != 0)
+		foreach (PokeyChannel c in Channels)
+			if ((c.Audc & 0xf) != 0)
 				return false;
 		return true;
 	}
@@ -500,8 +500,8 @@ class Pokey
 			break;
 		case 0x09:
 			// TODO: ReloadCycles, Out
-			for (int i = 0; i < 4; i++)
-				Channels[i].DoStimer(cycle);
+			foreach (PokeyChannel! c in Channels)
+				c.DoStimer(cycle);
 			break;
 		case 0x0e:
 			Irqst |= data ^ 0xff;
