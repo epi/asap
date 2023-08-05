@@ -166,7 +166,7 @@ class Pokey
 	int[DeltaBufferLength] DeltaBuffer;
 #else
 	int DeltaBufferLength;
-	int[]# DeltaBuffer;
+	int[]#? DeltaBuffer;
 #endif
 	0 .. 60 SumDACInputs;
 	int SumDACOutputs;
