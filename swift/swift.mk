@@ -1,4 +1,4 @@
-SWIFTC = $(DO)swiftc -no-color-diagnostics -sdk '$(SDKROOT)'
+SWIFTC = $(DO)swiftc -no-color-diagnostics
 
 # no user-configurable paths below this line
 
