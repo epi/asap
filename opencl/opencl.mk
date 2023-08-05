@@ -17,6 +17,6 @@ opencl/asap-cl.h: opencl/asap.cl opencl/asap2wav-kernel.cl
 	$(DO)(echo 'R"CLC(' && cat $^ && echo ')CLC"') >$@
 CLEAN += opencl/asap-cl.h
 
-opencl/asap.cl: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
-	$(CITO) -D OPENCL
+opencl/asap.cl: $(call src,asap.fu asap6502.fu asapinfo.fu cpu6502.fu pokey.fu) $(ASM6502_PLAYERS_OBX)
+	$(FUT) -D OPENCL
 CLEAN += opencl/asap.cl

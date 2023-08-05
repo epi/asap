@@ -37,8 +37,8 @@ java/classes/net/sf/asap/ASAP.class: $(srcdir)java/ASAPMusicRoutine.java java/sr
 	$(JAVAC) -d java/classes $(srcdir)java/ASAPMusicRoutine.java java/src/net/sf/asap/*.java
 CLEANDIR += java/classes
 
-java/src/net/sf/asap/ASAP.java: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(ASM6502_OBX)
-	$(CITO) -n net.sf.asap
+java/src/net/sf/asap/ASAP.java: $(call src,asap.fu asap6502.fu asapinfo.fu asapwriter.fu cpu6502.fu flashpack.fu pokey.fu) $(ASM6502_OBX)
+	$(FUT) -n net.sf.asap
 CLEANDIR += java/src
 
 java/doc: java/src/net/sf/asap/ASAP.java $(srcdir)java/ASAPMusicRoutine.java

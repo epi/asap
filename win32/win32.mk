@@ -237,10 +237,10 @@ win32/apokeysnd.dll: $(call src,win32/rmt/apokeysnd_dll.c) win32/rmt/pokey.c win
 	$(WIN32_CC) --std=c99 -DAPOKEYSND
 CLEAN += win32/apokeysnd.dll
 
-win32/rmt/pokey.h: $(srcdir)pokey.ci | win32/rmt/pokey.c
+win32/rmt/pokey.h: $(srcdir)pokey.fu | win32/rmt/pokey.c
 
-win32/rmt/pokey.c: $(srcdir)pokey.ci
-	$(CITO) -D APOKEYSND
+win32/rmt/pokey.c: $(srcdir)pokey.fu
+	$(FUT) -D APOKEYSND
 CLEAN += win32/rmt/pokey.c win32/rmt/pokey.h
 
 win32/rmt/apokeysnd-res.o: $(call src,win32/gui.rc asap.h)
@@ -265,10 +265,10 @@ win32/x64/ASAPShellEx-res.o: $(call src,win32/gui.rc asap.h)
 	$(WIN64_WINDRES) -DSHELLEX
 CLEAN += win32/x64/ASAPShellEx-res.o
 
-win32/shellex/asap-infowriter.hpp: $(call src,asapinfo.ci asap6502.ci asapwriter.ci flashpack.ci) $(ASM6502_OBX) | win32/shellex/asap-infowriter.cpp
+win32/shellex/asap-infowriter.hpp: $(call src,asapinfo.fu asap6502.fu asapwriter.fu flashpack.fu) $(ASM6502_OBX) | win32/shellex/asap-infowriter.cpp
 
-win32/shellex/asap-infowriter.cpp: $(call src,asapinfo.ci asap6502.ci asapwriter.ci flashpack.ci) $(ASM6502_OBX)
-	$(CITO)
+win32/shellex/asap-infowriter.cpp: $(call src,asapinfo.fu asap6502.fu asapwriter.fu flashpack.fu) $(ASM6502_OBX)
+	$(FUT)
 CLEAN += win32/shellex/asap-infowriter.cpp win32/shellex/asap-infowriter.hpp
 
 # setups

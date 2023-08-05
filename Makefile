@@ -10,7 +10,7 @@ AR = ar
 ARFLAGS = rc
 DO_CC = $(DO)$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $(if $(filter %.so,$@),-shared -fPIC) $(INCLUDEOPTS) $(filter %.c,$^) $(LDFLAGS) -lm
 DO_AR = $(DO)$(AR) $(ARFLAGS) $@ $^
-CITO = $(DO)cito -o $@ $(patsubst %,-I %,$(sort $(dir $(filter-out %.ci,$^)))) $(filter %.ci,$^)
+FUT = $(DO)fut -o $@ $(patsubst %,-I %,$(sort $(dir $(filter-out %.fu,$^)))) $(filter %.fu,$^)
 INSTALL = install
 INSTALL_PROGRAM = mkdir -p $(DESTDIR)$(2) && $(INSTALL) $(1) $(DESTDIR)$(2)/$(or $(3),$(1))
 INSTALL_DATA = mkdir -p $(DESTDIR)$(2) && $(INSTALL) -m 644 $(1) $(DESTDIR)$(2)/$(1)
@@ -102,25 +102,25 @@ asapscan: $(srcdir)asapscan.c asap-asapscan.h
 	$(DO_CC)
 CLEAN += asapscan asapscan.exe
 
-asap-asapscan.h: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX) | asap-asapscan.c
+asap-asapscan.h: $(call src,asap.fu asap6502.fu asapinfo.fu cpu6502.fu pokey.fu) $(ASM6502_PLAYERS_OBX) | asap-asapscan.c
 
-asap-asapscan.c: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
-	$(CITO) -D ASAPSCAN
+asap-asapscan.c: $(call src,asap.fu asap6502.fu asapinfo.fu cpu6502.fu pokey.fu) $(ASM6502_PLAYERS_OBX)
+	$(FUT) -D ASAPSCAN
 CLEAN += asap-asapscan.c asap-asapscan.h
 
 # asap.[ch]
 
-$(srcdir)asap.h: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(ASM6502_OBX) | $(srcdir)asap.c
+$(srcdir)asap.h: $(call src,asap.fu asap6502.fu asapinfo.fu asapwriter.fu cpu6502.fu flashpack.fu pokey.fu) $(ASM6502_OBX) | $(srcdir)asap.c
 
-$(srcdir)asap.c: $(call src,asap.ci asap6502.ci asapinfo.ci asapwriter.ci cpu6502.ci flashpack.ci pokey.ci) $(ASM6502_OBX)
-	$(CITO) -D C
+$(srcdir)asap.c: $(call src,asap.fu asap6502.fu asapinfo.fu asapwriter.fu cpu6502.fu flashpack.fu pokey.fu) $(ASM6502_OBX)
+	$(FUT) -D C
 
 # aatr.[ch]
 
-$(srcdir)aatr.h: $(srcdir)aatr.ci | $(srcdir)aatr.c
+$(srcdir)aatr.h: $(srcdir)aatr.fu | $(srcdir)aatr.c
 
-$(srcdir)aatr.c: $(srcdir)aatr.ci
-	$(CITO)
+$(srcdir)aatr.c: $(srcdir)aatr.fu
+	$(FUT)
 
 clean:
 	$(RM) $(CLEAN)

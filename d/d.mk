@@ -17,6 +17,6 @@ CLEAN += d/asap2wav.exe d/asap2wav.obj
 # 	$(DC)
 # CLEAN += d/asapplay.exe d/asapplay.obj
 
-d/asap.d: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
-	$(CITO)
+d/asap.d: $(call src,asap.fu asap6502.fu asapinfo.fu cpu6502.fu pokey.fu) $(ASM6502_PLAYERS_OBX)
+	$(FUT)
 CLEAN += d/asap.d

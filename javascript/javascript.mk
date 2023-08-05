@@ -7,6 +7,6 @@ endif
 javascript: javascript/asap.mjs
 .PHONY: javascript
 
-javascript/asap.js javascript/asap.mjs: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
-	$(CITO)
+javascript/asap.js javascript/asap.mjs: $(call src,asap.fu asap6502.fu asapinfo.fu cpu6502.fu pokey.fu) $(ASM6502_PLAYERS_OBX)
+	$(FUT)
 CLEAN += javascript/asap.js javascript/asap.mjs

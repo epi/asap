@@ -14,12 +14,12 @@
 	<p>The project is hosted on SourceForge. Check out <a href="https://sourceforge.net/p/asap/">project pages</a>.</p>
 	<p>ASAP is based on a development library, which you can easily embed in your program.
 	It's not only a fully portable C library - it's better than that.
-	Since ASAP is written in <a href="https://github.com/pfusik/cito">Ć</a>,
+	Since ASAP is written in <a href="https://fusion-lang.org">Fusion</a>,
 	it is also available as pure C++, C#, Java, JavaScript, Python, Swift and OpenCL.</p>
 	<img src="asap-internals.png" alt="Architecture diagram" />
 
 	<authors>
-		<author name="Piotr Fusik" email="fox@scene.pl" href="http://fusik.info/piotr/">Creator and lead developer.</author>
+		<author name="Piotr Fusik" email="piotr@fusion-lang.org" href="https://fusik.info/piotr/">Creator and lead developer.</author>
 		<author name="Atari800 Emulator Developers" href="https://atari800.github.io/">6502 and POKEY emulation used in 0.x.y versions of ASAP.</author>
 		<author name="Rod Castler" href="https://commons.wikimedia.org/wiki/File:POKEY_chip_on_an_Atari_130XE_motherboard.jpg">Android background photo.</author>
 		<author name="Zdenek Eisenhammer" email="pg@pinknet.cz">Testing.</author>

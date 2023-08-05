@@ -18,8 +18,8 @@ csharp/asapplay.exe: $(srcdir)csharp/asapplay.cs csharp/asap.cs
 	$(CSC)
 CLEAN += csharp/asapplay.exe
 
-csharp/asap.cs: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
-	$(CITO) -n Sf.Asap
+csharp/asap.cs: $(call src,asap.fu asap6502.fu asapinfo.fu cpu6502.fu pokey.fu) $(ASM6502_PLAYERS_OBX)
+	$(FUT) -n Sf.Asap
 CLEAN += csharp/asap.cs
 
 csharp/doc/ASAP.chm: csharp/doc/ASAP.dll

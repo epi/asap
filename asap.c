@@ -1,16 +1,16 @@
-// Generated automatically with "cito". Do not edit.
+// Generated automatically with "fut". Do not edit.
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include "asap.h"
 
-static void CiString_Assign(char **str, char *value)
+static void FuString_Assign(char **str, char *value)
 {
 	free(*str);
 	*str = value;
 }
 
-static char *CiString_Substring(const char *str, int len)
+static char *FuString_Substring(const char *str, int len)
 {
 	char *p = malloc(len + 1);
 	memcpy(p, str, len);
@@ -18,17 +18,17 @@ static char *CiString_Substring(const char *str, int len)
 	return p;
 }
 
-typedef void (*CiMethodPtr)(void *);
+typedef void (*FuMethodPtr)(void *);
 typedef struct {
 	size_t count;
 	size_t unitSize;
 	size_t refCount;
-	CiMethodPtr destructor;
-} CiShared;
+	FuMethodPtr destructor;
+} FuShared;
 
-static void *CiShared_Make(size_t count, size_t unitSize, CiMethodPtr constructor, CiMethodPtr destructor)
+static void *FuShared_Make(size_t count, size_t unitSize, FuMethodPtr constructor, FuMethodPtr destructor)
 {
-	CiShared *self = (CiShared *) malloc(sizeof(CiShared) + count * unitSize);
+	FuShared *self = (FuShared *) malloc(sizeof(FuShared) + count * unitSize);
 	self->count = count;
 	self->unitSize = unitSize;
 	self->refCount = 1;
@@ -40,11 +40,11 @@ static void *CiShared_Make(size_t count, size_t unitSize, CiMethodPtr constructo
 	return self + 1;
 }
 
-static void CiShared_Release(void *ptr)
+static void FuShared_Release(void *ptr)
 {
 	if (ptr == NULL)
 		return;
-	CiShared *self = (CiShared *) ptr - 1;
+	FuShared *self = (FuShared *) ptr - 1;
 	if (--self->refCount != 0)
 		return;
 	if (self->destructor != NULL) {
@@ -54,9 +54,9 @@ static void CiShared_Release(void *ptr)
 	free(self);
 }
 
-static void CiShared_Assign(void **ptr, void *value)
+static void FuShared_Assign(void **ptr, void *value)
 {
-	CiShared_Release(*ptr);
+	FuShared_Release(*ptr);
 	*ptr = value;
 }
 
@@ -559,7 +559,7 @@ static void FlashPack_PutPoke(FlashPack *self, int address, int value);
 
 static bool FlashPack_Compress(FlashPack *self, ASAPWriter *w);
 
-static const uint8_t CiResource_cm3_obx[2022] = {
+static const uint8_t FuResource_cm3_obx[2022] = {
 	255, 255, 0, 5, 223, 12, 76, 18, 11, 76, 120, 5, 76, 203, 7, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 160, 227, 237, 227, 160, 240, 236, 225,
 	249, 229, 242, 160, 246, 160, 178, 174, 177, 160, 0, 0, 0, 0, 0, 0,
@@ -687,7 +687,7 @@ static const uint8_t CiResource_cm3_obx[2022] = {
 	10, 0, 0, 1, 2, 131, 0, 1, 2, 3, 1, 0, 2, 131, 1, 0,
 	2, 3, 1, 2, 128, 3, 128, 64, 32, 16, 8, 4, 2, 1, 3, 3,
 	3, 3, 7, 11, 15, 19 };
-static const uint8_t CiResource_cmc_obx[2019] = {
+static const uint8_t FuResource_cmc_obx[2019] = {
 	255, 255, 0, 5, 220, 12, 76, 15, 11, 76, 120, 5, 76, 203, 7, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 160, 227, 237, 227, 160, 240, 236, 225,
 	249, 229, 242, 160, 246, 160, 178, 174, 177, 160, 0, 0, 0, 0, 0, 0,
@@ -815,7 +815,7 @@ static const uint8_t CiResource_cmc_obx[2019] = {
 	1, 2, 131, 0, 1, 2, 3, 1, 0, 2, 131, 1, 0, 2, 3, 1,
 	2, 128, 3, 128, 64, 32, 16, 8, 4, 2, 1, 3, 3, 3, 3, 7,
 	11, 15, 19 };
-static const uint8_t CiResource_cmr_obx[2019] = {
+static const uint8_t FuResource_cmr_obx[2019] = {
 	255, 255, 0, 5, 220, 12, 76, 15, 11, 76, 120, 5, 76, 203, 7, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 160, 227, 237, 227, 160, 240, 236, 225,
 	249, 229, 242, 160, 246, 160, 178, 174, 177, 160, 0, 0, 0, 0, 0, 0,
@@ -943,7 +943,7 @@ static const uint8_t CiResource_cmr_obx[2019] = {
 	1, 2, 131, 0, 1, 2, 3, 1, 0, 2, 131, 1, 0, 2, 3, 1,
 	2, 128, 3, 128, 64, 32, 16, 8, 4, 2, 1, 3, 3, 3, 3, 7,
 	11, 15, 19 };
-static const uint8_t CiResource_cms_obx[2757] = {
+static const uint8_t FuResource_cms_obx[2757] = {
 	255, 255, 0, 5, 190, 15, 234, 234, 234, 76, 21, 8, 76, 96, 15, 35,
 	5, 169, 5, 173, 5, 184, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 128, 128, 128, 128, 128, 128, 0, 0, 0, 0, 0, 0, 255,
@@ -1117,7 +1117,7 @@ static const uint8_t CiResource_cms_obx[2757] = {
 	29, 35, 5, 170, 189, 233, 6, 166, 200, 157, 35, 5, 173, 172, 5, 29,
 	38, 5, 170, 189, 233, 6, 166, 200, 157, 38, 5, 202, 16, 221, 96, 168,
 	185, 13, 8, 168, 96 };
-static const uint8_t CiResource_dlt_obx[2125] = {
+static const uint8_t FuResource_dlt_obx[2125] = {
 	255, 255, 0, 4, 70, 12, 255, 241, 228, 215, 203, 192, 181, 170, 161, 152,
 	143, 135, 127, 121, 114, 107, 101, 95, 90, 85, 80, 75, 71, 67, 63, 60,
 	56, 53, 50, 47, 44, 42, 39, 37, 35, 33, 31, 29, 28, 26, 24, 23,
@@ -1251,7 +1251,7 @@ static const uint8_t CiResource_dlt_obx[2125] = {
 	168, 177, 238, 170, 160, 51, 177, 238, 48, 14, 138, 109, 11, 3, 170, 173,
 	31, 3, 141, 55, 3, 76, 60, 12, 138, 109, 31, 3, 141, 55, 3, 174,
 	11, 3, 189, 0, 4, 24, 109, 55, 3, 141, 39, 3, 96 };
-static const uint8_t CiResource_fc_obx[1220] = {
+static const uint8_t FuResource_fc_obx[1220] = {
 	255, 255, 0, 4, 189, 8, 76, 9, 4, 32, 16, 4, 76, 173, 5, 162,
 	0, 160, 10, 32, 25, 5, 162, 8, 189, 172, 8, 157, 0, 210, 157, 16,
 	210, 202, 16, 244, 96, 133, 244, 162, 0, 134, 230, 134, 232, 134, 234, 169,
@@ -1329,7 +1329,7 @@ static const uint8_t CiResource_fc_obx[1220] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 80, 0, 0, 1, 1, 0,
 	0, 255, 255, 31 };
-static const uint8_t CiResource_mpt_obx[2233] = {
+static const uint8_t FuResource_mpt_obx[2233] = {
 	255, 255, 0, 5, 178, 13, 76, 205, 11, 173, 46, 7, 208, 1, 96, 169,
 	0, 141, 28, 14, 238, 29, 14, 173, 23, 14, 205, 187, 13, 144, 80, 206,
 	21, 14, 240, 3, 76, 197, 5, 162, 0, 142, 23, 14, 169, 0, 157, 237,
@@ -1470,7 +1470,7 @@ static const uint8_t CiResource_mpt_obx[2233] = {
 	208, 7, 140, 121, 13, 140, 127, 13, 96, 177, 250, 36, 249, 48, 4, 74,
 	74, 74, 74, 41, 15, 168, 185, 69, 10, 160, 0, 96, 160, 0, 140, 27,
 	14, 140, 26, 14, 136, 140, 25, 14, 96 };
-static const uint8_t CiResource_rmt4_obx[2007] = {
+static const uint8_t FuResource_rmt4_obx[2007] = {
 	255, 255, 144, 3, 96, 11, 128, 0, 128, 32, 128, 64, 0, 192, 128, 128,
 	128, 160, 0, 192, 64, 192, 0, 1, 5, 11, 21, 0, 1, 255, 255, 1,
 	1, 0, 255, 255, 0, 1, 1, 1, 0, 255, 255, 255, 255, 0, 1, 1,
@@ -1597,7 +1597,7 @@ static const uint8_t CiResource_rmt4_obx[2007] = {
 	25, 3, 174, 29, 3, 141, 2, 210, 142, 3, 210, 173, 26, 3, 174, 30,
 	3, 141, 4, 210, 142, 5, 210, 173, 27, 3, 174, 31, 3, 141, 6, 210,
 	142, 7, 210, 140, 8, 210, 96 };
-static const uint8_t CiResource_rmt8_obx[2275] = {
+static const uint8_t FuResource_rmt8_obx[2275] = {
 	255, 255, 144, 3, 108, 12, 128, 0, 128, 32, 128, 64, 0, 192, 128, 128,
 	128, 160, 0, 192, 64, 192, 0, 1, 5, 11, 21, 0, 1, 255, 255, 1,
 	1, 0, 255, 255, 0, 1, 1, 1, 0, 255, 255, 255, 255, 0, 1, 1,
@@ -1741,7 +1741,7 @@ static const uint8_t CiResource_rmt8_obx[2275] = {
 	5, 210, 173, 55, 3, 174, 51, 3, 141, 22, 210, 142, 6, 210, 173, 63,
 	3, 174, 59, 3, 141, 23, 210, 142, 7, 210, 169, 255, 140, 24, 210, 141,
 	8, 210, 96 };
-static const uint8_t CiResource_tm2_obx[3698] = {
+static const uint8_t FuResource_tm2_obx[3698] = {
 	255, 255, 0, 5, 107, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
 	1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
@@ -1974,7 +1974,7 @@ static const uint8_t CiResource_tm2_obx[3698] = {
 	0, 6, 157, 56, 8, 169, 0, 157, 184, 8, 157, 32, 9, 157, 8, 9,
 	157, 72, 9, 157, 128, 9, 157, 136, 9, 157, 144, 9, 169, 1, 157, 120,
 	8, 96 };
-static const uint8_t CiResource_tmc_obx[2671] = {
+static const uint8_t FuResource_tmc_obx[2671] = {
 	255, 255, 0, 5, 104, 15, 76, 206, 13, 76, 208, 8, 76, 239, 9, 15,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -2142,7 +2142,7 @@ static const uint8_t CiResource_tmc_obx[2671] = {
 	156, 8, 157, 164, 8, 136, 177, 252, 41, 192, 24, 125, 228, 7, 157, 228,
 	7, 157, 34, 5, 168, 185, 60, 6, 157, 244, 7, 169, 0, 157, 44, 8,
 	157, 100, 8, 157, 108, 8, 157, 148, 8, 169, 1, 157, 188, 7, 96 };
-static const uint8_t CiResource_xexb_obx[183] = {
+static const uint8_t FuResource_xexb_obx[183] = {
 	255, 255, 36, 1, 223, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212, 208,
 	251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 162, 8, 157, 16,
 	210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31, 210, 141, 0, 210, 169,
@@ -2155,7 +2155,7 @@ static const uint8_t CiResource_xexb_obx[183] = {
 	141, 162, 1, 189, 222, 1, 105, 0, 141, 181, 1, 201, 0, 208, 252, 173,
 	162, 1, 176, 198, 72, 138, 72, 174, 145, 1, 32, 152, 252, 104, 170, 104,
 	238, 186, 1, 64, 156, 131, 76 };
-static const uint8_t CiResource_xexd_obx[117] = {
+static const uint8_t FuResource_xexd_obx[117] = {
 	255, 255, 36, 1, 152, 1, 120, 160, 0, 140, 14, 212, 173, 11, 212, 208,
 	251, 141, 0, 212, 162, 29, 157, 0, 208, 202, 16, 250, 141, 14, 210, 162,
 	8, 157, 16, 210, 157, 0, 210, 202, 16, 247, 169, 3, 141, 31, 210, 141,
@@ -2164,7 +2164,7 @@ static const uint8_t CiResource_xexd_obx[117] = {
 	88, 76, 146, 1, 40, 8, 72, 138, 72, 152, 72, 32, 149, 1, 174, 53,
 	1, 240, 11, 174, 20, 208, 202, 240, 2, 162, 1, 32, 152, 252, 104, 168,
 	104, 170, 104, 64, 76 };
-static const uint8_t CiResource_xexinfo_obx[178] = {
+static const uint8_t FuResource_xexinfo_obx[178] = {
 	255, 255, 112, 252, 221, 252, 65, 80, 252, 173, 11, 212, 208, 251, 141, 5,
 	212, 162, 38, 142, 22, 208, 162, 10, 142, 23, 208, 162, 33, 142, 0, 212,
 	162, 80, 142, 2, 212, 162, 252, 142, 3, 212, 142, 9, 212, 96, 216, 189,
@@ -2725,25 +2725,25 @@ static uint8_t const *ASAP6502_GetPlayerRoutine(const ASAPInfo *info)
 {
 	switch (info->type) {
 	case ASAPModuleType_CMC:
-		return CiResource_cmc_obx;
+		return FuResource_cmc_obx;
 	case ASAPModuleType_CM3:
-		return CiResource_cm3_obx;
+		return FuResource_cm3_obx;
 	case ASAPModuleType_CMR:
-		return CiResource_cmr_obx;
+		return FuResource_cmr_obx;
 	case ASAPModuleType_CMS:
-		return CiResource_cms_obx;
+		return FuResource_cms_obx;
 	case ASAPModuleType_DLT:
-		return CiResource_dlt_obx;
+		return FuResource_dlt_obx;
 	case ASAPModuleType_MPT:
-		return CiResource_mpt_obx;
+		return FuResource_mpt_obx;
 	case ASAPModuleType_RMT:
-		return ASAPInfo_GetChannels(info) == 1 ? CiResource_rmt4_obx : CiResource_rmt8_obx;
+		return ASAPInfo_GetChannels(info) == 1 ? FuResource_rmt4_obx : FuResource_rmt8_obx;
 	case ASAPModuleType_TMC:
-		return CiResource_tmc_obx;
+		return FuResource_tmc_obx;
 	case ASAPModuleType_TM2:
-		return CiResource_tm2_obx;
+		return FuResource_tm2_obx;
 	case ASAPModuleType_FC:
-		return CiResource_fc_obx;
+		return FuResource_fc_obx;
 	default:
 		return NULL;
 	}
@@ -3382,7 +3382,7 @@ static bool ASAPInfo_ParseRmt(ASAPInfo *self, uint8_t const *module, int moduleL
 			break;
 		title[titleLen] = (uint8_t) (ASAPInfo_IsValidChar(c) ? c : ' ');
 	}
-	CiString_Assign(&self->title, CiString_Substring((const char *) title, titleLen));
+	FuString_Assign(&self->title, FuString_Substring((const char *) title, titleLen));
 	return true;
 }
 
@@ -3517,7 +3517,7 @@ static bool ASAPInfo_ParseTmc(ASAPInfo *self, uint8_t const *module, int moduleL
 	self->fastplay = 312 / i;
 	uint8_t title[127];
 	int titleLen = ASAPInfo_ParseTmcTitle(title, 0, module, 6);
-	CiString_Assign(&self->title, CiString_Substring((const char *) title, titleLen));
+	FuString_Assign(&self->title, FuString_Substring((const char *) title, titleLen));
 	return true;
 }
 
@@ -3640,7 +3640,7 @@ static bool ASAPInfo_ParseTm2(ASAPInfo *self, uint8_t const *module, int moduleL
 	int titleLen = ASAPInfo_ParseTmcTitle(title, 0, module, 39);
 	titleLen = ASAPInfo_ParseTmcTitle(title, titleLen, module, 71);
 	titleLen = ASAPInfo_ParseTmcTitle(title, titleLen, module, 103);
-	CiString_Assign(&self->title, CiString_Substring((const char *) title, titleLen));
+	FuString_Assign(&self->title, FuString_Substring((const char *) title, titleLen));
 	return true;
 }
 
@@ -3776,7 +3776,7 @@ static char *ASAPInfo_ParseText(uint8_t const *module, int i, int argEnd)
 		return strdup("");
 	if (len == 3 && module[i + 1] == '<' && module[i + 2] == '?' && module[i + 3] == '>')
 		return strdup("");
-	return CiString_Substring((const char *) module + (i + 1), len);
+	return FuString_Substring((const char *) module + (i + 1), len);
 }
 
 static bool ASAPInfo_HasStringAt(uint8_t const *module, int moduleIndex, const char *s)
@@ -3876,11 +3876,11 @@ static bool ASAPInfo_ParseSap(ASAPInfo *self, uint8_t const *module, int moduleL
 		if (++moduleIndex + 6 >= moduleLen)
 			return false;
 		if (tagLen == 6 && memcmp(module + lineStart, "AUTHOR", 6) == 0)
-			CiString_Assign(&self->author, ASAPInfo_ParseText(module, argStart, argEnd));
+			FuString_Assign(&self->author, ASAPInfo_ParseText(module, argStart, argEnd));
 		else if (tagLen == 4 && memcmp(module + lineStart, "NAME", 4) == 0)
-			CiString_Assign(&self->title, ASAPInfo_ParseText(module, argStart, argEnd));
+			FuString_Assign(&self->title, ASAPInfo_ParseText(module, argStart, argEnd));
 		else if (tagLen == 4 && memcmp(module + lineStart, "DATE", 4) == 0)
-			CiString_Assign(&self->date, ASAPInfo_ParseText(module, argStart, argEnd));
+			FuString_Assign(&self->date, ASAPInfo_ParseText(module, argStart, argEnd));
 		else if (tagLen == 4 && memcmp(module + lineStart, "TIME", 4) == 0) {
 			if (durationIndex >= 32)
 				return false;
@@ -3891,7 +3891,7 @@ static bool ASAPInfo_ParseSap(ASAPInfo *self, uint8_t const *module, int moduleL
 				argEnd -= 5;
 			}
 			{
-				char *arg = CiString_Substring((const char *) module + argStart, argEnd - argStart);
+				char *arg = FuString_Substring((const char *) module + argStart, argEnd - argStart);
 				if ((self->durations[durationIndex++] = ASAPInfo_ParseDuration(arg)) == -1) {
 					free(arg);
 					return false;
@@ -4064,17 +4064,17 @@ bool ASAPInfo_Load(ASAPInfo *self, const char *filename, uint8_t const *module, 
 		ext -= basename;
 		if (ext > 127)
 			ext = 127;
-		CiString_Assign(&self->filename, CiString_Substring(filename + basename, ext));
+		FuString_Assign(&self->filename, FuString_Substring(filename + basename, ext));
 		ext = ASAPInfo_GetPackedExt(filename);
 	}
 	else {
-		CiString_Assign(&self->filename, strdup(""));
+		FuString_Assign(&self->filename, strdup(""));
 		if ((ext = ASAPInfo_GuessPackedExt(module, moduleLen)) == -1)
 			return false;
 	}
-	CiString_Assign(&self->author, strdup(""));
-	CiString_Assign(&self->title, strdup(""));
-	CiString_Assign(&self->date, strdup(""));
+	FuString_Assign(&self->author, strdup(""));
+	FuString_Assign(&self->title, strdup(""));
+	FuString_Assign(&self->date, strdup(""));
 	self->channels = 1;
 	self->songs = 1;
 	self->defaultSong = 0;
@@ -4145,7 +4145,7 @@ bool ASAPInfo_SetAuthor(ASAPInfo *self, const char *value)
 {
 	if (!ASAPInfo_CheckValidText(value))
 		return false;
-	CiString_Assign(&self->author, strdup(value));
+	FuString_Assign(&self->author, strdup(value));
 	return true;
 }
 
@@ -4158,7 +4158,7 @@ bool ASAPInfo_SetTitle(ASAPInfo *self, const char *value)
 {
 	if (!ASAPInfo_CheckValidText(value))
 		return false;
-	CiString_Assign(&self->title, strdup(value));
+	FuString_Assign(&self->title, strdup(value));
 	return true;
 }
 
@@ -4176,7 +4176,7 @@ bool ASAPInfo_SetDate(ASAPInfo *self, const char *value)
 {
 	if (!ASAPInfo_CheckValidText(value))
 		return false;
-	CiString_Assign(&self->date, strdup(value));
+	FuString_Assign(&self->date, strdup(value));
 	return true;
 }
 
@@ -5399,7 +5399,7 @@ static bool ASAPWriter_WriteXexInfo(ASAPWriter *self, const ASAPInfo *info)
 	int titleAddress = otherAddress - authorLen - 8 - titleLen;
 	if (!ASAPWriter_WriteWord(self, titleAddress))
 		return false;
-	if (!ASAPWriter_WriteBytes(self, CiResource_xexinfo_obx, 4, 6))
+	if (!ASAPWriter_WriteBytes(self, FuResource_xexinfo_obx, 4, 6))
 		return false;
 	if (!ASAPWriter_WriteBytes(self, title, 0, titleLen))
 		return false;
@@ -5433,7 +5433,7 @@ static bool ASAPWriter_WriteXexInfo(ASAPWriter *self, const ASAPInfo *info)
 		if (!ASAPWriter_WriteByte(self, 2))
 			return false;
 	}
-	return ASAPWriter_WriteBytes(self, CiResource_xexinfo_obx, 6, 178);
+	return ASAPWriter_WriteBytes(self, FuResource_xexinfo_obx, 6, 178);
 }
 
 static bool ASAPWriter_WriteNative(ASAPWriter *self, const ASAPInfo *info, uint8_t const *module, int moduleLen)
@@ -5491,7 +5491,7 @@ int ASAPWriter_Write(ASAPWriter *self, const char *targetFilename, const ASAPInf
 			case ASAPModuleType_SAP_D:
 				if (ASAPInfo_GetPlayerRateScanlines(info) != 312)
 					return -1;
-				if (!ASAPWriter_WriteBytes(self, CiResource_xexd_obx, 2, 117))
+				if (!ASAPWriter_WriteBytes(self, FuResource_xexd_obx, 2, 117))
 					return -1;
 				if (!ASAPWriter_WriteWord(self, initAndPlayer[0]))
 					return -1;
@@ -5515,7 +5515,7 @@ int ASAPWriter_Write(ASAPWriter *self, const char *targetFilename, const ASAPInf
 			case ASAPModuleType_SAP_S:
 				return -1;
 			default:
-				if (!ASAPWriter_WriteBytes(self, CiResource_xexb_obx, 2, 183))
+				if (!ASAPWriter_WriteBytes(self, FuResource_xexb_obx, 2, 183))
 					return -1;
 				if (!ASAPWriter_WriteWord(self, initAndPlayer[0]))
 					return -1;
@@ -7057,7 +7057,7 @@ static void Pokey_Construct(Pokey *self)
 
 static void Pokey_Destruct(Pokey *self)
 {
-	CiShared_Release(self->deltaBuffer);
+	FuShared_Release(self->deltaBuffer);
 }
 
 static void Pokey_StartFrame(Pokey *self)
@@ -7070,7 +7070,7 @@ static void Pokey_Initialize(Pokey *self, int sampleRate)
 {
 	int64_t sr = sampleRate;
 	self->deltaBufferLength = (int) (sr * 312 * 114 / 1773447 + 32 + 2);
-	CiShared_Assign((void **) &self->deltaBuffer, (int *) CiShared_Make(self->deltaBufferLength, sizeof(int), NULL, NULL));
+	FuShared_Assign((void **) &self->deltaBuffer, (int *) FuShared_Make(self->deltaBufferLength, sizeof(int), NULL, NULL));
 	self->trailing = self->deltaBufferLength;
 	for (int c = 0; c < 4; c++)
 		PokeyChannel_Initialize(self->channels + c);

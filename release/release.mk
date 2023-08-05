@@ -105,7 +105,7 @@ version:
 	$(GREP) "<since>" $(srcdir)PORTS.xml | /usr/bin/sort -ru | head -1
 	$(GREP) Version: $(srcdir)asap.spec
 	$(GREP) -m 1 ^asap $(srcdir)debian/changelog
-	$(GREP) "int Version" $(srcdir)asapinfo.ci
+	$(GREP) "int Version" $(srcdir)asapinfo.fu
 	$(GREP) "VERSION =" $(srcdir)chksap.pl
 	$(GREP) android:versionName $(srcdir)java/android/AndroidManifest.xml
 	$(GREP) ", v" $(srcdir)win32/rmt/apokeysnd_dll.c

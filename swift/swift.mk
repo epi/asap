@@ -13,6 +13,6 @@ swift/asap2wav.exe: swift/main.swift swift/asap.swift
 	$(SWIFTC) -O -o $@ $^
 CLEAN += swift/asap2wav.exe swift/asap2wav.exp swift/asap2wav.lib
 
-swift/asap.swift: $(call src,asap.ci asap6502.ci asapinfo.ci cpu6502.ci pokey.ci) $(ASM6502_PLAYERS_OBX)
-	$(CITO)
+swift/asap.swift: $(call src,asap.fu asap6502.fu asapinfo.fu cpu6502.fu pokey.fu) $(ASM6502_PLAYERS_OBX)
+	$(FUT)
 CLEAN += swift/asap.swift

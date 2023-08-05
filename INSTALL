@@ -1,11 +1,11 @@
-﻿Build instructions
+Build instructions
 ==================
 
 Required tools
 --------------
 
-1. The core of ASAP is written in the Ć programming language.
-You'll need 'cito' (https://github.com/pfusik/cito).
+1. The core of ASAP is written in the Fusion programming language.
+You'll need 'fut' (https://fusion-lang.org).
 For your convenience, this is not needed for most of the C and C++ ports.
 
 2. GNU Make.
