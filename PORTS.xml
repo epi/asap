@@ -1,4 +1,4 @@
-﻿<?xml-stylesheet type="text/xsl" href="PORTS.xsl" ?>
+<?xml-stylesheet type="text/xsl" href="PORTS.xsl" ?>
 <ports>
 	<port name="WASAP">
 		<bin>Windows</bin>
@@ -32,7 +32,7 @@
 		<stil>yes</stil>
 		<comment class="good">Plays from ATR disk images</comment>
 		<lang>C</lang>
-		<a href="http://www.winamp.com/">Winamp</a>
+		<a href="https://www.winamp.com/">Winamp</a>
 	</port>
 	<port name="XMMS plugin">
 		<bin></bin>
@@ -49,7 +49,7 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>C</lang>
-		<a href="http://www.xmms.org/">XMMS</a>
+		<a href="https://xmms.org/">XMMS</a>
 	</port>
 	<port name="foobar2000 plugin">
 		<bin>Windows, foo_asap</bin>
@@ -67,7 +67,7 @@
 		<stil>yes</stil>
 		<comment class="good">Plays all foobar2000-supported formats from ATR disk images</comment>
 		<lang>C, C++</lang>
-		<a href="http://www.foobar2000.org/">foobar2000</a>
+		<a href="https://www.foobar2000.org/">foobar2000</a>
 	</port>
 	<port name="MOC plugin">
 		<bin></bin>
@@ -84,7 +84,7 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>C</lang>
-		<a href="http://moc.daper.net/">MOC</a>
+		<a href="https://moc.daper.net/">MOC</a>
 	</port>
 	<port name="POKEY DLL for RMT">
 		<bin>Windows</bin>
@@ -118,7 +118,7 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>JavaScript</lang>
-		<a href="http://asap.sourceforge.net/web.html">online demo</a>
+		<a href="https://asap.sourceforge.net/web.html">online demo</a>
 	</port>
 	<port name="asapconv">
 		<bin>Windows, macOS, Linux</bin>
@@ -152,7 +152,7 @@
 		<stil>yes</stil>
 		<comment class="good">Displays RMT instrument names</comment>
 		<lang>C</lang>
-		<a href="http://www.un4seen.com/xmplay.html">XMPlay</a>
+		<a href="https://www.un4seen.com/xmplay.html">XMPlay</a>
 	</port>
 	<port name="BASS add-on">
 		<bin>Windows</bin>
@@ -169,7 +169,7 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>C</lang>
-		<a href="http://www.un4seen.com/bass.html">BASS</a>
+		<a href="https://www.un4seen.com/bass.html">BASS</a>
 	</port>
 	<port name="Windows Explorer extension">
 		<bin>Windows</bin>
@@ -220,7 +220,7 @@
 		<stil>no</stil>
 		<comment class="bad">SAP, FC, RMT formats only</comment>
 		<lang>C</lang>
-		<a href="http://www.videolan.org/vlc/">VLC</a>
+		<a href="https://www.videolan.org/vlc/">VLC</a>
 	</port>
 	<port name="XMMS2 plugin">
 		<bin>Linux</bin>
@@ -388,7 +388,7 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>C</lang>
-		<a href="http://audacious-media-player.org/">Audacious</a>
+		<a href="https://audacious-media-player.org/">Audacious</a>
 	</port>
 	<port name="WASAP (Windows CE)">
 		<bin></bin>
@@ -454,7 +454,7 @@
 		<stil>no</stil>
 		<comment class="bad">SAP format only</comment>
 		<lang>C</lang>
-		<a href="http://gstreamer.freedesktop.org/">GStreamer</a>
+		<a href="https://gstreamer.freedesktop.org/">GStreamer</a>
 	</port>
 	<port name="MetroASAP">
 		<bin></bin>
@@ -567,7 +567,7 @@
 		<mute-pokey>no</mute-pokey>
 		<stil>no</stil>
 		<lang>C</lang>
-		<a href="http://www.libsdl.org/">SDL</a>
+		<a href="https://www.libsdl.org/">SDL</a>
 	</port>
 	<port name="ASAP2WAV (D)">
 		<bin></bin>
