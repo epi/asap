@@ -1,7 +1,7 @@
 /*
  * ASAP2WAV.java - converter of ASAP-supported formats to WAV files
  *
- * Copyright (C) 2007-2011  Piotr Fusik
+ * Copyright (C) 2007-2023  Piotr Fusik
  *
  * This file is part of ASAP (Another Slight Atari Player),
  * see http://asap.sourceforge.net
@@ -36,7 +36,7 @@ public class ASAP2WAV
 	private static boolean outputHeader = true;
 	private static int song = -1;
 	private static int sampleRate = 44100;
-	private static int format = ASAPSampleFormat.S16_L_E;
+	private static ASAPSampleFormat format = ASAPSampleFormat.S16_L_E;
 	private static int duration = -1;
 	private static int muteMask = 0;
 
