@@ -117,6 +117,7 @@ class FileInfoAdapter extends ArrayAdapter<FileInfo>
 public class Player extends ListActivity
 {
 	private String playingFilename;
+	private int playingSong;
 	private void play(Uri uri)
 	{
 		startService(new Intent(Intent.ACTION_VIEW, uri, this, PlayerService.class));
@@ -213,10 +214,14 @@ public class Player extends ListActivity
 				showTag(R.id.playing_author, metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
 				showTag(R.id.playing_date, metadata.getString(MediaMetadata.METADATA_KEY_DATE));
 				int songs = (int) metadata.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS);
-				if (songs > 1)
-					showTag(R.id.playing_song, getString(R.string.song_format, metadata.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER), songs));
-				else
+				if (songs > 1) {
+					playingSong = (int) metadata.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER);
+					showTag(R.id.playing_song, getString(R.string.song_format, playingSong, songs));
+				}
+				else {
+					playingSong = 0;
 					findViewById(R.id.playing_song).setVisibility(View.GONE);
+				}
 				duration = (int) metadata.getLong(MediaMetadata.METADATA_KEY_DURATION);
 				showTime(R.id.playing_time, duration == 0 ? -1 : duration);
 				findViewById(R.id.playing_panel).setVisibility(View.VISIBLE);
@@ -271,7 +276,7 @@ public class Player extends ListActivity
 	{
 		Intent intent = new Intent(Intent.ACTION_SEND);
 		intent.setType("text/plain");
-		intent.putExtra(Intent.EXTRA_TEXT, "https://asma.atari.org/asmadb/asma.html#/" + playingFilename);
+		intent.putExtra(Intent.EXTRA_TEXT, "https://asma.atari.org/asmadb/asma.html#/" + playingFilename + (playingSong > 0 ? "/" + playingSong : ""));
 		startActivity(Intent.createChooser(intent, null));
 	}
 
