@@ -52,6 +52,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PlayerService extends MediaBrowserService implements Runnable, AudioManager.OnAudioFocusChangeListener
 {
@@ -575,6 +577,8 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 		}
 	};
 
+	private static final Pattern fragmentPattern = Pattern.compile("/(.+?)(?:/(\\d{1,3}))?");
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId)
 	{
@@ -586,8 +590,15 @@ public class PlayerService extends MediaBrowserService implements Runnable, Audi
 			case "http":
 			case "https":
 				String fragment = uri.getFragment();
-				if (fragment != null && fragment.startsWith("/"))
-					uri = Util.getAsmaUri(fragment.substring(1));
+				if (fragment != null) {
+					Matcher m = fragmentPattern.matcher(fragment);
+					if (m.matches()) {
+						uri = Util.getAsmaUri(m.group(1));
+						String songString = m.group(2);
+						if (songString != null)
+							song = Integer.parseInt(songString) - 1;
+					}
+				}
 				break;
 			default:
 				break;
