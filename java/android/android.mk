@@ -2,6 +2,7 @@ ASMA_DIR = ../aasma/asma
 ANDROID_SDK = $(subst \,/,$(LOCALAPPDATA))/Android/Sdk
 ANDROID_JAR = $(ANDROID_SDK)/platforms/android-33/android.jar
 ANDROID_BUILD_TOOLS = $(ANDROID_SDK)/build-tools/33.0.2
+ANDROID_BACKGROUND_FILTER = -brightness-contrast -380x-90
 
 JAVA = $(DO)java
 AAPT = $(ANDROID_BUILD_TOOLS)/aapt
@@ -80,35 +81,35 @@ java/android/Indexer.class: $(srcdir)java/android/Indexer.java java/classes/net/
 CLEAN += java/android/Indexer.class
 
 java/android/res/drawable-land/background.jpg: java/android/img/POKEY_chip_on_an_Atari_130XE_motherboard.jpg
-	$(DO)magick $< -crop 2560x1280+0+420 -resize 1080x540 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 2560x1280+0+420 -resize 1080x540 $(ANDROID_BACKGROUND_FILTER) $@
 CLEAN += java/android/res/drawable-land/background.jpg
 
 java/android/res/drawable-land-xhdpi/background.jpg: java/android/img/POKEY_chip_on_an_Atari_130XE_motherboard.jpg
-	$(DO)magick $< -crop 2560x1280+0+420 -resize 2160x1080 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 2560x1280+0+420 -resize 2160x1080 $(ANDROID_BACKGROUND_FILTER) $@
 CLEAN += java/android/res/drawable-land-xhdpi/background.jpg
 
 java/android/res/drawable-port/background.jpg: java/android/img/POKEY_chip_on_an_Atari_130XE_motherboard.jpg
-	$(DO)magick $< -crop 928x1856+112+0 -resize 540x1080 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 928x1856+112+0 -resize 540x1080 $(ANDROID_BACKGROUND_FILTER) $@
 CLEAN += java/android/res/drawable-port/background.jpg
 
 java/android/res/drawable-port-xhdpi/background.jpg: java/android/img/POKEY_chip_on_an_Atari_130XE_motherboard.jpg
-	$(DO)magick $< -crop 928x1856+112+0 -resize 1080x2160 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 928x1856+112+0 -resize 1080x2160 $(ANDROID_BACKGROUND_FILTER) $@
 CLEAN += java/android/res/drawable-port-xhdpi/background.jpg
 
 java/android/res/drawable-land/stereo.jpg: java/android/img/stereo.jpg
-	$(DO)magick $< -crop 3840x1920+192+380 -resize 1080x540 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 3840x1920+192+380 -resize 1080x540 $(ANDROID_BACKGROUND_FILTER) $@
 CLEAN += java/android/res/drawable-land/stereo.jpg
 
 java/android/res/drawable-land-xhdpi/stereo.jpg: java/android/img/stereo.jpg
-	$(DO)magick $< -crop 3840x1920+192+380 -resize 2160x1080 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 3840x1920+192+380 -resize 2160x1080 $(ANDROID_BACKGROUND_FILTER) $@
 CLEAN += java/android/res/drawable-land-xhdpi/stereo.jpg
 
 java/android/res/drawable-port/stereo.jpg: java/android/img/stereo.jpg
-	$(DO)magick $< -crop 1512x3024+900+0 -resize 540x1080 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 1512x3024+900+0 -resize 540x1080 $(ANDROID_BACKGROUND_FILTER) $@
 CLEAN += java/android/res/drawable-port/stereo.jpg
 
 java/android/res/drawable-port-xhdpi/stereo.jpg: java/android/img/stereo.jpg
-	$(DO)magick $< -crop 1512x3024+900+0 -resize 1080x2160 -brightness-contrast -70x-75 $@
+	$(DO)magick $< -crop 1512x3024+900+0 -resize 1080x2160 $(ANDROID_BACKGROUND_FILTER) $@
 CLEAN += java/android/res/drawable-port-xhdpi/stereo.jpg
 
 android-push-asapconv: java/android/asapconv
