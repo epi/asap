@@ -36,13 +36,13 @@ void ASAP_Delete(ASAP *self);
 #define ASAP_SAMPLE_RATE 44100
 
 /**
- * Get current output sample rate.
+ * Returns the output sample rate.
  * @param self This <code>ASAP</code>.
  */
 int ASAP_GetSampleRate(const ASAP *self);
 
 /**
- * Set output sample rate.
+ * Sets the output sample rate.
  * @param self This <code>ASAP</code>.
  */
 void ASAP_SetSampleRate(ASAP *self, int sampleRate);

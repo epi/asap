@@ -68,10 +68,10 @@ public class ASAP
 
 	int CurrentSampleRate = SampleRate;
 
-	/// Get current output sample rate.
+	/// Returns the output sample rate.
 	public int GetSampleRate() => CurrentSampleRate;
 
-	/// Set output sample rate.
+	/// Sets the output sample rate.
 	public void SetSampleRate!(int sampleRate)
 	{
 		CurrentSampleRate = sampleRate;
